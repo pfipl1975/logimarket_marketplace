@@ -74,14 +74,17 @@ export function OfferCard({ offer }: { offer: CatalogOffer }) {
           ) : offer.conversionType === "rfq" ? (
             <RfqDialog offerId={offer.id} offerTitle={offer.title} partnerName={offer.partnerName} className="w-full" />
           ) : (
-            <Button asChild className="w-full gap-2 font-semibold text-white border-0"
+            <a
+              href={`/go/${offer.id}`}
+              target="_blank"
+              rel="nofollow noopener noreferrer"
+              className="inline-flex items-center justify-center w-full gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white border-0 transition-colors"
               style={{ backgroundColor: "#141c2c" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e2940")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#141c2c")}>
-              <a href={`/go/${offer.id}`} target="_blank" rel="nofollow noopener noreferrer">
-                Zobacz ofertę u Partnera <ExternalLink className="h-4 w-4" />
-              </a>
-            </Button>
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1e2940"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#141c2c"; }}
+            >
+              Zobacz ofertę u Partnera <ExternalLink className="h-4 w-4" />
+            </a>
           )}
         </div>
       </div>
