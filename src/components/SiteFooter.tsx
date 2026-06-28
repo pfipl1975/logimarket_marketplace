@@ -1,17 +1,12 @@
 import Link from "next/link";
-import { Boxes } from "lucide-react";
+import Logo from "@/components/Logo";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-auto text-white/70" style={{ backgroundColor: "#141c2c" }}>
+    <footer className="mt-auto bg-brand-navy text-white/70">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-3 md:px-6">
         <div>
-          <div className="flex items-center gap-2.5 text-white">
-            <span className="flex h-8 w-8 items-center justify-center rounded-md" style={{ backgroundColor: "#147487" }}>
-              <Boxes className="h-4 w-4 text-white" />
-            </span>
-            <span className="text-base font-bold">LogiMarket<span style={{ color: "#147487" }}>.pl</span></span>
-          </div>
+          <Logo variant="light" />
           <p className="mt-3 max-w-xs text-sm leading-relaxed">
             Giełda B2B sprzętu i wyposażenia magazynowego. Katalog ofertowy łączący kupujących ze zweryfikowanymi partnerami.
           </p>
@@ -28,7 +23,7 @@ export function SiteFooter() {
           <h2 className="text-sm font-semibold text-white">Dla partnerów</h2>
           <p className="mt-3 text-sm leading-relaxed">
             Chcesz wystawić swoje produkty? Napisz do nas:{" "}
-            <a className="hover:underline" href="mailto:partnerzy@logimarket.pl" style={{ color: "#147487" }}>partnerzy@logimarket.pl</a>
+            <a className="text-brand-teal hover:underline" href="mailto:partnerzy@logimarket.pl">partnerzy@logimarket.pl</a>
           </p>
         </div>
       </div>
