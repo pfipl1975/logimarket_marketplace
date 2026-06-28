@@ -69,14 +69,17 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
               ) : offer.conversionType === "rfq" ? (
                 <RfqDialog offerId={offer.id} offerTitle={offer.title} partnerName={offer.partnerName} className="w-full h-12 text-base" />
               ) : (
-                <Button asChild className="w-full gap-2 font-semibold text-white border-0 h-12 text-base"
+                <a
+                  href={`/go/${offer.id}`}
+                  target="_blank"
+                  rel="nofollow noopener noreferrer"
+                  className="inline-flex items-center justify-center w-full gap-2 rounded-md px-4 py-2 text-base font-semibold text-white border-0 transition-colors h-12"
                   style={{ backgroundColor: "#141c2c" }}
-                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e2940")}
-                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#141c2c")}>
-                  <a href={`/go/${offer.id}`} target="_blank" rel="nofollow noopener noreferrer">
-                    Zobacz ofertę u Partnera <ExternalLink className="h-5 w-5" />
-                  </a>
-                </Button>
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1e2940"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#141c2c"; }}
+                >
+                  Zobacz ofertę u Partnera <ExternalLink className="h-5 w-5" />
+                </a>
               )}
             </div>
 
