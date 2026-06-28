@@ -4,8 +4,8 @@ import Logo from "@/components/Logo";
 export function SiteFooter() {
   return (
     <footer className="mt-auto bg-brand-navy text-white/70">
-      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-3 md:px-6">
-        <div>
+      <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-[minmax(0,1.45fr)_minmax(0,0.75fr)_minmax(0,0.8fr)] md:px-6">
+        <div className="min-w-0">
           <Logo variant="light" />
           <p className="mt-3 max-w-xs text-sm leading-relaxed">
             Giełda B2B sprzętu i wyposażenia magazynowego. Katalog ofertowy łączący kupujących ze zweryfikowanymi partnerami.
