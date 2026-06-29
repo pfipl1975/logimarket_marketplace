@@ -24,8 +24,7 @@ function CartIcon() {
 }
 
 const portalLinks = [
-  { label: "Strona główna", href: "https://logimarket.pl" },
-  { label: "Baza wiedzy", href: "https://logimarket.pl/baza-wiedzy" },
+  { label: "LogiMarket.pl", href: "https://logimarket.pl" },
   { label: "Blog", href: "https://logimarket.pl/blog" },
 ];
 
