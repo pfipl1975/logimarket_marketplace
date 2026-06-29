@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl — Katalog B2B sprzętu i wyposażenia magazynowego",
+    "description": "Wózki widłowe, regały, palety, opakowania i wyposażenie logistyczne. Model hybrydowy B2B: RFQ + E-Commerce."
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "Blog",
+    "catalog": "Katalog ofert",
+    "cart": "Koszyk",
+    "backToCatalog": "Wróć do katalogu"
+  },
+  "hero": {
+    "badge": "Zweryfikowani partnerzy B2B",
+    "title": "Katalog sprzętu i wyposażenia magazynowego",
+    "description": "Wózki widłowe, regały, palety, opakowania i wyposażenie logistyczne w jednym miejscu.",
+    "modelDescription": "Model hybrydowy: RFQ dla ciężkiego sprzętu, E-Commerce dla artykułów powtarzalnych."
+  },
+  "catalog": {
+    "allOffers": "Wszystkie oferty",
+    "allCategories": "Wszystkie kategorie",
+    "categoriesAria": "Kategorie",
+    "emptyTitle": "Brak ofert w tej kategorii",
+    "emptyDescription": "Sprawdź inne kategorie lub wróć później.",
+    "offerCountOne": "oferta",
+    "offerCountOther": "dostępnych ofert",
+    "rfqLegend": "RFQ — Zapytaj o wycenę",
+    "ecommerceLegend": "E-Commerce — Dodaj do koszyka",
+    "platformNotice": "LogiMarket.pl to hybrydowa platforma B2B. Dla ciężkiego sprzętu oferujemy model RFQ (zapytanie ofertowe), dla artykułów powtarzalnych — model E-Commerce z koszykiem. Sprzedaż i realizacja zamówień odbywa się bezpośrednio u partnera. LogiMarket.pl nie jest stroną transakcji."
+  },
+  "offers": {
+    "featured": "Wyróżnione",
+    "price": "Cena",
+    "priceOnRequest": "Cena na zapytanie B2B",
+    "onRequest": "na zapytanie",
+    "description": "Opis",
+    "technicalParameters": "Parametry techniczne",
+    "externalOffer": "Zobacz ofertę u Partnera",
+    "gridView": "Kafelki",
+    "listView": "Lista",
+    "ecommerceNotice": "Ten produkt jest dostępny w modelu E-Commerce. Dodaj do koszyka i złóż zamówienie B2B.",
+    "rfqNotice": "Ta oferta wymaga indywidualnej wyceny. Wyślij zapytanie RFQ, a partner przygotuje ofertę."
+  },
+  "cta": {
+    "addToCart": "Dodaj do koszyka",
+    "requestQuote": "Zapytaj o wycenę",
+    "sendRequest": "Wyślij zapytanie",
+    "browseOffers": "Przeglądaj oferty",
+    "goToCheckout": "Przejdź do zamówienia",
+    "continueShopping": "Kontynuuj zakupy",
+    "placeOrder": "Złóż zamówienie B2B"
+  },
+  "rfq": {
+    "title": "Zapytanie o wycenę (RFQ)",
+    "successTitle": "Zapytanie wysłane pomyślnie!",
+    "successDescription": "Partner przygotuje wycenę B2B i skontaktuje się z Tobą.",
+    "descriptionSuffix": "Zapytanie trafi bezpośrednio do partnera.",
+    "pending": "Wysyłanie...",
+    "consent": "Wysyłając formularz wyrażasz zgodę na przekazanie danych partnerowi.",
+    "messagePlaceholder": "Liczba sztuk, termin, dodatkowe wymagania..."
+  },
+  "cart": {
+    "title": "Twój koszyk",
+    "emptyTitle": "Koszyk jest pusty",
+    "emptyDescription": "Dodaj produkty z katalogu, aby złożyć zamówienie B2B.",
+    "total": "Razem",
+    "unitShort": "szt."
+  },
+  "checkout": {
+    "title": "Zamówienie B2B",
+    "summary": "Podsumowanie",
+    "successTitle": "Zamówienie przyjęte!",
+    "successDescription": "Twoje zamówienie B2B zostało zapisane. Nasz zespół skontaktuje się z Tobą.",
+    "description": "Wypełnij formularz, aby złożyć zamówienie. Nie jest to transakcja online — nasz zespół zweryfikuje dostępność.",
+    "pending": "Przetwarzanie...",
+    "legalNote": "Złożenie zamówienia nie jest transakcją online. Nasz zespół zweryfikuje dostępność i skontaktuje się z Tobą.",
+    "orderNotesPlaceholder": "Termin dostawy, adres, dodatkowe wymagania..."
+  },
+  "form": {
+    "companyName": "Nazwa firmy *",
+    "contactName": "Osoba kontaktowa *",
+    "email": "E-mail *",
+    "phone": "Telefon",
+    "message": "Wiadomość",
+    "orderNotes": "Uwagi do zamówienia"
+  },
+  "footer": {
+    "portal": "Portal",
+    "partners": "Dla partnerów",
+    "description": "Giełda B2B sprzętu i wyposażenia magazynowego. Katalog ofertowy łączący kupujących ze zweryfikowanymi partnerami.",
+    "partnerPrompt": "Chcesz wystawić swoje produkty? Napisz do nas:",
+    "copyrightSuffix": "Sprzedaż realizowana bezpośrednio przez partnerów."
+  },
+  "system": {
+    "offerNotFound": "Oferta nie istnieje",
+    "fallbackCategory": "Bez kategorii",
+    "fallbackPartner": "Partner"
+  }
+}
