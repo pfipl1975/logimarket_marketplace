@@ -2,13 +2,18 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/hooks/useCart";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
-export const metadata: Metadata = {
-  title: "LogiMarket.pl — Katalog B2B sprzętu i wyposażenia magazynowego",
-  description: "Wózki widłowe, regały, palety, opakowania i wyposażenie logistyczne. Model hybrydowy B2B: RFQ + E-Commerce.",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary("pl");
+
+  return {
+    title: dict.meta.title,
+    description: dict.meta.description,
+  };
+}
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

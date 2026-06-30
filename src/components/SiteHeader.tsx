@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import { useCart } from "@/hooks/useCart";
+import type { Dictionary } from "@/lib/i18n/types";
 
 function CartIcon() {
   return (
@@ -23,13 +24,16 @@ function CartIcon() {
   );
 }
 
-const portalLinks = [
-  { label: "LogiMarket.pl", href: "https://logimarket.pl" },
-  { label: "Blog", href: "https://logimarket.pl/blog" },
-];
+interface SiteHeaderProps {
+  navLabels: Dictionary["nav"];
+}
 
-export function SiteHeader() {
+export function SiteHeader({ navLabels }: SiteHeaderProps) {
   const { itemCount, setIsOpen } = useCart();
+  const portalLinks = [
+    { label: navLabels.portal, href: "https://logimarket.pl" },
+    { label: navLabels.blog, href: "https://logimarket.pl/blog" },
+  ];
 
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
@@ -50,14 +54,14 @@ export function SiteHeader() {
                 {link.label}
               </a>
             ))}
-            <Link href="/" className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">Katalog ofert</Link>
+            <Link href="/" className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">{navLabels.catalog}</Link>
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
             <button onClick={() => setIsOpen(true)}
               className="relative flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white">
               <CartIcon />
-              <span className="hidden sm:inline">Koszyk</span>
+              <span className="hidden sm:inline">{navLabels.cart}</span>
               {itemCount > 0 && (
                 <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-teal text-[10px] font-bold text-white">
                   {itemCount}

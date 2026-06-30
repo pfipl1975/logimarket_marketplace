@@ -7,6 +7,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { OfferCard } from "@/components/OfferCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
 function ShieldCheckIcon({ className = "" }: { className?: string }) {
   return (
@@ -59,12 +60,16 @@ function PackageIcon({ className = "" }: { className?: string }) {
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ kategoria?: string }> }) {
   const { kategoria } = await searchParams;
-  const [categories, offers] = await Promise.all([getCategories(), getOffers(kategoria)]);
+  const [dict, categories, offers] = await Promise.all([getDictionary("pl"), getCategories(), getOffers(kategoria)]);
   const activeCategory = categories.find((c) => c.slug === kategoria);
+  const heroTitleAccent = dict.hero.titleAccent;
+  const heroTitleLead = dict.hero.title.endsWith(heroTitleAccent)
+    ? dict.hero.title.slice(0, -heroTitleAccent.length)
+    : dict.hero.title;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
-      <SiteHeader />
+      <SiteHeader navLabels={dict.nav} />
 
       <section className="relative overflow-hidden bg-brand-navy">
         <Image
@@ -78,14 +83,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
         <div className="absolute inset-0 bg-brand-navy/80" />
         <div className="relative mx-auto max-w-7xl px-4 py-14 md:px-6 md:py-20">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/20 bg-brand-teal/15 px-3 py-1.5 text-xs font-semibold text-brand-teal">
-            <ShieldCheckIcon className="h-3.5 w-3.5" />Zweryfikowani partnerzy B2B
+            <ShieldCheckIcon className="h-3.5 w-3.5" />{dict.hero.badge}
           </span>
           <h1 className="mt-5 text-balance text-3xl font-bold leading-tight text-white md:text-5xl tracking-tight">
-            Katalog sprzętu i <span className="text-brand-teal">wyposażenia magazynowego</span>
+            {heroTitleLead}<span className="text-brand-teal">{heroTitleAccent}</span>
           </h1>
           <p className="mt-4 max-w-xl text-pretty leading-relaxed text-white/60 text-base md:text-lg">
-            Wózki widłowe, regały, palety, opakowania i wyposażenie logistyczne w jednym miejscu.
-            Model hybrydowy: RFQ dla ciężkiego sprzętu, E-Commerce dla artykułów powtarzalnych.
+            {dict.hero.description} {dict.hero.modelDescription}
           </p>
         </div>
       </section>
@@ -93,35 +97,35 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-bold text-brand-navy">
-            {activeCategory ? activeCategory.name : "Wszystkie oferty"}
+            {activeCategory ? activeCategory.name : dict.catalog.allOffers}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {offers.length} {offers.length === 1 ? "oferta" : "dostępnych ofert"}
+            {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
           </p>
         </div>
 
         <div className="mt-5">
           <Suspense fallback={<div className="flex flex-wrap gap-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-9 w-32 rounded-full" />)}</div>}>
-            <CategoryFilter categories={categories} />
+            <CategoryFilter categories={categories} catalogLabels={dict.catalog} />
           </Suspense>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-navy" />
-            <span>RFQ — Zapytaj o wycenę</span>
+            <span>{dict.catalog.rfqLegend}</span>
           </div>
           <div className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
-            <span>E-Commerce — Dodaj do koszyka</span>
+            <span>{dict.catalog.ecommerceLegend}</span>
           </div>
         </div>
 
         {offers.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
             <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
-            <p className="text-lg font-semibold">Brak ofert w tej kategorii</p>
-            <p className="text-sm text-muted-foreground max-w-xs">Sprawdź inne kategorie lub wróć później.</p>
+            <p className="text-lg font-semibold">{dict.catalog.emptyTitle}</p>
+            <p className="text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -132,14 +136,12 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
         <div className="mt-12 flex items-start gap-3 rounded-lg border border-border bg-white p-4 text-sm text-muted-foreground">
           <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand-teal" />
           <p className="leading-relaxed">
-            LogiMarket.pl to hybrydowa platforma B2B. Dla ciężkiego sprzętu oferujemy model RFQ (zapytanie ofertowe),
-            dla artykułów powtarzalnych — model E-Commerce z koszykiem. Sprzedaż i realizacja zamówień odbywa się
-            bezpośrednio u partnera. LogiMarket.pl nie jest stroną transakcji.
+            {dict.catalog.platformNotice}
           </p>
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter navLabels={dict.nav} footerLabels={dict.footer} />
       <CartDrawer />
     </div>
   );

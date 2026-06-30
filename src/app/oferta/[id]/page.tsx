@@ -10,21 +10,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
 export default async function OfferDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const offerId = Number(id);
   if (isNaN(offerId)) notFound();
 
-  const offer = await getOfferById(offerId);
+  const [dict, offer] = await Promise.all([getDictionary("pl"), getOfferById(offerId)]);
   if (!offer) notFound();
 
   const attributes = Object.entries(offer.technicalAttributes);
   const isEcommerce = offer.offerModel === "ecommerce";
 
   return (
-    <div className="flex min-h-screen flex-col" style={{ backgroundColor: "#f0f0f0" }}>
-      <SiteHeader />
+    <div className="flex min-h-screen flex-col bg-brand-light-gray">
+      <SiteHeader navLabels={dict.nav} />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
         <Link href={`/?kategoria=${offer.categorySlug}`}
@@ -119,7 +120,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
         )}
       </main>
 
-      <SiteFooter />
+      <SiteFooter navLabels={dict.nav} footerLabels={dict.footer} />
       <CartDrawer />
     </div>
   );
