@@ -8,8 +8,17 @@ import { useCart } from "@/hooks/useCart";
 import { formatPrice } from "@/lib/utils";
 import { RfqDialog } from "./RfqDialog";
 import type { CatalogOffer } from "@/app/actions";
+import type { Dictionary } from "@/lib/i18n/types";
 
-export function OfferCard({ offer }: { offer: CatalogOffer }) {
+interface OfferCardProps {
+  offer: CatalogOffer;
+  offerLabels: Dictionary["offers"];
+  ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
+  rfqLabels: Dictionary["rfq"];
+  formLabels: Dictionary["form"];
+}
+
+export function OfferCard({ offer, offerLabels, ctaLabels, rfqLabels, formLabels }: OfferCardProps) {
   const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
@@ -29,11 +38,10 @@ export function OfferCard({ offer }: { offer: CatalogOffer }) {
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {offer.isFeatured && (
-            <Badge className="text-[10px] uppercase tracking-wider font-semibold text-white border-0" style={{ backgroundColor: "#147487" }}>Wyróżnione</Badge>
+            <Badge className="border-0 bg-brand-teal text-[10px] font-semibold uppercase tracking-wider text-white">{offerLabels.featured}</Badge>
           )}
-          <Badge variant="secondary" className="text-[10px] uppercase tracking-wider font-semibold text-white border-0"
-            style={{ backgroundColor: isEcommerce ? "#16a34a" : "#141c2c" }}>
-            {isEcommerce ? "E-Commerce" : "RFQ"}
+          <Badge variant="secondary" className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${isEcommerce ? "bg-green-600" : "bg-brand-navy"}`}>
+            {isEcommerce ? offerLabels.ecommerceModel : offerLabels.rfqModel}
           </Badge>
         </div>
       </Link>
@@ -63,16 +71,24 @@ export function OfferCard({ offer }: { offer: CatalogOffer }) {
         )}
 
         <div className="mt-4 flex flex-col gap-3 pt-3 border-t" style={{ borderColor: "#d9dde299" }}>
-          <p className="text-lg font-bold" style={{ color: "#141c2c" }}>{formatPrice(offer.priceBrutto, offer.priceOnRequest)}</p>
+          <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
           {isEcommerce ? (
             <Button onClick={() => addToCart(offer.id, 1)} className="w-full gap-2 font-semibold text-white border-0"
               style={{ backgroundColor: "#147487" }}
               onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0e5a6a")}
               onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#147487")}>
-              <ShoppingCart className="h-4 w-4" />Dodaj do koszyka
+              <ShoppingCart className="h-4 w-4" />{ctaLabels.addToCart}
             </Button>
           ) : offer.conversionType === "rfq" ? (
-            <RfqDialog offerId={offer.id} offerTitle={offer.title} partnerName={offer.partnerName} className="w-full" />
+            <RfqDialog
+              offerId={offer.id}
+              offerTitle={offer.title}
+              partnerName={offer.partnerName}
+              className="w-full"
+              rfqLabels={rfqLabels}
+              formLabels={formLabels}
+              ctaLabels={ctaLabels}
+            />
           ) : (
             <a
               href={`/go/${offer.id}`}
@@ -83,7 +99,7 @@ export function OfferCard({ offer }: { offer: CatalogOffer }) {
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1e2940"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#141c2c"; }}
             >
-              Zobacz ofertę u Partnera <ExternalLink className="h-4 w-4" />
+              {offerLabels.externalOffer} <ExternalLink className="h-4 w-4" />
             </a>
           )}
         </div>

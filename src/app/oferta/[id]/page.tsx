@@ -30,7 +30,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
         <Link href={`/?kategoria=${offer.categorySlug}`}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" />Wróć do katalogu
+          <ArrowLeft className="h-4 w-4" />{dict.nav.backToCatalog}
         </Link>
 
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
@@ -47,9 +47,8 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
           <div className="flex flex-col">
             <div className="flex flex-wrap gap-2">
               <Badge className="text-[10px] uppercase tracking-wider font-semibold text-white border-0" style={{ backgroundColor: "#147487" }}>{offer.categoryName}</Badge>
-              {offer.isFeatured && <Badge className="text-[10px] uppercase tracking-wider font-semibold text-white border-0" style={{ backgroundColor: "#f59e0b" }}>Wyróżnione</Badge>}
-              <Badge className="text-[10px] uppercase tracking-wider font-semibold text-white border-0"
-                style={{ backgroundColor: isEcommerce ? "#16a34a" : "#141c2c" }}>{isEcommerce ? "E-Commerce" : "RFQ"}</Badge>
+              {offer.isFeatured && <Badge className="border-0 bg-amber-500 text-[10px] font-semibold uppercase tracking-wider text-white">{dict.offers.featured}</Badge>}
+              <Badge className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${isEcommerce ? "bg-green-600" : "bg-brand-navy"}`}>{isEcommerce ? dict.offers.ecommerceModel : dict.offers.rfqModel}</Badge>
             </div>
 
             <h1 className="mt-4 text-2xl font-bold leading-tight md:text-3xl" style={{ color: "#141c2c" }}>{offer.title}</h1>
@@ -60,15 +59,23 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
             </p>
 
             <div className="mt-6 rounded-lg border bg-white p-4" style={{ borderColor: "#d9dde2" }}>
-              <p className="text-sm text-muted-foreground">Cena</p>
-              <p className="mt-1 text-3xl font-bold" style={{ color: "#141c2c" }}>{formatPrice(offer.priceBrutto, offer.priceOnRequest)}</p>
+              <p className="text-sm text-muted-foreground">{dict.offers.price}</p>
+              <p className="mt-1 text-3xl font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, dict.offers.priceOnRequest)}</p>
             </div>
 
             <div className="mt-4">
               {isEcommerce ? (
-                <AddToCartButton offerId={offer.id} />
+                <AddToCartButton offerId={offer.id} label={dict.cta.addToCart} />
               ) : offer.conversionType === "rfq" ? (
-                <RfqDialog offerId={offer.id} offerTitle={offer.title} partnerName={offer.partnerName} className="w-full h-12 text-base" />
+                <RfqDialog
+                  offerId={offer.id}
+                  offerTitle={offer.title}
+                  partnerName={offer.partnerName}
+                  className="w-full h-12 text-base"
+                  rfqLabels={dict.rfq}
+                  formLabels={dict.form}
+                  ctaLabels={dict.cta}
+                />
               ) : (
                 <a
                   href={`/go/${offer.id}`}
@@ -79,14 +86,14 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
                   onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1e2940"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#141c2c"; }}
                 >
-                  Zobacz ofertę u Partnera <ExternalLink className="h-5 w-5" />
+                  {dict.offers.externalOffer} <ExternalLink className="h-5 w-5" />
                 </a>
               )}
             </div>
 
             {offer.description && (
               <div className="mt-6">
-                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Opis</h3>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">{dict.offers.description}</h3>
                 <p className="mt-2 text-sm leading-relaxed">{offer.description}</p>
               </div>
             )}
@@ -94,8 +101,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
             <div className="mt-6 flex items-center gap-2 rounded-lg border p-3" style={{ backgroundColor: "#1474870d", borderColor: "#14748733" }}>
               <ShieldCheck className="h-5 w-5 shrink-0" style={{ color: "#147487" }} />
               <p className="text-xs text-muted-foreground leading-relaxed">
-                {isEcommerce ? "Ten produkt jest dostępny w modelu E-Commerce. Dodaj do koszyka i złóż zamówienie B2B."
-                  : "Ta oferta wymaga indywidualnej wyceny. Wyślij zapytanie RFQ, a partner przygotuje ofertę."}
+                {isEcommerce ? dict.offers.ecommerceNotice : dict.offers.rfqNotice}
               </p>
             </div>
           </div>
@@ -103,7 +109,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
 
         {attributes.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-lg font-bold mb-4" style={{ color: "#141c2c" }}>Parametry techniczne</h2>
+            <h2 className="text-lg font-bold mb-4 text-brand-navy">{dict.offers.technicalParameters}</h2>
             <div className="overflow-hidden rounded-lg border" style={{ borderColor: "#d9dde2" }}>
               <table className="w-full text-sm">
                 <tbody>
@@ -121,7 +127,13 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
       </main>
 
       <SiteFooter navLabels={dict.nav} footerLabels={dict.footer} />
-      <CartDrawer />
+      <CartDrawer
+        cartLabels={dict.cart}
+        ctaLabels={dict.cta}
+        checkoutLabels={dict.checkout}
+        formLabels={dict.form}
+        offerLabels={dict.offers}
+      />
     </div>
   );
 }

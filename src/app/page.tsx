@@ -129,7 +129,16 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {offers.map((offer) => <OfferCard key={offer.id} offer={offer} />)}
+            {offers.map((offer) => (
+              <OfferCard
+                key={offer.id}
+                offer={offer}
+                offerLabels={dict.offers}
+                ctaLabels={dict.cta}
+                rfqLabels={dict.rfq}
+                formLabels={dict.form}
+              />
+            ))}
           </div>
         )}
 
@@ -142,7 +151,13 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
       </main>
 
       <SiteFooter navLabels={dict.nav} footerLabels={dict.footer} />
-      <CartDrawer />
+      <CartDrawer
+        cartLabels={dict.cart}
+        ctaLabels={dict.cta}
+        checkoutLabels={dict.checkout}
+        formLabels={dict.form}
+        offerLabels={dict.offers}
+      />
     </div>
   );
 }

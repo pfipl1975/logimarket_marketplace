@@ -34,6 +34,8 @@
     "price": "Cena",
     "priceOnRequest": "Cena na zapytanie B2B",
     "onRequest": "na zapytanie",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
     "description": "Opis",
     "technicalParameters": "Parametry techniczne",
     "externalOffer": "Zobacz ofertę u Partnera",

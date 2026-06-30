@@ -6,8 +6,17 @@ import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { Minus, Plus, Trash2, ShoppingCart, Package } from "lucide-react";
 import { CheckoutModal } from "./CheckoutModal";
+import type { Dictionary } from "@/lib/i18n/types";
 
-export function CartDrawer() {
+interface CartDrawerProps {
+  cartLabels: Dictionary["cart"];
+  ctaLabels: Pick<Dictionary["cta"], "browseOffers" | "goToCheckout" | "continueShopping" | "placeOrder">;
+  checkoutLabels: Dictionary["checkout"];
+  formLabels: Dictionary["form"];
+  offerLabels: Pick<Dictionary["offers"], "onRequest">;
+}
+
+export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, offerLabels }: CartDrawerProps) {
   const { isOpen, setIsOpen, removeFromCart, updateQuantity, items } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -24,7 +33,7 @@ export function CartDrawer() {
         <SheetContent className="w-full sm:max-w-md flex flex-col">
           <SheetHeader className="pb-4">
             <SheetTitle className="flex items-center gap-2 text-lg font-bold">
-              <ShoppingCart className="h-5 w-5" style={{ color: "#147487" }} />Twój koszyk
+              <ShoppingCart className="h-5 w-5 text-brand-teal" />{cartLabels.title}
             </SheetTitle>
           </SheetHeader>
 
@@ -34,10 +43,10 @@ export function CartDrawer() {
                 <Package className="h-8 w-8" style={{ color: "#5a6472" }} />
               </div>
               <div>
-                <p className="text-base font-semibold">Koszyk jest pusty</p>
-                <p className="mt-1 text-sm text-muted-foreground">Dodaj produkty z katalogu, aby złożyć zamówienie B2B.</p>
+                <p className="text-base font-semibold">{cartLabels.emptyTitle}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{cartLabels.emptyDescription}</p>
               </div>
-              <Button onClick={() => setIsOpen(false)} variant="outline" className="mt-2">Przeglądaj oferty</Button>
+              <Button onClick={() => setIsOpen(false)} variant="outline" className="mt-2">{ctaLabels.browseOffers}</Button>
             </div>
           ) : (
             <>
@@ -68,7 +77,7 @@ export function CartDrawer() {
                         <p className="text-sm font-bold">
                           {item.priceBrutto && !item.priceOnRequest
                             ? new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(Number(item.priceBrutto) * item.quantity)
-                            : "na zapytanie"}
+                            : offerLabels.onRequest}
                         </p>
                       </div>
                     </div>
@@ -77,22 +86,34 @@ export function CartDrawer() {
               </div>
               <div className="border-t pt-4 space-y-4" style={{ borderColor: "#d9dde2" }}>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">Razem ({items.reduce((s, i) => s + i.quantity, 0)} szt.)</span>
+                  <span className="text-sm text-muted-foreground">{cartLabels.total} ({items.reduce((s, i) => s + i.quantity, 0)} {cartLabels.unitShort})</span>
                   <span className="text-lg font-bold">{new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 2 }).format(total)}</span>
                 </div>
                 <Button onClick={() => { setIsOpen(false); setCheckoutOpen(true); }} className="w-full font-semibold gap-2 text-white border-0"
                   style={{ backgroundColor: "#147487" }}
                   onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0e5a6a")}
                   onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#147487")}>
-                  Przejdź do zamówienia
+                  {ctaLabels.goToCheckout}
                 </Button>
-                <Button onClick={() => setIsOpen(false)} variant="ghost" className="w-full text-sm text-muted-foreground hover:text-foreground">Kontynuuj zakupy</Button>
+                <Button onClick={() => setIsOpen(false)} variant="ghost" className="w-full text-sm text-muted-foreground hover:text-foreground">{ctaLabels.continueShopping}</Button>
               </div>
             </>
           )}
         </SheetContent>
       </Sheet>
-      {checkoutOpen && <CheckoutModal open={checkoutOpen} onClose={() => setCheckoutOpen(false)} items={items} total={total} />}
+      {checkoutOpen && (
+        <CheckoutModal
+          open={checkoutOpen}
+          onClose={() => setCheckoutOpen(false)}
+          items={items}
+          total={total}
+          checkoutLabels={checkoutLabels}
+          formLabels={formLabels}
+          ctaLabels={ctaLabels}
+          cartLabels={cartLabels}
+          offerLabels={offerLabels}
+        />
+      )}
     </>
   );
 }
