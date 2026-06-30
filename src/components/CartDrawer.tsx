@@ -13,10 +13,11 @@ interface CartDrawerProps {
   ctaLabels: Pick<Dictionary["cta"], "browseOffers" | "goToCheckout" | "continueShopping" | "placeOrder">;
   checkoutLabels: Dictionary["checkout"];
   formLabels: Dictionary["form"];
+  systemLabels: Dictionary["system"];
   offerLabels: Pick<Dictionary["offers"], "onRequest">;
 }
 
-export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, offerLabels }: CartDrawerProps) {
+export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, systemLabels, offerLabels }: CartDrawerProps) {
   const { isOpen, setIsOpen, removeFromCart, updateQuantity, items } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -109,6 +110,7 @@ export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, 
           total={total}
           checkoutLabels={checkoutLabels}
           formLabels={formLabels}
+          systemLabels={systemLabels}
           ctaLabels={ctaLabels}
           cartLabels={cartLabels}
           offerLabels={offerLabels}

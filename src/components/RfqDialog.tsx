@@ -8,7 +8,29 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { submitRfq } from "@/app/actions";
+import type { RfqActionResult } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
+
+const idleRfqResult: RfqActionResult = { ok: null, code: "IDLE" };
+const emptyRfqForm = { companyName: "", contactName: "", email: "", phone: "", ["message"]: "" };
+
+function getRfqErrorMessage(
+  result: RfqActionResult,
+  formLabels: Dictionary["form"],
+  systemLabels: Dictionary["system"],
+): string | null {
+  switch (result.code) {
+    case "RFQ_OFFER_NOT_FOUND":
+      return systemLabels.offerNotFound;
+    case "RFQ_VALIDATION_ERROR":
+      return formLabels.validationError;
+    case "SYSTEM_ERROR":
+      return systemLabels.errorGeneric;
+    case "IDLE":
+    case "RFQ_SENT":
+      return null;
+  }
+}
 
 interface RfqDialogProps {
   offerId: number;
@@ -17,26 +39,36 @@ interface RfqDialogProps {
   className?: string;
   rfqLabels: Dictionary["rfq"];
   formLabels: Dictionary["form"];
+  systemLabels: Dictionary["system"];
   ctaLabels: Pick<Dictionary["cta"], "sendRequest" | "requestQuote">;
 }
 
-export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabels, formLabels, ctaLabels }: RfqDialogProps) {
+export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabels, formLabels, systemLabels, ctaLabels }: RfqDialogProps) {
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
-  const [formData, setFormData] = useState({ companyName: "", contactName: "", email: "", phone: "", message: "" });
+  const [actionResult, setActionResult] = useState<RfqActionResult>(idleRfqResult);
+  const [formData, setFormData] = useState(emptyRfqForm);
+  const errorMessage = getRfqErrorMessage(actionResult, formLabels, systemLabels);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    const result = await submitRfq({
-      offerId, companyName: formData.companyName, contactName: formData.contactName,
-      email: formData.email, phone: formData.phone || undefined, message: formData.message || undefined,
-    });
-    setPending(false);
-    if (result.ok) {
-      setSuccess(true);
-      setTimeout(() => { setOpen(false); setSuccess(false); setFormData({ companyName: "", contactName: "", email: "", phone: "", message: "" }); }, 2500);
+    setActionResult(idleRfqResult);
+    try {
+      const result = await submitRfq({
+        offerId, companyName: formData.companyName, contactName: formData.contactName,
+        email: formData.email, phone: formData.phone || undefined, message: formData.message || undefined,
+      });
+      setActionResult(result);
+      if (result.ok === true) {
+        setSuccess(true);
+        setTimeout(() => { setOpen(false); setSuccess(false); setFormData(emptyRfqForm); }, 2500);
+      }
+    } catch {
+      setActionResult({ ok: false, code: "SYSTEM_ERROR" });
+    } finally {
+      setPending(false);
     }
   };
 
@@ -79,6 +111,11 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
               <div className="grid gap-1.5"><Label htmlFor="rfq-msg">{formLabels.message}</Label>
                 <Textarea id="rfq-msg" rows={3} placeholder={rfqLabels.messagePlaceholder}
                   value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} /></div>
+              {errorMessage ? (
+                <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {errorMessage}
+                </p>
+              ) : null}
               <Button type="submit" disabled={pending} className="w-full font-semibold gap-2 text-white border-0"
                 style={{ backgroundColor: "#147487" }}
                 onMouseEnter={(e) => !pending && (e.currentTarget.style.backgroundColor = "#0e5a6a")}

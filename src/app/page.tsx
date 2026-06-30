@@ -137,6 +137,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
                 ctaLabels={dict.cta}
                 rfqLabels={dict.rfq}
                 formLabels={dict.form}
+                systemLabels={dict.system}
               />
             ))}
           </div>
@@ -156,6 +157,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ k
         ctaLabels={dict.cta}
         checkoutLabels={dict.checkout}
         formLabels={dict.form}
+        systemLabels={dict.system}
         offerLabels={dict.offers}
       />
     </div>

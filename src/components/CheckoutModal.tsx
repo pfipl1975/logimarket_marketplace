@@ -11,7 +11,30 @@ import { submitCheckout } from "@/app/actions";
 import { useCart } from "@/hooks/useCart";
 import { CheckCircle2, Loader2, Building2, User, Mail, Phone, MessageSquare, Package } from "lucide-react";
 import type { CartItemWithOffer } from "@/app/actions";
+import type { CheckoutActionResult } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
+
+const idleCheckoutResult: CheckoutActionResult = { ok: null, code: "IDLE" };
+const emptyCheckoutForm = { companyName: "", contactName: "", email: "", phone: "", ["message"]: "" };
+
+function getCheckoutErrorMessage(
+  result: CheckoutActionResult,
+  cartLabels: Pick<Dictionary["cart"], "emptyTitle" | "emptyDescription">,
+  formLabels: Dictionary["form"],
+  systemLabels: Dictionary["system"],
+): string | null {
+  switch (result.code) {
+    case "CHECKOUT_CART_EMPTY":
+      return `${cartLabels.emptyTitle} ${cartLabels.emptyDescription}`;
+    case "CHECKOUT_VALIDATION_ERROR":
+      return formLabels.validationError;
+    case "SYSTEM_ERROR":
+      return systemLabels.errorGeneric;
+    case "IDLE":
+    case "CHECKOUT_ORDER_CREATED":
+      return null;
+  }
+}
 
 interface CheckoutModalProps {
   open: boolean;
@@ -20,30 +43,42 @@ interface CheckoutModalProps {
   total: number;
   checkoutLabels: Dictionary["checkout"];
   formLabels: Dictionary["form"];
+  systemLabels: Dictionary["system"];
   ctaLabels: Pick<Dictionary["cta"], "placeOrder">;
-  cartLabels: Pick<Dictionary["cart"], "total">;
+  cartLabels: Pick<Dictionary["cart"], "total" | "emptyTitle" | "emptyDescription">;
   offerLabels: Pick<Dictionary["offers"], "onRequest">;
 }
 
-export function CheckoutModal({ open, onClose, items, total, checkoutLabels, formLabels, ctaLabels, cartLabels, offerLabels }: CheckoutModalProps) {
+export function CheckoutModal({ open, onClose, items, total, checkoutLabels, formLabels, systemLabels, ctaLabels, cartLabels, offerLabels }: CheckoutModalProps) {
   const { clearCart } = useCart();
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
-  const [formData, setFormData] = useState({ companyName: "", contactName: "", email: "", phone: "", message: "" });
+  const [actionResult, setActionResult] = useState<CheckoutActionResult>(idleCheckoutResult);
+  const [formData, setFormData] = useState(emptyCheckoutForm);
+  const errorMessage = getCheckoutErrorMessage(actionResult, cartLabels, formLabels, systemLabels);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setPending(true);
-    await submitCheckout({
-      companyName: formData.companyName, contactName: formData.contactName, email: formData.email,
-      phone: formData.phone || undefined, message: formData.message || undefined,
-      items: items.map((item) => ({ offerId: item.offerId, title: item.title, quantity: item.quantity, unitPrice: item.priceBrutto })),
-      totalAmount: total,
-    });
-    setPending(false);
-    setSuccess(true);
-    clearCart();
-    setTimeout(() => { onClose(); setSuccess(false); setFormData({ companyName: "", contactName: "", email: "", phone: "", message: "" }); }, 3000);
+    setActionResult(idleCheckoutResult);
+    try {
+      const result = await submitCheckout({
+        companyName: formData.companyName, contactName: formData.contactName, email: formData.email,
+        phone: formData.phone || undefined, message: formData.message || undefined,
+        items: items.map((item) => ({ offerId: item.offerId, title: item.title, quantity: item.quantity, unitPrice: item.priceBrutto })),
+        totalAmount: total,
+      });
+      setActionResult(result);
+      if (result.ok === true) {
+        setSuccess(true);
+        clearCart();
+        setTimeout(() => { onClose(); setSuccess(false); setFormData(emptyCheckoutForm); }, 3000);
+      }
+    } catch {
+      setActionResult({ ok: false, code: "SYSTEM_ERROR" });
+    } finally {
+      setPending(false);
+    }
   };
 
   return (
@@ -109,6 +144,11 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
                 <Textarea id="co-msg" rows={2} placeholder={checkoutLabels.orderNotesPlaceholder}
                   value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} />
               </div>
+              {errorMessage ? (
+                <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                  {errorMessage}
+                </p>
+              ) : null}
               <Button type="submit" disabled={pending} className="w-full font-semibold gap-2 text-white border-0"
                 style={{ backgroundColor: "#147487" }}
                 onMouseEnter={(e) => !pending && (e.currentTarget.style.backgroundColor = "#0e5a6a")}

@@ -81,6 +81,16 @@ export type CartItemWithOffer = {
   partnerName: string; categoryName: string;
 };
 
+export type RfqActionResult =
+  | { ok: null; code: "IDLE" }
+  | { ok: true; code: "RFQ_SENT" }
+  | { ok: false; code: "RFQ_OFFER_NOT_FOUND" | "RFQ_VALIDATION_ERROR" | "SYSTEM_ERROR" };
+
+export type CheckoutActionResult =
+  | { ok: null; code: "IDLE" }
+  | { ok: true; code: "CHECKOUT_ORDER_CREATED"; orderId: number }
+  | { ok: false; code: "CHECKOUT_VALIDATION_ERROR" | "CHECKOUT_CART_EMPTY" | "SYSTEM_ERROR" };
+
 export async function getCartItems(): Promise<CartItemWithOffer[]> {
   const sessionHash = await getSessionHash();
   const items = await db
@@ -141,7 +151,7 @@ export async function submitCheckout(data: {
   companyName: string; contactName: string; email: string; phone?: string; message?: string;
   items: { offerId: number; title: string; quantity: number; unitPrice: string | null }[];
   totalAmount?: number;
-}) {
+}): Promise<CheckoutActionResult> {
   "use server";
   const sessionHash = await getSessionHash();
   const [order] = await db.insert(orders).values({
@@ -149,24 +159,25 @@ export async function submitCheckout(data: {
     phone: data.phone ?? null, message: data.message ?? null, sessionHash,
     totalAmount: data.totalAmount?.toString() ?? null, status: "new",
   }).returning();
+  const orderId = Number(order.id);
   for (const item of data.items) {
-    await db.insert(orderItems).values({ orderId: order.id, offerId: item.offerId, title: item.title, quantity: item.quantity, unitPrice: item.unitPrice });
+    await db.insert(orderItems).values({ orderId, offerId: item.offerId, title: item.title, quantity: item.quantity, unitPrice: item.unitPrice });
   }
   await db.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
   revalidatePath("/");
-  return { ok: true, orderId: order.id };
+  return { ok: true, code: "CHECKOUT_ORDER_CREATED", orderId: Number(order.id) };
 }
 
 export async function submitRfq(data: {
   offerId: number; companyName: string; contactName: string; email: string; phone?: string; message?: string;
-}) {
+}): Promise<RfqActionResult> {
   "use server";
   const offerRows = await db.select().from(offers).where(eq(offers.id, data.offerId)).limit(1);
-  if (offerRows.length === 0) return { ok: false, message: "Oferta nie istnieje" };
+  if (offerRows.length === 0) return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
   await db.insert(rfqLeads).values({
     offerId: data.offerId, partnerId: offerRows[0].partnerId,
     companyName: data.companyName, contactName: data.contactName,
     email: data.email, phone: data.phone ?? null, message: data.message ?? null,
   });
-  return { ok: true, message: "Zapytanie wysłane pomyślnie" };
+  return { ok: true, code: "RFQ_SENT" };
 }

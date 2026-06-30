@@ -85,7 +85,8 @@
     "email": "E-mail *",
     "phone": "Telefon",
     "message": "Wiadomość",
-    "orderNotes": "Uwagi do zamówienia"
+    "orderNotes": "Uwagi do zamówienia",
+    "validationError": "Sprawdź wymagane pola formularza."
   },
   "footer": {
     "portal": "Portal",
@@ -96,6 +97,7 @@
   },
   "system": {
     "offerNotFound": "Oferta nie istnieje",
+    "errorGeneric": "Wystąpił błąd. Spróbuj ponownie.",
     "fallbackCategory": "Bez kategorii",
     "fallbackPartner": "Partner"
   }

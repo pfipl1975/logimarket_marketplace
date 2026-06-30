@@ -74,6 +74,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
                   className="w-full h-12 text-base"
                   rfqLabels={dict.rfq}
                   formLabels={dict.form}
+                  systemLabels={dict.system}
                   ctaLabels={dict.cta}
                 />
               ) : (
@@ -132,6 +133,7 @@ export default async function OfferDetailPage({ params }: { params: Promise<{ id
         ctaLabels={dict.cta}
         checkoutLabels={dict.checkout}
         formLabels={dict.form}
+        systemLabels={dict.system}
         offerLabels={dict.offers}
       />
     </div>

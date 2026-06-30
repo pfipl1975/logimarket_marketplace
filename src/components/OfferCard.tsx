@@ -16,9 +16,10 @@ interface OfferCardProps {
   ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
   rfqLabels: Dictionary["rfq"];
   formLabels: Dictionary["form"];
+  systemLabels: Dictionary["system"];
 }
 
-export function OfferCard({ offer, offerLabels, ctaLabels, rfqLabels, formLabels }: OfferCardProps) {
+export function OfferCard({ offer, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels }: OfferCardProps) {
   const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
@@ -87,6 +88,7 @@ export function OfferCard({ offer, offerLabels, ctaLabels, rfqLabels, formLabels
               className="w-full"
               rfqLabels={rfqLabels}
               formLabels={formLabels}
+              systemLabels={systemLabels}
               ctaLabels={ctaLabels}
             />
           ) : (
