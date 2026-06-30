@@ -12,6 +12,7 @@ import type { Dictionary } from "@/lib/i18n/types";
 
 interface OfferCardProps {
   offer: CatalogOffer;
+  detailHref?: string;
   offerLabels: Dictionary["offers"];
   ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
   rfqLabels: Dictionary["rfq"];
@@ -19,17 +20,18 @@ interface OfferCardProps {
   systemLabels: Dictionary["system"];
 }
 
-export function OfferCard({ offer, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels }: OfferCardProps) {
+export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels }: OfferCardProps) {
   const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
+  const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md"
       style={{ borderColor: "#d9dde2" }}
       onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1474874d")}
       onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#d9dde2")}>
-      <Link href={`/oferta/${offer.id}`} className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
+      <Link href={offerDetailHref} className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
         {offer.imageUrl ? (
           <img src={offer.imageUrl} alt={offer.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
         ) : (
@@ -50,7 +52,7 @@ export function OfferCard({ offer, offerLabels, ctaLabels, rfqLabels, formLabels
       <div className="flex flex-1 flex-col p-4">
         <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#147487" }}>{offer.categoryName}</span>
         <h3 className="mt-1.5 text-base font-bold leading-snug">
-          <Link href={`/oferta/${offer.id}`} className="hover:text-[#147487] transition-colors" style={{ color: "#141c2c" }}>{offer.title}</Link>
+          <Link href={offerDetailHref} className="text-[#141c2c] transition-colors hover:text-[#147487]">{offer.title}</Link>
         </h3>
         <p className="mt-1 text-xs flex items-center gap-1" style={{ color: "#5a6472" }}>
           <Wrench className="h-3 w-3" />{offer.partnerName}

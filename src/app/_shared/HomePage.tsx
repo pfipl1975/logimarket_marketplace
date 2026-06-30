@@ -7,6 +7,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { OfferCard } from "@/components/OfferCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { defaultLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/types";
 
@@ -142,6 +143,7 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
               <OfferCard
                 key={offer.id}
                 offer={offer}
+                detailHref={locale === defaultLocale ? `/oferta/${offer.id}` : `/${locale}/oferta/${offer.id}`}
                 offerLabels={dict.offers}
                 ctaLabels={dict.cta}
                 rfqLabels={dict.rfq}
