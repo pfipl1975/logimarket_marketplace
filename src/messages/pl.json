@@ -8,7 +8,11 @@
     "blog": "Blog",
     "catalog": "Katalog ofert",
     "cart": "Koszyk",
-    "backToCatalog": "Wróć do katalogu"
+    "backToCatalog": "Wróć do katalogu",
+    "languageSwitcherAria": "Wybór języka"
+  },
+  "common": {
+    "close": "Zamknij"
   },
   "hero": {
     "badge": "Zweryfikowani partnerzy B2B",

@@ -85,6 +85,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                   formLabels={dict.form}
                   systemLabels={dict.system}
                   ctaLabels={dict.cta}
+                  closeLabel={dict.common.close}
                 />
               ) : (
                 <a
@@ -145,6 +146,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
         formLabels={dict.form}
         systemLabels={dict.system}
         offerLabels={dict.offers}
+        closeLabel={dict.common.close}
       />
     </div>
   );

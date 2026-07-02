@@ -4,15 +4,17 @@ import { localeLabels, locales, type Locale } from "@/lib/i18n/config";
 type LanguageSwitcherProps = {
   currentLocale: Locale;
   links: Record<Locale, string>;
+  ariaLabel: string;
 };
 
 export function LanguageSwitcher({
   currentLocale,
   links,
+  ariaLabel,
 }: LanguageSwitcherProps) {
   return (
     <nav
-      aria-label="Wybór języka"
+      aria-label={ariaLabel}
       className="flex items-center gap-1 rounded-md border border-white/10 bg-white/5 p-1"
     >
       {locales.map((locale) => {

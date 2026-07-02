@@ -15,9 +15,10 @@ interface CartDrawerProps {
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
   offerLabels: Pick<Dictionary["offers"], "onRequest">;
+  closeLabel: Dictionary["common"]["close"];
 }
 
-export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, systemLabels, offerLabels }: CartDrawerProps) {
+export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, systemLabels, offerLabels, closeLabel }: CartDrawerProps) {
   const { isOpen, setIsOpen, removeFromCart, updateQuantity, items } = useCart();
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
@@ -31,7 +32,7 @@ export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, 
   return (
     <>
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent className="w-full sm:max-w-md flex flex-col">
+        <SheetContent className="w-full sm:max-w-md flex flex-col" closeLabel={closeLabel}>
           <SheetHeader className="pb-4">
             <SheetTitle className="flex items-center gap-2 text-lg font-bold">
               <ShoppingCart className="h-5 w-5 text-brand-teal" />{cartLabels.title}
@@ -114,6 +115,7 @@ export function CartDrawer({ cartLabels, ctaLabels, checkoutLabels, formLabels, 
           ctaLabels={ctaLabels}
           cartLabels={cartLabels}
           offerLabels={offerLabels}
+          closeLabel={closeLabel}
         />
       )}
     </>

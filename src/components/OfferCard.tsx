@@ -18,9 +18,10 @@ interface OfferCardProps {
   rfqLabels: Dictionary["rfq"];
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
+  closeLabel: Dictionary["common"]["close"];
 }
 
-export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels }: OfferCardProps) {
+export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel }: OfferCardProps) {
   const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
@@ -92,6 +93,7 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
               formLabels={formLabels}
               systemLabels={systemLabels}
               ctaLabels={ctaLabels}
+              closeLabel={closeLabel}
             />
           ) : (
             <a

@@ -41,9 +41,10 @@ interface RfqDialogProps {
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
   ctaLabels: Pick<Dictionary["cta"], "sendRequest" | "requestQuote">;
+  closeLabel: Dictionary["common"]["close"];
 }
 
-export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabels, formLabels, systemLabels, ctaLabels }: RfqDialogProps) {
+export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabels, formLabels, systemLabels, ctaLabels, closeLabel }: RfqDialogProps) {
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
@@ -82,7 +83,7 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
           <FileText className="h-4 w-4" />{ctaLabels.requestQuote}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" closeLabel={closeLabel}>
         {success ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
             <CheckCircle2 className="h-12 w-12" style={{ color: "#147487" }} />

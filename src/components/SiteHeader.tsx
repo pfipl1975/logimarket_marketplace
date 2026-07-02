@@ -68,7 +68,11 @@ export function SiteHeader({
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
-            <LanguageSwitcher currentLocale={locale} links={languageLinks} />
+            <LanguageSwitcher
+              currentLocale={locale}
+              links={languageLinks}
+              ariaLabel={navLabels.languageSwitcherAria}
+            />
             <button onClick={() => setIsOpen(true)}
               className="relative flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white">
               <CartIcon />

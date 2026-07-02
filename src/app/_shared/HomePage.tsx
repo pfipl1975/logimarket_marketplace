@@ -153,6 +153,7 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
                 rfqLabels={dict.rfq}
                 formLabels={dict.form}
                 systemLabels={dict.system}
+                closeLabel={dict.common.close}
               />
             ))}
           </div>
@@ -178,6 +179,7 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
         formLabels={dict.form}
         systemLabels={dict.system}
         offerLabels={dict.offers}
+        closeLabel={dict.common.close}
       />
     </div>
   );

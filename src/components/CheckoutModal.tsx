@@ -47,9 +47,10 @@ interface CheckoutModalProps {
   ctaLabels: Pick<Dictionary["cta"], "placeOrder">;
   cartLabels: Pick<Dictionary["cart"], "total" | "emptyTitle" | "emptyDescription">;
   offerLabels: Pick<Dictionary["offers"], "onRequest">;
+  closeLabel: Dictionary["common"]["close"];
 }
 
-export function CheckoutModal({ open, onClose, items, total, checkoutLabels, formLabels, systemLabels, ctaLabels, cartLabels, offerLabels }: CheckoutModalProps) {
+export function CheckoutModal({ open, onClose, items, total, checkoutLabels, formLabels, systemLabels, ctaLabels, cartLabels, offerLabels, closeLabel }: CheckoutModalProps) {
   const { clearCart } = useCart();
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
@@ -83,7 +84,7 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" closeLabel={closeLabel}>
         {success ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
             <CheckCircle2 className="h-14 w-14" style={{ color: "#147487" }} />
