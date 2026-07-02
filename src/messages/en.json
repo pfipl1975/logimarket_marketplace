@@ -1,0 +1,108 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl - B2B catalog of warehouse equipment and supplies",
+    "description": "Forklifts, racking, pallets, packaging and logistics equipment in one place. Hybrid B2B model: RFQ + E-Commerce."
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "Blog",
+    "catalog": "Offer catalog",
+    "cart": "Cart",
+    "backToCatalog": "Back to catalog",
+    "languageSwitcherAria": "Language selection"
+  },
+  "common": {
+    "close": "Close"
+  },
+  "hero": {
+    "badge": "Verified B2B partners",
+    "title": "Catalog of warehouse equipment and supplies",
+    "titleAccent": "warehouse equipment and supplies",
+    "description": "Forklifts, racking, pallets, packaging and logistics equipment in one place.",
+    "modelDescription": "Hybrid model: RFQ for heavy equipment, E-Commerce for repeatable items."
+  },
+  "catalog": {
+    "allOffers": "All offers",
+    "allCategories": "All categories",
+    "categoriesAria": "Categories",
+    "emptyTitle": "No offers in this category",
+    "emptyDescription": "Check other categories or come back later.",
+    "offerCountOne": "offer",
+    "offerCountOther": "available offers",
+    "rfqLegend": "RFQ - Request a quote",
+    "ecommerceLegend": "E-Commerce - Add to cart",
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+  },
+  "offers": {
+    "featured": "Featured",
+    "price": "Price",
+    "priceOnRequest": "B2B price on request",
+    "onRequest": "on request",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
+    "description": "Description",
+    "technicalParameters": "Technical parameters",
+    "externalOffer": "View offer at Partner",
+    "gridView": "Grid",
+    "listView": "List",
+    "ecommerceNotice": "This product is available in the E-Commerce model. Add it to the cart and submit a B2B order.",
+    "rfqNotice": "This offer requires an individual quote. Send an RFQ inquiry and the partner will prepare an offer."
+  },
+  "cta": {
+    "addToCart": "Add to cart",
+    "requestQuote": "Request a quote",
+    "sendRequest": "Send inquiry",
+    "browseOffers": "Browse offers",
+    "goToCheckout": "Proceed to order",
+    "continueShopping": "Continue browsing",
+    "placeOrder": "Submit B2B order"
+  },
+  "rfq": {
+    "title": "Request for quote (RFQ)",
+    "successTitle": "Inquiry sent successfully!",
+    "successDescription": "The partner will prepare a B2B quote and contact you.",
+    "descriptionSuffix": "The inquiry will go directly to the partner.",
+    "pending": "Sending...",
+    "consent": "By submitting the form, you agree to share your data with the partner.",
+    "messagePlaceholder": "Quantity, deadline, additional requirements..."
+  },
+  "cart": {
+    "title": "Your cart",
+    "emptyTitle": "Your cart is empty",
+    "emptyDescription": "Add products from the catalog to submit a B2B order.",
+    "total": "Total",
+    "unitShort": "pcs."
+  },
+  "checkout": {
+    "title": "B2B order",
+    "summary": "Summary",
+    "successTitle": "Order received!",
+    "successDescription": "Your B2B order has been saved. Our team will contact you.",
+    "description": "Complete the form to submit an order. This is not an online transaction - our team will verify availability.",
+    "pending": "Processing...",
+    "legalNote": "Submitting an order is not an online transaction. Our team will verify availability and contact you.",
+    "orderNotesPlaceholder": "Delivery date, address, additional requirements..."
+  },
+  "form": {
+    "companyName": "Company name *",
+    "contactName": "Contact person *",
+    "email": "E-mail *",
+    "phone": "Phone",
+    "message": "Message",
+    "orderNotes": "Order notes",
+    "validationError": "Check the required form fields."
+  },
+  "footer": {
+    "portal": "Portal",
+    "partners": "For partners",
+    "description": "B2B marketplace for warehouse equipment and supplies. An offer catalog connecting buyers with verified partners.",
+    "partnerPrompt": "Want to list your products? Contact us:",
+    "copyrightSuffix": "Sales are handled directly by partners."
+  },
+  "system": {
+    "offerNotFound": "Offer does not exist",
+    "errorGeneric": "An error occurred. Please try again.",
+    "fallbackCategory": "Uncategorized",
+    "fallbackPartner": "Partner"
+  }
+}
