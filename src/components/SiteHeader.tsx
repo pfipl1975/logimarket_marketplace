@@ -1,8 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import { useCart } from "@/hooks/useCart";
+import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
 
 function CartIcon() {
@@ -25,10 +27,16 @@ function CartIcon() {
 }
 
 interface SiteHeaderProps {
+  locale: Locale;
+  languageLinks: Record<Locale, string>;
   navLabels: Dictionary["nav"];
 }
 
-export function SiteHeader({ navLabels }: SiteHeaderProps) {
+export function SiteHeader({
+  locale,
+  languageLinks,
+  navLabels,
+}: SiteHeaderProps) {
   const { itemCount, setIsOpen } = useCart();
   const portalLinks = [
     { label: navLabels.portal, href: "https://logimarket.pl" },
@@ -58,6 +66,7 @@ export function SiteHeader({ navLabels }: SiteHeaderProps) {
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
+            <LanguageSwitcher currentLocale={locale} links={languageLinks} />
             <button onClick={() => setIsOpen(true)}
               className="relative flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white">
               <CartIcon />

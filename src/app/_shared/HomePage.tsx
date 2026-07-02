@@ -7,8 +7,8 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { CategoryFilter } from "@/components/CategoryFilter";
 import { OfferCard } from "@/components/OfferCard";
 import { Skeleton } from "@/components/ui/skeleton";
-import { defaultLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getHomeLocaleLinks, getOfferPath } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
 
 type PublicSearchParams = { [key: string]: string | string[] | undefined };
@@ -79,7 +79,11 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
-      <SiteHeader navLabels={dict.nav} />
+      <SiteHeader
+        locale={locale}
+        languageLinks={getHomeLocaleLinks()}
+        navLabels={dict.nav}
+      />
 
       <section className="relative overflow-hidden bg-brand-navy">
         <Image
@@ -143,7 +147,7 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
               <OfferCard
                 key={offer.id}
                 offer={offer}
-                detailHref={locale === defaultLocale ? `/oferta/${offer.id}` : `/${locale}/oferta/${offer.id}`}
+                detailHref={getOfferPath(locale, String(offer.id))}
                 offerLabels={dict.offers}
                 ctaLabels={dict.cta}
                 rfqLabels={dict.rfq}

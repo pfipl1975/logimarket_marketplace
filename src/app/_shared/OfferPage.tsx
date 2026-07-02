@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getOfferLocaleLinks } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
 
 interface OfferPageProps {
@@ -29,7 +30,11 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
-      <SiteHeader navLabels={dict.nav} />
+      <SiteHeader
+        locale={locale}
+        languageLinks={getOfferLocaleLinks(offerId)}
+        navLabels={dict.nav}
+      />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
         <Link href={`/?kategoria=${offer.categorySlug}`}
