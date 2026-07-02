@@ -9,6 +9,7 @@ import { RfqDialog } from "@/components/RfqDialog";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/AddToCartButton";
+import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getCategoryFilterPath, getOfferLocaleLinks } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
@@ -27,6 +28,8 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   const attributes = Object.entries(offer.technicalAttributes);
   const isEcommerce = offer.offerModel === "ecommerce";
+  const categoryLabels = dict.categories.bySlug as Record<string, string>;
+  const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -55,7 +58,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
           <div className="flex flex-col">
             <div className="flex flex-wrap gap-2">
-              <Badge className="border-0 bg-[#147487] text-[10px] font-semibold uppercase tracking-wider text-white">{offer.categoryName}</Badge>
+              <Badge className="border-0 bg-[#147487] text-[10px] font-semibold uppercase tracking-wider text-white">{categoryLabel}</Badge>
               {offer.isFeatured && <Badge className="border-0 bg-amber-500 text-[10px] font-semibold uppercase tracking-wider text-white">{dict.offers.featured}</Badge>}
               <Badge className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${isEcommerce ? "bg-green-600" : "bg-brand-navy"}`}>{isEcommerce ? dict.offers.ecommerceModel : dict.offers.rfqModel}</Badge>
             </div>

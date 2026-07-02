@@ -5,6 +5,7 @@ import { ShoppingCart, ExternalLink, Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
+import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { formatPrice } from "@/lib/utils";
 import { RfqDialog } from "./RfqDialog";
 import type { CatalogOffer } from "@/app/actions";
@@ -19,13 +20,15 @@ interface OfferCardProps {
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
+  categoryLabels: Record<string, string>;
 }
 
-export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel }: OfferCardProps) {
+export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels }: OfferCardProps) {
   const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
+  const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md"
@@ -51,7 +54,7 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
       </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <span className="text-[11px] font-semibold uppercase tracking-wider" style={{ color: "#147487" }}>{offer.categoryName}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-teal">{categoryLabel}</span>
         <h3 className="mt-1.5 text-base font-bold leading-snug">
           <Link href={offerDetailHref} className="text-[#141c2c] transition-colors hover:text-[#147487]">{offer.title}</Link>
         </h3>

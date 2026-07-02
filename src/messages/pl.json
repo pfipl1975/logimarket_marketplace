@@ -33,6 +33,16 @@
     "ecommerceLegend": "E-Commerce — Dodaj do koszyka",
     "platformNotice": "LogiMarket.pl to hybrydowa platforma B2B. Dla ciężkiego sprzętu oferujemy model RFQ (zapytanie ofertowe), dla artykułów powtarzalnych — model E-Commerce z koszykiem. Sprzedaż i realizacja zamówień odbywa się bezpośrednio u partnera. LogiMarket.pl nie jest stroną transakcji."
   },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "Opakowania i folie",
+      "palety-i-pojemniki": "Palety i pojemniki",
+      "rampy-i-doki-przeladunkowe": "Rampy i doki przeładunkowe",
+      "regaly-magazynowe": "Regały magazynowe",
+      "wozki-paletowe": "Wózki paletowe",
+      "wozki-widlowe-czolowe": "Wózki widłowe czołowe"
+    }
+  },
   "offers": {
     "featured": "Wyróżnione",
     "price": "Cena",

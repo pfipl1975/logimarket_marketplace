@@ -2,15 +2,18 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import type { Category } from "@/lib/schema";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface CategoryFilterProps {
   categories: Category[];
   catalogLabels: Pick<Dictionary["catalog"], "allCategories" | "categoriesAria">;
+  categoryLabels: Record<string, string>;
+  basePath: string;
 }
 
-export function CategoryFilter({ categories, catalogLabels }: CategoryFilterProps) {
+export function CategoryFilter({ categories, catalogLabels, categoryLabels, basePath }: CategoryFilterProps) {
   const searchParams = useSearchParams();
   const active = searchParams.get("kategoria") || "";
   const items = [{ name: catalogLabels.allCategories, slug: "" }, ...categories];
@@ -19,7 +22,10 @@ export function CategoryFilter({ categories, catalogLabels }: CategoryFilterProp
     <nav aria-label={catalogLabels.categoriesAria} className="flex flex-wrap gap-2">
       {items.map((item) => {
         const isActive = active === item.slug;
-        const href = item.slug ? `/?kategoria=${item.slug}` : "/";
+        const href = item.slug ? `${basePath}?kategoria=${item.slug}` : basePath;
+        const label = item.slug
+          ? getLocalizedCategoryLabel(categoryLabels, item.slug, item.name)
+          : item.name;
         return (
           <Link key={item.slug || "all"} href={href}
             className={isActive
@@ -27,7 +33,7 @@ export function CategoryFilter({ categories, catalogLabels }: CategoryFilterProp
               : "rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
             }
           >
-            {item.name}
+            {label}
           </Link>
         );
       })}

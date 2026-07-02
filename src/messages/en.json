@@ -33,6 +33,16 @@
     "ecommerceLegend": "E-Commerce - Add to cart",
     "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
   },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "Packaging and films",
+      "palety-i-pojemniki": "Pallets and containers",
+      "rampy-i-doki-przeladunkowe": "Loading ramps and docks",
+      "regaly-magazynowe": "Warehouse racking",
+      "wozki-paletowe": "Pallet trucks",
+      "wozki-widlowe-czolowe": "Counterbalance forklifts"
+    }
+  },
   "offers": {
     "featured": "Featured",
     "price": "Price",
