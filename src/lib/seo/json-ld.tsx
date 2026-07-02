@@ -161,3 +161,36 @@ export function createOfferJsonLd(
     ...productJsonLd,
   };
 }
+
+export interface OfferBreadcrumbJsonLdSource {
+  id: number;
+  title: string;
+}
+
+export function createOfferBreadcrumbJsonLd(
+  locale: Locale,
+  offer: OfferBreadcrumbJsonLdSource
+): JsonLdValue {
+  const homeUrl = getHomeCanonical(locale);
+  const offerUrl = getOfferCanonical(locale, String(offer.id));
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "@id": `${offerUrl}#breadcrumb`,
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "LogiMarket.pl",
+        "item": homeUrl,
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": offer.title,
+        "item": offerUrl,
+      },
+    ],
+  };
+}
