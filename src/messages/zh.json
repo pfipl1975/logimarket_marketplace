@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl — B2B 仓储设备和用品目录",
+    "description": "叉车、货架、托盘、包装和物流设备一站式采购。混合 B2B 模式：RFQ + E-Commerce。"
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "博客",
+    "catalog": "报价目录",
+    "cart": "购物车",
+    "backToCatalog": "返回目录",
+    "languageSwitcherAria": "语言选择"
+  },
+  "common": {
+    "close": "关闭"
+  },
+  "hero": {
+    "badge": "已验证的 B2B 合作伙伴",
+    "title": "仓储设备和用品目录",
+    "titleAccent": "仓储设备和用品",
+    "description": "叉车、货架、托盘、包装和物流设备一站式采购。",
+    "modelDescription": "混合模式：重型设备采用 RFQ 报价，常用标准件采用 E-Commerce 购物车。"
+  },
+  "catalog": {
+    "allOffers": "所有报价",
+    "allCategories": "所有分类",
+    "categoriesAria": "分类",
+    "emptyTitle": "该分类下暂无报价",
+    "emptyDescription": "请查看其他分类或稍后再试。",
+    "offerCountOne": "个报价",
+    "offerCountOther": "个可用报价",
+    "rfqLegend": "RFQ — 请求报价",
+    "ecommerceLegend": "E-Commerce — 加入购物车",
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+  },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "包装和薄膜",
+      "palety-i-pojemniki": "托盘和容器",
+      "rampy-i-doki-przeladunkowe": "装卸坡道和月台",
+      "regaly-magazynowe": "仓储货架",
+      "wozki-paletowe": "托盘搬运车",
+      "wozki-widlowe-czolowe": "平衡重式叉车"
+    }
+  },
+  "offers": {
+    "featured": "推荐",
+    "price": "价格",
+    "priceOnRequest": "B2B 询价",
+    "onRequest": "询价",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
+    "description": "描述",
+    "technicalParameters": "技术参数",
+    "externalOffer": "查看合作伙伴处的报价",
+    "gridView": "网格",
+    "listView": "列表",
+    "ecommerceNotice": "该产品支持 E-Commerce 模式。请加入购物车并提交 B2B 订单。",
+    "rfqNotice": "此报价需要单独评估。请发送 RFQ 询盘，合作伙伴将为您提供报价。"
+  },
+  "cta": {
+    "addToCart": "加入购物车",
+    "requestQuote": "请求报价",
+    "sendRequest": "发送询盘",
+    "browseOffers": "浏览报价",
+    "goToCheckout": "去结算",
+    "continueShopping": "继续浏览",
+    "placeOrder": "提交 B2B 订单"
+  },
+  "rfq": {
+    "title": "请求报价 (RFQ)",
+    "successTitle": "询盘发送成功！",
+    "successDescription": "合作伙伴将为您准备 B2B 报价并与您联系。",
+    "descriptionSuffix": "询盘将直接发送给合作伙伴。",
+    "pending": "发送中...",
+    "consent": "提交表单即表示您同意将数据传递给合作伙伴。",
+    "messagePlaceholder": "数量、交货期、其他要求..."
+  },
+  "cart": {
+    "title": "您的购物车",
+    "emptyTitle": "购物车是空的",
+    "emptyDescription": "请从目录中添加商品以提交 B2B 订单。",
+    "total": "总计",
+    "unitShort": "件"
+  },
+  "checkout": {
+    "title": "B2B 订单",
+    "summary": "摘要",
+    "successTitle": "订单已受理！",
+    "successDescription": "您的 B2B 订单已保存。我们的团队将与您联系。",
+    "description": "填写表单以提交订单。这并非在线支付交易 — 我们的团队将核实库存。",
+    "pending": "处理中...",
+    "legalNote": "提交订单并非在线支付交易。我们的团队将核实库存并与您联系。",
+    "orderNotesPlaceholder": "交货日期、地址、其他要求..."
+  },
+  "form": {
+    "companyName": "公司名称 *",
+    "contactName": "联系人 *",
+    "email": "电子邮箱 *",
+    "phone": "电话",
+    "message": "留言",
+    "orderNotes": "订单备注",
+    "validationError": "请检查表单中的必填项。"
+  },
+  "footer": {
+    "portal": "Portal",
+    "partners": "合作伙伴",
+    "description": "B2B 仓储设备和用品交易市场。连接买家与验证合作伙伴的报价目录。",
+    "partnerPrompt": "想要展示您的产品？联系我们：",
+    "copyrightSuffix": "销售由合作伙伴直接处理。"
+  },
+  "system": {
+    "offerNotFound": "报价不存在",
+    "errorGeneric": "发生错误，请重试。",
+    "fallbackCategory": "未分类",
+    "fallbackPartner": "合作伙伴"
+  }
+}

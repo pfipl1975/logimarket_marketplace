@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl — Catalogue B2B d’équipements et de fournitures d’entrepôt",
+    "description": "Chariots élévateurs, rayonnages, palettes, emballages et équipements logistiques en un seul endroit. Modèle B2B hybride : RFQ + E-Commerce."
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "Blog",
+    "catalog": "Catalogue d'offres",
+    "cart": "Panier",
+    "backToCatalog": "Retour au catalogue",
+    "languageSwitcherAria": "Choix de la langue"
+  },
+  "common": {
+    "close": "Fermer"
+  },
+  "hero": {
+    "badge": "Partenaires B2B vérifiés",
+    "title": "Catalogue d'équipements et de fournitures d'entrepôt",
+    "titleAccent": "fournitures d'entrepôt",
+    "description": "Chariots élévateurs, rayonnages, palettes, emballages et équipements logistiques en un seul endroit.",
+    "modelDescription": "Modèle hybride : RFQ pour les équipements lourds, E-Commerce pour les articles récurrents."
+  },
+  "catalog": {
+    "allOffers": "Toutes les offres",
+    "allCategories": "Toutes les catégories",
+    "categoriesAria": "Catégories",
+    "emptyTitle": "Aucune offre dans cette catégorie",
+    "emptyDescription": "Vérifiez les autres catégories ou revenez plus tard.",
+    "offerCountOne": "offre",
+    "offerCountOther": "offres disponibles",
+    "rfqLegend": "RFQ — Demander un devis",
+    "ecommerceLegend": "E-Commerce — Ajouter au panier",
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+  },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "Emballages et films",
+      "palety-i-pojemniki": "Palettes et conteneurs",
+      "rampy-i-doki-przeladunkowe": "Rampes et quais de chargement",
+      "regaly-magazynowe": "Rayonnages d’entrepôt",
+      "wozki-paletowe": "Transpalettes",
+      "wozki-widlowe-czolowe": "Chariots élévateurs frontaux"
+    }
+  },
+  "offers": {
+    "featured": "À la une",
+    "price": "Prix",
+    "priceOnRequest": "Prix B2B sur demande",
+    "onRequest": "sur demande",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
+    "description": "Description",
+    "technicalParameters": "Paramètres techniques",
+    "externalOffer": "Voir l'offre chez le partenaire",
+    "gridView": "Grille",
+    "listView": "Liste",
+    "ecommerceNotice": "Ce produit est disponible dans le modèle E-Commerce. Ajoutez-le au panier et envoyez la commande B2B.",
+    "rfqNotice": "Cette offre nécessite un devis individuel. Envoyez une demande RFQ et le partenaire préparera une offre."
+  },
+  "cta": {
+    "addToCart": "Ajouter au panier",
+    "requestQuote": "Demander un devis",
+    "sendRequest": "Envoyer la demande",
+    "browseOffers": "Parcourir les offres",
+    "goToCheckout": "Passer à la commande",
+    "continueShopping": "Continuer les achats",
+    "placeOrder": "Envoyer la commande B2B"
+  },
+  "rfq": {
+    "title": "Demande de devis (RFQ)",
+    "successTitle": "Demande envoyée avec succès !",
+    "successDescription": "Le partenaire préparera un devis B2B et vous contactera.",
+    "descriptionSuffix": "La demande sera envoyée directement au partenaire.",
+    "pending": "Envoi en cours...",
+    "consent": "En envoyant le formulaire, vous acceptez de partager vos données avec le partenaire.",
+    "messagePlaceholder": "Quantité, délai, exigences supplémentaires..."
+  },
+  "cart": {
+    "title": "Votre panier",
+    "emptyTitle": "Votre panier est vide",
+    "emptyDescription": "Ajoutez des produits du catalogue pour passer une commande B2B.",
+    "total": "Total",
+    "unitShort": "pièce"
+  },
+  "checkout": {
+    "title": "Commande B2B",
+    "summary": "Résumé",
+    "successTitle": "Commande reçue !",
+    "successDescription": "Votre commande B2B a été enregistrée. Notre équipe vous contactera.",
+    "description": "Remplissez le formulaire pour passer une commande. Il ne s'agit pas d'une transaction en ligne – notre équipe vérifiera la disponibilité.",
+    "pending": "Traitement en cours...",
+    "legalNote": "La soumission d'une commande n'est pas une transaction en ligne. Notre équipe vérifiera la disponibilité et vous contactera.",
+    "orderNotesPlaceholder": "Date de livraison, adresse, exigences supplémentaires..."
+  },
+  "form": {
+    "companyName": "Nom de l'entreprise *",
+    "contactName": "Personne de contact *",
+    "email": "E-mail *",
+    "phone": "Téléphone",
+    "message": "Message",
+    "orderNotes": "Notes de commande",
+    "validationError": "Veuillez vérifier les champs obligatoires du formulaire."
+  },
+  "footer": {
+    "portal": "Portail",
+    "partners": "Pour les partenaires",
+    "description": "Place de marché B2B d'équipements et de fournitures d'entrepôt. Un catalogue d'offres reliant les acheteurs avec des partenaires vérifiés.",
+    "partnerPrompt": "Vous souhaitez lister vos produits ? Contactez-nous :",
+    "copyrightSuffix": "Vente réalisée directement par les partenaires."
+  },
+  "system": {
+    "offerNotFound": "L'offre n'existe pas",
+    "errorGeneric": "Une erreur est survenue. Veuillez réessayer.",
+    "fallbackCategory": "Sans catégorie",
+    "fallbackPartner": "Partenaire"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl — Catálogo B2B de equipos y suministros para almacén",
+    "description": "Carretillas elevadoras, estanterías, palets, embalajes y equipos logísticos en un solo lugar. Modelo B2B híbrido: RFQ + E-Commerce."
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "Blog",
+    "catalog": "Catálogo de ofertas",
+    "cart": "Carrito",
+    "backToCatalog": "Volver al catálogo",
+    "languageSwitcherAria": "Selección de idioma"
+  },
+  "common": {
+    "close": "Cerrar"
+  },
+  "hero": {
+    "badge": "Socios B2B verificados",
+    "title": "Catálogo de equipos y suministros para almacén",
+    "titleAccent": "suministros para almacén",
+    "description": "Carretillas elevadoras, estanterías, palets, embalajes y equipos logísticos en un solo lugar.",
+    "modelDescription": "Modelo híbrido: RFQ para equipos pesados, E-Commerce para artículos repetitivos."
+  },
+  "catalog": {
+    "allOffers": "Todas las ofertas",
+    "allCategories": "Todas las categorías",
+    "categoriesAria": "Categorías",
+    "emptyTitle": "No hay ofertas en esta categoría",
+    "emptyDescription": "Consulte otras categorías o vuelva más tarde.",
+    "offerCountOne": "oferta",
+    "offerCountOther": "ofertas disponibles",
+    "rfqLegend": "RFQ — Solicitar presupuesto",
+    "ecommerceLegend": "E-Commerce — Añadir al carrito",
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+  },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "Embalajes y films",
+      "palety-i-pojemniki": "Palets y contenedores",
+      "rampy-i-doki-przeladunkowe": "Rampas y muelles de carga",
+      "regaly-magazynowe": "Estanterías de almacén",
+      "wozki-paletowe": "Transpaletas",
+      "wozki-widlowe-czolowe": "Carretillas elevadoras frontales"
+    }
+  },
+  "offers": {
+    "featured": "Destacado",
+    "price": "Precio",
+    "priceOnRequest": "Precio B2B bajo petición",
+    "onRequest": "bajo petición",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
+    "description": "Descripción",
+    "technicalParameters": "Parámetros técnicos",
+    "externalOffer": "Ver oferta en la web del Socio",
+    "gridView": "Cuadrícula",
+    "listView": "Lista",
+    "ecommerceNotice": "Este producto está disponible en el modelo E-Commerce. Añádelo al carrito y envía el pedido B2B.",
+    "rfqNotice": "Esta oferta requiere un presupuesto individual. Envía una solicitud RFQ y el socio preparará una oferta."
+  },
+  "cta": {
+    "addToCart": "Añadir al carrito",
+    "requestQuote": "Solicitar presupuesto",
+    "sendRequest": "Enviar solicitud",
+    "browseOffers": "Explorar ofertas",
+    "goToCheckout": "Proceder al pedido",
+    "continueShopping": "Seguir comprando",
+    "placeOrder": "Enviar pedido B2B"
+  },
+  "rfq": {
+    "title": "Solicitud de presupuesto (RFQ)",
+    "successTitle": "¡Solicitud enviada correctamente!",
+    "successDescription": "El socio preparará un presupuesto B2B y se pondrá en contacto con usted.",
+    "descriptionSuffix": "La solicitud se enviará directamente al socio.",
+    "pending": "Enviando...",
+    "consent": "Al enviar el formulario, acepta compartir sus datos con el socio.",
+    "messagePlaceholder": "Cantidad, fecha de entrega, requisitos adicionales..."
+  },
+  "cart": {
+    "title": "Su carrito",
+    "emptyTitle": "El carrito está vacío",
+    "emptyDescription": "Añada productos del catálogo para poder realizar un pedido B2B.",
+    "total": "Total",
+    "unitShort": "ud."
+  },
+  "checkout": {
+    "title": "Pedido B2B",
+    "summary": "Resumen",
+    "successTitle": "¡Pedido recibido!",
+    "successDescription": "Su pedido B2B ha sido guardado. Nuestro equipo se pondrá en contacto con usted.",
+    "description": "Complete el formulario para realizar un pedido. Esto no es una transacción en línea – nuestro equipo verificará la disponibilidad.",
+    "pending": "Procesando...",
+    "legalNote": "La presentación de un pedido no es una transacción en línea. Nuestro equipo verificará la disponibilidad y se pondrá en contacto con usted.",
+    "orderNotesPlaceholder": "Fecha de entrega, dirección, requisitos adicionales..."
+  },
+  "form": {
+    "companyName": "Nombre de la empresa *",
+    "contactName": "Persona de contacto *",
+    "email": "Correo electrónico *",
+    "phone": "Teléfono",
+    "message": "Mensaje",
+    "orderNotes": "Notas del pedido",
+    "validationError": "Por favor, compruebe los campos obligatorios del formulario."
+  },
+  "footer": {
+    "portal": "Portal",
+    "partners": "Para socios",
+    "description": "Mercado B2B de equipos y suministros para almacén. Un catálogo de ofertas que conecta a compradores con socios verificados.",
+    "partnerPrompt": "¿Quiere listar sus productos? Contáctenos:",
+    "copyrightSuffix": "Ventas gestionadas directamente por los socios."
+  },
+  "system": {
+    "offerNotFound": "La oferta no existe",
+    "errorGeneric": "Ocurrió un error. Por favor, inténtelo de nuevo.",
+    "fallbackCategory": "Sin categoría",
+    "fallbackPartner": "Socio"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl — B2B-каталог складського обладнання та техніки",
+    "description": "Вилкові навантажувачі, стелажі, палети, пакування та логістичне обладнання в одному місці. Гібридна B2B-модель: RFQ + E-Commerce."
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "Блог",
+    "catalog": "Каталог пропозицій",
+    "cart": "Кошик",
+    "backToCatalog": "Повернутися до каталогу",
+    "languageSwitcherAria": "Вибір мови"
+  },
+  "common": {
+    "close": "Закрити"
+  },
+  "hero": {
+    "badge": "Перевірені B2B-партнери",
+    "title": "Каталог складського обладнання та техніки",
+    "titleAccent": "складського обладнання та техніки",
+    "description": "Вилкові навантажувачі, стелажі, палети, пакування та логістичне обладнання в одному місці.",
+    "modelDescription": "Гібридна модель: RFQ для важкої техніки, E-Commerce для типових товарів."
+  },
+  "catalog": {
+    "allOffers": "Всі пропозиції",
+    "allCategories": "Всі категорії",
+    "categoriesAria": "Категорії",
+    "emptyTitle": "Немає пропозицій у цій категорії",
+    "emptyDescription": "Перевірте інші категорії або поверніться пізніше.",
+    "offerCountOne": "пропозиція",
+    "offerCountOther": "доступних пропозицій",
+    "rfqLegend": "RFQ — Запитати ціну",
+    "ecommerceLegend": "E-Commerce — Додати до кошика",
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+  },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "Пакування та плівки",
+      "palety-i-pojemniki": "Палети та контейнери",
+      "rampy-i-doki-przeladunkowe": "Завантажувальні рампи та доки",
+      "regaly-magazynowe": "Складські стелажі",
+      "wozki-paletowe": "Гідравлічні візки",
+      "wozki-widlowe-czolowe": "Фронтальні навантажувачі"
+    }
+  },
+  "offers": {
+    "featured": "Рекомендовані",
+    "price": "Ціна",
+    "priceOnRequest": "B2B ціна за запитом",
+    "onRequest": "за запитом",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
+    "description": "Опис",
+    "technicalParameters": "Технічні параметри",
+    "externalOffer": "Переглянути пропозицію у Партнера",
+    "gridView": "Плитка",
+    "listView": "Список",
+    "ecommerceNotice": "Цей товар доступний у моделі E-Commerce. Додайте його до кошика та надішліть B2B-замовлення.",
+    "rfqNotice": "Ця пропозиція вимагає індивідуального розрахунку ціни. Надішліть запит RFQ, і партнер підготує пропозицію."
+  },
+  "cta": {
+    "addToCart": "Додати до кошика",
+    "requestQuote": "Запитати ціну",
+    "sendRequest": "Надіслати запит",
+    "browseOffers": "Переглянути пропозиції",
+    "goToCheckout": "Перейти до замовлення",
+    "continueShopping": "Продовжити покупки",
+    "placeOrder": "Надіслати B2B-замовлення"
+  },
+  "rfq": {
+    "title": "Запит ціни (RFQ)",
+    "successTitle": "Запит успішно надіслано!",
+    "successDescription": "Партнер підготує B2B-пропозицію та зв'яжеться з вами.",
+    "descriptionSuffix": "Запит буде надіслано безпосередньо партнеру.",
+    "pending": "Надсилання...",
+    "consent": "Надсилаючи форму, ви погоджуєтеся на передачу ваших даних партнеру.",
+    "messagePlaceholder": "Кількість, терміни, додаткові вимоги..."
+  },
+  "cart": {
+    "title": "Ваш кошик",
+    "emptyTitle": "Кошик порожній",
+    "emptyDescription": "Додайте товари з каталогу, щоб надіслати B2B-замовлення.",
+    "total": "Разом",
+    "unitShort": "шт."
+  },
+  "checkout": {
+    "title": "B2B-замовлення",
+    "summary": "Підсумок",
+    "successTitle": "Замовлення прийнято!",
+    "successDescription": "Ваше B2B-замовлення збережено. Наша команда зв'яжеться з вами.",
+    "description": "Заповніть форму, щоб оформити замовлення. Це не онлайн-транзакція — наша команда перевірить наявність.",
+    "pending": "Обробка...",
+    "legalNote": "Оформлення замовлення не є онлайн-транзакцією. Наша команда перевірить наявність товару та зв'яжеться з вами.",
+    "orderNotesPlaceholder": "Дата доставки, адреса, додаткові вимоги..."
+  },
+  "form": {
+    "companyName": "Назва компанії *",
+    "contactName": "Контактна особа *",
+    "email": "E-mail *",
+    "phone": "Телефон",
+    "message": "Повідомлення",
+    "orderNotes": "Примітки до замовлення",
+    "validationError": "Будь ласка, перевірте обов'язкові поля форми."
+  },
+  "footer": {
+    "portal": "Portal",
+    "partners": "Для партнерів",
+    "description": "B2B-маркетплейс складського обладнання та техніки. Каталог пропозицій, що з'єднує покупців із перевіреними партнерами.",
+    "partnerPrompt": "Бажаєте розмістити свої товари? Зв'яжіться з нами:",
+    "copyrightSuffix": "Продаж здійснюється безпосередньо партнерами."
+  },
+  "system": {
+    "offerNotFound": "Пропозиція не існує",
+    "errorGeneric": "Виникла помилка. Спробуйте ще раз.",
+    "fallbackCategory": "Без категорії",
+    "fallbackPartner": "Партнер"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "meta": {
+    "title": "LogiMarket.pl — B2B-Katalog für Lagertechnik und Lagerausstattung",
+    "description": "Gabelstapler, Regale, Paletten, Verpackungen und Logistikausstattung an einem Ort. Hybrides B2B-Modell: RFQ + E-Commerce."
+  },
+  "nav": {
+    "portal": "LogiMarket.pl",
+    "blog": "Blog",
+    "catalog": "Angebotskatalog",
+    "cart": "Warenkorb",
+    "backToCatalog": "Zurück zum Katalog",
+    "languageSwitcherAria": "Sprachauswahl"
+  },
+  "common": {
+    "close": "Schließen"
+  },
+  "hero": {
+    "badge": "Verifizierte B2B-Partner",
+    "title": "Katalog für Lagertechnik und Lagerausstattung",
+    "titleAccent": "Lagerausstattung",
+    "description": "Gabelstapler, Regale, Paletten, Verpackungen und Logistikausstattung an einem Ort.",
+    "modelDescription": "Hybrides Modell: RFQ für Schwermaschinen, E-Commerce für wiederkehrende Artikel."
+  },
+  "catalog": {
+    "allOffers": "Alle Angebote",
+    "allCategories": "Alle Kategorien",
+    "categoriesAria": "Kategorien",
+    "emptyTitle": "Keine Angebote in dieser Kategorie",
+    "emptyDescription": "Prüfen Sie andere Kategorien oder versuchen Sie es später noch einmal.",
+    "offerCountOne": "Angebot",
+    "offerCountOther": "verfügbare Angebote",
+    "rfqLegend": "RFQ — Angebot anfragen",
+    "ecommerceLegend": "E-Commerce — In den Warenkorb",
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+  },
+  "categories": {
+    "bySlug": {
+      "opakowania-i-folie": "Verpackungen und Folien",
+      "palety-i-pojemniki": "Paletten und Behälter",
+      "rampy-i-doki-przeladunkowe": "Laderampen und Verladedocks",
+      "regaly-magazynowe": "Lagerregale",
+      "wozki-paletowe": "Hubwagen",
+      "wozki-widlowe-czolowe": "Frontstapler"
+    }
+  },
+  "offers": {
+    "featured": "Hervorgehoben",
+    "price": "Preis",
+    "priceOnRequest": "B2B-Preis auf Anfrage",
+    "onRequest": "auf Anfrage",
+    "ecommerceModel": "E-Commerce",
+    "rfqModel": "RFQ",
+    "description": "Beschreibung",
+    "technicalParameters": "Technische Parameter",
+    "externalOffer": "Angebot beim Partner ansehen",
+    "gridView": "Kacheln",
+    "listView": "Liste",
+    "ecommerceNotice": "Dieses Produkt ist im E-Commerce-Modell verfügbar. In den Warenkorb legen und B2B-Bestellung absenden.",
+    "rfqNotice": "Dieses Angebot erfordert ein individuelles Angebot. Senden Sie eine RFQ-Anfrage, und der Partner bereitet ein Angebot vor."
+  },
+  "cta": {
+    "addToCart": "In den Warenkorb",
+    "requestQuote": "Angebot anfragen",
+    "sendRequest": "Anfrage senden",
+    "browseOffers": "Angebote durchsuchen",
+    "goToCheckout": "Zur Bestellung",
+    "continueShopping": "Einkauf fortsetzen",
+    "placeOrder": "B2B-Bestellung absenden"
+  },
+  "rfq": {
+    "title": "Angebotsanfrage (RFQ)",
+    "successTitle": "Anfrage erfolgreich gesendet!",
+    "successDescription": "Der Partner bereitet ein B2B-Angebot vor und kontaktiert Sie.",
+    "descriptionSuffix": "Die Anfrage wird direkt an den Partner weitergeleitet.",
+    "pending": "Wird gesendet...",
+    "consent": "Mit dem Absenden des Formulars stimmen Sie der Weitergabe Ihrer Daten an den Partner zu.",
+    "messagePlaceholder": "Stückzahl, Liefertermin, zusätzliche Anforderungen..."
+  },
+  "cart": {
+    "title": "Ihr Warenkorb",
+    "emptyTitle": "Der Warenkorb ist leer",
+    "emptyDescription": "Fügen Sie Produkte aus dem Katalog hinzu, um eine B2B-Bestellung aufgeben zu können.",
+    "total": "Gesamtsumme",
+    "unitShort": "Stk."
+  },
+  "checkout": {
+    "title": "B2B-Bestellung",
+    "summary": "Zusammenfassung",
+    "successTitle": "Bestellung eingegangen!",
+    "successDescription": "Ihre B2B-Bestellung wurde gespeichert. Unser Team wird sich mit Ihnen in Verbindung setzen.",
+    "description": "Füllen Sie das Formular aus, um eine Bestellung aufzugeben. Dies ist keine Online-Transaktion – unser Team wird die Verfügbarkeit prüfen.",
+    "pending": "Wird verarbeitet...",
+    "legalNote": "Die Abgabe einer Bestellung ist keine Online-Transaktion. Unser Team prüft die Verfügbarkeit und kontaktiert Sie.",
+    "orderNotesPlaceholder": "Liefertermin, Lieferadresse, zusätzliche Anforderungen..."
+  },
+  "form": {
+    "companyName": "Firmenname *",
+    "contactName": "Ansprechpartner *",
+    "email": "E-Mail *",
+    "phone": "Telefon",
+    "message": "Nachricht",
+    "orderNotes": "Bestellhinweise",
+    "validationError": "Bitte überprüfen Sie die erforderlichen Formularfelder."
+  },
+  "footer": {
+    "portal": "Portal",
+    "partners": "Für Partner",
+    "description": "B2B-Marktplatz für Lagertechnik und Lagerausstattung. Ein Angebotskatalog, der Einkäufer mit verifizierten Partnern verbindet.",
+    "partnerPrompt": "Möchten Sie Ihre Produkte listem? Kontaktieren Sie uns:",
+    "copyrightSuffix": "Verkauf erfolgt direkt durch die Partner."
+  },
+  "system": {
+    "offerNotFound": "Angebot existiert nicht",
+    "errorGeneric": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
+    "fallbackCategory": "Ohne Kategorie",
+    "fallbackPartner": "Partner"
+  }
+}
