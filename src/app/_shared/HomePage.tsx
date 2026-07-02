@@ -75,6 +75,7 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
   const activeCategory = categories.find((c) => c.slug === kategoria);
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const categoryFilterBasePath = getHomePath(locale);
+  const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
   const activeCategoryLabel = activeCategory
     ? getLocalizedCategoryLabel(categoryLabels, activeCategory.slug, activeCategory.name)
     : dict.catalog.allOffers;
@@ -166,6 +167,7 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
                 systemLabels={dict.system}
                 closeLabel={dict.common.close}
                 categoryLabels={categoryLabels}
+                technicalAttributeLabels={technicalAttributeLabels}
               />
             ))}
           </div>

@@ -114,5 +114,34 @@
     "errorGeneric": "Wystąpił błąd. Spróbuj ponownie.",
     "fallbackCategory": "Bez kategorii",
     "fallbackPartner": "Partner"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "Stan",
+      "naped": "Napęd",
+      "udzwig": "Udźwig",
+      "typ-masztu": "Typ masztu",
+      "wymiary": "Wymiary",
+      "material": "Materiał",
+      "certyfikat": "Certyfikat",
+      "nosnosc": "Nośność",
+      "ocynk": "Ocynk",
+      "wysokosc": "Wysokość",
+      "liczba-poziomow": "Liczba poziomów",
+      "nosnosc-rzedu": "Nośność rzędu",
+      "typ-fali": "Typ fali",
+      "gramatura": "Gramatura",
+      "liczba-warstw": "Liczba warstw",
+      "kolor": "Kolor",
+      "rozciag": "Rozciąg",
+      "grubosc": "Grubość",
+      "waga-rolki": "Waga rolki",
+      "typ-kol": "Typ kół",
+      "dlugosc-widel": "Długość wideł",
+      "szerokosc-widel": "Szerokość wideł",
+      "nawierzchnia": "Nawierzchnia",
+      "zakres-wysokosci": "Zakres wysokości",
+      "szerokosc-najazdu": "Szerokość najazdu"
+    }
   }
 }

@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
+import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getCategoryFilterPath, getOfferLocaleLinks } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
@@ -30,6 +31,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
   const isEcommerce = offer.offerModel === "ecommerce";
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
+  const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -126,7 +128,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                 <tbody>
                   {attributes.map(([key, value], idx) => (
                     <tr key={key} className={idx % 2 === 0 ? "bg-gray-50" : "bg-white"}>
-                      <td className="w-1/3 border-r border-[#d9dde2] px-4 py-3 font-medium text-muted-foreground">{key}</td>
+                      <td className="w-1/3 border-r border-[#d9dde2] px-4 py-3 font-medium text-muted-foreground">{getLocalizedTechnicalAttributeLabel(technicalAttributeLabels, key)}</td>
                       <td className="px-4 py-3 font-bold text-[#141c2c]">{String(value)}</td>
                     </tr>
                   ))}

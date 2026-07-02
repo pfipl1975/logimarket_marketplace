@@ -114,5 +114,34 @@
     "errorGeneric": "Виникла помилка. Спробуйте ще раз.",
     "fallbackCategory": "Без категорії",
     "fallbackPartner": "Партнер"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "Стан",
+      "naped": "Привід",
+      "udzwig": "Вантажопідйомність",
+      "typ-masztu": "Тип щогли",
+      "wymiary": "Розміри",
+      "material": "Матеріал",
+      "certyfikat": "Сертифікат",
+      "nosnosc": "Несуча здатність",
+      "ocynk": "Оцинковка",
+      "wysokosc": "Висота",
+      "liczba-poziomow": "Кількість рівнів",
+      "nosnosc-rzedu": "Навантаження на ряд",
+      "typ-fali": "Тип хвилі",
+      "gramatura": "Граматура",
+      "liczba-warstw": "Кількість шарів",
+      "kolor": "Колір",
+      "rozciag": "Розтягнення",
+      "grubosc": "Товщина",
+      "waga-rolki": "Вага рулону",
+      "typ-kol": "Тип коліс",
+      "dlugosc-widel": "Довжина вил",
+      "szerokosc-widel": "Ширина вил",
+      "nawierzchnia": "Поверхня",
+      "zakres-wysokosci": "Діапазон висоти",
+      "szerokosc-najazdu": "Ширина заїзду"
+    }
   }
 }

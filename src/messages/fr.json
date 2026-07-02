@@ -114,5 +114,34 @@
     "errorGeneric": "Une erreur est survenue. Veuillez réessayer.",
     "fallbackCategory": "Sans catégorie",
     "fallbackPartner": "Partenaire"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "État",
+      "naped": "Entraînement",
+      "udzwig": "Capacité de charge",
+      "typ-masztu": "Type de mât",
+      "wymiary": "Dimensions",
+      "material": "Matériau",
+      "certyfikat": "Certificat",
+      "nosnosc": "Capacité de charge",
+      "ocynk": "Galvanisation",
+      "wysokosc": "Hauteur",
+      "liczba-poziomow": "Nombre de niveaux",
+      "nosnosc-rzedu": "Charge par rangée",
+      "typ-fali": "Type de cannelure",
+      "gramatura": "Grammage",
+      "liczba-warstw": "Nombre de couches",
+      "kolor": "Couleur",
+      "rozciag": "Allongement",
+      "grubosc": "Épaisseur",
+      "waga-rolki": "Poids du rouleau",
+      "typ-kol": "Type de roues",
+      "dlugosc-widel": "Longueur des fourches",
+      "szerokosc-widel": "Largeur des fourches",
+      "nawierzchnia": "Surface",
+      "zakres-wysokosci": "Plage de hauteur",
+      "szerokosc-najazdu": "Largeur de rampe"
+    }
   }
 }

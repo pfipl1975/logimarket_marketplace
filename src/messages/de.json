@@ -114,5 +114,34 @@
     "errorGeneric": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.",
     "fallbackCategory": "Ohne Kategorie",
     "fallbackPartner": "Partner"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "Zustand",
+      "naped": "Antrieb",
+      "udzwig": "Tragfähigkeit",
+      "typ-masztu": "Masttyp",
+      "wymiary": "Abmessungen",
+      "material": "Material",
+      "certyfikat": "Zertifikat",
+      "nosnosc": "Tragfähigkeit",
+      "ocynk": "Verzinkung",
+      "wysokosc": "Höhe",
+      "liczba-poziomow": "Anzahl der Ebenen",
+      "nosnosc-rzedu": "Reihenlast",
+      "typ-fali": "Wellenart",
+      "gramatura": "Flächengewicht",
+      "liczba-warstw": "Anzahl der Lagen",
+      "kolor": "Farbe",
+      "rozciag": "Dehnung",
+      "grubosc": "Dicke",
+      "waga-rolki": "Rollengewicht",
+      "typ-kol": "Radtyp",
+      "dlugosc-widel": "Gabellänge",
+      "szerokosc-widel": "Gabelbreite",
+      "nawierzchnia": "Oberfläche",
+      "zakres-wysokosci": "Höhenbereich",
+      "szerokosc-najazdu": "Auffahrbreite"
+    }
   }
 }

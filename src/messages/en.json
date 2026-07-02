@@ -114,5 +114,34 @@
     "errorGeneric": "An error occurred. Please try again.",
     "fallbackCategory": "Uncategorized",
     "fallbackPartner": "Partner"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "Condition",
+      "naped": "Drive",
+      "udzwig": "Load capacity",
+      "typ-masztu": "Mast type",
+      "wymiary": "Dimensions",
+      "material": "Material",
+      "certyfikat": "Certificate",
+      "nosnosc": "Load capacity",
+      "ocynk": "Galvanized",
+      "wysokosc": "Height",
+      "liczba-poziomow": "Number of levels",
+      "nosnosc-rzedu": "Row load capacity",
+      "typ-fali": "Flute type",
+      "gramatura": "Grammage",
+      "liczba-warstw": "Number of layers",
+      "kolor": "Color",
+      "rozciag": "Stretch",
+      "grubosc": "Thickness",
+      "waga-rolki": "Roll weight",
+      "typ-kol": "Wheel type",
+      "dlugosc-widel": "Fork length",
+      "szerokosc-widel": "Fork width",
+      "nawierzchnia": "Surface",
+      "zakres-wysokosci": "Height range",
+      "szerokosc-najazdu": "Ramp width"
+    }
   }
 }

@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
+import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { formatPrice } from "@/lib/utils";
 import { RfqDialog } from "./RfqDialog";
 import type { CatalogOffer } from "@/app/actions";
@@ -21,9 +22,10 @@ interface OfferCardProps {
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
   categoryLabels: Record<string, string>;
+  technicalAttributeLabels: Record<string, string>;
 }
 
-export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels }: OfferCardProps) {
+export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels, technicalAttributeLabels }: OfferCardProps) {
   const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
@@ -68,7 +70,7 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
               <tbody>
                 {attributes.map(([key, value], idx) => (
                   <tr key={key} className={idx % 2 === 0 ? "bg-white/50" : "bg-transparent"}>
-                    <td className="px-2.5 py-1.5 font-medium w-1/2 border-r" style={{ color: "#5a6472", borderColor: "#d9dde266" }}>{key}</td>
+                    <td className="px-2.5 py-1.5 font-medium w-1/2 border-r text-muted-foreground border-border">{getLocalizedTechnicalAttributeLabel(technicalAttributeLabels, key)}</td>
                     <td className="px-2.5 py-1.5 font-bold w-1/2" style={{ color: "#141c2c" }}>{String(value)}</td>
                   </tr>
                 ))}

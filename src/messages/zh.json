@@ -114,5 +114,34 @@
     "errorGeneric": "发生错误，请重试。",
     "fallbackCategory": "未分类",
     "fallbackPartner": "合作伙伴"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "状态",
+      "naped": "驱动",
+      "udzwig": "承载能力",
+      "typ-masztu": "门架类型",
+      "wymiary": "尺寸",
+      "material": "材料",
+      "certyfikat": "认证",
+      "nosnosc": "承载能力",
+      "ocynk": "镀锌",
+      "wysokosc": "高度",
+      "liczba-poziomow": "层数",
+      "nosnosc-rzedu": "排载荷",
+      "typ-fali": "瓦楞类型",
+      "gramatura": "克重",
+      "liczba-warstw": "层数",
+      "kolor": "颜色",
+      "rozciag": "拉伸率",
+      "grubosc": "厚度",
+      "waga-rolki": "卷重",
+      "typ-kol": "轮子类型",
+      "dlugosc-widel": "货叉长度",
+      "szerokosc-widel": "货叉宽度",
+      "nawierzchnia": "表面",
+      "zakres-wysokosci": "高度范围",
+      "szerokosc-najazdu": "坡道宽度"
+    }
   }
 }

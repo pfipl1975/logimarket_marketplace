@@ -114,5 +114,34 @@
     "errorGeneric": "Ocurrió un error. Por favor, inténtelo de nuevo.",
     "fallbackCategory": "Sin categoría",
     "fallbackPartner": "Socio"
+  },
+  "technicalAttributes": {
+    "labels": {
+      "stan": "Estado",
+      "naped": "Accionamiento",
+      "udzwig": "Capacidad de carga",
+      "typ-masztu": "Tipo de mástil",
+      "wymiary": "Dimensiones",
+      "material": "Material",
+      "certyfikat": "Certificado",
+      "nosnosc": "Capacidad de carga",
+      "ocynk": "Galvanizado",
+      "wysokosc": "Altura",
+      "liczba-poziomow": "Número de niveles",
+      "nosnosc-rzedu": "Capacidad por fila",
+      "typ-fali": "Tipo de onda",
+      "gramatura": "Gramaje",
+      "liczba-warstw": "Número de capas",
+      "kolor": "Color",
+      "rozciag": "Estiramiento",
+      "grubosc": "Espesor",
+      "waga-rolki": "Peso del rollo",
+      "typ-kol": "Tipo de ruedas",
+      "dlugosc-widel": "Longitud de horquillas",
+      "szerokosc-widel": "Anchura de horquillas",
+      "nawierzchnia": "Superficie",
+      "zakres-wysokosci": "Rango de altura",
+      "szerokosc-najazdu": "Anchura de rampa"
+    }
   }
 }
