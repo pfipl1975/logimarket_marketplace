@@ -1,0 +1,35 @@
+# LogiMarket — B2B Marketplace & Knowledge Base
+
+Canonical Site: https://logimarket.eu
+
+## Description
+LogiMarket is a B2B marketplace and procurement knowledge base for logistics, warehousing, intralogistics, and warehouse equipment. It operates under a hybrid interaction model, offering RFQ (request for quotation) for heavy equipment and E-Commerce carts for standard, repeatable items.
+
+## Supported Locales
+- Polish (pl) - default
+- English (en)
+- German (de)
+- French (fr)
+- Spanish (es)
+- Ukrainian (uk)
+- Simplified Chinese (zh)
+
+## Main Public Routes
+- Homepage (Canonical PL): https://logimarket.eu/
+- English Homepage: https://logimarket.eu/en
+- German Homepage: https://logimarket.eu/de
+- French Homepage: https://logimarket.eu/fr
+- Spanish Homepage: https://logimarket.eu/es
+- Ukrainian Homepage: https://logimarket.eu/uk
+- Chinese Homepage: https://logimarket.eu/zh
+- Dynamic Offer Details (PL): https://logimarket.eu/oferta/[id]
+- Dynamic Offer Details (Localized): https://logimarket.eu/[locale]/oferta/[id]
+
+## Technical & Data Architecture
+- **DB-Originated Content**: Product/offer titles, description texts, partner information, technical attribute values, and uploaded media are provided directly from database records and remain untranslated.
+- **Localized UI**: Static navigation links, categories, forms, checkout interfaces, and technical attribute keys (labels) are localized using dictionary-driven mapping.
+- **Outbound Redirections**: Outbound click tracking is handled globally via `/go/[id]` paths, which redirect to partners' external platforms and are excluded from search indexation.
+- **Interaction Models**:
+  - **RFQ (Request for Quote)**: Inquiries sent directly to verified B2B partners.
+  - **E-Commerce**: Session-based cart checkout for standard products.
+  - **Outbound**: Direct link to the partner's platform.
