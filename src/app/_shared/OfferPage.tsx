@@ -13,6 +13,7 @@ import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getCategoryFilterPath, getOfferLocaleLinks } from "@/lib/i18n/paths";
+import { JsonLdScript, createOfferJsonLd } from "@/lib/seo/json-ld";
 import type { Locale } from "@/lib/i18n/types";
 
 interface OfferPageProps {
@@ -35,6 +36,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
+      <JsonLdScript data={createOfferJsonLd(locale, offer, dict)} />
       <SiteHeader
         locale={locale}
         languageLinks={getOfferLocaleLinks(offerId)}
