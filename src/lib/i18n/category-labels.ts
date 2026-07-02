@@ -26,5 +26,25 @@ export function getLocalizedCategoryLabel(
   categorySlug: string,
   fallbackLabel: string,
 ): string {
-  return labelsBySlug[normalizeCategorySlug(categorySlug)] ?? fallbackLabel;
+  const normalizedSlug = normalizeCategorySlug(categorySlug);
+  const directLabel = labelsBySlug[normalizedSlug];
+
+  if (directLabel) {
+    return directLabel;
+  }
+
+  const matchingEntry = Object.entries(labelsBySlug).find(
+    ([key]) => normalizeCategorySlug(key) === normalizedSlug,
+  );
+
+  if (matchingEntry) {
+    return matchingEntry[1];
+  }
+
+  const normalizedFallbackLabel = normalizeCategorySlug(fallbackLabel);
+  const fallbackMatchingEntry = Object.entries(labelsBySlug).find(
+    ([key]) => normalizeCategorySlug(key) === normalizedFallbackLabel,
+  );
+
+  return fallbackMatchingEntry?.[1] ?? fallbackLabel;
 }
