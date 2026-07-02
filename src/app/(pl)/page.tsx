@@ -1,6 +1,8 @@
 import { defaultLocale } from "@/lib/i18n/config";
 import { HomePage } from "@/app/_shared/HomePage";
 import { generateHomeMetadata } from "@/lib/seo/metadata";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { JsonLdScript, createHomeJsonLd } from "@/lib/seo/json-ld";
 import type { Metadata } from "next";
 
 type PageProps = {
@@ -12,12 +14,18 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function Page({ searchParams }: PageProps) {
-  const resolvedSearchParams = await searchParams;
+  const [resolvedSearchParams, dict] = await Promise.all([
+    searchParams,
+    getDictionary(defaultLocale),
+  ]);
 
   return (
-    <HomePage
-      locale={defaultLocale}
-      searchParams={resolvedSearchParams}
-    />
+    <>
+      <JsonLdScript data={createHomeJsonLd(defaultLocale, dict)} />
+      <HomePage
+        locale={defaultLocale}
+        searchParams={resolvedSearchParams}
+      />
+    </>
   );
 }
