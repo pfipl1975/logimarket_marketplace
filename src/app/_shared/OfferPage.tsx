@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getOfferLocaleLinks } from "@/lib/i18n/paths";
+import { getCategoryFilterPath, getOfferLocaleLinks } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
 
 interface OfferPageProps {
@@ -37,7 +37,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
-        <Link href={`/?kategoria=${offer.categorySlug}`}
+        <Link href={getCategoryFilterPath(locale, offer.categorySlug)}
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />{dict.nav.backToCatalog}
         </Link>
@@ -133,7 +133,11 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
         )}
       </main>
 
-      <SiteFooter navLabels={dict.nav} footerLabels={dict.footer} />
+      <SiteFooter
+        locale={locale}
+        navLabels={dict.nav}
+        footerLabels={dict.footer}
+      />
       <CartDrawer
         cartLabels={dict.cart}
         ctaLabels={dict.cta}

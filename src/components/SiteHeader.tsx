@@ -5,6 +5,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import { useCart } from "@/hooks/useCart";
 import type { Locale } from "@/lib/i18n/config";
+import { getHomePath } from "@/lib/i18n/paths";
 import type { Dictionary } from "@/lib/i18n/types";
 
 function CartIcon() {
@@ -38,6 +39,7 @@ export function SiteHeader({
   navLabels,
 }: SiteHeaderProps) {
   const { itemCount, setIsOpen } = useCart();
+  const homeHref = getHomePath(locale);
   const portalLinks = [
     { label: navLabels.portal, href: "https://logimarket.pl" },
     { label: navLabels.blog, href: "https://logimarket.pl/blog" },
@@ -47,7 +49,7 @@ export function SiteHeader({
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
       <div className="bg-brand-navy">
         <div className="mx-auto flex max-w-7xl items-center px-3 py-3 sm:px-4 md:px-6 md:py-4">
-          <Link href="/" className="flex min-w-0 shrink-0 items-center">
+          <Link href={homeHref} className="flex min-w-0 shrink-0 items-center">
             <Logo variant="light" compact />
           </Link>
         </div>
@@ -62,7 +64,7 @@ export function SiteHeader({
                 {link.label}
               </a>
             ))}
-            <Link href="/" className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">{navLabels.catalog}</Link>
+            <Link href={homeHref} className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">{navLabels.catalog}</Link>
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">

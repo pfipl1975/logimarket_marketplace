@@ -10,6 +10,15 @@ export function getOfferPath(locale: Locale, offerId: string): string {
     : `/${locale}/oferta/${offerId}`;
 }
 
+export function getCategoryFilterPath(
+  locale: Locale,
+  categorySlug: string,
+): string {
+  const query = new URLSearchParams({ kategoria: categorySlug }).toString();
+
+  return `${getHomePath(locale)}?${query}`;
+}
+
 export function getHomeLocaleLinks(): Record<Locale, string> {
   return {
     pl: getHomePath("pl"),

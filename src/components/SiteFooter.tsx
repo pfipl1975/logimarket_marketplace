@@ -1,13 +1,22 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
+import type { Locale } from "@/lib/i18n/config";
+import { getHomePath } from "@/lib/i18n/paths";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface SiteFooterProps {
+  locale: Locale;
   navLabels: Dictionary["nav"];
   footerLabels: Dictionary["footer"];
 }
 
-export function SiteFooter({ navLabels, footerLabels }: SiteFooterProps) {
+export function SiteFooter({
+  locale,
+  navLabels,
+  footerLabels,
+}: SiteFooterProps) {
+  const homeHref = getHomePath(locale);
+
   return (
     <footer className="mt-auto bg-brand-navy text-white/70">
       <div className="mx-auto grid max-w-7xl gap-8 px-4 py-12 md:grid-cols-[minmax(0,1.45fr)_minmax(0,0.75fr)_minmax(0,0.8fr)] md:px-6">
@@ -21,7 +30,7 @@ export function SiteFooter({ navLabels, footerLabels }: SiteFooterProps) {
           <h2 className="text-sm font-semibold text-white">{footerLabels.portal}</h2>
           <ul className="mt-3 space-y-2 text-sm">
             <li><a className="hover:text-white transition-colors" href="https://logimarket.pl" target="_blank" rel="noopener noreferrer">{navLabels.portal}</a></li>
-            <li><Link className="hover:text-white transition-colors" href="/">{navLabels.catalog}</Link></li>
+            <li><Link className="hover:text-white transition-colors" href={homeHref}>{navLabels.catalog}</Link></li>
           </ul>
         </div>
         <div>

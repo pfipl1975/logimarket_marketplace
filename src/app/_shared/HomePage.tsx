@@ -166,7 +166,11 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
         </div>
       </main>
 
-      <SiteFooter navLabels={dict.nav} footerLabels={dict.footer} />
+      <SiteFooter
+        locale={locale}
+        navLabels={dict.nav}
+        footerLabels={dict.footer}
+      />
       <CartDrawer
         cartLabels={dict.cart}
         ctaLabels={dict.cta}
