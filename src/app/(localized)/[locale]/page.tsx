@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { defaultLocale, isLocale } from "@/lib/i18n/config";
-import { HomePage } from "../_shared/HomePage";
+import { HomePage } from "@/app/_shared/HomePage";
 
 type PageProps = {
   params: Promise<{ locale: string }>;

@@ -1,5 +1,5 @@
 import { defaultLocale } from "@/lib/i18n/config";
-import { HomePage } from "./_shared/HomePage";
+import { HomePage } from "@/app/_shared/HomePage";
 
 type PageProps = {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;

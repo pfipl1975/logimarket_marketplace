@@ -1,5 +1,5 @@
 import { defaultLocale } from "@/lib/i18n/config";
-import { OfferPage } from "../../_shared/OfferPage";
+import { OfferPage } from "@/app/_shared/OfferPage";
 
 type PageProps = {
   params: Promise<{ id: string }>;
