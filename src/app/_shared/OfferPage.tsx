@@ -72,7 +72,6 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
             <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
               <Wrench className="h-4 w-4" />
               <span className="font-medium">{offer.partnerName}</span>
-              {offer.partnerWebsite && <a href={offer.partnerWebsite} target="_blank" rel="noopener noreferrer" className="ml-1 text-[#147487] hover:underline">(www)</a>}
             </p>
 
             <div className="mt-6 rounded-lg border border-[#d9dde2] bg-white p-4">
