@@ -1,6 +1,7 @@
 import React from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
+import type { OfferPublicationStatus } from "@/lib/schema";
 import { getHomeCanonical, getOfferCanonical, absoluteUrl } from "./urls";
 import { siteBrand, localeLanguageTags } from "./site";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
@@ -85,6 +86,7 @@ export interface OfferJsonLdSource {
   partnerName: string;
   offerModel: string;
   conversionType: string;
+  publicationStatus: OfferPublicationStatus;
 }
 
 function parsePrice(priceStr: string | null): number | null {
@@ -121,6 +123,7 @@ export function createOfferJsonLd(
   const parsedPrice = parsePrice(offer.priceBrutto);
 
   const hasValidPrice =
+    offer.publicationStatus === "published" &&
     parsedPrice !== null &&
     !offer.priceOnRequest &&
     offer.offerModel !== "rfq" &&

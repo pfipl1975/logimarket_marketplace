@@ -38,10 +38,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
-      <JsonLdScript data={createOfferJsonLd(locale, {
-        ...offer,
-        priceOnRequest: isArchived ? true : offer.priceOnRequest,
-      }, dict)} />
+      <JsonLdScript data={createOfferJsonLd(locale, offer, dict)} />
       <JsonLdScript data={createOfferBreadcrumbJsonLd(locale, offer)} />
       <SiteHeader
         locale={locale}
