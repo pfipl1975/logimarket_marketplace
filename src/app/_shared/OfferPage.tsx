@@ -34,9 +34,14 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
 
+  const isArchived = offer.publicationStatus === "archived";
+
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
-      <JsonLdScript data={createOfferJsonLd(locale, offer, dict)} />
+      <JsonLdScript data={createOfferJsonLd(locale, {
+        ...offer,
+        priceOnRequest: isArchived ? true : offer.priceOnRequest,
+      }, dict)} />
       <JsonLdScript data={createOfferBreadcrumbJsonLd(locale, offer)} />
       <SiteHeader
         locale={locale}
@@ -49,6 +54,17 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="h-4 w-4" />{dict.nav.backToCatalog}
         </Link>
+
+        {isArchived && (
+          <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+            <p className="font-semibold text-base">Oferta archiwalna</p>
+            <p className="mt-1 text-sm">Ta oferta jest już nieaktualna i została sprzedana lub wycofana. Możesz przejrzeć inne ogłoszenia w kategorii{" "}
+              <Link href={getCategoryFilterPath(locale, offer.categorySlug)} className="font-semibold underline hover:text-amber-950">
+                {categoryLabel}
+              </Link>.
+            </p>
+          </div>
+        )}
 
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div className="overflow-hidden rounded-lg border border-[#d9dde2] bg-gray-100">
@@ -80,7 +96,11 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
             </div>
 
             <div className="mt-4">
-              {isEcommerce ? (
+              {isArchived ? (
+                <div className="flex h-12 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-base font-semibold text-gray-500 cursor-not-allowed">
+                  Oferta nieaktualna
+                </div>
+              ) : isEcommerce ? (
                 <AddToCartButton offerId={offer.id} label={dict.cta.addToCart} />
               ) : offer.conversionType === "rfq" ? (
                 <RfqDialog

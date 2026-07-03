@@ -1,4 +1,4 @@
-import { eq, asc } from "drizzle-orm";
+import { eq, asc, and } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { offers } from "@/lib/schema";
 
@@ -14,6 +14,6 @@ export async function getSitemapOfferEntries(): Promise<SitemapOfferEntry[]> {
       createdAt: offers.createdAt,
     })
     .from(offers)
-    .where(eq(offers.isActive, true))
+    .where(and(eq(offers.isActive, true), eq(offers.publicationStatus, "published")))
     .orderBy(asc(offers.id));
 }

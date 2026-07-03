@@ -28,6 +28,8 @@ export const categories = pgTable("categories", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export type OfferPublicationStatus = "draft" | "published" | "hidden" | "archived" | "deleted";
+
 export const offers = pgTable("offers", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   partnerId: bigint("partner_id", { mode: "number" }).notNull(),
@@ -42,8 +44,13 @@ export const offers = pgTable("offers", {
   outboundUrl: varchar("outbound_url", { length: 512 }),
   isFeatured: boolean("is_featured").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  publicationStatus: varchar("publication_status", { length: 20 }).$type<OfferPublicationStatus>().notNull().default("draft"),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+  deletedAt: timestamp("deleted_at", { withTimezone: true }),
   technicalAttributes: jsonb("technical_attributes").notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
 });
 
 export const clicks = pgTable("clicks", {

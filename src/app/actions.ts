@@ -2,12 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
-import { and, eq, desc, asc } from "drizzle-orm";
+import { and, eq, desc, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
 } from "@/lib/schema";
-import type { TechnicalAttributes } from "@/lib/schema";
+import type { TechnicalAttributes, OfferPublicationStatus } from "@/lib/schema";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -16,6 +16,7 @@ export type CatalogOffer = {
   technicalAttributes: TechnicalAttributes; categoryName: string; categorySlug: string;
   partnerId: number; partnerName: string; partnerLogo: string | null;
   partnerWebsite: string | null; partnerEmail: string;
+  publicationStatus: OfferPublicationStatus;
 };
 
 function rowToOffer(row: {
@@ -34,6 +35,7 @@ function rowToOffer(row: {
     partnerId: row.partner?.id ?? 0, partnerName: row.partner?.companyName ?? "Partner",
     partnerLogo: row.partner?.logoUrl ?? null, partnerWebsite: row.partner?.websiteUrl ?? null,
     partnerEmail: row.partner?.contactEmail ?? "",
+    publicationStatus: row.offer.publicationStatus,
   };
 }
 
@@ -52,7 +54,7 @@ export async function getCategories() {
 }
 
 export async function getOffers(categorySlug?: string): Promise<CatalogOffer[]> {
-  const conditions = [eq(offers.isActive, true)];
+  const conditions = [eq(offers.isActive, true), eq(offers.publicationStatus, "published")];
   if (categorySlug) conditions.push(eq(categories.slug, categorySlug));
   const rows = await db
     .select({ offer: offers, category: categories, partner: partners })
@@ -70,7 +72,7 @@ export async function getOfferById(id: number): Promise<CatalogOffer | null> {
     .from(offers)
     .leftJoin(categories, eq(offers.categoryId, categories.id))
     .leftJoin(partners, eq(offers.partnerId, partners.id))
-    .where(and(eq(offers.id, id), eq(offers.isActive, true)))
+    .where(and(eq(offers.id, id), inArray(offers.publicationStatus, ["published", "archived"])))
     .limit(1);
   return rows.length === 0 ? null : rowToOffer(rows[0]);
 }
@@ -116,6 +118,23 @@ export async function getCartCount(): Promise<number> {
 
 export async function addToCart(offerId: number, quantity = 1) {
   "use server";
+  const offer = await db
+    .select({
+      id: offers.id,
+    })
+    .from(offers)
+    .where(
+      and(
+        eq(offers.id, offerId),
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published")
+      )
+    )
+    .limit(1);
+
+  if (offer.length === 0) {
+    throw new Error("Oferta nie jest już dostępna.");
+  }
   const sessionHash = await getSessionHash();
   const existing = await db.select().from(cartItems).where(and(eq(cartItems.offerId, offerId), eq(cartItems.sessionHash, sessionHash))).limit(1);
   if (existing.length > 0) {
@@ -172,7 +191,21 @@ export async function submitRfq(data: {
   offerId: number; companyName: string; contactName: string; email: string; phone?: string; message?: string;
 }): Promise<RfqActionResult> {
   "use server";
-  const offerRows = await db.select().from(offers).where(eq(offers.id, data.offerId)).limit(1);
+  const offerRows = await db
+    .select({
+      id: offers.id,
+      partnerId: offers.partnerId,
+    })
+    .from(offers)
+    .where(
+      and(
+        eq(offers.id, data.offerId),
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published")
+      )
+    )
+    .limit(1);
+
   if (offerRows.length === 0) return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
   await db.insert(rfqLeads).values({
     offerId: data.offerId, partnerId: offerRows[0].partnerId,
