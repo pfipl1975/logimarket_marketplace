@@ -8,6 +8,8 @@ import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
 } from "@/lib/schema";
 import type { TechnicalAttributes, OfferPublicationStatus } from "@/lib/schema";
+import { getCategoryDescendantIds } from "@/lib/catalog/tree";
+import type { CatalogCategoryRow } from "@/lib/catalog/tree";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -49,8 +51,81 @@ async function getSessionHash(): Promise<string> {
   return hash;
 }
 
-export async function getCategories() {
-  return db.select().from(categories).orderBy(asc(categories.name));
+export async function getCategories(): Promise<CatalogCategoryRow[]> {
+  const rows = await db.select().from(categories).orderBy(asc(categories.name));
+  return rows.map((row) => ({
+    id: Number(row.id),
+    name: row.name,
+    slug: row.slug,
+    parentId: row.parentId !== null ? Number(row.parentId) : null,
+    createdAt: row.createdAt,
+  }));
+}
+
+export async function getCategoryBySlug(slug: string): Promise<CatalogCategoryRow | null> {
+  const rows = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.slug, slug))
+    .limit(1);
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: Number(row.id),
+    name: row.name,
+    slug: row.slug,
+    parentId: row.parentId !== null ? Number(row.parentId) : null,
+    createdAt: row.createdAt,
+  };
+}
+
+export async function getCategoryOffers(categorySlug: string): Promise<CatalogOffer[]> {
+  const cats = await getCategories();
+  const activeCat = cats.find((c) => c.slug === categorySlug);
+  if (!activeCat) return [];
+
+  const descendantIds = getCategoryDescendantIds(cats, activeCat.id);
+  const targetIds = [activeCat.id, ...descendantIds];
+
+  const rows = await db
+    .select({ offer: offers, category: categories, partner: partners })
+    .from(offers)
+    .leftJoin(categories, eq(offers.categoryId, categories.id))
+    .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .where(
+      and(
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published"),
+        inArray(offers.categoryId, targetIds)
+      )
+    )
+    .orderBy(desc(offers.isFeatured), desc(offers.createdAt));
+
+  return rows.map(rowToOffer);
+}
+
+export async function getCategoryOffersCount(categorySlug: string): Promise<number> {
+  const cats = await getCategories();
+  const activeCat = cats.find((c) => c.slug === categorySlug);
+  if (!activeCat) return 0;
+
+  const descendantIds = getCategoryDescendantIds(cats, activeCat.id);
+  const targetIds = [activeCat.id, ...descendantIds];
+
+  const rows = await db
+    .select({
+      id: offers.id,
+    })
+    .from(offers)
+    .where(
+      and(
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published"),
+        inArray(offers.categoryId, targetIds)
+      )
+    );
+
+  return rows.length;
 }
 
 export async function getOffers(categorySlug?: string): Promise<CatalogOffer[]> {

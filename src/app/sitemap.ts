@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 import { locales, defaultLocale } from "@/lib/i18n/config";
-import { getHomeCanonical, getHomeLanguageAlternates, getOfferCanonical } from "@/lib/seo/urls";
-import { getSitemapOfferEntries } from "@/lib/seo/repository";
+import { getHomeCanonical, getHomeLanguageAlternates, getOfferCanonical, absoluteUrl } from "@/lib/seo/urls";
+import { getSitemapOfferEntries, getSitemapCategoryEntries } from "@/lib/seo/repository";
 
 export const revalidate = 86400;
 
@@ -19,7 +19,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     };
   });
 
-  const offers = await getSitemapOfferEntries();
+  const catalogRootEntries = locales.map((locale) => {
+    const path = locale === defaultLocale ? "/katalog" : `/${locale}/katalog`;
+    return {
+      url: absoluteUrl(path),
+      changeFrequency: "weekly" as const,
+      priority: 0.8,
+    };
+  });
+
+  const [offers, cats] = await Promise.all([
+    getSitemapOfferEntries(),
+    getSitemapCategoryEntries(),
+  ]);
 
   const offerEntries = offers.flatMap((offer) =>
     locales.map((locale) => ({
@@ -28,5 +40,16 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  return [...homepageEntries, ...offerEntries];
+  const categoryEntries = cats.flatMap((cat) =>
+    locales.map((locale) => {
+      const path = locale === defaultLocale ? `/katalog/c-${cat.slug}` : `/${locale}/katalog/c-${cat.slug}`;
+      return {
+        url: absoluteUrl(path),
+        changeFrequency: "weekly" as const,
+        priority: 0.8,
+      };
+    })
+  );
+
+  return [...homepageEntries, ...catalogRootEntries, ...offerEntries, ...categoryEntries];
 }

@@ -64,7 +64,7 @@ export function SiteHeader({
                 {link.label}
               </a>
             ))}
-            <Link href={homeHref} className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">{navLabels.catalog}</Link>
+            <Link href={locale === "pl" ? "/katalog" : `/${locale}/katalog`} className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">{navLabels.catalog}</Link>
           </nav>
 
           <div className="flex shrink-0 items-center gap-2">
