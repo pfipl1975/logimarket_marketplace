@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowLeft, ExternalLink, Wrench, Package, ShieldCheck } from "lucide-react";
 import { getOfferById } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -36,6 +37,11 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   const isArchived = offer.publicationStatus === "archived";
 
+  const offerImageUrl =
+    typeof offer.imageUrl === "string" && offer.imageUrl.trim().length > 0
+      ? offer.imageUrl.trim()
+      : null;
+
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
       <JsonLdScript data={createOfferJsonLd(locale, offer, dict)} />
@@ -64,11 +70,19 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
         )}
 
         <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-2">
-          <div className="overflow-hidden rounded-lg border border-[#d9dde2] bg-gray-100">
-            {offer.imageUrl ? (
-              <img src={offer.imageUrl} alt={offer.title} className="h-full w-full object-cover aspect-[4/3]" />
+          <div className="relative overflow-hidden rounded-lg border border-[#d9dde2] bg-gray-100 aspect-[4/3]">
+            {offerImageUrl ? (
+              <Image
+                src={offerImageUrl}
+                alt={offer.title}
+                fill
+                sizes="(min-width: 1024px) 50vw, 100vw"
+                className="object-cover"
+                unoptimized
+                preload
+              />
             ) : (
-              <div className="flex aspect-[4/3] items-center justify-center">
+              <div className="flex h-full w-full items-center justify-center">
                 <Package className="h-20 w-20 text-[#5a64724d]" />
               </div>
             )}
