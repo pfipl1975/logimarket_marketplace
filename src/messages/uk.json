@@ -9,7 +9,8 @@
     "catalog": "Каталог пропозицій",
     "cart": "Кошик",
     "backToCatalog": "Повернутися до каталогу",
-    "languageSwitcherAria": "Вибір мови"
+    "languageSwitcherAria": "Вибір мови",
+    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"
   },
   "common": {
     "close": "Закрити"

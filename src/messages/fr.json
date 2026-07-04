@@ -9,7 +9,8 @@
     "catalog": "Catalogue d'offres",
     "cart": "Panier",
     "backToCatalog": "Retour au catalogue",
-    "languageSwitcherAria": "Choix de la langue"
+    "languageSwitcherAria": "Choix de la langue",
+    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"
   },
   "common": {
     "close": "Fermer"

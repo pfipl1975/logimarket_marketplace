@@ -46,10 +46,11 @@ export default function Logo({
     <span className={rootClassName}>
       <Image
         src={logoSrc}
-        alt="LogiMarket"
+        alt="LogiMarket B2B Marketplace"
         width={markOnly ? 500 : 2172}
         height={markOnly ? 500 : 724}
         priority={compact}
+        fetchPriority="high"
         sizes={imageSizes}
         className="h-full w-full object-contain"
       />

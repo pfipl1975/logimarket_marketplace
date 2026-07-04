@@ -9,7 +9,8 @@
     "catalog": "Offer catalog",
     "cart": "Cart",
     "backToCatalog": "Back to catalog",
-    "languageSwitcherAria": "Language selection"
+    "languageSwitcherAria": "Language selection",
+    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"
   },
   "common": {
     "close": "Close"

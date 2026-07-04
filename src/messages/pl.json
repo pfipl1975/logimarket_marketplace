@@ -9,7 +9,8 @@
     "catalog": "Katalog ofert",
     "cart": "Koszyk",
     "backToCatalog": "Wróć do katalogu",
-    "languageSwitcherAria": "Wybór języka"
+    "languageSwitcherAria": "Wybór języka",
+    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"
   },
   "common": {
     "close": "Zamknij"
