@@ -41,8 +41,8 @@ export function SiteHeader({
           </Link>
 
           <div className="min-w-0 flex-1 border-l border-white/15 pl-4 md:pl-8">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-white sm:text-xs md:text-sm">
-              {navLabels.constructionNotice ?? "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"}
+            <p className="text-xs font-bold uppercase tracking-wider text-white sm:text-sm md:text-base lg:text-lg xl:text-xl">
+              {navLabels.constructionNotice ?? "MARKETPLACE W BUDOWIE / MARKETPLACE UNDER CONSTRUCTION"}
             </p>
           </div>
         </div>

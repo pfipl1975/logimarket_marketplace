@@ -7,8 +7,8 @@ type LogoProps = {
   markOnly?: boolean;
 };
 
-const fullLogoSrc = "/images/brand/baner_marketplace.png";
-const markLogoSrc = "/images/brand/logimarket_mark.png";
+const fullLogoSrc = "/images/brand/logimarket_logo.png";
+const markLogoSrc = "/images/brand/logimarket_logo.png";
 
 export default function Logo({
   className = "",
@@ -47,8 +47,8 @@ export default function Logo({
       <Image
         src={logoSrc}
         alt="LogiMarket B2B Marketplace"
-        width={markOnly ? 500 : 2172}
-        height={markOnly ? 500 : 724}
+        width={512}
+        height={512}
         priority={compact}
         fetchPriority="high"
         sizes={imageSizes}
