@@ -217,3 +217,44 @@ export function createCatalogItemListJsonLd(
     })),
   };
 }
+
+// ─── Category-level ItemList (Section / Group / Leaf) ─────────────────────────
+
+export interface CategoryItemListItem {
+  name: string;
+  url: string;
+}
+
+/**
+ * Generate an ItemList JSON-LD for a category landing page.
+ *
+ * - Section page  → items are direct Group children
+ * - Group page    → items are direct Leaf children
+ * - Leaf page     → items are the offers physically rendered on the page
+ *
+ * Guarantees:
+ * - No Product schema
+ * - No prices / availability
+ * - No direct partner URLs (offer URLs are always /oferta/[id])
+ * - Returns null when items list is empty (caller must guard before rendering)
+ */
+export function createCategoryItemListJsonLd({
+  pageUrl,
+  items,
+}: {
+  pageUrl: string;
+  items: CategoryItemListItem[];
+}): JsonLdValue | null {
+  if (!items || items.length === 0) return null;
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "@id": `${pageUrl}#itemlist`,
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "url": item.url,
+    })),
+  };
+}

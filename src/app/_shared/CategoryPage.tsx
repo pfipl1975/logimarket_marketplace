@@ -10,9 +10,15 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
-import { JsonLdScript } from "@/lib/seo/json-ld";
+import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
+import { JsonLdScript, createCategoryItemListJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { CatalogCategoryExplorer } from "@/components/catalog/CatalogCategoryExplorer";
+import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
+import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
+import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks";
+import { CategoryInquiryChecklist } from "@/components/catalog/CategoryInquiryChecklist";
+import { CategoryFaqBlock } from "@/components/catalog/CategoryFaqBlock";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CategoryPageProps {
@@ -70,10 +76,9 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
 
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
 
-  // Build tree to find subcategories of the active category
+  // ── Tree + subcategory resolution ─────────────────────────────────────────
   const categoryTree = buildCategoryTree(allCategories);
-  
-  // Find active node in the tree to display its direct children
+
   const findNode = (nodes: CatalogCategoryNode[], targetId: number): CatalogCategoryNode | null => {
     for (const node of nodes) {
       if (node.id === targetId) return node;
@@ -82,20 +87,25 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     }
     return null;
   };
+
   const activeNode = findNode(categoryTree, category.id);
   const subcategories = activeNode ? activeNode.children : [];
 
-  const parentCategory = category.parentId !== null ? allCategories.find(c => c.id === category.parentId) : null;
-  const isSection = category.parentId === null;
-  const isGroup = parentCategory && parentCategory.parentId === null;
-  const isLeaf = parentCategory && parentCategory.parentId !== null;
+  const parentCategory = category.parentId !== null
+    ? allCategories.find((c) => c.id === category.parentId) ?? null
+    : null;
 
-  // Breadcrumbs trail
+  // ── PageRole (stateless, in-memory, no DB flags, no extra SQL) ────────────
+  const pageRole = resolveCategoryPageRole({
+    activeParentId: category.parentId,
+    parentOfParentId: parentCategory?.parentId,
+  });
+
+  // ── Breadcrumbs ───────────────────────────────────────────────────────────
   const breadcrumbs = getCategoryBreadcrumbs(allCategories, category.id);
-
   const categoryFilterBasePath = getHomePath(locale);
 
-  // Map tree to explorer format
+  // ── Explorer tree ─────────────────────────────────────────────────────────
   const explorerTree = categoryTree.map((section) => ({
     id: section.id,
     slug: section.slug,
@@ -139,7 +149,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
 
   const initialActiveSectionSlug = breadcrumbs.length > 0 ? breadcrumbs[0].slug : undefined;
 
-  // Generate BreadcrumbList JSON-LD
+  // ── JSON-LD: BreadcrumbList ───────────────────────────────────────────────
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
   const canonicalPath = `${catalogPath}/c-${category.slug}`;
   const canonicalUrl = absoluteUrl(canonicalPath);
@@ -170,7 +180,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     "itemListElement": breadcrumbItems,
   };
 
-  // Generate CollectionPage JSON-LD
+  // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
   const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -180,10 +190,55 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     "description": activeCategoryIntro || `${activeCategoryLabel} - ${dict.meta.description}`,
   };
 
+  // ── JSON-LD: ItemList (role-aware, no Product schema) ────────────────────
+  //
+  // Section → groups as items
+  // Group   → leaf children as items
+  // Leaf    → physically rendered offers as items
+  //
+  // Guarantees: no prices, no availability, no direct partner URLs.
+  const itemListItems = (() => {
+    if (pageRole === "leaf") {
+      // Leaf: items = rendered offers, URL = /oferta/[id]
+      return offers.map((offer) => ({
+        name: offer.title,
+        url: absoluteUrl(getOfferPath(locale, String(offer.id))),
+      }));
+    }
+    // Section or Group: items = subcategory children
+    return subcategories.map((sub: CatalogCategoryNode) => ({
+      name: resolveCategoryName({
+        slug: sub.slug,
+        dbName: sub.name,
+        localeBySlug,
+        fallbackBySlug,
+      }),
+      url: absoluteUrl(`${catalogPath}/c-${sub.slug}`),
+    }));
+  })();
+
+  const itemListJsonLd = createCategoryItemListJsonLd({
+    pageUrl: canonicalUrl,
+    items: itemListItems,
+  });
+
+  // ── Future content slots (null-safe, no data = not rendered) ─────────────
+  // These are prepared as null — future sprints (LM-CAT-06, LM-CAT-08, etc.)
+  // will populate them from DB/CMS. Passing null triggers null return in each
+  // component, producing zero DOM output.
+  const decisionGuidanceItems: string[] | null = null;
+  const technicalParams: Record<string, string> | null = null;
+  const relatedLinks: { label: string; href: string }[] | null = null;
+  const inquiryChecklistGroups: null = null;
+  const faqItems: null = null;
+
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
+      {/* ── JSON-LD injection ───────────────────────────────────────────── */}
       <JsonLdScript data={breadcrumbJsonLd} />
       <JsonLdScript data={collectionJsonLd} />
+      {itemListJsonLd && <JsonLdScript data={itemListJsonLd} />}
+
       <SiteHeader
         locale={locale}
         languageLinks={{
@@ -199,9 +254,13 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
-        {/* Breadcrumbs Navigation */}
+
+        {/* ── Breadcrumbs nav ──────────────────────────────────────────── */}
         <nav aria-label="Breadcrumbs" className="mb-6 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
-          <Link href={categoryFilterBasePath === "/" ? "/katalog" : `${categoryFilterBasePath}/katalog`} className="hover:text-foreground transition-colors">
+          <Link
+            href={categoryFilterBasePath === "/" ? "/katalog" : `${categoryFilterBasePath}/katalog`}
+            className="hover:text-foreground transition-colors"
+          >
             {dict.nav.catalog}
           </Link>
           {breadcrumbs.map((bc, idx) => {
@@ -220,7 +279,10 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
                     {bcLabel}
                   </span>
                 ) : (
-                  <Link href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${bc.slug}`} className="hover:text-foreground transition-colors">
+                  <Link
+                    href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${bc.slug}`}
+                    className="hover:text-foreground transition-colors"
+                  >
                     {bcLabel}
                   </Link>
                 )}
@@ -229,7 +291,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           })}
         </nav>
 
-        {/* Catalog category explorer */}
+        {/* ── Category explorer ────────────────────────────────────────── */}
         <div className="z-30 mb-6">
           <CatalogCategoryExplorer
             key={initialActiveSectionSlug}
@@ -239,6 +301,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           />
         </div>
 
+        {/* ── Hero / header section ─────────────────────────────────────── */}
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
             {activeCategoryLabel}
@@ -253,15 +316,15 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           )}
         </div>
 
-        {/* Subcategories section */}
-        {!isLeaf && subcategories.length > 0 && (
+        {/* ── Subcategory navigation (Section → groups, Group → leaf chips) */}
+        {pageRole !== "leaf" && subcategories.length > 0 && (
           <div className="mt-8 border-t border-border pt-8 mb-10">
             <h2 className="text-xl font-bold text-brand-navy mb-6">
               {dict.catalog.allCategories}
             </h2>
 
-            {isSection ? (
-              /* For Section: Render Groups + their leaf children */
+            {pageRole === "section" ? (
+              /* Section: Grid of group cards with their leaf links */
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {subcategories.map((group: CatalogCategoryNode) => {
                   const groupLabel = resolveCategoryName({
@@ -307,7 +370,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
                 })}
               </div>
             ) : (
-              /* For Group: Render leaf children as clean chips/links */
+              /* Group: Leaf children as pill chips */
               <div className="flex flex-wrap gap-2">
                 {subcategories.map((sub: CatalogCategoryNode) => {
                   const subLabel = resolveCategoryName({
@@ -331,7 +394,23 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           </div>
         )}
 
-        {/* Offers listings */}
+        {/* ── Optional content slots (null = no DOM output) ──────────────
+            Populated by future sprints (LM-CAT-06, LM-CAT-08, LM-CAT-INQUIRY-01).
+            Each component returns null when passed null/empty data.      */}
+        <CategoryDecisionGuidance
+          items={decisionGuidanceItems}
+          heading={dict.catalog.allCategories}
+        />
+        <CategoryTechnicalParameters
+          params={technicalParams}
+          heading={dict.catalog.allCategories}
+        />
+        <CategoryInquiryChecklist
+          groups={inquiryChecklistGroups}
+          heading={dict.catalog.allCategories}
+        />
+
+        {/* ── Offer listing ────────────────────────────────────────────── */}
         {offers.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
             <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
@@ -357,6 +436,19 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
             ))}
           </div>
         )}
+
+        {/* ── Optional lower content slots (FAQ + related) ───────────────
+            Rendered below offer listing per layout spec (LM-CAT-04).
+            Returns null when no data — zero DOM output.                  */}
+        <CategoryFaqBlock
+          items={faqItems}
+          heading={dict.catalog.allCategories}
+        />
+        <CategoryRelatedLinks
+          links={relatedLinks}
+          heading={dict.catalog.allCategories}
+        />
+
       </main>
 
       <SiteFooter
