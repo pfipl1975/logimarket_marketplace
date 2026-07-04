@@ -1,22 +1,15 @@
-import { Suspense } from "react";
 import Image from "next/image";
-import { getCategories, getOffers } from "@/app/actions";
+import { getOffers } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
-import { CategoryFilter } from "@/components/CategoryFilter";
 import { OfferCard } from "@/components/OfferCard";
-import { Skeleton } from "@/components/ui/skeleton";
-import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getHomeLocaleLinks, getHomePath, getOfferPath } from "@/lib/i18n/paths";
+import { getHomeLocaleLinks, getOfferPath } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
-
-type PublicSearchParams = { [key: string]: string | string[] | undefined };
 
 interface HomePageProps {
   locale: Locale;
-  searchParams: PublicSearchParams;
 }
 
 function ShieldCheckIcon({ className = "" }: { className?: string }) {
@@ -68,17 +61,10 @@ function PackageIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export async function HomePage({ locale, searchParams }: HomePageProps) {
-  const categoryParam = searchParams.kategoria;
-  const kategoria = Array.isArray(categoryParam) ? categoryParam[0] : categoryParam;
-  const [dict, categories, offers] = await Promise.all([getDictionary(locale), getCategories(), getOffers(kategoria)]);
-  const activeCategory = categories.find((c) => c.slug === kategoria);
+export async function HomePage({ locale }: HomePageProps) {
+  const [dict, offers] = await Promise.all([getDictionary(locale), getOffers()]);
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
-  const categoryFilterBasePath = getHomePath(locale);
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
-  const activeCategoryLabel = activeCategory
-    ? getLocalizedCategoryLabel(categoryLabels, activeCategory.slug, activeCategory.name)
-    : dict.catalog.allOffers;
   const heroTitleAccent = dict.hero.titleAccent;
   const heroTitleLead = dict.hero.title.endsWith(heroTitleAccent)
     ? dict.hero.title.slice(0, -heroTitleAccent.length)
@@ -118,22 +104,11 @@ export async function HomePage({ locale, searchParams }: HomePageProps) {
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-bold text-brand-navy">
-            {activeCategoryLabel}
+            {dict.catalog.allOffers}
           </h2>
           <p className="text-sm text-muted-foreground">
             {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
           </p>
-        </div>
-
-        <div className="mt-5">
-          <Suspense fallback={<div className="flex flex-wrap gap-2">{Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-9 w-32 rounded-full" />)}</div>}>
-            <CategoryFilter
-              categories={categories}
-              catalogLabels={dict.catalog}
-              categoryLabels={categoryLabels}
-              basePath={categoryFilterBasePath}
-            />
-          </Suspense>
         </div>
 
         <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
