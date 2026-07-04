@@ -5,11 +5,12 @@ import { getCategories } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
-import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
+import { resolveCategoryName } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
 import { buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { JsonLdScript } from "@/lib/seo/json-ld";
+import { defaultLocale } from "@/lib/i18n/config";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CatalogPageProps {
@@ -17,12 +18,13 @@ interface CatalogPageProps {
 }
 
 export async function CatalogPage({ locale }: CatalogPageProps) {
-  const [dict, allCategories] = await Promise.all([
-    getDictionary(locale),
-    getCategories(),
-  ]);
+  const dict = await getDictionary(locale);
+  const fallbackDict = locale === defaultLocale ? dict : await getDictionary(defaultLocale);
+  const allCategories = await getCategories();
 
-  const categoryLabels = dict.categories.bySlug as Record<string, string>;
+  const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
+  const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
+
   const categoryFilterBasePath = getHomePath(locale);
 
   // Build category hierarchy
@@ -81,7 +83,12 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
             {categoryTree.map((section: CatalogCategoryNode) => {
-              const sectionLabel = getLocalizedCategoryLabel(categoryLabels, section.slug, section.name);
+              const sectionLabel = resolveCategoryName({
+                slug: section.slug,
+                dbName: section.name,
+                localeBySlug,
+                fallbackBySlug,
+              });
               return (
                 <div key={section.id} className="rounded-lg border border-border bg-white p-6 shadow-sm">
                   <h2 className="text-lg font-bold text-brand-navy mb-4">
@@ -96,7 +103,12 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
                   {section.children.length > 0 && (
                     <ul className="space-y-2.5 border-t border-gray-100 pt-3">
                       {section.children.map((group: CatalogCategoryNode) => {
-                        const groupLabel = getLocalizedCategoryLabel(categoryLabels, group.slug, group.name);
+                        const groupLabel = resolveCategoryName({
+                          slug: group.slug,
+                          dbName: group.name,
+                          localeBySlug,
+                          fallbackBySlug,
+                        });
                         return (
                           <li key={group.id} className="text-sm font-medium text-muted-foreground">
                             <Link
@@ -109,7 +121,12 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
                             {group.children.length > 0 && (
                               <ul className="mt-1.5 ml-4 space-y-1.5 border-l border-gray-100 pl-3">
                                 {group.children.map((cat: CatalogCategoryNode) => {
-                                  const catLabel = getLocalizedCategoryLabel(categoryLabels, cat.slug, cat.name);
+                                  const catLabel = resolveCategoryName({
+                                    slug: cat.slug,
+                                    dbName: cat.name,
+                                    localeBySlug,
+                                    fallbackBySlug,
+                                  });
                                   return (
                                     <li key={cat.id} className="text-xs font-normal text-muted-foreground">
                                       <Link

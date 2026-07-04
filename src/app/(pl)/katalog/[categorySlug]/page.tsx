@@ -3,7 +3,7 @@ import { defaultLocale } from "@/lib/i18n/config";
 import { CategoryPage } from "@/app/_shared/CategoryPage";
 import { getCategoryBySlug, getCategoryOffersCount } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
+import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import type { Metadata } from "next";
 
 type Props = {
@@ -24,13 +24,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     notFound();
   }
 
-  const categoryLabels = dict.categories.bySlug as Record<string, string>;
-  const categoryLabel = getLocalizedCategoryLabel(categoryLabels, category.slug, category.name);
+  const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
+  const localeIntrosBySlug = dict.categories?.introsBySlug as Record<string, string> | undefined;
+
+  const categoryLabel = resolveCategoryName({
+    slug: category.slug,
+    dbName: category.name,
+    localeBySlug,
+    fallbackBySlug: undefined,
+  });
+
+  const categoryIntro = resolveCategoryIntro({
+    slug: category.slug,
+    localeIntrosBySlug,
+    fallbackIntrosBySlug: undefined,
+    fallbackIntro: "",
+  });
+
   const count = await getCategoryOffersCount(dbSlug);
 
   return {
     title: `${categoryLabel} | LogiMarket.pl`,
-    description: `Oferty B2B w kategorii ${categoryLabel} na platformie LogiMarket.pl.`,
+    description: categoryIntro || `Oferty B2B w kategorii ${categoryLabel} na platformie LogiMarket.pl.`,
     robots: {
       index: count > 0,
       follow: true,

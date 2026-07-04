@@ -5,12 +5,13 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { OfferCard } from "@/components/OfferCard";
-import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
+import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { JsonLdScript } from "@/lib/seo/json-ld";
+import { defaultLocale } from "@/lib/i18n/config";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CategoryPageProps {
@@ -40,12 +41,32 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     getCategoryOffers(categorySlug),
   ]);
 
+  const fallbackDict =
+    locale === defaultLocale ? dict : await getDictionary(defaultLocale);
+
   if (!category) {
     notFound();
   }
 
-  const categoryLabels = dict.categories.bySlug as Record<string, string>;
-  const activeCategoryLabel = getLocalizedCategoryLabel(categoryLabels, category.slug, category.name);
+  const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
+  const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
+  const localeIntrosBySlug = dict.categories?.introsBySlug as Record<string, string> | undefined;
+  const fallbackIntrosBySlug = fallbackDict.categories?.introsBySlug as Record<string, string> | undefined;
+
+  const activeCategoryLabel = resolveCategoryName({
+    slug: category.slug,
+    dbName: category.name,
+    localeBySlug,
+    fallbackBySlug,
+  });
+
+  const activeCategoryIntro = resolveCategoryIntro({
+    slug: category.slug,
+    localeIntrosBySlug,
+    fallbackIntrosBySlug,
+    fallbackIntro: "",
+  });
+
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
 
   // Build tree to find subcategories of the active category
@@ -82,7 +103,12 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     ...breadcrumbs.map((bc, idx) => ({
       "@type": "ListItem",
       position: idx + 2,
-      name: getLocalizedCategoryLabel(categoryLabels, bc.slug, bc.name),
+      name: resolveCategoryName({
+        slug: bc.slug,
+        dbName: bc.name,
+        localeBySlug,
+        fallbackBySlug,
+      }),
       item: absoluteUrl(`${catalogPath}/c-${bc.slug}`),
     })),
   ];
@@ -100,7 +126,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     "@id": `${canonicalUrl}#collection`,
     "url": canonicalUrl,
     "name": activeCategoryLabel,
-    "description": `${activeCategoryLabel} - ${dict.meta.description}`,
+    "description": activeCategoryIntro || `${activeCategoryLabel} - ${dict.meta.description}`,
   };
 
   return (
@@ -129,7 +155,12 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           </Link>
           {breadcrumbs.map((bc, idx) => {
             const isLast = idx === breadcrumbs.length - 1;
-            const bcLabel = getLocalizedCategoryLabel(categoryLabels, bc.slug, bc.name);
+            const bcLabel = resolveCategoryName({
+              slug: bc.slug,
+              dbName: bc.name,
+              localeBySlug,
+              fallbackBySlug,
+            });
             return (
               <span key={bc.id} className="flex items-center gap-1.5">
                 <span>/</span>
@@ -154,21 +185,34 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           <p className="text-sm text-muted-foreground">
             {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
           </p>
+          {activeCategoryIntro && (
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+              {activeCategoryIntro}
+            </p>
+          )}
         </div>
 
         {/* Subcategories links */}
         {subcategories.length > 0 && (
           <div className="mt-6">
             <div className="flex flex-wrap gap-2">
-              {subcategories.map((sub: CatalogCategoryNode) => (
-                <Link
-                  key={sub.id}
-                  href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
-                  className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
-                >
-                  {getLocalizedCategoryLabel(categoryLabels, sub.slug, sub.name)}
-                </Link>
-              ))}
+              {subcategories.map((sub: CatalogCategoryNode) => {
+                const subLabel = resolveCategoryName({
+                  slug: sub.slug,
+                  dbName: sub.name,
+                  localeBySlug,
+                  fallbackBySlug,
+                });
+                return (
+                  <Link
+                    key={sub.id}
+                    href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
+                    className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
+                  >
+                    {subLabel}
+                  </Link>
+                );
+              })}
             </div>
           </div>
         )}
@@ -193,7 +237,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
                 formLabels={dict.form}
                 systemLabels={dict.system}
                 closeLabel={dict.common.close}
-                categoryLabels={categoryLabels}
+                categoryLabels={localeBySlug || {}}
                 technicalAttributeLabels={technicalAttributeLabels}
               />
             ))}

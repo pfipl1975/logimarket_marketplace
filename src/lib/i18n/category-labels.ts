@@ -21,30 +21,93 @@ export function normalizeCategorySlug(slug: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+export function resolveCategoryName({
+  slug,
+  dbName,
+  localeBySlug,
+  fallbackBySlug,
+}: {
+  slug: string;
+  dbName: string;
+  localeBySlug?: Record<string, string>;
+  fallbackBySlug?: Record<string, string>;
+}): string {
+  const normalizedSlug = normalizeCategorySlug(slug);
+
+  // 1. Try locale label
+  if (localeBySlug) {
+    const directLabel = localeBySlug[normalizedSlug];
+    if (directLabel) return directLabel;
+
+    const matchingEntry = Object.entries(localeBySlug).find(
+      ([key]) => normalizeCategorySlug(key) === normalizedSlug,
+    );
+    if (matchingEntry) return matchingEntry[1];
+  }
+
+  // 2. Try fallback label (PL)
+  if (fallbackBySlug) {
+    const directLabel = fallbackBySlug[normalizedSlug];
+    if (directLabel) return directLabel;
+
+    const matchingEntry = Object.entries(fallbackBySlug).find(
+      ([key]) => normalizeCategorySlug(key) === normalizedSlug,
+    );
+    if (matchingEntry) return matchingEntry[1];
+  }
+
+  // 3. Fallback to DB name
+  return dbName;
+}
+
+export function resolveCategoryIntro({
+  slug,
+  localeIntrosBySlug,
+  fallbackIntrosBySlug,
+  fallbackIntro = "",
+}: {
+  slug: string;
+  localeIntrosBySlug?: Record<string, string>;
+  fallbackIntrosBySlug?: Record<string, string>;
+  fallbackIntro?: string;
+}): string {
+  const normalizedSlug = normalizeCategorySlug(slug);
+
+  // 1. Try locale intro
+  if (localeIntrosBySlug) {
+    const directIntro = localeIntrosBySlug[normalizedSlug];
+    if (directIntro) return directIntro;
+
+    const matchingEntry = Object.entries(localeIntrosBySlug).find(
+      ([key]) => normalizeCategorySlug(key) === normalizedSlug,
+    );
+    if (matchingEntry) return matchingEntry[1];
+  }
+
+  // 2. Try fallback intro (PL)
+  if (fallbackIntrosBySlug) {
+    const directIntro = fallbackIntrosBySlug[normalizedSlug];
+    if (directIntro) return directIntro;
+
+    const matchingEntry = Object.entries(fallbackIntrosBySlug).find(
+      ([key]) => normalizeCategorySlug(key) === normalizedSlug,
+    );
+    if (matchingEntry) return matchingEntry[1];
+  }
+
+  // 3. Return fallbackIntro
+  return fallbackIntro;
+}
+
 export function getLocalizedCategoryLabel(
-  labelsBySlug: Record<string, string>,
+  labelsBySlug: Record<string, string> | undefined,
   categorySlug: string,
   fallbackLabel: string,
 ): string {
-  const normalizedSlug = normalizeCategorySlug(categorySlug);
-  const directLabel = labelsBySlug[normalizedSlug];
-
-  if (directLabel) {
-    return directLabel;
-  }
-
-  const matchingEntry = Object.entries(labelsBySlug).find(
-    ([key]) => normalizeCategorySlug(key) === normalizedSlug,
-  );
-
-  if (matchingEntry) {
-    return matchingEntry[1];
-  }
-
-  const normalizedFallbackLabel = normalizeCategorySlug(fallbackLabel);
-  const fallbackMatchingEntry = Object.entries(labelsBySlug).find(
-    ([key]) => normalizeCategorySlug(key) === normalizedFallbackLabel,
-  );
-
-  return fallbackMatchingEntry?.[1] ?? fallbackLabel;
+  return resolveCategoryName({
+    slug: categorySlug,
+    dbName: fallbackLabel,
+    localeBySlug: labelsBySlug,
+    fallbackBySlug: undefined,
+  });
 }

@@ -1,9 +1,9 @@
 import { notFound } from "next/navigation";
-import { locales } from "@/lib/i18n/config";
+import { locales, defaultLocale } from "@/lib/i18n/config";
 import { CategoryPage } from "@/app/_shared/CategoryPage";
 import { getCategoryBySlug, getCategoryOffersCount } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
+import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import type { Locale } from "@/lib/i18n/types";
 import type { Metadata } from "next";
 
@@ -22,17 +22,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     getDictionary(locale as Locale),
   ]);
 
+  const fallbackDict =
+    locale === defaultLocale ? dict : await getDictionary(defaultLocale);
+
   if (!category) {
     notFound();
   }
 
-  const categoryLabels = dict.categories.bySlug as Record<string, string>;
-  const categoryLabel = getLocalizedCategoryLabel(categoryLabels, category.slug, category.name);
+  const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
+  const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
+  const localeIntrosBySlug = dict.categories?.introsBySlug as Record<string, string> | undefined;
+  const fallbackIntrosBySlug = fallbackDict.categories?.introsBySlug as Record<string, string> | undefined;
+
+  const categoryLabel = resolveCategoryName({
+    slug: category.slug,
+    dbName: category.name,
+    localeBySlug,
+    fallbackBySlug,
+  });
+
+  const categoryIntro = resolveCategoryIntro({
+    slug: category.slug,
+    localeIntrosBySlug,
+    fallbackIntrosBySlug,
+    fallbackIntro: "",
+  });
+
   const count = await getCategoryOffersCount(dbSlug);
 
   return {
     title: `${categoryLabel} | LogiMarket`,
-    description: `B2B offers in ${categoryLabel} on the LogiMarket platform.`,
+    description: categoryIntro || `B2B offers in ${categoryLabel} on the LogiMarket platform.`,
     robots: {
       index: count > 0,
       follow: true,
