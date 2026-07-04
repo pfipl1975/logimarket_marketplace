@@ -47,6 +47,10 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
+      <div className="bg-brand-light-gray border-b border-border-industrial py-1 px-3 text-center text-[10px] font-bold tracking-wider text-brand-navy uppercase sm:text-xs">
+        MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION
+      </div>
+
       <div className="bg-brand-navy">
         <div className="mx-auto flex max-w-7xl items-center px-3 py-3 sm:px-4 md:px-6 md:py-4">
           <Link href={homeHref} className="flex min-w-0 shrink-0 items-center">
