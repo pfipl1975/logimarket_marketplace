@@ -12,6 +12,7 @@ import { absoluteUrl } from "@/lib/seo/urls";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { JsonLdScript } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
+import { CatalogCategoryExplorer } from "@/components/catalog/CatalogCategoryExplorer";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CategoryPageProps {
@@ -87,8 +88,53 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   // Breadcrumbs trail
   const breadcrumbs = getCategoryBreadcrumbs(allCategories, category.id);
 
-  // Generate BreadcrumbList JSON-LD
   const categoryFilterBasePath = getHomePath(locale);
+
+  // Map tree to explorer format
+  const explorerTree = categoryTree.map((section) => ({
+    id: section.id,
+    slug: section.slug,
+    label: resolveCategoryName({
+      slug: section.slug,
+      dbName: section.name,
+      localeBySlug,
+      fallbackBySlug,
+    }),
+    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${section.slug}`,
+    children: section.children.map((group) => ({
+      id: group.id,
+      slug: group.slug,
+      label: resolveCategoryName({
+        slug: group.slug,
+        dbName: group.name,
+        localeBySlug,
+        fallbackBySlug,
+      }),
+      href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`,
+      children: group.children.map((cat) => ({
+        id: cat.id,
+        slug: cat.slug,
+        label: resolveCategoryName({
+          slug: cat.slug,
+          dbName: cat.name,
+          localeBySlug,
+          fallbackBySlug,
+        }),
+        href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`,
+        children: [],
+      })),
+    })),
+  }));
+
+  const explorerLabels = {
+    trigger: dict.catalog.categoriesAria,
+    close: dict.common.close,
+    allCategories: dict.catalog.allCategories,
+  };
+
+  const initialActiveSectionSlug = breadcrumbs.length > 0 ? breadcrumbs[0].slug : undefined;
+
+  // Generate BreadcrumbList JSON-LD
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
   const canonicalPath = `${catalogPath}/c-${category.slug}`;
   const canonicalUrl = absoluteUrl(canonicalPath);
@@ -177,6 +223,16 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
             );
           })}
         </nav>
+
+        {/* Catalog category explorer */}
+        <div className="z-30 mb-6">
+          <CatalogCategoryExplorer
+            key={initialActiveSectionSlug}
+            tree={explorerTree}
+            labels={explorerLabels}
+            initialActiveSectionSlug={initialActiveSectionSlug}
+          />
+        </div>
 
         <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
