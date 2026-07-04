@@ -185,5 +185,12 @@
       "zakres-wysokosci": "高度范围",
       "szerokosc-najazdu": "坡道宽度"
     }
+  },
+  "home": {
+    "procurementAreas": {
+      "title": "采购领域",
+      "subtitle": "转到仓库、内部物流和包装的最重要产品组。",
+      "cta": "查看类别"
+    }
   }
 }

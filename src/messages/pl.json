@@ -185,5 +185,12 @@
       "zakres-wysokosci": "Zakres wysokości",
       "szerokosc-najazdu": "Szerokość najazdu"
     }
+  },
+  "home": {
+    "procurementAreas": {
+      "title": "Obszary zakupowe",
+      "subtitle": "Przejdź do najważniejszych grup produktów dla magazynu, intralogistyki i pakowania.",
+      "cta": "Zobacz kategorię"
+    }
   }
 }

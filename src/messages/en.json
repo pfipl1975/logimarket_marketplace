@@ -185,5 +185,12 @@
       "zakres-wysokosci": "Height range",
       "szerokosc-najazdu": "Ramp width"
     }
+  },
+  "home": {
+    "procurementAreas": {
+      "title": "Procurement areas",
+      "subtitle": "Go to the most important product groups for warehousing, intralogistics, and packaging.",
+      "cta": "View category"
+    }
   }
 }

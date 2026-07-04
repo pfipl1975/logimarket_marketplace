@@ -185,5 +185,12 @@
       "zakres-wysokosci": "Höhenbereich",
       "szerokosc-najazdu": "Auffahrbreite"
     }
+  },
+  "home": {
+    "procurementAreas": {
+      "title": "Beschaffungsbereiche",
+      "subtitle": "Gehen Sie zu den wichtigsten Produktgruppen für Lagerung, Intralogistik und Verpackung.",
+      "cta": "Kategorie ansehen"
+    }
   }
 }

@@ -185,5 +185,12 @@
       "zakres-wysokosci": "Plage de hauteur",
       "szerokosc-najazdu": "Largeur de rampe"
     }
+  },
+  "home": {
+    "procurementAreas": {
+      "title": "Domaines d'approvisionnement",
+      "subtitle": "Accédez aux groupes de produits les plus importants pour l'entreposage, l'intralogistique et l'emballage.",
+      "cta": "Voir la catégorie"
+    }
   }
 }

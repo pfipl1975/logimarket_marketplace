@@ -185,5 +185,12 @@
       "zakres-wysokosci": "Rango de altura",
       "szerokosc-najazdu": "Anchura de rampa"
     }
+  },
+  "home": {
+    "procurementAreas": {
+      "title": "Áreas de compras",
+      "subtitle": "Vaya a los grupos de productos más importantes para almacenamiento, intralogística y embalaje.",
+      "cta": "Ver categoría"
+    }
   }
 }
