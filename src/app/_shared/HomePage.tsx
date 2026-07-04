@@ -1,15 +1,28 @@
+import Link from "next/link";
 import Image from "next/image";
 import { getOffers } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { OfferCard } from "@/components/OfferCard";
+import { OfferListItem } from "@/components/offers/OfferListItem";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getHomeLocaleLinks, getOfferPath } from "@/lib/i18n/paths";
+import { getHomeLocaleLinks, getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import type { Locale } from "@/lib/i18n/types";
+
+const VIEW_OFFER_LABELS: Record<Locale, string> = {
+  pl: "Zobacz ofertę",
+  en: "View offer",
+  de: "Angebot ansehen",
+  fr: "Voir l'offre",
+  uk: "Переглянути пропозицію",
+  es: "Ver oferta",
+  zh: "查看报价",
+};
 
 interface HomePageProps {
   locale: Locale;
+  view?: "grid" | "list";
 }
 
 function ShieldCheckIcon({ className = "" }: { className?: string }) {
@@ -61,7 +74,7 @@ function PackageIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export async function HomePage({ locale }: HomePageProps) {
+export async function HomePage({ locale, view = "grid" }: HomePageProps) {
   const [dict, offers] = await Promise.all([getDictionary(locale), getOffers()]);
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
@@ -69,6 +82,12 @@ export async function HomePage({ locale }: HomePageProps) {
   const heroTitleLead = dict.hero.title.endsWith(heroTitleAccent)
     ? dict.hero.title.slice(0, -heroTitleAccent.length)
     : dict.hero.title;
+
+  const homePath = getHomePath(locale);
+  const gridHref = `${homePath}?view=grid`;
+  const listHref = `${homePath}?view=list`;
+  const catalogHref = locale === "pl" ? "/katalog" : `/${locale}/katalog`;
+  const viewOfferLabel = VIEW_OFFER_LABELS[locale];
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -111,22 +130,71 @@ export async function HomePage({ locale }: HomePageProps) {
           </p>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-brand-navy" />
-            <span>{dict.catalog.rfqLegend}</span>
+        <div className="mt-6 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-brand-navy" />
+              <span>{dict.catalog.rfqLegend}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
+              <span>{dict.catalog.ecommerceLegend}</span>
+            </div>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-green-600" />
-            <span>{dict.catalog.ecommerceLegend}</span>
-          </div>
+
+          {/* View switcher — URL-driven, locale-aware */}
+          <nav aria-label="Zmień widok ofert" className="flex overflow-hidden rounded border border-border">
+            <Link
+              href={gridHref}
+              aria-current={view === "grid" ? "page" : undefined}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                view === "grid"
+                  ? "bg-brand-navy text-white"
+                  : "bg-white text-brand-navy hover:bg-gray-50"
+              }`}
+            >
+              {dict.offers.gridView}
+            </Link>
+            <Link
+              href={listHref}
+              aria-current={view === "list" ? "page" : undefined}
+              className={`border-l border-border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                view === "list"
+                  ? "bg-brand-navy text-white"
+                  : "bg-white text-brand-navy hover:bg-gray-50"
+              }`}
+            >
+              {dict.offers.listView}
+            </Link>
+          </nav>
         </div>
 
         {offers.length === 0 ? (
-          <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
+          <div className="mt-12 flex flex-col items-center gap-4 py-16 text-center">
             <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
-            <p className="text-lg font-semibold">{dict.catalog.emptyTitle}</p>
-            <p className="text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
+            <div>
+              <p className="text-lg font-semibold">{dict.catalog.allOffers}</p>
+              <p className="mt-1 text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
+            </div>
+            <Link
+              href={catalogHref}
+              className="mt-2 inline-flex items-center rounded border border-brand-navy px-4 py-2 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"
+            >
+              {dict.nav.catalog}
+            </Link>
+          </div>
+        ) : view === "list" ? (
+          <div className="mt-6 flex flex-col gap-3">
+            {offers.map((offer) => (
+              <OfferListItem
+                key={offer.id}
+                offer={offer}
+                detailHref={getOfferPath(locale, String(offer.id))}
+                offerLabels={dict.offers}
+                categoryLabels={categoryLabels}
+                viewOfferLabel={viewOfferLabel}
+              />
+            ))}
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

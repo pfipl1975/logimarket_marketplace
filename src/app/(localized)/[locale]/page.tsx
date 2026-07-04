@@ -9,6 +9,7 @@ import type { Locale } from "@/lib/i18n/config";
 
 type PageProps = {
   params: Promise<{ locale: string }>;
+  searchParams?: Promise<{ view?: string }>;
 };
 
 export async function generateMetadata({
@@ -25,8 +26,13 @@ export async function generateMetadata({
 
 export default async function LocalizedPage({
   params,
+  searchParams,
 }: PageProps) {
-  const { locale: rawLocale } = await params;
+  const [{ locale: rawLocale }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve({} as { view?: string }),
+  ]);
+  const view = resolvedSearchParams.view === "list" ? "list" : "grid";
 
   if (!isLocale(rawLocale)) {
     notFound();
@@ -41,7 +47,7 @@ export default async function LocalizedPage({
   return (
     <>
       <JsonLdScript data={createHomeJsonLd(rawLocale, dict)} />
-      <HomePage locale={rawLocale} />
+      <HomePage locale={rawLocale} view={view} />
     </>
   );
 }
