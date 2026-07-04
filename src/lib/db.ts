@@ -21,9 +21,14 @@ function getPool() {
   pool = new Pool({
     connectionString,
     ssl: isSslRequired ? { rejectUnauthorized: false } : false,
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    max: Number(process.env.DATABASE_POOL_MAX ?? 3),
+    idleTimeoutMillis: 5_000,
+    connectionTimeoutMillis: 5_000,
+    maxLifetimeSeconds: 60,
+  });
+
+  pool.on("error", (error) => {
+    console.error("Unexpected idle PostgreSQL pool error", error);
   });
 
   return pool;
