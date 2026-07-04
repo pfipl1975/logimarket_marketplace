@@ -85,6 +85,11 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   const activeNode = findNode(categoryTree, category.id);
   const subcategories = activeNode ? activeNode.children : [];
 
+  const parentCategory = category.parentId !== null ? allCategories.find(c => c.id === category.parentId) : null;
+  const isSection = category.parentId === null;
+  const isGroup = parentCategory && parentCategory.parentId === null;
+  const isLeaf = parentCategory && parentCategory.parentId !== null;
+
   // Breadcrumbs trail
   const breadcrumbs = getCategoryBreadcrumbs(allCategories, category.id);
 
@@ -248,28 +253,81 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           )}
         </div>
 
-        {/* Subcategories links */}
-        {subcategories.length > 0 && (
-          <div className="mt-6">
-            <div className="flex flex-wrap gap-2">
-              {subcategories.map((sub: CatalogCategoryNode) => {
-                const subLabel = resolveCategoryName({
-                  slug: sub.slug,
-                  dbName: sub.name,
-                  localeBySlug,
-                  fallbackBySlug,
-                });
-                return (
-                  <Link
-                    key={sub.id}
-                    href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
-                    className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
-                  >
-                    {subLabel}
-                  </Link>
-                );
-              })}
-            </div>
+        {/* Subcategories section */}
+        {!isLeaf && subcategories.length > 0 && (
+          <div className="mt-8 border-t border-border pt-8 mb-10">
+            <h2 className="text-xl font-bold text-brand-navy mb-6">
+              {dict.catalog.allCategories}
+            </h2>
+
+            {isSection ? (
+              /* For Section: Render Groups + their leaf children */
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {subcategories.map((group: CatalogCategoryNode) => {
+                  const groupLabel = resolveCategoryName({
+                    slug: group.slug,
+                    dbName: group.name,
+                    localeBySlug,
+                    fallbackBySlug,
+                  });
+                  return (
+                    <div key={group.id} className="rounded-lg border border-border bg-white p-5 shadow-sm">
+                      <h3 className="text-sm font-bold text-brand-navy mb-3">
+                        <Link
+                          href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`}
+                          className="hover:text-brand-teal transition-colors"
+                        >
+                          {groupLabel}
+                        </Link>
+                      </h3>
+                      {group.children.length > 0 && (
+                        <ul className="space-y-1.5 border-t border-gray-50 pt-2.5">
+                          {group.children.map((cat: CatalogCategoryNode) => {
+                            const catLabel = resolveCategoryName({
+                              slug: cat.slug,
+                              dbName: cat.name,
+                              localeBySlug,
+                              fallbackBySlug,
+                            });
+                            return (
+                              <li key={cat.id}>
+                                <Link
+                                  href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`}
+                                  className="text-xs text-muted-foreground hover:text-brand-teal transition-colors"
+                                >
+                                  {catLabel}
+                                </Link>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              /* For Group: Render leaf children as clean chips/links */
+              <div className="flex flex-wrap gap-2">
+                {subcategories.map((sub: CatalogCategoryNode) => {
+                  const subLabel = resolveCategoryName({
+                    slug: sub.slug,
+                    dbName: sub.name,
+                    localeBySlug,
+                    fallbackBySlug,
+                  });
+                  return (
+                    <Link
+                      key={sub.id}
+                      href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
+                      className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
+                    >
+                      {subLabel}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
