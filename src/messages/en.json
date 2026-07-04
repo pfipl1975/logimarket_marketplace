@@ -10,7 +10,11 @@
     "cart": "Cart",
     "backToCatalog": "Back to catalog",
     "languageSwitcherAria": "Language selection",
-    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"
+    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION",
+    "menu": "Menu",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "mainNavigation": "Main navigation"
   },
   "common": {
     "close": "Close"

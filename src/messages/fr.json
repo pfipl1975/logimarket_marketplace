@@ -10,7 +10,11 @@
     "cart": "Panier",
     "backToCatalog": "Retour au catalogue",
     "languageSwitcherAria": "Choix de la langue",
-    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION"
+    "constructionNotice": "MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION",
+    "menu": "Menu",
+    "openMenu": "Ouvrir le menu",
+    "closeMenu": "Fermer le menu",
+    "mainNavigation": "Navigation principale"
   },
   "common": {
     "close": "Fermer"

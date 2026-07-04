@@ -1,31 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
-import { useCart } from "@/hooks/useCart";
+import { CartButton } from "@/components/CartButton";
+import { MobileNavigation, type MobileNavigationItem } from "@/components/MobileNavigation";
 import type { Locale } from "@/lib/i18n/config";
 import { getHomePath } from "@/lib/i18n/paths";
 import type { Dictionary } from "@/lib/i18n/types";
-
-function CartIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      className="h-4 w-4"
-      viewBox="0 0 24 24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        className="fill-none stroke-current"
-        d="M6.5 7h14l-1.7 8.5H8.1L6.5 7ZM6.5 7 5.8 4H3.5M9 19.5h.1M18 19.5h.1"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 
 interface SiteHeaderProps {
   locale: Locale;
@@ -38,11 +18,18 @@ export function SiteHeader({
   languageLinks,
   navLabels,
 }: SiteHeaderProps) {
-  const { itemCount, setIsOpen } = useCart();
   const homeHref = getHomePath(locale);
   const portalLinks = [
     { label: navLabels.portal, href: "https://logimarket.pl" },
     { label: navLabels.blog, href: "https://logimarket.pl/blog" },
+  ];
+
+  const catalogHref = locale === "pl" ? "/katalog" : `/${locale}/katalog`;
+
+  const mobileNavItems: MobileNavigationItem[] = [
+    { label: navLabels.portal, href: "https://logimarket.pl", external: true },
+    { label: navLabels.blog, href: "https://logimarket.pl/blog", external: true },
+    { label: navLabels.catalog, href: catalogHref },
   ];
 
   return (
@@ -62,16 +49,27 @@ export function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 px-3 py-2 sm:px-4 md:px-6">
-          <nav className="flex min-w-0 flex-1 flex-wrap items-center gap-1">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-4 md:px-6">
+          {/* Desktop Navigation Links */}
+          <nav className="hidden md:flex min-w-0 flex-1 items-center gap-1">
             {portalLinks.map((link) => (
               <a key={link.href} href={link.href} target="_blank" rel="noopener noreferrer"
                 className="rounded-md px-2.5 py-2 text-sm font-medium text-white/75 transition-colors hover:bg-white/5 hover:text-white sm:px-3">
                 {link.label}
               </a>
             ))}
-            <Link href={locale === "pl" ? "/katalog" : `/${locale}/katalog`} className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">{navLabels.catalog}</Link>
+            <Link href={catalogHref} className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">
+              {navLabels.catalog}
+            </Link>
           </nav>
+
+          {/* Mobile Navigation Burger Button & Dropdown */}
+          <MobileNavigation
+            items={mobileNavItems}
+            menuOpenLabel={navLabels.menu ?? "Menu"}
+            menuCloseLabel={navLabels.closeMenu ?? "Close menu"}
+            mainNavigationLabel={navLabels.mainNavigation ?? "Main navigation"}
+          />
 
           <div className="flex shrink-0 items-center gap-2">
             <LanguageSwitcher
@@ -79,16 +77,7 @@ export function SiteHeader({
               links={languageLinks}
               ariaLabel={navLabels.languageSwitcherAria}
             />
-            <button onClick={() => setIsOpen(true)}
-              className="relative flex items-center gap-1.5 rounded-md border border-white/15 px-3 py-2 text-sm font-medium text-white/80 transition-colors hover:border-white/30 hover:text-white">
-              <CartIcon />
-              <span className="hidden sm:inline">{navLabels.cart}</span>
-              {itemCount > 0 && (
-                <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-brand-teal text-[10px] font-bold text-white">
-                  {itemCount}
-                </span>
-              )}
-            </button>
+            <CartButton label={navLabels.cart} />
           </div>
         </div>
       </div>
