@@ -172,7 +172,7 @@ export interface OfferBreadcrumbJsonLdSource {
 
 export function createOfferBreadcrumbJsonLd(
   locale: Locale,
-  offer: OfferBreadcrumbJsonLdSource
+  offer: OfferBreadcrumbJsonLdSource,
 ): JsonLdValue {
   const homeUrl = getHomeCanonical(locale);
   const offerUrl = getOfferCanonical(locale, String(offer.id));
@@ -195,5 +195,25 @@ export function createOfferBreadcrumbJsonLd(
         "item": offerUrl,
       },
     ],
+  };
+}
+
+export interface CatalogItemListSource {
+  name: string;
+  url: string;
+}
+
+export function createCatalogItemListJsonLd(
+  items: CatalogItemListSource[],
+): JsonLdValue {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "url": item.url,
+    })),
   };
 }

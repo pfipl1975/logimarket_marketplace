@@ -4,6 +4,7 @@ import { CategoryPage } from "@/app/_shared/CategoryPage";
 import { getCategoryBySlug, getCategoryOffersCount } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
+import { absoluteUrl } from "@/lib/seo/urls";
 import type { Locale } from "@/lib/i18n/types";
 import type { Metadata } from "next";
 
@@ -50,12 +51,30 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const count = await getCategoryOffersCount(dbSlug);
 
+  const canonicalPath =
+    locale === defaultLocale
+      ? `/katalog/${categorySlug}`
+      : `/${locale}/katalog/${categorySlug}`;
+
   return {
     title: `${categoryLabel} | LogiMarket`,
     description: categoryIntro || `B2B offers in ${categoryLabel} on the LogiMarket platform.`,
     robots: {
       index: count > 0,
       follow: true,
+    },
+    alternates: {
+      canonical: absoluteUrl(canonicalPath),
+      languages: {
+        pl: absoluteUrl(`/katalog/${categorySlug}`),
+        en: absoluteUrl(`/en/katalog/${categorySlug}`),
+        de: absoluteUrl(`/de/katalog/${categorySlug}`),
+        fr: absoluteUrl(`/fr/katalog/${categorySlug}`),
+        uk: absoluteUrl(`/uk/katalog/${categorySlug}`),
+        es: absoluteUrl(`/es/katalog/${categorySlug}`),
+        zh: absoluteUrl(`/zh/katalog/${categorySlug}`),
+        "x-default": absoluteUrl(`/katalog/${categorySlug}`),
+      },
     },
   };
 }

@@ -4,6 +4,7 @@ import { CategoryPage } from "@/app/_shared/CategoryPage";
 import { getCategoryBySlug, getCategoryOffersCount } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
+import { absoluteUrl } from "@/lib/seo/urls";
 import type { Metadata } from "next";
 
 type Props = {
@@ -49,6 +50,19 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: {
       index: count > 0,
       follow: true,
+    },
+    alternates: {
+      canonical: absoluteUrl(`/katalog/${categorySlug}`),
+      languages: {
+        pl: absoluteUrl(`/katalog/${categorySlug}`),
+        en: absoluteUrl(`/en/katalog/${categorySlug}`),
+        de: absoluteUrl(`/de/katalog/${categorySlug}`),
+        fr: absoluteUrl(`/fr/katalog/${categorySlug}`),
+        uk: absoluteUrl(`/uk/katalog/${categorySlug}`),
+        es: absoluteUrl(`/es/katalog/${categorySlug}`),
+        zh: absoluteUrl(`/zh/katalog/${categorySlug}`),
+        "x-default": absoluteUrl(`/katalog/${categorySlug}`),
+      },
     },
   };
 }
