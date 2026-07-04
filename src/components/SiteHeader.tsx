@@ -47,15 +47,17 @@ export function SiteHeader({
 
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
-      <div className="bg-brand-light-gray border-b border-border-industrial py-1 px-3 text-center text-[10px] font-bold tracking-wider text-brand-navy uppercase sm:text-xs">
-        MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION
-      </div>
-
       <div className="bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center px-3 py-3 sm:px-4 md:px-6 md:py-4">
-          <Link href={homeHref} className="flex min-w-0 shrink-0 items-center">
-            <Logo variant="light" compact />
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-3 py-3 sm:px-4 md:gap-8 md:px-6 md:py-4">
+          <Link href={homeHref} className="flex shrink-0 items-center" aria-label="LogiMarket">
+            <Logo variant="light" compact markOnly />
           </Link>
+
+          <div className="min-w-0 flex-1 border-l border-white/15 pl-4 md:pl-8">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-white sm:text-xs md:text-sm">
+              MARKETPLACE W BUDOWIE / MARKETPLACE DURING CONSTRUCTION
+            </p>
+          </div>
         </div>
       </div>
 
