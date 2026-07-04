@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
@@ -30,16 +31,19 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md"
-      style={{ borderColor: "#d9dde2" }}
-      onMouseEnter={(e) => (e.currentTarget.style.borderColor = "#1474874d")}
-      onMouseLeave={(e) => (e.currentTarget.style.borderColor = "#d9dde2")}>
+    <article className="group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md border-[#d9dde2] hover:border-brand-teal/30">
       <Link href={offerDetailHref} className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
         {offer.imageUrl ? (
-          <img src={offer.imageUrl} alt={offer.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+          <Image
+            src={offer.imageUrl}
+            alt={offer.title}
+            fill
+            sizes="(min-width: 1024px) 25vw, (min-width: 768px) 33vw, 50vw"
+            className="object-cover transition-transform duration-300 group-hover:scale-105"
+          />
         ) : (
-          <div className="flex h-full w-full items-center justify-center" style={{ backgroundColor: "#141c2c0d" }}>
-            <Package className="h-12 w-12" style={{ color: "#5a64724d" }} />
+          <div className="flex h-full w-full items-center justify-center bg-[#141c2c]/5">
+            <Package className="h-12 w-12 text-[#5a6472]/30" />
           </div>
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
@@ -57,18 +61,18 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
         <h3 className="mt-1.5 text-base font-bold leading-snug">
           <Link href={offerDetailHref} className="text-[#141c2c] transition-colors hover:text-[#147487]">{offer.title}</Link>
         </h3>
-        <p className="mt-1 text-xs flex items-center gap-1" style={{ color: "#5a6472" }}>
+        <p className="mt-1 text-xs flex items-center gap-1 text-[#5a6472]">
           <Wrench className="h-3 w-3" />{offer.partnerName}
         </p>
 
         {attributes.length > 0 && (
-          <div className="mt-3 rounded border overflow-hidden" style={{ borderColor: "#d9dde299" }}>
+          <div className="mt-3 rounded border overflow-hidden border-[#d9dde2]/60">
             <table className="w-full text-xs">
               <tbody>
                 {attributes.map(([key, value], idx) => (
                   <tr key={key} className={idx % 2 === 0 ? "bg-white/50" : "bg-transparent"}>
                     <td className="px-2.5 py-1.5 font-medium w-1/2 border-r text-muted-foreground border-border">{getLocalizedTechnicalAttributeLabel(technicalAttributeLabels, key)}</td>
-                    <td className="px-2.5 py-1.5 font-bold w-1/2" style={{ color: "#141c2c" }}>{String(value)}</td>
+                    <td className="px-2.5 py-1.5 font-bold w-1/2 text-brand-navy">{String(value)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -76,7 +80,7 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
           </div>
         )}
 
-        <div className="mt-4 flex flex-col gap-3 pt-3 border-t" style={{ borderColor: "#d9dde299" }}>
+        <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
           <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
           <OfferAction
             offer={{

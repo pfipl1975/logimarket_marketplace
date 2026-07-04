@@ -76,17 +76,14 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className={`gap-2 font-semibold text-white border-0 ${className ?? ""}`}
-          style={{ backgroundColor: "#141c2c" }}
-          onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#1e2940")}
-          onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#141c2c")}>
+        <Button className={`gap-2 font-semibold text-white border-0 bg-brand-navy hover:bg-[#1e2940] ${className ?? ""}`}>
           <FileText className="h-4 w-4" />{ctaLabels.requestQuote}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-md" closeLabel={closeLabel}>
         {success ? (
           <div className="flex flex-col items-center gap-3 py-8 text-center">
-            <CheckCircle2 className="h-12 w-12" style={{ color: "#147487" }} />
+            <CheckCircle2 className="h-12 w-12 text-brand-teal" />
             <p className="text-base font-medium">{rfqLabels.successTitle}</p>
             <p className="text-sm text-muted-foreground">{rfqLabels.successDescription}</p>
           </div>
@@ -117,10 +114,7 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
                   {errorMessage}
                 </p>
               ) : null}
-              <Button type="submit" disabled={pending} className="w-full font-semibold gap-2 text-white border-0"
-                style={{ backgroundColor: "#147487" }}
-                onMouseEnter={(e) => !pending && (e.currentTarget.style.backgroundColor = "#0e5a6a")}
-                onMouseLeave={(e) => !pending && (e.currentTarget.style.backgroundColor = "#147487")}>
+              <Button type="submit" disabled={pending} className="w-full font-semibold gap-2 text-white border-0 bg-brand-teal hover:bg-[#0e5a6a] disabled:opacity-50">
                 {pending ? <><Loader2 className="h-4 w-4 animate-spin" />{rfqLabels.pending}</> : ctaLabels.sendRequest}
               </Button>
               <p className="text-center text-xs text-muted-foreground">{rfqLabels.consent}</p>

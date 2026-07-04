@@ -87,7 +87,7 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
       <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto" closeLabel={closeLabel}>
         {success ? (
           <div className="flex flex-col items-center gap-3 py-10 text-center">
-            <CheckCircle2 className="h-14 w-14" style={{ color: "#147487" }} />
+            <CheckCircle2 className="h-14 w-14 text-brand-teal" />
             <p className="text-xl font-bold">{checkoutLabels.successTitle}</p>
             <p className="text-sm text-muted-foreground max-w-xs">{checkoutLabels.successDescription}</p>
           </div>
@@ -102,7 +102,7 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
               </DialogDescription>
             </DialogHeader>
 
-            <div className="rounded-lg border p-3 space-y-2" style={{ borderColor: "#d9dde2", backgroundColor: "#f8f9fa" }}>
+            <div className="rounded-lg border p-3 space-y-2 border-[#d9dde2] bg-[#f8f9fa]">
               <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{checkoutLabels.summary}</p>
               {items.map((item) => (
                 <div key={item.id} className="flex justify-between text-sm">
@@ -150,10 +150,11 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
                   {errorMessage}
                 </p>
               ) : null}
-              <Button type="submit" disabled={pending} className="w-full font-semibold gap-2 text-white border-0"
-                style={{ backgroundColor: "#147487" }}
-                onMouseEnter={(e) => !pending && (e.currentTarget.style.backgroundColor = "#0e5a6a")}
-                onMouseLeave={(e) => !pending && (e.currentTarget.style.backgroundColor = "#147487")}>
+              <Button
+                type="submit"
+                disabled={pending}
+                className="w-full font-semibold gap-2 text-white border-0 bg-brand-teal hover:bg-[#0e5a6a]"
+              >
                 {pending ? <><Loader2 className="h-4 w-4 animate-spin" />{checkoutLabels.pending}</> : ctaLabels.placeOrder}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
