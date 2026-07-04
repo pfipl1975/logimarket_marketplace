@@ -1,15 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, ExternalLink, Wrench, Package, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Wrench, Package, ShieldCheck } from "lucide-react";
 import { getOfferById } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
-import { RfqDialog } from "@/components/RfqDialog";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
-import { AddToCartButton } from "@/components/AddToCartButton";
+import { OfferAction } from "@/components/OfferAction";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -111,29 +110,23 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                 <div className="flex h-12 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-base font-semibold text-gray-500 cursor-not-allowed">
                   Oferta nieaktualna
                 </div>
-              ) : isEcommerce ? (
-                <AddToCartButton offerId={offer.id} label={dict.cta.addToCart} />
-              ) : offer.conversionType === "rfq" ? (
-                <RfqDialog
-                  offerId={offer.id}
-                  offerTitle={offer.title}
-                  partnerName={offer.partnerName}
-                  className="w-full h-12 text-base"
+              ) : (
+                <OfferAction
+                  offer={{
+                    id: offer.id,
+                    title: offer.title,
+                    offerModel: offer.offerModel,
+                    conversionType: offer.conversionType,
+                    partnerName: offer.partnerName,
+                  }}
+                  ctaLabels={dict.cta}
                   rfqLabels={dict.rfq}
                   formLabels={dict.form}
                   systemLabels={dict.system}
-                  ctaLabels={dict.cta}
                   closeLabel={dict.common.close}
+                  externalOfferLabel={dict.offers.externalOffer}
+                  variant="detail"
                 />
-              ) : (
-                <a
-                  href={`/go/${offer.id}`}
-                  target="_blank"
-                  rel="nofollow noopener noreferrer"
-                  className="inline-flex h-12 w-full items-center justify-center gap-2 rounded-md border-0 bg-brand-navy px-4 py-2 text-base font-semibold text-white transition-colors hover:bg-[#1e2940]"
-                >
-                  {dict.offers.externalOffer} <ExternalLink className="h-5 w-5" />
-                </a>
               )}
             </div>
 

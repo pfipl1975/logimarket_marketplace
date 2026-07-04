@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, ExternalLink, Wrench, Package } from "lucide-react";
+import { Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { useCart } from "@/hooks/useCart";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { formatPrice } from "@/lib/utils";
-import { RfqDialog } from "./RfqDialog";
+import { OfferAction } from "./OfferAction";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
 
@@ -26,7 +24,6 @@ interface OfferCardProps {
 }
 
 export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels, technicalAttributeLabels }: OfferCardProps) {
-  const { addToCart } = useCart();
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
@@ -81,38 +78,22 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
 
         <div className="mt-4 flex flex-col gap-3 pt-3 border-t" style={{ borderColor: "#d9dde299" }}>
           <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
-          {isEcommerce ? (
-            <Button onClick={() => addToCart(offer.id, 1)} className="w-full gap-2 font-semibold text-white border-0"
-              style={{ backgroundColor: "#147487" }}
-              onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "#0e5a6a")}
-              onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "#147487")}>
-              <ShoppingCart className="h-4 w-4" />{ctaLabels.addToCart}
-            </Button>
-          ) : offer.conversionType === "rfq" ? (
-            <RfqDialog
-              offerId={offer.id}
-              offerTitle={offer.title}
-              partnerName={offer.partnerName}
-              className="w-full"
-              rfqLabels={rfqLabels}
-              formLabels={formLabels}
-              systemLabels={systemLabels}
-              ctaLabels={ctaLabels}
-              closeLabel={closeLabel}
-            />
-          ) : (
-            <a
-              href={`/go/${offer.id}`}
-              target="_blank"
-              rel="nofollow noopener noreferrer"
-              className="inline-flex items-center justify-center w-full gap-2 rounded-md px-4 py-2 text-sm font-semibold text-white border-0 transition-colors"
-              style={{ backgroundColor: "#141c2c" }}
-              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#1e2940"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#141c2c"; }}
-            >
-              {offerLabels.externalOffer} <ExternalLink className="h-4 w-4" />
-            </a>
-          )}
+          <OfferAction
+            offer={{
+              id: offer.id,
+              title: offer.title,
+              offerModel: offer.offerModel,
+              conversionType: offer.conversionType,
+              partnerName: offer.partnerName,
+            }}
+            ctaLabels={ctaLabels}
+            rfqLabels={rfqLabels}
+            formLabels={formLabels}
+            systemLabels={systemLabels}
+            closeLabel={closeLabel}
+            externalOfferLabel={offerLabels.externalOffer}
+            variant="card"
+          />
         </div>
       </div>
     </article>
