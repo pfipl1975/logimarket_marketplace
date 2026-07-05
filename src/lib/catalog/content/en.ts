@@ -19,7 +19,29 @@ export const enCategoryContent: CategoryContentMap = {
       "Operating aisle width (AST) and compatibility with reach trucks, VNA trucks, or counterbalance forklifts",
       "Occupational safety requirements (upright protectors, backstop mesh panels, safety fencing)",
       "Need for future racking system expansion or integration with warehouse automation",
-      "Technical condition and joints of the concrete floor slab affecting footplate anchoring"
+      "Technical condition and joints of the concrete floor slab affecting footplate anchoring",
+      "Fire resistance class of steel components and sprinkler system requirements (ESFR)",
+      "Influence of installation tolerances and upright verticality on structure stability per EN 15620"
+    ],
+    technicalParameters: [
+      { label: "Design standards", value: "EN 15620 / EN 15635 compliant" },
+      { label: "Max structure height", value: "Up to 30+ meters (in silo / clad-rack systems)" },
+      { label: "Allowable beam deflection", value: "L/200 (according to FEM standards)" },
+      { label: "Protective coating", value: "Powder coated (epoxy-polyester) / Hot-dip galvanized (HDG)" }
+    ],
+    faq: [
+      {
+        question: "How often should expert inspections of warehouse racking be carried out?",
+        answer: "According to the EN 15635 standard, expert inspections by a certified inspector must be performed at least once every 12 months. In addition, weekly internal visual inspections conducted by the designated PRSES (Person Responsible for Racking Safety) are required."
+      },
+      {
+        question: "What do racking damage classification levels (green, amber, red) mean?",
+        answer: "Damage levels define the deformation of uprights or braces. Green level indicates deflection within limits (safe to continue operating). Amber level requires part replacement at the next opportunity (no reloading allowed after unloading). Red level indicates a critical risk of collapse — the bay must be immediately offloaded and isolated from use."
+      },
+      {
+        question: "Is it permissible to use wire mesh decking on selective pallet racks?",
+        answer: "Yes, drop-in wire mesh decking is widely used to store non-standard or small loads and to prevent loose cartons from falling. It is also recommended by fire safety regulations because it allows water from sprinkler systems to flow freely."
+      }
     ],
     relatedCategoryEdges: [
       {
@@ -67,7 +89,29 @@ export const enCategoryContent: CategoryContentMap = {
       "Work intensity (number of shifts, need for fast battery exchange or opportunity charging)",
       "Surface type and wheels (polyurethane wheels for smooth floors, solid resilient or pneumatic wheels for uneven terrain)",
       "Occupational safety requirements and additional equipment (fork cameras, proximity radars, blue spot, speed limiters)",
-      "Compatibility with existing infrastructure (clearance height of doorways, parameters of loading docks and ramps)"
+      "Compatibility with existing infrastructure (clearance height of doorways, parameters of loading docks and ramps)",
+      "Warranty service availability, response times (SLA), and access to original spare parts",
+      "Total Cost of Ownership (TCO), including energy consumption, charging cycles, and mandatory safety inspections"
+    ],
+    technicalParameters: [
+      { label: "Load capacity", value: "from 1000 kg to 8000+ kg (depending on class)" },
+      { label: "Battery standards", value: "Lead-acid (PzS) / Lithium-ion (Li-Ion, fast charging support)" },
+      { label: "Lift height", value: "Up to 13+ meters (for Reach Trucks and VNA system trucks)" },
+      { label: "Safety standard", value: "ISO 3691-1 compliant" }
+    ],
+    faq: [
+      {
+        question: "When is it recommended to replace lead-acid batteries with lithium-ion (Li-Ion) technology?",
+        answer: "Li-Ion technology is highly recommended for intensive, multi-shift operations. It allows opportunity charging (e.g. during 15-minute breaks), requires no dedicated charging rooms (no gas emissions), and needs zero maintenance. In contrast, lead-acid batteries require 8 hours of charging and 8 hours of cooling."
+      },
+      {
+        question: "What is the difference between a Reach Truck and a standard counterbalance forklift?",
+        answer: "A Reach Truck has a mast that extends forward, allowing it to retrieve pallets in narrow working aisles (often under 2.9 m). Traditional counterbalance forklifts require wider aisles (3.5 - 4.0 m) but are more versatile for outdoor operations, trailer loading, and uneven terrain."
+      },
+      {
+        question: "What safety equipment is recommended for forklifts operating in shared pedestrian zones?",
+        answer: "Recommended equipment includes optical warnings (e.g. blue spot / red zone lights projected on the floor), acoustic reverse alarms, speed limiting systems, and active pedestrian detection radars that automatically slow down the vehicle."
+      }
     ],
     relatedCategoryEdges: [
       {
@@ -120,7 +164,9 @@ export const enCategoryContent: CategoryContentMap = {
       { label: "Temperature resistance", value: "-20°C to +60°C (PP), -40°C to +70°C (HDPE)" },
       { label: "Maximum capacity", value: "from 15 kg to 50 kg (depending on base variant)" },
       { label: "Container base", value: "Smooth, ribbed, double (reinforced)" },
-      { label: "Stackability", value: "Yes (structure allows stable stacking)" }
+      { label: "Stackability", value: "Yes (structure allows stable stacking)" },
+      { label: "Antistatic versions (ESD)", value: "Available (with surface resistance 10^3 - 10^10 Ohm)" },
+      { label: "Labeling options", value: "RFID / Barcode I2of5 / Laser logo engraving" }
     ],
     faq: [
       {
@@ -134,6 +180,10 @@ export const enCategoryContent: CategoryContentMap = {
       {
         question: "Are Euro containers resistant to oils and chemicals?",
         answer: "Yes, polypropylene and polyethylene exhibit very high resistance to most acids, alkalis, oils, and industrial greases."
+      },
+      {
+        question: "Are Euro containers recyclable?",
+        answer: "Yes, the containers are made from homogeneous thermoplastics (HDPE or PP), allowing 100% material recycling. Worn or damaged containers can be ground down and processed into new industrial regranulate."
       }
     ],
     relatedCategoryEdges: [
@@ -180,7 +230,9 @@ export const enCategoryContent: CategoryContentMap = {
       { label: "Frame load capacity", value: "up to 300 kg (standard), up to 600 kg (heavy duty)" },
       { label: "Worktop type", value: "Laminated MDF, worktop with oil-resistant rubber, hardwood multiplex plywood" },
       { label: "Height adjustment", value: "Manual (750-1050 mm) or smooth electric" },
-      { label: "Frame finish", value: "Powder coated (steel structure)" }
+      { label: "Frame finish", value: "Powder coated (steel structure)" },
+      { label: "ESD protection", value: "Optional (grounded worktops and frame per EN 61340-5-1)" },
+      { label: "Ergonomic certification", value: "Design compliant with ISO 6385 standards" }
     ],
     inquiryChecklist: {
       description: "The checklist below applies only to custom-made, individual designs of packing benches and picking stations. It helps match ergonomic parameters and equipment to your specific warehouse processes:",
@@ -240,6 +292,10 @@ export const enCategoryContent: CategoryContentMap = {
       {
         question: "When is it worth choosing a bench with electric height adjustment?",
         answer: "Electric adjustment is key in multi-shift work environments where people of different heights work at one station, or when the process requires frequent changes from sitting to standing position to maintain ergonomics."
+      },
+      {
+        question: "When is it necessary to use ESD (antistatic) packing benches?",
+        answer: "An ESD configuration is mandatory when packing and assembling electronic components, microprocessors, and sensitive measuring devices. The grounded ESD worktop and conductive powder coating protect electronics from electrostatic discharge damage caused by operator movement."
       }
     ],
     relatedCategoryEdges: [
@@ -282,7 +338,9 @@ export const enCategoryContent: CategoryContentMap = {
       { label: "Decking type", value: "P5 chipboard, trapezoidal sheet with board, steel grating" },
       { label: "Clear height", value: "Customized individually (typically min. 2200 mm under the mezzanine)" },
       { label: "Edge protection", value: "System guardrails (handrail, knee rail, toe board)" },
-      { label: "Loading gates", value: "Sliding, tilting (safety lock gates protecting operator)" }
+      { label: "Loading gates", value: "Sliding, tilting (safety lock gates protecting operator)" },
+      { label: "Execution class (EXC)", value: "EXC2 (in accordance with EN 1090-2)" },
+      { label: "Assembly bolts", value: "Grade 8.8 / 10.9 (high-strength structural bolting assemblies)" }
     ],
     inquiryChecklist: {
       description: "For the preparation of a complete engineering concept, structural calculations, and budget estimation of the warehouse mezzanine, please collect and provide the following technical data of the facility:",
@@ -351,6 +409,10 @@ export const enCategoryContent: CategoryContentMap = {
       {
         question: "Can manual hand pallet trucks be operated on the mezzanine?",
         answer: "Yes, provided the mezzanine is designed for appropriate dynamic and point loads (typically min. 500 kg/m² and appropriate decking resistant to wheel pressure, e.g. P5 board covered with sheet metal or plywood)."
+      },
+      {
+        question: "What safety gates (cradle gates) are recommended at mezzanine drop-off points?",
+        answer: "It is recommended to use tilting/cradle safety gates. They work on a counterweight principle: when the gate is open for the forklift on the edge, the operator's side is closed by a steel barrier. Once rotated, the operator gains safe access to the pallet while the outer edge becomes completely blocked."
       }
     ],
     relatedCategoryEdges: [

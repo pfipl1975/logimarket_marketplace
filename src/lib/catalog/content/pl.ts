@@ -19,7 +19,29 @@ export const plCategoryContent: CategoryContentMap = {
       "Szerokość korytarzy roboczych (AST) i kompatybilność z wózkami typu reach truck, VNA lub wózkami czołowymi",
       "Wymogi bezpieczeństwa pracy (odbojnice, siatki zabezpieczające tył regału, wygrodzenia BHP)",
       "Potrzeba przyszłej rozbudowy systemu regałowego lub integracji z automatyzacją magazynową",
-      "Stan techniczny i parametry dylatacji posadzki betonowej wpływającej na kotwienie stóp regałów"
+      "Stan techniczny i parametry dylatacji posadzki betonowej wpływającej na kotwienie stóp regałów",
+      "Klasa odporności ogniowej elementów stalowych i wymagania dotyczące systemów tryskaczowych (ESFR)",
+      "Wpływ tolerancji montażowych i pionowości słupów na stateczność konstrukcji według normy PN-EN 15620"
+    ],
+    technicalParameters: [
+      { label: "Standard projektowy", value: "PN-EN 15620 / PN-EN 15635" },
+      { label: "Maksymalna wysokość konstrukcji", value: "Do 30+ metrów (w systemach silosowych / clad-rack)" },
+      { label: "Dopuszczalne ugięcie belek", value: "L/200 (zgodnie z normą FEM)" },
+      { label: "Powłoka ochronna", value: "Malowanie proszkowe (epoksydowo-poliestrowe) / Ocynk ogniowy (HDG)" }
+    ],
+    faq: [
+      {
+        question: "Jak często należy przeprowadzać przeglądy eksperckie regałów magazynowych?",
+        answer: "Zgodnie z normą PN-EN 15635 oraz polskimi przepisami BHP, przeglądy eksperckie (wykonywane przez certyfikowanego inspektora) muszą być realizowane co najmniej raz na 12 miesięcy. Dodatkowo wymagane są cotygodniowe przeglądy wewnętrzne (wizualne) przeprowadzane przez wyznaczonego w magazynie PRSES (osobę odpowiedzialną za bezpieczeństwo regałów)."
+      },
+      {
+        question: "Co oznacza klasa uderzenia regału według klasyfikacji uszkodzeń (zielona, pomarańczowa, czerwona)?",
+        answer: "Klasyfikacja wg PN-EN 15635 określa stopień deformacji elementów nośnych. Klasa zielona oznacza ugięcie w granicach normy (dopuszczalna dalsza eksploatacja). Klasa pomarańczowa to uszkodzenie wymagające wymiany elementu przy najbliższej okazji (obciążanie zabronione po rozładunku). Klasa czerwona oznacza krytyczne zagrożenie katastrofą budowlaną — strefa musi być natychmiast wyłączona z użytku i rozładowana."
+      },
+      {
+        question: "Czy dopuszczalne jest stosowanie półek siatkowych na regałach paletowych?",
+        answer: "Tak, półki siatkowe (drop-in wire decking) są powszechnie stosowane w celu umożliwienia składowania towarów drobnicowych na paletach uszkodzonych lub jako zabezpieczenie przed wypadnięciem luźnych kartonów. Są również zalecane przez przepisy ppoż., gdyż umożliwiają swobodny przepływ wody z instalacji tryskaczowych."
+      }
     ],
     relatedCategoryEdges: [
       {
@@ -67,7 +89,29 @@ export const plCategoryContent: CategoryContentMap = {
       "Intensywność pracy (liczba zmian roboczych, potrzeba szybkiej wymiany lub doładowywania baterii)",
       "Rodzaj nawierzchni i kół (koła poliuretanowe na gładką posadzkę, superelastyczne lub pneumatyczne na teren nierówny)",
       "Wymagania BHP i wyposażenie dodatkowe (kamery na widłach, radary zbliżeniowe, blue spot, ograniczniki prędkości)",
-      "Kompatybilność z istniejącą infrastrukturą (wysokość bram przejazdowych, parametry ramp i doków przeładunkowych)"
+      "Kompatybilność z istniejącą infrastrukturą (wysokość bram przejazdowych, parametry ramp i doków przeładunkowych)",
+      "Dostępność serwisu gwarancyjnego, czas reakcji serwisu (SLA) i dostęp do oryginalnych części zamiennych",
+      "Koszty TCO (Total Cost of Ownership) obejmujące zużycie energii, cykle ładowania i przeglądy konserwacyjne UDT"
+    ],
+    technicalParameters: [
+      { label: "Dopuszczalny udźwig", value: "od 1000 kg do 8000+ kg (zależnie od klasy wózka)" },
+      { label: "Standard zasilania elektrycznego", value: "Baterie kwasowo-ołowiowe (PzS) / Litowo-jonowe (Li-Ion, szybkie ładowanie)" },
+      { label: "Wysokość podnoszenia masztu", value: "Do 13+ metrów (w wózkach wysokiego składowania Reach Truck / VNA)" },
+      { label: "Norma bezpieczeństwa", value: "Zgodność z PN-EN ISO 3691-1" }
+    ],
+    faq: [
+      {
+        question: "Kiedy warto zastąpić baterię kwasowo-ołowiową technologią litowo-jonową (Li-Ion)?",
+        answer: "Technologia Li-Ion jest zalecana do pracy wielozmianowej o wysokim natężeniu. Umożliwia okazjonalne szybkie doładowywanie (np. w trakcie 15-minutowych przerw), nie wymaga specjalnych wentylowanych akumulatorowni (brak emisji gazów) ani codziennej konserwacji (uzupełniania wody destylowanej). Wózek z baterią kwasową wymaga 8-godzinnego ładowania i 8-godzinnego chłodzenia baterii."
+      },
+      {
+        question: "Czym różni się wózek typu Reach Truck od standardowego wózka czołowego?",
+        answer: "Wózek Reach Truck (wysokiego składowania) ma wysuwany maszt do przodu i tyłu, co pozwala na pobieranie palet w bardzo wąskich korytarzach roboczych (często poniżej 2.9 m). Tradycyjne wózki czołowe potrzebują szerszych korytarzy (3.5 - 4.0 m), ale są bardziej wszechstronne do prac zewnętrznych, załadunku naczep i jazdy po nierównym terenie."
+      },
+      {
+        question: "Jakie uprawnienia są wymagane do obsługi wózków widłowych w Polsce?",
+        answer: "Wymagane jest posiadanie uprawnień UDT (Urzędu Dozoru Technicznego) odpowiedniej kategorii (dawne I WJO, II WJO lub III WJO). Odpowiednikami są aktualne kwalifikacje do obsługi wózków jezdniowych podnośnikowych z mechanicznym napędem podnoszenia."
+      }
     ],
     relatedCategoryEdges: [
       {
@@ -120,7 +164,9 @@ export const plCategoryContent: CategoryContentMap = {
       { label: "Odporność na temperatury", value: "-20°C do +60°C (PP), -40°C do +70°C (HDPE)" },
       { label: "Maksymalny udźwig", value: "od 15 kg do 50 kg (zależnie od wariantu dna)" },
       { label: "Dno pojemnika", value: "Gładkie, żebrowane, podwójne (wzmocnione)" },
-      { label: "Możliwość sztaplowania", value: "Tak (struktura umożliwia stabilne piętrowanie)" }
+      { label: "Możliwość sztaplowania", value: "Tak (struktura umożliwia stabilne piętrowanie)" },
+      { label: "Wersje antystatyczne (ESD)", value: "Dostępne (z rezystancją powierzchniową 10^3 - 10^10 Ohm)" },
+      { label: "Znakowanie", value: "RFID / Kod kreskowy I2of5 / Grawer laserowy logo" }
     ],
     faq: [
       {
@@ -134,6 +180,10 @@ export const plCategoryContent: CategoryContentMap = {
       {
         question: "Czy pojemniki Euro są odporne na oleje i chemikalia?",
         answer: "Tak, polipropylen i polietylen wykazują bardzo wysoką odporność na większość kwasów, zasad, olejów oraz smarów przemysłowych."
+      },
+      {
+        question: "Czy pojemniki Euro mogą być poddawane recyklingowi?",
+        answer: "Tak, pojemniki są wykonane z jednorodnych tworzyw termoplastycznych (HDPE lub PP), co umożliwia ich 100% recykling materiałowy. Zużyte lub uszkodzone pojemniki mogą być zmielone i przetworzone na nowy regranulat przemysłowy."
       }
     ],
     relatedCategoryEdges: [
@@ -180,7 +230,9 @@ export const plCategoryContent: CategoryContentMap = {
       { label: "Nośność konstrukcji", value: "do 300 kg (standard), do 600 kg (ciężka)" },
       { label: "Typ blatu", value: "MDF laminowany, blat z gumą olejoodporną, sklejka liściasta" },
       { label: "Regulacja wysokości", value: "Manualna (750-1050 mm) lub elektryczna płynna" },
-      { label: "Wykończenie stelaża", value: "Malowanie proszkowe (konstrukcja stalowa)" }
+      { label: "Wykończenie stelaża", value: "Malowanie proszkowe (konstrukcja stalowa)" },
+      { label: "Ochrona przed wyładowaniami (ESD)", value: "Opcjonalna (blaty i konstrukcja uziemiona zgodnie z PN-EN 61340-5-1)" },
+      { label: "Certyfikacja ergonomiczna", value: "Konstrukcja spełniająca wymogi normy DIN EN ISO 6385" }
     ],
     inquiryChecklist: {
       description: "Poniższa lista kontrolna dotyczy wyłącznie indywidualnych projektów stanowisk kompletacyjnych i stołów pakowych wykonywanych na wymiar. Pomaga ona dopasować parametry ergonomiczne i osprzęt do specyfiki Państwa procesów:",
@@ -240,6 +292,10 @@ export const plCategoryContent: CategoryContentMap = {
       {
         question: "Kiedy warto wybrać stół z elektryczną regulacją wysokości?",
         answer: "Elektryczna regulacja jest kluczowa w systemie pracy wielozmianowej, gdzie przy jednym stanowisku pracują osoby o różnym wzroście, lub gdy proces wymaga częstej zmiany pozycji pracy z siedzącej na stojącą w celu zachowania ergonomii."
+      },
+      {
+        question: "Kiedy konieczne jest stosowanie stołów pakowych w wersji ESD (antystatycznej)?",
+        answer: "Wersja ESD jest wymagana przy pakowaniu i kompletowaniu podzespołów elektronicznych, mikroprocesorów oraz czułych urządzeń pomiarowych. Uziemiony blat ESD i powłoka przewodząca chronią elektronikę przed uszkodzeniem wskutek nagłych wyładowań elektrostatycznych generowanych przez ruch operatora."
       }
     ],
     relatedCategoryEdges: [
@@ -282,7 +338,9 @@ export const plCategoryContent: CategoryContentMap = {
       { label: "Typ poszycia", value: "Płyta wiórowa P5, blacha trapezowa z płytą, krata pomostowa (stalowa)" },
       { label: "Wysokość w świetle", value: "Dostosowywana indywidualnie (zazwyczaj min. 2200 mm pod antresolą)" },
       { label: "Zabezpieczenia krawędzi", value: "Balustrady systemowe (barierka kolanowa, krawężnik)" },
-      { label: "Bramki załadunkowe", value: "Przesuwne, wahadłowe (bramki bezpieczeństwa śluzy)" }
+      { label: "Bramki załadunkowe", value: "Przesuwne, wahadłowe (bramki bezpieczeństwa śluzy)" },
+      { label: "Klasa wykonania EXC", value: "EXC2 (zgodnie z normą PN-EN 1090-2)" },
+      { label: "Śruby montażowe", value: "Klasa 8.8 / 10.9 (konstrukcyjne połączenia sprężane)" }
     ],
     inquiryChecklist: {
       description: "Dla przygotowania kompletnej koncepcji inżynieryjnej, kalkulacji statycznej oraz wyceny budżetowej antresoli magazynowej, prosimy o zebranie i dostarczenie poniższych danych technicznych obiektu:",
@@ -351,6 +409,10 @@ export const plCategoryContent: CategoryContentMap = {
       {
         question: "Czy na antresoli można jeździć ręcznymi wózkami paletowymi?",
         answer: "Tak, pod warunkiem zaprojektowania antresoli na odpowiednie obciążenia dynamiczne i punktowe (zazwyczaj min. 500 kg/m² oraz odpowiednie poszycie odporne na nacisk kół wózka, np. płyta P5 pokryta blachą lub sklejką)."
+      },
+      {
+        question: "Jakie bramki bezpieczeństwa (śluzy) są zalecane w punktach przeładunkowych na antresoli?",
+        answer: "Zaleca się stosowanie bramek wahadłowych typu 'kołyska' (paletowe śluzy bezpieczeństwa). Działają one na zasadzie przeciwwagi: gdy bramka jest otwarta od strony wózka widłowego, krawędź antresoli od strony operatora jest całkowicie odgrodzona barierką, a po obróceniu ładunku operator ma bezpieczny dostęp, podczas gdy krawędź zewnętrzna zostaje zamknięta."
       }
     ],
     relatedCategoryEdges: [

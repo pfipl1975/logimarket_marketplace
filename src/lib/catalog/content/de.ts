@@ -19,7 +19,29 @@ export const deCategoryContent: CategoryContentMap = {
       "Arbeitsgangbreite (AST) und Kompatibilität mit Schubmaststaplern, VNA-Schmalgangstaplern oder Frontstaplern",
       "Anforderungen an die Arbeitssicherheit (Anfahrschutz, Rückgitterpaneele, Sicherheitszäune)",
       "Bedarf an zukünftiger Regalerweiterung oder Integration mit Lagerautomatisierung",
-      "Technischer Zustand und Dehnungsfugen der Betonbodenplatte, die die Fußplattenverankerung beeinflussen"
+      "Technischer Zustand und Dehnungsfugen der Betonbodenplatte, die die Fußplattenverankerung beeinflussen",
+      "Feuerwiderstandsklasse der Stahlbauteile und Anforderungen an Sprinkleranlagen (ESFR)",
+      "Einfluss von Montagetoleranzen und Lotabweichungen der Stützen auf die Tragwerksstabilität nach DIN EN 15620"
+    ],
+    technicalParameters: [
+      { label: "Planungsnormen", value: "Konform mit DIN EN 15620 / DIN EN 15635" },
+      { label: "Maximale Bauhöhe", value: "Bis zu 30+ Meter (in Silobauweise / dach- und wandgetragenen Systemen)" },
+      { label: "Zulässige Trägerdurchbiegung", value: "L/200 (nach FEM-Richtlinien)" },
+      { label: "Schutzbeschichtung", value: "Pulverbeschichtet (Epoxid-Polyester) / Feuerverzinkt (HDG)" }
+    ],
+    faq: [
+      {
+        question: "Wie oft müssen Experteninspektionen von Lagerregalen durchgeführt werden?",
+        answer: "Gemäß der DIN EN 15635 müssen Experteninspektionen durch einen zertifizierten Prüfer mindestens alle 12 Monate durchgeführt werden. Zusätzlich sind wöchentliche interne Sichtprüfungen durch den Sicherheitsbeauftragten für Regale (PRSES) erforderlich."
+      },
+      {
+        question: "Was bedeuten die Schadenstufen bei Regalen (grün, orange, rot)?",
+        answer: "Die Schadenstufen definieren den Deformationsgrad. Grün bedeutet Verformung innerhalb der Toleranz (weiterer Betrieb zulässig). Orange bedeutet Beschädigung, die bei nächster Gelegenheit behoben werden muss (kein Wiederbeladen nach Entladung). Rot bedeutet eine kritische Einsturzgefahr — das Regalfeld muss sofort entladen und gesperrt werden."
+      },
+      {
+        question: "Ist der Einsatz von Gitterrostböden in Palettenregalen zulässig?",
+        answer: "Ja, Gitterrostböden (Auflagegitter) werden häufig eingesetzt, um die Lagerung von Sonderladehilfsmitteln zu ermöglichen oder das Herabfallen von Einzelkartons zu verhindern. Sie sind auch brandschutztechnisch vorteilhaft, da das Löschwasser von Sprinklern ungehindert durchfließen kann."
+      }
     ],
     relatedCategoryEdges: [
       {
@@ -67,7 +89,29 @@ export const deCategoryContent: CategoryContentMap = {
       "Arbeitsintensität (Anzahl der Schichten, Bedarf an schnellem Batteriewechsel oder Gelegenheitsladung)",
       "Oberflächenbeschaffenheit und Räder (Polyurethanräder für glatte Böden, elastische Vollgummi- oder Luftreifen für unebenes Gelände)",
       "Arbeitsschutzanforderungen und Zusatzausrüstung (Gabelkameras, Abstandsradare, Blue Spot, Geschwindigkeitsbegrenzer)",
-      "Kompatibilität mit bestehender Infrastruktur (Durchfahrtshöhe von Toren, Parameter von Verladedocks und Rampen)"
+      "Kompatibilität mit bestehender Infrastruktur (Durchfahrtshöhe von Toren, Parameter von Verladedocks und Rampen)",
+      "Verfügbarkeit des Garantieservices, Service-Reaktionszeiten (SLA) und Zugang zu Originalersatzteilen",
+      "Gesamtbetriebskosten (TCO), einschließlich Energieverbrauch, Ladezyklen und vorgeschriebenen UDT-Wartungsprüfungen"
+    ],
+    technicalParameters: [
+      { label: "Tragfähigkeit", value: "von 1000 kg bis 8000+ kg (je nach Staplerklasse)" },
+      { label: "Batteriestandard", value: "Blei-Säure (PzS) / Lithium-Ionen (Li-Ion, Schnellladung unterstützt)" },
+      { label: "Hubhöhe", value: "Bis zu 13+ Meter (für Schubmaststapler und VNA-Schmalganggeräte)" },
+      { label: "Sicherheitsnorm", value: "Konform mit DIN EN ISO 3691-1" }
+    ],
+    faq: [
+      {
+        question: "Wann lohnt sich der Umstieg von Blei-Säure-Batterien auf Lithium-Ionen-Technologie (Li-Ion)?",
+        answer: "Die Li-Ion-Technologie eignet sich ideal for den intensiven Mehrschichtbetrieb. Sie ermöglicht schnelles Zwischenladen (z. B. in Pausen), benötigt keine speziellen Batterieladeräume (keine Gasung) und ist wartungsfrei. Blei-Säure-Batterien erfordern dagegen 8 Stunden Ladezeit und 8 Stunden Abkühlung."
+      },
+      {
+        question: "Was ist der Unterschied zwischen einem Schubmaststapler und einem Frontstapler?",
+        answer: "Ein Schubmaststapler besitzt ein vorschubfähiges Hubgerüst, wodurch er in sehr engen Gängen (oft unter 2,9 m) arbeiten kann. Klassische Frontstapler benötigen breitere Gänge (3,5 - 4,0 m), sind aber universeller im Außenbereich, bei der Lkw-Verladung und auf unebenem Gelände einsetzbar."
+      },
+      {
+        question: "Welche Sicherheitsvorrichtungen sind für Stapler im Mischbetrieb mit Fußgängern ratsam?",
+        answer: "Empfehlenswert sind optische Warnsysteme (wie Blue Spot oder rote Sicherheitszonen-Lichtlinien auf dem Boden), akustische Rückfahrwarner, Geschwindigkeitsbegrenzer und aktive Personenerkennungskameras, die den Stapler automatisch abbremsen."
+      }
     ],
     relatedCategoryEdges: [
       {
@@ -120,7 +164,9 @@ export const deCategoryContent: CategoryContentMap = {
       { label: "Temperaturbeständigkeit", value: "-20°C bis +60°C (PP), -40°C bis +70°C (HDPE)" },
       { label: "Maximale Tragfähigkeit", value: "von 15 kg bis 50 kg (je nach Bodenvariante)" },
       { label: "Behälterboden", value: "Glatt, gerippt, doppelt (verstärkt)" },
-      { label: "Stapelfähigkeit", value: "Ja (Konstruktion ermöglicht stabiles Stapeln)" }
+      { label: "Stapelfähigkeit", value: "Ja (Konstruktion ermöglicht stabiles Stapeln)" },
+      { label: "Antistatische Ausführungen (ESD)", value: "Verfügbar (mit Oberflächenwiderstand 10^3 - 10^10 Ohm)" },
+      { label: "Kennzeichnungsoptionen", value: "RFID / Barcode I2of5 / Laser-Logogravur" }
     ],
     faq: [
       {
@@ -134,6 +180,10 @@ export const deCategoryContent: CategoryContentMap = {
       {
         question: "Sind Euro-Behälter beständig gegen Öle und Chemikalien?",
         answer: "Ja, Polypropylen und Polyethylen weisen eine sehr hohe Beständigkeit gegenüber den meisten Säuren, Laugen, Ölen und Industriefetten auf."
+      },
+      {
+        question: "Sind Euro-Behälter recycelbar?",
+        answer: "Ja, die Behälter bestehen aus sortenreinen Thermoplasten (HDPE oder PP), was ein 100%iges stoffliches Recycling ermöglicht. Beschädigte oder ausgemusterte Behälter können geschreddert und zu neuem Industrieregranulat verarbeitet werden."
       }
     ],
     relatedCategoryEdges: [
@@ -180,7 +230,9 @@ export const deCategoryContent: CategoryContentMap = {
       { label: "Rahmentragfähigkeit", value: "bis zu 300 kg (Standard), bis zu 600 kg (Schwerlast)" },
       { label: "Arbeitsplattentyp", value: "MDF laminiert, Arbeitsplatte mit ölbeständigem Gummi, Hartholz-Multiplexplatte" },
       { label: "Höhenverstellung", value: "Manuell (750-1050 mm) oder stufenlos elektrisch" },
-      { label: "Rahmenfinish", value: "Pulverbeschichtet (Stahlkonstruktion)" }
+      { label: "Rahmenfinish", value: "Pulverbeschichtet (Stahlkonstruktion)" },
+      { label: "ESD-Schutz", value: "Optional (geerdete Arbeitsplatten und Gestell nach DIN EN 61340-5-1)" },
+      { label: "Ergonomie-Zertifizierung", value: "Konstruktion konform mit DIN EN ISO 6385 Standards" }
     ],
     inquiryChecklist: {
       description: "Die folgende Checkliste gilt nur für kundenspezifische, individuelle Designs von Packtischen und Kommissionierstationen. Sie hilft, ergonomische Parameter und Ausstattung auf Ihre spezifischen Lagerprozesse abzustimmen:",
@@ -240,6 +292,10 @@ export const deCategoryContent: CategoryContentMap = {
       {
         question: "Wann lohnt sich die Wahl eines Tisches mit elektrischer Höhenverstellung?",
         answer: "Die elektrische Verstellung ist der Schlüssel in Schichtarbeitsumgebungen, in denen Personen unterschiedlicher Größe an einer Station arbeiten, oder wenn der Prozess häufige Wechsel von sitzender zu stehender Position erfordert, um die Ergonomie zu wahren."
+      },
+      {
+        question: "Wann sind Packtische in ESD-Ausführung (antistatisch) erforderlich?",
+        answer: "Eine ESD-Ausführung ist beim Verpacken und Kommissionieren von elektronischen Bauteilen, Mikroprozessoren und empfindlichen Messgeräten zwingend erforderlich. Die geerdete ESD-Arbeitsplatte und die ableitfähige Pulverbeschichtung schützen die Elektronik vor Schäden durch elektrostatische Entladungen."
       }
     ],
     relatedCategoryEdges: [
@@ -282,7 +338,9 @@ export const deCategoryContent: CategoryContentMap = {
       { label: "Bodenbelagstyp", value: "P5-Spanplatte, Trapezblech mit Platte, Stahlgitterrost" },
       { label: "Lichte Höhe", value: "Individuell angepasst (typischerweise mind. 2200 mm unter der Bühne)" },
       { label: "Kantenschutz", value: "Systemgeländer (Handlauf, Knieleiste, Fußleiste)" },
-      { label: "Ladeschleusen", value: "Schiebe-, Kippschleusen (Sicherheitsschleusen zum Schutz des Bedieners)" }
+      { label: "Ladeschleusen", value: "Schiebe-, Kippschleusen (Sicherheitsschleusen zum Schutz des Bedieners)" },
+      { label: "Ausführungsklasse (EXC)", value: "EXC2 (nach DIN EN 1090-2)" },
+      { label: "Montageschrauben", value: "Güte 8.8 / 10.9 (hochfeste planmäßig vorspannbare Schraubenverbindungen)" }
     ],
     inquiryChecklist: {
       description: "Für die Erstellung eines vollständigen Engineering-Konzepts, statischer Berechnungen und einer Budgetkalkulation der Lagerbühne sammeln und übermitteln Sie bitte die folgenden technischen Projektdaten:",
@@ -351,6 +409,10 @@ export const deCategoryContent: CategoryContentMap = {
       {
         question: "Können manuelle Hubwagen auf der Bühne betrieben werden?",
         answer: "Ja, vorausgesetzt, die Bühne ist für entsprechende dynamische und Punktlasten ausgelegt (in der Regel mind. 500 kg/m² und ein entsprechender Belag, der gegen Raddruck beständig ist, z. B. P5-Platte mit Blech- oder Sperrholzabdeckung)."
+      },
+      {
+        question: "Welche Sicherheitsübergabestationen (Schleusen) werden auf Lagerbühnen empfohlen?",
+        answer: "Empfohlen werden kippbare Palettenschleusen (Cargoschleusen). Sie funktionieren nach dem Gegengewichtsprinzip: Ist die Schleuse zum Stapler hin geöffnet, sperrt eine Barriere den Zugang für den Mitarbeiter. Nach dem Umschwenken kann die Palette sicher entnommen werden, während die Bühnenkante zum Hallenboden hin geschlossen ist."
       }
     ],
     relatedCategoryEdges: [
