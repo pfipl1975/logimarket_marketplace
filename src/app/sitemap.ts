@@ -52,15 +52,38 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  const glossaryTerms = getGlossaryTerms();
+  const plTerms = getGlossaryTerms("pl");
+  const enTerms = getGlossaryTerms("en");
+  const deTerms = getGlossaryTerms("de");
+
   const glossaryEntries = [
     {
       url: absoluteUrl("/slownik-branzowy"),
       changeFrequency: "daily" as const,
       priority: 0.7,
     },
-    ...glossaryTerms.map((term) => ({
+    ...plTerms.map((term) => ({
       url: absoluteUrl(`/slownik-branzowy/${term.slug}`),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+    {
+      url: absoluteUrl("/en/logistics-glossary"),
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    },
+    ...enTerms.map((term) => ({
+      url: absoluteUrl(`/en/logistics-glossary/${term.slug}`),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+    {
+      url: absoluteUrl("/de/logistik-lexikon"),
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    },
+    ...deTerms.map((term) => ({
+      url: absoluteUrl(`/de/logistik-lexikon/${term.slug}`),
       changeFrequency: "weekly" as const,
       priority: 0.6,
     })),

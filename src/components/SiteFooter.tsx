@@ -38,6 +38,20 @@ export function SiteFooter({
                 </Link>
               </li>
             )}
+            {locale === "en" && (
+              <li>
+                <Link className="hover:text-white transition-colors" href="/en/logistics-glossary">
+                  Logistics glossary
+                </Link>
+              </li>
+            )}
+            {locale === "de" && (
+              <li>
+                <Link className="hover:text-white transition-colors" href="/de/logistik-lexikon">
+                  Logistik-Lexikon
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
         <div>

@@ -34,6 +34,10 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 - /oferta/[id]
 - /slownik-branzowy
 - /slownik-branzowy/[slug]
+- /en/logistics-glossary
+- /en/logistics-glossary/[slug]
+- /de/logistik-lexikon
+- /de/logistik-lexikon/[slug]
 - /en
 - /de
 - /fr
@@ -44,6 +48,14 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 ## Słownik branżowy (Polish B2B Glossary)
 - /slownik-branzowy (Index of industrial logistics terms)
 - /slownik-branzowy/[slug] (Individual term definitions like pojemnik-euro, regal-paletowy, antresola-magazynowa)
+
+## English logistics glossary (B2B Glossary)
+- /en/logistics-glossary (Index of B2B logistics terms in English)
+- /en/logistics-glossary/[slug] (Individual term definitions like Euro container, pallet racking, warehouse mezzanine)
+
+## German logistics glossary (Logistik-Lexikon)
+- /de/logistik-lexikon (Index of B2B logistics terms in German)
+- /de/logistik-lexikon/[slug] (Individual term definitions like EURO-Behälter, Palettenregal, Lagerbühne)
 
 ## Notes For AI Agents
 - Public catalog and offer pages are server-rendered and contain meaningful HTML.
