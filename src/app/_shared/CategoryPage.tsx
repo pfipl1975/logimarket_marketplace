@@ -19,12 +19,65 @@ import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechni
 import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks";
 import { CategoryInquiryChecklist } from "@/components/catalog/CategoryInquiryChecklist";
 import { CategoryFaqBlock } from "@/components/catalog/CategoryFaqBlock";
+import { getCategoryContent } from "@/lib/catalog/content";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CategoryPageProps {
   locale: Locale;
   categorySlug: string; // dbSlug (without 'c-' prefix)
 }
+
+const blockHeadings = {
+  pl: {
+    decisionGuidance: "Wskazówki decyzyjne / Kryteria wyboru",
+    technicalParameters: "Specyfikacja i parametry techniczne",
+    inquiryChecklist: "Lista kontrolna zapytania (RFQ) — Co przygotować do wyceny?",
+    faq: "Często zadawane pytania (FAQ)",
+    relatedLinks: "Powiązane kategorie i rozwiązania",
+  },
+  en: {
+    decisionGuidance: "Decision Guidance / Selection Criteria",
+    technicalParameters: "Technical Specification & Parameters",
+    inquiryChecklist: "Inquiry Checklist (RFQ) — What to prepare?",
+    faq: "Frequently Asked Questions (FAQ)",
+    relatedLinks: "Related Categories & Solutions",
+  },
+  de: {
+    decisionGuidance: "Entscheidungshilfe / Auswahlkriterien",
+    technicalParameters: "Technische Spezifikationen & Parameter",
+    inquiryChecklist: "Anfrage-Checkliste (RFQ) — Was ist vorzubereiten?",
+    faq: "Häufig gestellte Fragen (FAQ)",
+    relatedLinks: "Verwandte Kategorien & Lösungen",
+  },
+  fr: {
+    decisionGuidance: "Guide de décision / Critères de sélection",
+    technicalParameters: "Spécifications techniques & paramètres",
+    inquiryChecklist: "Liste de contrôle de demande (RFQ) — Que préparer ?",
+    faq: "Foire aux questions (FAQ)",
+    relatedLinks: "Catégories & solutions associées",
+  },
+  uk: {
+    decisionGuidance: "Рекомендації щодо вибору / Критерії",
+    technicalParameters: "Технічні характеристики та параметри",
+    inquiryChecklist: "Контрольний список запиту (RFQ) — Що підготувати?",
+    faq: "Часті питання (FAQ)",
+    relatedLinks: "Пов'язані категорії та рішення",
+  },
+  es: {
+    decisionGuidance: "Guía de decisión / Criterios de selección",
+    technicalParameters: "Especificaciones técnicas y parámetros",
+    inquiryChecklist: "Lista de verificación de consulta (RFQ) — ¿Qué preparar?",
+    faq: "Preguntas frecuentes (FAQ)",
+    relatedLinks: "Categorías y soluciones relacionadas",
+  },
+  zh: {
+    decisionGuidance: "决策指南 / 选择标准",
+    technicalParameters: "技术规范与参数",
+    inquiryChecklist: "询价清单 (RFQ) — 准备工作",
+    faq: "常见问题解答 (FAQ)",
+    relatedLinks: "相关类别 & 解决方案",
+  },
+};
 
 function PackageIcon({ className = "" }: { className?: string }) {
   return (
@@ -191,21 +244,13 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   };
 
   // ── JSON-LD: ItemList (role-aware, no Product schema) ────────────────────
-  //
-  // Section → groups as items
-  // Group   → leaf children as items
-  // Leaf    → physically rendered offers as items
-  //
-  // Guarantees: no prices, no availability, no direct partner URLs.
   const itemListItems = (() => {
     if (pageRole === "leaf") {
-      // Leaf: items = rendered offers, URL = /oferta/[id]
       return offers.map((offer) => ({
         name: offer.title,
         url: absoluteUrl(getOfferPath(locale, String(offer.id))),
       }));
     }
-    // Section or Group: items = subcategory children
     return subcategories.map((sub: CatalogCategoryNode) => ({
       name: resolveCategoryName({
         slug: sub.slug,
@@ -222,15 +267,70 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
     items: itemListItems,
   });
 
-  // ── Future content slots (null-safe, no data = not rendered) ─────────────
-  // These are prepared as null — future sprints (LM-CAT-06, LM-CAT-08, etc.)
-  // will populate them from DB/CMS. Passing null triggers null return in each
-  // component, producing zero DOM output.
-  const decisionGuidanceItems: string[] | null = null;
-  const technicalParams: Record<string, string> | null = null;
-  const relatedLinks: { label: string; href: string }[] | null = null;
-  const inquiryChecklistGroups: null = null;
-  const faqItems: null = null;
+  // ── Retrieve static content (Hybrid Model C: stateless TS seed) ───────────
+  const categoryContent = getCategoryContent(locale, category.slug);
+
+  const decisionGuidanceItems = categoryContent?.decisionFactors || null;
+
+  const technicalParams = (() => {
+    if (!categoryContent?.technicalParameters) return null;
+    const params: Record<string, string> = {};
+    for (const item of categoryContent.technicalParameters) {
+      params[item.label] = item.value;
+    }
+    return params;
+  })();
+
+  const relatedLinks = (() => {
+    if (!categoryContent?.relatedCategoryEdges) return null;
+
+    const links = categoryContent.relatedCategoryEdges
+      .map((edge) => {
+        const targetCategory = allCategories.find((c) => c.slug === edge.targetSlug);
+        if (!targetCategory) return null;
+
+        const label = resolveCategoryName({
+          slug: edge.targetSlug,
+          dbName: targetCategory.name,
+          localeBySlug,
+          fallbackBySlug,
+        });
+
+        const href = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${edge.targetSlug}`;
+        return {
+          label,
+          href,
+          priority: edge.priority,
+        };
+      })
+      .filter((link): link is { label: string; href: string; priority: number } => link !== null)
+      .sort((a, b) => a.priority - b.priority)
+      .slice(0, 6);
+
+    return links.length > 0 ? links : null;
+  })();
+
+  const inquiryChecklistGroups = categoryContent?.inquiryChecklist?.groups || null;
+  const inquiryChecklistDescription = categoryContent?.inquiryChecklist?.description || null;
+  const faqItems = categoryContent?.faq || null;
+
+  // ── JSON-LD: FAQPage ──────────────────────────────────────────────────────
+  const faqJsonLd = faqItems && faqItems.length > 0
+    ? {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": faqItems.map((item) => ({
+          "@type": "Question",
+          "name": item.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": item.answer,
+          },
+        })),
+      }
+    : null;
+
+  const headings = blockHeadings[locale] || blockHeadings.pl;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -238,6 +338,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
       <JsonLdScript data={breadcrumbJsonLd} />
       <JsonLdScript data={collectionJsonLd} />
       {itemListJsonLd && <JsonLdScript data={itemListJsonLd} />}
+      {faqJsonLd && <JsonLdScript data={faqJsonLd} />}
 
       <SiteHeader
         locale={locale}
@@ -312,6 +413,11 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           {activeCategoryIntro && (
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
               {activeCategoryIntro}
+            </p>
+          )}
+          {categoryContent?.definition && (
+            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed border-l-2 border-brand-teal pl-3">
+              {categoryContent.definition}
             </p>
           )}
         </div>
@@ -394,20 +500,19 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           </div>
         )}
 
-        {/* ── Optional content slots (null = no DOM output) ──────────────
-            Populated by future sprints (LM-CAT-06, LM-CAT-08, LM-CAT-INQUIRY-01).
-            Each component returns null when passed null/empty data.      */}
+        {/* ── Optional content slots (null = no DOM output) ────────────── */}
         <CategoryDecisionGuidance
           items={decisionGuidanceItems}
-          heading={dict.catalog.allCategories}
+          heading={headings.decisionGuidance}
         />
         <CategoryTechnicalParameters
           params={technicalParams}
-          heading={dict.catalog.allCategories}
+          heading={headings.technicalParameters}
         />
         <CategoryInquiryChecklist
           groups={inquiryChecklistGroups}
-          heading={dict.catalog.allCategories}
+          heading={headings.inquiryChecklist}
+          description={inquiryChecklistDescription}
         />
 
         {/* ── Offer listing ────────────────────────────────────────────── */}
@@ -437,16 +542,14 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           </div>
         )}
 
-        {/* ── Optional lower content slots (FAQ + related) ───────────────
-            Rendered below offer listing per layout spec (LM-CAT-04).
-            Returns null when no data — zero DOM output.                  */}
+        {/* ── Optional lower content slots (FAQ + related) ─────────────── */}
         <CategoryFaqBlock
           items={faqItems}
-          heading={dict.catalog.allCategories}
+          heading={headings.faq}
         />
         <CategoryRelatedLinks
           links={relatedLinks}
-          heading={dict.catalog.allCategories}
+          heading={headings.relatedLinks}
         />
 
       </main>
