@@ -31,6 +31,13 @@ export function SiteFooter({
           <ul className="mt-3 space-y-2 text-sm">
             <li><a className="hover:text-white transition-colors" href="https://logimarket.pl" target="_blank" rel="noopener noreferrer">{navLabels.portal}</a></li>
             <li><Link className="hover:text-white transition-colors" href={homeHref}>{navLabels.catalog}</Link></li>
+            {locale === "pl" && (
+              <li>
+                <Link className="hover:text-white transition-colors" href="/slownik-branzowy">
+                  Słownik branżowy
+                </Link>
+              </li>
+            )}
           </ul>
         </div>
         <div>

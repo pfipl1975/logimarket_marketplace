@@ -23,6 +23,7 @@ import { getCategoryContent } from "@/lib/catalog/content";
 import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
 import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
 import type { Locale } from "@/lib/i18n/types";
+import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
 
 interface CategoryPageProps {
   locale: Locale;
@@ -298,6 +299,7 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   const inquiryChecklistGroups = categoryContent?.inquiryChecklist?.groups || null;
   const inquiryChecklistDescription = categoryContent?.inquiryChecklist?.description || null;
   const faqItems = categoryContent?.faq || null;
+  const glossaryLinks = resolveGlossaryLinksForCategory(category.slug);
 
   // ── JSON-LD: FAQPage ──────────────────────────────────────────────────────
   const faqJsonLd = createFaqPageJsonLd({
@@ -535,6 +537,37 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           items={faqItems}
           heading={headings.faq}
         />
+
+        {/* Słownik branżowy - Powiązane pojęcia */}
+        {locale === "pl" && glossaryLinks && glossaryLinks.length > 0 && (
+          <div className="mt-8 border-t border-border pt-8">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal block mb-3">
+              Pojęcia branżowe
+            </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {glossaryLinks.map((link) => (
+                <div key={link.slug} className="border border-border bg-white p-4 rounded-none shadow-none flex flex-col justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-brand-navy mb-1.5">
+                      <Link href={link.href} className="hover:text-brand-teal transition-colors">
+                        {link.term}
+                      </Link>
+                    </h3>
+                    <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                      {link.shortDefinition}
+                    </p>
+                  </div>
+                  <div className="mt-3 text-right">
+                    <Link href={link.href} className="text-xs font-semibold text-brand-teal hover:underline inline-flex items-center gap-1">
+                      Definicja pojęcia <span>→</span>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         <CategoryRelatedLinks
           links={relatedLinks}
           heading={headings.relatedLinks}

@@ -1,4 +1,5 @@
 import { getCategories, getOffers } from "@/app/actions";
+import { getGlossaryTerms } from "@/lib/glossary";
 
 export async function GET() {
   try {
@@ -32,6 +33,18 @@ export async function GET() {
         content += `- ${offer.title} (Category: ${offer.categoryName}, Offer model: ${offer.offerModel})\n`;
         content += `  Path: /oferta/${offer.id}\n`;
         content += `  Description: ${descSnippet}\n\n`;
+      });
+    }
+
+    const glossaryTerms = getGlossaryTerms();
+    content += "\n## Słownik branżowy (B2B Glossary)\n";
+    if (glossaryTerms.length === 0) {
+      content += "- No glossary terms defined.\n";
+    } else {
+      glossaryTerms.forEach((term) => {
+        content += `- ${term.term} (Slug: ${term.slug})\n`;
+        content += `  Path: /slownik-branzowy/${term.slug}\n`;
+        content += `  Description: ${term.shortDefinition}\n\n`;
       });
     }
 

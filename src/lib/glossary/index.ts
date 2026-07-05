@@ -1,6 +1,8 @@
 import { plGlossaryContent } from "./pl";
 import type { GlossaryTerm } from "./types";
 
+export * from "./related";
+
 /**
  * Retrieve a specific glossary term by its slug.
  *
