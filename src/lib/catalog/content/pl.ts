@@ -12,11 +12,14 @@ export const plCategoryContent: CategoryContentMap = {
       "Hurtownie i archiwa zakładowe"
     ],
     decisionFactors: [
-      "Typ składowanych jednostek ładunkowych (palety EUR, palety przemysłowe, dłużyce, kartony)",
-      "Nośność maksymalna na poziom składowania oraz nośność całej kolumny regałowej",
-      "Wymagana zasada rotacji towarów (LIFO, FIFO)",
-      "Wymiary hali magazynowej, w tym wysokość użytkowa w świetle oraz nośność posadzki",
-      "Szerokość korytarzy roboczych i typ stosowanych wózków widłowych (np. czołowe, reach truck, VNA)"
+      "Typ składowanych jednostek ładunkowych (palety EUR, palety przemysłowe, dłużyce, kartony, towary nietypowe)",
+      "Nośność maksymalna na poziom składowania oraz dopuszczalne obciążenie całej kolumny regałowej",
+      "Wymagana zasada rotacji towarów (LIFO - np. regały wjezdne, FIFO - np. regały przepływowe, rzędowe)",
+      "Wymiary hali magazynowej, w tym wysokość użytkowa w świetle, rozstaw słupów konstrukcyjnych oraz nośność posadzki",
+      "Szerokość korytarzy roboczych (AST) i kompatybilność z wózkami typu reach truck, VNA lub wózkami czołowymi",
+      "Wymogi bezpieczeństwa pracy (odbojnice, siatki zabezpieczające tył regału, wygrodzenia BHP)",
+      "Potrzeba przyszłej rozbudowy systemu regałowego lub integracji z automatyzacją magazynową",
+      "Stan techniczny i parametry dylatacji posadzki betonowej wpływającej na kotwienie stóp regałów"
     ],
     relatedCategoryEdges: [
       {
@@ -57,11 +60,14 @@ export const plCategoryContent: CategoryContentMap = {
       "Zasilanie linii produkcyjnych w komponenty"
     ],
     decisionFactors: [
-      "Masa maksymalna ładunku (udźwig nominalny) oraz wysokość podnoszenia",
-      "Typ napędu (elektryczny, spalinowy LPG/Diesel, ręczny)",
-      "Warunki pracy (praca wewnątrz pomieszczeń, na zewnątrz, chłodnia, strefy zagrożenia wybuchem EX)",
-      "Wymagany korytarz roboczy (promień skrętu wózka oraz wymiary ładunku)",
-      "Intensywność pracy (praca jednozmianowa czy wielozmianowa wymagająca szybkiej wymiany baterii)"
+      "Masa maksymalna ładunku (udźwig nominalny i zredukowany na maksymalnej wysokości) oraz gabaryty ładunku",
+      "Typ napędu (elektryczny kwasowo-ołowiowy, litowo-jonowy, spalinowy LPG/Diesel, ręczny hydrauliczny)",
+      "Warunki środowiskowe (praca wewnątrz hal, na zewnątrz, chłodnia/mroźnia, strefy zagrożenia wybuchem EX)",
+      "Wymagany korytarz roboczy w zależności od promienia skrętu wózka oraz długości przewożonej palety",
+      "Intensywność pracy (liczba zmian roboczych, potrzeba szybkiej wymiany lub doładowywania baterii)",
+      "Rodzaj nawierzchni i kół (koła poliuretanowe na gładką posadzkę, superelastyczne lub pneumatyczne na teren nierówny)",
+      "Wymagania BHP i wyposażenie dodatkowe (kamery na widłach, radary zbliżeniowe, blue spot, ograniczniki prędkości)",
+      "Kompatybilność z istniejącą infrastrukturą (wysokość bram przejazdowych, parametry ramp i doków przeładunkowych)"
     ],
     relatedCategoryEdges: [
       {
@@ -177,31 +183,51 @@ export const plCategoryContent: CategoryContentMap = {
       { label: "Wykończenie stelaża", value: "Malowanie proszkowe (konstrukcja stalowa)" }
     ],
     inquiryChecklist: {
-      description: "Dla konfiguracji niestandardowych lub projektów stanowisk kompletacji prosimy o przygotowanie informacji według poniższych obszarów:",
+      description: "Poniższa lista kontrolna dotyczy wyłącznie indywidualnych projektów stanowisk kompletacyjnych i stołów pakowych wykonywanych na wymiar. Pomaga ona dopasować parametry ergonomiczne i osprzęt do specyfiki Państwa procesów:",
       groups: [
         {
-          groupLabel: "Wymiary i Ergonomia",
+          groupLabel: "Stanowisko pracy i ergonomia",
           fields: [
-            "Pożądane wymiary blatu (szerokość x głębokość)",
-            "Zakres regulacji wysokości blatu (praca stojąca, stojąco-siedząca czy siedząca)",
-            "Pożądany materiał blatu (standardowy laminat, gruba sklejka, blat ESD antystatyczny, pokrycie gumowe)"
+            "Wymagana szerokość i głębokość blatu roboczego (dopasowana do rozmiaru kartonów)",
+            "System regulacji wysokości (manualny na śrubach blokujących czy elektryczny sterowany przyciskiem)",
+            "Typ pracy na stanowisku (stojąca ciągła, siedząco-stojąca ze stołkiem przemysłowym, siedząca)",
+            "Wymagane pokrycie blatu (standardowy laminat melaminowy, gruba sklejka liściasta, guma antystatyczna ESD, mata olejoodporna)"
           ]
         },
         {
-          groupLabel: "Akcesoria i Wyposażenie Stacji",
+          groupLabel: "Proces pakowania i kompletacji",
           fields: [
-            "Półki nadblatowe (na kartony, segregatory, akcesoria pakowe)",
-            "Systemy cięcia i podawania materiałów (folia bąbelkowa, papier, stretch)",
-            "Wymagane oświetlenie nad stanowiskiem (dedykowane lampy LED)",
-            "Uchwyty na sprzęt IT (uchwyt VESA na monitor, uchwyt na komputer, półka na drukarkę etykiet)"
+            "Przewidywany wolumen i typ pakowanych przesyłek (liczba paczek na godzinę)",
+            "Maksymalna waga kompletowanych i ważonych na stole pakietów",
+            "Sposób podawania towarów do pakowania (z pojemników Euro, bezpośrednio z wózków, z linii przenośników)",
+            "Sposób odbioru gotowych paczek (odkładanie na palety, zsuwanie na stół odbiorczy, taśmociąg)"
           ]
         },
         {
-          groupLabel: "Integracja z Przepływem Pracy",
+          groupLabel: "Konstrukcja stołu i akcesoria",
           fields: [
-            "Czy stół ma być wpięty w linię przenośników (np. doprowadzających lub odprowadzających kartony)?",
-            "Wymagania elektryczne (liczba gniazd zasilających, gniazda RJ45 LAN)",
-            "Liczba stanowisk pakowych w projekcie i ich układ przestrzenny"
+            "Pożądana konfiguracja półek nadblatowych (półki z przegrodami na kartony, półki na dokumenty)",
+            "Systemy dozowania materiałów pakowych (uchwyt dolny/górny na folię bąbelkową, papier falisty, folię stretch)",
+            "Wbudowane oprzyrządowanie (zintegrowana waga w blacie, szuflady podblatowe na drobne akcesoria, nożyk przesuwny do folii)",
+            "Oświetlenie robocze LED (mocowane na stelażu pionowym z regulacją kąta nachylenia)"
+          ]
+        },
+        {
+          groupLabel: "Media i integracja IT",
+          fields: [
+            "Wymagane uchwyty systemowe dla urządzeń IT (uchwyt VESA na monitor, uchwyt na klawiaturę, półka na drukarkę etykiet)",
+            "Zapotrzebowanie na instalacje zasilające i sieciowe (liczba gniazd 230V, gniazda LAN RJ45, porty USB)",
+            "Zintegrowane przyłącza pneumatyczne (szybkozłączki do narzędzi na sprężone powietrze)",
+            "Kompatybilność z liniami rolkowymi (potrzeba wbudowania blatu kulowego lub rolek kierunkowych)"
+          ]
+        },
+        {
+          groupLabel: "Wdrożenie i modularność",
+          fields: [
+            "Łączna liczba planowanych stanowisk pakowych w danej strefie magazynu",
+            "Możliwość przyszłej rekonfiguracji (wymóg modułowej konstrukcji opartej na perforowanych profilach)",
+            "Zakres montażu (dostawa stołów zmontowanych czy montaż na obiekcie przez ekipę serwisową)",
+            "Planowany harmonogram wdrożenia i oczekiwany termin oddania stanowisk do użytku"
           ]
         }
       ]
@@ -259,32 +285,56 @@ export const plCategoryContent: CategoryContentMap = {
       { label: "Bramki załadunkowe", value: "Przesuwne, wahadłowe (bramki bezpieczeństwa śluzy)" }
     ],
     inquiryChecklist: {
-      description: "Dla przygotowania wstępnej koncepcji i oferty budżetowej antresoli magazynowej, prosimy o dostarczenie poniższych danych technicznych:",
+      description: "Dla przygotowania kompletnej koncepcji inżynieryjnej, kalkulacji statycznej oraz wyceny budżetowej antresoli magazynowej, prosimy o zebranie i dostarczenie poniższych danych technicznych obiektu:",
       groups: [
         {
-          groupLabel: "Geometria i Wymiary Konstrukcji",
+          groupLabel: "Wymiary i układ przestrzenny hali",
           fields: [
-            "Wymiary planowanego podestu (szerokość x długość w metrach)",
-            "Wysokość hali w świetle (od posadzki do najniższego elementu dachu)",
-            "Wysokość poziomu antresoli (lub pożądana wysokość czysta pod konstrukcją)",
-            "Orientacyjna siatka słupów (rozstaw słupów podestu, np. 4x4m, 5x6m dla swobody ruchu pod spodem)"
+            "Planowane wymiary zewnętrzne antresoli (szerokość x długość w metrach)",
+            "Dokładna wysokość hali w świetle (od poziomu czystej posadzki do najniższego elementu więźby dachowej lub instalacji)",
+            "Wymagana wysokość w świetle pod konstrukcją antresoli (wolna przestrzeń dla ruchu ludzi lub wózków)",
+            "Lokalizacja podestu w hali (wolnostojący, w narożniku, przylegający do jednej lub kilku ścian)",
+            "Wszelkie przeszkody budowlane lub instalacyjne w strefie montażu (słupy hali, centrale wentylacyjne, rury ppoż., bramy)"
           ]
         },
         {
-          groupLabel: "Obciążenia i Przeznaczenie",
+          groupLabel: "Nośność posadzki i wymagania obciążeń",
           fields: [
-            "Wymagane obciążenie użytkowe na 1 m² podestu (np. 300 kg dla kompletacji ręcznej, 500 kg dla regałów półkowych, więcej dla wózków paletowych)",
-            "Co będzie składowane na antresoli (regały półkowe, towary luzem, biura socjalne)?",
-            "Typ posadzki w hali (grubość płyty betonowej, zbrojenie, jeśli są znane)"
+            "Pożądane dopuszczalne obciążenie użytkowe podłogi antresoli (np. 300, 500, 800 czy ponad 1000 kg/m²)",
+            "Rodzaj planowanego składowania na podeście (regały półkowe, towary na paletach, ruch ręcznych wózków paletowych)",
+            "Dopuszczalna nośność posadzki hali (grubość płyty żelbetowej, dopuszczalny nacisk punktowy stopy słupa w kN)",
+            "Sposób kotwienia konstrukcji do podłoża (czy posadzka posiada ogrzewanie podłogowe, instalacje podziemne)",
+            "Występowanie specyficznych obciążeń punktowych (np. ciężkie maszyny, szafy sterownicze, wózki widłowe)"
           ]
         },
         {
-          groupLabel: "Dostęp i Bezpieczeństwo",
+          groupLabel: "Konstrukcja, wyposażenie i dostęp",
           fields: [
-            "Liczba klatek schodowych i ich orientacyjne umiejscowienie",
-            "Liczba miejsc załadunku towarów paletowych (miejsca odbioru palet z wózka widłowego)",
-            "Typ bramki bezpieczeństwa (bramka wahadłowa/śluza chroniąca operatora przed upadkiem, bramka przesuwna)",
-            "Wymogi ochrony przeciwpożarowej (np. czy wymagane jest poszycie z kraty stalowej dla przepływu wody z tryskaczy)"
+            "Preferowany rozstaw słupów nośnych (wymagany szeroki rozstaw dla swobody ruchu na dole czy dopuszczalny rozstaw gęstszy)",
+            "Liczba klatek schodowych i ich preferowane usytuowanie ze względów ewakuacyjnych",
+            "Rodzaj poszycia podłogi (standardowa płyta wiórowa P5 antypoślizgowa, krata stalowa zgrzewana z oczkiem, blacha ryflowana)",
+            "Liczba miejsc wyładunkowych na palety (miejsca odbioru ładunków z wózka widłowego)",
+            "Typ bramki bezpieczeństwa w punkcie odbioru palet (śluza wahadłowa kołyskowa chroniąca operatora, bramka przesuwna, łańcuch ochronny)"
+          ]
+        },
+        {
+          groupLabel: "Bezpieczeństwo, ppoż. i formalności",
+          fields: [
+            "Wymagane barierki i balustrady ochronne (standardowa wysokość 1100 mm, krawężnik przypodłogowy, barierka kolanowa)",
+            "Wymagania ochrony przeciwpożarowej (klasa odporności ogniowej konstrukcji R30, R60 lub brak wymogu)",
+            "Integracja z instalacjami bezpieczeństwa (potrzeba wykonania instalacji tryskaczowej pod antresolą, montaż oświetlenia awaryjnego)",
+            "Weryfikacja dróg ewakuacyjnych i odległości do wyjść ewakuacyjnych z poziomów antresoli",
+            "Czy projekt wymaga uzgodnienia z rzeczoznawcą ds. zabezpieczeń ppoż. oraz BHP przed montażem"
+          ]
+        },
+        {
+          groupLabel: "Operacje i warunki wdrożenia",
+          fields: [
+            "Planowany tryb pracy na antresoli (jednozmianowy, wielozmianowy o wysokim natężeniu)",
+            "Możliwość prowadzenia prac montażowych w trakcie normalnego funkcjonowania magazynu (etapowanie montażu)",
+            "Dostępność przestrzeni do rozładunku i składowania elementów konstrukcyjnych przed i w trakcie montażu",
+            "Wymóg użycia specjalistycznego sprzętu do montażu (np. wózki widłowe, podnośniki nożycowe o określonym napędzie)",
+            "Oczekiwany termin rozpoczęcia prac instalacyjnych i planowana data uruchomienia operacyjnego antresoli"
           ]
         }
       ]
