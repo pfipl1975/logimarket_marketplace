@@ -1,4 +1,4 @@
-export type CategoryContentLocale = "pl";
+export type CategoryContentLocale = "pl" | "en" | "de";
 
 export type RelatedCategoryRelationType =
   | "parent_child"
