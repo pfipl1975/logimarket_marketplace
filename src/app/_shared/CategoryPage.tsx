@@ -11,7 +11,7 @@ import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
-import { JsonLdScript, createCategoryItemListJsonLd } from "@/lib/seo/json-ld";
+import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { CatalogCategoryExplorer } from "@/components/catalog/CatalogCategoryExplorer";
 import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
@@ -315,20 +315,10 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   const faqItems = categoryContent?.faq || null;
 
   // ── JSON-LD: FAQPage ──────────────────────────────────────────────────────
-  const faqJsonLd = faqItems && faqItems.length > 0
-    ? {
-        "@context": "https://schema.org",
-        "@type": "FAQPage",
-        "mainEntity": faqItems.map((item) => ({
-          "@type": "Question",
-          "name": item.question,
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": item.answer,
-          },
-        })),
-      }
-    : null;
+  const faqJsonLd = createFaqPageJsonLd({
+    faq: faqItems,
+    pageUrl: canonicalUrl,
+  });
 
   const headings = blockHeadings[locale] || blockHeadings.pl;
 

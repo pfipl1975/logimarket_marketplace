@@ -258,3 +258,52 @@ export function createCategoryItemListJsonLd({
     })),
   };
 }
+
+// ─── Category FAQPage JSON-LD ─────────────────────────────────────────────────
+
+export interface FaqItemInput {
+  question: string;
+  answer: string;
+}
+
+/**
+ * Generate a FAQPage JSON-LD for a category landing page.
+ *
+ * Guarantees:
+ * - Decoupled from content templates and database models
+ * - Null-safe: returns null when input has less than 2 valid Q&A entries
+ * - Zero XSS: standard JSON serialization
+ * - Strict schema guard: no Product/Offer schemas, no prices, no partner details
+ */
+export function createFaqPageJsonLd({
+  faq,
+  pageUrl,
+}: {
+  faq: FaqItemInput[] | null | undefined;
+  pageUrl: string;
+}): JsonLdValue | null {
+  if (!faq) return null;
+
+  const validFaq = faq.filter(
+    (item) => item.question.trim().length > 0 && item.answer.trim().length > 0
+  );
+
+  if (validFaq.length < 2) {
+    return null;
+  }
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${pageUrl}#faq`,
+    "url": pageUrl,
+    "mainEntity": validFaq.map((item) => ({
+      "@type": "Question",
+      "name": item.question,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": item.answer,
+      },
+    })),
+  };
+}
