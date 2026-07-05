@@ -3,7 +3,7 @@ import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
 import type { OfferPublicationStatus } from "@/lib/schema";
 import { getHomeCanonical, getOfferCanonical, absoluteUrl } from "./urls";
-import { siteBrand, localeLanguageTags } from "./site";
+import { localeLanguageTags } from "./site";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 
 type JsonLdPrimitive = string | number | boolean | null;
@@ -26,8 +26,11 @@ export function JsonLdScript({ data }: { data: JsonLdValue }) {
   );
 }
 
-export function createHomeJsonLd(locale: Locale, dict: Dictionary): JsonLdValue {
-  const canonicalUrl = getHomeCanonical(locale);
+const authorityOrigin = "https://www.logimarket.eu";
+const organizationId = `${authorityOrigin}/#organization`;
+const websiteId = `${authorityOrigin}/#website`;
+
+export function createGlobalAuthorityJsonLd(locale: Locale): JsonLdValue {
   const langTag = localeLanguageTags[locale];
 
   return {
@@ -35,42 +38,51 @@ export function createHomeJsonLd(locale: Locale, dict: Dictionary): JsonLdValue 
     "@graph": [
       {
         "@type": "Organization",
-        "@id": `${siteBrand.url}/#organization`,
-        "name": siteBrand.name,
-        "alternateName": siteBrand.alternateName,
-        "url": siteBrand.url,
+        "@id": organizationId,
+        "name": "LogiMarket",
+        "alternateName": ["LogiMarket.eu", "LogiMarket.pl"],
+        "url": authorityOrigin,
         "logo": {
           "@type": "ImageObject",
-          "url": siteBrand.logoUrl,
+          "url": `${authorityOrigin}/images/brand/baner_marketplace.png`,
         },
-        "description": dict.meta.description,
+        "email": "partnerzy@logimarket.pl",
+        "sameAs": ["https://logimarket.pl"],
+        "description": "B2B marketplace and procurement knowledge base for logistics, warehousing, intralogistics and warehouse equipment.",
       },
       {
         "@type": "WebSite",
-        "@id": `${siteBrand.url}/#website`,
-        "url": siteBrand.url,
-        "name": siteBrand.name,
+        "@id": websiteId,
+        "url": authorityOrigin,
+        "name": "LogiMarket",
         "inLanguage": langTag,
         "publisher": {
-          "@id": `${siteBrand.url}/#organization`,
+          "@id": organizationId,
         },
-      },
-      {
-        "@type": "CollectionPage",
-        "@id": `${canonicalUrl}#webpage`,
-        "url": canonicalUrl,
-        "name": dict.meta.title,
-        "description": dict.meta.description,
-        "inLanguage": langTag,
-        "isPartOf": {
-          "@id": `${siteBrand.url}/#website`,
-        },
-        "publisher": {
-          "@id": `${siteBrand.url}/#organization`,
-        },
-        "about": "B2B marketplace for logistics, warehousing, intralogistics and warehouse equipment",
       },
     ],
+  };
+}
+
+export function createHomeJsonLd(locale: Locale, dict: Dictionary): JsonLdValue {
+  const canonicalUrl = getHomeCanonical(locale);
+  const langTag = localeLanguageTags[locale];
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${canonicalUrl}#webpage`,
+    "url": canonicalUrl,
+    "name": dict.meta.title,
+    "description": dict.meta.description,
+    "inLanguage": langTag,
+    "isPartOf": {
+      "@id": websiteId,
+    },
+    "publisher": {
+      "@id": organizationId,
+    },
+    "about": "B2B marketplace for logistics, warehousing, intralogistics and warehouse equipment",
   };
 }
 
