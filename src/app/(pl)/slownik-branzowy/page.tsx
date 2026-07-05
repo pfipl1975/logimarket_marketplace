@@ -7,16 +7,16 @@ import { absoluteUrl } from "@/lib/seo/urls";
 export const revalidate = 86400; // Cache for 24h
 
 export const metadata: Metadata = {
-  title: "Leksykon Logistyczny — Pojęcia B2B | LogiMarket.pl",
+  title: "Słownik Branżowy — Pojęcia B2B | LogiMarket.pl",
   description: "Baza wiedzy i słownik pojęć z logistyki, magazynowania, intralogistyki, opakowań oraz maszyn transportowych. Poznaj definicje techniczne B2B.",
   alternates: {
-    canonical: absoluteUrl("/leksykon-logistyczny"),
+    canonical: absoluteUrl("/slownik-branzowy"),
   },
 };
 
 export default async function GlossaryIndexPage() {
   const terms = getGlossaryTerms();
-  const pageUrl = absoluteUrl("/leksykon-logistyczny");
+  const pageUrl = absoluteUrl("/slownik-branzowy");
 
   const jsonLdData = createDefinedTermSetJsonLd({
     terms: terms.map((t) => ({
@@ -41,7 +41,7 @@ export default async function GlossaryIndexPage() {
           </Link>
           <span>/</span>
           <span className="font-semibold text-foreground" aria-current="page">
-            Leksykon logistyczny
+            Słownik branżowy
           </span>
         </nav>
 
@@ -51,7 +51,7 @@ export default async function GlossaryIndexPage() {
             Baza wiedzy B2B
           </span>
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy mt-1">
-            Leksykon logistyczny
+            Słownik branżowy
           </h1>
           <p className="text-muted-foreground mt-3 max-w-3xl text-sm leading-relaxed">
             Semantyczna baza pojęć technicznych, norm oraz terminologii stosowanej w nowoczesnej logistyce, intralogistyce, systemach składowania i wyposażeniu magazynów. Słownik stanowi praktyczne kompendium dla menedżerów logistyki, działów zakupów procurement i inżynierów procesu.
@@ -71,7 +71,7 @@ export default async function GlossaryIndexPage() {
                 </span>
                 <h2 className="text-lg font-bold text-brand-navy mb-2">
                   <Link
-                    href={`/leksykon-logistyczny/${t.slug}`}
+                    href={`/slownik-branzowy/${t.slug}`}
                     className="hover:text-brand-teal transition-colors"
                   >
                     {t.term}
@@ -83,7 +83,7 @@ export default async function GlossaryIndexPage() {
               </div>
               <div className="mt-4 pt-4 border-t border-gray-50 flex justify-end">
                 <Link
-                  href={`/leksykon-logistyczny/${t.slug}`}
+                  href={`/slownik-branzowy/${t.slug}`}
                   className="text-xs font-semibold text-brand-teal hover:underline flex items-center gap-1"
                 >
                   Zobacz definicję

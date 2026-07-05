@@ -55,12 +55,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const glossaryTerms = getGlossaryTerms();
   const glossaryEntries = [
     {
-      url: absoluteUrl("/leksykon-logistyczny"),
+      url: absoluteUrl("/slownik-branzowy"),
       changeFrequency: "daily" as const,
       priority: 0.7,
     },
     ...glossaryTerms.map((term) => ({
-      url: absoluteUrl(`/leksykon-logistyczny/${term.slug}`),
+      url: absoluteUrl(`/slownik-branzowy/${term.slug}`),
       changeFrequency: "weekly" as const,
       priority: 0.6,
     })),

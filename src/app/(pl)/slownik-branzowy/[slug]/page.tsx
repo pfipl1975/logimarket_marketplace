@@ -35,10 +35,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${term.term} — Definicja, Zastosowanie | Leksykon LogiMarket`,
+    title: `${term.term} — Definicja, Zastosowanie | Słownik Branżowy`,
     description: term.shortDefinition,
     alternates: {
-      canonical: absoluteUrl(`/leksykon-logistyczny/${term.slug}`),
+      canonical: absoluteUrl(`/slownik-branzowy/${term.slug}`),
     },
   };
 }
@@ -54,8 +54,8 @@ export default async function GlossaryTermPage({ params }: Props) {
   const dict = await getDictionary(defaultLocale);
   const categoryLabels = (dict.categories?.bySlug || {}) as Record<string, string>;
 
-  const pageUrl = absoluteUrl(`/leksykon-logistyczny/${term.slug}`);
-  const setUrl = absoluteUrl("/leksykon-logistyczny");
+  const pageUrl = absoluteUrl(`/slownik-branzowy/${term.slug}`);
+  const setUrl = absoluteUrl("/slownik-branzowy");
 
   const termJsonLd = createDefinedTermJsonLd({
     term: term.term,
@@ -87,8 +87,8 @@ export default async function GlossaryTermPage({ params }: Props) {
             LogiMarket.pl
           </Link>
           <span>/</span>
-          <Link href="/leksykon-logistyczny" className="hover:text-foreground transition-colors">
-            Leksykon logistyczny
+          <Link href="/slownik-branzowy" className="hover:text-foreground transition-colors">
+            Słownik branżowy
           </Link>
           <span>/</span>
           <span className="font-semibold text-foreground" aria-current="page">
@@ -103,7 +103,7 @@ export default async function GlossaryTermPage({ params }: Props) {
           <main className="min-w-0 flex-1 w-full space-y-8">
             <div className="border-b border-border pb-6">
               <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal">
-                Leksykon logistyczny pojęć
+                Słownik branżowy pojęć
               </span>
               <h1 className="text-3xl font-bold tracking-tight text-brand-navy mt-1">
                 {term.term}
@@ -196,7 +196,7 @@ export default async function GlossaryTermPage({ params }: Props) {
                     return (
                       <li key={tSlug}>
                         <Link
-                          href={`/leksykon-logistyczny/${tSlug}`}
+                          href={`/slownik-branzowy/${tSlug}`}
                           className="text-xs font-medium text-brand-teal hover:underline block"
                         >
                           {label}

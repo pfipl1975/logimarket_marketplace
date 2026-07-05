@@ -328,7 +328,7 @@ export function createDefinedTermSetJsonLd({
     "@context": "https://schema.org",
     "@type": "DefinedTermSet",
     "@id": `${pageUrl}#definedtermset`,
-    "name": "Leksykon Logistyczny LogiMarket",
+    "name": "Słownik Branżowy LogiMarket",
     "description": "Baza wiedzy B2B pojęć z logistyki, magazynowania, intralogistyki, opakowań i procesów zakupowych.",
     "url": pageUrl,
     "hasDefinedTerm": terms.map((item) => ({
@@ -367,7 +367,7 @@ export function createDefinedTermJsonLd({
     "inDefinedTermSet": {
       "@type": "DefinedTermSet",
       "@id": `${setUrl}#definedtermset`,
-      "name": "Leksykon Logistyczny LogiMarket",
+      "name": "Słownik Branżowy LogiMarket",
       "url": setUrl,
     },
   };
