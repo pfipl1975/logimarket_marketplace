@@ -1,22 +1,30 @@
 import { plGlossaryContent } from "./pl";
-import type { GlossaryTerm } from "./types";
+import { enGlossaryContent } from "./en";
+import { deGlossaryContent } from "./de";
+import type { GlossaryTerm, GlossaryContentMap } from "./types";
 
 export * from "./related";
 
+export type GlossaryContentLocale = "pl" | "en" | "de";
+
+const contentMaps: Record<GlossaryContentLocale, GlossaryContentMap> = {
+  pl: plGlossaryContent,
+  en: enGlossaryContent,
+  de: deGlossaryContent,
+};
+
 /**
- * Retrieve a specific glossary term by its slug.
- *
- * Supported locales: PL (currently Polish-only pilot foundation)
+ * Retrieve a specific glossary term by its slug and optional locale.
  */
-export function getGlossaryTerm(slug: string): GlossaryTerm | null {
-  return plGlossaryContent[slug] ?? null;
+export function getGlossaryTerm(slug: string, locale: GlossaryContentLocale = "pl"): GlossaryTerm | null {
+  const map = contentMaps[locale] || plGlossaryContent;
+  return map[slug] ?? null;
 }
 
 /**
- * Retrieve all registered glossary terms.
- *
- * Supported locales: PL
+ * Retrieve all registered glossary terms for a specific locale.
  */
-export function getGlossaryTerms(): GlossaryTerm[] {
-  return Object.values(plGlossaryContent);
+export function getGlossaryTerms(locale: GlossaryContentLocale = "pl"): GlossaryTerm[] {
+  const map = contentMaps[locale] || plGlossaryContent;
+  return Object.values(map);
 }
