@@ -86,6 +86,57 @@ export function createHomeJsonLd(locale: Locale, dict: Dictionary): JsonLdValue 
   };
 }
 
+export interface BreadcrumbJsonLdItem {
+  name: string;
+  url: string;
+}
+
+export function createBreadcrumbListJsonLd(
+  items: BreadcrumbJsonLdItem[],
+): JsonLdValue {
+  return {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": items.map((item, index) => ({
+      "@type": "ListItem",
+      "position": index + 1,
+      "name": item.name,
+      "item": item.url,
+    })),
+  };
+}
+
+export function createLandingCollectionPageJsonLd({
+  pageUrl,
+  name,
+  description,
+  locale,
+  about,
+}: {
+  pageUrl: string;
+  name: string;
+  description: string;
+  locale: Locale;
+  about: string;
+}): JsonLdValue {
+  return {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${pageUrl}#collection`,
+    "url": pageUrl,
+    "name": name,
+    "description": description,
+    "inLanguage": localeLanguageTags[locale],
+    "isPartOf": {
+      "@id": websiteId,
+    },
+    "publisher": {
+      "@id": organizationId,
+    },
+    "about": about,
+  };
+}
+
 export interface OfferJsonLdSource {
   id: number;
   title: string;

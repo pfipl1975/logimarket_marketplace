@@ -3,6 +3,7 @@ import { locales, defaultLocale } from "@/lib/i18n/config";
 import { getHomeCanonical, getHomeLanguageAlternates, getOfferCanonical, absoluteUrl } from "@/lib/seo/urls";
 import { getSitemapOfferEntries, getSitemapCategoryEntries } from "@/lib/seo/repository";
 import { getGlossaryTerms } from "@/lib/glossary";
+import { getLandingSitemapEntries } from "@/lib/landing";
 
 export const revalidate = 86400;
 
@@ -28,6 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.8,
     };
   });
+
+  const landingEntries = getLandingSitemapEntries().map((entry) => ({
+    url: absoluteUrl(entry.path),
+    changeFrequency: "weekly" as const,
+    priority: 0.75,
+  }));
 
   const [offers, cats] = await Promise.all([
     getSitemapOfferEntries(),
@@ -89,5 +96,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })),
   ];
 
-  return [...homepageEntries, ...catalogRootEntries, ...offerEntries, ...categoryEntries, ...glossaryEntries];
+  return [
+    ...homepageEntries,
+    ...catalogRootEntries,
+    ...landingEntries,
+    ...offerEntries,
+    ...categoryEntries,
+    ...glossaryEntries,
+  ];
 }

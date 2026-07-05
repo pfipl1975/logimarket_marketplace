@@ -29,6 +29,20 @@ export async function GET() {
     content += `## Glossary Architecture\n`;
     content += `Glossary routes expose public logistics and procurement terminology. Polish, English and German glossary pages have controlled semantic layers and can be used as canonical knowledge-base content.\n\n`;
 
+    content += `## Landing Page Architecture\n`;
+    content += `Purchase-intent landing pages are controlled server-rendered pages for strategic B2B procurement topics. They connect decision guidance, catalog categories and glossary terms without creating new offer, checkout, RFQ or outbound behavior.\n`;
+    content += `Valid landing pages are:\n`;
+    content += `- /rozwiazania/wyposazenie-magazynu\n`;
+    content += `- /rozwiazania/intralogistyka\n`;
+    content += `- /rozwiazania/kompletacja-i-pakowanie\n`;
+    content += `- /en/solutions/warehouse-equipment\n`;
+    content += `- /en/solutions/intralogistics\n`;
+    content += `- /en/solutions/picking-and-packing\n`;
+    content += `- /de/loesungen/lagerausstattung\n`;
+    content += `- /de/loesungen/intralogistik\n`;
+    content += `- /de/loesungen/kommissionierung-und-verpackung\n`;
+    content += `Invalid cross-locale landing route combinations are not canonical content.\n\n`;
+
     content += `## Business Models\n`;
     content += `- RFQ: request-for-quotation flow for heavy machinery and complex B2B equipment.\n`;
     content += `- E-Commerce: cart-based flow for standardized repeatable products.\n`;

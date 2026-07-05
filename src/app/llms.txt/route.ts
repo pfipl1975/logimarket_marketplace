@@ -38,6 +38,17 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 - Safety systems and warehouse marking
 - Intralogistics and warehouse procurement
 
+## Purchase Intent Landing Pages
+- /rozwiazania/wyposazenie-magazynu (PL warehouse equipment purchase-intent page)
+- /rozwiazania/intralogistyka (PL intralogistics purchase-intent page)
+- /rozwiazania/kompletacja-i-pakowanie (PL picking and packing purchase-intent page)
+- /en/solutions/warehouse-equipment (EN warehouse equipment purchase-intent page)
+- /en/solutions/intralogistics (EN intralogistics purchase-intent page)
+- /en/solutions/picking-and-packing (EN picking and packing purchase-intent page)
+- /de/loesungen/lagerausstattung (DE warehouse equipment purchase-intent page)
+- /de/loesungen/intralogistik (DE intralogistics purchase-intent page)
+- /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)
+
 ## Core Paths
 - /
 - /katalog
