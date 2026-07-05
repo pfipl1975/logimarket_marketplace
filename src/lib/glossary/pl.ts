@@ -57,7 +57,7 @@ export const plGlossaryContent: GlossaryContentMap = {
       }
     ]
   },
-  "antresole-magazynowa": {
+  "antresola-magazynowa": {
     slug: "antresola-magazynowa",
     term: "Antresola magazynowa",
     shortDefinition: "Samonośna konstrukcja stalowa tworząca dodatkowe poziomy użytkowe nad posadzką hali, zwiększająca powierzchnię użytkową bez rozbudowy budynku.",
