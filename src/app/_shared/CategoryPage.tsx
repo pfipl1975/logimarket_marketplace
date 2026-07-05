@@ -20,6 +20,7 @@ import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks"
 import { CategoryInquiryChecklist } from "@/components/catalog/CategoryInquiryChecklist";
 import { CategoryFaqBlock } from "@/components/catalog/CategoryFaqBlock";
 import { getCategoryContent } from "@/lib/catalog/content";
+import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CategoryPageProps {
@@ -282,32 +283,15 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   })();
 
   const relatedLinks = (() => {
-    if (!categoryContent?.relatedCategoryEdges) return null;
-
-    const links = categoryContent.relatedCategoryEdges
-      .map((edge) => {
-        const targetCategory = allCategories.find((c) => c.slug === edge.targetSlug);
-        if (!targetCategory) return null;
-
-        const label = resolveCategoryName({
-          slug: edge.targetSlug,
-          dbName: targetCategory.name,
-          localeBySlug,
-          fallbackBySlug,
-        });
-
-        const href = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${edge.targetSlug}`;
-        return {
-          label,
-          href,
-          priority: edge.priority,
-        };
-      })
-      .filter((link): link is { label: string; href: string; priority: number } => link !== null)
-      .sort((a, b) => a.priority - b.priority)
-      .slice(0, 6);
-
-    return links.length > 0 ? links : null;
+    const resolved = resolveRelatedCategoryLinks({
+      edges: categoryContent?.relatedCategoryEdges,
+      allCategories,
+      locale,
+      categoryFilterBasePath,
+      localeBySlug,
+      fallbackBySlug,
+    });
+    return resolved.length > 0 ? resolved : null;
   })();
 
   const inquiryChecklistGroups = categoryContent?.inquiryChecklist?.groups || null;
