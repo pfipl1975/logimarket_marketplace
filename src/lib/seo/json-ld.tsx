@@ -307,3 +307,77 @@ export function createFaqPageJsonLd({
     })),
   };
 }
+
+export interface DefinedTermItemInput {
+  term: string;
+  slug: string;
+  description: string;
+}
+
+/**
+ * Generate DefinedTermSet JSON-LD for the main glossary listing page.
+ */
+export function createDefinedTermSetJsonLd({
+  terms,
+  pageUrl,
+}: {
+  terms: DefinedTermItemInput[];
+  pageUrl: string;
+}): JsonLdValue {
+  return {
+    "@context": "https://schema.org",
+    "@type": "DefinedTermSet",
+    "@id": `${pageUrl}#definedtermset`,
+    "name": "Leksykon Logistyczny LogiMarket",
+    "description": "Baza wiedzy B2B pojęć z logistyki, magazynowania, intralogistyki, opakowań i procesów zakupowych.",
+    "url": pageUrl,
+    "hasDefinedTerm": terms.map((item) => ({
+      "@type": "DefinedTerm",
+      "name": item.term,
+      "description": item.description,
+      "url": `${pageUrl}/${item.slug}`,
+    })),
+  };
+}
+
+export interface DefinedTermInput {
+  term: string;
+  shortDefinition: string;
+  synonyms?: string[];
+  pageUrl: string;
+  setUrl: string;
+}
+
+/**
+ * Generate DefinedTerm JSON-LD for a single glossary entry page.
+ */
+export function createDefinedTermJsonLd({
+  term,
+  shortDefinition,
+  synonyms,
+  pageUrl,
+  setUrl,
+}: DefinedTermInput): JsonLdValue {
+  const result: Record<string, JsonLdValue> = {
+    "@type": "DefinedTerm",
+    "@id": `${pageUrl}#definedterm`,
+    "name": term,
+    "description": shortDefinition,
+    "url": pageUrl,
+    "inDefinedTermSet": {
+      "@type": "DefinedTermSet",
+      "@id": `${setUrl}#definedtermset`,
+      "name": "Leksykon Logistyczny LogiMarket",
+      "url": setUrl,
+    },
+  };
+
+  if (synonyms && synonyms.length > 0) {
+    result["alternateName"] = synonyms;
+  }
+
+  return {
+    "@context": "https://schema.org",
+    ...result,
+  };
+}

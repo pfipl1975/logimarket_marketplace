@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next";
 import { locales, defaultLocale } from "@/lib/i18n/config";
 import { getHomeCanonical, getHomeLanguageAlternates, getOfferCanonical, absoluteUrl } from "@/lib/seo/urls";
 import { getSitemapOfferEntries, getSitemapCategoryEntries } from "@/lib/seo/repository";
+import { getGlossaryTerms } from "@/lib/glossary";
 
 export const revalidate = 86400;
 
@@ -51,5 +52,19 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     })
   );
 
-  return [...homepageEntries, ...catalogRootEntries, ...offerEntries, ...categoryEntries];
+  const glossaryTerms = getGlossaryTerms();
+  const glossaryEntries = [
+    {
+      url: absoluteUrl("/leksykon-logistyczny"),
+      changeFrequency: "daily" as const,
+      priority: 0.7,
+    },
+    ...glossaryTerms.map((term) => ({
+      url: absoluteUrl(`/leksykon-logistyczny/${term.slug}`),
+      changeFrequency: "weekly" as const,
+      priority: 0.6,
+    })),
+  ];
+
+  return [...homepageEntries, ...catalogRootEntries, ...offerEntries, ...categoryEntries, ...glossaryEntries];
 }
