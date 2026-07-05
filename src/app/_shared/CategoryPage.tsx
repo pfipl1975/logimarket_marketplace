@@ -21,6 +21,7 @@ import { CategoryInquiryChecklist } from "@/components/catalog/CategoryInquiryCh
 import { CategoryFaqBlock } from "@/components/catalog/CategoryFaqBlock";
 import { getCategoryContent } from "@/lib/catalog/content";
 import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
+import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CategoryPageProps {
@@ -376,8 +377,21 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           />
         </div>
 
-        {/* ── Hero / header section ─────────────────────────────────────── */}
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <aside className="hidden lg:block w-72 shrink-0 lg:sticky lg:top-24">
+            <CategoryTreeSidebar
+              tree={categoryTree}
+              activeSlug={category.slug}
+              locale={locale}
+              categoryFilterBasePath={categoryFilterBasePath}
+              localeBySlug={localeBySlug}
+              fallbackBySlug={fallbackBySlug}
+            />
+          </aside>
+
+          <div className="min-w-0 flex-1 w-full">
+            {/* ── Hero / header section ─────────────────────────────────────── */}
+            <div className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
             {activeCategoryLabel}
           </h1>
@@ -525,6 +539,9 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           links={relatedLinks}
           heading={headings.relatedLinks}
         />
+
+          </div>
+        </div>
 
       </main>
 
