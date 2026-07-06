@@ -6,10 +6,17 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { OfferCard } from "@/components/OfferCard";
 import { OfferProcurementListRow } from "@/components/offers/OfferProcurementListRow";
+import { CategoryOfferFilters } from "@/components/catalog/CategoryOfferFilters";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
+import {
+  buildCategoryOfferQueryHref,
+  hasActiveCategoryOfferFilters,
+  type CategoryOfferFilters as CategoryOfferFiltersState,
+  type OfferModelFilter,
+} from "@/lib/catalog/query";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
 import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
@@ -24,12 +31,14 @@ import { getCategoryContent } from "@/lib/catalog/content";
 import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
 import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
 import type { Locale } from "@/lib/i18n/types";
+import type { CatalogOffer } from "@/app/actions";
 import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
 
 interface CategoryPageProps {
   locale: Locale;
   categorySlug: string; // dbSlug (without 'c-' prefix)
   view?: "grid" | "list";
+  filters?: CategoryOfferFiltersState;
 }
 
 const blockHeadings = {
@@ -98,7 +107,41 @@ function PackageIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export async function CategoryPage({ locale, categorySlug, view = "grid" }: CategoryPageProps) {
+function offerMatchesModel(offer: CatalogOffer, model: OfferModelFilter): boolean {
+  if (model === "ecommerce") {
+    return offer.offerModel === "ecommerce";
+  }
+
+  if (model === "rfq") {
+    return offer.offerModel !== "ecommerce" && offer.conversionType === "rfq";
+  }
+
+  return offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+}
+
+function applyCategoryOfferFilters(
+  offers: CatalogOffer[],
+  filters: CategoryOfferFiltersState,
+): CatalogOffer[] {
+  return offers.filter((offer) => {
+    if (filters.model && !offerMatchesModel(offer, filters.model)) {
+      return false;
+    }
+
+    if (filters.featured && !offer.isFeatured) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export async function CategoryPage({
+  locale,
+  categorySlug,
+  view = "grid",
+  filters = {},
+}: CategoryPageProps) {
   const [dict, category, allCategories, offers] = await Promise.all([
     getDictionary(locale),
     getCategoryBySlug(categorySlug),
@@ -311,8 +354,21 @@ export async function CategoryPage({ locale, categorySlug, view = "grid" }: Cate
 
   const headings = blockHeadings[locale] || blockHeadings.pl;
   const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
-  const gridHref = `${viewBasePath}?view=grid`;
-  const listHref = `${viewBasePath}?view=list`;
+  const queryState = { view, filters };
+  const hasActiveFilters = hasActiveCategoryOfferFilters(filters);
+  const filteredOffers = applyCategoryOfferFilters(offers, filters);
+  const renderedOffers = hasActiveFilters ? filteredOffers : offers;
+  const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "grid" });
+  const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "list" });
+  const clearFiltersHref = buildCategoryOfferQueryHref(viewBasePath, queryState, {
+    clearFilters: true,
+  });
+  const renderedOfferCountLabel = `${renderedOffers.length} ${
+    renderedOffers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther
+  }`;
+  const offerCountLabel = hasActiveFilters
+    ? `${dict.catalog.filtersResultsLabel}: ${renderedOfferCountLabel} / ${offers.length}`
+    : renderedOfferCountLabel;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -529,14 +585,33 @@ export async function CategoryPage({ locale, categorySlug, view = "grid" }: Cate
           description={inquiryChecklistDescription}
         />
 
-        {/* ── Offer listing ────────────────────────────────────────────── */}
+        {/* ── Offer filters + listing ──────────────────────────────────── */}
+        {offers.length > 0 && (
+          <CategoryOfferFilters
+            basePath={viewBasePath}
+            view={view}
+            filters={filters}
+            labels={{
+              filtersHeading: dict.catalog.filtersHeading,
+              filtersSummary: dict.catalog.filtersSummary,
+              filtersAll: dict.catalog.filtersAll,
+              filtersClear: dict.catalog.filtersClear,
+              filtersModelHeading: dict.catalog.filtersModelHeading,
+              filtersModelRfq: dict.catalog.filtersModelRfq,
+              filtersModelEcommerce: dict.catalog.filtersModelEcommerce,
+              filtersModelOutbound: dict.catalog.filtersModelOutbound,
+              filtersFeaturedOnly: dict.catalog.filtersFeaturedOnly,
+            }}
+          />
+        )}
+
         <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-xl font-bold text-brand-navy">
               {dict.catalog.allOffers}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
+              {offerCountLabel}
             </p>
           </div>
 
@@ -566,15 +641,29 @@ export async function CategoryPage({ locale, categorySlug, view = "grid" }: Cate
           </nav>
         </div>
 
-        {offers.length === 0 ? (
+        {renderedOffers.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
             <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
-            <p className="text-lg font-semibold">{dict.catalog.emptyTitle}</p>
-            <p className="text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
+            <p className="text-lg font-semibold">
+              {hasActiveFilters ? dict.catalog.filtersEmptyTitle : dict.catalog.emptyTitle}
+            </p>
+            <p className="text-sm text-muted-foreground max-w-xs">
+              {hasActiveFilters
+                ? dict.catalog.filtersEmptyDescription
+                : dict.catalog.emptyDescription}
+            </p>
+            {hasActiveFilters && (
+              <Link
+                href={clearFiltersHref}
+                className="mt-2 rounded border border-border bg-white px-4 py-2 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"
+              >
+                {dict.catalog.filtersClear}
+              </Link>
+            )}
           </div>
         ) : view === "list" ? (
           <div className="mt-6 flex flex-col gap-3">
-            {offers.map((offer) => (
+            {renderedOffers.map((offer) => (
               <OfferProcurementListRow
                 key={offer.id}
                 offer={offer}
@@ -592,7 +681,7 @@ export async function CategoryPage({ locale, categorySlug, view = "grid" }: Cate
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {offers.map((offer) => (
+            {renderedOffers.map((offer) => (
               <OfferCard
                 key={offer.id}
                 offer={offer}

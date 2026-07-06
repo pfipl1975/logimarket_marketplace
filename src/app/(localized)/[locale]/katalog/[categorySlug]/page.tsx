@@ -5,19 +5,18 @@ import { getCategoryBySlug, getCategoryOffersCount } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import { absoluteUrl } from "@/lib/seo/urls";
+import {
+  resolveCategoryOfferFilters,
+  resolveOfferListingView,
+  type CategorySearchParams,
+} from "@/lib/catalog/query";
 import type { Locale } from "@/lib/i18n/types";
 import type { Metadata } from "next";
 
 type Props = {
   params: Promise<{ locale: string; categorySlug: string }>;
-  searchParams?: Promise<{ view?: string }>;
+  searchParams?: Promise<CategorySearchParams>;
 };
-
-type OfferListingView = "grid" | "list";
-
-function resolveOfferListingView(view: string | undefined): OfferListingView {
-  return view === "list" ? "list" : "grid";
-}
 
 function createSafeNoIndexMetadata(): Metadata {
   return {
@@ -107,12 +106,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params, searchParams }: Props) {
   const [{ locale, categorySlug }, resolvedSearchParams] = await Promise.all([
     params,
-    searchParams ?? Promise.resolve({} as { view?: string }),
+    searchParams ?? Promise.resolve({} as CategorySearchParams),
   ]);
   if (!locales.includes(locale as Locale)) notFound();
   if (!categorySlug.startsWith("c-")) notFound();
 
   const dbSlug = categorySlug.slice(2);
   const view = resolveOfferListingView(resolvedSearchParams.view);
-  return <CategoryPage locale={locale as Locale} categorySlug={dbSlug} view={view} />;
+  const filters = resolveCategoryOfferFilters(resolvedSearchParams);
+  return (
+    <CategoryPage
+      locale={locale as Locale}
+      categorySlug={dbSlug}
+      view={view}
+      filters={filters}
+    />
+  );
 }
