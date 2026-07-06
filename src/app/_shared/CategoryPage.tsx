@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { OfferCard } from "@/components/OfferCard";
+import { OfferProcurementListRow } from "@/components/offers/OfferProcurementListRow";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
@@ -28,6 +29,7 @@ import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
 interface CategoryPageProps {
   locale: Locale;
   categorySlug: string; // dbSlug (without 'c-' prefix)
+  view?: "grid" | "list";
 }
 
 const blockHeadings = {
@@ -96,7 +98,7 @@ function PackageIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) {
+export async function CategoryPage({ locale, categorySlug, view = "grid" }: CategoryPageProps) {
   const [dict, category, allCategories, offers] = await Promise.all([
     getDictionary(locale),
     getCategoryBySlug(categorySlug),
@@ -308,6 +310,9 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
   });
 
   const headings = blockHeadings[locale] || blockHeadings.pl;
+  const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
+  const gridHref = `${viewBasePath}?view=grid`;
+  const listHref = `${viewBasePath}?view=list`;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -525,11 +530,65 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
         />
 
         {/* ── Offer listing ────────────────────────────────────────────── */}
+        <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-xl font-bold text-brand-navy">
+              {dict.catalog.allOffers}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
+            </p>
+          </div>
+
+          <nav aria-label={dict.offers.viewSwitcherAria} className="flex w-fit overflow-hidden rounded border border-border">
+            <Link
+              href={gridHref}
+              aria-current={view === "grid" ? "page" : undefined}
+              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                view === "grid"
+                  ? "bg-brand-navy text-white"
+                  : "bg-white text-brand-navy hover:bg-gray-50"
+              }`}
+            >
+              {dict.offers.gridView}
+            </Link>
+            <Link
+              href={listHref}
+              aria-current={view === "list" ? "page" : undefined}
+              className={`border-l border-border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                view === "list"
+                  ? "bg-brand-navy text-white"
+                  : "bg-white text-brand-navy hover:bg-gray-50"
+              }`}
+            >
+              {dict.offers.listView}
+            </Link>
+          </nav>
+        </div>
+
         {offers.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
             <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
             <p className="text-lg font-semibold">{dict.catalog.emptyTitle}</p>
             <p className="text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
+          </div>
+        ) : view === "list" ? (
+          <div className="mt-6 flex flex-col gap-3">
+            {offers.map((offer) => (
+              <OfferProcurementListRow
+                key={offer.id}
+                offer={offer}
+                detailHref={getOfferPath(locale, String(offer.id))}
+                offerLabels={dict.offers}
+                ctaLabels={dict.cta}
+                rfqLabels={dict.rfq}
+                formLabels={dict.form}
+                systemLabels={dict.system}
+                closeLabel={dict.common.close}
+                categoryLabels={localeBySlug || {}}
+                technicalAttributeLabels={technicalAttributeLabels}
+              />
+            ))}
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">

@@ -104,6 +104,7 @@
     "externalOffer": "View offer at Partner",
     "gridView": "Grid",
     "listView": "List",
+    "viewSwitcherAria": "Change offer view",
     "ecommerceNotice": "This product is available in the E-Commerce model. Add it to the cart and submit a B2B order.",
     "rfqNotice": "This offer requires an individual quote. Send an RFQ inquiry and the partner will prepare an offer."
   },

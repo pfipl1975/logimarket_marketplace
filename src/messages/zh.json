@@ -104,6 +104,7 @@
     "externalOffer": "查看合作伙伴处的报价",
     "gridView": "网格",
     "listView": "列表",
+    "viewSwitcherAria": "切换报价视图",
     "ecommerceNotice": "该产品支持 E-Commerce 模式。请加入购物车并提交 B2B 订单。",
     "rfqNotice": "此报价需要单独评估。请发送 RFQ 询盘，合作伙伴将为您提供报价。"
   },

@@ -104,6 +104,7 @@
     "externalOffer": "Ver oferta en la web del Socio",
     "gridView": "Cuadrícula",
     "listView": "Lista",
+    "viewSwitcherAria": "Cambiar vista de ofertas",
     "ecommerceNotice": "Este producto está disponible en el modelo E-Commerce. Añádelo al carrito y envía el pedido B2B.",
     "rfqNotice": "Esta oferta requiere un presupuesto individual. Envía una solicitud RFQ y el socio preparará una oferta."
   },

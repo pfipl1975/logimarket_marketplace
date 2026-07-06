@@ -104,6 +104,7 @@
     "externalOffer": "Angebot beim Partner ansehen",
     "gridView": "Kacheln",
     "listView": "Liste",
+    "viewSwitcherAria": "Angebotsansicht wechseln",
     "ecommerceNotice": "Dieses Produkt ist im E-Commerce-Modell verfügbar. In den Warenkorb legen und B2B-Bestellung absenden.",
     "rfqNotice": "Dieses Angebot erfordert ein individuelles Angebot. Senden Sie eine RFQ-Anfrage, und der Partner bereitet ein Angebot vor."
   },

@@ -10,7 +10,14 @@ import type { Metadata } from "next";
 
 type Props = {
   params: Promise<{ locale: string; categorySlug: string }>;
+  searchParams?: Promise<{ view?: string }>;
 };
+
+type OfferListingView = "grid" | "list";
+
+function resolveOfferListingView(view: string | undefined): OfferListingView {
+  return view === "list" ? "list" : "grid";
+}
 
 function createSafeNoIndexMetadata(): Metadata {
   return {
@@ -97,11 +104,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default async function Page({ params }: Props) {
-  const { locale, categorySlug } = await params;
+export default async function Page({ params, searchParams }: Props) {
+  const [{ locale, categorySlug }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve({} as { view?: string }),
+  ]);
   if (!locales.includes(locale as Locale)) notFound();
   if (!categorySlug.startsWith("c-")) notFound();
 
   const dbSlug = categorySlug.slice(2);
-  return <CategoryPage locale={locale as Locale} categorySlug={dbSlug} />;
+  const view = resolveOfferListingView(resolvedSearchParams.view);
+  return <CategoryPage locale={locale as Locale} categorySlug={dbSlug} view={view} />;
 }
