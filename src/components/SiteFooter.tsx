@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import type { Locale } from "@/lib/i18n/config";
-import { getHomePath } from "@/lib/i18n/paths";
+import { getHomePath, getGlossaryPath } from "@/lib/i18n/paths";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface SiteFooterProps {
@@ -16,6 +16,7 @@ export function SiteFooter({
   footerLabels,
 }: SiteFooterProps) {
   const homeHref = getHomePath(locale);
+  const glossaryHref = getGlossaryPath(locale);
 
   return (
     <footer className="mt-auto bg-brand-navy text-white/70">
@@ -31,24 +32,10 @@ export function SiteFooter({
           <ul className="mt-3 space-y-2 text-sm">
             <li><a className="hover:text-white transition-colors" href="https://logimarket.pl" target="_blank" rel="noopener noreferrer">{navLabels.portal}</a></li>
             <li><Link className="hover:text-white transition-colors" href={homeHref}>{navLabels.catalog}</Link></li>
-            {locale === "pl" && (
+            {glossaryHref && (
               <li>
-                <Link className="hover:text-white transition-colors" href="/slownik-branzowy">
-                  Słownik branżowy
-                </Link>
-              </li>
-            )}
-            {locale === "en" && (
-              <li>
-                <Link className="hover:text-white transition-colors" href="/en/logistics-glossary">
-                  Logistics glossary
-                </Link>
-              </li>
-            )}
-            {locale === "de" && (
-              <li>
-                <Link className="hover:text-white transition-colors" href="/de/logistik-lexikon">
-                  Logistik-Lexikon
+                <Link className="hover:text-white transition-colors" href={glossaryHref}>
+                  {navLabels.glossary}
                 </Link>
               </li>
             )}

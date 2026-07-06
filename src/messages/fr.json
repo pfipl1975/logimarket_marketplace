@@ -14,7 +14,8 @@
     "menu": "Menu",
     "openMenu": "Ouvrir le menu",
     "closeMenu": "Fermer le menu",
-    "mainNavigation": "Navigation principale"
+    "mainNavigation": "Navigation principale",
+    "glossary": "Glossaire"
   },
   "common": {
     "close": "Fermer"

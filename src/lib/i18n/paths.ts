@@ -42,3 +42,16 @@ export function getOfferLocaleLinks(offerId: string): Record<Locale, string> {
     zh: getOfferPath("zh", offerId),
   } satisfies Record<Locale, string>;
 }
+
+export function getGlossaryPath(locale: Locale): string | null {
+  if (locale === "pl") {
+    return "/slownik-branzowy";
+  }
+  if (locale === "en") {
+    return "/en/logistics-glossary";
+  }
+  if (locale === "de") {
+    return "/de/logistik-lexikon";
+  }
+  return null;
+}

@@ -14,7 +14,8 @@
     "menu": "Меню",
     "openMenu": "Відкрити меню",
     "closeMenu": "Закрити menu",
-    "mainNavigation": "Головна навігація"
+    "mainNavigation": "Головна навігація",
+    "glossary": "Словник"
   },
   "common": {
     "close": "Закрити"
