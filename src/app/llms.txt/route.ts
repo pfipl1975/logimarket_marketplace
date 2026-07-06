@@ -32,12 +32,21 @@ Valid canonical landing pages:
 - /rozwiazania/wyposazenie-magazynu (PL warehouse equipment purchase-intent page)
 - /rozwiazania/intralogistyka (PL intralogistics purchase-intent page)
 - /rozwiazania/kompletacja-i-pakowanie (PL picking and packing purchase-intent page)
+- /rozwiazania/magazyn-e-commerce (PL e-commerce warehouse purchase-intent page)
+- /rozwiazania/centrum-dystrybucyjne (PL distribution center purchase-intent page)
+- /rozwiazania/strefa-przyjec-i-wysylek (PL receiving and shipping area purchase-intent page)
 - /en/solutions/warehouse-equipment (EN warehouse equipment purchase-intent page)
 - /en/solutions/intralogistics (EN intralogistics purchase-intent page)
 - /en/solutions/picking-and-packing (EN picking and packing purchase-intent page)
+- /en/solutions/ecommerce-warehouse (EN e-commerce warehouse purchase-intent page)
+- /en/solutions/distribution-center (EN distribution center purchase-intent page)
+- /en/solutions/receiving-and-shipping-area (EN receiving and shipping area purchase-intent page)
 - /de/loesungen/lagerausstattung (DE warehouse equipment purchase-intent page)
 - /de/loesungen/intralogistik (DE intralogistics purchase-intent page)
 - /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)
+- /de/loesungen/e-commerce-lager (DE e-commerce warehouse purchase-intent page)
+- /de/loesungen/distributionszentrum (DE distribution center purchase-intent page)
+- /de/loesungen/wareneingang-und-versand (DE receiving and shipping area purchase-intent page)
 
 Invalid cross-locale landing route combinations are 404 routes and are not canonical content.
 

@@ -937,4 +937,910 @@ export const landingPages = [
         "B2B-Landingpage für Kommissionierung und Verpackung: Arbeitsplätze, Eurobehälter, interner Transport und passende Katalogkategorien.",
     },
   },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "pl",
+    slug: "magazyn-e-commerce",
+    path: "/rozwiazania/magazyn-e-commerce",
+    sectionLabel: "Rozwiązania",
+    title: "Magazyn e-commerce",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Logistyka e-commerce wymaga dużej elastyczności, szybkości kompletacji oraz sprawnej obsługi zwrotów. Ta strona wspiera decyzje zakupowe w zakresie regałów półkowych, wózków kompletacyjnych, stanowisk pakowania i pojemników plastikowych.",
+    procurementContextTitle: "Kontekst zakupowy B2B",
+    procurementContext: [
+      "Wysoka rotacja towarów oraz duża zmienność zamówień wymuszają dynamiczną adaptację przestrzeni składowej.",
+      "Zakupy wyposażenia powinny skupiać się na skalowalności i modułowości – systemy regałowe i stoły pakowe muszą rosnąć wraz z wolumenem paczek.",
+      "Kluczowym kryterium jest integracja procesów: składowanie drobnych towarów, kompletacja wielopozycyjna oraz ergonomiczne pakowanie.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Szybkość picking-u",
+        description:
+          "Oceń ergonomię sięgania po towary. Półkowe regały o wysokim stopniu regulacji i przejrzyste kuwety Euro skracają czas kompletacji.",
+      },
+      {
+        title: "Stanowisko pakowania",
+        description:
+          "Wybieraj stoły pakowe z regulacją wysokości i nadstawkami na materiały eksploatacyjne, co ogranicza zmęczenie operatora.",
+      },
+      {
+        title: "Rotacja i nośność",
+        description:
+          "Dostosuj obciążenie regałów do lżejszych, lecz liczniejszych partii asortymentu charakterystycznych dla handlu online.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Stoły pakowe i kompletacyjne",
+        href: "/katalog/c-stoly-pakowe-i-kompletacyjne",
+        context: "Ergonomiczne stanowiska pakowe przyspieszające przygotowanie przesyłek do kuriera.",
+      },
+      {
+        label: "Pojemniki plastikowe Euro",
+        href: "/katalog/c-pojemniki-plastikowe-euro",
+        context: "Podstawowe nośniki drobnego asortymentu w strefach kompletacji i transportu.",
+      },
+      {
+        label: "Wózki i transport wewnętrzny",
+        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Środki transportu ułatwiające zbiórkę wielu zamówień jednocześnie.",
+      },
+      {
+        label: "Regały i systemy składowania",
+        href: "/katalog/c-regaly-i-systemy-skladowania",
+        context: "Konstrukcje półkowe idealne do składowania produktów drobnicowych.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Kompletacja zamówień",
+        href: "/slownik-branzowy/kompletacja-zamowien",
+        context: "Główny proces logistyczny decydujący o wydajności wysyłek e-commerce.",
+      },
+      {
+        label: "Pojemnik Euro",
+        href: "/slownik-branzowy/pojemnik-euro",
+        context: "Znormalizowana jednostka składowania kompatybilna z regałami i przenośnikami.",
+      },
+      {
+        label: "Transport wewnętrzny",
+        href: "/slownik-branzowy/transport-wewnetrzny",
+        context: "Ruch materiałów w strefach składowania i pakowania w centrum logistycznym.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jak dobrać regały do magazynu e-commerce?",
+        answer:
+          "Wybierz regały półkowe o łatwej regulacji poziomów, dostosowane do wymiarów najczęściej używanych pojemników Euro.",
+      },
+      {
+        question: "Dlaczego ergonomia stołów pakowych jest ważna?",
+        answer:
+          "Praca stojąca przy pakowaniu generuje obciążenie. Regulacja wysokości i łatwy dostęp do kartonów zwiększają wydajność.",
+      },
+      {
+        question: "Czy pojemniki Euro są niezbędne?",
+        answer:
+          "Zapewniają standaryzację – pasują do regałów, wózków i automatycznych przenośników, zapobiegając uszkodzeniom towaru.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Przejdź do katalogu",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz rozwiązania",
+    },
+    seo: {
+      title: "Wyposażenie magazynu e-commerce B2B | LogiMarket",
+      description:
+        "Dobór wyposażenia do magazynów e-commerce: ergonomiczne stoły pakowe, wózki kompletacyjne, pojemniki Euro i regały półkowe dla logistyki B2B.",
+    },
+  },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "en",
+    slug: "ecommerce-warehouse",
+    path: "/en/solutions/ecommerce-warehouse",
+    sectionLabel: "Solutions",
+    title: "E-commerce warehouse",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "E-commerce logistics requires high flexibility, fast order picking, and efficient returns management. This page coordinates purchasing decisions for shelving systems, picking carts, packing stations, and plastic bins.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "High inventory turnover and small, multi-item orders demand dynamic layout configuration.",
+      "Equipment procurement must focus on scalability – packing tables and shelving units must adapt to seasonal volume peaks.",
+      "Optimal flow integration connects small parts storage, multi-order picking, and ergonomic pack-out zones.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Picking speed",
+        description:
+          "Evaluate picker ergonomics. Highly adjustable shelving and clear Euro containers minimize pick times.",
+      },
+      {
+        title: "Packing station",
+        description:
+          "Select packing tables with adjustable heights and built-in supply storage to reduce worker fatigue.",
+      },
+      {
+        title: "Flexibility and capacity",
+        description:
+          "Match rack capacities to light, high-density item configurations typical in online retail logistics.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Packing and picking tables",
+        href: "/en/katalog/c-stoly-pakowe-i-kompletacyjne",
+        context: "Ergonomic stations accelerating order consolidation and dispatch.",
+      },
+      {
+        label: "Plastic Euro containers",
+        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        context: "Standard carriers for picking, buffering, and organizing loose items.",
+      },
+      {
+        label: "Carts and internal transport",
+        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Handling equipment facilitating multi-batch order collection.",
+      },
+      {
+        label: "Racking and storage systems",
+        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        context: "Shelving structures ideal for high-density small parts storage.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Order picking",
+        href: "/en/logistics-glossary/kompletacja-zamowien",
+        context: "Primary warehouse process directly affecting order cycle times.",
+      },
+      {
+        label: "Euro container",
+        href: "/en/logistics-glossary/pojemnik-euro",
+        context: "Standardized storage bin compatible with shelving and conveyors.",
+      },
+      {
+        label: "Internal transport",
+        href: "/en/logistics-glossary/transport-wewnetrzny",
+        context: "Material flow logic within storage and packing zones.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "How do I choose shelving for an e-commerce facility?",
+        answer:
+          "Select boltless shelving with easily adjustable shelf levels configured to standard Euro container dimensions.",
+      },
+      {
+        question: "Why is packing table ergonomics critical?",
+        answer:
+          "Repetitive packing actions cause strain. Height-adjustable tables with organizers improve packing throughput.",
+      },
+      {
+        question: "Are Euro bins necessary for e-commerce picking?",
+        answer:
+          "Standardized bins ensure compatibility across storage shelving, picking carts, and automated conveyor loops.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Go to catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View solutions",
+    },
+    seo: {
+      title: "E-commerce Warehouse Equipment B2B | LogiMarket",
+      description:
+        "Procurement guide for e-commerce warehouse setup: packing tables, picking carts, Euro containers, and adjustable shelving for B2B buyers.",
+    },
+  },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "de",
+    slug: "e-commerce-lager",
+    path: "/de/loesungen/e-commerce-lager",
+    sectionLabel: "Lösungen",
+    title: "E-Commerce-Lager",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "E-Commerce-Logistik erfordert hohe Flexibilität, schnelle Kommissionierung und effiziente Retourenabwicklung. Diese Seite strukturiert Kaufentscheidungen für Fachbodenregale, Kommissionierwagen, Packtische und Kunststoffbehälter.",
+    procurementContextTitle: "B2B-Einkaufskontext",
+    procurementContext: [
+      "Hoher Warenumschlag und kleinteilige Bestellungen verlangen eine dynamische Raumnutzung.",
+      "Die Beschaffung sollte auf Skalierbarkeit ausgerichtet sein – Packtische und Regale müssen mit saisonalen Volumenpeaks mitwachsen.",
+      "Ein optimaler Prozess verbindet Kleinteilelagerung, Mehrbehälter-Kommissionierung und ergonomische Verpackungsplätze.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Zugriffsgeschwindigkeit",
+        description:
+          "Achten Sie auf ergonomischen Griffbereich. Verstellbare Fachböden und transparente Euroboxen verkürzen Kommissionierzeiten.",
+      },
+      {
+        title: "Ergonomie",
+        description:
+          "Wählen Sie Packtische mit Höhenverstellung und Ablagen für Verpackungsmaterialien, um Ermüdung zu reduzieren.",
+      },
+      {
+        title: "Strukturelle Kapazität",
+        description:
+          "Passen Sie Regalträger an leichte, hochdichte Produktkonfigurationen des Onlinehandels an.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Pack- und Kommissioniertische",
+        href: "/de/katalog/c-stoly-pakowe-i-kompletacyjne",
+        context: "Ergonomische Packplätze zur Beschleunigung von Verpackung und Versand.",
+      },
+      {
+        label: "Euro-Kunststoffbehälter",
+        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        context: "Standardträger für Kommissionierung, Pufferung und Kleinteilelagerung.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Transportmittel zur effizienten Sammelkommissionierung.",
+      },
+      {
+        label: "Regale und Lagersysteme",
+        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        context: "Fachbodenkonstruktionen ideal für die e-commerce Kleinteilelagerung.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Kommissionierung",
+        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        context: "Zentraler Lagerprozess mit direktem Einfluss auf Durchlaufzeiten.",
+      },
+      {
+        label: "Eurobehälter",
+        href: "/de/logistik-lexikon/pojemnik-euro",
+        context: "Standardisierte Transporteinheit kompatibel mit Fachbodenregalen.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        href: "/de/logistik-lexikon/transport-wewnetrzny",
+        context: "Materialflusslogistik innerhalb der e-commerce Logistikbereiche.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Wie wähle ich Regale für ein e-commerce Lager aus?",
+        answer:
+          "Bevorzugen Sie schraublose Fachbodenregale mit flexibler Ebenenverstellung passend zu Ihren Eurobehälter-Dimensionen.",
+      },
+      {
+        question: "Warum ist die Ergonomie von Packtischen so wichtig?",
+        answer:
+          "Wiederholtes Verpacken belastet den Körper. Höhenverstellbare Tische mit Zubehörhaltern steigern die Verpackungsleistung.",
+      },
+      {
+        question: "Sind Euroboxen für die Kommissionierung zwingend erforderlich?",
+        answer:
+          "Sie bieten Standardisierung – sie passen exakt auf Regalböden, Wagen und Bänder, was Warenschäden vorbeugt.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Lösungen anzeigen",
+    },
+    seo: {
+      title: "E-Commerce-Lagerausstattung B2B | LogiMarket",
+      description:
+        "B2B-Leitfaden für e-commerce Logistik: Packtische, Kommissionierwagen, Eurobehälter und Fachbodenregale für industrielle Einkäufer.",
+    },
+  },
+  {
+    intent: "distribution-center",
+    locale: "pl",
+    slug: "centrum-dystrybucyjne",
+    path: "/rozwiazania/centrum-dystrybucyjne",
+    sectionLabel: "Rozwiązania",
+    title: "Centrum dystrybucyjne",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Centra dystrybucyjne opierają się na masowym przepływie palet, buforowaniu zapasów oraz wydajnej konsolidacji ładunków. Ta strona ułatwia dobór regałów wysokiego składowania, wózków widłowych, podestów magazynowych oraz systemów oznakowania stref.",
+    procurementContextTitle: "Kontekst zakupowy B2B",
+    procurementContext: [
+      "Decyzje w centrum dystrybucyjnym determinowane są przez wysoki przepływ jednostek paletowych (palety Euro, palety przemysłowe).",
+      "Konieczne jest zachowanie równowagi pomiędzy strefą składowania a strefą szybkiej kompletacji i buforowania.",
+      "Zakupy wyposażenia magazynowego muszą spełniać najwyższe standardy nośności i bezpieczeństwa mechanicznego.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Wykorzystanie wysokości",
+        description:
+          "Zmaksymalizuj przestrzeń pionową. Regały paletowe rzędowe lub systemy podestów magazynowych pozwalają podwoić pojemność składowania.",
+      },
+      {
+        title: "Bezpieczeństwo pracy",
+        description:
+          "W strefach intensywnego ruchu wózków widłowych niezbędne są stalowe lub elastyczne osłony ram i słupów regałowych.",
+      },
+      {
+        title: "Układ stref i oznakowanie",
+        description:
+          "Jasne rozgraniczenie stref za pomocą znaków pionowych i poziomych podnosi płynność procesów i ogranicza kolizje.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Regały i systemy składowania",
+        href: "/katalog/c-regaly-i-systemy-skladowania",
+        context: "Regały paletowe i półkowe tworzące trzon infrastruktury centrum dystrybucyjnego.",
+      },
+      {
+        label: "Antresole i podesty magazynowe",
+        href: "/katalog/c-antresole-i-podesty-magazynowe",
+        context: "Wielopoziomowe konstrukcje zwiększające powierzchnię użytkową hali.",
+      },
+      {
+        label: "Wózki i transport wewnętrzny",
+        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Wózki widłowe czołowe, reach trucki i wózki paletowe do obsługi ładunków.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Regał paletowy",
+        href: "/slownik-branzowy/regal-paletowy",
+        context: "Pojęcie definiujące konstrukcje ramowe do masowego składowania towarów paletowych.",
+      },
+      {
+        label: "Transport wewnętrzny",
+        href: "/slownik-branzowy/transport-wewnetrzny",
+        context: "Ruch wózków, maszyn i operatorów w obrębie hali dystrybucyjnej.",
+      },
+      {
+        label: "Kompletacja zamówień",
+        href: "/slownik-branzowy/kompletacja-zamowien",
+        context: "Zbiórka towarów z poziomów zerowych regałów paletowych lub stref kompletacyjnych.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jak dobrać system regałowy do centrum dystrybucyjnego?",
+        answer:
+          "Podstawą są regały paletowe rzędowe, które zapewniają bezpośredni dostęp do każdej palety. Uzupełnij je regałami wjezdnymi lub przepływowymi dla towarów szybkorotujących.",
+      },
+      {
+        question: "Kiedy warto zainwestować w antresolę magazynową?",
+        answer:
+          "Gdy potrzebujesz dodatkowej powierzchni do kompletacji lub pakowania lekkich towarów bez rozbudowy samej hali.",
+      },
+      {
+        question: "Jakie zabezpieczenia regałów są wymagane?",
+        answer:
+          "Zgodnie z normą PN-EN 15635 słupy narożne i narażone na uderzenia wózków widłowych muszą posiadać osłony o wysokości min. 400 mm.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Przejdź do katalogu",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz rozwiązania",
+    },
+    seo: {
+      title: "Wyposażenie centrum dystrybucyjnego B2B | LogiMarket",
+      description:
+        "Wybór wyposażenia do centrów dystrybucyjnych: regały paletowe, antresole, wózki widłowe, zabezpieczenia i oznakowanie magazynu B2B.",
+    },
+  },
+  {
+    intent: "distribution-center",
+    locale: "en",
+    slug: "distribution-center",
+    path: "/en/solutions/distribution-center",
+    sectionLabel: "Solutions",
+    title: "Distribution center",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Distribution centers rely on high-volume pallet flow, inventory buffering, and efficient cargo consolidation. This page coordinates procurement for selective pallet racks, forklifts, warehouse mezzanines, and aisle marking systems.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "Inbound and outbound flows are defined by high-volume pallet handling (Euro pallets, industrial pallets).",
+      "Balancing reserve storage zones with active picking and sorting areas is key to warehouse efficiency.",
+      "Procured equipment must meet maximum load capacities and rigid structural safety standards.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Vertical storage",
+        description:
+          "Maximize vertical space utilization. Heavy-duty pallet racking and mezzanine platforms double effective footprint.",
+      },
+      {
+        title: "Asset protection",
+        description:
+          "Implement structural column guards and barrier rails in high-traffic forklift transit lanes.",
+      },
+      {
+        title: "Aisle layout",
+        description:
+          "Ensure clear separation of pedestrian and machinery paths with professional markings to maintain flow.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Racking and storage systems",
+        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        context: "Pallet racks and heavy shelving forming the core infrastructure of distribution hubs.",
+      },
+      {
+        label: "Antresole and warehouse mezzanines",
+        href: "/en/katalog/c-antresole-i-podesty-magazynowe",
+        context: "Multi-level structural platforms maximizing usable height.",
+      },
+      {
+        label: "Carts and internal transport",
+        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Counterbalance trucks, reach trucks, and pallet jacks for pallet manipulation.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Pallet racking",
+        href: "/en/logistics-glossary/regal-paletowy",
+        context: "Framework structures designed for high-density storage of palletized loads.",
+      },
+      {
+        label: "Internal transport",
+        href: "/en/logistics-glossary/transport-wewnetrzny",
+        context: "Material handling traffic flow inside distribution facilities.",
+      },
+      {
+        label: "Order picking",
+        href: "/en/logistics-glossary/kompletacja-zamowien",
+        context: "Consolidation of items from lower racking levels or dedicated picking zones.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "How do I choose racking for a distribution hub?",
+        answer:
+          "Start with selective pallet racking for 100% accessibility. Consider drive-in or gravity flow racks for high-density, low-SKU product buffers.",
+      },
+      {
+        question: "When should I consider a mezzanine floor?",
+        answer:
+          "When you need additional floor space for assembly, sorting, or packing without expanding the physical building envelope.",
+      },
+      {
+        question: "What rack protection is mandatory?",
+        answer:
+          "Uprights exposed to forklift collisions must be fitted with crash protectors (at least 400 mm high) to prevent collapse risks.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Go to catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View solutions",
+    },
+    seo: {
+      title: "Distribution Center Equipment B2B | LogiMarket",
+      description:
+        "Procurement guide for B2B distribution centers: heavy pallet racks, industrial mezzanines, reach trucks, and aisle markings.",
+    },
+  },
+  {
+    intent: "distribution-center",
+    locale: "de",
+    slug: "distributionszentrum",
+    path: "/de/loesungen/distributionszentrum",
+    sectionLabel: "Lösungen",
+    title: "Distributionszentrum",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Distributionszentrum basieren auf hohem Palettendurchsatz, Bestandspufferung und effizienter Frachtkonsolidierung. Diese Seite unterstützt die Beschaffung von Palettenregalen, Gabelstaplern, Lagerbühnen und Kennzeichnungssystemen.",
+    procurementContextTitle: "B2B-Einkaufskontext",
+    procurementContext: [
+      "Der Umschlag wird durch hohe Frequenzen von Ladungsträgern (Europaletten, Einwegpaletten) definiert.",
+      "Die Abstimmung zwischen Blocklagerung, Regallagerung und Kommissionierzone ist entscheidend.",
+      "Beschaffte Systeme müssen höchste Tragfähigkeiten aufweisen und mechanischen Belastungen standhalten.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Höhennutzung",
+        description:
+          "Nutzen Sie die Raumhöhe. Palettenregale und mehrgeschossige Lagerbühnen verdoppeln die nutzbare Fläche.",
+      },
+      {
+        title: "Sicherer Betrieb",
+        description:
+          "Installieren Sie Rammschutzvorrichtungen und Leitplanken an allen Verkehrswegen von Flurförderzeugen.",
+      },
+      {
+        title: "Zonenorganisation",
+        description:
+          "Trennen Sie Fußgänger- und Staplerwege durch Bodenmarkierungen und Schilder, um Unfälle zu vermeiden.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Regale und Lagersysteme",
+        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        context: "Schwerlast- und Palettenregale für geordnete Lagerung im Distributionszentrum.",
+      },
+      {
+        label: "Lagerbühnen und Podeste",
+        href: "/de/katalog/c-antresole-i-podesty-magazynowe",
+        context: "Mehrgeschossige Stahletagen zur Erhöhung der Nutzfläche ohne Anbau.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Frontstapler, Schubmaststapler und Hubwagen für Palettenbewegungen.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Palettenregal",
+        href: "/de/logistik-lexikon/regal-paletowy",
+        context: "System zur mehrstufigen Aufnahme schwerer Ladungsträger.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        href: "/de/logistik-lexikon/transport-wewnetrzny",
+        context: "Fluss von Fahrzeugen und Materialien im Distributionsbereich.",
+      },
+      {
+        label: "Kommissionierung",
+        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        context: "Zusammenstellung von Palettenladungen für den Weitertransport.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Welches Regalsystem eignet sich für ein Distributionszentrum?",
+        answer:
+          "Breitgang-Palettenregale bieten Flexibilität. Nutzen Sie Durchlaufregale für das FIFO-Prinzip bei schnellem Warenumschlag.",
+      },
+      {
+        question: "Wann lohnen sich Lagerbühnen?",
+        answer:
+          "Wenn Deckenhöhen vorhanden sind und zusätzliche Flächen für Verpackung, Sortierung oder Konfektionierung benötigt werden.",
+      },
+      {
+        question: "Welcher Anprallschutz ist Pflicht?",
+        answer:
+          "Gemäß DIN EN 15635 müssen Eckpfosten von Regalen durch einen mindestens 400 mm hohen, bodenverankerten Schutz gesichert sein.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Lösungen anzeigen",
+    },
+    seo: {
+      title: "Ausstattung für Distributionszentren B2B | LogiMarket",
+      description:
+        "B2B-Einkaufsführer für Distributionszentren: Palettenregale, Lagerbühnen, Stapler und Schutzplanken für Logistikentscheider.",
+    },
+  },
+  {
+    intent: "receiving-shipping",
+    locale: "pl",
+    slug: "strefa-przyjec-i-wysylek",
+    path: "/rozwiazania/strefa-przyjec-i-wysylek",
+    sectionLabel: "Rozwiązania",
+    title: "Strefa przyjęć i wysyłek",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Strefa wejścia i wyjścia towarów to krytyczny punkt każdego magazynu, gdzie odbywa się kontrola jakości, ważenie, foliowanie i konsolidacja wysyłek. Strona porządkuje dobór stołów pakowych, wózków paletowych, owijarek i zabezpieczeń ochronnych.",
+    procurementContextTitle: "Kontekst zakupowy B2B",
+    procurementContext: [
+      "Strefa przeładunku (doki, rampy) łączy transport zewnętrzny z wewnętrznym przepływem towarów.",
+      "Kluczowa jest prędkość operacji – wózki paletowe i stanowiska kontroli muszą działać bez przestojów.",
+      "Zakupy powinny uwzględniać ochronę infrastruktury dokowej oraz stanowisk kontrolno-pakowych.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Stanowisko kontroli i pakowania",
+        description:
+          "Zorganizuj stanowiska kontroli jakości blisko doków. Stoły o regulowanej wysokości z uchwytami na etykiety podnoszą sprawność.",
+      },
+      {
+        title: "Sprawność rozładunku",
+        description:
+          "Wybieraj solidne ręczne lub elektryczne wózki paletowe, które radzą sobie z nierównościami doków i częstym użytkowaniem.",
+      },
+      {
+        title: "Ochrona infrastruktury",
+        description:
+          "Stosuj słupki ochronne, bariery oraz odbojnice naprowadzające wózków przy dokach przeładunkowych.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Stoły pakowe i kompletacyjne",
+        href: "/katalog/c-stoly-pakowe-i-kompletacyjne",
+        context: "Stanowiska kontroli jakości, ważenia i etykietowania przesyłek przed wysyłką.",
+      },
+      {
+        label: "Pojemniki plastikowe Euro",
+        href: "/katalog/c-pojemniki-plastikowe-euro",
+        context: "Nośniki dla towarów odrzucanych na kontroli lub konsolidowanych.",
+      },
+      {
+        label: "Wózki i transport wewnętrzny",
+        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Wózki paletowe (paleciaki) oraz wózki unoszące do pracy w dokach.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Transport wewnętrzny",
+        href: "/slownik-branzowy/transport-wewnetrzny",
+        context: "Ruch ładunków pomiędzy dokami przeładunkowymi a regałami wysokiego składowania.",
+      },
+      {
+        label: "Pojemnik Euro",
+        href: "/slownik-branzowy/pojemnik-euro",
+        context: "Znormalizowany nośnik ułatwiający transport drobnych partii na przyjęciu towaru.",
+      },
+      {
+        label: "Kompletacja zamówień",
+        href: "/slownik-branzowy/kompletacja-zamowien",
+        context: "Etap poprzedzający strefę wysyłki i ostateczną konsolidację paczek.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jak usprawnić kontrolę jakości na przyjęciu?",
+        answer:
+          "Zainstaluj dedykowane stanowiska kontrolne z wagami i skanerami blisko doków rozładunkowych, co ograniczy zbędny ruch towaru.",
+      },
+      {
+        question: "Jakie wózki są najlepsze do strefy dokowej?",
+        answer:
+          "Elektryczne wózki unoszące z platformą dla operatora znacząco przyspieszają rozładunek naczep tirów.",
+      },
+      {
+        question: "Czy odbojnice w dokach są konieczne?",
+        answer:
+          "Tak, amortyzują uderzenia cofających ciężarówek, chroniąc ścianę budynku i rampę przed kosztownymi naprawami.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Przejdź do katalogu",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz rozwiązania",
+    },
+    seo: {
+      title: "Wyposażenie strefy przyjęć i wysyłek B2B | LogiMarket",
+      description:
+        "Wyposażenie strefy przyjęć i wysyłek B2B: stoły pakowe, wózki paletowe, ochrona doków i stanowiska kontroli ładunków na platformie LogiMarket.",
+    },
+  },
+  {
+    intent: "receiving-shipping",
+    locale: "en",
+    slug: "receiving-and-shipping-area",
+    path: "/en/solutions/receiving-and-shipping-area",
+    sectionLabel: "Solutions",
+    title: "Receiving and shipping area",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "The inbound and outbound dock area is a critical warehouse node where quality control, weighing, wrapping, and shipment consolidation take place. This page coordinates procurement for packing tables, pallet jacks, stretch wrappers, and safety barriers.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "The loading dock area links inbound/outbound road freight with the warehouse's internal flow.",
+      "Speed and safety are key – pallet jacks and check stations must operate reliably during peak hours.",
+      "Purchasing focus should center on protecting loading ramp infrastructure and packing stations.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Quality check stations",
+        description:
+          "Position check desks close to shipping doors. Height-adjustable tables with monitor mounts streamline processing.",
+      },
+      {
+        title: "Dock unloading speed",
+        description:
+          "Procure robust hand pallet trucks or electric walkie jacks built to cross dock levelers repeatedly.",
+      },
+      {
+        title: "Infrastructure guards",
+        description:
+          "Install safety bollards, column barriers, and heavy rubber dock bumpers to protect loading bays.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Packing and picking tables",
+        href: "/en/katalog/c-stoly-pakowe-i-kompletacyjne",
+        context: "Stations for quality check, weighing, and labeling before final dispatch.",
+      },
+      {
+        label: "Plastic Euro containers",
+        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        context: "Standard boxes for buffering consolidated packages or return merchandise.",
+      },
+      {
+        label: "Carts and internal transport",
+        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Pallet trucks, electric lifters, and platform carts for dock operations.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Internal transport",
+        href: "/en/logistics-glossary/transport-wewnetrzny",
+        context: "Movement of incoming pallets from docks to high-bay storage racks.",
+      },
+      {
+        label: "Euro container",
+        href: "/en/logistics-glossary/pojemnik-euro",
+        context: "Standard container simplifying item sortation during receiving checks.",
+      },
+      {
+        label: "Order picking",
+        href: "/en/logistics-glossary/kompletacja-zamowien",
+        context: "The pick process preceding consolidation in the dispatch lane.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "How do I improve incoming quality checks?",
+        answer:
+          "Set up check desks equipped with integrated scales and label printers next to unloading bays to reduce material transport times.",
+      },
+      {
+        question: "Which pallet trucks are best for loading bays?",
+        answer:
+          "Ride-on electric pallet trucks with folding platforms greatly accelerate trailer loading and unloading.",
+      },
+      {
+        question: "Are dock bumpers necessary?",
+        answer:
+          "Yes, they absorb the impact of backing trailers, protecting the dock levelers and the building facade from damage.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Go to catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View solutions",
+    },
+    seo: {
+      title: "Receiving and Shipping Area Equipment B2B | LogiMarket",
+      description:
+        "Procurement guide for B2B dock areas: heavy check tables, pallet jacks, bay bumpers, and safety guards for warehouse buyers.",
+    },
+  },
+  {
+    intent: "receiving-shipping",
+    locale: "de",
+    slug: "wareneingang-und-versand",
+    path: "/de/loesungen/wareneingang-und-versand",
+    sectionLabel: "Lösungen",
+    title: "Wareneingang und Versand",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Die Warenein- und -ausgangszone ist eine kritische Lagerschnittstelle für Qualitätskontrolle, Verwiegung, Palettenwicklung und Versandkonsolidierung. Diese Seite koordiniert die Beschaffung von Packtischen, Hubwagen, Stretchwicklern und Rammschutzvorrichtungen.",
+    procurementContextTitle: "B2B-Einkaufskontext",
+    procurementContext: [
+      "Der Ladebereich (Rampen, Tore) verbindet externen Lkw-Transport mit dem internen Warenfluss.",
+      "Geschwindigkeit ist Trumpf – Hubwagen und Kontrollstationen müssen im Dauereinsatz standhalten.",
+      "Beschaffungsentscheidungen sollten auf den Schutz der Torkonstruktion und Kontrollarbeitsplätze abzielen.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Kontrollarbeitsplätze",
+        description:
+          "Platzieren Sie Prüftische nahe den Verladetoren. Höhenverstellbare Tische mit Monitorhaltern beschleunigen die Abwicklung.",
+      },
+      {
+        title: "Entladegeschwindigkeit",
+        description:
+          "Wählen Sie robuste Handhubwagen oder Elektro-Niederhubwagen für den ständigen Einsatz auf Überladebrücken.",
+      },
+      {
+        title: "Infrastrukturschutz",
+        description:
+          "Installieren Sie Schutzpoller, Säulenschutz und Gummipuffer, um Schäden an Verladestationen zu vermeiden.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Pack- und Kommissioniertische",
+        href: "/de/katalog/c-stoly-pakowe-i-kompletacyjne",
+        context: "Arbeitsstationen für Wareneingangsprüfung, Waagen und Labeldruck.",
+      },
+      {
+        label: "Euro-Kunststoffbehälter",
+        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        context: "Standardbehälter für Retourenprüfung und vorsortierte Bauteile.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        context: "Gabelhubwagen und Mitfahr-Flurförderzeuge für den Rampeneinsatz.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Innerbetrieblicher Transport",
+        href: "/de/logistik-lexikon/transport-wewnetrzny",
+        context: "Warenfluss von den Laderampen zu den Palettenhochregallagern.",
+      },
+      {
+        label: "Eurobehälter",
+        href: "/de/logistik-lexikon/pojemnik-euro",
+        context: "Modulare Behälter zur Sortierung von Waren im Wareneingang.",
+      },
+      {
+        label: "Kommissionierung",
+        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        context: "Vorschreitender Prozess vor der Konsolidierung in der Versandzone.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Wie optimiere ich die Wareneingangskontrolle?",
+        answer:
+          "Richten Sie Kontrolltische mit integrierten Waagen und Scannern nahe den Toren ein, um unnötige Transportwege zu vermeiden.",
+      },
+      {
+        question: "Welche Hubwagen eignen sich für Verladearbeiten?",
+        answer:
+          "Elektro-Niederhubwagen mit Fahrerstandplattform beschleunigen das Be- und Entladen von Lkw-Aufliegern erheblich.",
+      },
+      {
+        question: "Sind Anfahrpuffer an den Toren notwendig?",
+        answer:
+          "Ja, sie dämpfen den Aufprall andockender Lkw und schützen Überladebrücken und das Gebäude vor teuren Schäden.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Lösungen anzeigen",
+    },
+    seo: {
+      title: "Ausstattung für Wareneingang und Versand B2B | LogiMarket",
+      description:
+        "B2B-Ausstattungsführer für Verladebereiche: Packtische, Hubwagen, Rampenschutz und Qualitätskontrollplätze auf LogiMarket.",
+    },
+  },
 ] satisfies LandingPageContent[];

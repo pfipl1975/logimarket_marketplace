@@ -5,7 +5,10 @@ export type LandingLocale = Extract<Locale, "pl" | "en" | "de">;
 export type LandingIntent =
   | "warehouse-equipment"
   | "intralogistics"
-  | "picking-packing";
+  | "picking-packing"
+  | "ecommerce-warehouse"
+  | "distribution-center"
+  | "receiving-shipping";
 
 export interface LandingLink {
   label: string;

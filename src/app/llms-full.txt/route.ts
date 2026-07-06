@@ -43,12 +43,21 @@ export async function GET() {
     content += `- /rozwiazania/wyposazenie-magazynu (PL warehouse equipment purchase-intent page)\n`;
     content += `- /rozwiazania/intralogistyka (PL intralogistics purchase-intent page)\n`;
     content += `- /rozwiazania/kompletacja-i-pakowanie (PL picking and packing purchase-intent page)\n`;
+    content += `- /rozwiazania/magazyn-e-commerce (PL e-commerce warehouse purchase-intent page)\n`;
+    content += `- /rozwiazania/centrum-dystrybucyjne (PL distribution center purchase-intent page)\n`;
+    content += `- /rozwiazania/strefa-przyjec-i-wysylek (PL receiving and shipping area purchase-intent page)\n`;
     content += `- /en/solutions/warehouse-equipment (EN warehouse equipment purchase-intent page)\n`;
     content += `- /en/solutions/intralogistics (EN intralogistics purchase-intent page)\n`;
     content += `- /en/solutions/picking-and-packing (EN picking and packing purchase-intent page)\n`;
+    content += `- /en/solutions/ecommerce-warehouse (EN e-commerce warehouse purchase-intent page)\n`;
+    content += `- /en/solutions/distribution-center (EN distribution center purchase-intent page)\n`;
+    content += `- /en/solutions/receiving-and-shipping-area (EN receiving and shipping area purchase-intent page)\n`;
     content += `- /de/loesungen/lagerausstattung (DE warehouse equipment purchase-intent page)\n`;
     content += `- /de/loesungen/intralogistik (DE intralogistics purchase-intent page)\n`;
     content += `- /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)\n`;
+    content += `- /de/loesungen/e-commerce-lager (DE e-commerce warehouse purchase-intent page)\n`;
+    content += `- /de/loesungen/distributionszentrum (DE distribution center purchase-intent page)\n`;
+    content += `- /de/loesungen/wareneingang-und-versand (DE receiving and shipping area purchase-intent page)\n`;
     content += `Invalid cross-locale landing route combinations are 404 pages and are not canonical content.\n\n`;
 
     content += `## Business Models\n`;
