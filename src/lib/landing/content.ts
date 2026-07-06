@@ -39,22 +39,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Regały i systemy składowania",
-        href: "/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Podstawowa infrastruktura składowania dla palet, pojemników i komponentów.",
       },
       {
         label: "Pojemniki plastikowe Euro",
-        href: "/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Jednostki magazynowe dla kompletacji, transportu wewnętrznego i odkładania części.",
       },
       {
         label: "Antresole i podesty magazynowe",
-        href: "/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Rozbudowa powierzchni użytkowej bez zmiany lokalizacji magazynu.",
       },
       {
         label: "Stoły pakowe i kompletacyjne",
-        href: "/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Stanowiska dla operacji kompletacji, kontroli i pakowania.",
       },
     ],
@@ -62,17 +62,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Regał paletowy",
-        href: "/slownik-branzowy/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Definicja systemu składowania i jego roli w magazynie B2B.",
       },
       {
         label: "Pojemnik Euro",
-        href: "/slownik-branzowy/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standardowy pojemnik logistyczny używany w przepływach magazynowych.",
       },
       {
         label: "Kompletacja zamówień",
-        href: "/slownik-branzowy/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Proces pobierania i przygotowania towaru do realizacji zamówień.",
       },
     ],
@@ -143,22 +143,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Wózki i transport wewnętrzny",
-        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Sprzęt dla ruchu materiałów między strefami obiektu.",
       },
       {
         label: "Regały i systemy składowania",
-        href: "/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Miejsca składowania dopasowane do transportu i rotacji towaru.",
       },
       {
         label: "Pojemniki plastikowe Euro",
-        href: "/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Nośniki procesu dla komponentów, kompletacji i odkładania.",
       },
       {
         label: "Antresole i podesty magazynowe",
-        href: "/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Dodatkowe poziomy pracy i składowania w przepływie wewnętrznym.",
       },
     ],
@@ -166,17 +166,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Kompletacja zamówień",
-        href: "/slownik-branzowy/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Proces, który często determinuje układ intralogistyki.",
       },
       {
         label: "Regał paletowy",
-        href: "/slownik-branzowy/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Element systemu składowania powiązany z ruchem palet.",
       },
       {
         label: "Pojemnik Euro",
-        href: "/slownik-branzowy/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standardowy nośnik materiałów w procesach wewnętrznych.",
       },
     ],
@@ -247,22 +247,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Stoły pakowe i kompletacyjne",
-        href: "/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Stanowiska robocze dla przygotowania zamówień i wysyłek.",
       },
       {
         label: "Pojemniki plastikowe Euro",
-        href: "/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Nośniki dla komponentów, kompletacji i odkładania międzyoperacyjnego.",
       },
       {
         label: "Wózki i transport wewnętrzny",
-        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Przemieszczanie pojemników i materiałów między strefami.",
       },
       {
         label: "Regały i systemy składowania",
-        href: "/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Organizacja zapasu blisko stanowisk kompletacji.",
       },
     ],
@@ -270,17 +270,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Kompletacja zamówień",
-        href: "/slownik-branzowy/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Definicja procesu kompletacji i jego roli w realizacji zamówień.",
       },
       {
         label: "Pojemnik Euro",
-        href: "/slownik-branzowy/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Nośnik wykorzystywany w kompletacji, odkładaniu i transporcie.",
       },
       {
         label: "Regał paletowy",
-        href: "/slownik-branzowy/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Element zaplecza składowania dla stref kompletacyjnych.",
       },
     ],
@@ -351,22 +351,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Racking and storage systems",
-        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Core storage infrastructure for pallets, containers and components.",
       },
       {
         label: "Euro plastic containers",
-        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Warehouse load units for picking, internal transport and temporary storage.",
       },
       {
         label: "Warehouse mezzanines and platforms",
-        href: "/en/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Additional usable work or storage levels inside an existing facility.",
       },
       {
         label: "Packing and picking tables",
-        href: "/en/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Workstations for picking, inspection and packing operations.",
       },
     ],
@@ -374,17 +374,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Pallet racking",
-        href: "/en/logistics-glossary/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Definition of a storage system and its role in B2B warehouses.",
       },
       {
         label: "Euro container",
-        href: "/en/logistics-glossary/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standard logistics container used in warehouse flows.",
       },
       {
         label: "Order picking",
-        href: "/en/logistics-glossary/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "The process of collecting and preparing goods for orders.",
       },
     ],
@@ -455,22 +455,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Internal transport and handling",
-        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Equipment for moving materials between facility zones.",
       },
       {
         label: "Racking and storage systems",
-        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Storage locations matched to movement patterns and goods rotation.",
       },
       {
         label: "Euro plastic containers",
-        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Process carriers for components, picking and temporary storage.",
       },
       {
         label: "Warehouse mezzanines and platforms",
-        href: "/en/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Additional work and storage levels for internal flows.",
       },
     ],
@@ -478,17 +478,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Order picking",
-        href: "/en/logistics-glossary/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "A process that often defines intralogistics layout.",
       },
       {
         label: "Pallet racking",
-        href: "/en/logistics-glossary/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Storage infrastructure connected to pallet movement.",
       },
       {
         label: "Euro container",
-        href: "/en/logistics-glossary/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "A standard carrier for internal material flows.",
       },
     ],
@@ -559,22 +559,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Packing and picking tables",
-        href: "/en/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Workstations for preparing orders and dispatch units.",
       },
       {
         label: "Euro plastic containers",
-        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Carriers for components, picking and intermediate buffering.",
       },
       {
         label: "Internal transport and handling",
-        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Movement of containers and materials between zones.",
       },
       {
         label: "Racking and storage systems",
-        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Stock organization close to picking and packing work.",
       },
     ],
@@ -582,17 +582,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Order picking",
-        href: "/en/logistics-glossary/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Definition of the picking process and its B2B role.",
       },
       {
         label: "Euro container",
-        href: "/en/logistics-glossary/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Carrier used in picking, buffering and internal transport.",
       },
       {
         label: "Pallet racking",
-        href: "/en/logistics-glossary/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Storage support for picking-zone replenishment.",
       },
     ],
@@ -663,22 +663,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Regale und Lagersysteme",
-        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Zentrale Lagerinfrastruktur für Paletten, Behälter und Komponenten.",
       },
       {
         label: "Euro-Kunststoffbehälter",
-        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Ladungsträger für Kommissionierung, innerbetrieblichen Transport und Zwischenlagerung.",
       },
       {
         label: "Lagerbühnen und Podeste",
-        href: "/de/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Zusätzliche Nutzflächen im bestehenden Lagergebäude.",
       },
       {
         label: "Pack- und Kommissioniertische",
-        href: "/de/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Arbeitsplätze für Kommissionierung, Kontrolle und Verpackung.",
       },
     ],
@@ -686,17 +686,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Palettenregal",
-        href: "/de/logistik-lexikon/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Definition eines Lagersystems und seiner Rolle im B2B-Lager.",
       },
       {
         label: "Eurobehälter",
-        href: "/de/logistik-lexikon/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standardisierter Logistikbehälter für Lagerprozesse.",
       },
       {
         label: "Kommissionierung",
-        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Prozess der Entnahme und Vorbereitung von Waren für Aufträge.",
       },
     ],
@@ -767,22 +767,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Technik für Materialbewegungen zwischen Zonen.",
       },
       {
         label: "Regale und Lagersysteme",
-        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Lagerplätze passend zu Transportmustern und Umschlag.",
       },
       {
         label: "Euro-Kunststoffbehälter",
-        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Prozessträger für Komponenten, Kommissionierung und Zwischenlagerung.",
       },
       {
         label: "Lagerbühnen und Podeste",
-        href: "/de/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Zusätzliche Arbeits- und Lagerflächen für interne Flüsse.",
       },
     ],
@@ -790,17 +790,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Kommissionierung",
-        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Ein Prozess, der häufig das Intralogistik-Layout bestimmt.",
       },
       {
         label: "Palettenregal",
-        href: "/de/logistik-lexikon/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Lagerinfrastruktur im Zusammenhang mit Palettenbewegungen.",
       },
       {
         label: "Eurobehälter",
-        href: "/de/logistik-lexikon/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standardträger für interne Materialflüsse.",
       },
     ],
@@ -871,22 +871,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Pack- und Kommissioniertische",
-        href: "/de/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Arbeitsplätze für Vorbereitung von Aufträgen und Versand.",
       },
       {
         label: "Euro-Kunststoffbehälter",
-        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Träger für Komponenten, Kommissionierung und Zwischenpuffer.",
       },
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Bewegung von Behältern und Materialien zwischen Zonen.",
       },
       {
         label: "Regale und Lagersysteme",
-        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Organisation des Bestands nahe der Kommissionierzone.",
       },
     ],
@@ -894,17 +894,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Kommissionierung",
-        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Definition des Kommissionierprozesses und seiner B2B-Rolle.",
       },
       {
         label: "Eurobehälter",
-        href: "/de/logistik-lexikon/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Träger für Kommissionierung, Pufferung und internen Transport.",
       },
       {
         label: "Palettenregal",
-        href: "/de/logistik-lexikon/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Lagerunterstützung für Nachschub in Kommissionierzonen.",
       },
     ],
@@ -975,22 +975,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Stoły pakowe i kompletacyjne",
-        href: "/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Ergonomiczne stanowiska pakowe przyspieszające przygotowanie przesyłek do kuriera.",
       },
       {
         label: "Pojemniki plastikowe Euro",
-        href: "/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Podstawowe nośniki drobnego asortymentu w strefach kompletacji i transportu.",
       },
       {
         label: "Wózki i transport wewnętrzny",
-        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Środki transportu ułatwiające zbiórkę wielu zamówień jednocześnie.",
       },
       {
         label: "Regały i systemy składowania",
-        href: "/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Konstrukcje półkowe idealne do składowania produktów drobnicowych.",
       },
     ],
@@ -998,17 +998,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Kompletacja zamówień",
-        href: "/slownik-branzowy/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Główny proces logistyczny decydujący o wydajności wysyłek e-commerce.",
       },
       {
         label: "Pojemnik Euro",
-        href: "/slownik-branzowy/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Znormalizowana jednostka składowania kompatybilna z regałami i przenośnikami.",
       },
       {
         label: "Transport wewnętrzny",
-        href: "/slownik-branzowy/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Ruch materiałów w strefach składowania i pakowania w centrum logistycznym.",
       },
     ],
@@ -1079,22 +1079,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Packing and picking tables",
-        href: "/en/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Ergonomic stations accelerating order consolidation and dispatch.",
       },
       {
         label: "Plastic Euro containers",
-        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Standard carriers for picking, buffering, and organizing loose items.",
       },
       {
         label: "Carts and internal transport",
-        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Handling equipment facilitating multi-batch order collection.",
       },
       {
         label: "Racking and storage systems",
-        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Shelving structures ideal for high-density small parts storage.",
       },
     ],
@@ -1102,17 +1102,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Order picking",
-        href: "/en/logistics-glossary/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Primary warehouse process directly affecting order cycle times.",
       },
       {
         label: "Euro container",
-        href: "/en/logistics-glossary/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standardized storage bin compatible with shelving and conveyors.",
       },
       {
         label: "Internal transport",
-        href: "/en/logistics-glossary/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Material flow logic within storage and packing zones.",
       },
     ],
@@ -1183,22 +1183,22 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Pack- und Kommissioniertische",
-        href: "/de/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Ergonomische Packplätze zur Beschleunigung von Verpackung und Versand.",
       },
       {
         label: "Euro-Kunststoffbehälter",
-        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Standardträger für Kommissionierung, Pufferung und Kleinteilelagerung.",
       },
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Transportmittel zur effizienten Sammelkommissionierung.",
       },
       {
         label: "Regale und Lagersysteme",
-        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Fachbodenkonstruktionen ideal für die e-commerce Kleinteilelagerung.",
       },
     ],
@@ -1206,17 +1206,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Kommissionierung",
-        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Zentraler Lagerprozess mit direktem Einfluss auf Durchlaufzeiten.",
       },
       {
         label: "Eurobehälter",
-        href: "/de/logistik-lexikon/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standardisierte Transporteinheit kompatibel mit Fachbodenregalen.",
       },
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/logistik-lexikon/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Materialflusslogistik innerhalb der e-commerce Logistikbereiche.",
       },
     ],
@@ -1287,17 +1287,17 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Regały i systemy składowania",
-        href: "/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Regały paletowe i półkowe tworzące trzon infrastruktury centrum dystrybucyjnego.",
       },
       {
         label: "Antresole i podesty magazynowe",
-        href: "/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Wielopoziomowe konstrukcje zwiększające powierzchnię użytkową hali.",
       },
       {
         label: "Wózki i transport wewnętrzny",
-        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Wózki widłowe czołowe, reach trucki i wózki paletowe do obsługi ładunków.",
       },
     ],
@@ -1305,17 +1305,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Regał paletowy",
-        href: "/slownik-branzowy/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Pojęcie definiujące konstrukcje ramowe do masowego składowania towarów paletowych.",
       },
       {
         label: "Transport wewnętrzny",
-        href: "/slownik-branzowy/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Ruch wózków, maszyn i operatorów w obrębie hali dystrybucyjnej.",
       },
       {
         label: "Kompletacja zamówień",
-        href: "/slownik-branzowy/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Zbiórka towarów z poziomów zerowych regałów paletowych lub stref kompletacyjnych.",
       },
     ],
@@ -1386,17 +1386,17 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Racking and storage systems",
-        href: "/en/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Pallet racks and heavy shelving forming the core infrastructure of distribution hubs.",
       },
       {
         label: "Antresole and warehouse mezzanines",
-        href: "/en/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Multi-level structural platforms maximizing usable height.",
       },
       {
         label: "Carts and internal transport",
-        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Counterbalance trucks, reach trucks, and pallet jacks for pallet manipulation.",
       },
     ],
@@ -1404,17 +1404,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Pallet racking",
-        href: "/en/logistics-glossary/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "Framework structures designed for high-density storage of palletized loads.",
       },
       {
         label: "Internal transport",
-        href: "/en/logistics-glossary/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Material handling traffic flow inside distribution facilities.",
       },
       {
         label: "Order picking",
-        href: "/en/logistics-glossary/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Consolidation of items from lower racking levels or dedicated picking zones.",
       },
     ],
@@ -1485,17 +1485,17 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Regale und Lagersysteme",
-        href: "/de/katalog/c-regaly-i-systemy-skladowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
         context: "Schwerlast- und Palettenregale für geordnete Lagerung im Distributionszentrum.",
       },
       {
         label: "Lagerbühnen und Podeste",
-        href: "/de/katalog/c-antresole-i-podesty-magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
         context: "Mehrgeschossige Stahletagen zur Erhöhung der Nutzfläche ohne Anbau.",
       },
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Frontstapler, Schubmaststapler und Hubwagen für Palettenbewegungen.",
       },
     ],
@@ -1503,17 +1503,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Palettenregal",
-        href: "/de/logistik-lexikon/regal-paletowy",
+        glossarySlug: "regal-paletowy",
         context: "System zur mehrstufigen Aufnahme schwerer Ladungsträger.",
       },
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/logistik-lexikon/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Fluss von Fahrzeugen und Materialien im Distributionsbereich.",
       },
       {
         label: "Kommissionierung",
-        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Zusammenstellung von Palettenladungen für den Weitertransport.",
       },
     ],
@@ -1584,17 +1584,17 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Stoły pakowe i kompletacyjne",
-        href: "/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Stanowiska kontroli jakości, ważenia i etykietowania przesyłek przed wysyłką.",
       },
       {
         label: "Pojemniki plastikowe Euro",
-        href: "/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Nośniki dla towarów odrzucanych na kontroli lub konsolidowanych.",
       },
       {
         label: "Wózki i transport wewnętrzny",
-        href: "/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Wózki paletowe (paleciaki) oraz wózki unoszące do pracy w dokach.",
       },
     ],
@@ -1602,17 +1602,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Transport wewnętrzny",
-        href: "/slownik-branzowy/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Ruch ładunków pomiędzy dokami przeładunkowymi a regałami wysokiego składowania.",
       },
       {
         label: "Pojemnik Euro",
-        href: "/slownik-branzowy/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Znormalizowany nośnik ułatwiający transport drobnych partii na przyjęciu towaru.",
       },
       {
         label: "Kompletacja zamówień",
-        href: "/slownik-branzowy/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Etap poprzedzający strefę wysyłki i ostateczną konsolidację paczek.",
       },
     ],
@@ -1683,17 +1683,17 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Packing and picking tables",
-        href: "/en/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Stations for quality check, weighing, and labeling before final dispatch.",
       },
       {
         label: "Plastic Euro containers",
-        href: "/en/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Standard boxes for buffering consolidated packages or return merchandise.",
       },
       {
         label: "Carts and internal transport",
-        href: "/en/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Pallet trucks, electric lifters, and platform carts for dock operations.",
       },
     ],
@@ -1701,17 +1701,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Internal transport",
-        href: "/en/logistics-glossary/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Movement of incoming pallets from docks to high-bay storage racks.",
       },
       {
         label: "Euro container",
-        href: "/en/logistics-glossary/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Standard container simplifying item sortation during receiving checks.",
       },
       {
         label: "Order picking",
-        href: "/en/logistics-glossary/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "The pick process preceding consolidation in the dispatch lane.",
       },
     ],
@@ -1782,17 +1782,17 @@ export const landingPages = [
     relatedCategories: [
       {
         label: "Pack- und Kommissioniertische",
-        href: "/de/katalog/c-stoly-pakowe-i-kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
         context: "Arbeitsstationen für Wareneingangsprüfung, Waagen und Labeldruck.",
       },
       {
         label: "Euro-Kunststoffbehälter",
-        href: "/de/katalog/c-pojemniki-plastikowe-euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
         context: "Standardbehälter für Retourenprüfung und vorsortierte Bauteile.",
       },
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/katalog/c-wozki-i-transport-wewnetrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
         context: "Gabelhubwagen und Mitfahr-Flurförderzeuge für den Rampeneinsatz.",
       },
     ],
@@ -1800,17 +1800,17 @@ export const landingPages = [
     relatedGlossaryTerms: [
       {
         label: "Innerbetrieblicher Transport",
-        href: "/de/logistik-lexikon/transport-wewnetrzny",
+        glossarySlug: "transport-wewnetrzny",
         context: "Warenfluss von den Laderampen zu den Palettenhochregallagern.",
       },
       {
         label: "Eurobehälter",
-        href: "/de/logistik-lexikon/pojemnik-euro",
+        glossarySlug: "pojemnik-euro",
         context: "Modulare Behälter zur Sortierung von Waren im Wareneingang.",
       },
       {
         label: "Kommissionierung",
-        href: "/de/logistik-lexikon/kompletacja-zamowien",
+        glossarySlug: "kompletacja-zamowien",
         context: "Vorschreitender Prozess vor der Konsolidierung in der Versandzone.",
       },
     ],

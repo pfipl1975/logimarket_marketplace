@@ -10,9 +10,15 @@ export type LandingIntent =
   | "distribution-center"
   | "receiving-shipping";
 
-export interface LandingLink {
+export interface LandingCategoryLink {
   label: string;
-  href: string;
+  categorySlug: string;
+  context: string;
+}
+
+export interface LandingGlossaryLink {
+  label: string;
+  glossarySlug: string;
   context: string;
 }
 
@@ -40,9 +46,9 @@ export interface LandingPageContent {
   decisionGuidanceTitle: string;
   decisionFactors: LandingDecisionFactor[];
   relatedCategoriesTitle: string;
-  relatedCategories: LandingLink[];
+  relatedCategories: LandingCategoryLink[];
   relatedGlossaryTitle: string;
-  relatedGlossaryTerms: LandingLink[];
+  relatedGlossaryTerms: LandingGlossaryLink[];
   faqTitle: string;
   faq: LandingFaqItem[];
   cta: {

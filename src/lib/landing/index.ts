@@ -7,10 +7,13 @@ export type {
   LandingDecisionFactor,
   LandingFaqItem,
   LandingIntent,
-  LandingLink,
+  LandingCategoryLink,
+  LandingGlossaryLink,
   LandingLocale,
   LandingPageContent,
 } from "./types";
+
+export { getCategoryLink, getGlossaryLink } from "./links";
 
 export const landingLocales = ["pl", "en", "de"] as const satisfies LandingLocale[];
 

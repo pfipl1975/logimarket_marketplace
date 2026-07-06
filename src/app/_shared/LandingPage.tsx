@@ -4,7 +4,12 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
-import { getLandingLanguageLinks, type LandingPageContent } from "@/lib/landing";
+import {
+  getLandingLanguageLinks,
+  getCategoryLink,
+  getGlossaryLink,
+  type LandingPageContent,
+} from "@/lib/landing";
 import { absoluteUrl } from "@/lib/seo/urls";
 import {
   JsonLdScript,
@@ -47,7 +52,7 @@ export async function LandingPage({ landing }: LandingPageProps) {
   const itemListJsonLd = createCatalogItemListJsonLd(
     landing.relatedCategories.map((category) => ({
       name: category.label,
-      url: absoluteUrl(category.href),
+      url: absoluteUrl(getCategoryLink(landing.locale, category.categorySlug)),
     })),
   );
 
@@ -106,7 +111,7 @@ export async function LandingPage({ landing }: LandingPageProps) {
                 </Link>
                 {primaryCategory && (
                   <Link
-                    href={primaryCategory.href}
+                    href={getCategoryLink(landing.locale, primaryCategory.categorySlug)}
                     className="inline-flex items-center justify-center rounded-md border border-border bg-white px-5 py-3 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"
                   >
                     {landing.cta.secondaryLabel}
@@ -155,8 +160,8 @@ export async function LandingPage({ landing }: LandingPageProps) {
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
               {landing.relatedCategories.map((category) => (
                 <Link
-                  key={category.href}
-                  href={category.href}
+                  key={category.categorySlug}
+                  href={getCategoryLink(landing.locale, category.categorySlug)}
                   className="group border border-border bg-white p-5 transition-colors hover:border-brand-teal"
                 >
                   <h3 className="text-sm font-bold text-brand-navy group-hover:text-brand-teal">
@@ -177,8 +182,8 @@ export async function LandingPage({ landing }: LandingPageProps) {
             <div className="mt-5 space-y-3">
               {landing.relatedGlossaryTerms.map((term) => (
                 <Link
-                  key={term.href}
-                  href={term.href}
+                  key={term.glossarySlug}
+                  href={getGlossaryLink(landing.locale, term.glossarySlug)}
                   className="block border border-border bg-white p-5 transition-colors hover:border-brand-teal"
                 >
                   <h3 className="text-sm font-bold text-brand-navy">{term.label}</h3>
