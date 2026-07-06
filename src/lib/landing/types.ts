@@ -8,7 +8,10 @@ export type LandingIntent =
   | "picking-packing"
   | "ecommerce-warehouse"
   | "distribution-center"
-  | "receiving-shipping";
+  | "receiving-shipping"
+  | "storage-systems"
+  | "packaging-load-securing"
+  | "warehouse-safety";
 
 export interface LandingCategoryLink {
   label: string;

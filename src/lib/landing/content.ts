@@ -1843,4 +1843,904 @@ export const landingPages = [
         "B2B-Ausstattungsführer für Verladebereiche: Packtische, Hubwagen, Rampenschutz und Qualitätskontrollplätze auf LogiMarket.",
     },
   },
+  // 1. Storage Systems - PL
+  {
+    intent: "storage-systems",
+    locale: "pl",
+    slug: "systemy-skladowania",
+    path: "/rozwiazania/systemy-skladowania",
+    sectionLabel: "Rozwiązania",
+    title: "Systemy składowania dla magazynów i centrów logistycznych",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Efektywne składowanie towarów w magazynie wymaga precyzyjnego doboru systemów regałowych i optymalizacji kubatury. Ta strona wspiera procesy decyzyjne w zakresie zakupu regałów paletowych, antresol magazynowych oraz pojemników Euro.",
+    procurementContextTitle: "Kontekst zakupowy B2B",
+    procurementContext: [
+      "Projektowanie przestrzeni magazynowej musi uwzględniać nośność posadzki oraz maksymalne obciążenie ram regałowych.",
+      "Dobór odpowiedniej technologii zależy od parametrów rotacji zapasów (LIFO, FIFO) oraz specyfikacji używanych wózków widłowych.",
+      "Wymogi BHP i regularne roczne przeglądy techniczne PRSES to kluczowe elementy zarządzania bezpieczeństwem konstrukcji.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Maksymalne obciążenie",
+        description:
+          "Dostosuj nośność trawersów i kolumn regałów do masy składowanych palet z zapasem bezpieczeństwa.",
+      },
+      {
+        title: "Rotacja ładunków",
+        description:
+          "Wybierz regały rzędowe dla pełnego dostępu (FIFO) lub regały wjezdne i przepływowe dla optymalizacji gęstości.",
+      },
+      {
+        title: "Wysokość składowania",
+        description:
+          "Wykorzystaj wysokość użytkowej hali poprzez wdrożenie systemów wysokiego składowania lub antresoli roboczych.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Regały i systemy składowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Podstawowe konstrukcje nośne do wielopoziomowego składowania towarów.",
+      },
+      {
+        label: "Antresole i podesty magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Samonośne konstrukcje stalowe zwielokrotniające powierzchnię użytkową.",
+      },
+      {
+        label: "Pojemniki plastikowe Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Standaryzowane nośniki drobnego asortymentu w systemach półkowych.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Regał paletowy",
+        glossarySlug: "regal-paletowy",
+        context: "Definicja i wymagania techniczne dla rzędowych systemów paletowych.",
+      },
+      {
+        label: "Antresola magazynowa",
+        glossarySlug: "antresola-magazynowa",
+        context: "Wielopoziomowe podesty stalowe w logistyce magazynowej.",
+      },
+      {
+        label: "Nośność regału",
+        glossarySlug: "nosnosc-regalu",
+        context: "Parametry statyczne obciążeń dopuszczalnych w konstrukcjach.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jakie są najczęstsze błędy przy doborze nośności regału?",
+        answer:
+          "Ignorowanie dynamicznych sił podczas odkładania palet oraz nierównomierne rozłożenie ciężaru na belkach nośnych.",
+      },
+      {
+        question: "Czy montaż regałów magazynowych wymaga specjalnych uprawnień?",
+        answer:
+          "Tak, ekipa montażowa musi posiadać certyfikaty producenta oraz uprawnienia do pracy na wysokościach i obsługi podnośników.",
+      },
+      {
+        question: "Jakie są zalety stosowania półek siatkowych na regałach?",
+        answer:
+          "Półki siatkowe poprawiają bezpieczeństwo zapobiegając wypadaniu kartonów i ułatwiają swobodny przepływ wody z instalacji tryskaczowej.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Otwórz katalog",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz rozwiązania",
+    },
+    seo: {
+      title: "Systemy składowania i regały B2B | LogiMarket",
+      description:
+        "Dobór i zakupy systemów składowania: regały paletowe, antresole, regały półkowe i pojemniki Euro na LogiMarket.pl.",
+    },
+  },
+  // 1. Storage Systems - EN
+  {
+    intent: "storage-systems",
+    locale: "en",
+    slug: "storage-systems",
+    path: "/en/solutions/storage-systems",
+    sectionLabel: "Solutions",
+    title: "Storage systems for warehouses and logistics facilities",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Efficient warehouse storage requires precise selection of racking systems and volume optimization. This page guides B2B decisions for pallet racking, mezzanine floors, and Euro containers.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "Warehouse layout planning must align frame load capacities with floor slab load-bearing parameters.",
+      "Selecting the appropriate storage technology depends on SKU rotation patterns (LIFO, FIFO) and forklift specifications.",
+      "BHP safety compliance and annual PRSES expert inspections are essential for structural integrity management.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Load capacity",
+        description:
+          "Match beam and frame load capacities to pallet weights with a proper safety margin.",
+      },
+      {
+        title: "SKU rotation",
+        description:
+          "Choose selective racking for direct access (FIFO) or drive-in and dynamic racking for high density.",
+      },
+      {
+        title: "Vertical expansion",
+        description:
+          "Utilize clear warehouse height by implementing high-bay storage or multi-tier mezzanine floors.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Racks and storage systems",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Load-bearing structures for multi-level goods storage.",
+      },
+      {
+        label: "Mezzanines and platform floors",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Self-supporting steel structures multiplying usable floor space.",
+      },
+      {
+        label: "Euro plastic containers",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Standardized load carriers for shelving systems.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Pallet racking",
+        glossarySlug: "regal-paletowy",
+        context: "Technical requirements and definitions for pallet storage.",
+      },
+      {
+        label: "Warehouse mezzanine",
+        glossarySlug: "antresola-magazynowa",
+        context: "Multi-level steel platforms in warehouse logistics.",
+      },
+      {
+        label: "Rack capacity",
+        glossarySlug: "nosnosc-regalu",
+        context: "Static parameters of allowable structural loads.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "What are the key mistakes in choosing rack capacities?",
+        answer:
+          "Neglecting dynamic forces during pallet placement and uneven load distribution across structural beams.",
+      },
+      {
+        question: "Does warehouse racking installation require certification?",
+        answer:
+          "Yes, installation teams must be certified by the manufacturer and qualified for high-altitude work.",
+      },
+      {
+        question: "What are the benefits of using wire mesh decking?",
+        answer:
+          "Wire decking prevents loose cartons from falling and allows free water flow from ESFR sprinkler systems.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Open Catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View Solutions",
+    },
+    seo: {
+      title: "Warehouse Storage Systems B2B | LogiMarket",
+      description:
+        "Guide to industrial storage systems: pallet racks, warehouse mezzanines, shelving, and Euro containers on LogiMarket.",
+    },
+  },
+  // 1. Storage Systems - DE
+  {
+    intent: "storage-systems",
+    locale: "de",
+    slug: "lagersysteme",
+    path: "/de/loesungen/lagersysteme",
+    sectionLabel: "Lösungen",
+    title: "Lagersysteme für Lager und Logistikstandorte",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Effiziente Lagerung erfordert eine präzise Auswahl der Regalsysteme und eine optimale Raumausnutzung. Diese Seite unterstützt Einkaufsentscheidungen für Palettenregale, Lagerbühnen und Eurobehälter.",
+    procurementContextTitle: "Einkaufskontext B2B",
+    procurementContext: [
+      "Die Layoutplanung muss die Feldlasten der Regale mit der Tragfähigkeit der Bodenplatte abstimmen.",
+      "Die Wahl des Regaltyps hängt von Umschlagshäufigkeiten (LIFO, FIFO) und den Spezifikationen der Flurförderzeuge ab.",
+      "BHP-Sicherheitsvorschriften und jährliche PRSES-Expertenprüfungen sind für den Werterhalt unerlässlich.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Regaltraglast",
+        description:
+          "Passen Sie Feld- und Fachlasten der Regale an das Gewicht der Ladungsträger mit Sicherheitsreserve an.",
+      },
+      {
+        title: "Lagerprinzip",
+        description:
+          "Wählen Sie Breitgangregale für Direktzugriff (FIFO) oder Einfahrregale für hohe Volumennutzung.",
+      },
+      {
+        title: "Höhennutzung",
+        description:
+          "Nutzen Sie lichte Hallenhöhen durch Hochregale oder mehrgeschossige Lagerbühnen aus.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Regale und Lagersysteme",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Tragende Konstruktionen zur mehrstöckigen Lagerung.",
+      },
+      {
+        label: "Lagerbühnen und Podeste",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Freistehende Stahlkonstruktionen zur Erhöhung der Nutzfläche.",
+      },
+      {
+        label: "Euro-Kunststoffbehälter",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Standardisierte Transportbehälter für Fachbodenregale.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Palettenregal",
+        glossarySlug: "regal-paletowy",
+        context: "Technische Anforderungen und Begriffe für Palettenlagerung.",
+      },
+      {
+        label: "Lagerbühne",
+        glossarySlug: "antresola-magazynowa",
+        context: "Mehrgeschossige Bühnensysteme in der Intralogistik.",
+      },
+      {
+        label: "Regaltraglast",
+        glossarySlug: "nosnosc-regalu",
+        context: "Statische Parameter der zulässigen Tragfähigkeit von Regalen.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Wie optimiere ich die Regalsicherheit?",
+        answer:
+          "Installieren Sie Rammschutz an allen freistehenden Regalrahmen und führen Sie wöchentlich Sichtprüfungen durch.",
+      },
+      {
+        question: "Benötigt der Regalaufbau eine Fachzertifizierung?",
+        answer:
+          "Ja, die Montage muss durch zertifiziertes Fachpersonal nach DIN EN 15635 durchgeführt werden.",
+      },
+      {
+        question: "Welche Vorteile bieten Gitterrostböden?",
+        answer:
+          "Sie verhindern das Durchfallen von Kartons und erfüllen brandschutztechnische Vorgaben für Sprinkleranlagen.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Lösungen anzeigen",
+    },
+    seo: {
+      title: "Lagersysteme und Regale B2B | LogiMarket",
+      description:
+        "B2B-Einkaufsführer für Lagersysteme: Palettenregale, Lagerbühnen, Fachböden und Behälter auf LogiMarket.",
+    },
+  },
+  // 2. Packaging and Load Securing - PL
+  {
+    intent: "packaging-load-securing",
+    locale: "pl",
+    slug: "pakowanie-i-zabezpieczenie-ladunku",
+    path: "/rozwiazania/pakowanie-i-zabezpieczenie-ladunku",
+    sectionLabel: "Rozwiązania",
+    title: "Pakowanie i zabezpieczenie ładunku w procesach magazynowych",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Odpowiednie zabezpieczenie ładunku i organizacja stref pakowania eliminują uszkodzenia transportowe i poprawiają wydajność wysyłek. Ta strona ułatwia zakupy stołów pakowych, pojemników plastikowych oraz urządzeń transportowych.",
+    procurementContextTitle: "Kontekst zakupowy B2B",
+    procurementContext: [
+      "Stanowiska pakowe powinny być zoptymalizowane pod kątem ergonomii ruchu operatora i łatwego dostępu do folii oraz kartonów.",
+      "Wybór opakowań i pojemników Euro musi uwzględniać standaryzację modułu paletowego w celu redukcji pustych przestrzeni w transporcie.",
+      "Wytrzymałość mechaniczna i parametry ESD blatu roboczego są kluczowe w procesach pakowania wrażliwych towarów.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Ergonomia stanowiska",
+        description:
+          "Zastosuj stoły pakowe z elektryczną lub manualną regulacją wysokości oraz nadstawkami IT.",
+      },
+      {
+        title: "Ochrona i nośniki",
+        description:
+          "Wdrażaj modułowe pojemniki z trwałego tworzywa PP lub HDPE, minimalizujące ryzyko uszkodzenia zawartości.",
+      },
+      {
+        title: "Integracja z transportem",
+        description:
+          "Zintegruj strefę pakowania z przenośnikami lub ręcznymi wózkami unoszącymi w celu przyspieszenia odbioru gotowych paczek.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Stoły pakowe i kompletacyjne",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Modułowe meble przemysłowe do pakowania i weryfikacji paczek.",
+      },
+      {
+        label: "Pojemniki plastikowe Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Trwałe pojemniki transportowe chroniące drobny asortyment.",
+      },
+      {
+        label: "Wózki i transport wewnętrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Urządzenia transportu bliskiego do transportu paczek i palet.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Stół pakowy",
+        glossarySlug: "stol-pakowy",
+        context: "Ergonomia i wyposażenie stanowisk przeznaczonych do pakowania.",
+      },
+      {
+        label: "Pojemnik Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Znormalizowane kuwety transportowo-magazynowe.",
+      },
+      {
+        label: "Kompletacja zamówień",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Zestawianie towarów przed procesem ich pakowania i wysyłki.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jakie są zalety modułowych stołów pakowych?",
+        answer:
+          "Umożliwiają bezproblemowe doposażenie w półki, uchwyty na folię stretch, wagi oraz ramiona VESA pod monitory w dowolnym momencie.",
+      },
+      {
+        question: "Kiedy konieczne jest stosowanie blatów antystatycznych (ESD)?",
+        answer:
+          "Podczas weryfikacji i pakowania wrażliwej elektroniki, mikroprocesorów oraz innych podzespołów podatnych na wyładowania elektrostatyczne.",
+      },
+      {
+        question: "Jak pojemniki Euro ułatwiają proces pakowania?",
+        answer:
+          "Dzięki ujednoliconym wymiarom łatwo mieszczą się na półkach nadblatowych i pasują do modułowych wózków kompletacyjnych.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Otwórz katalog",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz rozwiązania",
+    },
+    seo: {
+      title: "Pakowanie i zabezpieczenie ładunku B2B | LogiMarket",
+      description:
+        "Wyposażenie stref pakowania: stoły pakowe, pojemniki Euro, transport bliski i nośniki logistyczne na LogiMarket.pl.",
+    },
+  },
+  // 2. Packaging and Load Securing - EN
+  {
+    intent: "packaging-load-securing",
+    locale: "en",
+    slug: "packaging-and-load-securing",
+    path: "/en/solutions/packaging-and-load-securing",
+    sectionLabel: "Solutions",
+    title: "Packaging and load securing for warehouse operations",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Proper load securing and optimized packing zones eliminate transport damage and boost shipping throughput. This guide helps source packing tables, plastic containers, and transport equipment.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "Packing stations should be designed to minimize operator movements and ensure easy access to stretch films and boxes.",
+      "Selecting Euro containers must follow pallet module standards to reduce empty transport volumes.",
+      "Mechanical durability and ESD protection of the work surface are critical when packing sensitive industrial goods.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Station ergonomics",
+        description:
+          "Use packing tables with electric or manual height adjustment and IT integrations.",
+      },
+      {
+        title: "Protective load carriers",
+        description:
+          "Deploy modular containers made of durable PP or HDPE to protect content integrity.",
+      },
+      {
+        title: "Transport integration",
+        description:
+          "Connect packing zones with gravity conveyors or hand pallet jacks to speed up dispatch collection.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Packing and picking tables",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Modular industrial furniture for parcel preparation.",
+      },
+      {
+        label: "Euro plastic containers",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Robust transport boxes protecting small-parts stock.",
+      },
+      {
+        label: "Trolleys and internal transport",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Material handling equipment for parcel and pallet movement.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Packing table",
+        glossarySlug: "stol-pakowy",
+        context: "Ergonomics and modular equipment for industrial packing.",
+      },
+      {
+        label: "Euro container",
+        glossarySlug: "pojemnik-euro",
+        context: "Standardized plastic boxes for transport and handling.",
+      },
+      {
+        label: "Order picking",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Gathering and sorting stock prior to dispatch packaging.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "What are the advantages of modular packing stations?",
+        answer:
+          "They allow simple retrofitting of shelves, bubble wrap rolls, scales, and VESA arms at any time.",
+      },
+      {
+        question: "When is ESD protection needed for packing tables?",
+        answer:
+          "When handling electronic components, microprocessors, or other devices vulnerable to static electricity.",
+      },
+      {
+        question: "How do Euro containers improve packing workflows?",
+        answer:
+          "Their uniform sizing easily fits on overhead shelves and matches modular picking carts.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Open Catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View Solutions",
+    },
+    seo: {
+      title: "Packaging and Load Securing B2B | LogiMarket",
+      description:
+        "Packing zone equipment: modular packing tables, Euro containers, and material handling on LogiMarket.",
+    },
+  },
+  // 2. Packaging and Load Securing - DE
+  {
+    intent: "packaging-load-securing",
+    locale: "de",
+    slug: "verpackung-und-ladungssicherung",
+    path: "/de/loesungen/verpackung-und-ladungssicherung",
+    sectionLabel: "Lösungen",
+    title: "Verpackung und Ladungssicherung im Lagerbetrieb",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Eine sachgemäße Ladungssicherung und optimierte Packplätze verhindern Transportschäden und steigern den Durchsatz. Diese Seite unterstützt Sie beim Einkauf von Packtischen, Kunststoffbehältern und Flurförderzeugen.",
+    procurementContextTitle: "Einkaufskontext B2B",
+    procurementContext: [
+      "Packstationen sollten so gestaltet sein, dass unnötige Greifwege entfallen und Verpackungsmittel leicht erreichbar sind.",
+      "Die Auswahl von Eurobehältern muss sich am Palettenmodul orientieren, um Transportvolumen optimal auszusetzen.",
+      "Mechanische Belastbarkeit und ESD-Schutz der Arbeitsplatte sind beim Packen empfindlicher Güter von Bedeutung.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Ergonomie am Packtisch",
+        description:
+          "Verwenden Sie Packtische mit Höhenverstellung sowie nützlichen IT-Halterungen.",
+      },
+      {
+        title: "Schützende Ladungsträger",
+        description:
+          "Setzen Sie Behälter aus PP/HDPE ein, um das Risiko von Produktbeschädigungen zu minimieren.",
+      },
+      {
+        title: "Materialfluss-Anbindung",
+        description:
+          "Koppeln Sie Packbereiche mit Rollenbahnen oder Handhubwagen für schnellen Abtransport.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Pack- und Kommissioniertische",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Modulare Arbeitsplatzsysteme für Versandvorbereitung.",
+      },
+      {
+        label: "Euro-Kunststoffbehälter",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Tragfähige Kisten zum Schutz von Kleinteilen.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Fördertechnik zur schnellen Beförderung von Kartons und Paletten.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Packtisch",
+        glossarySlug: "stol-pakowy",
+        context: "Ergonomie und modulares Zubehör für industrielle Packplätze.",
+      },
+      {
+        label: "Eurobehälter",
+        glossarySlug: "pojemnik-euro",
+        context: "Standardisierte Transportbehälter aus Kunststoff.",
+      },
+      {
+        label: "Kommissionierung",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Zusammenstellung von Waren vor dem Verpackungsprozess.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Welche Vorteile bieten modulare Packtische?",
+        answer:
+          "Sie ermöglichen eine nachträgliche Anpassung von Ablagen, Abrollvorrichtungen, Waagen und Monitorarmen ohne Umbau.",
+      },
+      {
+        question: "Wann wird eine antistatische (ESD) Arbeitsplatte benötigt?",
+        answer:
+          "Beim Packen von empfindlichen elektronischen Bauteilen zum Schutz vor elektrostatischen Entladungen.",
+      },
+      {
+        question: "Wie erleichtern Eurobehälter den Packprozess?",
+        answer:
+          "Durch standardisierte Maße passen sie perfekt auf Packtischregale und beschleunigen die Materialzuführung.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Lösungen anzeigen",
+    },
+    seo: {
+      title: "Verpackung und Ladungssicherung B2B | LogiMarket",
+      description:
+        "B2B-Packplatzbedarf: ergonomische Packtische, Eurobehälter, Stretchvorrichtungen und Fördertechnik auf LogiMarket.",
+    },
+  },
+  // 3. Warehouse Safety - PL
+  {
+    intent: "warehouse-safety",
+    locale: "pl",
+    slug: "bezpieczenstwo-magazynu",
+    path: "/rozwiazania/bezpieczenstwo-magazynu",
+    sectionLabel: "Rozwiązania",
+    title: "Bezpieczeństwo magazynu i infrastruktury logistycznej",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Ochrona regałów, wygrodzenie stref ruchu oraz odpowiednie zabezpieczenia BHP redukują kolizje i chronią infrastrukturę magazynową. Ta strona wspiera procesy decyzyjne przy zakupie odbojnic ochronnych, barier oraz wózków.",
+    procurementContextTitle: "Kontekst zakupowy B2B",
+    procurementContext: [
+      "Zabezpieczenia słupów regałów i odbojnice narożne są wymagane normą PN-EN 15635 w celu zapobiegania katastrofom budowlanym.",
+      "Planowanie stref ochronnych musi uwzględniać rozkład dróg transportowych dla wózków widłowych oraz ścieżek dla pieszych.",
+      "Wysoka jakość stali i powłoki ostrzegawcze (żółto-czarne) barier ochronnych gwarantują długotrwałą wytrzymałość i widoczność.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Ochrona kolumn regałowych",
+        description:
+          "Wdrażaj stalowe lub tworzywowe osłony słupów regałów paletowych na wysokości min. 400 mm.",
+      },
+      {
+        title: "Wygrodzenia dróg",
+        description:
+          "Stosuj balustrady ochronne i bariery energochłonne do fizycznego oddzielenia stref ruchu wózków i pieszych.",
+      },
+      {
+        title: "Bezpieczna intralogistyka",
+        description:
+          "Wybieraj wózki widłowe z systemami ostrzegawczymi (blue spot, radary) oraz bariery dokowe zapobiegające upadkom.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Regały i systemy składowania",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Konstrukcje regałowe wymagające zabezpieczeń i odbojnic ochronnych.",
+      },
+      {
+        label: "Antresole i podesty magazynowe",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Podesty wyposażone w balustrady BHP i bramki śluzowe paletowe.",
+      },
+      {
+        label: "Wózki i transport wewnętrzny",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Urządzenia transportu bliskiego do transportu paczek i palet.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Regał paletowy",
+        glossarySlug: "regal-paletowy",
+        context: "Ochrona regałów przed uderzeniami wózków widłowych.",
+      },
+      {
+        label: "Nośność regału",
+        glossarySlug: "nosnosc-regalu",
+        context: "Stateczność i parametry bezpieczeństwa kolumn regałowych.",
+      },
+      {
+        label: "Wózek widłowy",
+        glossarySlug: "wozek-widlowy",
+        context: "Zasady bezpiecznego manewrowania w wąskich korytarzach roboczych.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jakie są minimalne wymagania dotyczące osłon słupów regałów?",
+        answer:
+          "Zgodnie z normami europejskimi, osłona musi chronić słup na wysokości co najmniej 400 mm i być zamocowana niezależnie do posadzki.",
+      },
+      {
+        question: "Czy bariery ochronne z tworzywa sztucznego są lepsze od stalowych?",
+        answer:
+          "Bariery polimerowe pochłaniają energię uderzenia powracając do pierwotnego kształtu, co chroni posadzkę przed wyrwaniem kotew, podczas gdy bariery stalowe wymagają wymiany po silnym zderzeniu.",
+      },
+      {
+        question: "Jak zabezpieczyć krawędź antresoli magazynowej?",
+        answer:
+          "Należy zastosować barierki ochronne o wysokości 1,1 m z krawężnikiem przypodłogowym (toe board) oraz systemową bramkę bezpieczeństwa typu śluza.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Otwórz katalog",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz rozwiązania",
+    },
+    seo: {
+      title: "Bezpieczeństwo magazynu i wygrodzenia BHP B2B | LogiMarket",
+      description:
+        "Wyposażenie ochronne dla logistyki: odbojnice regałowe, bariery energochłonne, śluzy bezpieczeństwa i osłony na LogiMarket.pl.",
+    },
+  },
+  // 3. Warehouse Safety - EN
+  {
+    intent: "warehouse-safety",
+    locale: "en",
+    slug: "warehouse-safety",
+    path: "/en/solutions/warehouse-safety",
+    sectionLabel: "Solutions",
+    title: "Warehouse safety and logistics infrastructure protection",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Rack protection, traffic segregation, and appropriate safety equipment reduce collisions and protect warehouse assets. This page guides procurement of column guards, safety barriers, and industrial trucks.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "Column protectors for racking frames are required by DIN EN 15635 to prevent structural failures.",
+      "Traffic planning must separate forklift routes from pedestrian walkways through physical barriers.",
+      "High-strength steel and warning colors (yellow/black) for guards guarantee long-term durability and visibility.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Rack protection",
+        description:
+          "Deploy steel or polymer frame guards on pallet rack uprights up to at least 400 mm height.",
+      },
+      {
+        title: "Traffic segregation",
+        description:
+          "Use safety guardrails and energy-absorbing barriers to physically separate forklift paths from pedestrians.",
+      },
+      {
+        title: "Safe material handling",
+        description:
+          "Select forklifts with alert systems (blue spot, warning sensors) and gate safety systems.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Racks and storage systems",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Racking structures requiring collision guards and safety barriers.",
+      },
+      {
+        label: "Mezzanines and platform floors",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Elevated structures requiring handrails and pallet gate systems.",
+      },
+      {
+        label: "Trolleys and internal transport",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Material handling vehicles operating in shared traffic zones.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Pallet racking",
+        glossarySlug: "regal-paletowy",
+        context: "Racking protection requirements and safety measures.",
+      },
+      {
+        label: "Rack capacity",
+        glossarySlug: "nosnosc-regalu",
+        context: "Structural stability and load limits for storage configurations.",
+      },
+      {
+        label: "Forklift",
+        glossarySlug: "wozek-widlowy",
+        context: "Safe driving and maneuvering regulations in tight layout channels.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "What are the minimum requirements for rack upright guards?",
+        answer:
+          "According to European standards, protectors must guard the frame up to a height of at least 400 mm and be anchored independently to the floor.",
+      },
+      {
+        question: "Are polymer safety barriers better than steel ones?",
+        answer:
+          "Polymer barriers absorb impact energy and return to their original shape, protecting concrete floor anchors from tearing, whereas steel barriers must be replaced after severe impact.",
+      },
+      {
+        question: "How do you protect elevated mezzanine edges?",
+        answer:
+          "Install 1.1 m high handrails with toe boards and a system safety pallet gate.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Open Catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View Solutions",
+    },
+    seo: {
+      title: "Warehouse Safety and Guardrails B2B | LogiMarket",
+      description:
+        "Procurement guide for safety equipment: rack column protectors, dynamic barriers, pallet gates, and OSHA compliance on LogiMarket.",
+    },
+  },
+  // 3. Warehouse Safety - DE
+  {
+    intent: "warehouse-safety",
+    locale: "de",
+    slug: "lagersicherheit",
+    path: "/de/loesungen/lagersicherheit",
+    sectionLabel: "Lösungen",
+    title: "Lagersicherheit und Schutz der Logistikinfrastruktur",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Regalschutz, Verkehrstrennung und angemessene Schutzvorrichtungen minimieren Kollisionen und sichern Halleninventar. Dieser B2B-Führer unterstützt Sie bei der Auswahl von Rammschutz, Barrieren und Staplersystemen.",
+    procurementContextTitle: "Einkaufskontext B2B",
+    procurementContext: [
+      "Ein Rammschutz für Regalstützen ist nach DIN EN 15635 zwingend vorgeschrieben, um Einstürze zu verhindern.",
+      "Die Verkehrsplanung muss Fahrwege für Stapler und Fußgängerbereiche durch physische Trennung entkoppeln.",
+      "Hochwertiger Stahl und Warnfarben (gelb/schwarz) garantieren dauerhafte Widerstandskraft und Sichtbarkeit.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Regalstützenschutz",
+        description:
+          "Verwenden Sie Stützenschützer aus Stahl oder Kunststoff an Regalbeinen bis mindestens 400 mm Höhe.",
+      },
+      {
+        title: "Verkehrstrennung",
+        description:
+          "Setzen Sie Schutzgeländer ein, um Staplerfahrbereiche von Gehwegzonen abzugrenzen.",
+      },
+      {
+        title: "Sichere Intralogistik",
+        description:
+          "Wählen Sie Flurförderzeuge mit Warnleuchten (Blue Spot) und Schleusengeländer an Übergabestellen.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Regale und Lagersysteme",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Lagerregale, die Kollisionsschutz und Eckschutzgitter erfordern.",
+      },
+      {
+        label: "Lagerbühnen und Podeste",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Bühnensysteme mit Geländern und Palettenschleusen.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Fahrzeuge für internen Transport, die in Mischzonen verkehren.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Palettenregal",
+        glossarySlug: "regal-paletowy",
+        context: "Sicherheitstechnische Rammschutzvorgaben für Regalrahmen.",
+      },
+      {
+        label: "Regaltraglast",
+        glossarySlug: "nosnosc-regalu",
+        context: "Statische Stabilität und Lastgrenzen von Lagersystemen.",
+      },
+      {
+        label: "Gabelstapler",
+        glossarySlug: "wozek-widlowy",
+        context: "Sicherheit und Richtlinien für Staplerfahrer in engen Gängen.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Wie hoch muss ein Anfahrschutz für Regale sein?",
+        answer:
+          "Laut europäischen Vorschriften muss der Rammschutz mindestens 400 mm hoch sein und unabhängig von der Stütze am Boden verankert werden.",
+      },
+      {
+        question: "Sind Kunststoff-Schutzbarrieren besser als solche aus Stahl?",
+        answer:
+          "Polymer-Barrieren absorbieren Stoßkräfte elastisch und verformen sich nicht dauerhaft, was den Hallenboden schont, während Stahlbarrieren nach Verformung getauscht werden müssen.",
+      },
+      {
+        question: "Wie sichert man Übergabestellen auf Lagerbühnen ab?",
+        answer:
+          "Durch Schleusengeländer (Palettenschleusen), die dem Bediener ständigen Absturzschutz bei der Be- und Entladung bieten.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Lösungen anzeigen",
+    },
+    seo: {
+      title: "Lagersicherheit und Rammschutz B2B | LogiMarket",
+      description:
+        "B2B-Bedarf für Arbeitsschutz im Lager: Anfahrschutz, Geländersysteme, Palettenschleusen und Barrieren auf LogiMarket.",
+    },
+  },
 ] satisfies LandingPageContent[];
