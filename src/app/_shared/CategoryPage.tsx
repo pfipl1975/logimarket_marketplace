@@ -21,7 +21,7 @@ import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } f
 import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
 import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
-import { CatalogCategoryExplorer } from "@/components/catalog/CatalogCategoryExplorer";
+import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
 import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
 import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
 import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks";
@@ -207,40 +207,20 @@ export async function CategoryPage({
   const categoryFilterBasePath = getHomePath(locale);
 
   // ── Explorer tree ─────────────────────────────────────────────────────────
-  const explorerTree = categoryTree.map((section) => ({
-    id: section.id,
-    slug: section.slug,
+  const mapExplorerNode = (node: CatalogCategoryNode): CatalogExplorerNode => ({
+    id: node.id,
+    slug: node.slug,
     label: resolveCategoryName({
-      slug: section.slug,
-      dbName: section.name,
+      slug: node.slug,
+      dbName: node.name,
       localeBySlug,
       fallbackBySlug,
     }),
-    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${section.slug}`,
-    children: section.children.map((group) => ({
-      id: group.id,
-      slug: group.slug,
-      label: resolveCategoryName({
-        slug: group.slug,
-        dbName: group.name,
-        localeBySlug,
-        fallbackBySlug,
-      }),
-      href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`,
-      children: group.children.map((cat) => ({
-        id: cat.id,
-        slug: cat.slug,
-        label: resolveCategoryName({
-          slug: cat.slug,
-          dbName: cat.name,
-          localeBySlug,
-          fallbackBySlug,
-        }),
-        href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`,
-        children: [],
-      })),
-    })),
-  }));
+    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${node.slug}`,
+    children: node.children.map(mapExplorerNode),
+  });
+
+  const explorerTree = categoryTree.map(mapExplorerNode);
 
   const explorerLabels = {
     trigger: dict.catalog.categoriesAria,
@@ -293,20 +273,21 @@ export async function CategoryPage({
 
   // ── JSON-LD: ItemList (role-aware, no Product schema) ────────────────────
   const itemListItems = (() => {
-    if (pageRole === "leaf") {
-      return offers.map((offer) => ({
-        name: offer.title,
-        url: absoluteUrl(getOfferPath(locale, String(offer.id))),
+    if (subcategories.length > 0) {
+      return subcategories.map((sub: CatalogCategoryNode) => ({
+        name: resolveCategoryName({
+          slug: sub.slug,
+          dbName: sub.name,
+          localeBySlug,
+          fallbackBySlug,
+        }),
+        url: absoluteUrl(`${catalogPath}/c-${sub.slug}`),
       }));
     }
-    return subcategories.map((sub: CatalogCategoryNode) => ({
-      name: resolveCategoryName({
-        slug: sub.slug,
-        dbName: sub.name,
-        localeBySlug,
-        fallbackBySlug,
-      }),
-      url: absoluteUrl(`${catalogPath}/c-${sub.slug}`),
+
+    return offers.map((offer) => ({
+      name: offer.title,
+      url: absoluteUrl(getOfferPath(locale, String(offer.id))),
     }));
   })();
 
@@ -354,6 +335,7 @@ export async function CategoryPage({
 
   const headings = blockHeadings[locale] || blockHeadings.pl;
   const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
+  const hasNestedSubcategories = subcategories.some((sub) => sub.children.length > 0);
   const queryState = { view, filters };
   const hasActiveFilters = hasActiveCategoryOfferFilters(filters);
   const filteredOffers = applyCategoryOfferFilters(offers, filters);
@@ -493,14 +475,13 @@ export async function CategoryPage({
         </div>
 
         {/* ── Subcategory navigation (Section → groups, Group → leaf chips) */}
-        {pageRole !== "leaf" && subcategories.length > 0 && (
+        {subcategories.length > 0 && (
           <div className="mt-8 border-t border-border pt-8 mb-10">
             <h2 className="text-xl font-bold text-brand-navy mb-6">
               {dict.catalog.allCategories}
             </h2>
 
-            {pageRole === "section" ? (
-              /* Section: Grid of group cards with their leaf links */
+            {pageRole === "section" || hasNestedSubcategories ? (
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {subcategories.map((group: CatalogCategoryNode) => {
                   const groupLabel = resolveCategoryName({
@@ -532,10 +513,37 @@ export async function CategoryPage({
                               <li key={cat.id}>
                                 <Link
                                   href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`}
-                                  className="text-xs text-muted-foreground hover:text-brand-teal transition-colors"
+                                  className={`text-xs transition-colors hover:text-brand-teal ${
+                                    cat.children.length > 0
+                                      ? "font-semibold text-brand-navy/80"
+                                      : "text-muted-foreground"
+                                  }`}
                                 >
                                   {catLabel}
                                 </Link>
+                                {cat.children.length > 0 && (
+                                  <ul className="mt-1.5 space-y-1 border-l border-border pl-3">
+                                    {cat.children.map((leaf: CatalogCategoryNode) => {
+                                      const leafLabel = resolveCategoryName({
+                                        slug: leaf.slug,
+                                        dbName: leaf.name,
+                                        localeBySlug,
+                                        fallbackBySlug,
+                                      });
+
+                                      return (
+                                        <li key={leaf.id}>
+                                          <Link
+                                            href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${leaf.slug}`}
+                                            className="text-xs text-muted-foreground transition-colors hover:text-brand-teal"
+                                          >
+                                            {leafLabel}
+                                          </Link>
+                                        </li>
+                                      );
+                                    })}
+                                  </ul>
+                                )}
                               </li>
                             );
                           })}

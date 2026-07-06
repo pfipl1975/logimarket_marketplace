@@ -435,5 +435,280 @@ export const enCategoryContent: CategoryContentMap = {
         context: "Safety handrails, mesh screens, and guardrails"
       }
     ]
+  },
+  "osprzet-do-wozkow-widlowych":   {
+    "slug": "osprzet-do-wozkow-widlowych",
+    "locale": "en",
+    "definition": "Forklift attachments are interchangeable devices mounted on the carriage or directly on the forks to extend a truck beyond standard pallet lifting. B2B selection depends on carriage class, residual capacity, hydraulic circuits and the load type being handled.",
+    "applications": [
+      "Handling non-palletized loads",
+      "Precise load positioning in racking and docks",
+      "Emptying bins and process containers",
+      "Maintenance and service tasks inside warehouses"
+    ],
+    "decisionFactors": [
+      "ISO/FEM carriage class and residual capacity",
+      "Mounting type: carriage-mounted, fork-mounted or adapter-based",
+      "Hydraulic requirements and available auxiliary circuits",
+      "Load type: palletized, cylindrical, fragile, unstable or bulk",
+      "Attachment weight and effect on truck stability"
+    ],
+    "inquiryChecklist": {
+      "description": "A forklift attachment inquiry should describe both the base truck and the handled load.",
+      "groups": [
+        {
+          "groupLabel": "Base truck",
+          "fields": [
+            "Truck manufacturer, model and nominal capacity",
+            "ISO/FEM carriage class and lifting height",
+            "Available hydraulic circuits and hose routing"
+          ]
+        },
+        {
+          "groupLabel": "Load and operation",
+          "fields": [
+            "Load weight, dimensions and center of gravity",
+            "Whether the load is palletized, cylindrical, fragile, bulk or unstable",
+            "Operation type: shifting, rotating, clamping, lifting, emptying or work at height"
+          ]
+        }
+      ]
+    },
+    "faq": [
+      {
+        "question": "Does every attachment fit every forklift?",
+        "answer": "No. The attachment must match the carriage class, residual capacity, hydraulics and operating environment of the truck."
+      },
+      {
+        "question": "Why is residual capacity critical?",
+        "answer": "Attachments add weight and move the load center. This reduces the real safe capacity of the truck and must be checked before use."
+      }
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-i-transport-wewnetrzny",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Material handling and internal transport context"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Common base trucks for forklift attachments"
+      },
+      {
+        "targetSlug": "widly-i-przedluzki",
+        "relationType": "parent_child",
+        "priority": 3,
+        "context": "Existing forks and extensions category"
+      },
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "safety_dependency",
+        "priority": 4,
+        "context": "Existing fork-mounted work cage category"
+      }
+    ]
+  },
+  "pozycjonery-i-przesuwy-boczne":   {
+    "slug": "pozycjonery-i-przesuwy-boczne",
+    "locale": "en",
+    "definition": "Fork positioners and side shifters allow the operator to adjust fork spacing or carriage position without repeatedly repositioning the truck.",
+    "decisionFactors": [
+      "Side-shift and fork-spacing range",
+      "ISO/FEM carriage compatibility",
+      "Residual capacity and operator visibility",
+      "Hydraulic requirements"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Base trucks for carriage-mounted positioning attachments"
+      },
+      {
+        "targetSlug": "regaly-i-systemy-skladowania",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Precise load placement in storage systems"
+      }
+    ]
+  },
+  "chwytaki-do-wozkow-widlowych":   {
+    "slug": "chwytaki-do-wozkow-widlowych",
+    "locale": "en",
+    "definition": "Forklift clamps handle non-palletized loads or products requiring controlled pressure.",
+    "decisionFactors": [
+      "Arm opening range",
+      "Contact pad shape and material",
+      "Clamping force and pressure control",
+      "Load stability without a pallet"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Base trucks for specialist clamps"
+      },
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Palletless handling and load securing context"
+      }
+    ]
+  },
+  "obrotnice-do-wozkow-widlowych":   {
+    "slug": "obrotnice-do-wozkow-widlowych",
+    "locale": "en",
+    "definition": "Forklift rotators turn a load or container in a controlled range, usually for emptying, mixing or changing load orientation.",
+    "decisionFactors": [
+      "Rotation range and speed",
+      "Load retention during rotation",
+      "Hydraulic requirements and attachment weight",
+      "Effect on load center"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "pojemniki-i-kuwety",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Bins and containers used in process handling"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Base trucks for rotators"
+      }
+    ]
+  },
+  "widly-i-przedluzki":   {
+    "slug": "widly-i-przedluzki",
+    "locale": "en",
+    "definition": "Forks and extensions are the primary load-bearing components of a forklift.",
+    "decisionFactors": [
+      "Carriage class and fork section",
+      "Fork length, thickness and wear",
+      "Open or closed fork-extension design",
+      "Whether weighing is part of the process"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "osprzet-do-wozkow-widlowych",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Parent forklift attachments category"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Forklifts using replaceable forks"
+      }
+    ]
+  },
+  "systemy-push-pull-i-stabilizatory-ladunku":   {
+    "slug": "systemy-push-pull-i-stabilizatory-ladunku",
+    "locale": "en",
+    "definition": "Push-pull systems and load stabilizers support processes where pallets are replaced with slip-sheets or loads require additional top pressure.",
+    "decisionFactors": [
+      "Whether slip-sheet logistics are accepted",
+      "Required top pressure and stabilization",
+      "Number of pallets per cycle",
+      "Effect on truck length and manoeuvrability"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Slip sheets and load securing materials"
+      },
+      {
+        "targetSlug": "nosniki-ladunku",
+        "relationType": "comparison",
+        "priority": 2,
+        "context": "Pallet and alternative load-carrier comparison"
+      }
+    ]
+  },
+  "osprzet-wysiegnikowy-i-dzwigowy":   {
+    "slug": "osprzet-wysiegnikowy-i-dzwigowy",
+    "locale": "en",
+    "definition": "Jib and lifting attachments let forklifts handle suspended loads.",
+    "decisionFactors": [
+      "Jib length and hook position",
+      "Capacity at the selected hook point",
+      "Fork-mounted or carriage-mounted design",
+      "Protection against slipping from forks"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Base trucks for lifting adapters"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Marking and securing lifting zones"
+      }
+    ]
+  },
+  "osprzet-budowlany-komunalny-i-rolniczy":   {
+    "slug": "osprzet-budowlany-komunalny-i-rolniczy",
+    "locale": "en",
+    "definition": "Construction, municipal and agricultural attachments extend forklifts beyond standard warehouse work for bulk materials, snow, waste and sweeping tasks.",
+    "decisionFactors": [
+      "Mechanical or hydraulic operation",
+      "Structure resistance to bulk material work",
+      "Fork-mounted locking method",
+      "Outdoor conditions and surface quality"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-spalinowe",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Common base trucks for outdoor work"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Marking of yard and municipal work zones"
+      }
+    ]
+  },
+  "bezpieczenstwo-i-praca-na-wysokosci":   {
+    "slug": "bezpieczenstwo-i-praca-na-wysokosci",
+    "locale": "en",
+    "definition": "Safety and work-at-height attachments include cages and platforms mounted to forklifts for short, controlled service tasks.",
+    "decisionFactors": [
+      "Cage locking method on forks",
+      "Guardrails, entry gate and anchor points",
+      "Allowed worker count and working load",
+      "Safety procedures and restrictions on personnel lifting"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Existing fork work cage category"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Safety and marking context"
+      }
+    ]
   }
 };

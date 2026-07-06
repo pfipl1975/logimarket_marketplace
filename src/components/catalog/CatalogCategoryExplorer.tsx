@@ -24,6 +24,43 @@ interface CatalogCategoryExplorerProps {
   initialActiveSectionSlug?: string;
 }
 
+function ExplorerChildLinks({
+  nodes,
+  onNavigate,
+  level = 0,
+}: {
+  nodes: CatalogExplorerNode[];
+  onNavigate: () => void;
+  level?: number;
+}) {
+  if (nodes.length === 0) return null;
+
+  return (
+    <ul className={level === 0 ? "space-y-1.5 border-t border-gray-50 pt-2" : "mt-1.5 space-y-1.5 border-l border-border/60 pl-3"}>
+      {nodes.map((node) => (
+        <li key={node.id}>
+          <Link
+            href={node.href}
+            onClick={onNavigate}
+            className={`block transition-colors hover:text-brand-teal ${
+              level === 0
+                ? "text-xs text-muted-foreground"
+                : "text-xs text-muted-foreground/90"
+            }`}
+          >
+            {node.label}
+          </Link>
+          <ExplorerChildLinks
+            nodes={node.children}
+            onNavigate={onNavigate}
+            level={level + 1}
+          />
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function CatalogCategoryExplorer({
   tree,
   labels,
@@ -34,7 +71,7 @@ export function CatalogCategoryExplorer({
     initialActiveSectionSlug || (tree.length > 0 ? tree[0].slug : "")
   );
   const [openMobileSectionSlug, setOpenMobileSectionSlug] = useState<string | null>(null);
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
 
 
@@ -150,21 +187,10 @@ export function CatalogCategoryExplorer({
                     >
                       {group.label}
                     </Link>
-                    {group.children.length > 0 && (
-                      <ul className="space-y-1.5 border-t border-gray-50 pt-2">
-                        {group.children.map((cat) => (
-                          <li key={cat.id}>
-                            <Link
-                              href={cat.href}
-                              onClick={() => setIsOpen(false)}
-                              className="block text-xs text-muted-foreground hover:text-brand-teal transition-colors"
-                            >
-                              {cat.label}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    <ExplorerChildLinks
+                      nodes={group.children}
+                      onNavigate={() => setIsOpen(false)}
+                    />
                   </div>
                 ))}
               </div>
@@ -217,21 +243,10 @@ export function CatalogCategoryExplorer({
                       >
                         {group.label}
                       </Link>
-                      {group.children.length > 0 && (
-                        <ul className="pl-3 space-y-1.5 border-l border-border/60">
-                          {group.children.map((cat) => (
-                            <li key={cat.id}>
-                              <Link
-                                href={cat.href}
-                                onClick={() => setIsOpen(false)}
-                                className="block text-xs text-muted-foreground hover:text-brand-teal transition-colors"
-                              >
-                                {cat.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
+                      <ExplorerChildLinks
+                        nodes={group.children}
+                        onNavigate={() => setIsOpen(false)}
+                      />
                     </div>
                   ))}
                 </div>

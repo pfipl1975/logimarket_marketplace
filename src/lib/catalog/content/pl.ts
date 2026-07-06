@@ -435,5 +435,280 @@ export const plCategoryContent: CategoryContentMap = {
         context: "Balustrady ochronne, siatki zabezpieczające i wygrodzenia"
       }
     ]
+  },
+  "osprzet-do-wozkow-widlowych":   {
+    "slug": "osprzet-do-wozkow-widlowych",
+    "locale": "pl",
+    "definition": "Osprzęt do wózków widłowych obejmuje wymienne urządzenia montowane na karetce lub bezpośrednio na widłach, które rozszerzają funkcję wózka poza standardowe podnoszenie palet. W zakupach B2B kluczowe jest dopasowanie osprzętu do klasy karetki, udźwigu resztkowego, hydrauliki wózka oraz rodzaju obsługiwanego ładunku.",
+    "applications": [
+      "Obsługa ładunków bezpaletowych w produkcji, recyklingu i dystrybucji",
+      "Precyzyjne pozycjonowanie palet i pojemników w regałach oraz dokach",
+      "Opróżnianie pojemników, kontenerów i koszy technologicznych",
+      "Serwisowe prace pomocnicze i utrzymanie ruchu w magazynie"
+    ],
+    "decisionFactors": [
+      "Klasa karetki ISO/FEM i realny udźwig resztkowy po montażu osprzętu",
+      "Rodzaj montażu: na karetkę, na widły lub jako adapter specjalny",
+      "Wymagane zasilanie hydrauliczne i liczba dostępnych sekcji w wózku",
+      "Rodzaj ładunku: paletowy, bezpaletowy, delikatny, cylindryczny, niestabilny lub sypki",
+      "Wpływ masy własnej osprzętu na stateczność, środek ciężkości i bezpieczeństwo pracy"
+    ],
+    "inquiryChecklist": {
+      "description": "Dane potrzebne do zapytania o osprzęt do wózka widłowego powinny opisywać zarówno wózek, jak i ładunek, który ma być obsługiwany.",
+      "groups": [
+        {
+          "groupLabel": "Wózek bazowy",
+          "fields": [
+            "Model i producent wózka oraz udźwig nominalny",
+            "Klasa karetki ISO/FEM i wysokość podnoszenia",
+            "Dostępne sekcje hydrauliczne i sposób prowadzenia przewodów"
+          ]
+        },
+        {
+          "groupLabel": "Ładunek i proces",
+          "fields": [
+            "Masa, wymiary i środek ciężkości ładunku",
+            "Czy ładunek jest paletowy, cylindryczny, delikatny, sypki lub niestabilny",
+            "Opis operacji: przesuwanie, obracanie, chwytanie, podnoszenie, opróżnianie lub praca na wysokości"
+          ]
+        }
+      ]
+    },
+    "faq": [
+      {
+        "question": "Czy każdy osprzęt pasuje do każdego wózka widłowego?",
+        "answer": "Nie. Osprzęt musi pasować do klasy karetki, udźwigu resztkowego, hydrauliki i warunków pracy wózka. Sam nominalny udźwig wózka nie wystarcza do bezpiecznego doboru."
+      },
+      {
+        "question": "Dlaczego udźwig resztkowy jest ważniejszy niż sam udźwig nominalny?",
+        "answer": "Osprzęt ma własną masę i przesuwa środek ciężkości ładunku. To zmniejsza realny udźwig zestawu wózek plus osprzęt, dlatego dobór wymaga sprawdzenia stateczności i tabliczki udźwigu."
+      }
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-i-transport-wewnetrzny",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Nadrzędny obszar transportu wewnętrznego"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Najczęstsze wózki bazowe dla osprzętu"
+      },
+      {
+        "targetSlug": "widly-i-przedluzki",
+        "relationType": "parent_child",
+        "priority": 3,
+        "context": "Istniejąca kategoria wideł i przedłużek"
+      },
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "safety_dependency",
+        "priority": 4,
+        "context": "Istniejąca kategoria koszy roboczych na widły"
+      }
+    ]
+  },
+  "pozycjonery-i-przesuwy-boczne":   {
+    "slug": "pozycjonery-i-przesuwy-boczne",
+    "locale": "pl",
+    "definition": "Pozycjonery wideł i przesuwy boczne umożliwiają operatorowi zmianę położenia wideł lub całej karetki bez przestawiania wózka.",
+    "decisionFactors": [
+      "Zakres przesuwu bocznego i rozstawu wideł",
+      "Kompatybilność z klasą karetki ISO/FEM",
+      "Wpływ na udźwig resztkowy i widoczność operatora",
+      "Wymagane zasilanie hydrauliczne"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Wózki bazowe dla osprzętu montowanego na karetce"
+      },
+      {
+        "targetSlug": "regaly-i-systemy-skladowania",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Precyzyjne odkładanie ładunków w systemach składowania"
+      }
+    ]
+  },
+  "chwytaki-do-wozkow-widlowych":   {
+    "slug": "chwytaki-do-wozkow-widlowych",
+    "locale": "pl",
+    "definition": "Chwytaki do wózków widłowych służą do obsługi ładunków bezpaletowych lub wymagających kontrolowanego docisku.",
+    "decisionFactors": [
+      "Zakres otwarcia ramion",
+      "Kształt i materiał okładzin kontaktowych",
+      "Siła docisku oraz możliwość jej regulacji",
+      "Masa i stabilność ładunku bez palety"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Wózki bazowe dla chwytaków specjalistycznych"
+      },
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Obsługa bezpaletowa i zabezpieczanie ładunków"
+      }
+    ]
+  },
+  "obrotnice-do-wozkow-widlowych":   {
+    "slug": "obrotnice-do-wozkow-widlowych",
+    "locale": "pl",
+    "definition": "Obrotnice do wózków widłowych pozwalają obracać ładunek lub pojemnik w kontrolowanym zakresie.",
+    "decisionFactors": [
+      "Zakres obrotu i prędkość ruchu",
+      "Sposób zabezpieczenia ładunku podczas obrotu",
+      "Hydraulika i masa własna obrotnicy",
+      "Wpływ obrotu na środek ciężkości"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "pojemniki-i-kuwety",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Pojemniki używane w procesach obsługi ładunków"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Wózki bazowe dla obrotnic"
+      }
+    ]
+  },
+  "widly-i-przedluzki":   {
+    "slug": "widly-i-przedluzki",
+    "locale": "pl",
+    "definition": "Widły i przedłużki wideł są podstawowymi elementami nośnymi wózka widłowego.",
+    "decisionFactors": [
+      "Klasa karetki i przekrój wideł",
+      "Długość, grubość i stopień zużycia wideł",
+      "Czy przedłużki są otwarte czy zamknięte",
+      "Czy pomiar masy ma być zintegrowany z procesem"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "osprzet-do-wozkow-widlowych",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Nadrzędna kategoria osprzętu do wózków widłowych"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Wózki używane z wymiennymi widłami"
+      }
+    ]
+  },
+  "systemy-push-pull-i-stabilizatory-ladunku":   {
+    "slug": "systemy-push-pull-i-stabilizatory-ladunku",
+    "locale": "pl",
+    "definition": "Systemy Push-Pull i stabilizatory ładunku wspierają procesy, w których paleta jest zastępowana przekładką transportową lub ładunek wymaga dodatkowego docisku.",
+    "decisionFactors": [
+      "Czy proces dopuszcza slip-sheet",
+      "Wymagany docisk i stabilizacja od góry",
+      "Liczba palet obsługiwanych w jednym cyklu",
+      "Wpływ osprzętu na długość i manewrowość wózka"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Przekładki i materiały zabezpieczenia ładunku"
+      },
+      {
+        "targetSlug": "nosniki-ladunku",
+        "relationType": "comparison",
+        "priority": 2,
+        "context": "Porównanie palet i alternatywnych nośników ładunku"
+      }
+    ]
+  },
+  "osprzet-wysiegnikowy-i-dzwigowy":   {
+    "slug": "osprzet-wysiegnikowy-i-dzwigowy",
+    "locale": "pl",
+    "definition": "Osprzęt wysięgnikowy i dźwigowy pozwala użyć wózka widłowego do podnoszenia ładunków podwieszanych.",
+    "decisionFactors": [
+      "Długość wysięgnika i położenie haka",
+      "Udźwig na konkretnym punkcie zaczepienia",
+      "Sposób mocowania na widłach lub karetce",
+      "Zabezpieczenie przed zsunięciem z wideł"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Wózki bazowe dla adapterów dźwigowych"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Oznakowanie i zabezpieczenie stref podnoszenia"
+      }
+    ]
+  },
+  "osprzet-budowlany-komunalny-i-rolniczy":   {
+    "slug": "osprzet-budowlany-komunalny-i-rolniczy",
+    "locale": "pl",
+    "definition": "Osprzęt budowlany, komunalny i rolniczy rozszerza zastosowanie wózków widłowych poza klasyczny magazyn.",
+    "decisionFactors": [
+      "Czy osprzęt jest mechaniczny czy hydrauliczny",
+      "Odporność konstrukcji na pracę z materiałem sypkim",
+      "Sposób mocowania na widłach",
+      "Warunki pracy na zewnątrz i jakość nawierzchni"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-spalinowe",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Typowe wózki bazowe do pracy zewnętrznej"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Oznakowanie placów i stref prac komunalnych"
+      }
+    ]
+  },
+  "bezpieczenstwo-i-praca-na-wysokosci":   {
+    "slug": "bezpieczenstwo-i-praca-na-wysokosci",
+    "locale": "pl",
+    "definition": "Osprzęt bezpieczeństwa i pracy na wysokości obejmuje kosze, platformy oraz klatki montowane do wózków w celu wykonywania krótkich, kontrolowanych prac serwisowych.",
+    "decisionFactors": [
+      "Sposób blokowania kosza na widłach",
+      "Barierki, bramka wejściowa i punkty asekuracji",
+      "Dopuszczalna liczba osób i obciążenie robocze",
+      "Procedury BHP i zakaz transportu osób poza pracą kontrolowaną"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Istniejąca kategoria koszy roboczych na widły"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Kontekst BHP i oznakowania"
+      }
+    ]
   }
 };

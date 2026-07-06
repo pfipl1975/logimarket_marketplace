@@ -435,5 +435,280 @@ export const deCategoryContent: CategoryContentMap = {
         context: "Schutzgeländer, Maschenschutzzäune und Geländersysteme"
       }
     ]
+  },
+  "osprzet-do-wozkow-widlowych":   {
+    "slug": "osprzet-do-wozkow-widlowych",
+    "locale": "de",
+    "definition": "Anbaugeräte für Gabelstapler sind wechselbare Geräte an der Gabelträgerplatte oder direkt auf den Gabelzinken. Sie erweitern den Stapler über das reine Palettenhandling hinaus. Die Beschaffung muss FEM-Klasse, Resttragfähigkeit, Hydraulik und Lastart berücksichtigen.",
+    "applications": [
+      "Handling nicht palettierter Lasten",
+      "Präzises Positionieren in Regalen und an Rampen",
+      "Entleeren von Behältern und Prozesscontainern",
+      "Service- und Instandhaltungsarbeiten im Lager"
+    ],
+    "decisionFactors": [
+      "ISO/FEM-Klasse und Resttragfähigkeit",
+      "Montageart: Gabelträger, Gabelzinken oder Adapter",
+      "Hydraulikanforderungen und verfügbare Zusatzkreise",
+      "Lastart: palettiert, zylindrisch, empfindlich, instabil oder Schüttgut",
+      "Eigengewicht und Auswirkung auf die Standsicherheit"
+    ],
+    "inquiryChecklist": {
+      "description": "Eine Anfrage für Stapleranbaugeräte sollte sowohl den Stapler als auch die Last beschreiben.",
+      "groups": [
+        {
+          "groupLabel": "Basisstapler",
+          "fields": [
+            "Hersteller, Modell und Nenntragfähigkeit",
+            "ISO/FEM-Klasse und Hubhöhe",
+            "Verfügbare Hydraulikkreise und Schlauchführung"
+          ]
+        },
+        {
+          "groupLabel": "Last und Prozess",
+          "fields": [
+            "Gewicht, Abmessungen und Schwerpunkt der Last",
+            "Palettiert, zylindrisch, empfindlich, Schüttgut oder instabil",
+            "Operation: Verschieben, Drehen, Klammern, Heben, Entleeren oder Arbeiten in der Höhe"
+          ]
+        }
+      ]
+    },
+    "faq": [
+      {
+        "question": "Passt jedes Anbaugerät an jeden Stapler?",
+        "answer": "Nein. Es muss zu FEM-Klasse, Resttragfähigkeit, Hydraulik und Einsatzumgebung des Staplers passen."
+      },
+      {
+        "question": "Warum ist die Resttragfähigkeit entscheidend?",
+        "answer": "Anbaugeräte bringen Eigengewicht mit und verschieben den Lastschwerpunkt. Dadurch sinkt die sichere Tragfähigkeit des Gesamtsystems."
+      }
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-i-transport-wewnetrzny",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Übergeordneter Bereich innerbetrieblicher Transport"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Häufige Basisstapler für Anbaugeräte"
+      },
+      {
+        "targetSlug": "widly-i-przedluzki",
+        "relationType": "parent_child",
+        "priority": 3,
+        "context": "Bestehende Kategorie Gabelzinken und Verlängerungen"
+      },
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "safety_dependency",
+        "priority": 4,
+        "context": "Bestehende Kategorie gabelmontierter Arbeitskörbe"
+      }
+    ]
+  },
+  "pozycjonery-i-przesuwy-boczne":   {
+    "slug": "pozycjonery-i-przesuwy-boczne",
+    "locale": "de",
+    "definition": "Zinkenversteller und Seitenschieber ermöglichen das Verstellen der Zinken oder des Gabelträgers ohne wiederholtes Rangieren des Staplers.",
+    "decisionFactors": [
+      "Seitenschub- und Zinkenverstellbereich",
+      "Kompatibilität zur ISO/FEM-Klasse",
+      "Resttragfähigkeit und Sicht des Bedieners",
+      "Hydraulikanforderungen"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Basisstapler für Anbaugeräte am Gabelträger"
+      },
+      {
+        "targetSlug": "regaly-i-systemy-skladowania",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Präzise Lastplatzierung in Lagersystemen"
+      }
+    ]
+  },
+  "chwytaki-do-wozkow-widlowych":   {
+    "slug": "chwytaki-do-wozkow-widlowych",
+    "locale": "de",
+    "definition": "Klammergeräte dienen dem Handling nicht palettierter Lasten oder Produkten mit kontrolliertem Anpressdruck.",
+    "decisionFactors": [
+      "Öffnungsbereich der Arme",
+      "Form und Material der Kontaktflächen",
+      "Klammerkraft und Druckregelung",
+      "Stabilität der Last ohne Palette"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Basisstapler für Spezialklammern"
+      },
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Palettenloses Handling und Ladungssicherung"
+      }
+    ]
+  },
+  "obrotnice-do-wozkow-widlowych":   {
+    "slug": "obrotnice-do-wozkow-widlowych",
+    "locale": "de",
+    "definition": "Drehgeräte drehen Lasten oder Behälter kontrolliert, meist zum Entleeren, Mischen oder Ändern der Lastorientierung.",
+    "decisionFactors": [
+      "Drehbereich und Geschwindigkeit",
+      "Sicherung der Last während der Drehung",
+      "Hydraulik und Eigengewicht",
+      "Einfluss auf den Lastschwerpunkt"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "pojemniki-i-kuwety",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Behälter im Prozesshandling"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Basisstapler für Drehgeräte"
+      }
+    ]
+  },
+  "widly-i-przedluzki":   {
+    "slug": "widly-i-przedluzki",
+    "locale": "de",
+    "definition": "Gabelzinken und Verlängerungen sind die primären tragenden Elemente eines Gabelstaplers.",
+    "decisionFactors": [
+      "FEM-Klasse und Zinkenquerschnitt",
+      "Länge, Stärke und Verschleiß der Zinken",
+      "Offene oder geschlossene Verlängerungen",
+      "Integration der Verwiegung in den Prozess"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "osprzet-do-wozkow-widlowych",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Übergeordnete Kategorie Stapleranbaugeräte"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Stapler mit wechselbaren Gabelzinken"
+      }
+    ]
+  },
+  "systemy-push-pull-i-stabilizatory-ladunku":   {
+    "slug": "systemy-push-pull-i-stabilizatory-ladunku",
+    "locale": "de",
+    "definition": "Push-Pull-Systeme und Laststabilisatoren unterstützen Prozesse, in denen Paletten durch Slip-Sheets ersetzt werden oder eine Last zusätzlichen Oberdruck benötigt.",
+    "decisionFactors": [
+      "Akzeptanz von Slip-Sheet-Logistik",
+      "Erforderlicher Oberdruck und Stabilisierung",
+      "Anzahl Paletten pro Zyklus",
+      "Einfluss auf Staplerlänge und Manövrierfähigkeit"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Slip-Sheets und Ladungssicherungsmaterialien"
+      },
+      {
+        "targetSlug": "nosniki-ladunku",
+        "relationType": "comparison",
+        "priority": 2,
+        "context": "Vergleich von Paletten und alternativen Ladungsträgern"
+      }
+    ]
+  },
+  "osprzet-wysiegnikowy-i-dzwigowy":   {
+    "slug": "osprzet-wysiegnikowy-i-dzwigowy",
+    "locale": "de",
+    "definition": "Ausleger- und Hebeanbaugeräte ermöglichen das Heben hängender Lasten mit dem Stapler.",
+    "decisionFactors": [
+      "Auslegerlänge und Hakenposition",
+      "Tragfähigkeit am jeweiligen Hakenpunkt",
+      "Montage auf Gabeln oder Gabelträger",
+      "Sicherung gegen Abrutschen von den Gabeln"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Basisstapler für Hebeadapter"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Kennzeichnung und Sicherung von Hebezonen"
+      }
+    ]
+  },
+  "osprzet-budowlany-komunalny-i-rolniczy":   {
+    "slug": "osprzet-budowlany-komunalny-i-rolniczy",
+    "locale": "de",
+    "definition": "Bau-, Kommunal- und Landwirtschaftsanbaugeräte erweitern Stapler über klassische Lagerarbeiten hinaus, etwa für Schüttgut, Schnee, Abfall und Reinigungsarbeiten.",
+    "decisionFactors": [
+      "Mechanischer oder hydraulischer Antrieb",
+      "Konstruktion für Schüttgutbelastung",
+      "Verriegelung auf den Gabeln",
+      "Außeneinsatz und Oberflächenqualität"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-spalinowe",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Häufige Basisstapler für Außeneinsätze"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Kennzeichnung von Hof- und Kommunalarbeitsbereichen"
+      }
+    ]
+  },
+  "bezpieczenstwo-i-praca-na-wysokosci":   {
+    "slug": "bezpieczenstwo-i-praca-na-wysokosci",
+    "locale": "de",
+    "definition": "Sicherheits- und Höhenarbeitsanbaugeräte umfassen Arbeitskörbe, Plattformen und Sicherheitskörbe für kurze, kontrollierte Servicearbeiten mit dem Stapler.",
+    "decisionFactors": [
+      "Verriegelung des Korbs auf den Gabeln",
+      "Geländer, Zugangstür und Anschlagpunkte",
+      "Zulässige Personenzahl und Arbeitslast",
+      "Sicherheitsverfahren und Grenzen der Personenaufnahme"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Bestehende Kategorie Arbeitskörbe für Gabelzinken"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Kontext Arbeitssicherheit und Kennzeichnung"
+      }
+    ]
   }
 };

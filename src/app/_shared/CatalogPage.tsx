@@ -11,7 +11,7 @@ import { getHomePath } from "@/lib/i18n/paths";
 import { buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { JsonLdScript } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
-import { CatalogCategoryExplorer } from "@/components/catalog/CatalogCategoryExplorer";
+import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CatalogPageProps {
@@ -22,13 +22,14 @@ type DirectoryLink = {
   id: number;
   label: string;
   href: string;
+  depth: number;
 };
 
 type DirectoryGroup = {
   id: number;
   label: string;
   href: string | null;
-  leafLinks: DirectoryLink[];
+  categoryLinks: DirectoryLink[];
 };
 
 type DirectorySection = {
@@ -62,35 +63,37 @@ function resolveDirectoryLabel(
   });
 }
 
-function collectTerminalCategoryLinks(
+function collectDirectoryCategoryLinks(
   nodes: CatalogCategoryNode[],
   categoryFilterBasePath: string,
   routeableSlugSet: Set<string>,
   localeBySlug: Record<string, string> | undefined,
   fallbackBySlug: Record<string, string> | undefined,
+  depth = 0,
 ): DirectoryLink[] {
   const links: DirectoryLink[] = [];
 
   for (const node of nodes) {
+    const href = getCatalogCategoryHref(categoryFilterBasePath, node.slug, routeableSlugSet);
+    if (href) {
+      links.push({
+        id: node.id,
+        label: resolveDirectoryLabel(node, localeBySlug, fallbackBySlug),
+        href,
+        depth,
+      });
+    }
+
     if (node.children.length > 0) {
-      links.push(...collectTerminalCategoryLinks(
+      links.push(...collectDirectoryCategoryLinks(
         node.children,
         categoryFilterBasePath,
         routeableSlugSet,
         localeBySlug,
         fallbackBySlug,
+        depth + 1,
       ));
-      continue;
     }
-
-    const href = getCatalogCategoryHref(categoryFilterBasePath, node.slug, routeableSlugSet);
-    if (!href) continue;
-
-    links.push({
-      id: node.id,
-      label: resolveDirectoryLabel(node, localeBySlug, fallbackBySlug),
-      href,
-    });
   }
 
   return links;
@@ -117,7 +120,7 @@ function buildDirectorySections({
       id: group.id,
       label: resolveDirectoryLabel(group, localeBySlug, fallbackBySlug),
       href: getCatalogCategoryHref(categoryFilterBasePath, group.slug, routeableSlugSet),
-      leafLinks: collectTerminalCategoryLinks(
+      categoryLinks: collectDirectoryCategoryLinks(
         group.children,
         categoryFilterBasePath,
         routeableSlugSet,
@@ -126,7 +129,7 @@ function buildDirectorySections({
       ),
     })),
     terminalLinks: section.children.length === 0
-      ? collectTerminalCategoryLinks(
+      ? collectDirectoryCategoryLinks(
         [section],
         categoryFilterBasePath,
         routeableSlugSet,
@@ -158,41 +161,20 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
     fallbackBySlug,
   });
 
-  // Map tree to explorer format
-  const explorerTree = categoryTree.map((section) => ({
-    id: section.id,
-    slug: section.slug,
+  const mapExplorerNode = (node: CatalogCategoryNode): CatalogExplorerNode => ({
+    id: node.id,
+    slug: node.slug,
     label: resolveCategoryName({
-      slug: section.slug,
-      dbName: section.name,
+      slug: node.slug,
+      dbName: node.name,
       localeBySlug,
       fallbackBySlug,
     }),
-    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${section.slug}`,
-    children: section.children.map((group) => ({
-      id: group.id,
-      slug: group.slug,
-      label: resolveCategoryName({
-        slug: group.slug,
-        dbName: group.name,
-        localeBySlug,
-        fallbackBySlug,
-      }),
-      href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`,
-      children: group.children.map((cat) => ({
-        id: cat.id,
-        slug: cat.slug,
-        label: resolveCategoryName({
-          slug: cat.slug,
-          dbName: cat.name,
-          localeBySlug,
-          fallbackBySlug,
-        }),
-        href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`,
-        children: [],
-      })),
-    })),
-  }));
+    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${node.slug}`,
+    children: node.children.map(mapExplorerNode),
+  });
+
+  const explorerTree = categoryTree.map(mapExplorerNode);
 
   const explorerLabels = {
     trigger: dict.catalog.categoriesAria,
@@ -317,15 +299,22 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
                                 </h4>
                               )}
 
-                              {group.leafLinks.length > 0 && (
+                              {group.categoryLinks.length > 0 && (
                                 <ul className="mt-2 space-y-1.5 border-l border-border pl-3">
-                                  {group.leafLinks.map((leaf) => (
-                                    <li key={leaf.id}>
+                                  {group.categoryLinks.map((categoryLink) => (
+                                    <li
+                                      key={categoryLink.id}
+                                      className={categoryLink.depth > 0 ? "pl-3" : undefined}
+                                    >
                                       <Link
-                                        href={leaf.href}
-                                        className="text-xs leading-relaxed text-muted-foreground transition-colors hover:text-brand-teal"
+                                        href={categoryLink.href}
+                                        className={`text-xs leading-relaxed transition-colors hover:text-brand-teal ${
+                                          categoryLink.depth === 0
+                                            ? "font-semibold text-brand-navy/80"
+                                            : "text-muted-foreground"
+                                        }`}
                                       >
-                                        {leaf.label}
+                                        {categoryLink.label}
                                       </Link>
                                     </li>
                                   ))}

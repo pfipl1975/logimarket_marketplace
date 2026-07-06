@@ -41,6 +41,102 @@ function buildActiveTrail(tree: CatalogCategoryNode[], activeSlug: string): Set<
   return trail;
 }
 
+interface CategoryTreeBranchProps {
+  nodes: CatalogCategoryNode[];
+  activeSlug: string;
+  activeTrail: Set<string>;
+  basePath: string;
+  level?: number;
+  localeBySlug?: Record<string, string>;
+  fallbackBySlug?: Record<string, string>;
+}
+
+function CategoryTreeBranch({
+  nodes,
+  activeSlug,
+  activeTrail,
+  basePath,
+  level = 0,
+  localeBySlug,
+  fallbackBySlug,
+}: CategoryTreeBranchProps) {
+  return (
+    <ul className={level === 0 ? "space-y-3" : "mt-2 space-y-2 border-l border-gray-100 pl-3"}>
+      {nodes.map((node) => {
+        const label = resolveCategoryName({
+          slug: node.slug,
+          dbName: node.name,
+          localeBySlug,
+          fallbackBySlug,
+        });
+
+        const isActive = node.slug === activeSlug;
+        const isInTrail = activeTrail.has(node.slug);
+        const hasChildren = node.children.length > 0;
+        const linkClassName = `${
+          level === 0
+            ? "text-xs font-bold uppercase tracking-wide"
+            : level === 1
+              ? "text-sm font-medium"
+              : "text-xs"
+        } transition-colors hover:text-brand-teal ${
+          isActive
+            ? level === 0
+              ? "text-brand-teal border-l-2 border-brand-teal pl-2"
+              : "text-brand-teal font-semibold"
+            : isInTrail
+              ? "text-brand-navy"
+              : level >= 2
+                ? "text-muted-foreground"
+                : "text-brand-navy/70"
+        }`;
+
+        if (hasChildren) {
+          return (
+            <li key={node.id} className="space-y-1">
+              <details open={isInTrail} className="group/category-details">
+                <summary className="flex cursor-pointer list-none items-center justify-between text-brand-navy outline-none transition-colors hover:text-brand-teal">
+                  <Link
+                    href={`${basePath}/katalog/c-${node.slug}`}
+                    aria-current={isActive ? "page" : undefined}
+                    className={`flex-1 py-0.5 ${linkClassName}`}
+                  >
+                    {label}
+                  </Link>
+                  <span className="mr-1 text-[8px] text-muted-foreground/60 transition-transform duration-200 group-open/category-details:rotate-180">
+                    ▼
+                  </span>
+                </summary>
+                <CategoryTreeBranch
+                  nodes={node.children}
+                  activeSlug={activeSlug}
+                  activeTrail={activeTrail}
+                  basePath={basePath}
+                  level={level + 1}
+                  localeBySlug={localeBySlug}
+                  fallbackBySlug={fallbackBySlug}
+                />
+              </details>
+            </li>
+          );
+        }
+
+        return (
+          <li key={node.id}>
+            <Link
+              href={`${basePath}/katalog/c-${node.slug}`}
+              aria-current={isActive ? "page" : undefined}
+              className={`block py-0.5 ${linkClassName}`}
+            >
+              {label}
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
+
 /**
  * CategoryTreeSidebar — server-rendered category navigation for catalog pages.
  *
@@ -75,148 +171,14 @@ export function CategoryTreeSidebar({
       <div className="mb-4 text-xs font-bold uppercase tracking-wider text-brand-navy border-b border-border pb-2">
         {headingLabel}
       </div>
-      <ul className="space-y-3">
-        {tree.map((section) => {
-          const sectionLabel = resolveCategoryName({
-            slug: section.slug,
-            dbName: section.name,
-            localeBySlug,
-            fallbackBySlug,
-          });
-
-          const isSectionActive = section.slug === activeSlug;
-          const isSectionInTrail = activeTrail.has(section.slug);
-          const hasGroups = section.children && section.children.length > 0;
-
-          if (hasGroups) {
-            return (
-              <li key={section.id} className="space-y-1">
-                <details open={isSectionInTrail} className="group/section-details">
-                  <summary className="list-none outline-none cursor-pointer flex items-center justify-between text-xs font-bold uppercase tracking-wide transition-colors hover:text-brand-teal text-brand-navy select-none">
-                    <Link
-                      href={`${basePath}/katalog/c-${section.slug}`}
-                      aria-current={isSectionActive ? "page" : undefined}
-                      className={`flex-1 py-0.5 ${
-                        isSectionActive
-                          ? "text-brand-teal border-l-2 border-brand-teal pl-2"
-                          : isSectionInTrail
-                            ? "text-brand-navy"
-                            : "text-brand-navy/70"
-                      }`}
-                    >
-                      {sectionLabel}
-                    </Link>
-                    <span className="text-[8px] text-muted-foreground/60 transition-transform duration-200 group-open/section-details:rotate-180 mr-1">
-                      ▼
-                    </span>
-                  </summary>
-                  <ul className="space-y-2 border-l border-gray-100 pl-3 ml-1 mt-2 mb-2">
-                    {section.children.map((group) => {
-                      const groupLabel = resolveCategoryName({
-                        slug: group.slug,
-                        dbName: group.name,
-                        localeBySlug,
-                        fallbackBySlug,
-                      });
-
-                      const isGroupActive = group.slug === activeSlug;
-                      const isGroupInTrail = activeTrail.has(group.slug);
-                      const hasLeaves = group.children && group.children.length > 0;
-
-                      if (hasLeaves) {
-                        return (
-                          <li key={group.id} className="space-y-1">
-                            <details open={isGroupInTrail} className="group/group-details">
-                              <summary className="list-none outline-none cursor-pointer flex items-center justify-between text-sm font-medium transition-colors hover:text-brand-teal text-brand-navy select-none">
-                                <Link
-                                  href={`${basePath}/katalog/c-${group.slug}`}
-                                  aria-current={isGroupActive ? "page" : undefined}
-                                  className={`flex-1 py-0.5 ${
-                                    isGroupActive
-                                      ? "text-brand-teal font-semibold"
-                                      : isGroupInTrail
-                                        ? "text-brand-navy"
-                                        : "text-brand-navy/70"
-                                  }`}
-                                >
-                                  {groupLabel}
-                                </Link>
-                                <span className="text-[7px] text-muted-foreground/50 transition-transform duration-200 group-open/group-details:rotate-180 mr-1">
-                                  ▼
-                                </span>
-                              </summary>
-                              <ul className="space-y-1.5 pl-3 border-l border-gray-50 ml-0.5 py-0.5 mt-1.5 mb-1.5">
-                                {group.children.map((leaf) => {
-                                  const leafLabel = resolveCategoryName({
-                                    slug: leaf.slug,
-                                    dbName: leaf.name,
-                                    localeBySlug,
-                                    fallbackBySlug,
-                                  });
-
-                                  const isLeafActive = leaf.slug === activeSlug;
-
-                                  return (
-                                    <li key={leaf.id}>
-                                      <Link
-                                        href={`${basePath}/katalog/c-${leaf.slug}`}
-                                        aria-current={isLeafActive ? "page" : undefined}
-                                        className={`block py-0.5 text-xs transition-colors hover:text-brand-teal ${
-                                          isLeafActive
-                                            ? "text-brand-teal font-semibold border-l border-brand-teal pl-1.5 -ml-3"
-                                            : "text-muted-foreground"
-                                        }`}
-                                      >
-                                        {leafLabel}
-                                      </Link>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </details>
-                          </li>
-                        );
-                      }
-
-                      return (
-                        <li key={group.id}>
-                          <Link
-                            href={`${basePath}/katalog/c-${group.slug}`}
-                            aria-current={isGroupActive ? "page" : undefined}
-                            className={`block py-0.5 text-sm font-medium transition-colors hover:text-brand-teal ${
-                              isGroupActive
-                                ? "text-brand-teal font-semibold"
-                                : "text-brand-navy/70"
-                            }`}
-                          >
-                            {groupLabel}
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </details>
-              </li>
-            );
-          }
-
-          return (
-            <li key={section.id}>
-              <Link
-                href={`${basePath}/katalog/c-${section.slug}`}
-                aria-current={isSectionActive ? "page" : undefined}
-                className={`block py-0.5 text-xs font-bold uppercase tracking-wide transition-colors hover:text-brand-teal ${
-                  isSectionActive
-                    ? "text-brand-teal border-l-2 border-brand-teal pl-2"
-                    : "text-brand-navy/70"
-                }`}
-              >
-                {sectionLabel}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <CategoryTreeBranch
+        nodes={tree}
+        activeSlug={activeSlug}
+        activeTrail={activeTrail}
+        basePath={basePath}
+        localeBySlug={localeBySlug}
+        fallbackBySlug={fallbackBySlug}
+      />
     </nav>
   );
 }
