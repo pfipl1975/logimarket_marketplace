@@ -2,43 +2,33 @@ export async function GET() {
   const content = `# LogiMarket
 
 ## Context
-LogiMarket is an industrial B2B procurement marketplace and intralogistics directory for warehouse equipment, logistics products, packaging supplies and industrial procurement.
+LogiMarket is an industrial B2B procurement marketplace and intralogistics directory for warehouse equipment, logistics products, packaging supplies, and industrial procurement.
 
 ## Entity Authority
 - Entity name: LogiMarket
 - Public domain: https://www.logimarket.eu
 - Entity type: B2B marketplace and procurement knowledge base.
-- Scope: logistics, warehousing, intralogistics and warehouse equipment.
+- Scope: logistics, warehousing, intralogistics, and warehouse equipment.
 - Supported locales: pl, en, de, fr, uk, es, zh.
 - Partner offer content can originate from partners and is not automatically translated.
 
-## Main Information
-- Homepage: Public entry point to procurement areas, catalog navigation and selected B2B offers.
-- Catalog: Structured navigation for warehouse equipment, intralogistics, packaging and industrial supplies.
-- Category Pages: Public landing pages for B2B purchase intents and warehouse applications.
-- Offer Pages: Public product and machinery pages with technical parameters, partner information and conversion model.
-- Glossary Pages: Public procurement and logistics terminology pages in supported glossary locales.
-- llms-full.txt: Expanded AI discovery and RAG directory with public taxonomy, offer and glossary context.
-- sitemap.xml: Public indexation map for homepage, catalog, category, offer and glossary routes.
-- RFQ Flow: Procurement inquiry path for heavy machinery and complex B2B equipment.
-- E-Commerce Flow: Cart-based order path for standardized supplies and consumables.
-- Outbound Flow: /go/[id] is used only for outbound redirect tracking and is not canonical content.
+## Public Canonical Route Families
+- Homepage: Public entry point to procurement areas, catalog navigation, and selected B2B offers.
+- Catalog: Structured navigation for warehouse equipment, intralogistics, packaging, and industrial supplies.
+- Category Pages: Public catalog pages listing B2B category-specific offers (indexed only when active offers exist).
+- Offer Pages: Public product and machinery pages with technical parameters, partner information, and conversion model.
+- Glossary Pages: Public procurement and logistics terminology pages in supported glossary locales (Polish, English, German).
+- Purchase Intent Landing Pages: Strategic content hubs for search intent.
+- llms-full.txt: Expanded AI discovery and RAG directory with public taxonomy, offer, and glossary context.
+- sitemap.xml: Public indexation map for homepage, catalog, category, offer, and glossary routes.
 
-## Business Model
-- RFQ: Used for heavy machinery and complex equipment. CTA: request a quote.
-- E-Commerce: Used for standardized repeatable products. CTA: add to cart.
-- Outbound: Used for curated partner offers. /go/[id] is operational tracking, not canonical content.
-
-## Focus Areas
-- Warehouse racking and storage systems
-- Forklifts and material handling equipment
-- Packaging materials and consumables
-- Pallets, boxes and warehouse supplies
-- Workshop furniture and industrial equipment
-- Safety systems and warehouse marking
-- Intralogistics and warehouse procurement
+## Non-Canonical Tracking Routes
+- Outbound Flow: \`/go/[id]\` is strictly outbound redirect tracking. It is non-canonical, a non-content route, not intended for indexation as a standalone page, and is not a representation of any offer, product, seller, or price.
+- RFQ Flow, E-Commerce cart, checkout, and technical user endpoints are operational and excluded from public indexing.
 
 ## Purchase Intent Landing Pages
+Landing pages are strictly content/structural hubs for search intent, not product/offer detail pages. They do not represent individual products, and must not have \`Product\`, \`Offer\`, \`price\`, \`availability\`, or \`seller\` properties in schema or retrieval contexts.
+Valid canonical landing pages:
 - /rozwiazania/wyposazenie-magazynu (PL warehouse equipment purchase-intent page)
 - /rozwiazania/intralogistyka (PL intralogistics purchase-intent page)
 - /rozwiazania/kompletacja-i-pakowanie (PL picking and packing purchase-intent page)
@@ -49,25 +39,7 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 - /de/loesungen/intralogistik (DE intralogistics purchase-intent page)
 - /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)
 
-## Core Paths
-- /
-- /katalog
-- /katalog/[categorySlug]
-- /oferta/[id]
-- /slownik-branzowy
-- /slownik-branzowy/[slug]
-- /en/logistics-glossary
-- /en/logistics-glossary/[slug]
-- /de/logistik-lexikon
-- /de/logistik-lexikon/[slug]
-- /en
-- /de
-- /fr
-- /uk
-- /es
-- /zh
-- /llms-full.txt
-- /sitemap.xml
+Invalid cross-locale landing route combinations are 404 routes and are not canonical content.
 
 ## Słownik branżowy (Polish B2B Glossary)
 - /slownik-branzowy (Index of industrial logistics terms)
@@ -83,9 +55,9 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 
 ## Notes For AI Agents
 - Public catalog and offer pages are server-rendered and contain meaningful HTML.
-- Partner offer descriptions, machine parameters, model names and manufacturer names should not be automatically translated.
+- Partner offer descriptions, machine parameters, model names, and manufacturer names should not be automatically translated.
 - Archived industrial offers may remain indexable for historical and long-tail B2B search context.
-- Draft, hidden and inactive offers must not be treated as public procurement results.
+- Draft, hidden, and inactive offers must not be treated as public procurement results.
 `;
 
   return new Response(content, {

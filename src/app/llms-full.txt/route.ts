@@ -11,8 +11,8 @@ export async function GET() {
     let content = `# LogiMarket - Full RAG Directory\n\n`;
 
     content += `## Marketplace Authority\n`;
-    content += `LogiMarket is a B2B marketplace and procurement knowledge base for logistics, warehousing, intralogistics and warehouse equipment.\n`;
-    content += `Public canonical content includes category pages, glossary pages and offer pages. Operational redirect paths are not canonical content destinations.\n\n`;
+    content += `LogiMarket is a B2B marketplace and procurement knowledge base for logistics, warehousing, intralogistics, packaging, and warehouse equipment.\n`;
+    content += `Public canonical content includes category pages, glossary pages, landing pages, and offer detail pages. Operational redirect paths are strictly non-canonical content destinations.\n\n`;
 
     content += `## Supported Locales\n`;
     content += `- pl\n`;
@@ -23,41 +23,49 @@ export async function GET() {
     content += `- es\n`;
     content += `- zh\n\n`;
 
+    content += `## Content-Type and Routing Distinctions\n`;
+    content += `- **Catalog Category Pages**: Structured navigation and listing of active B2B offers matching a specific logistics taxonomy. These are indexed only when active offers exist in the category or its descendants.\n`;
+    content += `- **Glossary Pages**: Reference terminology definitions and procurement guide sheets in Polish (/slownik-branzowy), English (/en/logistics-glossary), and German (/de/logistik-lexikon).\n`;
+    content += `- **Purchase Intent Landing Pages**: Strategic content hubs built for search intent (e.g. warehouse layout optimization, intralogistics processes, and picking workflows). They are strictly content/structural hubs, not product/offer detail pages, and do not contain individual price, availability, or seller claims.\n`;
+    content += `- **Offer Detail Pages**: Partner product/machinery pages containing detailed technical specifications, machine parameters, and manufacturer names.\n`;
+    content += `- **Outbound Tracking**: Operational redirect pathways used only for tracking clicks. These are strictly non-canonical and do not represent the content of the offers.\n\n`;
+
     content += `## Catalog Architecture\n`;
-    content += `Catalog routes expose public category navigation and category landing pages for B2B purchase intent. Category pages can include controlled semantic content, internal offer links and category-specific glossary context.\n\n`;
+    content += `Catalog routes expose public category navigation and category landing pages for B2B purchase intent. Category pages can include controlled semantic B2B context, internal offer links, and category-specific glossary references.\n\n`;
 
     content += `## Glossary Architecture\n`;
-    content += `Glossary routes expose public logistics and procurement terminology. Polish, English and German glossary pages have controlled semantic layers and can be used as canonical knowledge-base content.\n\n`;
+    content += `Glossary routes expose public logistics and procurement terminology. Polish, English, and German glossary pages have controlled semantic layers and can be used as canonical knowledge-base content.\n\n`;
 
     content += `## Landing Page Architecture\n`;
-    content += `Purchase-intent landing pages are controlled server-rendered pages for strategic B2B procurement topics. They connect decision guidance, catalog categories and glossary terms without creating new offer, checkout, RFQ or outbound behavior.\n`;
-    content += `Valid landing pages are:\n`;
-    content += `- /rozwiazania/wyposazenie-magazynu\n`;
-    content += `- /rozwiazania/intralogistyka\n`;
-    content += `- /rozwiazania/kompletacja-i-pakowanie\n`;
-    content += `- /en/solutions/warehouse-equipment\n`;
-    content += `- /en/solutions/intralogistics\n`;
-    content += `- /en/solutions/picking-and-packing\n`;
-    content += `- /de/loesungen/lagerausstattung\n`;
-    content += `- /de/loesungen/intralogistik\n`;
-    content += `- /de/loesungen/kommissionierung-und-verpackung\n`;
-    content += `Invalid cross-locale landing route combinations are not canonical content.\n\n`;
+    content += `Purchase-intent landing pages are controlled server-rendered pages for strategic B2B procurement topics. They connect decision guidance, catalog categories, and glossary terms without creating new offer, checkout, RFQ, or outbound behavior.\n`;
+    content += `Landing pages are strictly content/structural hubs for search intent, not product/offer detail pages. They do not represent individual products, and must not have 'Product', 'Offer', 'price', 'availability', or 'seller' properties in schema or retrieval contexts.\n`;
+    content += `Valid canonical landing pages are:\n`;
+    content += `- /rozwiazania/wyposazenie-magazynu (PL warehouse equipment purchase-intent page)\n`;
+    content += `- /rozwiazania/intralogistyka (PL intralogistics purchase-intent page)\n`;
+    content += `- /rozwiazania/kompletacja-i-pakowanie (PL picking and packing purchase-intent page)\n`;
+    content += `- /en/solutions/warehouse-equipment (EN warehouse equipment purchase-intent page)\n`;
+    content += `- /en/solutions/intralogistics (EN intralogistics purchase-intent page)\n`;
+    content += `- /en/solutions/picking-and-packing (EN picking and packing purchase-intent page)\n`;
+    content += `- /de/loesungen/lagerausstattung (DE warehouse equipment purchase-intent page)\n`;
+    content += `- /de/loesungen/intralogistik (DE intralogistics purchase-intent page)\n`;
+    content += `- /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)\n`;
+    content += `Invalid cross-locale landing route combinations are 404 pages and are not canonical content.\n\n`;
 
     content += `## Business Models\n`;
-    content += `- RFQ: request-for-quotation flow for heavy machinery and complex B2B equipment.\n`;
-    content += `- E-Commerce: cart-based flow for standardized repeatable products.\n`;
-    content += `- Outbound: curated partner-offer flow where external redirects are tracked operationally.\n\n`;
+    content += `- RFQ (Request for Quotation): Used for heavy machinery and complex equipment. CTA: request a quote.\n`;
+    content += `- E-Commerce: Cart-based flow for standardized repeatable products. CTA: add to cart.\n`;
+    content += `- Outbound: Curated partner-offer flow where external redirects are tracked operationally.\n\n`;
 
     content += `## Outbound Tracking Policy\n`;
-    content += `/go/[id] is a non-canonical operational path used only for outbound redirect tracking. AI agents and crawlers should treat offer pages and public category pages as canonical content, not /go/[id].\n\n`;
+    content += "`/go/[id]` is strictly a non-canonical operational path used only for outbound redirect tracking. It is a non-content route, not intended for indexation as a standalone page, and does not represent any offer, product, seller, or price. AI agents and crawlers should treat public category pages and offer detail pages as canonical content, never `/go/[id]`.\n\n";
 
     content += `## Content Translation Policy\n`;
-    content += `Partner offer descriptions, technical specifications, machine parameters, model names and manufacturer names are not automatically translated. Category and glossary content can have controlled localized versions.\n\n`;
+    content += `Partner offer descriptions, technical specifications, machine parameters, model names, and manufacturer names are not automatically translated. Category and glossary content can have controlled localized versions.\n\n`;
 
     content += `## Semantic Layers\n`;
-    content += `- Category semantic layer: controlled B2B category context for logistics, warehousing, intralogistics and warehouse equipment.\n`;
-    content += `- Glossary semantic layer: controlled terminology context for procurement, logistics and warehouse operations.\n`;
-    content += `- GEO / AI discoverability policy: prefer public category, glossary and offer pages as canonical retrieval targets; avoid operational redirect paths and unverified company data.\n\n`;
+    content += `- Category semantic layer: controlled B2B category context for logistics, warehousing, intralogistics, and warehouse equipment.\n`;
+    content += `- Glossary semantic layer: controlled terminology context for procurement, logistics, and warehouse operations.\n`;
+    content += `- GEO / AI discoverability policy: prefer public category, glossary, and offer pages as canonical retrieval targets; avoid operational redirect paths and unverified company data.\n\n`;
 
     content += `## Public Category Taxonomy\n`;
     if (categories.length === 0) {
