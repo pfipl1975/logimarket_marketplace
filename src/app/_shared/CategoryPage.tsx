@@ -379,13 +379,32 @@ export async function CategoryPage({ locale, categorySlug }: CategoryPageProps) 
           />
         </div>
 
+        <details className="mb-6 rounded border border-border bg-white p-4 shadow-sm lg:hidden">
+          <summary className="cursor-pointer list-none text-sm font-bold uppercase tracking-wide text-brand-navy transition-colors hover:text-brand-teal">
+            {dict.catalog.mobileCategoryNavigationSummary}
+          </summary>
+          <div className="mt-4 border-t border-border pt-4">
+            <CategoryTreeSidebar
+              tree={categoryTree}
+              activeSlug={category.slug}
+              categoryFilterBasePath={categoryFilterBasePath}
+              navigationLabel={dict.catalog.treeNavigationAria}
+              headingLabel={dict.catalog.treeNavigationHeading}
+              className="rounded-none border-0 bg-transparent p-0 shadow-none"
+              localeBySlug={localeBySlug}
+              fallbackBySlug={fallbackBySlug}
+            />
+          </div>
+        </details>
+
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <aside className="hidden lg:block w-72 shrink-0 lg:sticky lg:top-24">
             <CategoryTreeSidebar
               tree={categoryTree}
               activeSlug={category.slug}
-              locale={locale}
               categoryFilterBasePath={categoryFilterBasePath}
+              navigationLabel={dict.catalog.treeNavigationAria}
+              headingLabel={dict.catalog.treeNavigationHeading}
               localeBySlug={localeBySlug}
               fallbackBySlug={fallbackBySlug}
             />

@@ -18,6 +18,125 @@ interface CatalogPageProps {
   locale: Locale;
 }
 
+type DirectoryLink = {
+  id: number;
+  label: string;
+  href: string;
+};
+
+type DirectoryGroup = {
+  id: number;
+  label: string;
+  href: string | null;
+  leafLinks: DirectoryLink[];
+};
+
+type DirectorySection = {
+  id: number;
+  label: string;
+  href: string | null;
+  groups: DirectoryGroup[];
+  terminalLinks: DirectoryLink[];
+};
+
+function getCatalogCategoryHref(
+  categoryFilterBasePath: string,
+  slug: string,
+  routeableSlugSet: Set<string>,
+): string | null {
+  if (!routeableSlugSet.has(slug)) return null;
+  const basePath = categoryFilterBasePath === "/" ? "" : categoryFilterBasePath;
+  return `${basePath}/katalog/c-${slug}`;
+}
+
+function resolveDirectoryLabel(
+  node: CatalogCategoryNode,
+  localeBySlug: Record<string, string> | undefined,
+  fallbackBySlug: Record<string, string> | undefined,
+): string {
+  return resolveCategoryName({
+    slug: node.slug,
+    dbName: node.name,
+    localeBySlug,
+    fallbackBySlug,
+  });
+}
+
+function collectTerminalCategoryLinks(
+  nodes: CatalogCategoryNode[],
+  categoryFilterBasePath: string,
+  routeableSlugSet: Set<string>,
+  localeBySlug: Record<string, string> | undefined,
+  fallbackBySlug: Record<string, string> | undefined,
+): DirectoryLink[] {
+  const links: DirectoryLink[] = [];
+
+  for (const node of nodes) {
+    if (node.children.length > 0) {
+      links.push(...collectTerminalCategoryLinks(
+        node.children,
+        categoryFilterBasePath,
+        routeableSlugSet,
+        localeBySlug,
+        fallbackBySlug,
+      ));
+      continue;
+    }
+
+    const href = getCatalogCategoryHref(categoryFilterBasePath, node.slug, routeableSlugSet);
+    if (!href) continue;
+
+    links.push({
+      id: node.id,
+      label: resolveDirectoryLabel(node, localeBySlug, fallbackBySlug),
+      href,
+    });
+  }
+
+  return links;
+}
+
+function buildDirectorySections({
+  categoryTree,
+  categoryFilterBasePath,
+  routeableSlugSet,
+  localeBySlug,
+  fallbackBySlug,
+}: {
+  categoryTree: CatalogCategoryNode[];
+  categoryFilterBasePath: string;
+  routeableSlugSet: Set<string>;
+  localeBySlug: Record<string, string> | undefined;
+  fallbackBySlug: Record<string, string> | undefined;
+}): DirectorySection[] {
+  return categoryTree.map((section) => ({
+    id: section.id,
+    label: resolveDirectoryLabel(section, localeBySlug, fallbackBySlug),
+    href: getCatalogCategoryHref(categoryFilterBasePath, section.slug, routeableSlugSet),
+    groups: section.children.map((group) => ({
+      id: group.id,
+      label: resolveDirectoryLabel(group, localeBySlug, fallbackBySlug),
+      href: getCatalogCategoryHref(categoryFilterBasePath, group.slug, routeableSlugSet),
+      leafLinks: collectTerminalCategoryLinks(
+        group.children,
+        categoryFilterBasePath,
+        routeableSlugSet,
+        localeBySlug,
+        fallbackBySlug,
+      ),
+    })),
+    terminalLinks: section.children.length === 0
+      ? collectTerminalCategoryLinks(
+        [section],
+        categoryFilterBasePath,
+        routeableSlugSet,
+        localeBySlug,
+        fallbackBySlug,
+      )
+      : [],
+  }));
+}
+
 export async function CatalogPage({ locale }: CatalogPageProps) {
   const dict = await getDictionary(locale);
   const fallbackDict = locale === defaultLocale ? dict : await getDictionary(defaultLocale);
@@ -30,6 +149,14 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
 
   // Build category hierarchy
   const categoryTree = buildCategoryTree(allCategories);
+  const routeableSlugSet = new Set(allCategories.map((category) => category.slug));
+  const directorySections = buildDirectorySections({
+    categoryTree,
+    categoryFilterBasePath,
+    routeableSlugSet,
+    localeBySlug,
+    fallbackBySlug,
+  });
 
   // Map tree to explorer format
   const explorerTree = categoryTree.map((section) => ({
@@ -130,6 +257,103 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
               <div className="z-30">
                 <CatalogCategoryExplorer tree={explorerTree} labels={explorerLabels} />
               </div>
+
+              <section
+                aria-labelledby="catalog-directory-heading"
+                className="border-t border-border pt-8"
+              >
+                <div className="max-w-3xl">
+                  <h2
+                    id="catalog-directory-heading"
+                    className="text-2xl font-bold tracking-tight text-brand-navy"
+                  >
+                    {dict.catalog.directoryHeading}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    {dict.catalog.directoryIntro}
+                  </p>
+                </div>
+
+                <div className="mt-6 grid gap-5">
+                  {directorySections.map((section) => (
+                    <section
+                      key={section.id}
+                      className="rounded border border-border bg-white p-5 shadow-sm"
+                    >
+                      <div className="border-b border-border pb-4">
+                        {section.href ? (
+                          <Link
+                            href={section.href}
+                            className="text-lg font-bold text-brand-navy transition-colors hover:text-brand-teal"
+                          >
+                            {section.label}
+                          </Link>
+                        ) : (
+                          <h3 className="text-lg font-bold text-brand-navy">
+                            {section.label}
+                          </h3>
+                        )}
+                        {section.groups.length > 0 && (
+                          <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                            {dict.catalog.directoryGroupsHeading}
+                          </p>
+                        )}
+                      </div>
+
+                      {section.groups.length > 0 && (
+                        <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
+                          {section.groups.map((group) => (
+                            <div key={group.id} className="min-w-0">
+                              {group.href ? (
+                                <Link
+                                  href={group.href}
+                                  className="text-sm font-bold text-brand-navy transition-colors hover:text-brand-teal"
+                                >
+                                  {group.label}
+                                </Link>
+                              ) : (
+                                <h4 className="text-sm font-bold text-brand-navy">
+                                  {group.label}
+                                </h4>
+                              )}
+
+                              {group.leafLinks.length > 0 && (
+                                <ul className="mt-2 space-y-1.5 border-l border-border pl-3">
+                                  {group.leafLinks.map((leaf) => (
+                                    <li key={leaf.id}>
+                                      <Link
+                                        href={leaf.href}
+                                        className="text-xs leading-relaxed text-muted-foreground transition-colors hover:text-brand-teal"
+                                      >
+                                        {leaf.label}
+                                      </Link>
+                                    </li>
+                                  ))}
+                                </ul>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {section.terminalLinks.length > 0 && (
+                        <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                          {section.terminalLinks.map((leaf) => (
+                            <li key={leaf.id}>
+                              <Link
+                                href={leaf.href}
+                                className="text-sm font-semibold text-brand-navy transition-colors hover:text-brand-teal"
+                              >
+                                {leaf.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </section>
+                  ))}
+                </div>
+              </section>
             </div>
           )}
         </div>

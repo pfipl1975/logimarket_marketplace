@@ -1,13 +1,15 @@
 import Link from "next/link";
 import { resolveCategoryName } from "@/lib/i18n/category-labels";
+import { cn } from "@/lib/utils";
 import type { CatalogCategoryNode } from "@/lib/catalog/tree";
-import type { Locale } from "@/lib/i18n/types";
 
 export interface CategoryTreeSidebarProps {
   tree: CatalogCategoryNode[];
   activeSlug: string;
-  locale: Locale;
   categoryFilterBasePath: string;
+  navigationLabel: string;
+  headingLabel: string;
+  className?: string;
   localeBySlug?: Record<string, string>;
   fallbackBySlug?: Record<string, string>;
 }
@@ -40,7 +42,7 @@ function buildActiveTrail(tree: CatalogCategoryNode[], activeSlug: string): Set<
 }
 
 /**
- * CategoryTreeSidebar — server-rendered category navigation sidebar for desktop.
+ * CategoryTreeSidebar — server-rendered category navigation for catalog pages.
  *
  * UX Refinements:
  * - Employs a native HTML <details> and <summary> disclosure pattern.
@@ -53,8 +55,10 @@ function buildActiveTrail(tree: CatalogCategoryNode[], activeSlug: string): Set<
 export function CategoryTreeSidebar({
   tree,
   activeSlug,
-  locale,
   categoryFilterBasePath,
+  navigationLabel,
+  headingLabel,
+  className,
   localeBySlug,
   fallbackBySlug,
 }: CategoryTreeSidebarProps) {
@@ -65,11 +69,11 @@ export function CategoryTreeSidebar({
 
   return (
     <nav
-      aria-label="Nawigacja katalogu"
-      className="w-full rounded-lg border border-border bg-white p-5 shadow-sm"
+      aria-label={navigationLabel}
+      className={cn("w-full rounded-lg border border-border bg-white p-5 shadow-sm", className)}
     >
       <div className="mb-4 text-xs font-bold uppercase tracking-wider text-brand-navy border-b border-border pb-2">
-        {locale === "pl" ? "Katalog kategorii" : "Catalog Navigation"}
+        {headingLabel}
       </div>
       <ul className="space-y-3">
         {tree.map((section) => {
