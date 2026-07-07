@@ -121,7 +121,7 @@ export const deCategoryContent: CategoryContentMap = {
         context: "Klassische Frontgabelstapler mit Verbrennungs- oder Elektroantrieb"
       },
       {
-        targetSlug: "wozki-unoszace-i-kompaktowe",
+        targetSlug: "wozki-paletowe-i-podnosnikowe",
         relationType: "parent_child",
         priority: 2,
         context: "Elektrische und manuelle Hubwagen für den horizontalen Transport"

@@ -121,7 +121,7 @@ export const plCategoryContent: CategoryContentMap = {
         context: "Klasyczne wózki czołowe z napędem spalinowym lub elektrycznym"
       },
       {
-        targetSlug: "wozki-unoszace-i-kompaktowe",
+        targetSlug: "wozki-paletowe-i-podnosnikowe",
         relationType: "parent_child",
         priority: 2,
         context: "Wózki paletowe elektryczne i ręczne do transportu poziomego"

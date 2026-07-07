@@ -121,7 +121,7 @@ export const enCategoryContent: CategoryContentMap = {
         context: "Classic counterbalance forklifts with combustion or electric drive"
       },
       {
-        targetSlug: "wozki-unoszace-i-kompaktowe",
+        targetSlug: "wozki-paletowe-i-podnosnikowe",
         relationType: "parent_child",
         priority: 2,
         context: "Electric and manual pallet trucks for horizontal transport"
