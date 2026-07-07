@@ -3103,4 +3103,124 @@ export const landingPages = [
         "B2B-Einkaufsführer für Gabelstapler-Anbaugeräte: Zinkenversteller, Klammern, Drehgeräte, Gabeln, Verlängerungen, Arbeitskörbe und Auswahlkriterien.",
     },
   },
+  // Forklift Attachments - ES
+  {
+    intent: "forklift-attachments",
+    locale: "es",
+    slug: "accesorios-para-carretillas-elevadoras",
+    path: "/es/soluciones/accesorios-para-carretillas-elevadoras",
+    sectionLabel: "Soluciones",
+    title: "Accesorios para carretillas elevadoras",
+    eyebrow: "Intención de compra B2B",
+    intro:
+      "Los accesorios para carretillas elevadoras amplían las capacidades de la máquina más allá de la manipulación estándar de palés. Esta guía de compra ayuda a comparar implementos de posicionamiento, sujeción, rotación, elevación y seguridad para operaciones de almacén y producción.",
+    procurementContextTitle: "Contexto de compra B2B",
+    procurementContext: [
+      "La selección del implemento debe iniciarse analizando el tipo de carga, el ciclo de trabajo y el método de montaje en la carretilla.",
+      "Para compras B2B, es necesario verificar la compatibilidad del tablero portahorquillas, los requisitos hidráulicos, el impacto en la capacidad de carga residual y la visibilidad del operador.",
+      "Compare los accesorios por grupos funcionales: desplazadores laterales, posicionadores de horquillas, pinzas, rotadores, prolongadores de horquillas y equipos de seguridad.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Carga y operación",
+        description:
+          "Distinga entre cargas paletizadas, mercancías no paletizadas, bobinas, balas, contenedores y tareas de mantenimiento. Cada operación requiere una geometría de implemento y un enfoque de estabilización específicos.",
+      },
+      {
+        title: "Compatibilidad con la carretilla",
+        description:
+          "Compruebe la clase de tablero portahorquillas, el peso del accesorio, el centro de gravedad de la carga, las funciones hidráulicas y cómo afecta la configuración al funcionamiento seguro.",
+      },
+      {
+        title: "Procedimientos de seguridad",
+        description:
+          "Verifique la compatibilidad con la documentación técnica del fabricante de la carretilla y con los procedimientos internos de seguridad. Las cestas de trabajo y los accesorios de elevación requieren normas claras de uso.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Accesorios para carretillas",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "Categoría principal de implementos montados en carretillas elevadoras.",
+      },
+      {
+        label: "Posicionadores y desplazadores",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "Accesorios para el ajuste del espaciado de horquillas y el posicionamiento preciso de la carga.",
+      },
+      {
+        label: "Pinzas para carretillas",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "Pinzas para balas, bobinas, cajas de cartón, bidones y cargas no paletizadas.",
+      },
+      {
+        label: "Rotadores para carretillas",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "Implementos para el giro controlado o vaciado de cargas.",
+      },
+      {
+        label: "Horquillas y prolongadores",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "Horquillas de carga, prolongadores y configuraciones especiales de horquillas.",
+      },
+      {
+        label: "Seguridad y trabajo en altura",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "Plataformas de trabajo y equipos para tareas de mantenimiento controladas.",
+      },
+      {
+        label: "Cestas de seguridad para horquillas",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "Categoría de cestas de trabajo montadas sobre horquillas.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Carretilla elevadora",
+        glossarySlug: "wozek-widlowy",
+        context: "La máquina portadora principal para la mayoría de las configuraciones de accesorios.",
+      },
+      {
+        label: "Transporte interno",
+        glossarySlug: "transport-wewnetrzny",
+        context: "El proceso intralogístico donde los implementos influyen en cómo se mueven las mercancías.",
+      },
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Proceso de almacén afectado por la ergonomía de la carretilla y sus implementos.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre compras B2B",
+    faq: [
+      {
+        question: "¿Cómo debe seleccionarse un accesorio para carretilla elevadora?",
+        answer:
+          "Comience analizando el tipo de carga, la frecuencia de operación, el método de montaje y las limitaciones del espacio de trabajo. Luego, compare el grupo funcional de implementos que mejor se adapte a la tarea.",
+      },
+      {
+        question: "¿Puede un accesorio afectar al funcionamiento seguro de la carretilla?",
+        answer:
+          "Sí. El peso del accesorio, su geometría y el centro de gravedad de la carga modifican las condiciones operativas de la máquina. Por ello, verifique la compatibilidad con la documentación técnica del fabricante de la carretilla y con los procedimientos internos de seguridad.",
+      },
+      {
+        question: "¿Cuándo es preferible una pinza en lugar de las horquillas estándar?",
+        answer:
+          "Una pinza es útil cuando la carga no se puede manipular de forma segura sobre un palé o cuando requiere presión, sujeción o rotación sin dañar el material.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver categoría de accesorios",
+    },
+    seo: {
+      title: "Guía de compra B2B de accesorios para carretillas elevadoras | LogiMarket",
+      description:
+        "Guía de compra B2B de accesorios para carretillas elevadoras: posicionadores, pinzas, rotadores, horquillas, prolongadores, cestas de trabajo y criterios de selección para almacenes.",
+    },
+  },
 ] satisfies LandingPageContent[];
