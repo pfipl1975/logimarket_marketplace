@@ -3583,4 +3583,424 @@ export const landingPages = [
         "叉车属具 B2B 采购指南：定位器、夹具、旋转器、货叉、加长套、高空工作平台以及仓库作业的选型标准。",
     },
   },
+  // Warehouse Equipment - ES
+  {
+    intent: "warehouse-equipment",
+    locale: "es",
+    slug: "equipamiento-de-almacen",
+    path: "/es/soluciones/equipamiento-de-almacen",
+    sectionLabel: "Soluciones",
+    title: "Equipamiento de almacén",
+    eyebrow: "Intención de compra B2B",
+    intro:
+      "Las decisiones sobre el equipamiento de almacén comienzan analizando los flujos de trabajo, las cargas y las tareas del operador. Esta página estructura las opciones de compra de estanterías, contenedores, mesas de trabajo e infraestructura de almacén.",
+    procurementContextTitle: "Contexto de compra B2B",
+    procurementContext: [
+      "El equipamiento debe dar soporte al flujo real de materiales: recepción, almacenamiento, preparación de pedidos, embalaje y expedición.",
+      "Las compras B2B deben tener en cuenta la distribución de las instalaciones, la seguridad laboral, las opciones de expansión y la compatibilidad con los equipos de manipulación existentes.",
+      "Un proceso de compra fiable compara categorías, parámetros técnicos y la terminología del sector relacionada.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Flujo y ergonomía",
+        description:
+          "Identifique qué zonas del almacén generan mayor movimiento y dónde el equipamiento puede reducir las distancias de transporte o la manipulación repetida.",
+      },
+      {
+        title: "Capacidad de carga y compatibilidad",
+        description:
+          "Compare la estructura, las dimensiones, las cargas de trabajo y los estándares de las unidades de carga en lugar de evaluar productos aislados.",
+      },
+      {
+        title: "Escalabilidad del sistema",
+        description:
+          "Considere cómo las estanterías, las mesas de trabajo, los contenedores y las entreplantas pueden ampliarse sin necesidad de rediseñar toda la configuración del almacén.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Infraestructura de almacenamiento principal para palés, contenedores y componentes.",
+      },
+      {
+        label: "Contenedores plásticos Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Unidades de carga de almacén para picking, transporte interno y almacenamiento temporal.",
+      },
+      {
+        label: "Entreplantas y pasarelas de almacén",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Niveles de trabajo o almacenamiento útiles adicionales dentro de una instalación existente.",
+      },
+      {
+        label: "Mesas de embalaje y preparación",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Puestos de trabajo para operaciones de picking, inspección y embalaje.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Estantería de paletización",
+        glossarySlug: "regal-paletowy",
+        context: "Definición de un sistema de almacenamiento y su función en los almacenes B2B.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Contenedor logístico estándar utilizado en los flujos de almacén.",
+      },
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "El proceso de recogida y preparación de mercancías para los pedidos.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre compras B2B",
+    faq: [
+      {
+        question: "¿Por dónde debería empezar la selección del equipamiento de almacén?",
+        answer:
+          "Comience con el flujo de materiales, las unidades de carga, las limitaciones del edificio y las zonas de trabajo. Compare las categorías de equipamiento una vez que estos requisitos estén claros.",
+      },
+      {
+        question: "¿Es suficiente una sola categoría para planificar el equipamiento de almacén?",
+        answer:
+          "Normalmente no. Las estanterías, los contenedores, las mesas de trabajo y las entreplantas forman un único sistema operativo y deben evaluarse en su conjunto.",
+      },
+      {
+        question: "¿Cómo pueden los compradores reducir el riesgo en la adquisición?",
+        answer:
+          "Utilice una lista de control de compra que abarque las cargas, las dimensiones, la ergonomía, la seguridad, las opciones de ampliación y la compatibilidad con los equipos de manipulación existentes.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Abrir categoría principal",
+    },
+    seo: {
+      title: "Equipamiento de almacén B2B | LogiMarket",
+      description:
+        "Compare categorías de equipamiento de almacén B2B: estanterías, contenedores Euro, entreplantas y puestos de embalaje para compras de logística.",
+    },
+  },
+  // Warehouse Equipment - FR
+  {
+    intent: "warehouse-equipment",
+    locale: "fr",
+    slug: "equipement-entrepot",
+    path: "/fr/solutions/equipement-entrepot",
+    sectionLabel: "Solutions",
+    title: "Équipement d'entrepôt",
+    eyebrow: "Intention d'achat B2B",
+    intro:
+      "Les choix d'équipement d'entrepôt commencent par l'analyse des flux de travail, des charges et des tâches de l'opérateur. Cette page structure les options d'achat pour les rayonnages, les bacs, les postes de travail et l'infrastructure d'entrepôt.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "L'équipement doit soutenir le flux réel de marchandises : réception, stockage, préparation de commandes, emballage et expédition.",
+      "Les achats B2B doivent prendre en compte l'aménagement du site, la sécurité au travail, les options d'extension et la compatibilité avec le matériel de manutention existant.",
+      "Un processus d'achat fiable compare les catégories, les paramètres techniques et la terminologie industrielle associée.",
+    ],
+    decisionGuidanceTitle: "Guide de décision",
+    decisionFactors: [
+      {
+        title: "Flux et ergonomie",
+        description:
+          "Identifiez les zones de l'entrepôt qui génèrent le plus de déplacements et déterminez où l'équipement peut réduire les distances ou les manipulations répétées.",
+      },
+      {
+        title: "Capacité de charge et compatibilité",
+        description:
+          "Comparez la structure, les dimensions, les charges utiles et les normes des unités de charge au lieu d'évaluer des produits isolés.",
+      },
+      {
+        title: "Évolutivité du système",
+        description:
+          "Considérez comment les rayonnages, les postes de travail, les bacs et les mezzanines peuvent évoluer sans avoir à redessiner toute l'installation de l'entrepôt.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Infrastructure de stockage essentielle pour les palettes, les bacs et les composants.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Unités de charge pour la préparation, le transport interne et le stockage temporaire.",
+      },
+      {
+        label: "Mezzanines et plateformes d'entrepôt",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Niveaux de travail ou de stockage supplémentaires au sein d'un bâtiment existant.",
+      },
+      {
+        label: "Postes d'emballage et de préparation",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Postes de travail pour les opérations de prélèvement, d'inspection et d'emballage.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Définition d'un système de stockage et son rôle dans les entrepôts B2B.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Bac logistique standard utilisé dans les flux d'entrepôt.",
+      },
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Le processus de collecte et de préparation des marchandises pour les commandes.",
+      },
+    ],
+    faqTitle: "FAQ achats B2B",
+    faq: [
+      {
+        question: "Par quoi devrait commencer la sélection de l'équipement d'entrepôt ?",
+        answer:
+          "Commencez par le flux de marchandises, les unités de charge, les contraintes du bâtiment et les zones de travail. Comparez les catégories d'équipement une fois ces besoins clarifiés.",
+      },
+      {
+        question: "Une seule catégorie suffit-elle pour planifier l'équipement d'un entrepôt ?",
+        answer:
+          "Généralement non. Les rayonnages, les bacs, les postes de travail et les plateformes forment un système opérationnel unique et doivent être évalués ensemble.",
+      },
+      {
+        question: "Comment les acheteurs peuvent-ils réduire les risques liés à l'achat ?",
+        answer:
+          "Utilisez une liste de contrôle d'achat couvrant les charges, les dimensions, l'ergonomie, la sécurité, les options d'extension et la compatibilité avec le matériel de manutention existant.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Ouvrir la catégorie principale",
+    },
+    seo: {
+      title: "Équipement d'entrepôt B2B | LogiMarket",
+      description:
+        "Comparez les catégories d'équipement d'entrepôt B2B : rayonnages, bacs Euro, mezzanines et postes d'emballage pour les achats logistiques.",
+    },
+  },
+  // Warehouse Equipment - UK
+  {
+    intent: "warehouse-equipment",
+    locale: "uk",
+    slug: "obladnannia-dlia-skladiv",
+    path: "/uk/solutions/obladnannia-dlia-skladiv",
+    sectionLabel: "Рішення",
+    title: "Складське обладнання",
+    eyebrow: "B2B-закупівлі",
+    intro:
+      "Вибір складського обладнання починається з аналізу робочих процесів, типів вантажів та завдань оператора. Ця сторінка структурує рішення для закупівлі стелажів, контейнерів, робочих столів та складської інфраструктури.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Обладнання повинно підтримувати реальний рух матеріалів: приймання, зберігання, комплектацію, пакування та відвантаження.",
+      "Для B2B-закупівель слід враховувати планування приміщення, безпеку праці, можливості розширення та сумісність із наявним вантажопідйомним обладнанням.",
+      "Надійний процес закупівлі передбачає порівняння категорій, технічних параметрів та пов'язаної галузевої термінології.",
+    ],
+    decisionGuidanceTitle: "Рекомендації щодо вибору",
+    decisionFactors: [
+      {
+        title: "Потік та ергономіка",
+        description:
+          "Визначте, які зони складу створюють найбільше переміщень і де обладнання може зменшити відстань транспортування або повторне оброблення.",
+      },
+      {
+        title: "Вантажопідйомність та сумісність",
+        description:
+          "Порівнюйте конструкцію, розміри, робочі навантаження та стандарти вантажних одиниць замість оцінювання окремих продуктів.",
+      },
+      {
+        title: "Масштабованість системи",
+        description:
+          "Враховуйте, як стелажі, робочі столи, контейнери та мезоніни можуть розширюватися без повної перебудови складської системи.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Основна складська інфраструктура для палет, контейнерів та компонентів.",
+      },
+      {
+        label: "Пластикові євроконтейнери",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Вантажні одиниці для комплектації, внутрішнього транспорту та тимчасового зберігання.",
+      },
+      {
+        label: "Складські мезоніни та платформи",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Додаткові корисні рівні для роботи або зберігання всередині наявного приміщення.",
+      },
+      {
+        label: "Столи для пакування та комплектації",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Робочі станції для операцій відбору, контролю та пакування.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Палетний стелаж",
+        glossarySlug: "regal-paletowy",
+        context: "Визначення системи зберігання та її роль на складах B2B.",
+      },
+      {
+        label: "Євроконтейнер",
+        glossarySlug: "pojemnik-euro",
+        context: "Стандартний логістичний контейнер, що використовується у складських потоках.",
+      },
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Процес збору та підготовки товарів для замовлень.",
+      },
+    ],
+    faqTitle: "FAQ щодо закупівель",
+    faq: [
+      {
+        question: "З чого слід починати вибір складського обладнання?",
+        answer:
+          "Почніть із руху матеріалів, вантажних одиниць, обмежень будівлі та робочих зон. Порівнюйте категорії обладнання після того, як ці вимоги будуть чітко визначені.",
+      },
+      {
+        question: "Чи достатньо однієї категорії для планування складського обладнання?",
+        answer:
+          "Зазвичай ні. Стелажі, контейнери, робочі станції та платформи утворюють єдину операційну систему і мають оцінюватися разом.",
+      },
+      {
+        question: "Як покупці можуть зменшити ризики під час закупівель?",
+        answer:
+          "Використовуйте чеклист закупівлі, що охоплює навантаження, розміри, ергономіку, безпеку, можливості розширення та сумісність із наявним обладнанням.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Відкрити основну категорію",
+    },
+    seo: {
+      title: "Складське обладнання B2B | LogiMarket",
+      description:
+        "Порівняйте категорії складського обладнання B2B: стелажі, євроконтейнери, мезоніни та пакувальні столи для закупівель логістики.",
+    },
+  },
+  // Warehouse Equipment - ZH
+  {
+    intent: "warehouse-equipment",
+    locale: "zh",
+    slug: "warehouse-equipment",
+    path: "/zh/solutions/warehouse-equipment",
+    sectionLabel: "解决方案",
+    title: "仓储设备",
+    eyebrow: "B2B采购意向",
+    intro:
+      "仓储设备的选型决策应从作业流程、载荷特性以及操作员任务出发。本页面旨在为您的货架、料箱、工作台及仓库基础设施采购提供系统化选择。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "设备选型应当能够支持实际的物料流程：收货、存储、拣选、包装和发货。",
+      "B2B采购应当综合考虑场地布局、作业安全、扩展性以及与现有搬运设备的兼容性。",
+      "科学的采购流程应当对产品类别、技术参数和行业相关术语进行全面对比。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "流程与人机工程学",
+        description:
+          "明确仓库内哪些区域的物料移动最频繁，以及哪些设备可以有效缩短搬运距离或减少重复操作。",
+      },
+      {
+        title: "承载能力与兼容性",
+        description:
+          "对比设备的结构、尺寸、工作载荷及载荷单元标准，而非孤立地评估单个产品。",
+      },
+      {
+        title: "系统可扩展性",
+        description:
+          "考虑货架、工作台、料箱及阁楼平台如何在不重新设计整个仓库布局的情况下进行扩展。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "托盘、料箱及零配件的核心存储基础设施。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "用于拣选、内部运输和临时存储的仓储载荷单元。",
+      },
+      {
+        label: "钢结构阁楼与平台",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "在现有厂房内新增的可用作业或存储楼层。",
+      },
+      {
+        label: "包装与拣选工作台",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "用于拣选、检验和包装作业的工位工作台。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "仓储系统的定义及其在 B2B 仓库中的作用。",
+      },
+      {
+        label: "欧标周转箱",
+        glossarySlug: "pojemnik-euro",
+        context: "仓储物流流程中使用的标准物流容器。",
+      },
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "收集和准备订单货物的仓储作业过程。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "选择仓储设备时应从哪里开始？",
+        answer:
+          "应首先明确物料流程、载荷单元、建筑结构限制和作业分区。在理清这些需求后再进行设备类别的对比。",
+      },
+      {
+        question: "仅规划单一类别的设备是否足够？",
+        answer:
+          "通常不够。货架、料箱、工作台和平台构成了一个有机的作业系统，应当作为一个整体进行评估。",
+      },
+      {
+        question: "采购人员如何降低采购风险？",
+        answer:
+          "使用涵盖载荷、尺寸、人机工程学、安全性、扩展性以及与现有设备兼容性的采购清单。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看核心分类",
+    },
+    seo: {
+      title: "仓储设备 B2B | LogiMarket",
+      description:
+        "对比 B2B 仓储设备类别：货架、欧标周转箱、阁楼平台及包装工作台以进行物流采购。",
+    },
+  },
 ] satisfies LandingPageContent[];
