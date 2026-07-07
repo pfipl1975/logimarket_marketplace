@@ -3223,4 +3223,244 @@ export const landingPages = [
         "Guía de compra B2B de accesorios para carretillas elevadoras: posicionadores, pinzas, rotadores, horquillas, prolongadores, cestas de trabajo y criterios de selección para almacenes.",
     },
   },
+  // Forklift Attachments - FR
+  {
+    intent: "forklift-attachments",
+    locale: "fr",
+    slug: "accessoires-pour-chariots-elevateurs",
+    path: "/fr/solutions/accessoires-pour-chariots-elevateurs",
+    sectionLabel: "Solutions",
+    title: "Accessoires pour chariots élévateurs",
+    eyebrow: "Intention d'achat B2B",
+    intro:
+      "Les accessoires pour chariots élévateurs étendent les capacités d'un chariot au-delà de la manipulation standard de palettes. Ce guide d'achat aide à comparer les équipements amovibles de positionnement, de serrage, de rotation, de levage et de sécurité pour les opérations d'entrepôt et de production.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "La sélection de l'équipement amovible doit commencer par le type de charge, le cycle de travail et la méthode de montage sur le chariot.",
+      "Pour les achats B2B, vérifiez la compatibilité du tablier porteur, les exigences hydrauliques, l'impact sur la capacité résiduelle et la visibilité de l'opérateur.",
+      "Comparez les accessoires par groupes fonctionnels : déports latéraux et positionneurs de fourches, pinces, rotateurs, rallonges de fourches et nacelles de travail.",
+    ],
+    decisionGuidanceTitle: "Guide de décision",
+    decisionFactors: [
+      {
+        title: "Charge et opération",
+        description:
+          "Distinguez les charges palettisées, les marchandises non paletisées, les bobines, les balles, les conteneurs et les tâches d'entretien. Chaque opération nécessite une géométrie d'accessoire spécifique.",
+      },
+      {
+        title: "Compatibilité du chariot",
+        description:
+          "Vérifiez la classe du tablier porteur, le poids de l'accessoire, le centre de gravité de la charge, les fonctions hydrauliques et l'impact de la configuration sur la sécurité.",
+      },
+      {
+        title: "Procédures de sécurité",
+        description:
+          "Vérifiez la compatibilité avec la documentation technique du fabricant du chariot élévateur et avec les procédures internes de sécurité. Les nacelles de travail et les accessoires de levage ont des règles d'utilisation strictes.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Accessoires pour chariots",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "Catégorie principale pour les équipements montés sur chariots élévateurs.",
+      },
+      {
+        label: "Positionneurs et déports",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "Accessoires pour l'écartement des fourches et le positionnement précis de la charge.",
+      },
+      {
+        label: "Pinces pour chariots",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "Pinces pour balles, bobines, cartons, fûts et charges non palettisées.",
+      },
+      {
+        label: "Rotateurs pour chariots",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "Accessoires pour la rotation contrôlée ou le vidage des charges.",
+      },
+      {
+        label: "Fourches et rallonges",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "Fourches porteuses, rallonges et configurations de fourches spécialisées.",
+      },
+      {
+        label: "Sécurité et travail en hauteur",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "Nacelles de travail et équipements pour les tâches d'entretien contrôlées.",
+      },
+      {
+        label: "Nacelles de sécurité sur fourches",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "Catégorie de nacelles de travail montées sur les fourches.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Chariot élévateur",
+        glossarySlug: "wozek-widlowy",
+        context: "La machine porteuse principale pour la plupart des configurations d'accessoires.",
+      },
+      {
+        label: "Transport interne",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Le processus intralogistique où les accessoires influencent la manipulation des marchandises.",
+      },
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Processus d'entrepôt influencé par l'ergonomie du chariot et des accessoires.",
+      },
+    ],
+    faqTitle: "FAQ achats B2B",
+    faq: [
+      {
+        question: "Comment un acheteur doit-il sélectionner un accessoire pour chariot élévateur ?",
+        answer:
+          "Commencez par le type de charge, la fréquence d'utilisation, la méthode de montage et les contraintes du lieu de travail. Comparez ensuite le groupe fonctionnel d'accessoires adapté à la tâche.",
+      },
+      {
+        question: "Un accessoire peut-il affecter le fonctionnement du chariot élévateur ?",
+        answer:
+          "Oui. Le poids, la géométrie de l'accessoire et le centre de gravité de la charge modifient les conditions d'utilisation. Vérifiez la compatibilité avec la documentation technique du fabricant du chariot élévateur et avec les procédures internes de sécurité.",
+      },
+      {
+        question: "Quand une pince est-elle préférable à des fourches standard ?",
+        answer:
+          "Une pince est utile lorsque la charge ne peut pas être manipulée en toute sécurité sur une palette ou nécessite une pression, un serrage ou une rotation sans endommager le matériel.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir la catégorie des accessoires",
+    },
+    seo: {
+      title: "Guide d'achat B2B des accessoires pour chariots élévateurs | LogiMarket",
+      description:
+        "Guide d'achat B2B des accessoires pour chariots élévateurs : positionneurs, pinces, rotateurs, fourches, rallonges, nacelles et critères de choix pour entrepôts.",
+    },
+  },
+  // Forklift Attachments - UK
+  {
+    intent: "forklift-attachments",
+    locale: "uk",
+    slug: "navesne-obladnannia-dlia-navantazhuvachiv",
+    path: "/uk/solutions/navesne-obladnannia-dlia-navantazhuvachiv",
+    sectionLabel: "Рішення",
+    title: "Навісне обладнання для навантажувачів",
+    eyebrow: "B2B-закупівлі",
+    intro:
+      "Навісне обладнання для навантажувачів розширює можливості машини поза межами стандартного переміщення палет. Цей посібник із закупівель допомагає порівняти навісні пристрої для позиціонування, затискання, обертання, підйому та безпеки на складах та виробництвах.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Підбір навісного обладнання слід починати з аналізу типу вантажу, робочого циклу та способу монтажу на навантажувач.",
+      "Для B2B-закупівель перевіряйте сумісність каретки, вимоги до гідравліки, вплив на залишкову вантажопідйомність та оглядовість оператора.",
+      "Порівнюйте навісне обладнання за функціональними групами: бокові зміщувачі та позиціонери вил, захвати, ротатори, подовжувачі вил та робочі платформи.",
+    ],
+    decisionGuidanceTitle: "Рекомендації щодо підбору",
+    decisionFactors: [
+      {
+        title: "Вантаж та специфіка роботи",
+        description:
+          "Розрізняйте палетовані вантажі, непалетовані товари, рулони, тюки, контейнери та сервісні завдання. Кожна операція вимагає своєї геометрії пристрою та підходу до фіксації вантажу.",
+      },
+      {
+        title: "Сумісність із навантажувачем",
+        description:
+          "Перевірте клас каретки навантажувача, вагу навісного обладнання, центр ваги вантажу, гідравлічні функції та вплив конфігурації на безпечну експлуатацію.",
+      },
+      {
+        title: "Процедури безпеки",
+        description:
+          "Перевірте сумісність із технічною документацією виробника навантажувача та внутрішніми процедурами безпеки. Робочі платформи та підйомні пристрої вимагають чітких правил використання.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Навісне обладнання",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "Основна категорія для обладнання, що монтується на вилкові навантажувачі.",
+      },
+      {
+        label: "Позиціонери та зміщувачі",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "Пристрої для регулювання відстані між вилами та точного позиціонування вантажу.",
+      },
+      {
+        label: "Захвати для навантажувачів",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "Захвати для тюків, рулонів, коробок, бочок та непалетованих вантажів.",
+      },
+      {
+        label: "Ротатори для навантажувачів",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "Навісні пристрої для контрольованого повертання або спорожнення вантажу.",
+      },
+      {
+        label: "Вила та подовжувачі",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "Вантажні вила, подовжувачі та спеціальні конфігурації вил.",
+      },
+      {
+        label: "Безпека та робота на висоті",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "Робочі платформи та обладнання для контрольованих сервісних завдань.",
+      },
+      {
+        label: "Робочі кошики на вила",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "Категорія робочих кошиків, що монтуються на вила навантажувача.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Вилковий навантажувач",
+        glossarySlug: "wozek-widlowy",
+        context: "Базова машина для більшості конфігурацій навісного обладнання.",
+      },
+      {
+        label: "Внутрішній транспорт",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Процес інтралогістики, де навісні пристрої впливають на спосіб переміщення вантажів.",
+      },
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Складський процес, на який впливає ергономіка навантажувача та його навісного обладнання.",
+      },
+    ],
+    faqTitle: "FAQ щодо закупівель",
+    faq: [
+      {
+        question: "Як покупцеві вибрати навісне обладнання для навантажувача?",
+        answer:
+          "Почніть із типу вантажу, інтенсивності роботи, способу монтажу та обмежень робочої зони. Потім порівняйте функціональну групу пристроїв, що підходить для завдання.",
+      },
+      {
+        question: "Чи може навісне обладнання впливати на експлуатацію навантажувача?",
+        answer:
+          "Так. Вага пристрою, його геометрія та центр ваги змінюють робочі умови машини. Тому перевірте сумісність із технічною документацією виробника навантажувача та внутрішніми процедурами безпеки.",
+      },
+      {
+        question: "Коли захват є ефективнішим за стандартні вила?",
+        answer:
+          "Захват потрінен тоді, коли вантаж неможливо безпечно переміщувати на палеті, або коли він потребує стискання, обхоплення чи обертання без пошкодження матеріалу.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Дивитися категорію обладнання",
+    },
+    seo: {
+      title: "Посібник B2B з вибору навісного обладнання для навантажувачів | LogiMarket",
+      description:
+        "Посібник B2B із вибору навісного обладнання для навантажувачів: позиціонери, захвати, ротатори, вила, подовжувачі, робочі кошики та критерії підбору.",
+    },
+  },
 ] satisfies LandingPageContent[];
