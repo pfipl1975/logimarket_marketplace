@@ -3463,4 +3463,124 @@ export const landingPages = [
         "Посібник B2B із вибору навісного обладнання для навантажувачів: позиціонери, захвати, ротатори, вила, подовжувачі, робочі кошики та критерії підбору.",
     },
   },
+  // Forklift Attachments - ZH
+  {
+    intent: "forklift-attachments",
+    locale: "zh",
+    slug: "forklift-attachments",
+    path: "/zh/solutions/forklift-attachments",
+    sectionLabel: "解决方案",
+    title: "叉车属具",
+    eyebrow: "B2B采购意向",
+    intro:
+      "叉车属具能够将叉车的功能延伸至标准托盘搬运之外。本采购指南旨在帮助您对比和选择适用于仓库及生产现场的定位器、夹具、旋转器、起重和安全相关叉车属具。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "选择属具时，应首先明确载荷类型、工作循环以及在叉车上的安装方式。",
+      "对于B2B采购，请核实属具与货叉架的兼容性、液压系统要求、对残余承载能力的影响以及操作员的视野范围。",
+      "通过功能组别对比各类属具：侧移器和货叉定位器、夹具、旋转器、货叉、推拉器、吊臂以及安全相关设备。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "载荷与作业类型",
+        description:
+          "区分托盘化载荷、非托盘货物、卷状物、打包物、容器以及维护作业。每种作业都需要特定的属具几何形状和载荷稳定方式。",
+      },
+      {
+        title: "叉车兼容性",
+        description:
+          "核实货叉架类别、属具自重、载荷中心、液压阀芯功能，以及该配置如何影响叉车的安全操作。",
+      },
+      {
+        title: "安全规程",
+        description:
+          "请根据叉车制造商的技术文件以及企业内部安全流程核实属具兼容性。工作平台和起重属具需要有明确的使用规范。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "叉车属具",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "安装在叉车上的各种属具的主要分类。",
+      },
+      {
+        label: "定位器与侧移器",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "用于调节货叉间距和实现载荷精准定位的属具分类。",
+      },
+      {
+        label: "叉车夹具",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "适用于打包物、卷状物、纸箱、圆桶及非托盘化载荷的夹具。",
+      },
+      {
+        label: "叉车旋转器",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "用于载荷受控旋转或倾倒的属具。",
+      },
+      {
+        label: "货叉与加长套",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "承载货叉、货叉加长套及特殊规格货叉配置。",
+      },
+      {
+        label: "安全与高空作业",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "用于受控维护和检修作业的工作平台及相关设备。",
+      },
+      {
+        label: "货叉安装式安全工作平台",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "安装在货叉上的工作平台/工作笼分类。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "叉车",
+        glossarySlug: "wozek-widlowy",
+        context: "大多数仓库属具配置的承载主机。",
+      },
+      {
+        label: "内部运输",
+        glossarySlug: "transport-wewnetrzny",
+        context: "属具性能直接影响物料搬运效率的厂内物流过程。",
+      },
+      {
+        label: "订单捡选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "受叉车及属具人机工程学设计影响的仓储作业过程。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "采购人员应如何选择合适的叉车属具？",
+        answer:
+          "首先考虑载荷类型、作业频率、安装方式和现场空间限制，然后对比符合作业要求的功能属具组别。",
+      },
+      {
+        question: "安装属具是否会影响叉车的日常操作？",
+        answer:
+          "是的。属具的重量、几何形状和载荷中心都会改变叉车的行驶与起升特性，因此应根据叉车制造商的技术文件以及企业内部安全流程进行核实。",
+      },
+      {
+        question: "什么情况下使用夹具会优于标准货叉？",
+        answer:
+          "当载荷无法在托盘上安全托举，或者需要施加一定的夹紧压力、抱夹或旋转且不损伤物料时，使用夹具是更佳的选择。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看属具分类",
+    },
+    seo: {
+      title: "叉车属具 B2B 采购指南 | LogiMarket",
+      description:
+        "叉车属具 B2B 采购指南：定位器、夹具、旋转器、货叉、加长套、高空工作平台以及仓库作业的选型标准。",
+    },
+  },
 ] satisfies LandingPageContent[];
