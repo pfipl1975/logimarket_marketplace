@@ -15,7 +15,19 @@ export type {
 
 export { getCategoryLink, getGlossaryLink } from "./links";
 
-export const landingLocales = ["pl", "en", "de"] as const satisfies LandingLocale[];
+export const landingLocales = [
+  "pl",
+  "en",
+  "de",
+  "fr",
+  "uk",
+  "es",
+  "zh",
+] as const satisfies LandingLocale[];
+
+export type LandingLanguageLinks = Partial<Record<LandingLocale, string>> & {
+  "x-default"?: string;
+};
 
 export function getLandingPage(
   locale: LandingLocale,
@@ -45,13 +57,21 @@ export function getLandingSlugsForLocale(locale: LandingLocale): string[] {
   return getLandingPagesByLocale(locale).map((page) => page.slug);
 }
 
-export function getLandingLanguageLinks(intent: LandingIntent): Record<Locale, string> {
-  const links = Object.fromEntries(
-    locales.map((locale) => [locale, getHomePath(locale)]),
-  ) as Record<Locale, string>;
+export function getLandingLanguageLinks(intent: LandingIntent): LandingLanguageLinks {
+  const links: LandingLanguageLinks = {};
 
-  for (const locale of landingLocales) {
-    links[locale] = getLandingPageByIntent(intent, locale).path;
+  for (const page of landingPages) {
+    if (page.intent === intent) {
+      links[page.locale] = page.path;
+    }
+  }
+
+  const plPage = landingPages.find(
+    (page) => page.intent === intent && page.locale === "pl",
+  );
+
+  if (plPage) {
+    links["x-default"] = plPage.path;
   }
 
   return links;

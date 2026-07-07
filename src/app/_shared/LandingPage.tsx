@@ -4,6 +4,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
+import { locales, type Locale } from "@/lib/i18n/config";
 import {
   getLandingLanguageLinks,
   getCategoryLink,
@@ -27,7 +28,13 @@ export async function LandingPage({ landing }: LandingPageProps) {
   const dict = await getDictionary(landing.locale);
   const pageUrl = absoluteUrl(landing.path);
   const homePath = getHomePath(landing.locale);
-  const languageLinks = getLandingLanguageLinks(landing.intent);
+  const rawLanguageLinks = getLandingLanguageLinks(landing.intent);
+  const headerLanguageLinks = Object.fromEntries(
+    locales.map((locale) => [
+      locale,
+      rawLanguageLinks[locale] ?? getHomePath(locale),
+    ]),
+  ) as Record<Locale, string>;
   const primaryCategory = landing.relatedCategories[0];
 
   const breadcrumbJsonLd = createBreadcrumbListJsonLd([
@@ -70,7 +77,7 @@ export async function LandingPage({ landing }: LandingPageProps) {
 
       <SiteHeader
         locale={landing.locale}
-        languageLinks={languageLinks}
+        languageLinks={headerLanguageLinks}
         navLabels={dict.nav}
       />
 

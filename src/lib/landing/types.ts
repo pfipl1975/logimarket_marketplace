@@ -1,6 +1,9 @@
 import type { Locale } from "@/lib/i18n/config";
 
-export type LandingLocale = Extract<Locale, "pl" | "en" | "de">;
+export type LandingLocale = Extract<
+  Locale,
+  "pl" | "en" | "de" | "fr" | "uk" | "es" | "zh"
+>;
 
 export type LandingIntent =
   | "warehouse-equipment"

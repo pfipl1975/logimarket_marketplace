@@ -7,9 +7,9 @@ export function getCategoryLink(locale: LandingLocale, categorySlug: string): st
 export function getGlossaryLink(locale: LandingLocale, glossarySlug: string): string {
   if (locale === "pl") {
     return `/slownik-branzowy/${glossarySlug}`;
-  } else if (locale === "en") {
-    return `/en/logistics-glossary/${glossarySlug}`;
-  } else {
+  } else if (locale === "de") {
     return `/de/logistik-lexikon/${glossarySlug}`;
+  } else {
+    return `/en/logistics-glossary/${glossarySlug}`;
   }
 }

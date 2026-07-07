@@ -13,25 +13,21 @@ type Props = {
 
 export const revalidate = 86400;
 
-const ALLOWED_LOCALES = ["en", "fr", "uk", "zh"] as const;
-
 export function generateStaticParams() {
-  return ALLOWED_LOCALES.flatMap((locale) => {
-    return getLandingSlugsForLocale(locale as any).map((slug) => ({
-      locale,
-      slug,
-    }));
-  });
+  return getLandingSlugsForLocale("es").map((slug) => ({
+    locale: "es",
+    slug,
+  }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { locale, slug } = await params;
 
-  if (!ALLOWED_LOCALES.includes(locale as any)) {
+  if (locale !== "es") {
     return createSafeLandingNoIndexMetadata();
   }
 
-  const landing = getLandingPage(locale as any, slug);
+  const landing = getLandingPage("es", slug);
 
   if (!landing) {
     return createSafeLandingNoIndexMetadata();
@@ -43,11 +39,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Page({ params }: Props) {
   const { locale, slug } = await params;
 
-  if (!ALLOWED_LOCALES.includes(locale as any)) {
+  if (locale !== "es") {
     notFound();
   }
 
-  const landing = getLandingPage(locale as any, slug);
+  const landing = getLandingPage("es", slug);
 
   if (!landing) {
     notFound();

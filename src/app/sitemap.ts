@@ -51,15 +51,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   });
 
   // 3. Purchase Intent Landing Pages
-  // Explicit PL/EN/DE mapping generated from the existing source of truth.
+  // Dynamic locale mapping generated from the existing source of truth.
   const landingEntries = getLandingSitemapEntries().map((entry) => {
     const rawLinks = getLandingLanguageLinks(entry.intent);
-    const languagesMap: Record<string, string> = {
-      pl: absoluteUrl(rawLinks.pl),
-      en: absoluteUrl(rawLinks.en),
-      de: absoluteUrl(rawLinks.de),
-      "x-default": absoluteUrl(rawLinks.pl),
-    };
+    const languagesMap = Object.fromEntries(
+      Object.entries(rawLinks).map(([locale, path]) => [locale, absoluteUrl(path)]),
+    );
 
     return {
       url: absoluteUrl(entry.path),
