@@ -2743,4 +2743,364 @@ export const landingPages = [
         "B2B-Bedarf für Arbeitsschutz im Lager: Anfahrschutz, Geländersysteme, Palettenschleusen und Barrieren auf LogiMarket.",
     },
   },
+  // Forklift Attachments - PL
+  {
+    intent: "forklift-attachments",
+    locale: "pl",
+    slug: "osprzet-do-wozkow-widlowych",
+    path: "/rozwiazania/osprzet-do-wozkow-widlowych",
+    sectionLabel: "Rozwiązania",
+    title: "Osprzęt do wózków widłowych",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Osprzęt do wózków widłowych rozszerza zastosowanie wózka poza standardową obsługę palet. Ten przewodnik porządkuje decyzje zakupowe dla pozycjonowania, chwytania, obracania, podnoszenia i bezpiecznej obsługi ładunków w magazynie oraz produkcji.",
+    procurementContextTitle: "Kontekst zakupowy",
+    procurementContext: [
+      "Dobór osprzętu powinien zaczynać się od typu ładunku, cyklu pracy i sposobu montażu na wózku.",
+      "W procesie B2B ważne są kompatybilność z karetką, wymagania hydrauliczne, wpływ na udźwig roboczy oraz widoczność operatora.",
+      "Decyzję warto prowadzić przez grupy funkcjonalne: przesuwy i pozycjonery, chwytaki, obrotnice, widły, systemy push-pull, wysięgniki oraz osprzęt safety-related.",
+    ],
+    decisionGuidanceTitle: "Wskazówki decyzyjne",
+    decisionFactors: [
+      {
+        title: "Ładunek i operacja",
+        description:
+          "Rozdziel ładunki paletowe, bezpaletowe, rolki, bele, pojemniki i prace serwisowe. Każdy typ operacji wymaga innej geometrii osprzętu i sposobu stabilizacji.",
+      },
+      {
+        title: "Kompatybilność z wózkiem",
+        description:
+          "Sprawdź klasę karetki, masę osprzętu, środek ciężkości, potrzebne sekcje hydrauliczne i wpływ konfiguracji na bezpieczną pracę operatora.",
+      },
+      {
+        title: "Bezpieczeństwo i procedury",
+        description:
+          "Porównuj rozwiązania z instrukcją wózka, procedurami BHP i warunkami miejsca pracy. Dla koszy roboczych i osprzętu podnoszącego wymagaj jasnych zasad użycia.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Osprzęt do wózków widłowych",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "Główna kategoria dla osprzętu montowanego na wózkach widłowych.",
+      },
+      {
+        label: "Pozycjonery i przesuwy boczne",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "Osprzęt do ustawiania wideł i precyzyjnego pozycjonowania ładunku.",
+      },
+      {
+        label: "Chwytaki do wózków widłowych",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "Chwytaki do bel, rolek, kartonów, beczek i ładunków bezpaletowych.",
+      },
+      {
+        label: "Obrotnice do wózków widłowych",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "Osprzęt do kontrolowanego obracania lub opróżniania ładunków.",
+      },
+      {
+        label: "Widły i przedłużki",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "Elementy nośne, przedłużki oraz specjalistyczne konfiguracje wideł.",
+      },
+      {
+        label: "Bezpieczeństwo i praca na wysokości",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "Kosze robocze i osprzęt do kontrolowanych prac serwisowych.",
+      },
+      {
+        label: "Kosze robocze na widły",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "Kategoria dla koszy roboczych montowanych na widłach.",
+      },
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Wózek widłowy",
+        glossarySlug: "wozek-widlowy",
+        context: "Podstawowy nośnik osprzętu w transporcie wewnętrznym.",
+      },
+      {
+        label: "Transport wewnętrzny",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Proces, w którym osprzęt wpływa na sposób przemieszczania ładunków.",
+      },
+      {
+        label: "Kompletacja zamówień",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Proces magazynowy, w którym dobór wózka i osprzętu może zmieniać ergonomię pracy.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Jak dobrać osprzęt do wózka widłowego w procesie B2B?",
+        answer:
+          "Najpierw opisz typ ładunku, częstotliwość operacji, sposób montażu i wymagania stanowiska pracy. Dopiero potem porównuj konkretne grupy osprzętu.",
+      },
+      {
+        question: "Czy osprzęt wpływa na parametry pracy wózka?",
+        answer:
+          "Tak. Masa, geometria i środek ciężkości osprzętu mogą zmieniać warunki pracy wózka, dlatego konfigurację trzeba weryfikować z dokumentacją maszyny i procedurami zakładu.",
+      },
+      {
+        question: "Kiedy wybrać chwytak zamiast standardowych wideł?",
+        answer:
+          "Chwytak jest właściwy, gdy ładunek nie jest stabilnie obsługiwany na palecie lub wymaga docisku, objęcia albo obrotu bez uszkodzenia materiału.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Przejdź do katalogu",
+      primaryHref: "/katalog",
+      secondaryLabel: "Zobacz kategorię osprzętu",
+    },
+    seo: {
+      title: "Osprzęt do wózków widłowych B2B | LogiMarket",
+      description:
+        "Przewodnik zakupowy B2B dla osprzętu do wózków widłowych: pozycjonery, chwytaki, obrotnice, widły, przedłużki, kosze robocze i kryteria doboru.",
+    },
+  },
+  // Forklift Attachments - EN
+  {
+    intent: "forklift-attachments",
+    locale: "en",
+    slug: "forklift-attachments",
+    path: "/en/solutions/forklift-attachments",
+    sectionLabel: "Solutions",
+    title: "Forklift attachments",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Forklift attachments extend a truck beyond standard pallet handling. This procurement guide helps compare positioning, clamping, rotating, lifting and safety-related attachments for warehouse and production operations.",
+    procurementContextTitle: "B2B Procurement Context",
+    procurementContext: [
+      "Attachment selection should start with load type, work cycle and mounting method on the truck.",
+      "For B2B purchasing, check carriage compatibility, hydraulic requirements, working capacity impact and operator visibility.",
+      "Compare attachments by functional groups: side shifts and fork positioners, clamps, rotators, forks, push-pull systems, jibs and safety-related equipment.",
+    ],
+    decisionGuidanceTitle: "Decision Guidance",
+    decisionFactors: [
+      {
+        title: "Load and operation",
+        description:
+          "Separate palletized loads, non-palletized goods, rolls, bales, containers and service tasks. Each operation needs a different attachment geometry and load-stabilizing approach.",
+      },
+      {
+        title: "Truck compatibility",
+        description:
+          "Check carriage class, attachment weight, load center, hydraulic functions and how the configuration affects safe operation.",
+      },
+      {
+        title: "Safety procedures",
+        description:
+          "Verify the setup against the truck documentation, workplace procedures and the actual operating environment. Work platforms and lifting attachments need clear usage rules.",
+      },
+    ],
+    relatedCategoriesTitle: "Related Catalog Categories",
+    relatedCategories: [
+      {
+        label: "Forklift attachments",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "Main category for attachments mounted on forklift trucks.",
+      },
+      {
+        label: "Positioners and side shifts",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "Attachments for fork spacing and precise load positioning.",
+      },
+      {
+        label: "Forklift clamps",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "Clamps for bales, rolls, cartons, drums and non-palletized loads.",
+      },
+      {
+        label: "Forklift rotators",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "Attachments for controlled turning or emptying of loads.",
+      },
+      {
+        label: "Forks and extensions",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "Load-bearing forks, extensions and specialized fork configurations.",
+      },
+      {
+        label: "Safety and work at height",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "Work cages and equipment for controlled service tasks.",
+      },
+      {
+        label: "Fork safety cages",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "Category for work cages mounted on forks.",
+      },
+    ],
+    relatedGlossaryTitle: "Related Glossary Terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Forklift",
+        glossarySlug: "wozek-widlowy",
+        context: "The carrier machine for most warehouse attachment configurations.",
+      },
+      {
+        label: "Internal transport",
+        glossarySlug: "transport-wewnetrzny",
+        context: "The process where attachments influence how goods are moved.",
+      },
+      {
+        label: "Order picking",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Warehouse process affected by truck and attachment ergonomics.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "How should a buyer select forklift attachments?",
+        answer:
+          "Start with the load type, operating frequency, mounting method and workplace constraints. Then compare the functional attachment group that fits the task.",
+      },
+      {
+        question: "Can an attachment affect forklift operation?",
+        answer:
+          "Yes. Attachment weight, geometry and load center can change operating conditions, so the configuration should be checked against the truck documentation and site procedures.",
+      },
+      {
+        question: "When is a clamp better than standard forks?",
+        answer:
+          "A clamp is useful when the load cannot be handled safely on a pallet or needs pressure, wrapping or rotation without damaging the material.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Open Catalog",
+      primaryHref: "/en/katalog",
+      secondaryLabel: "View attachment category",
+    },
+    seo: {
+      title: "Forklift Attachments B2B Procurement Guide | LogiMarket",
+      description:
+        "B2B procurement guide for forklift attachments: positioners, clamps, rotators, forks, extensions, work cages and selection criteria for warehouse operations.",
+    },
+  },
+  // Forklift Attachments - DE
+  {
+    intent: "forklift-attachments",
+    locale: "de",
+    slug: "gabelstapler-anbaugeraete",
+    path: "/de/loesungen/gabelstapler-anbaugeraete",
+    sectionLabel: "Lösungen",
+    title: "Anbaugeräte für Gabelstapler",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Anbaugeräte erweitern Gabelstapler über die klassische Palettenhandhabung hinaus. Dieser Einkaufsführer unterstützt die Auswahl von Zinkenverstellern, Klammern, Drehgeräten, Gabeln und sicherheitsbezogenen Lösungen für Lager und Produktion.",
+    procurementContextTitle: "Einkaufskontext B2B",
+    procurementContext: [
+      "Die Auswahl sollte mit Lastart, Arbeitszyklus und Montageart am Stapler beginnen.",
+      "Im B2B-Einkauf zählen Kompatibilität mit dem Gabelträger, hydraulische Anforderungen, Einfluss auf die Tragfähigkeit und Sichtverhältnisse für den Bediener.",
+      "Vergleichen Sie Anbaugeräte nach Funktionsgruppen: Seitenschieber und Zinkenversteller, Klammern, Drehgeräte, Gabeln, Push-Pull-Systeme, Ausleger und sicherheitsbezogene Ausstattung.",
+    ],
+    decisionGuidanceTitle: "Entscheidungshilfe",
+    decisionFactors: [
+      {
+        title: "Last und Anwendung",
+        description:
+          "Unterscheiden Sie palettierte Lasten, nicht palettierte Güter, Rollen, Ballen, Behälter und Servicearbeiten. Jede Anwendung erfordert eine andere Geometrie und Lastsicherung.",
+      },
+      {
+        title: "Kompatibilität mit dem Stapler",
+        description:
+          "Prüfen Sie Gabelträgerklasse, Eigengewicht des Anbaugeräts, Lastschwerpunkt, Hydraulikfunktionen und Auswirkungen auf den sicheren Betrieb.",
+      },
+      {
+        title: "Arbeitssicherheit und Verfahren",
+        description:
+          "Bewerten Sie die Konfiguration anhand der Staplerdokumentation, der internen Arbeitsanweisungen und der tatsächlichen Einsatzumgebung.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Anbaugeräte für Gabelstapler",
+        categorySlug: "c-osprzet-do-wozkow-widlowych",
+        context: "Hauptkategorie für am Gabelstapler montierte Anbaugeräte.",
+      },
+      {
+        label: "Positionierer und Seitenschieber",
+        categorySlug: "c-pozycjonery-i-przesuwy-boczne",
+        context: "Anbaugeräte für Zinkenabstand und präzise Lastpositionierung.",
+      },
+      {
+        label: "Klammergeräte für Gabelstapler",
+        categorySlug: "c-chwytaki-do-wozkow-widlowych",
+        context: "Klammern für Ballen, Rollen, Kartons, Fässer und nicht palettierte Lasten.",
+      },
+      {
+        label: "Drehgeräte für Gabelstapler",
+        categorySlug: "c-obrotnice-do-wozkow-widlowych",
+        context: "Anbaugeräte zum kontrollierten Drehen oder Entleeren von Lasten.",
+      },
+      {
+        label: "Gabeln und Verlängerungen",
+        categorySlug: "c-widly-i-przedluzki",
+        context: "Tragende Gabeln, Verlängerungen und spezielle Gabelkonfigurationen.",
+      },
+      {
+        label: "Sicherheit und Arbeiten in der Höhe",
+        categorySlug: "c-bezpieczenstwo-i-praca-na-wysokosci",
+        context: "Arbeitskörbe und Ausstattung für kontrollierte Servicearbeiten.",
+      },
+      {
+        label: "Arbeitskörbe für Stapler",
+        categorySlug: "c-kosze-robocze-na-widly",
+        context: "Kategorie für auf Gabeln montierte Arbeitskörbe.",
+      },
+    ],
+    relatedGlossaryTitle: "Verwandte Fachbegriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Gabelstapler",
+        glossarySlug: "wozek-widlowy",
+        context: "Das Trägerfahrzeug für viele Anbaugeräte im Lager.",
+      },
+      {
+        label: "Innerbetrieblicher Transport",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Der Prozess, in dem Anbaugeräte die Bewegung von Lasten beeinflussen.",
+      },
+      {
+        label: "Kommissionierung",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Lagerprozess, bei dem Stapler- und Anbaugeräteergonomie relevant sein kann.",
+      },
+    ],
+    faqTitle: "Einkaufs-FAQ",
+    faq: [
+      {
+        question: "Wie wählt man ein Anbaugerät für Gabelstapler aus?",
+        answer:
+          "Beginnen Sie mit Lastart, Einsatzhäufigkeit, Montageart und Einschränkungen am Arbeitsplatz. Danach vergleichen Sie die passende Funktionsgruppe.",
+      },
+      {
+        question: "Beeinflusst ein Anbaugerät den Staplerbetrieb?",
+        answer:
+          "Ja. Gewicht, Geometrie und Lastschwerpunkt können die Betriebsbedingungen verändern, daher sollte die Konfiguration mit der Staplerdokumentation und den Standortprozessen abgeglichen werden.",
+      },
+      {
+        question: "Wann ist eine Klammer sinnvoller als Standardgabeln?",
+        answer:
+          "Eine Klammer ist sinnvoll, wenn eine Last nicht sicher auf einer Palette bewegt werden kann oder Druck, Umgreifen oder Drehen ohne Materialschaden erfordert.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Katalog öffnen",
+      primaryHref: "/de/katalog",
+      secondaryLabel: "Anbaugeräte-Kategorie anzeigen",
+    },
+    seo: {
+      title: "Anbaugeräte für Gabelstapler B2B | LogiMarket",
+      description:
+        "B2B-Einkaufsführer für Gabelstapler-Anbaugeräte: Zinkenversteller, Klammern, Drehgeräte, Gabeln, Verlängerungen, Arbeitskörbe und Auswahlkriterien.",
+    },
+  },
 ] satisfies LandingPageContent[];

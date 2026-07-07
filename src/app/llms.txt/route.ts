@@ -38,6 +38,7 @@ Valid canonical landing pages:
 - /rozwiazania/systemy-skladowania (PL storage systems purchase-intent page)
 - /rozwiazania/pakowanie-i-zabezpieczenie-ladunku (PL packaging and load securing purchase-intent page)
 - /rozwiazania/bezpieczenstwo-magazynu (PL warehouse safety purchase-intent page)
+- /rozwiazania/osprzet-do-wozkow-widlowych (PL forklift attachments purchase-intent page)
 - /en/solutions/warehouse-equipment (EN warehouse equipment purchase-intent page)
 - /en/solutions/intralogistics (EN intralogistics purchase-intent page)
 - /en/solutions/picking-and-packing (EN picking and packing purchase-intent page)
@@ -47,6 +48,7 @@ Valid canonical landing pages:
 - /en/solutions/storage-systems (EN storage systems purchase-intent page)
 - /en/solutions/packaging-and-load-securing (EN packaging and load securing purchase-intent page)
 - /en/solutions/warehouse-safety (EN warehouse safety purchase-intent page)
+- /en/solutions/forklift-attachments (EN forklift attachments purchase-intent page)
 - /de/loesungen/lagerausstattung (DE warehouse equipment purchase-intent page)
 - /de/loesungen/intralogistik (DE intralogistics purchase-intent page)
 - /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)
@@ -56,6 +58,7 @@ Valid canonical landing pages:
 - /de/loesungen/lagersysteme (DE storage systems purchase-intent page)
 - /de/loesungen/verpackung-und-ladungssicherung (DE packaging and load securing purchase-intent page)
 - /de/loesungen/lagersicherheit (DE warehouse safety purchase-intent page)
+- /de/loesungen/gabelstapler-anbaugeraete (DE forklift attachments purchase-intent page)
 
 Invalid cross-locale landing route combinations are 404 routes and are not canonical content.
 

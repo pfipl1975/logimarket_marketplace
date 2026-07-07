@@ -11,7 +11,8 @@ export type LandingIntent =
   | "receiving-shipping"
   | "storage-systems"
   | "packaging-load-securing"
-  | "warehouse-safety";
+  | "warehouse-safety"
+  | "forklift-attachments";
 
 export interface LandingCategoryLink {
   label: string;
