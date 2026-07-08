@@ -4819,4 +4819,400 @@ export const landingPages = [
         "工业订单拣选与打包系统采购指南：打包工作台、欧标塑料周转箱、内部运输搬运设备及出货打包配套分类选型。",
     },
   },
+  {
+    intent: "packaging-load-securing",
+    locale: "es",
+    slug: "embalaje-y-sujecion-de-cargas",
+    path: "/es/soluciones/embalaje-y-sujecion-de-cargas",
+    sectionLabel: "Soluciones",
+    title: "Embalaje y sujeción de cargas en procesos de almacén",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La sujeción adecuada de la carga y la optimización de las zonas de embalaje eliminan los daños de transporte y mejoran el rendimiento de los envíos. Esta guía ayuda a la adquisición de mesas de embalaje, contenedores de plástico y equipos de transporte.",
+    procurementContextTitle: "Contexto de adquisición B2B",
+    procurementContext: [
+      "Los puestos de embalaje deben optimizarse para la ergonomía del operario y el acceso rápido a películas elásticas y cajas.",
+      "La selección de contenedores Euro debe respetar la estandarización del módulo de palets para reducir los espacios vacíos en el transporte.",
+      "La resistencia mecánica y las propiedades ESD de la superficie de trabajo son clave al embalar productos electrónicos o sensibles.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Ergonomía del puesto",
+        description:
+          "Utilice mesas de embalaje con regulación de altura eléctrica o manual y soportes para equipos informáticos.",
+      },
+      {
+        title: "Protección y soportes",
+        description:
+          "Implemente contenedores modulares de plástico PP o HDPE duradero para minimizar el riesgo de daños a la mercancía.",
+      },
+      {
+        title: "Integración con transporte",
+        description:
+          "Integre la zona de embalaje con transportadores o transpaletas manuales para acelerar la recogida de paquetes listos.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Mesas de embalaje y preparación",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Mobiliario industrial modular para embalaje y verificación de paquetes.",
+      },
+      {
+        label: "Contenedores de plástico Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Contenedores de transporte duraderos que protegen el inventario pequeño.",
+      },
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Equipos de manipulación para el transporte de paquetes y palets.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Mesa de embalaje",
+        glossarySlug: "stol-pakowy",
+        context: "Ergonomía y equipamiento modular de puestos destinados al embalaje industrial.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Contenedores de plástico estandarizados para transporte y almacenamiento.",
+      },
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Agrupación y clasificación de mercancías antes del proceso de embalaje y envío.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Cuáles son las ventajas de las mesas de embalaje modulares?",
+        answer:
+          "Permiten reequipar fácilmente estantes, soportes para rollos de film, básculas y brazos VESA para monitores en cualquier momento.",
+      },
+      {
+        question: "¿Cuándo es necesario utilizar mesas de embalaje con protección ESD?",
+        answer:
+          "Durante la manipulación y el embalaje de componentes electrónicos, microprocesadores u otros dispositivos sensibles a descargas electrostáticas.",
+      },
+      {
+        question: "¿Cómo mejoran los contenedores Euro los flujos de embalaje?",
+        answer:
+          "Sus dimensiones estandarizadas encajan fácilmente en estantes superiores y son compatibles con carros de preparación modulares.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Embalaje y sujeción de cargas B2B | LogiMarket",
+      description:
+        "Equipamiento de zonas de embalaje: mesas de embalaje modulares, contenedores Euro y transporte interno en LogiMarket.",
+    },
+  },
+  {
+    intent: "packaging-load-securing",
+    locale: "fr",
+    slug: "emballage-et-arrimage-des-charges",
+    path: "/fr/solutions/emballage-et-arrimage-des-charges",
+    sectionLabel: "Solutions",
+    title: "Emballage et arrimage des charges dans les opérations d'entrepôt",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Un arrimage adéquat des charges et des zones d'emballage optimisées éliminent les dommages liés au transport et augmentent le débit des expéditions. Ce guide aide à l'achat de tables d'emballage, de bacs en plastique et d'équipements de transport.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "Les postes d'emballage doivent être conçus pour optimiser l'ergonomie de l'opérateur et assurer un accès facile aux films étirables et aux cartons.",
+      "Le choix des bacs Euro doit respecter les standards du module de palettes pour réduire les volumes de transport vides.",
+      "La durabilité mécanique et la protection ESD du plan de travail sont essentielles lors de l'emballage de composants sensibles.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Ergonomie du poste",
+        description:
+          "Utilisez des tables d'emballage avec réglage de hauteur électrique ou manuel et des supports informatiques.",
+      },
+      {
+        title: "Protection et supports",
+        description:
+          "Déployez des bacs modulaires en plastique PP ou HDPE durable pour minimiser les risques de dommages aux marchandises.",
+      },
+      {
+        title: "Intégration du transport",
+        description:
+          "Connectez la zone d'emballage à des convoyeurs ou des transpalettes manuels pour accélérer la collecte des colis prêts.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Tables d'emballage et de préparation",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Mobilier industriel modulaire pour la préparation et la vérification des colis.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Bacs de transport robustes protégeant le stock de petites pièces.",
+      },
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Équipements de manutention pour le déplacement de colis et de palettes.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Table d'emballage",
+        glossarySlug: "stol-pakowy",
+        context: "Ergonomie et équipement modulaire des postes destinés à l'emballage industriel.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Bacs en plastique standardisés pour le transport et la manutention.",
+      },
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Regroupement et tri des marchandises avant l'étape d'emballage et d'expédition.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Quels sont les avantages des tables d'emballage modulaires ?",
+        answer:
+          "Elles permettent d'ajouter facilement des étagères, des dérouleurs de film étirable, des balances et des bras VESA à tout moment.",
+      },
+      {
+        question: "Quand la protection ESD est-elle nécessaire pour les tables d'emballage ?",
+        answer:
+          "Lors de la manipulation et de l'emballage de composants électroniques, de microprocesseurs ou d'autres dispositifs sensibles aux décharges.",
+      },
+      {
+        question: "Comment les bacs Euro améliorent-ils les flux d'emballage ?",
+        answer:
+          "Leurs dimensions standardisées s'intègrent facilement sur les étagères supérieures et correspondent aux chariots de préparation modulaires.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Emballage et arrimage des charges B2B | LogiMarket",
+      description:
+        "Équipement de zones d'emballage : tables d'emballage modulaires, bacs Euro et matériel de manutention sur LogiMarket.",
+    },
+  },
+  {
+    intent: "packaging-load-securing",
+    locale: "uk",
+    slug: "pakuvannia-ta-kriplennia-vantazhiv",
+    path: "/uk/solutions/pakuvannia-ta-kriplennia-vantazhiv",
+    sectionLabel: "Рішення",
+    title: "Пакування та кріплення вантажів у складських процесах",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Належне кріплення вантажів та оптимізація зон пакування запобігають пошкодженням при транспортуванні та збільшують швидкість відправлень. Цей посібник спрощує вибір пакувальних столів, контейнерів та обладнання.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Робочі місця для пакування мають бути оптимізовані під ерогономіку оператора та легкий доступ до стрейч-плівок і коробок.",
+      "Вибір контейнерів Euro повинен враховувати стандартизацію палетного модуля для зменшення порожнього простору при транспортуванні.",
+      "Механічна міцність та ESD-захист робочої поверхні є критично важливими при пакуванні чутливих промислових товарів.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Ергономіка робочого місця",
+        description:
+          "Використовуйте пакувальні столи з електричним або ручним регулюванням висоти та тримачами для моніторів.",
+      },
+      {
+        title: "Захист та тара",
+        description:
+          "Впроваджуйте модульні контейнери з міцного пластику PP або HDPE для мінімізації ризиків пошкодження товарів.",
+      },
+      {
+        title: "Інтеграція з транспортом",
+        description:
+          "Об'єднуйте зону пакування з гравітаційними конвеєрами або ручними роклами для швидкого відправлення готових вантажів.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Столи для пакування та комплектації",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Модульні промислові меблі для пакування та перевірки посилок.",
+      },
+      {
+        label: "Пластикові контейнери Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Міцні транспортні ящики, що захищають дрібний асортимент товарів.",
+      },
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Обладнання для переміщення коробок та піддонів між робочими зонами склада.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Пакувальний стіл",
+        glossarySlug: "stol-pakowy",
+        context: "Ергономіка та модульне обладнання робочих місць, призначених для промислового пакування.",
+      },
+      {
+        label: "Контейнер Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Стандартизовані пластикові ящики для транспортування та зберігання.",
+      },
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Збирання та сортування товарів перед процесом пакування та відправлення.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Які переваги мають модульні пакувальні столи?",
+        answer:
+          "Вони дозволяють легко доукомплектувати робоче місце полицями, тримачами для плівки, вагами та кронштейнами VESA в будь-який момент.",
+      },
+      {
+        question: "Коли потрібен ESD-захист для пакувальних столів?",
+        answer:
+          "При роботі з електронними компонентами, мікропроцесорами або іншими пристроями, чутливими до статичної електрики.",
+      },
+      {
+        question: "Як контейнери Euro покращують пакувальні процеси?",
+        answer:
+          "Їхні уніфіковані розміри легко підходять до надбудовних полиць та сумісні з модулевими візками комплектації.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Переглянути рішення",
+    },
+    seo: {
+      title: "Пакування та кріплення вантажів B2B | LogiMarket",
+      description:
+        "Обладнання зон пакування: промислові пакувальні столи, євроконтейнери та складський транспорт на LogiMarket.",
+    },
+  },
+  {
+    intent: "packaging-load-securing",
+    locale: "zh",
+    slug: "packaging-load-securing",
+    path: "/zh/solutions/packaging-load-securing",
+    sectionLabel: "解决方案",
+    title: "仓储物流中的包装与货物稳固安全",
+    eyebrow: "B2B采购意向",
+    intro:
+      "合理的货物稳固包装和优化的打包区域设计，可有效避免运输残损并提高出货吞吐量。本指南旨在为您的打包工作台、塑料周转箱及搬运搬运设备的采购提供决策参考。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "打包工位的设计应最大程度优化操作人员的操作轨迹，并确保缠绕膜和纸箱触手可及。",
+      "欧标周转箱的选型必须遵循托盘模数标准，以减少运输过程中的装载空隙。",
+      "在包装敏感工业品时，工作台台面的机械耐久性以及防静电（ESD）保护至关重要。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "工位人机工程学",
+        description:
+          "采用配备电动或手动高度调节功能、以及集成 IT 系统接口的工业打包台。",
+      },
+      {
+        title: "防护与载体",
+        description:
+          "部署由耐用 PP 或 HDPE 材料制成的模块化周转箱，以降低货物受损风险。",
+      },
+      {
+        title: "输送集成",
+        description:
+          "将打包区域与辊道输送线 or 手推托盘搬运车相连，加速已打包货物的出库集货。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "打包与拣选工作台",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "用于包裹准备、校验和打包包装的模块化工业家具。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "用于保护小型物资的耐用标准化物流箱。",
+      },
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "用于在不同工段间流转纸箱和托盘的内部物流设备。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "打包工作台",
+        glossarySlug: "stol-pakowy",
+        context: "工业打包站的人机工程学配置和模块化配件。",
+      },
+      {
+        label: "欧标周转箱",
+        glossarySlug: "pojemnik-euro",
+        context: "在运输和厂内流转中使用的标准化塑料周转容器。",
+      },
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "在包装和发货之前对仓储物资进行拣选与分类。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "模块化打包工作台的优势是什么？",
+        answer:
+          "支持在任何需要的时候灵活加装搁板、缠绕膜卷轴、电子秤以及用于显示器的 VESA 悬臂。",
+      },
+      {
+        question: "什么情况下打包工作台需要配置防静电（ESD）台面？",
+        answer:
+          "在校验和打包电子元器件、集成电路板或其他易受静电放电损坏的物资时。",
+      },
+      {
+        question: "欧标周转箱如何优化打包流程？",
+        answer:
+          "其标准化尺寸使其能够轻松放置在台面上方悬挂架上，并与模块化拣选推车完美匹配。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "包装与货物稳固 B2B | LogiMarket",
+      description:
+        "出货打包区设备采购：模块化打包台、欧标周转箱、内部运输和包装辅助载体选型。",
+    },
+  },
 ] satisfies LandingPageContent[];
