@@ -18,6 +18,7 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 - Category Pages: Public catalog pages listing B2B category-specific offers (indexed only when active offers exist).
 - Offer Pages: Public product and machinery pages with technical parameters, partner information, and conversion model.
 - Glossary Pages: Public procurement and logistics terminology pages in supported glossary locales (Polish, English, German).
+- Solutions Index Pages: Multilingual editorial hubs listing all purchase-intent landing pages per locale.
 - Purchase Intent Landing Pages: Strategic content hubs for search intent.
 - llms-full.txt: Expanded AI discovery and RAG directory with public taxonomy, offer, and glossary context.
 - sitemap.xml: Public indexation map for homepage, catalog, category, offer, and glossary routes.
@@ -25,6 +26,17 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 ## Non-Canonical Tracking Routes
 - Outbound Flow: \`/go/[id]\` is strictly outbound redirect tracking. It is non-canonical, a non-content route, not intended for indexation as a standalone page, and is not a representation of any offer, product, seller, or price.
 - RFQ Flow, E-Commerce cart, checkout, and technical user endpoints are operational and excluded from public indexing.
+
+## Solutions Index Pages
+Solutions index pages are multilingual editorial hubs listing all 10 purchase-intent landing pages for each supported locale. They are informational and navigational only — no prices, no offers, no partner data.
+Valid canonical solutions index pages:
+- /rozwiazania (PL solutions index)
+- /en/solutions (EN solutions index)
+- /de/loesungen (DE solutions index)
+- /es/soluciones (ES solutions index)
+- /fr/solutions (FR solutions index)
+- /uk/solutions (UK solutions index)
+- /zh/solutions (ZH solutions index)
 
 ## Purchase Intent Landing Pages
 Landing pages are strictly content/structural hubs for search intent, not product/offer detail pages. They do not represent individual products, and must not have \`Product\`, \`Offer\`, \`price\`, \`availability\`, or \`seller\` properties in schema or retrieval contexts.

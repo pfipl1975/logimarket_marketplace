@@ -10,6 +10,7 @@ import {
 import { getSitemapOfferEntries, getSitemapCategoryEntries } from "@/lib/seo/repository";
 import { getGlossaryTerms } from "@/lib/glossary";
 import { getLandingSitemapEntries, getLandingLanguageLinks } from "@/lib/landing";
+import { solutionsIndexPaths } from "@/app/_shared/SolutionsIndexPage";
 
 export const revalidate = 86400;
 
@@ -67,6 +68,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       },
     };
   });
+
+  // 4. Solutions Index Pages — one per locale
+  const solutionsIndexAlternates = Object.fromEntries(
+    Object.entries(solutionsIndexPaths).map(([loc, path]) => [loc, absoluteUrl(path)]),
+  );
+  solutionsIndexAlternates["x-default"] = absoluteUrl(solutionsIndexPaths.pl);
+
+  const solutionsIndexEntries = Object.entries(solutionsIndexPaths).map(([, path]) => ({
+    url: absoluteUrl(path),
+    changeFrequency: "weekly" as const,
+    priority: 0.8,
+    alternates: {
+      languages: solutionsIndexAlternates,
+    },
+  }));
 
   // Fetch categories and offers using existing build-safe read-only repository helpers.
   const [offers, cats] = await Promise.all([
@@ -160,6 +176,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const allEntries = [
     ...homepageEntries,
     ...catalogRootEntries,
+    ...solutionsIndexEntries,
     ...landingEntries,
     ...offerEntries,
     ...categoryEntries,
