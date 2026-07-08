@@ -6819,4 +6819,420 @@ export const landingPages = [
         "B2B工业仓库安全 hardware 配置：重型货架防撞角、弹力吸能护栏、翻转式安全卸货闸门及立柱保护系统。",
     },
   },
+  {
+    intent: "intralogistics",
+    locale: "es",
+    slug: "intralogistica",
+    path: "/es/soluciones/intralogistica",
+    sectionLabel: "Soluciones",
+    title: "Intralogística",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La intralogística conecta el transporte interno, el almacenamiento, la preparación de pedidos y el flujo de materiales en el centro. Esta página ayuda a los compradores a estructurar las decisiones sobre equipos y categorías en torno al flujo interno.",
+    procurementContextTitle: "Contexto de adquisición",
+    procurementContext: [
+      "Las decisiones de intralogística deben basarse en un mapa de movimientos de materiales y de intensidad de carga en las zonas de trabajo.",
+      "Los equipos de manipulación, las estanterías, los contenedores y los puntos de amortiguación deben coincidir con los ritmos de recepción y expedición.",
+      "La comparación de categorías relacionadas ayuda a evitar cuellos de botella entre el almacenamiento, la preparación de pedidos y el transporte interno.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Movimiento de materiales",
+        description:
+          "Compruebe qué unidades se mueven con mayor frecuencia y cómo cooperan los equipos de transporte interno con las zonas de almacenamiento y preparación.",
+      },
+      {
+        title: "Puntos de amortiguación",
+        description:
+          "Utilice contenedores, estanterías y mesas de trabajo para evitar el almacenamiento temporal no controlado en las vías de tránsito.",
+      },
+      {
+        title: "Seguridad del proceso",
+        description:
+          "Considere la visibilidad, el ancho de los pasillos, las cargas de trabajo y la separación física entre rutas peatonales y de transporte.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Equipos para el movimiento de materiales entre zonas de la instalación.",
+      },
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Lugares de almacenamiento adaptados a los patrones de movimiento y la rotación de mercancías.",
+      },
+      {
+        label: "Contenedores plásticos Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Soportes de proceso para componentes, preparación de pedidos y almacenamiento temporal.",
+      },
+      {
+        label: "Altillos y plataformas de almacén",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Niveles adicionales de trabajo y almacenamiento para flujos internos.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Proceso que a menudo define el diseño de la intralogística.",
+      },
+      {
+        label: "Estantería de paletización",
+        glossarySlug: "regal-paletowy",
+        context: "Infraestructura de almacenamiento vinculada al movimiento de palets.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Soporte estándar para flujos de materiales internos.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Qué abarca la intralogística en las compras B2B?",
+        answer:
+          "Abarca los equipos y la organización del flujo interno: transporte, almacenamiento, amortiguación, preparación de pedidos y preparación para la expedición.",
+      },
+      {
+        question: "¿Cómo se deben comparar las categorías de intralogística?",
+        answer:
+          "Compare su efecto en el flujo, la seguridad, la compatibilidad de las unidades de carga y las limitaciones del edificio.",
+      },
+      {
+        question: "¿La intralogística se refiere únicamente a los equipos de manipulación?",
+        answer:
+          "No. Los equipos de manipulación son importantes, pero las estanterías, los contenedores, las estaciones de trabajo y las áreas de amortiguación son igualmente esenciales.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Abrir categoría base",
+    },
+    seo: {
+      title: "Intralogística B2B | LogiMarket",
+      description:
+        "Página de adquisición B2B para intralogística: transporte interno, estanterías, contenedores y organización del flujo de materiales en el almacén.",
+    },
+  },
+  {
+    intent: "intralogistics",
+    locale: "fr",
+    slug: "intralogistique",
+    path: "/fr/solutions/intralogistique",
+    sectionLabel: "Solutions",
+    title: "Intralogistique",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "L'intralogistique relie le transport interne, le stockage, la préparation de commandes et le flux de matériaux dans le site. Cette page aide à structurer les décisions d'achat autour du flux interne.",
+    procurementContextTitle: "Contexte d'achat",
+    procurementContext: [
+      "Les décisions intralogistiques doivent découler d'une cartographie des flux de matériaux et de l'intensité des charges dans les zones de travail.",
+      "Les engins de manutention, les rayonnages, les bacs et les zones tampons doivent s'adapter aux rythmes de réception et d'expédition.",
+      "La comparaison des catégories associées permet d'éviter les goulots d'étranglement entre le stockage, la préparation de commandes et le transport interne.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Flux de matériaux",
+        description:
+          "Vérifiez quelles unités se déplacent le plus souvent et comment les engins de transport interne collaborent avec les zones de stockage.",
+      },
+      {
+        title: "Zones tampons",
+        description:
+          "Utilisez des bacs, des rayonnages et des postes de travail pour éviter le stockage temporaire non contrôlé dans les allées.",
+      },
+      {
+        title: "Sécurité des processus",
+        description:
+          "Prenez en compte la visibilité, la largeur des allées, les charges admissibles et la séparation physique piétons/chariots.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Matériel pour le déplacement des charges entre les différentes zones du site.",
+      },
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Emplacements de stockage adaptés aux schémas de flux et à la rotation des marchandises.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Supports de manutention pour les composants, le picking et le stockage temporaire.",
+      },
+      {
+        label: "Mezzanines et plateformes de stockage",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Niveaux de travail et de stockage supplémentaires pour les flux internes.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Processus qui définit souvent l'implantation intralogistique.",
+      },
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Infrastructure de stockage liée aux mouvements des palettes.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Support standardisé pour les flux de matériaux internes.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Que couvre l'intralogistique dans les achats B2B ?",
+        answer:
+          "Elle couvre les équipements et l'organisation du flux interne : transport, stockage, stockage tampon, picking et préparation à l'expédition.",
+      },
+      {
+        question: "Comment comparer les catégories d'intralogistique ?",
+        answer:
+          "Comparez leur impact sur le flux, la sécurité, la compatibilité des charges et les contraintes du bâtiment.",
+      },
+      {
+        question: "L'intralogistique se limite-t-elle aux engins de manutention ?",
+        answer:
+          "Non. Les chariots comptent, mais les rayonnages, les bacs, les postes de travail et les zones tampons sont tout aussi importants.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Ouvrir la catégorie de base",
+    },
+    seo: {
+      title: "Intralogistique B2B | LogiMarket",
+      description:
+        "Page d'achat B2B pour l'intralogistique : transport interne, rayonnages, bacs de stockage et organisation des flux de matériaux.",
+    },
+  },
+  {
+    intent: "intralogistics",
+    locale: "uk",
+    slug: "intralohistyka",
+    path: "/uk/solutions/intralohistyka",
+    sectionLabel: "Рішення",
+    title: "Внутрішньоскладська логістика (Інтралогістика)",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Інтралогістика об'єднує внутрішній транспорт, зберігання, комплектацію та організацію матеріальних потоків у приміщенні. Ця сторінка допомагає структурувати вибір обладнання відповідно до інтенсивності складських потоків.",
+    procurementContextTitle: "Контекст закупівель",
+    procurementContext: [
+      "Інтралогістичні рішення мають ґрунтуватися на карті матеріальних потоків та навантаження робочих зон.",
+      "Навантажувальна техніка, стелажі, контейнери та зони буферизації повинні відповідати загальному ритму прийому та відвантаження.",
+      "Правильне зіставлення взаємопов'язаних категорій зменшує ризик виникнення вузьких місць між зонами зберігання, відбору та транспортування.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Рух матеріалів",
+        description:
+          "Перевірте, які вантажні одиниці переміщуються найчастіше та як внутрішній транспорт взаємодіє з зонами зберігання та комплектації.",
+      },
+      {
+        title: "Буферні зони",
+        description:
+          "Підбирайте контейнери, стелажі та столи так, щоб запобігти неконтрольованому тимчасовому зберіганню вантажів у проїздах.",
+      },
+      {
+        title: "Безпека процесу",
+        description:
+          "Враховуйте видимість, ширину проїздів, робочі навантаження та фізичне відокремлення шляхів пішоходів від руху техніки.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Обладнання для переміщення матеріалів між різними зонами складського об'єкта.",
+      },
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Місця зберігання, адаптовані до транспортних потоків та ротації вантажів.",
+      },
+      {
+        label: "Пластикові євроконтейнери",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Технологічна тара для комплектуючих, відбору та проміжного зберігання.",
+      },
+      {
+        label: "Складські мезоніни та платформи",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Додаткові робочі рівні для організації внутрішніх матеріальних потоків.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Процес, який безпосередньо визначає планування інтралогістики.",
+      },
+      {
+        label: "Палетний стелаж",
+        glossarySlug: "regal-paletowy",
+        context: "Елемент системи зберігання, тісно пов'язаний із переміщенням піддонів.",
+      },
+      {
+        label: "Євроконтейнер",
+        glossarySlug: "pojemnik-euro",
+        context: "Стандартизована логістична тара для внутрішніх матеріальних потоків.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Що включає інтралогістика в B2B-закупівлях?",
+        answer:
+          "Вона охоплює обладнання та організацію внутрішніх процесів: транспортування, зберігання, буферизацію, відбір та підготовку до відвантаження.",
+      },
+      {
+        question: "Як порівнювати інтралогістичні категорії?",
+        answer:
+          "Порівнюйте їх за впливом на швидкість потоку вантажів, безпеку праці, сумісність із тарою та просторові обмеження будівлі.",
+      },
+      {
+        question: "Чи стосується інтралогістика лише навантажувальної техніки?",
+        answer:
+          "Ні. Техніка є важливою, але стелажі, контейнери, робочі столи та буферні точки є не менш важливими складниками системи.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Відкрити базову категорію",
+    },
+    seo: {
+      title: "Інтралогістика B2B | LogiMarket",
+      description:
+        "B2B-сторінка закупівель для інтралогістики: внутрішній транспорт, палетні стелажі, контейнери та організація складського вантажопотоку.",
+    },
+  },
+  {
+    intent: "intralogistics",
+    locale: "zh",
+    slug: "intralogistics",
+    path: "/zh/solutions/intralogistics",
+    sectionLabel: "解决方案",
+    title: "内部物流管理与仓储流转控制",
+    eyebrow: "B2B采购意向",
+    intro:
+      "内部物流是连接厂区内部搬运、高位存储、订单拣选以及工序间物料流转的关键纽带。本页面旨在为搬运设备、重型货架及多功能工位器具的系统化采购提供指南。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "内部物流的采购规划应基于全厂物料流向图以及各作业区的高峰期载荷流量。",
+      "物料搬运设备、重型货架系统、标准周转箱以及暂存缓存点必须能够无缝契合出入库节拍。",
+      "对相关联 of 设备品类进行系统化比选，可显著降低存储、拣选与内部流转环节间的交接瓶颈风险。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "物料流量与路径",
+        description:
+          "明确库内高频流转的托盘或周转箱路线，确保内运设备与存储、拣选区域的高效对接。",
+      },
+      {
+        title: "暂存缓存设置",
+        description:
+          "合理配置周转容器、轻型层架和工作台，避免散乱物资占用消防通道或交通干线。",
+      },
+      {
+        title: "动线与过程安全",
+        description:
+          "充分评估通道宽度、运行视线、机械最大工作载荷，实现人行步道与叉车行驶轨迹的物理隔离。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "用于库区、车间与工位间物料流转的搬运与起重机械。",
+      },
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "与物料搬运动线及存货周转率高度匹配的系统化货架库位。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "贯穿散料配送、订单拣选与半成品暂存的标准化物流载体。",
+      },
+      {
+        label: "阁楼货架与钢平台",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "在原厂房物理高度内开辟出的双层物料集散与分拨空间。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "对厂内物流动线与缓存区域布局起决定性影响的关键出库前工序。",
+      },
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "与大吨位叉车往返取货动作紧密相连的重型货架钢结构体系。",
+      },
+      {
+        label: "欧标周转箱",
+        glossarySlug: "pojemnik-euro",
+        context: "在分拣输送、自动化立体库和工序流转中通用的标准化器具。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "B2B内部物流采购主要包含哪些设备类别？",
+        answer:
+          "涵盖从接收、存储、多级缓存、拣选打包直至发货区前的库内流转设备，包括搬运车、托盘货架、周转箱和钢平台。",
+      },
+      {
+        question: "如何系统性地评估内部物流相关设备？",
+        answer:
+          "应综合考量设备对整体动线的影响、安全系数、与承载单元尺寸的匹配度以及厂房地面荷载约束。",
+      },
+      {
+        question: "内部物流采购是否仅仅指购买叉车？",
+        answer:
+          "不是。叉车和手推车只是搬运载体，与之紧密配套的标准容器、货架结构、操作台和高空平台同样是实现流畅流转必不可少的元素。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "打开核心分类",
+    },
+    seo: {
+      title: "内部物流与仓储搬运设备采购 B2B | LogiMarket",
+      description:
+        "B2B厂内物流规划指南：手动/电动搬运车、标准化托盘货架、欧标容器及多层钢平台系统选型服务。",
+    },
+  },
 ] satisfies LandingPageContent[];
