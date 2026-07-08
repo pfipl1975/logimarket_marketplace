@@ -6423,4 +6423,400 @@ export const landingPages = [
         "B2B仓储配送中心规划：横梁式托盘货架、工业钢平台、高位前移式叉车及库内人车分流安全标识选型指南。",
     },
   },
+  {
+    intent: "warehouse-safety",
+    locale: "es",
+    slug: "seguridad-en-almacen",
+    path: "/es/soluciones/seguridad-en-almacen",
+    sectionLabel: "Soluciones",
+    title: "Seguridad en almacén y protección de infraestructuras",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La protección de estanterías, la delimitación de zonas de tráfico y los sistemas de seguridad reducen las colisiones y protegen la infraestructura del almacén. Esta página facilita la selección de protectores contra impactos, barreras de seguridad y carretillas industriales.",
+    procurementContextTitle: "Contexto de adquisición B2B",
+    procurementContext: [
+      "Los protectores de puntales de estanterías y las defensas de esquinas reducen el riesgo de fallos estructurales graves.",
+      "La planificación de las zonas de protección debe separar las vías de circulación de carretillas elevadoras de las sendas peatonales mediante barreras físicas.",
+      "El acero de alta resistencia y los colores de advertencia (amarillo y negro) de las barreras garantizan durabilidad y visibilidad a largo plazo.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Protección de columnas",
+        description:
+          "Instale protectores de acero o polímero en los puntales de las estanterías de paletización de al menos 400 mm de altura.",
+      },
+      {
+        title: "Segregación de vías",
+        description:
+          "Use barandillas de protección y barreras absorbe-impactos para separar físicamente las zonas de peatones y el tráfico de maquinaria.",
+      },
+      {
+        title: "Intralogística segura",
+        description:
+          "Seleccione carretillas con sistemas de aviso óptico o acústico (blue spot, radares) y barreras en los muelles de carga.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Estructuras de estantería que requieren defensas y barreras de protección contra colisiones.",
+      },
+      {
+        label: "Altillos y plataformas de almacén",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Estructuras elevadas que requieren pasamanos de seguridad y puertas de paso peatonal.",
+      },
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Vehículos de manipulación que operan en zonas de tráfico compartido.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Estantería de paletización",
+        glossarySlug: "regal-paletowy",
+        context: "Requisitos de protección de estructuras frente al impacto de carretillas.",
+      },
+      {
+        label: "Capacidad de carga de estantería",
+        glossarySlug: "nosnosc-regalu",
+        context: "Estabilidad estructural y límites de carga de las configuraciones de almacenamiento.",
+      },
+      {
+        label: "Carretilla elevadora",
+        glossarySlug: "wozek-widlowy",
+        context: "Normas de conducción y maniobra seguras en pasillos estrechos.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Cuáles son los requisitos mínimos para las protecciones de puntales de estanterías?",
+        answer:
+          "Las defensas deben proteger el puntal hasta una altura mínima de 400 mm y estar fijadas de forma independiente al suelo del almacén.",
+      },
+      {
+        question: "¿Son mejores las barreras de seguridad de polímero que las de acero?",
+        answer:
+          "Las barreras poliméricas absorben la energía de los impactos recuperando su forma, lo que evita daños en los anclajes de hormigón, mientras que las de acero deben sustituirse tras un impacto grave.",
+      },
+      {
+        question: "¿Cómo proteger los bordes de los altillos industriales?",
+        answer:
+          "Instale barandillas protectoras de 1,1 m de altura con rodapiés y una puerta de seguridad para palets (tipo esclusa).",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Seguridad en almacén y barreras de protección B2B | LogiMarket",
+      description:
+        "Equipamiento de seguridad industrial para almacenes: protectores de estanterías, barreras absorbe-impactos y puertas de esclusa en LogiMarket.",
+    },
+  },
+  {
+    intent: "warehouse-safety",
+    locale: "fr",
+    slug: "securite-en-entrepot",
+    path: "/fr/solutions/securite-en-entrepot",
+    sectionLabel: "Solutions",
+    title: "Sécurité en entrepôt et protection de l'infrastructure",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La protection des rayonnages, la délimitation des zones de circulation et les équipements de sécurité limitent les collisions et protègent l'infrastructure. Cette page facilite la sélection de protections de montants, de barrières et de chariots.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "Les sabots de protection pour échelles de rayonnage et les protections d'angle réduisent le risque de défaillances structurelles graves.",
+      "La planification des zones de sécurité doit séparer les voies de circulation des chariots et les allées piétonnes via des barrières physiques.",
+      "L'acier à haute résistance et les couleurs d'avertissement (jaune/noir) des barrières garantissent durabilité et visibilité à long terme.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Protection des colonnes",
+        description:
+          "Installez des protections en acier ou polymère sur les échelles de rayonnage d'une hauteur minimale de 400 mm.",
+      },
+      {
+        title: "Ségrégation des flux",
+        description:
+          "Utilisez des garde-corps et des barrières à mémoire de forme pour séparer physiquement les piétons des chariots.",
+      },
+      {
+        title: "Intralogistique sûre",
+        description:
+          "Choisissez des engins équipés de systèmes d'avertissement (blue spot, radars) et des barrières de sécurité pour quais.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Rayonnages de stockage nécessitant des protections contre les chocs et des barrières.",
+      },
+      {
+        label: "Mezzanines et plateformes de stockage",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Plateformes surélevées nécessitant des garde-corps et des barrières de sécurité pour palettes.",
+      },
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Engins de manutention circulant dans des zones de trafic mixte.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Exigences de protection des structures de stockage contre les collisions.",
+      },
+      {
+        label: "Capacité de charge du rayonnage",
+        glossarySlug: "nosnosc-regalu",
+        context: "Stabilité de la structure et limites de charge des configurations de stockage.",
+      },
+      {
+        label: "Chariot élévateur",
+        glossarySlug: "wozek-widlowy",
+        context: "Consignes de conduite et manœuvres en sécurité dans les allées étroites.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Comment choisir un système de rayonnage pour un hub logistique ?",
+        answer:
+          "Les sabots doivent protéger le montant sur une hauteur minimale de 400 mm et être fixés de manière indépendante au sol de la dalle.",
+      },
+      {
+        question: "Les barrières de sécurité en polymère sont-elles meilleures que celles en acier ?",
+        answer:
+          "Les barrières en polymère absorbent l'énergie des chocs et reprennent leur forme initiale, protégeant les ancrages au sol, tandis que celles en acier doivent être remplacées après une déformation.",
+      },
+      {
+        question: "Comment sécuriser le bord d'une plateforme mezzanine ?",
+        answer:
+          "Installez des garde-corps d'une hauteur de 1,1 m munis de plinthes de sécurité et d'une barrière écluse pour palettes.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Sécurité en entrepôt et barrières de protection B2B | LogiMarket",
+      description:
+        "Équipement de sécurité pour entrepôts industriels : sabots de protection, barrières dynamiques et sas à palettes sur LogiMarket.",
+    },
+  },
+  {
+    intent: "warehouse-safety",
+    locale: "uk",
+    slug: "bezpeka-skladu",
+    path: "/uk/solutions/bezpeka-skladu",
+    sectionLabel: "Рішення",
+    title: "Безпека складу та захист логістичної інфраструктури",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Захист стелажів, розділення транспортних потоків та складські системи безпеки зменшують кількість зіткнень та захищають складські активи. Ця сторінка полегшує вибір захисних відбійників, бар'єрів та навантажувачів.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Захисні кожухи для стійок стелажів та кутові відбійники необхідні для запобігання пошкодженням та руйнуванню конструкцій.",
+      "Планування зон безпеки має передбачати фізичне розділення шляхів руху навантажувачів від пішохідних зон за допомогою огороджень.",
+      "Високоякісна сталь та сигнальне забарвлення (жовто-чорне) захисних бар'єрів забезпечують довговічність та чудову видимість.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Захист стійок",
+        description:
+          "Встановлюйте сталеві або полімерні протектори стійок палетних стелажів заввишки не менше 400 мм.",
+      },
+      {
+        title: "Розділення руху",
+        description:
+          "Використовуйте захисні перила та енергопоглинаючі бар'єри для фізичного відокремлення маршрутів техніки від пішоходів.",
+      },
+      {
+        title: "Безпечна логістика",
+        description:
+          "Вибирайте навантажувачі з попереджувальними системами (blue spot, радари) та захисні ворота для навантажувальних доків.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Стелажні конструкції, які потребують встановлення відбійників та захисних бар'єрів.",
+      },
+      {
+        label: "Складські мезоніни та платформи",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Підняті над рівнем підлоги мезоніни, які потребують перил та безпечних перевантажувальних шлюзів.",
+      },
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Внутрішньоскладська техніка, що працює в зонах спільного руху з персоналом.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Палетний стелаж",
+        glossarySlug: "regal-paletowy",
+        context: "Вимоги до захисту рамних металоконструкцій від ударів колісною технікою.",
+      },
+      {
+        label: "Вантажопідйомність стелажа",
+        glossarySlug: "nosnosc-regalu",
+        context: "Конструктивна стійкість та обмеження навантаження стелажних систем.",
+      },
+      {
+        label: "Навантажувач",
+        glossarySlug: "wozek-widlowy",
+        context: "Правила безпечного водіння та маневрування у вузьких складських проїздах.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Які мінімальні вимоги до захисних кожухів для стійок стелажів?",
+        answer:
+          "Захисний елемент повинен закривати стійку на висоту мінімум 400 мм та кріпитися анкерами безпосередньо до підлоги, окремо від самої стійки.",
+      },
+      {
+        question: "Чи кращі пластикові захисні бар'єри за сталеві?",
+        answer:
+          "Полімерні бар'єри поглинають ударну енергію та повертаються до початкової форми, що захищає кріплення в бетоні, тоді як пошкоджену сталеву балясину доведеться замінити.",
+      },
+      {
+        question: "Як захистити край мезонінної платформи?",
+        answer:
+          "Необхідно змонтувати огорожу висотою 1,1 м з бортовою дошкою знизу та встановити безпечні двосторонні ворота-шлюз для завантаження палет.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Переглянути рішення",
+    },
+    seo: {
+      title: "Безпека складу та захисні бар'єри B2B | LogiMarket",
+      description:
+        "Захисне обладнання для промислових складів: відбійники стійок, гнучкі бар'єри та перевантажувальні шлюзи на LogiMarket.",
+    },
+  },
+  {
+    intent: "warehouse-safety",
+    locale: "zh",
+    slug: "warehouse-safety",
+    path: "/zh/solutions/warehouse-safety",
+    sectionLabel: "解决方案",
+    title: "仓储安全管理与物流基础设施防护",
+    eyebrow: "B2B采购意向",
+    intro:
+      "安装货架防撞保护件、划定人车通行界限以及配置适当的安全隔离设施，能够有效减少碰撞事故并保护仓库基础设施。本页面旨在为防撞柱、工业护栏及重型仓储安全设备的采购提供指南。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "货架立柱防护罩和转角防撞桩是减少重型货架受撞倒塌风险、防止结构性损坏的必要物理屏障。",
+      "仓库内部的安全通道规划必须通过安装实体阻挡护栏，将叉车行驶路线与人员行走通道进行物理隔离。",
+      "防撞柱所采用的高强度钢材以及黄黑警示漆等高辨识度涂装，可确保设备的长期抗撞性能与日常能见度。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "货架立柱防护",
+        description:
+          "在重型托盘货架立柱上安装钢制或高弹力聚合物防撞护脚，保护高度应不低于400毫米。",
+      },
+      {
+        title: "人车分流与隔离",
+        description:
+          "配置重型防撞双栏杆和吸能材料护栏，在厂区内建立起行人与物料搬运设备之间的实体防线。",
+      },
+      {
+        title: "物流防滑防坠落",
+        description:
+          "叉车设备可选装声光警示系统（如 blue spot、防撞雷达），并在二层钢平台上加装安全卸货闸门。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "需要配置立柱保护器、防护端栅的重型存储架和托盘货架系统。",
+      },
+      {
+        label: "阁楼货架与钢平台",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "高空作业区，边缘需配置符合安全要求的高扶手和重型安全联锁托盘闸门。",
+      },
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "在混合交通区域内运行的物料搬运车辆，需符合相关行驶管理规范。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "应对叉车碰撞冲击而设计的格构钢货架立柱保护件安装规范。",
+      },
+      {
+        label: "货架载荷能力",
+        glossarySlug: "nosnosc-regalu",
+        context: "货架结构在大吨位存储状态下的稳定性与许用极限参数。",
+      },
+      {
+        label: "叉车",
+        glossarySlug: "wozek-widlowy",
+        context: "车辆在狭窄巷道中安全行驶、规避死角与限速行驶的安全驾驶指引。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "重型货架立柱防护座有哪些基本设计规范？",
+        answer:
+          "防撞防护罩的保护高度应不低于400毫米，且固定用化学锚栓或膨胀螺栓必须独立安装在地面上，不能与货架立柱立板共用螺栓。",
+      },
+      {
+        question: "高分子材料安全护栏与传统钢制护栏相比有何优势？",
+        answer:
+          "高回弹聚合物安全护栏能够吸收巨大冲击力并在变形后复原，有效保护地坪混凝土不被崩裂扯碎，而传统的钢制防撞栏在发生严重形变后则必须报废换新。",
+      },
+      {
+        question: "如何对阁楼钢平台的卸货边缘进行安全防护？",
+        answer:
+          "必须在边缘架设高度不低于1.1米且底部配有踢脚板的栏杆，同时推荐加装能在翻转动作中提供防坠落连续屏障的翻转式安全闸门。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "仓储安全设施与工业防撞栏采购 B2B | LogiMarket",
+      description:
+        "B2B工业仓库安全 hardware 配置：重型货架防撞角、弹力吸能护栏、翻转式安全卸货闸门及立柱保护系统。",
+    },
+  },
 ] satisfies LandingPageContent[];
