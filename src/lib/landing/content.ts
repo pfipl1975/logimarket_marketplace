@@ -4003,4 +4003,404 @@ export const landingPages = [
         "对比 B2B 仓储设备类别：货架、欧标周转箱、阁楼平台及包装工作台以进行物流采购。",
     },
   },
+  // Storage Systems - ES
+  {
+    intent: "storage-systems",
+    locale: "es",
+    slug: "sistemas-de-almacenaje",
+    path: "/es/soluciones/sistemas-de-almacenaje",
+    sectionLabel: "Soluciones",
+    title: "Sistemas de almacenaje para almacenes y centros logísticos",
+    eyebrow: "Intención de compra B2B",
+    intro:
+      "El almacenamiento eficiente en el almacén requiere una selección precisa de los sistemas de estanterías y la optimización de la capacidad cúbica. Esta página apoya los procesos de decisión para la compra de estanterías para palets, entreplantas industriales y contenedores Euro.",
+    procurementContextTitle: "Contexto de compra B2B",
+    procurementContext: [
+      "El diseño del espacio del almacén debe tener en cuenta la resistencia de la solera y la capacidad de carga máxima de los bastidores.",
+      "La selección de la tecnología adecuada depende de los parámetros de rotación de las existencias (LIFO, FIFO) y de las especificaciones de las carretillas elevadoras utilizadas.",
+      "El cumplimiento de las normas de prevención de riesgos laborales y las inspecciones técnicas anuales realizadas por inspectores PRSES son esenciales para la seguridad de la estructura.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Capacidad de carga máxima",
+        description:
+          "Adapte la capacidad de carga de los largueros y bastidores al peso de los palets almacenados con un margen de seguridad adecuado.",
+      },
+      {
+        title: "Rotación de la carga",
+        description:
+          "Elija estanterías convencionales para un acceso directo (FIFO) o estanterías compactas y dinámicas para optimizar la densidad de almacenamiento.",
+      },
+      {
+        title: "Altura de almacenamiento",
+        description:
+          "Aproveche la altura útil de la nave industrial mediante la implementación de sistemas de gran altura o entreplantas de trabajo.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Estructuras portantes básicas para el almacenamiento de mercancías en múltiples niveles.",
+      },
+      {
+        label: "Entreplantas y pasarelas de almacén",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Estructuras metálicas autoportantes que multiplican la superficie útil de la nave.",
+      },
+      {
+        label: "Contenedores plásticos Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Portadores estandarizados para el almacenamiento de mercancía pequeña en sistemas de estanterías.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Estantería de paletización",
+        glossarySlug: "regal-paletowy",
+        context: "Definición y requisitos técnicos de los sistemas convencionales de almacenamiento de palets.",
+      },
+      {
+        label: "Entreplanta de almacén",
+        glossarySlug: "antresola-magazynowa",
+        context: "Plataformas metálicas multinivel en la logística de almacenamiento.",
+      },
+      {
+        label: "Capacidad del rack",
+        glossarySlug: "nosnosc-regalu",
+        context: "Parámetros estáticos de cargas admisibles en las estructuras.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre compras B2B",
+    faq: [
+      {
+        question: "¿Cuáles son los errores más comunes al seleccionar la capacidad de carga de las estanterías?",
+        answer:
+          "Ignorar las fuerzas dinámicas al depositar los palets y no distribuir el peso de manera uniforme sobre las vigas de carga.",
+      },
+      {
+        question: "¿Requiere el montaje de las estanterías industriales una certificación especial?",
+        answer:
+          "Sí, el equipo de montaje debe contar con certificaciones del fabricante y estar cualificado para trabajos en altura.",
+      },
+      {
+        question: "¿Cuáles son las ventajas de utilizar estantes de malla de rejilla?",
+        answer:
+          "Los estantes de malla evitan la caída de cajas sueltas y facilitan el paso del agua de los sistemas de rociadores contra incendios.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Sistemas de almacenaje y estanterías B2B | LogiMarket",
+      description:
+        "Guía de compra de sistemas de almacenamiento industrial: estanterías de paletización, entreplantas industriales y contenedores Euro en LogiMarket.",
+    },
+  },
+  // Storage Systems - FR
+  {
+    intent: "storage-systems",
+    locale: "fr",
+    slug: "systemes-de-stockage",
+    path: "/fr/solutions/systemes-de-stockage",
+    sectionLabel: "Solutions",
+    title: "Systèmes de stockage pour entrepôts et centres logistiques",
+    eyebrow: "Intention d'achat B2B",
+    intro:
+      "Un stockage efficace en entrepôt exige une sélection rigoureuse des systèmes de rayonnage et une optimisation de la hauteur utile. Cette page guide les décisions B2B pour les rayonnages à palettes, les mezzanines industrielles et les bacs Euro.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "L'aménagement de l'entrepôt doit aligner les capacités de charge des échelles de rayonnage avec la résistance de la dalle de sol.",
+      "Le choix de la technologie dépend des flux de rotation des stocks (LIFO, FIFO) et des spécifications des chariots élévateurs utilisés.",
+      "La conformité aux normes de sécurité au travail et les inspections annuelles par des experts PRSES sont essentielles pour la gestion de l'intégrité des structures.",
+    ],
+    decisionGuidanceTitle: "Guide de décision",
+    decisionFactors: [
+      {
+        title: "Capacité de charge",
+        description:
+          "Adaptez la capacité de charge des lisses et des échelles au poids des palettes avec une marge de sécurité appropriée.",
+      },
+      {
+        title: "Rotation des stocks",
+        description:
+          "Choisissez des rayonnages à palettes classiques pour un accès direct (FIFO) ou des rayonnages par accumulation pour optimiser la densité.",
+      },
+      {
+        title: "Expansion verticale",
+        description:
+          "Exploitez la hauteur utile du bâtiment en installant des rayonnages grande hauteur ou des mezzanines industrielles à plusieurs niveaux.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Structures porteuses essentielles pour le stockage de marchandises sur plusieurs niveaux.",
+      },
+      {
+        label: "Mezzanines et plateformes d'entrepôt",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Plateformes métalliques autoportantes multipliant la surface au sol disponible.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Supports standardisés pour le stockage de petits produits dans les rayonnages.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Définition et exigences techniques pour le stockage de palettes.",
+      },
+      {
+        label: "Mezzanine d'entrepôt",
+        glossarySlug: "antresola-magazynowa",
+        context: "Plateformes métalliques multiniveaux dans la logistique de stockage.",
+      },
+      {
+        label: "Capacité du rayonnage",
+        glossarySlug: "nosnosc-regalu",
+        context: "Paramètres statiques des charges admissibles sur les structures de stockage.",
+      },
+    ],
+    faqTitle: "FAQ achats B2B",
+    faq: [
+      {
+        question: "Quelles sont les erreurs courantes lors du choix des capacités de charge ?",
+        answer:
+          "Négliger les forces dynamiques lors de la dépose des palettes et répartir le poids de manière inégale sur les lisses.",
+      },
+      {
+        question: "L'installation de rayonnages industriels nécessite-t-elle des habilitations spéciales ?",
+        answer:
+          "Oui, les équipes de montage doivent être agréées par le fabricant et qualifiées pour les travaux en hauteur.",
+      },
+      {
+        question: "Quels sont les avantages d'utiliser des plateaux grillagés ?",
+        answer:
+          "Les plateaux grillagés empêchent la chute de cartons individuels et permettent le passage de l'eau des systèmes de sprinklers.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Systèmes de stockage et rayonnages B2B | LogiMarket",
+      description:
+        "Guide d'achat pour les systèmes de stockage industriels : rayonnages à palettes, mezzanines de stockage et bacs Euro sur LogiMarket.",
+    },
+  },
+  // Storage Systems - UK
+  {
+    intent: "storage-systems",
+    locale: "uk",
+    slug: "systemy-zberihannia",
+    path: "/uk/solutions/systemy-zberihannia",
+    sectionLabel: "Рішення",
+    title: "Системи зберігання для складів та логістичних центрів",
+    eyebrow: "B2B-закупівлі",
+    intro:
+      "Ефективне зберігання товарів на складі вимагає точного підбору стелажних систем та оптимізації корисного об'єму. Ця сторінка допомагає приймати рішення щодо закупівлі палетних стелажів, складських мезонінів та євроконтейнерів.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Проектування складського простору має враховувати несучу здатність підлоги та максимальне навантаження на рами стелажів.",
+      "Вибір технології залежить від швидкості ротації товарів (LIFO, FIFO) та технічних характеристик навантажувачів.",
+      "Дотримання вимог охорони праці та щорічний технічний огляд стелажів інспекторами PRSES є обов'язковими для безпеки конструкцій.",
+    ],
+    decisionGuidanceTitle: "Рекомендації щодо вибору",
+    decisionFactors: [
+      {
+        title: "Максимальне навантаження",
+        description:
+          "Узгоджуйте вантажопідйомність балок та рам стелажів із вагою палет із відповідним коефіцієнтом безпеки.",
+      },
+      {
+        title: "Ротація вантажів",
+        description:
+          "Обирайте фронтальні стелажі для прямого доступу (FIFO) або набивні чи гравітаційні стелажі для максимальної щільності.",
+      },
+      {
+        title: "Висота зберігання",
+        description:
+          "Використовуйте корисну висоту складу за рахунок впровадження висотних стелажних систем або робочих мезонінів.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Основні несучі конструкції для багаторівневого зберігання вантажів.",
+      },
+      {
+        label: "Складські мезоніни та платформи",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Самонесучі металеві конструкції, що збільшують корисну площу приміщення.",
+      },
+      {
+        label: "Пластикові євроконтейнери",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Стандартизовані носії для дрібного асортименту на поличних стелажах.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Палетний стелаж",
+        glossarySlug: "regal-paletowy",
+        context: "Визначення та технічні вимоги до фронтальних систем зберігання палет.",
+      },
+      {
+        label: "Складський мезонін",
+        glossarySlug: "antresola-magazynowa",
+        context: "Багаторівневі сталеві платформи у складській логістиці.",
+      },
+      {
+        label: "Вантажопідйомність стелажа",
+        glossarySlug: "nosnosc-regalu",
+        context: "Статичні параметри допустимого навантаження на металеві конструкції.",
+      },
+    ],
+    faqTitle: "FAQ щодо закупівель",
+    faq: [
+      {
+        question: "Які найпоширеніші помилки при виборі вантажопідйомності стелажів?",
+        answer:
+          "Ігнорування динамічних навантажень під час встановлення палет та нерівномірний розподіл ваги на балках.",
+      },
+      {
+        question: "Чи вимагає монтаж складських стелажів спеціальної сертифікації?",
+        answer:
+          "Так, монтажна бригада повинна мати сертифікати від виробника та допуск до робіт на висоті.",
+      },
+      {
+        question: "Які переваги використання сітчастих полиць на стелажах?",
+        answer:
+          "Сітчасті полиці запобігають падінню окремих коробок і забезпечують проходження води в разі спрацьовування спринклерної системи.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Дивитися рішення",
+    },
+    seo: {
+      title: "Системи зберігання та стелажі B2B | LogiMarket",
+      description:
+        "Вибір та закупівля складських систем зберігання: палетні стелажі, мезоніни, поличні стелажі та євроконтейнери на LogiMarket.",
+    },
+  },
+  // Storage Systems - ZH
+  {
+    intent: "storage-systems",
+    locale: "zh",
+    slug: "storage-systems",
+    path: "/zh/solutions/storage-systems",
+    sectionLabel: "解决方案",
+    title: "用于仓库及物流设施的仓储系统",
+    eyebrow: "B2B采购意向",
+    intro:
+      "高效的仓库存储离不开对货架系统的精准选型和空间容量的深度优化。本页面旨在为您的托盘货架、阁楼平台及欧标周转箱采购提供决策参考。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "仓库规划设计必须将货架单元的承载力与地面楼板的荷载参数进行科学匹配。",
+      "选择何种仓储技术取决于物料的旋转规律（LIFO, FIFO）以及所用叉车的性能规格。",
+      "符合安全生产规范以及由 PRSES 专家进行的年度货架技术检测是保障结构安全的关键。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "承载能力",
+        description:
+          "将横梁与立柱的额定承载力与存储的托盘重量进行匹配，并留出合理的安全系数。",
+      },
+      {
+        title: "货物流转",
+        description:
+          "选择横梁式货架以实现直接访问（FIFO），或选择驶入式和动态重力货架以提高存储密度。",
+      },
+      {
+        title: "垂直空间扩展",
+        description:
+          "通过引入高位货架或多层钢结构阁楼平台，充分利用仓库的净空高度。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "用于多层货物存储的重载核心结构。",
+      },
+      {
+        label: "钢结构阁楼与平台",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "自承重钢结构设计，可成倍增加可用地面空间。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "货架搁板系统配套使用的标准物流容器。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "托盘存储的技术要求与基本概念。",
+      },
+      {
+        label: "阁楼平台",
+        glossarySlug: "antresola-magazynowa",
+        context: "仓储物流中常见的多层钢结构平台系统。",
+      },
+      {
+        label: "货架承载力",
+        glossarySlug: "nosnosc-regalu",
+        context: "货架结构允许的最大静态承载参数。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "选择货架承载力时最容易犯哪些错误？",
+        answer:
+          "忽视托盘放置时的动态冲击力，以及横梁上载荷分布不均。",
+      },
+      {
+        question: "仓库货架安装是否需要专业资质？",
+        answer:
+          "是的，安装团队必须获得制造商的授权认证，并具备高空作业和特种设备操作资质。",
+      },
+      {
+        question: "货架上使用钢网层板有哪些好处？",
+        answer:
+          "钢网层板可以有效防止零散纸箱跌落，并且不阻碍消防喷淋系统水流的通过。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "仓储系统与货架 B2B | LogiMarket",
+      description:
+        "工业仓储系统采购指南：托盘货架、钢结构阁楼、搁板货架及欧标周转箱选型规范。",
+    },
+  },
 ] satisfies LandingPageContent[];
