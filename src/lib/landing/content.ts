@@ -5611,4 +5611,420 @@ export const landingPages = [
         "B2B装卸货区设备采购：重载校验台、托盘车、装卸口防撞垫及防护护栏选型规范。",
     },
   },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "es",
+    slug: "almacen-ecommerce",
+    path: "/es/soluciones/almacen-ecommerce",
+    sectionLabel: "Soluciones",
+    title: "Almacén e-commerce",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La logística de comercio electrónico requiere alta flexibilidad, velocidad en la preparación de pedidos y una gestión eficiente de devoluciones. Esta página coordina la adquisición de estanterías, carros de picking, mesas de embalaje y contenedores de plástico.",
+    procurementContextTitle: "Contexto de adquisición B2B",
+    procurementContext: [
+      "La alta rotación de inventario y los pedidos pequeños de múltiples artículos exigen una configuración dinámica del espacio.",
+      "La compra de equipamiento debe enfocarse en la escalabilidad: las mesas de embalaje y estanterías deben adaptarse a los picos estacionales de demanda.",
+      "La prioridad es la integración de flujos: almacenamiento de piezas pequeñas, preparación de pedidos multi-lote y zonas ergonómicas de embalaje.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Velocidad de picking",
+        description:
+          "Evalúe la ergonomía del operario. Estanterías fácilmente ajustables y gavetas Euro transparentes reducen los tiempos de recogida.",
+      },
+      {
+        title: "Estación de embalaje",
+        description:
+          "Seleccione mesas de embalaje con altura regulable y estantes integrados para consumibles para disminuir la fatiga laboral.",
+      },
+      {
+        title: "Flexibilidad y capacidad",
+        description:
+          "Adapte la capacidad de las estanterías para configuraciones de productos ligeros pero de alta densidad, típicos del comercio online.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Mesas de embalaje y preparación",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Estaciones ergonómicas que aceleran la consolidación y expedición de pedidos.",
+      },
+      {
+        label: "Contenedores de plástico Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Soportes estándar para picking, almacenamiento temporal y organización de piezas sueltas.",
+      },
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Equipos de manipulación que facilitan la recogida de múltiples pedidos simultáneamente.",
+      },
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Estructuras de estanterías ideales para el almacenamiento de piezas pequeñas a alta densidad.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Proceso logístico clave que influye directamente en el tiempo de entrega al cliente.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Caja estandarizada compatible con estanterías de picking y sistemas de transporte.",
+      },
+      {
+        label: "Transporte interno",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Flujo físico de mercancías dentro de las zonas de almacenamiento, preparación y empaque.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Cómo seleccionar estanterías para un almacén e-commerce?",
+        answer:
+          "Priorice estanterías metálicas sin tornillos con niveles regulables para adaptarse al tamaño de sus contenedores Euro.",
+      },
+      {
+        question: "¿Por qué es crítica la ergonomía en las mesas de embalaje?",
+        answer:
+          "Las tareas repetitivas causan fatiga. Las mesas regulables en altura con organizadores aumentan la productividad diaria.",
+      },
+      {
+        question: "¿Son necesarios los contenedores Euro en el picking?",
+        answer:
+          "Sí, garantizan la estandarización y son ideales para estanterías, carros de preparación y cintas transportadoras.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Equipamiento para almacén e-commerce B2B | LogiMarket",
+      description:
+        "Guía de adquisición para almacenes e-commerce: mesas de embalaje, carros de picking, contenedores Euro y estanterías para profesionales en LogiMarket.",
+    },
+  },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "fr",
+    slug: "entrepot-ecommerce",
+    path: "/fr/solutions/entrepot-ecommerce",
+    sectionLabel: "Solutions",
+    title: "Entrepôt e-commerce",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La logistique du commerce électronique exige une grande flexibilité, une préparation rapide des commandes et une gestion efficace des retours. Cette page structure l'achat de rayonnages, de chariots de préparation, de tables d'emballage et de bacs en plastique.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "La rotation élevée des stocks et les petites commandes multi-articles exigent une configuration dynamique de l'espace de stockage.",
+      "L'achat d'équipement doit privilégier la modularité : les tables d'emballage et les rayonnages doivent s'adapter aux pics d'activité saisonniers.",
+      "La priorité is l'intégration des flux : stockage de pièces légères, préparation multi-commandes et postes d'emballage ergonomiques.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Vitesse de préparation",
+        description:
+          "Évaluez l'ergonomie du préparateur. Des rayonnages réglables et des bacs Euro transparents réduisent le temps de recherche.",
+      },
+      {
+        title: "Poste d'emballage",
+        description:
+          "Choisissez des tables d'emballage réglables en hauteur avec des supports pour consommables afin de limiter la fatigue de l'opérateur.",
+      },
+      {
+        title: "Flexibilité et capacité",
+        description:
+          "Adaptez la capacité des étagères aux configurations de produits légers mais à forte densité, typiques de l'e-commerce.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Tables d'emballage et de préparation",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Postes ergonomiques accélérant la consolidation et la préparation des colis.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Supports standard pour la préparation, la mise en tampon et l'organisation du vrac.",
+      },
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Équipements de manutention facilitant le prélèvement de plusieurs commandes à la fois.",
+      },
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Structures d'étagères idéales pour le stockage haute densité de petits articles.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Processus logistique clé impactant directement le délai de livraison final.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Bac standardisé compatible avec les rayonnages légers et les convoyeurs.",
+      },
+      {
+        label: "Transport interne",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Flux de matériaux au sein des zones de stockage, de préparation et d'emballage.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Comment choisir des rayonnages pour un entrepôt e-commerce ?",
+        answer:
+          "Privilégiez les rayonnages légers sans vis avec des niveaux modulables adaptés aux dimensions de vos bacs Euro.",
+      },
+      {
+        question: "Pourquoi l'ergonomie des tables de conditionnement est-elle cruciale ?",
+        answer:
+          "L'emballage répétitif fatigue les opérateurs. Des tables réglables équipées de dévidoirs augmentent les cadences.",
+      },
+      {
+        question: "Les bacs Euro sont-ils indispensables pour la préparation ?",
+        answer:
+          "Oui, ils apportent une standardisation parfaite avec les rayonnages, les chariots de picking et les convoyeurs.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Équipement pour entrepôt e-commerce B2B | LogiMarket",
+      description:
+        "Guide d'achat pour logistique e-commerce : tables d'emballage, chariots de préparation, bacs Euro et rayonnages industriels sur LogiMarket.",
+    },
+  },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "uk",
+    slug: "sklad-elektronnoi-komertsii",
+    path: "/uk/solutions/sklad-elektronnoi-komertsii",
+    sectionLabel: "Рішення",
+    title: "Склад електронної комерції",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Логістика e-commerce вимагає високої гнучкості, швидкості комплектації замовлень та ефективного оброблення повернень. Ця сторінка впорядковує закупівлі поличних стелажів, візків для комплектації, столів для пакування та пластикових ящиків.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Висока оборотність запасів і дрібноштучні замовлення вимагають динамічного планування складського простору.",
+      "Закупівля обладнання має орієнтуватися на масштабованість: столи для пакування та стелажі повинні адаптуватися до сезонних піків.",
+      "Ключовим є інтеграція процесів: зберігання дрібних товарів, багатозонове відбирання та ергономічні зони консолідації.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Швидкість комплектації",
+        description:
+          "Оцінюйте ергономіку відбирача. Стелажі з легким регулюванням полиць та прозорі контейнери Euro скорочують час пошуку.",
+      },
+      {
+        title: "Пакувальний стіл",
+        description:
+          "Обирайте столи для пакування з регулювання висоти та тримачами для витратних матеріалів, щоб зменшити втому персоналу.",
+      },
+      {
+        title: "Гнучкість та навантаження",
+        description:
+          "Підбирайте полиці під легкі дрібноштучні товари з високою щільністю укладання, що характерно для онлайн-торгівлі.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Столи для пакування та комплектації",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Ергономічні робочі місця, що прискорюють консолідацію та підготовку посилок до відправлення.",
+      },
+      {
+        label: "Пластикові контейнери Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Стандартна тара для комплектації, тимчасового буферизування та сортування штучних товарів.",
+      },
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Обладнання для полегшення одночасного збирання великої кількості дрібних замовлень.",
+      },
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Поличні конструкції, які ідеально підходять для зберігання дрібноштучного асортименту.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Основний складський процес, що безпосередньо впливає на час виконання замовлення клієнта.",
+      },
+      {
+        label: "Контейнер Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Стандартизована коробка, що підходить для використання на поличних стелажах та конвеєрах.",
+      },
+      {
+        label: "Внутрішній транспорт",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Фізичне переміщення вантажів у зонах зберігання, комплектації та пакування замовлень.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Як підібрати стелажі для складу e-commerce?",
+        answer:
+          "Обирайте поличні металеві стелажі безболтового з'єднання з можливістю швидкої перестановки полиць під розміри контейнерів Euro.",
+      },
+      {
+        question: "Чому важлива ергономіка столу для пакування?",
+        answer:
+          "Одноманітна пакувальна робота викликає перевтому. Столи з регулюванням висоти та тримачами для коробок підвищують продуктивність.",
+      },
+      {
+        question: "Чи обов'язково використовувати ящики Euro під час комплектації?",
+        answer:
+          "Так, вони забезпечують стандартизацію – підходять до полиць, візків та автоматичних конвеєрних ліній.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Переглянути рішення",
+    },
+    seo: {
+      title: "Обладнання для складу e-commerce B2B | LogiMarket",
+      description:
+        "Посібник із закупівель для складів електронної комерції: пакувальні столи, комплектувальні візки, ящики Euro та поличні стелажі на LogiMarket.",
+    },
+  },
+  {
+    intent: "ecommerce-warehouse",
+    locale: "zh",
+    slug: "ecommerce-warehouse",
+    path: "/zh/solutions/ecommerce-warehouse",
+    sectionLabel: "解决方案",
+    title: "电商物流仓库与配送中心",
+    eyebrow: "B2B采购意向",
+    intro:
+      "电商物流对作业灵活性、订单拣选速度和高效的退货处理有着极高要求。本页面专为电商仓库在采购 Fachboden 搁板货架、拣选推车、打包工作台及塑料周转箱时提供决策指导。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "高库存周转率与多品类小订单特征要求库区布局具备动态调整能力。",
+      "设备采购必须着眼于可扩展性：打包台和货架单元需要适应季节性业务高峰。",
+      "优化的流程整合应当紧密连接零配件存储、多订单并行拣选以及符合人体工学的打包工位。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "拣选作业速度",
+        description:
+          "评估拣货员的人体工学特性。高度易调的搁板货架和标识清晰的欧标周转箱可显著缩短拣货时间。",
+      },
+      {
+        title: "打包工位设计",
+        description:
+          "采购高度可调且带有包装耗材挂架的专业打包台，以降低操作人员的劳动强度。",
+      },
+      {
+        title: "灵活性与承载力",
+        description:
+          "货架载荷应精确匹配在线零售物流中典型的高密度、轻量化零散商品配置。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "打包与拣选工作台",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "符合人体工学的工作台，有助于加速订单合并与最终发货。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "用于订单拣选、缓存以及分类存放散装物资的标准周转箱。",
+      },
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "旨在提高多批次订单集中拣选效率 of 物流搬运设备。",
+      },
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "非常适合零散配件高密度存储的层架与 Fachboden 货架结构。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "直接决定电商发货周期和履约时效的核心仓库作业流程。",
+      },
+      {
+        label: "欧标周转箱",
+        glossarySlug: "pojemnik-euro",
+        context: "与轻型搁板货架及辊筒输送线完美兼容的标准化仓储载体。",
+      },
+      {
+        label: "内部物流",
+        glossarySlug: "transport-wewnetrzny",
+        context: "电商配发货区内，物资从存储区流转至打包工位的内部物流逻辑。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "如何为电商仓库配置货架？",
+        answer:
+          "首选无螺栓结构的轻型 Fachboden 搁板货架，其层高应可灵活调节以匹配标准欧标箱。",
+      },
+      {
+        question: "打包台的人体工学设计为什么至关重要？",
+        answer:
+          "重复性打包动作极易导致疲劳。配备物料整理架的高度可调工作台可大幅提升打包产出。",
+      },
+      {
+        question: "电商拣货是否必须使用欧标周转箱？",
+        answer:
+          "欧标箱提供了高度标准化的界面，能够无缝配合货架、拣货推车和自动输送线。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "电商仓库设备采购 B2B | LogiMarket",
+      description:
+        "B2B电商物流仓库配置规范：打包工作台、多层拣货推车、欧标周转箱及轻型货架选型指南。",
+    },
+  },
 ] satisfies LandingPageContent[];
