@@ -6027,4 +6027,400 @@ export const landingPages = [
         "B2B电商物流仓库配置规范：打包工作台、多层拣货推车、欧标周转箱及轻型货架选型指南。",
     },
   },
+  {
+    intent: "distribution-center",
+    locale: "es",
+    slug: "centro-de-distribucion",
+    path: "/es/soluciones/centro-de-distribucion",
+    sectionLabel: "Soluciones",
+    title: "Centro de distribución",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Los centros de distribución se basan en el flujo masivo de palets, el almacenamiento intermedio y una consolidación eficiente de cargas. Esta página facilita la adquisición de estanterías de paletización, carretillas elevadoras, altillos industriales y señalización de zonas.",
+    procurementContextTitle: "Contexto de adquisición B2B",
+    procurementContext: [
+      "Las decisiones en los centros de distribución vienen determinadas por el alto flujo de unidades de paletización (palets Euro y palets industriales).",
+      "Es indispensable mantener el equilibrio operativo entre la zona de almacenamiento general y las áreas de preparación rápida y consolidación.",
+      "La compra de equipamiento debe cumplir con las normativas más estrictas de capacidad de carga y seguridad contra impactos mecánicos.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Aprovechamiento de altura",
+        description:
+          "Maximice el espacio vertical. Las estanterías de paletización y las estructuras de altillos permiten duplicar la capacidad útil.",
+      },
+      {
+        title: "Seguridad operativa",
+        description:
+          "En zonas con tránsito intensivo de carretillas, es obligatorio instalar protectores de columnas de acero o polímero de alta resistencia.",
+      },
+      {
+        title: "Diseño de pasillos y señalización",
+        description:
+          "La demarcación clara con señales horizontales y verticales optimiza el tráfico interno y previene colisiones.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Estanterías de paletización y picking que forman la estructura principal del centro logístico.",
+      },
+      {
+        label: "Altillos y plataformas de almacén",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Estructuras modulares a varios niveles para aprovechar la altura de la nave industrial.",
+      },
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Carretillas contrapesadas, retráctiles y transpaletas para la manipulación de mercancías paletizadas.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Estantería de paletización",
+        glossarySlug: "regal-paletowy",
+        context: "Estructuras metálicas diseñadas para la carga de mercancías pesadas sobre palet.",
+      },
+      {
+        label: "Transporte interno",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Flujo y tránsito de carretillas, transpaletas y operarios en la zona logística.",
+      },
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Consolidación de productos desde los niveles bajos de estantería o zonas de picking dedicadas.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Cómo seleccionar estanterías para un centro de distribución?",
+        answer:
+          "Comience con estanterías convencionales para palets con acceso al 100% de los huecos. Use dinámicas o compactas para flujos de alta densidad.",
+      },
+      {
+        question: "¿Cuándo conviene instalar un altillo industrial?",
+        answer:
+          "Cuando necesite habilitar más superficie útil para áreas de picking, control o preparación de pedidos sin ampliar la superficie construida.",
+      },
+      {
+        question: "¿Qué tipo de protectores para estanterías son exigibles?",
+        answer:
+          "Los puntales y largueros expuestos a impactos de carretillas deben contar con defensas de al menos 400 mm de altura ancladas al suelo.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Equipamiento para centros de distribución B2B | LogiMarket",
+      description:
+        "Guía de adquisición para centros de distribución B2B: estanterías para palets, altillos, carretillas industriales y sistemas de señalización en LogiMarket.",
+    },
+  },
+  {
+    intent: "distribution-center",
+    locale: "fr",
+    slug: "centre-de-distribution",
+    path: "/fr/solutions/centre-de-distribution",
+    sectionLabel: "Solutions",
+    title: "Centre de distribution",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Les centres de distribution reposent sur un flux massif de palettes, le stockage tampon et une consolidation efficace des charges. Cette page facilite l'acquisition de rayonnages à palettes, de chariots élévateurs, de plateformes de stockage et de signalétique.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "Les décisions d'achat en centre de distribution sont dictées par le volume élevé de palettes manutentionnées (palettes Euro et industrielles).",
+      "Il est essentiel d'équilibrer l'espace entre la zone de stockage de réserve et les zones de préparation rapide ou de tri.",
+      "Les équipements commandés doivent respecter les normes les plus strictes de charge maximale et de sécurité mécanique.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Utilisation de la hauteur",
+        description:
+          "Maximisez l'espace vertical. Les rayonnages à palettes lourds et les plateformes mezzanine permettent de doubler la surface au sol.",
+      },
+      {
+        title: "Sécurité des installations",
+        description:
+          "Dans les allées à fort trafic de chariots élévateurs, des protections robustes de montants de rayonnage sont indispensables.",
+      },
+      {
+        title: "Organisation des flux",
+        description:
+          "Délimitez clairement les allées piétonnes et machines avec une signalisation adaptée afin de fluidifier les transferts.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Rayonnages à palettes et étagères formant l'infrastructure centrale des plates-formes logistiques.",
+      },
+      {
+        label: "Mezzanines et plateformes de stockage",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Structures autoporteuses à plusieurs niveaux optimisant la hauteur sous plafond.",
+      },
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Chariots frontaux, rétractables et transpalettes pour la manipulation de palettes.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Structures métalliques de stockage pour la charge de palettes de poids élevé.",
+      },
+      {
+        label: "Transport interne",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Flux de déplacement des engins et des opérateurs au sein du centre logistique.",
+      },
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Prélèvement de marchandises depuis les niveaux inférieurs ou les zones de picking dédiées.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Comment choisir un système de rayonnage pour un hub logistique ?",
+        answer:
+          "Optez pour des rayonnages à palettes conventionnels pour une accessibilité totale. Ajoutez des rayonnages dynamiques pour les fortes rotations.",
+      },
+      {
+        question: "Quand convient-il d'investir dans une plateforme de stockage ?",
+        answer:
+          "Dès que vous avez besoin de surface supplémentaire pour le tri, le contrôle ou l'emballage sans agrandir le bâtiment.",
+      },
+      {
+        question: "Quelles protections de rayonnages sont requises ?",
+        answer:
+          "Les échelles exposées aux chocs des chariots doivent être munies de sabots de protection d'au moins 400 mm de haut fixés au sol.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Équipement pour centre de distribution B2B | LogiMarket",
+      description:
+        "Guide d'achat pour centres de distribution B2B : rayonnages à palettes, mezzanines de stockage, chariots élévateurs et signalisation industrielle.",
+    },
+  },
+  {
+    intent: "distribution-center",
+    locale: "uk",
+    slug: "dystrybutsiinyi-tsentr",
+    path: "/uk/solutions/dystrybutsiinyi-tsentr",
+    sectionLabel: "Рішення",
+    title: "Дистриб'юторський центр",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Дистриб'юторські центри спираються на масовий вантажопотік палет, буферизацію запасів та ефективну консолідацію відправлень. Ця сторінка полегшує вибір палетних стелажів, навантажувачів, мезонінних конструкцій та систем розмітки зон.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Рішення в дистриб'юторському центрі визначаються високою інтенсивністю обробки палетних вантажів (Euro-палети, промислові палети).",
+      "Необхідно підтримувати баланс між зоною тривалого зберігання та зонами швидкого відбору, сортування і консолідації.",
+      "Закупівля складського обладнання має відповідати найвищим стандартам вантажопідйомності та механічної безпеки.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Використання висоти",
+        description:
+          "Максимізуйте вертикальний простір. Фронтальні палетні стелажі та складські мезоніни дозволяють подвоїти корисну площу.",
+      },
+      {
+        title: "Безпека праці",
+        description:
+          "У зонах інтенсивного руху навантажувачів обов'язковим є встановлення сталевих або полімерних захисних огороджень для стійок стелажів.",
+      },
+      {
+        title: "Планування проїздів та розмітка",
+        description:
+          "Чітке розділення шляхів пішоходів і техніки за допомогою горизонтальної розмітки підвищує безпеку операцій.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Палетні та поличні стелажі, що становлять основу інфраструктури дистриб'юторського вузла.",
+      },
+      {
+        label: "Складські мезоніни та платформи",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "Багаторівневі конструкції, що збільшують корисну робочу площу складу без добудови приміщень.",
+      },
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Навантажувачі, штабелери (reach truck) та роклі для маніпуляцій із піддонами.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Палетний стелаж",
+        glossarySlug: "regal-paletowy",
+        context: "Рамні конструкції для зберігання великої кількості важких палетних вантажів.",
+      },
+      {
+        label: "Внутрішній транспорт",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Рух техніки, машин та операторів у межах дистриб'юторського хабу.",
+      },
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Збирання товарів з нижніх рівнів стелажів або зі спеціалізованих зон відбору.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Як вибрати стелажну систему для дистриб'юторського центру?",
+        answer:
+          "Основою є фронтальні палетні стелажі з прямим доступом до кожного піддона. Для швидкої ротації підходять гравітаційні стелажі.",
+      },
+      {
+        question: "Коли доцільно інвестувати у складський мезонін?",
+        answer:
+          "Коли потрібна додаткова площа для сортування, комплектації або пакування легких товарів без розширення стін будівлі.",
+      },
+      {
+        question: "Який захист стелажів є обов'язковим?",
+        answer:
+          "Відповідно до стандарту EN 15635, стійки стелажів, що можуть зазнати ударів техніки, мають захищатися відбійниками висотою щонайменше 400 мм.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Переглянути рішення",
+    },
+    seo: {
+      title: "Обладнання для дистриб'юторських центрів B2B | LogiMarket",
+      description:
+        "Посібник із закупівель для дистриб'юторських центрів B2B: палетні стелажі, мезоніни, навантажувачі, захисні відбійники та розмітка.",
+    },
+  },
+  {
+    intent: "distribution-center",
+    locale: "zh",
+    slug: "distribution-center",
+    path: "/zh/solutions/distribution-center",
+    sectionLabel: "解决方案",
+    title: "仓储配送中心与分拨枢纽",
+    eyebrow: "B2B采购意向",
+    intro:
+      "配送中心的核心在于实现大宗托盘物流的快速流转、库存合理缓冲以及高效的货物合并出库。本页面专为大吨位托盘货架、叉车、钢平台阁板及人车分流安全标识的采购提供指南。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "配送中心的设备采购主要由托盘单元（欧标托盘、重型工业托盘）的高强度搬运工况所决定。",
+      "在庞大的高位存储区与快速拣选、暂存缓存区之间保持高效物理流转是配送流程的核心。",
+      "所选设备必须具备极高的承载能力，且必须严格遵循货架结构安全性标准规范。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "垂直空间利用",
+        description:
+          "极大化垂直净空率。高承载托盘货架和重型钢制阁楼平台能使实际仓储物理面积翻倍。",
+      },
+      {
+        title: "设备与人员防护",
+        description:
+          "在大吨位前移式叉车穿梭频繁的通道内，货架立柱护脚及重型立柱防撞栏是必不可少的。",
+      },
+      {
+        title: "通道布局与人车分流",
+        description:
+          "采用专业高亮地标 and 警示牌，对人行通道与机械行驶轨道进行清晰区隔以保障顺畅运行。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "构成配送中心主要架构的托盘货架及高载荷层架系统。",
+      },
+      {
+        label: "阁楼货架与钢平台",
+        categorySlug: "c-antresole-i-podesty-magazynowe",
+        context: "大幅扩展可用库区高度的重型多层钢结构阁楼与平台。",
+      },
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "用于库内托盘装载与码放的平衡重叉车、前移式叉车及手动/电动托盘 jack。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "专门针对托盘装载货物进行高密度、多层码放的格构式货架钢结构。",
+      },
+      {
+        label: "内部物流",
+        glossarySlug: "transport-wewnetrzny",
+        context: "物流配送中心内部各装卸货、缓存与分拣作业区之间的内部运送与行车控制。",
+      },
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "在库区交接区前，于低层货架段或专用配货区内完成的商品汇集汇总工序。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "如何为配送中心合理配置货架？",
+        answer:
+          "首选重型横梁式托盘货架以获得100%的自由通道与直取能力；针对大批量少SKU物资，可加配驶入式或重力流货架。",
+      },
+      {
+        question: "何时需要考虑架设钢平台或阁楼？",
+        answer:
+          "当您需要在原厂房面积内为分拣、配货或打包作业区开辟额外的物理空间，而又不想对主体建筑进行改扩建时。",
+      },
+      {
+        question: "仓库货架立柱防撞有哪些强制规范？",
+        answer:
+          "凡是易受叉车碰撞冲击的货架外露立柱，均必须安装高度不低于400毫米且锚固在地面上的防撞保护座。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "配送中心设备采购 B2B | LogiMarket",
+      description:
+        "B2B仓储配送中心规划：横梁式托盘货架、工业钢平台、高位前移式叉车及库内人车分流安全标识选型指南。",
+    },
+  },
 ] satisfies LandingPageContent[];
