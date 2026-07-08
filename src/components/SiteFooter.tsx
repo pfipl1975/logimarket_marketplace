@@ -45,7 +45,7 @@ export function SiteFooter({
           <h2 className="text-sm font-semibold text-white">{footerLabels.partners}</h2>
           <p className="mt-3 text-sm leading-relaxed">
             {footerLabels.partnerPrompt}{" "}
-            <a className="text-brand-teal hover:underline" href="mailto:partnerzy@logimarket.pl">partnerzy@logimarket.pl</a>
+            <a className="text-brand-teal hover:underline" href="mailto:kontakt@logimarket.pl">kontakt@logimarket.pl</a>
           </p>
         </div>
       </div>

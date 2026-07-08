@@ -46,7 +46,7 @@ export function createGlobalAuthorityJsonLd(locale: Locale): JsonLdValue {
           "@type": "ImageObject",
           "url": `${authorityOrigin}/images/brand/baner_marketplace.png`,
         },
-        "email": "partnerzy@logimarket.pl",
+        "email": "kontakt@logimarket.pl",
         "sameAs": ["https://logimarket.pl"],
         "description": "B2B marketplace and procurement knowledge base for logistics, warehousing, intralogistics and warehouse equipment.",
       },
