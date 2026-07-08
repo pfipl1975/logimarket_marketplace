@@ -13,7 +13,12 @@ export type {
   LandingPageContent,
 } from "./types";
 
-export { getCategoryLink, getGlossaryLink } from "./links";
+export {
+  getCategoryLink,
+  getGlossaryLink,
+  getSolutionsIndexPath,
+  solutionsIndexPaths,
+} from "./links";
 
 export const landingLocales = [
   "pl",

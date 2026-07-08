@@ -5,6 +5,7 @@ import { CartButton } from "@/components/CartButton";
 import { MobileNavigation, type MobileNavigationItem } from "@/components/MobileNavigation";
 import type { Locale } from "@/lib/i18n/config";
 import { getHomePath, getGlossaryPath } from "@/lib/i18n/paths";
+import { getSolutionsIndexPath } from "@/lib/landing/links";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface SiteHeaderProps {
@@ -26,11 +27,13 @@ export function SiteHeader({
 
   const catalogHref = locale === "pl" ? "/katalog" : `/${locale}/katalog`;
   const glossaryHref = getGlossaryPath(locale);
+  const solutionsHref = getSolutionsIndexPath(locale);
 
   const mobileNavItems: MobileNavigationItem[] = [
     { label: navLabels.portal, href: "https://logimarket.pl", external: true },
     { label: navLabels.blog, href: "https://logimarket.pl/blog", external: true },
     ...(glossaryHref ? [{ label: navLabels.glossary, href: glossaryHref }] : []),
+    { label: navLabels.solutions, href: solutionsHref },
     { label: navLabels.catalog, href: catalogHref },
   ];
 
@@ -66,6 +69,11 @@ export function SiteHeader({
                 {navLabels.glossary}
               </Link>
             )}
+            <Link
+              href={solutionsHref}
+              className="rounded-md px-2.5 py-2 text-sm font-medium text-white/75 transition-colors hover:bg-white/5 hover:text-white sm:px-3">
+              {navLabels.solutions}
+            </Link>
             <Link href={catalogHref} className="ml-1 rounded-md bg-white/5 px-3 py-2 text-sm font-semibold text-white">
               {navLabels.catalog}
             </Link>

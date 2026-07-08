@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { SolutionsIndexPage, solutionsIndexPaths } from "@/app/_shared/SolutionsIndexPage";
+import { SolutionsIndexPage } from "@/app/_shared/SolutionsIndexPage";
+import { solutionsIndexPaths } from "@/lib/landing";
 import { absoluteUrl } from "@/lib/seo/urls";
 
 type Props = {

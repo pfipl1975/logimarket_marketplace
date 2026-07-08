@@ -9,8 +9,11 @@ import {
 } from "@/lib/seo/urls";
 import { getSitemapOfferEntries, getSitemapCategoryEntries } from "@/lib/seo/repository";
 import { getGlossaryTerms } from "@/lib/glossary";
-import { getLandingSitemapEntries, getLandingLanguageLinks } from "@/lib/landing";
-import { solutionsIndexPaths } from "@/app/_shared/SolutionsIndexPage";
+import {
+  getLandingSitemapEntries,
+  getLandingLanguageLinks,
+  solutionsIndexPaths,
+} from "@/lib/landing";
 
 export const revalidate = 86400;
 

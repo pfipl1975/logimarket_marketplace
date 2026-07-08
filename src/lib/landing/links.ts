@@ -1,5 +1,19 @@
 import type { LandingLocale } from "./types";
 
+export const solutionsIndexPaths: Record<LandingLocale, string> = {
+  pl: "/rozwiazania",
+  en: "/en/solutions",
+  de: "/de/loesungen",
+  es: "/es/soluciones",
+  fr: "/fr/solutions",
+  uk: "/uk/solutions",
+  zh: "/zh/solutions",
+};
+
+export function getSolutionsIndexPath(locale: LandingLocale): string {
+  return solutionsIndexPaths[locale];
+}
+
 export function getCategoryLink(locale: LandingLocale, categorySlug: string): string {
   return locale === "pl" ? `/katalog/${categorySlug}` : `/${locale}/katalog/${categorySlug}`;
 }

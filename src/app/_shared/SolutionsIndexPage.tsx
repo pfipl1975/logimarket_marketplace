@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getLandingPagesByLocale } from "@/lib/landing";
+import {
+  getLandingPagesByLocale,
+  getSolutionsIndexPath,
+} from "@/lib/landing";
 import type { LandingLocale, LandingIntent } from "@/lib/landing/types";
 import {
   JsonLdScript,
@@ -15,17 +18,6 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
 import { locales, type Locale } from "@/lib/i18n/config";
-
-// Canonical index paths per locale
-export const solutionsIndexPaths: Record<LandingLocale, string> = {
-  pl: "/rozwiazania",
-  en: "/en/solutions",
-  de: "/de/loesungen",
-  es: "/es/soluciones",
-  fr: "/fr/solutions",
-  uk: "/uk/solutions",
-  zh: "/zh/solutions",
-};
 
 // Deterministic B2B intent order
 const INTENT_ORDER: LandingIntent[] = [
@@ -270,7 +262,7 @@ interface SolutionsIndexPageProps {
 
 export async function SolutionsIndexPage({ locale }: SolutionsIndexPageProps) {
   const dict = await getDictionary(locale as Locale);
-  const indexPath = solutionsIndexPaths[locale];
+  const indexPath = getSolutionsIndexPath(locale);
   const pageUrl = absoluteUrl(indexPath);
   const homePath = getHomePath(locale as Locale);
   const t = labels[locale];
@@ -283,7 +275,7 @@ export async function SolutionsIndexPage({ locale }: SolutionsIndexPageProps) {
 
   // Language links for header
   const headerLanguageLinks = Object.fromEntries(
-    locales.map((loc) => [loc, solutionsIndexPaths[loc as LandingLocale] ?? getHomePath(loc as Locale)])
+    locales.map((loc) => [loc, getSolutionsIndexPath(loc as LandingLocale)]),
   ) as Record<Locale, string>;
 
   // JSON-LD
