@@ -5215,4 +5215,400 @@ export const landingPages = [
         "出货打包区设备采购：模块化打包台、欧标周转箱、内部运输和包装辅助载体选型。",
     },
   },
+  {
+    intent: "receiving-shipping",
+    locale: "es",
+    slug: "recepcion-y-expedicion",
+    path: "/es/soluciones/recepcion-y-expedicion",
+    sectionLabel: "Soluciones",
+    title: "Área de recepción y expedición de mercancías",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La zona de muelles de entrada y salida es un nodo crítico del almacén donde se realiza el control de calidad, pesaje, retractilado y consolidación de envíos. Esta página organiza la adquisición de mesas de embalaje, transpaletas, envolvedoras y barreras de seguridad.",
+    procurementContextTitle: "Contexto de adquisición B2B",
+    procurementContext: [
+      "La zona de muelles de carga conecta el transporte por carretera con el flujo interno del almacén.",
+      "La velocidad y la seguridad son clave: las transpaletas y las estaciones de control deben operar de manera fiable durante las horas punta.",
+      "La prioridad de compra debe centrarse en proteger la infraestructura de las rampas de carga y los puestos de embalaje.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Estaciones de control de calidad",
+        description:
+          "Coloque mesas de control cerca de las puertas de carga. Las mesas ajustables en altura con soportes para monitores agilizan el proceso.",
+      },
+      {
+        title: "Velocidad de descarga en muelles",
+        description:
+          "Adquiera transpaletas manuales robustas o eléctricas diseñadas para cruzar niveladores de muelle repetidamente.",
+      },
+      {
+        title: "Protecciones de infraestructura",
+        description:
+          "Instale postes de seguridad, barreras para columnas y topes de goma para muelles pesados para proteger las bahías de carga.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Mesas de embalaje y preparación",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Estaciones para control de calidad, pesaje y etiquetado antes del envío final.",
+      },
+      {
+        label: "Contenedores de plástico Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Cajas estándar para almacenar paquetes consolidados o mercancías devueltas.",
+      },
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Transpaletas, elevadores eléctricos y carros de plataforma para operaciones en muelles.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Transporte interno",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Movimiento de palets entrantes desde los muelles hasta las estanterías de gran altura.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Soporte estándar que simplifica la clasificación de artículos en el control de recepción.",
+      },
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "El proceso de recogida previo a la consolidación en la zona de expedición.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Cómo mejorar el control de calidad en la recepción?",
+        answer:
+          "Instale mesas de control equipadas con básculas integradas e impresoras de etiquetas cerca de las bahías de descarga para reducir los tiempos de transporte.",
+      },
+      {
+        question: "¿Qué transpaletas son mejores para los muelles de carga?",
+        answer:
+          "Las transpaletas eléctricas con plataforma plegable para el operario aceleran significativamente la carga y descarga de remolques.",
+      },
+      {
+        question: "¿Son necesarios los topes para muelles?",
+        answer:
+          "Sí, absorben el impacto de los camiones al dar marcha atrás, protegiendo los niveladores y la fachada del edificio de posibles daños.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Equipamiento de recepción y expedición B2B | LogiMarket",
+      description:
+        "Guía de adquisición para muelles de carga B2B: mesas de control, transpaletas, topes de muelle y protecciones para compradores de almacenes.",
+    },
+  },
+  {
+    intent: "receiving-shipping",
+    locale: "fr",
+    slug: "reception-et-expedition",
+    path: "/fr/solutions/reception-et-expedition",
+    sectionLabel: "Solutions",
+    title: "Zone de réception et d'expédition des marchandises",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La zone des quais d'entrée et de sortie est un nœud critique de l'entrepôt où s'effectuent le contrôle qualité, le pesage, le banderolage et la consolidation des expéditions. Cette page structure l'achat de tables d'emballage, de transpalettes, de filmeuses et de barrières de sécurité.",
+    procurementContextTitle: "Contexte d'achat B2B",
+    procurementContext: [
+      "La zone des quais de chargement relie le transport routier externe au flux interne de l'entrepôt.",
+      "La rapidité et la sécurité sont essentielles : les transpalettes et les stations de contrôle doivent fonctionner de manière fiable pendant les heures de pointe.",
+      "La priorité d'achat doit se concentrer sur la protection de l'infrastructure des rampes de chargement et des postes d'emballage.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Stations de contrôle qualité",
+        description:
+          "Placez les tables de contrôle à proximité des portes de quai. Des tables réglables en hauteur avec supports d'écran rationalisent le traitement.",
+      },
+      {
+        title: "Vitesse de déchargement sur quai",
+        description:
+          "Procurez-vous des transpalettes manuels robustes ou des transpalettes électriques conçus pour franchir répétitivement les niveleurs de quai.",
+      },
+      {
+        title: "Protections d'infrastructure",
+        description:
+          "Installez des poteaux de protection, des barrières de colonne et des butoirs de quai en caoutchouc pour protéger les zones de chargement.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Tables d'emballage et de préparation",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Postes pour le contrôle qualité, le pesage et l'étiquetage avant l'expédition finale.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Bacs standard pour stocker les colis consolidés ou les marchandises retournées.",
+      },
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Transpalettes, élévateurs électriques et chariots à plateforme pour les opérations de quai.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes associés du glossaire",
+    relatedGlossaryTerms: [
+      {
+        label: "Transport interne",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Déplacement des palettes entrantes depuis les quais vers les rayonnages de grande hauteur.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Support standard simplifiant le tri des articles lors du contrôle de réception.",
+      },
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Processus de prélèvement précédant la consolidation dans la zone d'expédition.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Comment améliorer les contrôles qualité à la réception ?",
+        answer:
+          "Installez des tables de contrôle équipées de balances intégrées et d'imprimantes d'étiquettes près des quais de déchargement pour réduire les temps de transport.",
+      },
+      {
+        question: "Quels transpalettes sont les meilleurs pour les quais de chargement ?",
+        answer:
+          "Les transpalettes électriques à plateforme rabattable pour l'opérateur accélèrent considérablement le chargement et le déchargement des remorques.",
+      },
+      {
+        question: "Les butoirs de quai sont-ils nécessaires ?",
+        answer:
+          "Oui, ils absorbent l'impact des remorques en marche arrière, protégeant les niveleurs et la façade du bâtiment contre les dommages.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Équipement de réception et d'expédition B2B | LogiMarket",
+      description:
+        "Guide d'achat pour les zones de quai B2B : tables de contrôle, transpalettes, butoirs de quai et protections pour les acheteurs d'entrepôt.",
+    },
+  },
+  {
+    intent: "receiving-shipping",
+    locale: "uk",
+    slug: "pryimannia-ta-vidvantazhennia",
+    path: "/uk/solutions/pryimannia-ta-vidvantazhennia",
+    sectionLabel: "Рішення",
+    title: "Зона приймання та відвантаження товарів",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Зона вхідних і вихідних доків є критично важливим вузлом складу, де відбуваються контроль якості, зважування, пакування та консолідація відправлень. Ця сторінка впорядковує закупівлі пакувальних столів, роклів, палетопакувальників та захисних бар'єрів.",
+    procurementContextTitle: "Контекст B2B-закупівель",
+    procurementContext: [
+      "Зона завантажувальних доків з'єднує зовнішній автомобільний транспорт із внутрішнім вантажопотоком складу.",
+      "Швидкість та безпека є ключовими: рокли та пости контролю повинні працювати надійно в години пікових навантажень.",
+      "Пріоритет закупівель має бути зосереджений на захисті докової інфраструктури та постів контролю й пакування.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Пости контролю якості",
+        description:
+          "Розташовуйте столи контролю поруч із воротами доків. Регульовані по висоті столи з кронштейнами для моніторів полегшують роботу.",
+      },
+      {
+        title: "Швидкість розвантаження",
+        description:
+          "Закуповуйте міцні ручні рокли або електричні візки, призначені для багаторазового подолання перепадів докових левелерів.",
+      },
+      {
+        title: "Захист інфраструктури",
+        description:
+          "Встановлюйте захисні стовпчики, бар'єри для колон та важкі гумові відбійники для захисту завантажувальних рамп.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Столи для пакування та комплектації",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Робочі місця для контролю якості, зважування та маркування посилок перед відправленням.",
+      },
+      {
+        label: "Пластикові контейнери Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Стандартні ящики для зберігання консолідованих посилок або повернутих товарів.",
+      },
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Рокли, електричні навантажувачі та візки для докових операцій.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Внутрішній транспорт",
+        glossarySlug: "transport-wewnetrzny",
+        context: "Переміщення вхідних піддонів від доків до стелажів високого зберігання.",
+      },
+      {
+        label: "Контейнер Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Стандартизована тара, що спрощує сортування товарів під час перевірки на прийманні.",
+      },
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Процес збирання товарів, що передує консолідації в зоні відвантаження.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Як покращити контроль якості на прийманні?",
+        answer:
+          "Встановіть столи контролю, обладнані інтегрованими вагами та принтерами етикеток безпосередньо біля доків розвантаження для скорочення часу переміщення.",
+      },
+      {
+        question: "Які візки найкраще підходять для завантажувальних доків?",
+        answer:
+          "Електричні рокли з відкидною платформою для оператора значно прискорюють завантаження та розвантаження напівпричепів.",
+      },
+      {
+        question: "Чи потрібні докові відбійники?",
+        answer:
+          "Так, вони амортизують удари вантажівок при русі заднім ходом, захищаючи левелери та фасад будівлі від пошкоджень.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Переглянути рішення",
+    },
+    seo: {
+      title: "Обладнання зони приймання та відвантаження B2B | LogiMarket",
+      description:
+        "Посібник із закупівель для докових зон B2B: столи контролю, рокли, докові відбійники та захисні огорожі на LogiMarket.",
+    },
+  },
+  {
+    intent: "receiving-shipping",
+    locale: "zh",
+    slug: "receiving-shipping",
+    path: "/zh/solutions/receiving-shipping",
+    sectionLabel: "解决方案",
+    title: "仓储设施中的收货与发货出库区",
+    eyebrow: "B2B采购意向",
+    intro:
+      "收货与发货出库的装卸货区是仓库的关键节点，在这里进行质量控制、称重、缠绕包装和出货合并。本页面旨在为您的打包台、托盘搬运车、缠绕机及安全护栏等设备的采购提供决策参考。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "装卸货区将外部公路运输与仓库内部的物流顺畅连接。",
+      "速度与安全是核心：在高峰时段，托盘搬运车和校验工位必须以高可靠性运行。",
+      "采购重点应当聚焦于保护装卸货平台基础设施以及校验打包工位。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "质检校验工位",
+        description:
+          "将校验台布置在紧邻出货门的位置。配备显示器支架的高度可调工作台可大幅简化操作流程。",
+      },
+      {
+        title: "装卸货速度",
+        description:
+          "采购坚固耐用的手推托盘车 or 步行式电动托盘搬运车，以适应频繁通过登车桥的工况。",
+      },
+      {
+        title: "基础设施防护",
+        description:
+          "在装卸口安装安全防撞柱、立柱护栏以及重载橡胶防撞垫，保护卸货车位。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "打包与拣选工作台",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "用于发货前质量校验、称重和条码打印的专用工作台。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "用于暂存质检异常物资或已合并待发包裹的标准周转箱。",
+      },
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "适用于装卸货区域操作的托盘搬运车、电动堆高车和平台手推车。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "内部物流",
+        glossarySlug: "transport-wewnetrzny",
+        context: "入库托盘从装卸货平台转运至高位货架区的物理流转过程。",
+      },
+      {
+        label: "欧标周转箱",
+        glossarySlug: "pojemnik-euro",
+        context: "收货质检校验过程中用于细分和分拣物资的标准周转载体。",
+      },
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "物资在出货通道进行最终合并包装前必经的拣选工序。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "如何提升入库收货的质检效率？",
+        answer:
+          "在卸货车位旁直接配置集成了电子秤和标签打印机的专用校验台，以缩短搬运流转时间。",
+      },
+      {
+        question: "装卸货平台哪种托盘搬运车最适用？",
+        answer:
+          "配备折叠式站板的乘驾式电动托盘搬运车能够显著加快货车车厢的装卸效率。",
+      },
+      {
+        question: "装卸平台防撞胶垫是必需的吗？",
+        answer:
+          "是的，防撞垫能够有效吸收货车倒车对接时的冲击力，防止登车桥以及建筑物墙面受损。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "收货与发货出库区设备 B2B | LogiMarket",
+      description:
+        "B2B装卸货区设备采购：重载校验台、托盘车、装卸口防撞垫及防护护栏选型规范。",
+    },
+  },
 ] satisfies LandingPageContent[];
