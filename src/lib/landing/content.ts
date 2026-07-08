@@ -4403,4 +4403,420 @@ export const landingPages = [
         "工业仓储系统采购指南：托盘货架、钢结构阁楼、搁板货架及欧标周转箱选型规范。",
     },
   },
+  {
+    intent: "picking-packing",
+    locale: "es",
+    slug: "preparacion-y-embalaje",
+    path: "/es/soluciones/preparacion-y-embalaje",
+    sectionLabel: "Soluciones",
+    title: "Preparación y embalaje",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Las zonas de preparación y embalaje afectan directamente al rendimiento de los pedidos, la ergonomía del operario y la calidad del envío. Esta página organiza las decisiones de adquisición de equipos para estaciones de trabajo industriales.",
+    procurementContextTitle: "Contexto de adquisición",
+    procurementContext: [
+      "La selección de equipos debe considerar los perfiles de los pedidos, el número de líneas, el método de almacenamiento temporal y los requisitos de control de calidad.",
+      "Los contenedores, las mesas de preparación y el almacenamiento cercano deben formar un flujo de travail coherente para el operario.",
+      "Los compradores B2B deben adaptar las estaciones de trabajo a tareas repetitivas y a los cambios estacionales de volumen.",
+    ],
+    decisionGuidanceTitle: "Guía de decisión",
+    decisionFactors: [
+      {
+        title: "Distribución del puesto",
+        description:
+          "Coloque los contenedores, herramientas y materiales de manera que los operarios puedan realizar las tareas con menos movimientos y traslados innecesarios.",
+      },
+      {
+        title: "Control e identificación",
+        description:
+          "Defina dónde se gestionan la verificación de artículos, el etiquetado y la documentación o marcado de envío.",
+      },
+      {
+        title: "Flexibilidad operativa",
+        description:
+          "Elija equipos que puedan adaptarse a los cambios en el surtido, el número de líneas de pedido y la precisión requerida.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías del catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Mesas de embalaje y preparación",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Puestos de trabajo para la preparación de pedidos y unidades de envío.",
+      },
+      {
+        label: "Contenedores de plástico Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Soportes para componentes, preparación y almacenamiento intermedio.",
+      },
+      {
+        label: "Transporte interno y manipulación",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Movimiento de contenedores y materiales entre zonas.",
+      },
+      {
+        label: "Estanterías y sistemas de almacenamiento",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Organización del inventario cerca de los puestos de preparación.",
+      },
+    ],
+    relatedGlossaryTitle: "Términos del glosario relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Definición del proceso de preparación y su función en la logística B2B.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Soporte utilizado en la preparación, almacenamiento temporal y transporte interno.",
+      },
+      {
+        label: "Estanterías de paletización",
+        glossarySlug: "regal-paletowy",
+        context: "Soporte de almacenamiento para la reposición de la zona de preparación.",
+      },
+    ],
+    faqTitle: "Preguntas frecuentes sobre adquisiciones",
+    faq: [
+      {
+        question: "¿Qué es lo más importante al comprar equipos de preparación?",
+        answer:
+          "La ergonomía del puesto de trabajo, el método de almacenamiento temporal, la visibilidad del surtido y la verificación rápida del pedido son los principales factores.",
+      },
+      {
+        question: "¿Deben seleccionarse las mesas de embalaje por separado?",
+        answer:
+          "No siempre. Los mejores resultados se obtienen evaluando las mesas, contenedores, estanterías y el transporte interno como una zona unificada.",
+      },
+      {
+        question: "¿Cómo se debe preparar una solicitud de compra?",
+        answer:
+          "Describa los tipos de productos, el número de líneas de pedido, la precisión requerida, el método de embalaje y las limitaciones de espacio del puesto.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir catálogo",
+      primaryHref: "/es/katalog",
+      secondaryLabel: "Ver soluciones",
+    },
+    seo: {
+      title: "Preparación y embalaje B2B | LogiMarket",
+      description:
+        "Guía de adquisición B2B para preparación y embalaje: mesas de trabajo, contenedores Euro, transporte interno y categorías para optimizar la preparación de pedidos.",
+    },
+  },
+  {
+    intent: "picking-packing",
+    locale: "fr",
+    slug: "preparation-et-emballage",
+    path: "/fr/solutions/preparation-et-emballage",
+    sectionLabel: "Solutions",
+    title: "Préparation et emballage",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Les zones de préparation et d'emballage affectent directement le débit des commandes, l'ergonomie de l'opérateur et la qualité de l'expédition. Cette page structure les décisions d'achat d'équipements pour les postes de travail industriels.",
+    procurementContextTitle: "Contexte d'achat",
+    procurementContext: [
+      "La sélection des équipements doit tenir compte des profils de commande, du nombre de lignes, de la méthode de stockage temporaire et des exigences de contrôle qualité.",
+      "Les bacs, les tables de préparation et le stockage à proximité doivent former un flux de travail cohérent pour l'opérateur.",
+      "Les acheteurs B2B doivent adapter les postes de travail aux tâches répétitives et aux variations saisonnières de volume.",
+    ],
+    decisionGuidanceTitle: "Conseils de décision",
+    decisionFactors: [
+      {
+        title: "Aménagement du poste",
+        description:
+          "Disposez les bacs, les outils et les matériaux de manière à ce que les opérateurs puissent effectuer les tâches avec moins de mouvements et de transferts inutiles.",
+      },
+      {
+        title: "Contrôle et identification",
+        description:
+          "Définissez l'endroit où sont gérés la vérification des articles, l'étiquetage et la documentation ou le marquage d'expédition.",
+      },
+      {
+        title: "Flexibilité opérationnelle",
+        description:
+          "Choisissez des équipements capables de s'adapter aux variations d'assortiment, au nombre de lignes de commande et à la précision requise.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories du catalogue associées",
+    relatedCategories: [
+      {
+        label: "Tables d'emballage et de préparation",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Postes de travail pour la préparation des commandes et des unités d'expédition.",
+      },
+      {
+        label: "Bacs plastiques Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Supports pour composants, préparation et stockage intermédiaire.",
+      },
+      {
+        label: "Transport interne et manutention",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Déplacement de bacs et de matériaux entre les zones.",
+      },
+      {
+        label: "Rayonnages et systèmes de stockage",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Organisation des stocks à proximité des postes de préparation.",
+      },
+    ],
+    relatedGlossaryTitle: "Termes du glossaire associés",
+    relatedGlossaryTerms: [
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Définition du processus de préparation et son rôle dans la logistique B2B.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Support utilisé pour la préparation, le stockage temporaire et le transport interne.",
+      },
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Support de stockage pour le réapprovisionnement de la zone de préparation.",
+      },
+    ],
+    faqTitle: "FAQ sur les achats",
+    faq: [
+      {
+        question: "Qu'est-ce qui importe le plus lors de l'achat d'équipements de préparation ?",
+        answer:
+          "L'ergonomie du poste de travail, la méthode de stockage temporaire, la visibilité de l'assortiment et la vérification rapide des commandes sont les principaux critères.",
+      },
+      {
+        question: "Les tables d'emballage doivent-elles être choisies séparément ?",
+        answer:
+          "Pas toujours. Les meilleurs résultats proviennent d'une évaluation globale des tables, bacs, rayonnages et du transport interne.",
+      },
+      {
+        question: "Comment préparer une demande d'achat ?",
+        answer:
+          "Décrivez les types de produits, le nombre de lignes de commande, la précision requise, la méthode d'emballage et les contraintes d'espace du poste.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir le catalogue",
+      primaryHref: "/fr/katalog",
+      secondaryLabel: "Voir les solutions",
+    },
+    seo: {
+      title: "Préparation et emballage B2B | LogiMarket",
+      description:
+        "Guide d'achat B2B pour la préparation et l'emballage : tables de préparation, bacs Euro, transport interne et catégories pour optimiser la préparation des commandes.",
+    },
+  },
+  {
+    intent: "picking-packing",
+    locale: "uk",
+    slug: "komplektatsiia-ta-pakuvannia",
+    path: "/uk/solutions/komplektatsiia-ta-pakuvannia",
+    sectionLabel: "Рішення",
+    title: "Комплектація та пакування",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Зони комплектації та пакування безпосередньо впливають на швидкість обробки замовлень, ергономіку роботи оператора та якість відправлень. Ця сторінка структурує рішення щодо вибору обладнання для робочих станцій.",
+    procurementContextTitle: "Закупівля обладнання",
+    procurementContext: [
+      "Вибір обладнання повинен враховувати профілі замовлень, кількість позицій, метод буферизації та вимоги до контролю якості.",
+      "Контейнери, столи для комплектації та прилеглі зони зберігання мають формувати узгоджений робочий процес оператора.",
+      "Покупцям у сегменті B2B слід адаптувати робочі місця до повторюваних операцій та сезонних змін обсягів замовлень.",
+    ],
+    decisionGuidanceTitle: "Керівництво щодо вибору",
+    decisionFactors: [
+      {
+        title: "Планування робочої зони",
+        description:
+          "Розташовуйте контейнери, інструменти та матеріали так, щоб оператори виконували завдання з мінімальною кількістю зайвих рухів.",
+      },
+      {
+        title: "Контроль та ідентифікація",
+        description:
+          "Визначте, де відбуватиметься перевірка товарів, маркування та оформлення супровідних документів.",
+      },
+      {
+        title: "Операційна гнучкість",
+        description:
+          "Обирайте обладнання, яке можна легко адаптувати до змін в асортименті, кількості позицій та вимог до точності.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Столи для пакування та комплектації",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "Робочі місця для підготовки замовлень та пакувальних одиниць.",
+      },
+      {
+        label: "Пластикові контейнери Euro",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "Тара для зберігання деталей, комплектації та проміжного буферного накопичення.",
+      },
+      {
+        label: "Внутрішній транспорт та переміщення",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "Переміщення контейнерів та матеріалів між робочими зонами.",
+      },
+      {
+        label: "Стелажі та системи зберігання",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "Організація складського запасу безпосередньо біля робочих місць комплектації.",
+      },
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Визначення процесу комплектації та його роль у логістиці B2B.",
+      },
+      {
+        label: "Контейнер Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Універсальна тара для комплектації, буферизації та внутрішнього транспортування.",
+      },
+      {
+        label: "Палетні стелажі",
+        glossarySlug: "regal-paletowy",
+        context: "Конструкції зберігання для поповнення запасів у зонах комплектації.",
+      },
+    ],
+    faqTitle: "Питання та відповіді при закупівлі",
+    faq: [
+      {
+        question: "Що є найважливішим при купівлі обладнання для комплектації?",
+        answer:
+          "Ергономіка робочого місця, спосіб буферизації, видимість асортименту та швидкість перевірки замовлення є ключовими факторами.",
+      },
+      {
+        question: "Чи варто вибирати столи для пакування окремо?",
+        answer:
+          "Не завжди. Найкращі результати дає комплексне проектування столів, контейнерів, стелажів та внутрішнього транспорту як єдиної системи.",
+      },
+      {
+        question: "Як правильно підготувати запит на закупівлю?",
+        answer:
+          "Опишіть типи товарів, кількість позицій у замовленні, вимоги до точності, метод пакування та обмеження робочого простору.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити каталог",
+      primaryHref: "/uk/katalog",
+      secondaryLabel: "Переглянути рішення",
+    },
+    seo: {
+      title: "Комплектація та пакування B2B | LogiMarket",
+      description:
+        "Посібник із закупівель B2B для комплектації та пакування: столи для пакування, контейнери Euro, складський транспорт та категорії для оптимізації обробки замовлень.",
+    },
+  },
+  {
+    intent: "picking-packing",
+    locale: "zh",
+    slug: "picking-packing",
+    path: "/zh/solutions/picking-packing",
+    sectionLabel: "解决方案",
+    title: "订单拣选与打包包装",
+    eyebrow: "B2B采购意向",
+    intro:
+      "拣选和打包区域直接影响订单的吞吐量、操作人员的符合人机工程学体验以及出货质量。本页面旨在为您的工位工作台及相关配套设备的采购提供决策参考。",
+    procurementContextTitle: "B2B采购背景",
+    procurementContext: [
+      "设备的选型必须综合考虑订单结构特点、订单行数量、临时缓存方式以及质检要求。",
+      "周转箱、拣选工作台以及附近的货架系统应当形成连贯且高效的操作流。",
+      "B2B采购需使工作台的配置能够适应高重复性的操作任务以及季节性的物料吞吐量波动。",
+    ],
+    decisionGuidanceTitle: "决策指南",
+    decisionFactors: [
+      {
+        title: "工作台布局",
+        description:
+          "合理规划周转箱、工具及辅料的摆放位置，最大程度减少操作人员不必要的伸手与搬运距离。",
+      },
+      {
+        title: "校验与追踪",
+        description:
+          "明确订单项核对、标签打印贴附以及出货单据随货的物理操作节点。",
+      },
+      {
+        title: "柔性拓展能力",
+        description:
+          "选择能够灵活调整以匹配产品品类切换、订单行行数变化以及准确率要求的工作台系统。",
+      },
+    ],
+    relatedCategoriesTitle: "相关产品目录分类",
+    relatedCategories: [
+      {
+        label: "打包与拣选工作台",
+        categorySlug: "c-stoly-pakowe-i-kompletacyjne",
+        context: "用于订单准备及发货单元包装的专用工作台。",
+      },
+      {
+        label: "塑料欧标周转箱",
+        categorySlug: "c-pojemniki-plastikowe-euro",
+        context: "用于物料、零部件存储，拣选及工序间临时缓存的标准载体。",
+      },
+      {
+        label: "内部物流与搬运设备",
+        categorySlug: "c-wozki-i-transport-wewnetrzny",
+        context: "用于周转箱及辅料在不同工作区域之间的转运。",
+      },
+      {
+        label: "货架与存储系统",
+        categorySlug: "c-regaly-i-systemy-skladowania",
+        context: "紧邻拣选和打包工位布置的高效库存组织。",
+      },
+    ],
+    relatedGlossaryTitle: "相关词汇术语",
+    relatedGlossaryTerms: [
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "订单拣选流程的定义及其在B2B供应链中的角色。",
+      },
+      {
+        label: "欧标周转箱",
+        glossarySlug: "pojemnik-euro",
+        context: "拣选、缓存及厂内物流运输中使用的标准化周转容器。",
+      },
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "用于拣选区快速补货的大型仓储支撑结构。",
+      },
+    ],
+    faqTitle: "采购常见问题解答",
+    faq: [
+      {
+        question: "采购拣选设备时最核心的考量点是什么？",
+        answer:
+          "工位的人机工程学设计、物料缓存方式、货位目视化程度以及快速校验机制是核心因素。",
+      },
+      {
+        question: "打包工作台是否需要单独选型？",
+        answer:
+          "不建议。将工作台、周转容器、就近货架和内部搬运设备作为一个整体区域进行 system 评估，才能实现最佳效率。",
+      },
+      {
+        question: "如何准备采购询价书？",
+        answer:
+          "请在询价书中说明产品类型、订单平均行数、准确率指标、打包方式以及工位场地的空间尺寸限制。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开产品目录",
+      primaryHref: "/zh/katalog",
+      secondaryLabel: "查看解决方案",
+    },
+    seo: {
+      title: "订单拣选与打包 B2B | LogiMarket",
+      description:
+        "工业订单拣选与打包系统采购指南：打包工作台、欧标塑料周转箱、内部运输搬运设备及出货打包配套分类选型。",
+    },
+  },
 ] satisfies LandingPageContent[];
