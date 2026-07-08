@@ -1,5 +1,6 @@
 import { getCategories, getOffers } from "@/app/actions";
 import { getGlossaryTerms } from "@/lib/glossary";
+import { solutionsIndexPaths } from "@/lib/landing/links";
 
 export async function GET() {
   try {
@@ -22,6 +23,14 @@ export async function GET() {
     content += `- uk\n`;
     content += `- es\n`;
     content += `- zh\n\n`;
+
+    content += `## Solutions Index Pages\n`;
+    content += `Solutions index pages are multilingual editorial hubs listing all purchase-intent landing pages for each supported locale. They are informational and navigational retrieval targets for landing-page discovery.\n`;
+    content += `Valid canonical solutions index pages are:\n`;
+    for (const [locale, path] of Object.entries(solutionsIndexPaths)) {
+      content += `- ${path} (${locale.toUpperCase()} solutions index)\n`;
+    }
+    content += `\n`;
 
     content += `## Content-Type and Routing Distinctions\n`;
     content += `- **Catalog Category Pages**: Structured navigation and listing of active B2B offers matching a specific logistics taxonomy. These are indexed only when active offers exist in the category or its descendants.\n`;

@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { isNavItemActive } from "@/lib/navigation/active";
+import { cn } from "@/lib/utils";
 
 export type MobileNavigationItem = {
   label: string;
@@ -23,6 +26,7 @@ export function MobileNavigation({
   mainNavigationLabel,
 }: MobileNavigationProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const pathname = usePathname();
 
   // Close menu on ESC key press
   useEffect(() => {
@@ -81,8 +85,13 @@ export function MobileNavigation({
         >
           <div className="p-2">
             {items.map((item) => {
-              const className =
-                "block rounded-md px-3 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-white/5 hover:text-white min-h-[44px] flex items-center";
+              const isActive = !item.external && isNavItemActive(pathname, item.href);
+              const className = cn(
+                "flex min-h-[44px] items-center rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-white/5 hover:text-white",
+                isActive
+                  ? "bg-white/5 font-semibold text-white"
+                  : "font-medium text-white/80",
+              );
 
               if (item.external) {
                 return (
@@ -104,6 +113,7 @@ export function MobileNavigation({
                   key={item.href}
                   href={item.href}
                   onClick={() => setIsOpen(false)}
+                  aria-current={isActive ? "page" : undefined}
                   className={className}
                 >
                   {item.label}
