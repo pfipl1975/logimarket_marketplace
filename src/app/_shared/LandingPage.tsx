@@ -7,6 +7,7 @@ import { getHomePath } from "@/lib/i18n/paths";
 import { locales, type Locale } from "@/lib/i18n/config";
 import {
   getLandingLanguageLinks,
+  getLandingPageByIntent,
   getCategoryLink,
   getGlossaryLink,
   type LandingPageContent,
@@ -36,6 +37,9 @@ export async function LandingPage({ landing }: LandingPageProps) {
     ]),
   ) as Record<Locale, string>;
   const primaryCategory = landing.relatedCategories[0];
+  const relatedIntentPages = landing.relatedIntents?.map((intent) =>
+    getLandingPageByIntent(intent, landing.locale),
+  ) ?? [];
 
   const breadcrumbJsonLd = createBreadcrumbListJsonLd([
     {
@@ -200,6 +204,30 @@ export async function LandingPage({ landing }: LandingPageProps) {
                 </Link>
               ))}
             </div>
+
+            {relatedIntentPages.length > 0 && landing.relatedIntentsTitle && (
+              <div className="mt-8">
+                <h2 className="text-xl font-bold tracking-tight text-brand-navy">
+                  {landing.relatedIntentsTitle}
+                </h2>
+                <div className="mt-5 space-y-3">
+                  {relatedIntentPages.map((intentPage) => (
+                    <Link
+                      key={intentPage.intent}
+                      href={intentPage.path}
+                      className="block border border-border bg-white p-5 transition-colors hover:border-brand-teal"
+                    >
+                      <h3 className="text-sm font-bold text-brand-navy">
+                        {intentPage.title}
+                      </h3>
+                      <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                        {intentPage.intro}
+                      </p>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 

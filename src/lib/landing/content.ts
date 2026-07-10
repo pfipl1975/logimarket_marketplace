@@ -7235,4 +7235,1789 @@ export const landingPages = [
         "B2B厂内物流规划指南：手动/电动搬运车、标准化托盘货架、欧标容器及多层钢平台系统选型服务。",
     },
   },
+  {
+    intent: "warehouse-robotics",
+    locale: "pl",
+    slug: "robotyzacja-magazynu",
+    path: "/rozwiazania/robotyzacja-magazynu",
+    sectionLabel: "Rozwiązania",
+    title: "Robotyzacja magazynu",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Robotyzacja magazynu obejmuje dobór robotów mobilnych, systemów kompletacji, automatyzacji palet, infrastruktury, oprogramowania i usług wdrożeniowych. Strona porządkuje decyzje przed RFQ i prowadzi do właściwych kategorii katalogu.",
+    procurementContextTitle: "Kontekst zakupowy",
+    procurementContext: [
+      "Robotyzacja może wspierać transport pojemników, kartonów, palet i ciężkich ładunków, ale dobór zależy od procesu, layoutu, nośników oraz ruchu ludzi i urządzeń.",
+      "AGV są zwykle stosowane w bardziej kontrolowanych systemach prowadzenia i ruchu, a AMR zwykle korzystają z bardziej autonomicznej nawigacji oraz dynamicznego planowania trasy.",
+      "Ostateczna klasyfikacja AGV lub AMR zależy od konkretnego systemu producenta, zastosowanej infrastruktury, integracji i wymagań bezpieczeństwa.",
+      "W projekcie trzeba uwzględnić ładowanie, dokowanie, zasilanie, osprzęt, systemy bezpieczeństwa, fleet management, monitoring oraz integrację z WMS, WCS i ERP.",
+      "Przed RFQ warto zebrać typy jednostek logistycznych, masy i wymiary, punkty pobrania i odkładania, szerokości ciągów, wysokość składowania, liczbę zmian, środowisko pracy i wymagania serwisowe.",
+    ],
+    decisionGuidanceTitle: "Pytania decyzyjne przed RFQ",
+    decisionFactors: [
+      {
+        title: "Procesy do robotyzacji",
+        description:
+          "Określ, czy priorytetem jest transport pojemników, palet, kompletacja, goods-to-person, sortowanie paczek, paletyzacja, depaletyzacja czy wsparcie operatorów.",
+      },
+      {
+        title: "AGV czy AMR",
+        description:
+          "AGV warto rozważać przy stabilnych trasach i kontrolowanym ruchu, a AMR przy większej zmienności layoutu i potrzebie dynamicznej nawigacji. Dobór należy zweryfikować dla konkretnego projektu.",
+      },
+      {
+        title: "Palety i ciężkie ładunki",
+        description:
+          "Dla palet porównuj autonomiczne wózki paletowe, widłowe, reach trucki, AGV do palet, AMR do palet oraz systemy załadunku i rozładunku.",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person i shelf-to-person przenoszą zapas lub nośniki do stacji operatora, co zwykle wymaga analizy SKU, ergonomii stanowisk i integracji z systemem sterowania.",
+      },
+      {
+        title: "Kompletacja i manipulacja",
+        description:
+          "Roboty kompletacyjne, pick-and-place, chwytaki wizyjne, coboty, paletyzacja i depaletyzacja wymagają oceny produktów, opakowań, tolerancji procesu i punktów kontroli.",
+      },
+      {
+        title: "Infrastruktura i bezpieczeństwo",
+        description:
+          "Uwzględnij dokowanie, ładowanie, baterie, oznakowanie tras, separację ruchu, widoczność, strefy interakcji z ludźmi i wymagania analizy bezpieczeństwa.",
+      },
+      {
+        title: "Oprogramowanie i integracje",
+        description:
+          "Sprawdź, czy potrzebne będą fleet management, traffic management, monitoring, digital twin, WMS, WCS, ERP oraz jasne zasady wymiany danych.",
+      },
+      {
+        title: "Przygotowanie magazynu",
+        description:
+          "Przygotowanie może obejmować pomiary layoutu, mapę przepływów, nośność posadzki, punkty ładowania, sieć, oznaczenia i procedury pracy z ludźmi.",
+      },
+      {
+        title: "Porównanie dostawców",
+        description:
+          "Porównuj nie tylko urządzenia, lecz także audyt, projekt koncepcyjny, uruchomienie, SLA, utrzymanie, szkolenie i odpowiedzialność integratora.",
+      },
+    ],
+    relatedCategoriesTitle: "Powiązane kategorie katalogu",
+    relatedCategories: [
+      {
+        label: "Robotyzacja i automatyzacja magazynu",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "Sekcja katalogowa dla robotów, infrastruktury, oprogramowania i usług robotyzacji.",
+      },
+      {
+        label: "Roboty mobilne AGV / AMR",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV, AMR, roboty transportowe do pojemników, kartonów i zadań holowniczych.",
+      },
+      {
+        label: "AGV / AMR do palet i ciężkich ładunków",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "Rozwiązania do transportu palet, autonomiczne wózki i systemy załadunku.",
+      },
+      {
+        label: "Goods-to-person i automatyzacja kompletacji",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "Systemy, w których towar lub nośnik trafia do operatora albo stacji kompletacji.",
+      },
+      {
+        label: "Roboty kompletacyjne i manipulacyjne",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Roboty pick-and-place, paletyzacja, depaletyzacja, sortowanie paczek i coboty.",
+      },
+      {
+        label: "Egzoszkielety i wspomaganie pracy",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "Rozwiązania wspierające operatorów przy podnoszeniu i powtarzalnych czynnościach.",
+      },
+      {
+        label: "Infrastruktura do robotyzacji magazynu",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "Ładowanie, zasilanie, dokowanie, trasy, osprzęt, bezpieczeństwo i części.",
+      },
+      {
+        label: "Oprogramowanie i integracja robotów",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management, integracja z WMS/WCS/ERP, monitoring i symulacja procesu.",
+      },
+      {
+        label: "Wdrożenie i utrzymanie robotyzacji",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "Audyt, projekt koncepcyjny, uruchomienie, modernizacja procesu, serwis i SLA.",
+      },
+      {
+        label: "AGV — automatyczne pojazdy prowadzone",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "Pojazdy do kontrolowanych tras i powtarzalnych przepływów wewnętrznych.",
+      },
+      {
+        label: "AMR — autonomiczne roboty mobilne",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "Roboty mobilne do bardziej dynamicznego planowania trasy i zmiennych przepływów.",
+      },
+      {
+        label: "AGV do palet",
+        categorySlug: "c-agv-do-palet",
+        context: "Automatyzacja stabilnych przepływów paletowych między określonymi punktami procesu.",
+      },
+      {
+        label: "Autonomiczne wózki paletowe",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "Transport palet między strefami przyjęcia, składowania, kompletacji i wysyłki.",
+      },
+      {
+        label: "Roboty regałowe / shelf-to-person",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "Systemy dostarczające zapas lub regał do operatora lub stacji kompletacji.",
+      },
+      {
+        label: "Roboty do kompletacji zamówień",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "Automatyzacja pobierania, odkładania i wspomagania procesu kompletacji.",
+      },
+      {
+        label: "Roboty do paletyzacji",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "Układanie kartonów, pojemników lub produktów na paletach po analizie produktu.",
+      },
+      {
+        label: "Roboty do depaletyzacji",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "Zdejmowanie ładunków z palet i przekazywanie ich do kolejnych etapów procesu.",
+      },
+      {
+        label: "Egzoszkielety pasywne",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "Wsparcie operatorów przy czynnościach wymagających podnoszenia lub utrzymywania pozycji.",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "Zarządzanie flotą robotów, zadaniami, ruchem i dostępnością systemu.",
+      },
+      {
+        label: "Integracja robotów z WMS / WCS / ERP",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "Wymiana danych, zlecenia transportowe, statusy zadań i logika sterowania.",
+      },
+      {
+        label: "Audyt robotyzacji magazynu",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "Analiza procesu, danych wejściowych i ograniczeń przed decyzją inwestycyjną.",
+      },
+    ],
+    relatedIntentsTitle: "Powiązane rozwiązania",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "Powiązane pojęcia",
+    relatedGlossaryTerms: [
+      {
+        label: "Kompletacja zamówień",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Proces często wpływający na dobór goods-to-person, robotów kompletacyjnych i stacji pracy.",
+      },
+      {
+        label: "Pojemnik Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Przykład standardowego nośnika, który może być istotny przy analizie transportu pojemników.",
+      },
+      {
+        label: "Regał paletowy",
+        glossarySlug: "regal-paletowy",
+        context: "Punkt odniesienia dla przepływów palet i integracji transportu ze strefą składowania.",
+      },
+    ],
+    faqTitle: "FAQ zakupowe",
+    faq: [
+      {
+        question: "Czym różni się AGV od AMR?",
+        answer:
+          "AGV zwykle pracują w bardziej kontrolowanym systemie prowadzenia, a AMR zwykle wykorzystują bardziej autonomiczną nawigację. Klasyfikację trzeba sprawdzić dla konkretnego systemu i procesu.",
+      },
+      {
+        question: "Jakie procesy magazynowe można robotyzować?",
+        answer:
+          "Najczęściej analizuje się transport pojemników, kartonów i palet, kompletację, goods-to-person, sortowanie, paletyzację, depaletyzację oraz wsparcie operatorów.",
+      },
+      {
+        question: "Czy roboty mogą transportować palety?",
+        answer:
+          "Tak, ale dobór zależy od masy, wymiarów, nośników, punktów pobrania i odkładania, szerokości tras, ruchu w obiekcie oraz integracji systemowej.",
+      },
+      {
+        question: "Na czym polega goods-to-person?",
+        answer:
+          "Goods-to-person dostarcza towar, pojemnik lub regał do operatora albo stacji pracy. Wymaga analizy zapasu, ergonomii, sekwencji zadań i sterowania.",
+      },
+      {
+        question: "Jakie dane przygotować do RFQ?",
+        answer:
+          "Przygotuj typy jednostek logistycznych, zakres mas i wymiarów, przepływy, punkty startu i końca, layout, środowisko pracy, systemy WMS/WCS/ERP oraz wymagania dostępności i serwisu.",
+      },
+      {
+        question: "Jak roboty integrują się z WMS, WCS i ERP?",
+        answer:
+          "Integracja zwykle obejmuje zlecenia, statusy, priorytety, mapowanie lokalizacji, wyjątki procesowe i raportowanie. Zakres zależy od architektury systemów w magazynie.",
+      },
+      {
+        question: "Jak przygotować infrastrukturę magazynu?",
+        answer:
+          "Należy ocenić trasy, posadzkę, miejsca ładowania, dokowanie, sieć, widoczność, oznaczenia, separację ruchu i sposób pracy ludzi z urządzeniami.",
+      },
+      {
+        question: "Czy wdrożenie wymaga analizy bezpieczeństwa?",
+        answer:
+          "Taką analizę należy zaplanować dla konkretnego projektu, ponieważ bezpieczeństwo zależy od layoutu, ruchu, interakcji z ludźmi, urządzeń i procedur.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Przejdź do sekcji robotyzacji",
+      primaryHref: "/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "Zobacz kategorie robotyzacji",
+    },
+    seo: {
+      title: "Robotyzacja magazynu AGV i AMR | LogiMarket",
+      description:
+        "Landing B2B o robotyzacji magazynu: AGV, AMR, goods-to-person, palety, kompletacja, integracja WMS/WCS/ERP i dane do RFQ.",
+    },
+  },
+  {
+    intent: "warehouse-robotics",
+    locale: "en",
+    slug: "warehouse-robotics",
+    path: "/en/solutions/warehouse-robotics",
+    sectionLabel: "Solutions",
+    title: "Warehouse Robotics",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Warehouse robotics covers mobile robots, automated pallet flows, goods-to-person systems, robotic picking, infrastructure, software integration and implementation services. This page structures RFQ preparation and links to the relevant catalog categories.",
+    procurementContextTitle: "Procurement context",
+    procurementContext: [
+      "Robotics can support transport of totes, cartons, pallets and heavy loads, but selection depends on the process, layout, load carriers, traffic and human-machine interaction.",
+      "AGV systems are typically used in more controlled guidance and traffic environments, while AMR systems typically use more autonomous navigation and dynamic route planning.",
+      "The final AGV or AMR classification depends on the specific vendor system, infrastructure, integration scope and safety requirements.",
+      "A project should consider charging, docking, power, attachments, safety systems, fleet management, monitoring and integration with WMS, WCS and ERP.",
+      "Before RFQ, prepare load-unit types, weight and size ranges, pickup and drop-off points, aisle widths, storage height, shifts, work environment and service expectations.",
+    ],
+    decisionGuidanceTitle: "Decision questions before RFQ",
+    decisionFactors: [
+      {
+        title: "Processes to automate",
+        description:
+          "Clarify whether the priority is tote transport, pallet transport, picking, goods-to-person, parcel sorting, palletizing, depalletizing or operator assistance.",
+      },
+      {
+        title: "AGV or AMR",
+        description:
+          "AGV may fit stable routes and controlled traffic; AMR may fit variable layouts and dynamic navigation. The choice should be validated for the specific project.",
+      },
+      {
+        title: "Pallets and heavy loads",
+        description:
+          "For pallets, compare pallet AGV, pallet AMR, autonomous pallet trucks, autonomous forklifts, reach trucks and loading or unloading systems.",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person and shelf-to-person bring inventory or carriers to the operator, usually requiring SKU analysis, workstation ergonomics and control-system integration.",
+      },
+      {
+        title: "Picking and manipulation",
+        description:
+          "Robotic picking, pick-and-place, vision-guided grippers, cobots, palletizing and depalletizing require review of products, packaging and process tolerances.",
+      },
+      {
+        title: "Infrastructure and safety",
+        description:
+          "Include docking, charging, batteries, route marking, traffic separation, visibility, human interaction zones and project-specific safety analysis.",
+      },
+      {
+        title: "Software and integrations",
+        description:
+          "Check whether the project needs fleet management, traffic management, monitoring, digital twin, WMS, WCS, ERP and clear data exchange rules.",
+      },
+      {
+        title: "Warehouse readiness",
+        description:
+          "Readiness may include layout measurements, flow mapping, floor constraints, charging points, network coverage, signage and operating procedures.",
+      },
+      {
+        title: "Supplier comparison",
+        description:
+          "Compare not only devices, but also audit, concept design, commissioning, SLA, maintenance, training and integrator responsibility.",
+      },
+    ],
+    relatedCategoriesTitle: "Related catalog categories",
+    relatedCategories: [
+      {
+        label: "Warehouse robotics and automation",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "Catalog section for robots, infrastructure, software and robotics services.",
+      },
+      {
+        label: "Mobile robots AGV / AMR",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV, AMR, tote and carton transport robots, tugger robots and platform robots.",
+      },
+      {
+        label: "AGV / AMR for pallets and heavy loads",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "Pallet transport, autonomous trucks and pallet loading or unloading flows.",
+      },
+      {
+        label: "Goods-to-person and picking automation",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "Systems where goods or carriers move to the operator or picking station.",
+      },
+      {
+        label: "Picking and manipulation robots",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Pick-and-place, palletizing, depalletizing, parcel sorting and warehouse cobots.",
+      },
+      {
+        label: "Exoskeletons and work assistance",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "Operator-support systems for lifting and repetitive warehouse tasks.",
+      },
+      {
+        label: "Infrastructure for warehouse robotics",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "Charging, power, docking, traffic routes, accessories, safety and spare parts.",
+      },
+      {
+        label: "Robot software and integration",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management, WMS/WCS/ERP integration, monitoring and simulation.",
+      },
+      {
+        label: "Robotics implementation and maintenance",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "Audit, concept design, commissioning, process modernization, service and SLA.",
+      },
+      {
+        label: "AGV — automated guided vehicles",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "Vehicles for controlled routes and repeatable internal material flows.",
+      },
+      {
+        label: "AMR — autonomous mobile robots",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "Mobile robots for more dynamic route planning and variable flows.",
+      },
+      {
+        label: "Pallet AGV",
+        categorySlug: "c-agv-do-palet",
+        context: "Automation of stable pallet flows between defined process points.",
+      },
+      {
+        label: "Autonomous pallet trucks",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "Pallet movement between receiving, storage, picking and shipping areas.",
+      },
+      {
+        label: "Shelf-to-person robots",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "Systems delivering inventory or shelving to an operator or picking station.",
+      },
+      {
+        label: "Order-picking robots",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "Automation of picking, placing and assisted order fulfillment.",
+      },
+      {
+        label: "Palletizing robots",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "Stacking cartons, totes or products on pallets after product review.",
+      },
+      {
+        label: "Depalletizing robots",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "Removing loads from pallets and passing them to downstream process steps.",
+      },
+      {
+        label: "Passive exoskeletons",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "Operator support for lifting or sustained postures in warehouse work.",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "Robot fleet, task, traffic and system availability management.",
+      },
+      {
+        label: "Robot integration with WMS / WCS / ERP",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "Data exchange, transport orders, task statuses and control logic.",
+      },
+      {
+        label: "Warehouse robotics audit",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "Process, data and constraint analysis before an investment decision.",
+      },
+    ],
+    relatedIntentsTitle: "Related solutions",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "Related terms",
+    relatedGlossaryTerms: [
+      {
+        label: "Order picking",
+        glossarySlug: "kompletacja-zamowien",
+        context: "A process that often drives goods-to-person, robotic picking and workstation design.",
+      },
+      {
+        label: "Euro container",
+        glossarySlug: "pojemnik-euro",
+        context: "A standardized carrier that may matter in tote and carton transport analysis.",
+      },
+      {
+        label: "Pallet racking",
+        glossarySlug: "regal-paletowy",
+        context: "A reference point for pallet flows and integration with storage areas.",
+      },
+    ],
+    faqTitle: "Procurement FAQ",
+    faq: [
+      {
+        question: "What is the difference between AGV and AMR?",
+        answer:
+          "AGV usually operates in a more controlled guidance system, while AMR usually uses more autonomous navigation. The classification should be checked for the actual system and process.",
+      },
+      {
+        question: "Which warehouse processes can be automated with robots?",
+        answer:
+          "Common candidates include tote, carton and pallet transport, picking, goods-to-person, sorting, palletizing, depalletizing and operator assistance.",
+      },
+      {
+        question: "Can robots transport pallets?",
+        answer:
+          "Yes, but selection depends on load weight, dimensions, carriers, pickup and drop-off points, route widths, traffic and system integration.",
+      },
+      {
+        question: "How does goods-to-person work?",
+        answer:
+          "Goods-to-person delivers goods, carriers or shelving to an operator or workstation. It requires analysis of inventory, ergonomics, task sequencing and controls.",
+      },
+      {
+        question: "What data should be prepared for RFQ?",
+        answer:
+          "Prepare load-unit types, weight and size ranges, flows, start and end points, layout, operating environment, WMS/WCS/ERP systems, availability and service requirements.",
+      },
+      {
+        question: "How do robots integrate with WMS, WCS and ERP?",
+        answer:
+          "Integration usually covers orders, statuses, priorities, location mapping, process exceptions and reporting. Scope depends on the warehouse system architecture.",
+      },
+      {
+        question: "How should warehouse infrastructure be prepared?",
+        answer:
+          "Review routes, floor condition, charging points, docking, network, visibility, signage, traffic separation and human-device operating procedures.",
+      },
+      {
+        question: "Does implementation require safety analysis?",
+        answer:
+          "A project-specific safety analysis should be planned because safety depends on layout, traffic, human interaction, devices and procedures.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Open robotics catalog section",
+      primaryHref: "/en/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "View robotics categories",
+    },
+    seo: {
+      title: "Warehouse Robotics AGV and AMR | LogiMarket",
+      description:
+        "B2B guide to warehouse robotics: AGV, AMR, goods-to-person, pallets, robotic picking, WMS/WCS/ERP integration and RFQ preparation.",
+    },
+  },
+  {
+    intent: "warehouse-robotics",
+    locale: "de",
+    slug: "lagerrobotik",
+    path: "/de/loesungen/lagerrobotik",
+    sectionLabel: "Lösungen",
+    title: "Lagerrobotik",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Lagerrobotik umfasst mobile Roboter, automatisierte Palettenflüsse, Goods-to-person, robotergestützte Kommissionierung, Infrastruktur, Softwareintegration und Implementierungsleistungen. Diese Seite strukturiert die RFQ-Vorbereitung und führt zu passenden Katalogkategorien.",
+    procurementContextTitle: "Beschaffungskontext",
+    procurementContext: [
+      "Robotik kann den Transport von Behältern, Kartons, Paletten und schweren Lasten unterstützen, die Auswahl hängt jedoch von Prozess, Layout, Ladungsträgern, Verkehr und Interaktion mit Menschen ab.",
+      "AGV werden typischerweise in stärker kontrollierten Führungs- und Verkehrsstrukturen eingesetzt, während AMR meist autonomere Navigation und dynamische Routenplanung nutzen.",
+      "Die endgültige Einordnung als AGV oder AMR hängt vom konkreten Herstellersystem, der Infrastruktur, dem Integrationsumfang und den Sicherheitsanforderungen ab.",
+      "Ein Projekt sollte Laden, Andocken, Energieversorgung, Zubehör, Sicherheitssysteme, fleet management, Monitoring und Integration mit WMS, WCS und ERP berücksichtigen.",
+      "Vor dem RFQ sollten Ladungsträger, Gewichts- und Maßbereiche, Aufnahme- und Abgabepunkte, Gangbreiten, Lagerhöhe, Schichten, Arbeitsumgebung und Serviceanforderungen beschrieben werden.",
+    ],
+    decisionGuidanceTitle: "Entscheidungsfragen vor dem RFQ",
+    decisionFactors: [
+      {
+        title: "Zu robotisierende Prozesse",
+        description:
+          "Klären Sie, ob Behältertransport, Palettentransport, Kommissionierung, Goods-to-person, Paketsortierung, Palettierung, Depalettierung oder Operator-Unterstützung Priorität hat.",
+      },
+      {
+        title: "AGV oder AMR",
+        description:
+          "AGV können zu stabilen Routen und kontrolliertem Verkehr passen; AMR können zu variablen Layouts und dynamischer Navigation passen. Die Wahl ist projektbezogen zu prüfen.",
+      },
+      {
+        title: "Paletten und schwere Lasten",
+        description:
+          "Für Paletten vergleichen Sie Paletten-AGV, Paletten-AMR, autonome Hubwagen, autonome Gabelstapler, Reach Trucks sowie Be- und Entladesysteme.",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person und shelf-to-person bringen Bestand oder Ladungsträger zum Bediener und erfordern meist SKU-Analyse, Arbeitsplatzergonomie und Steuerungsintegration.",
+      },
+      {
+        title: "Kommissionierung und Handling",
+        description:
+          "Robotic picking, pick-and-place, vision-geführte Greifer, Cobots, Palettierung und Depalettierung erfordern Prüfung von Produkten, Verpackungen und Prozesstoleranzen.",
+      },
+      {
+        title: "Infrastruktur und Sicherheit",
+        description:
+          "Berücksichtigen Sie Docking, Laden, Batterien, Routenmarkierung, Verkehrstrennung, Sichtbarkeit, Interaktionszonen und projektspezifische Sicherheitsanalyse.",
+      },
+      {
+        title: "Software und Integration",
+        description:
+          "Prüfen Sie Bedarf an fleet management, traffic management, Monitoring, digital twin, WMS, WCS, ERP und klaren Regeln für den Datenaustausch.",
+      },
+      {
+        title: "Lagerbereitschaft",
+        description:
+          "Vorbereitung kann Layoutmessung, Flussaufnahme, Bodeneinschränkungen, Ladepunkte, Netzwerkabdeckung, Beschilderung und Betriebsverfahren umfassen.",
+      },
+      {
+        title: "Anbietervergleich",
+        description:
+          "Vergleichen Sie nicht nur Geräte, sondern auch Audit, Konzept, Inbetriebnahme, SLA, Wartung, Schulung und Verantwortung des Integrators.",
+      },
+    ],
+    relatedCategoriesTitle: "Verwandte Katalogkategorien",
+    relatedCategories: [
+      {
+        label: "Lagerrobotik und Automatisierung",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "Katalogsektion für Roboter, Infrastruktur, Software und Dienstleistungen.",
+      },
+      {
+        label: "Mobile Roboter AGV / AMR",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV, AMR, Roboter für Behälter, Kartons, Schleppaufgaben und Plattformen.",
+      },
+      {
+        label: "AGV / AMR für Paletten und schwere Lasten",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "Palettentransport, autonome Fahrzeuge sowie Be- und Entladeflüsse.",
+      },
+      {
+        label: "Goods-to-person und Kommissionierautomatisierung",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "Systeme, bei denen Ware oder Träger zum Bediener oder Arbeitsplatz kommen.",
+      },
+      {
+        label: "Kommissionier- und Manipulationsroboter",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Pick-and-place, Palettierung, Depalettierung, Sortierung und Cobots.",
+      },
+      {
+        label: "Exoskelette und Arbeitsunterstützung",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "Unterstützungssysteme für Heben und wiederholte Lagertätigkeiten.",
+      },
+      {
+        label: "Infrastruktur für Lagerrobotik",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "Laden, Energie, Docking, Verkehrswege, Zubehör, Sicherheit und Ersatzteile.",
+      },
+      {
+        label: "Robotersoftware und Integration",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management, WMS/WCS/ERP-Integration, Monitoring und Simulation.",
+      },
+      {
+        label: "Implementierung und Wartung der Robotik",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "Audit, Konzept, Inbetriebnahme, Prozessanpassung, Service und SLA.",
+      },
+      {
+        label: "AGV — automated guided vehicles",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "Fahrzeuge für kontrollierte Routen und wiederholbare Materialflüsse.",
+      },
+      {
+        label: "AMR — autonomous mobile robots",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "Mobile Roboter für dynamischere Routenplanung und variable Flüsse.",
+      },
+      {
+        label: "Paletten-AGV",
+        categorySlug: "c-agv-do-palet",
+        context: "Automatisierung stabiler Palettenflüsse zwischen definierten Prozesspunkten.",
+      },
+      {
+        label: "Autonome Palettenhubwagen",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "Palettenbewegung zwischen Wareneingang, Lager, Kommissionierung und Versand.",
+      },
+      {
+        label: "Shelf-to-person-Roboter",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "Systeme, die Bestand oder Regale zum Bediener oder Arbeitsplatz bringen.",
+      },
+      {
+        label: "Roboter für Auftragskommissionierung",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "Automatisierung von Greifen, Ablegen und unterstützter Auftragsabwicklung.",
+      },
+      {
+        label: "Palettierroboter",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "Stapeln von Kartons, Behältern oder Produkten auf Paletten nach Produktprüfung.",
+      },
+      {
+        label: "Depalettierroboter",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "Entnahme von Lasten von Paletten und Übergabe an nachgelagerte Schritte.",
+      },
+      {
+        label: "Passive Exoskelette",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "Unterstützung für Heben oder gehaltene Körperhaltungen im Lager.",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "Management von Roboterflotte, Aufgaben, Verkehr und Systemverfügbarkeit.",
+      },
+      {
+        label: "Roboterintegration mit WMS / WCS / ERP",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "Datenaustausch, Transportaufträge, Statusmeldungen und Steuerungslogik.",
+      },
+      {
+        label: "Audit der Lagerrobotik",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "Analyse von Prozess, Daten und Einschränkungen vor einer Investitionsentscheidung.",
+      },
+    ],
+    relatedIntentsTitle: "Verwandte Lösungen",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "Verwandte Begriffe",
+    relatedGlossaryTerms: [
+      {
+        label: "Kommissionierung",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Ein Prozess, der Goods-to-person, Roboterkommissionierung und Arbeitsplatzgestaltung beeinflusst.",
+      },
+      {
+        label: "Eurobehälter",
+        glossarySlug: "pojemnik-euro",
+        context: "Standardisierter Träger, der bei Behältertransporten relevant sein kann.",
+      },
+      {
+        label: "Palettenregal",
+        glossarySlug: "regal-paletowy",
+        context: "Bezugspunkt für Palettenflüsse und Integration mit Lagerbereichen.",
+      },
+    ],
+    faqTitle: "Beschaffungs-FAQ",
+    faq: [
+      {
+        question: "Worin unterscheiden sich AGV und AMR?",
+        answer:
+          "AGV arbeiten meist in kontrollierteren Führungssystemen, AMR nutzen meist autonomere Navigation. Die Einordnung sollte für das konkrete System und den Prozess geprüft werden.",
+      },
+      {
+        question: "Welche Lagerprozesse können robotisiert werden?",
+        answer:
+          "Häufig analysiert werden Behälter-, Karton- und Palettentransport, Kommissionierung, Goods-to-person, Sortierung, Palettierung, Depalettierung und Operator-Unterstützung.",
+      },
+      {
+        question: "Können Roboter Paletten transportieren?",
+        answer:
+          "Ja, die Auswahl hängt jedoch von Gewicht, Abmessungen, Trägern, Aufnahme- und Abgabepunkten, Gangbreiten, Verkehr und Systemintegration ab.",
+      },
+      {
+        question: "Wie funktioniert Goods-to-person?",
+        answer:
+          "Goods-to-person bringt Ware, Träger oder Regale zum Bediener oder Arbeitsplatz. Es erfordert Analyse von Bestand, Ergonomie, Aufgabenfolge und Steuerung.",
+      },
+      {
+        question: "Welche Daten sind für ein RFQ vorzubereiten?",
+        answer:
+          "Bereiten Sie Ladungsträger, Gewichts- und Größenbereiche, Flüsse, Start- und Zielpunkte, Layout, Arbeitsumgebung, WMS/WCS/ERP, Verfügbarkeit und Serviceanforderungen vor.",
+      },
+      {
+        question: "Wie integrieren sich Roboter mit WMS, WCS und ERP?",
+        answer:
+          "Integration umfasst meist Aufträge, Status, Prioritäten, Standortmapping, Prozessausnahmen und Reporting. Der Umfang hängt von der Systemarchitektur ab.",
+      },
+      {
+        question: "Wie sollte die Lagerinfrastruktur vorbereitet werden?",
+        answer:
+          "Prüfen Sie Wege, Boden, Ladepunkte, Docking, Netzwerk, Sichtbarkeit, Beschilderung, Verkehrstrennung und Verfahren für Menschen und Geräte.",
+      },
+      {
+        question: "Erfordert die Einführung eine Sicherheitsanalyse?",
+        answer:
+          "Eine projektspezifische Sicherheitsanalyse sollte eingeplant werden, da Sicherheit von Layout, Verkehr, menschlicher Interaktion, Geräten und Verfahren abhängt.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Robotik-Katalog öffnen",
+      primaryHref: "/de/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "Robotik-Kategorien ansehen",
+    },
+    seo: {
+      title: "Lagerrobotik AGV und AMR | LogiMarket",
+      description:
+        "B2B-Leitfaden zu Lagerrobotik: AGV, AMR, Goods-to-person, Paletten, Kommissionierroboter, WMS/WCS/ERP-Integration und RFQ-Vorbereitung.",
+    },
+  },
+  {
+    intent: "warehouse-robotics",
+    locale: "fr",
+    slug: "robotique-entrepot",
+    path: "/fr/solutions/robotique-entrepot",
+    sectionLabel: "Solutions",
+    title: "Robotique d'entrepôt",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La robotique d'entrepôt couvre les robots mobiles, les flux de palettes automatisés, les systèmes goods-to-person, la préparation robotisée, l'infrastructure, l'intégration logicielle et les services de mise en œuvre. Cette page structure la préparation RFQ et relie les catégories pertinentes du catalogue.",
+    procurementContextTitle: "Contexte d'achat",
+    procurementContext: [
+      "La robotique peut soutenir le transport de bacs, cartons, palettes et charges lourdes, mais le choix dépend du processus, du layout, des supports de charge, du trafic et des interactions humaines.",
+      "Les AGV sont généralement utilisés dans des systèmes de guidage et de circulation plus contrôlés, tandis que les AMR utilisent généralement une navigation plus autonome et une planification dynamique.",
+      "La classification finale AGV ou AMR dépend du système du fabricant, de l'infrastructure, du périmètre d'intégration et des exigences de sécurité.",
+      "Un projet doit intégrer la recharge, le docking, l'alimentation, les accessoires, les systèmes de sécurité, le fleet management, le monitoring et l'intégration WMS, WCS et ERP.",
+      "Avant le RFQ, préparez les types d'unités logistiques, les plages de poids et dimensions, les points de prise et dépôt, les largeurs d'allées, la hauteur de stockage, les équipes, l'environnement et les attentes de service.",
+    ],
+    decisionGuidanceTitle: "Questions de décision avant RFQ",
+    decisionFactors: [
+      {
+        title: "Processus à robotiser",
+        description:
+          "Précisez si la priorité concerne le transport de bacs, palettes, la préparation, le goods-to-person, le tri colis, la palettisation, la dépalettisation ou l'assistance opérateur.",
+      },
+      {
+        title: "AGV ou AMR",
+        description:
+          "Un AGV peut convenir aux trajets stables et au trafic contrôlé; un AMR peut convenir aux layouts variables et à la navigation dynamique. Le choix doit être validé par projet.",
+      },
+      {
+        title: "Palettes et charges lourdes",
+        description:
+          "Pour les palettes, comparez AGV palette, AMR palette, transpalettes autonomes, chariots autonomes, reach trucks et systèmes de chargement ou déchargement.",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person et shelf-to-person amènent le stock ou le support vers l'opérateur et demandent souvent une analyse SKU, ergonomie et intégration de contrôle.",
+      },
+      {
+        title: "Préparation et manipulation",
+        description:
+          "Robotic picking, pick-and-place, préhenseurs avec vision, cobots, palettisation et dépalettisation exigent l'analyse des produits, emballages et tolérances.",
+      },
+      {
+        title: "Infrastructure et sécurité",
+        description:
+          "Incluez docking, recharge, batteries, marquage des trajets, séparation des flux, visibilité, zones d'interaction et analyse de sécurité propre au projet.",
+      },
+      {
+        title: "Logiciels et intégrations",
+        description:
+          "Vérifiez le besoin de fleet management, traffic management, monitoring, digital twin, WMS, WCS, ERP et règles d'échange de données.",
+      },
+      {
+        title: "Préparation de l'entrepôt",
+        description:
+          "La préparation peut inclure mesures du layout, cartographie des flux, contraintes de sol, points de recharge, réseau, signalisation et procédures d'exploitation.",
+      },
+      {
+        title: "Comparaison des fournisseurs",
+        description:
+          "Comparez les équipements, mais aussi audit, conception, mise en service, SLA, maintenance, formation et responsabilité de l'intégrateur.",
+      },
+    ],
+    relatedCategoriesTitle: "Catégories de catalogue associées",
+    relatedCategories: [
+      {
+        label: "Robotique et automatisation d'entrepôt",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "Section catalogue pour robots, infrastructure, logiciels et services de robotique.",
+      },
+      {
+        label: "Robots mobiles AGV / AMR",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV, AMR, robots pour bacs, cartons, remorquage et plateformes.",
+      },
+      {
+        label: "AGV / AMR pour palettes et charges lourdes",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "Transport de palettes, chariots autonomes et flux de chargement ou déchargement.",
+      },
+      {
+        label: "Goods-to-person et automatisation picking",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "Systèmes où les marchandises ou supports arrivent vers l'opérateur.",
+      },
+      {
+        label: "Robots de préparation et manipulation",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Pick-and-place, palettisation, dépalettisation, tri colis et cobots d'entrepôt.",
+      },
+      {
+        label: "Exosquelettes et assistance au travail",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "Systèmes de soutien opérateur pour levage et tâches répétitives.",
+      },
+      {
+        label: "Infrastructure pour robotique d'entrepôt",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "Recharge, alimentation, docking, trajets, accessoires, sécurité et pièces.",
+      },
+      {
+        label: "Logiciels et intégration des robots",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management, intégration WMS/WCS/ERP, monitoring et simulation.",
+      },
+      {
+        label: "Mise en œuvre et maintenance robotique",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "Audit, concept, démarrage, adaptation du processus, service et SLA.",
+      },
+      {
+        label: "AGV — automated guided vehicles",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "Véhicules pour trajets contrôlés et flux internes répétables.",
+      },
+      {
+        label: "AMR — autonomous mobile robots",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "Robots mobiles pour planification de route plus dynamique et flux variables.",
+      },
+      {
+        label: "AGV pour palettes",
+        categorySlug: "c-agv-do-palet",
+        context: "Automatisation de flux palettes stables entre points de processus définis.",
+      },
+      {
+        label: "Transpalettes autonomes",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "Déplacement de palettes entre réception, stockage, picking et expédition.",
+      },
+      {
+        label: "Robots shelf-to-person",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "Systèmes apportant stock ou rayonnage vers l'opérateur ou la station.",
+      },
+      {
+        label: "Robots de préparation de commandes",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "Automatisation du prélèvement, dépôt et assistance à la préparation.",
+      },
+      {
+        label: "Robots de palettisation",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "Empilage de cartons, bacs ou produits sur palettes après analyse produit.",
+      },
+      {
+        label: "Robots de dépalettisation",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "Retrait de charges depuis palettes et transfert vers les étapes suivantes.",
+      },
+      {
+        label: "Exosquelettes passifs",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "Soutien opérateur pour levage ou postures maintenues en entrepôt.",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "Gestion de flotte, tâches, trafic et disponibilité du système.",
+      },
+      {
+        label: "Intégration robots avec WMS / WCS / ERP",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "Échange de données, ordres de transport, statuts et logique de contrôle.",
+      },
+      {
+        label: "Audit de robotique d'entrepôt",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "Analyse du processus, des données et contraintes avant décision d'investissement.",
+      },
+    ],
+    relatedIntentsTitle: "Solutions associées",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "Termes associés",
+    relatedGlossaryTerms: [
+      {
+        label: "Préparation de commandes",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Processus influençant goods-to-person, picking robotisé et conception des postes.",
+      },
+      {
+        label: "Bac Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Support standardisé pouvant compter dans l'analyse de transport de bacs.",
+      },
+      {
+        label: "Rayonnage à palettes",
+        glossarySlug: "regal-paletowy",
+        context: "Point de référence pour flux palettes et intégration avec stockage.",
+      },
+    ],
+    faqTitle: "FAQ achat",
+    faq: [
+      {
+        question: "Quelle est la différence entre AGV et AMR ?",
+        answer:
+          "Un AGV travaille généralement dans un guidage plus contrôlé, tandis qu'un AMR utilise généralement une navigation plus autonome. La classification doit être vérifiée pour le système et le processus.",
+      },
+      {
+        question: "Quels processus d'entrepôt peuvent être robotisés ?",
+        answer:
+          "Les cas fréquents sont transport de bacs, cartons et palettes, picking, goods-to-person, tri, palettisation, dépalettisation et assistance opérateur.",
+      },
+      {
+        question: "Les robots peuvent-ils transporter des palettes ?",
+        answer:
+          "Oui, mais le choix dépend du poids, dimensions, supports, points de prise et dépôt, largeurs de trajet, trafic et intégration système.",
+      },
+      {
+        question: "Comment fonctionne goods-to-person ?",
+        answer:
+          "Goods-to-person apporte marchandises, supports ou rayonnages à un opérateur ou poste. Il demande analyse du stock, ergonomie, séquencement et contrôle.",
+      },
+      {
+        question: "Quelles données préparer pour le RFQ ?",
+        answer:
+          "Préparez unités logistiques, poids et dimensions, flux, points de départ et arrivée, layout, environnement, WMS/WCS/ERP, disponibilité et exigences de service.",
+      },
+      {
+        question: "Comment les robots s'intègrent-ils avec WMS, WCS et ERP ?",
+        answer:
+          "L'intégration couvre souvent ordres, statuts, priorités, mapping des emplacements, exceptions de processus et reporting. Le périmètre dépend de l'architecture.",
+      },
+      {
+        question: "Comment préparer l'infrastructure de l'entrepôt ?",
+        answer:
+          "Vérifiez trajets, sol, points de recharge, docking, réseau, visibilité, signalisation, séparation des flux et procédures humains-machines.",
+      },
+      {
+        question: "La mise en œuvre demande-t-elle une analyse de sécurité ?",
+        answer:
+          "Une analyse spécifique au projet doit être prévue, car la sécurité dépend du layout, du trafic, des interactions humaines, des appareils et procédures.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Ouvrir la section robotique",
+      primaryHref: "/fr/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "Voir les catégories robotique",
+    },
+    seo: {
+      title: "Robotique d'entrepôt AGV et AMR | LogiMarket",
+      description:
+        "Guide B2B sur la robotique d'entrepôt : AGV, AMR, goods-to-person, palettes, picking robotisé, intégration WMS/WCS/ERP et préparation RFQ.",
+    },
+  },
+  {
+    intent: "warehouse-robotics",
+    locale: "es",
+    slug: "robotica-de-almacen",
+    path: "/es/soluciones/robotica-de-almacen",
+    sectionLabel: "Soluciones",
+    title: "Robótica de almacén",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "La robótica de almacén cubre robots móviles, flujos automatizados de palés, goods-to-person, picking robotizado, infraestructura, integración de software y servicios de implementación. Esta página estructura la preparación de RFQ y enlaza con categorías relevantes del catálogo.",
+    procurementContextTitle: "Contexto de compra",
+    procurementContext: [
+      "La robótica puede apoyar el transporte de contenedores, cajas, palés y cargas pesadas, pero la selección depende del proceso, layout, soportes de carga, tráfico e interacción con personas.",
+      "Los AGV se usan normalmente en sistemas de guiado y tráfico más controlados, mientras que los AMR suelen usar navegación más autónoma y planificación dinámica de rutas.",
+      "La clasificación final como AGV o AMR depende del sistema concreto del fabricante, infraestructura, alcance de integración y requisitos de seguridad.",
+      "Un proyecto debe considerar carga, docking, alimentación, accesorios, sistemas de seguridad, fleet management, monitorización e integración con WMS, WCS y ERP.",
+      "Antes del RFQ conviene preparar tipos de unidades logísticas, pesos y dimensiones, puntos de recogida y entrega, anchuras de pasillo, altura de almacenamiento, turnos, entorno y servicio.",
+    ],
+    decisionGuidanceTitle: "Preguntas de decisión antes del RFQ",
+    decisionFactors: [
+      {
+        title: "Procesos a robotizar",
+        description:
+          "Defina si la prioridad es transporte de contenedores, palés, picking, goods-to-person, clasificación de paquetes, paletización, despaletización o asistencia al operador.",
+      },
+      {
+        title: "AGV o AMR",
+        description:
+          "AGV puede encajar en rutas estables y tráfico controlado; AMR puede encajar en layouts variables y navegación dinámica. La elección debe validarse para cada proyecto.",
+      },
+      {
+        title: "Palés y cargas pesadas",
+        description:
+          "Para palés compare AGV para palés, AMR para palés, transpaletas autónomas, carretillas autónomas, reach trucks y sistemas de carga o descarga.",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person y shelf-to-person llevan inventario o soportes al operador y normalmente requieren análisis SKU, ergonomía del puesto e integración de control.",
+      },
+      {
+        title: "Picking y manipulación",
+        description:
+          "Robotic picking, pick-and-place, pinzas con visión, cobots, paletización y despaletización requieren revisar productos, embalajes y tolerancias de proceso.",
+      },
+      {
+        title: "Infraestructura y seguridad",
+        description:
+          "Incluya docking, carga, baterías, señalización de rutas, separación de tráfico, visibilidad, zonas de interacción y análisis de seguridad del proyecto.",
+      },
+      {
+        title: "Software e integraciones",
+        description:
+          "Compruebe si se requiere fleet management, traffic management, monitorización, digital twin, WMS, WCS, ERP y reglas claras de intercambio de datos.",
+      },
+      {
+        title: "Preparación del almacén",
+        description:
+          "La preparación puede incluir mediciones del layout, mapa de flujos, límites del suelo, puntos de carga, red, señalización y procedimientos operativos.",
+      },
+      {
+        title: "Comparación de proveedores",
+        description:
+          "Compare equipos, pero también auditoría, diseño conceptual, puesta en marcha, SLA, mantenimiento, formación y responsabilidad del integrador.",
+      },
+    ],
+    relatedCategoriesTitle: "Categorías de catálogo relacionadas",
+    relatedCategories: [
+      {
+        label: "Robótica y automatización de almacén",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "Sección de catálogo para robots, infraestructura, software y servicios.",
+      },
+      {
+        label: "Robots móviles AGV / AMR",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV, AMR, robots para contenedores, cajas, remolque y plataformas.",
+      },
+      {
+        label: "AGV / AMR para palés y cargas pesadas",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "Transporte de palés, vehículos autónomos y flujos de carga o descarga.",
+      },
+      {
+        label: "Goods-to-person y automatización de picking",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "Sistemas en los que mercancías o soportes llegan al operador.",
+      },
+      {
+        label: "Robots de picking y manipulación",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Pick-and-place, paletización, despaletización, clasificación y cobots.",
+      },
+      {
+        label: "Exoesqueletos y asistencia laboral",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "Sistemas de apoyo a operadores para elevación y tareas repetitivas.",
+      },
+      {
+        label: "Infraestructura para robótica de almacén",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "Carga, alimentación, docking, rutas, accesorios, seguridad y repuestos.",
+      },
+      {
+        label: "Software e integración de robots",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management, integración WMS/WCS/ERP, monitorización y simulación.",
+      },
+      {
+        label: "Implementación y mantenimiento de robótica",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "Auditoría, concepto, puesta en marcha, modernización, servicio y SLA.",
+      },
+      {
+        label: "AGV — automated guided vehicles",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "Vehículos para rutas controladas y flujos internos repetibles.",
+      },
+      {
+        label: "AMR — autonomous mobile robots",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "Robots móviles para planificación de rutas más dinámica y flujos variables.",
+      },
+      {
+        label: "AGV para palés",
+        categorySlug: "c-agv-do-palet",
+        context: "Automatización de flujos de palés estables entre puntos definidos del proceso.",
+      },
+      {
+        label: "Transpaletas autónomas",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "Movimiento de palés entre recepción, almacenamiento, picking y expedición.",
+      },
+      {
+        label: "Robots shelf-to-person",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "Sistemas que llevan inventario o estanterías al operador o estación.",
+      },
+      {
+        label: "Robots para preparación de pedidos",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "Automatización de picking, colocación y asistencia al cumplimiento.",
+      },
+      {
+        label: "Robots de paletización",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "Apilado de cajas, contenedores o productos en palés tras revisión del producto.",
+      },
+      {
+        label: "Robots de despaletización",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "Retirada de cargas de palés y transferencia a pasos posteriores.",
+      },
+      {
+        label: "Exoesqueletos pasivos",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "Apoyo al operador para elevación o posturas sostenidas en almacén.",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "Gestión de flota, tareas, tráfico y disponibilidad del sistema.",
+      },
+      {
+        label: "Integración de robots con WMS / WCS / ERP",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "Intercambio de datos, órdenes de transporte, estados y lógica de control.",
+      },
+      {
+        label: "Auditoría de robótica de almacén",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "Análisis de proceso, datos y restricciones antes de invertir.",
+      },
+    ],
+    relatedIntentsTitle: "Soluciones relacionadas",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "Términos relacionados",
+    relatedGlossaryTerms: [
+      {
+        label: "Preparación de pedidos",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Proceso que influye en goods-to-person, picking robotizado y diseño de puestos.",
+      },
+      {
+        label: "Contenedor Euro",
+        glossarySlug: "pojemnik-euro",
+        context: "Soporte estandarizado que puede ser relevante en transporte de contenedores.",
+      },
+      {
+        label: "Estantería para palés",
+        glossarySlug: "regal-paletowy",
+        context: "Referencia para flujos de palés e integración con almacenamiento.",
+      },
+    ],
+    faqTitle: "FAQ de compra",
+    faq: [
+      {
+        question: "¿Cuál es la diferencia entre AGV y AMR?",
+        answer:
+          "AGV suele trabajar en un sistema de guiado más controlado, mientras que AMR suele usar navegación más autónoma. La clasificación debe comprobarse para el sistema y proceso reales.",
+      },
+      {
+        question: "¿Qué procesos de almacén pueden robotizarse?",
+        answer:
+          "Se analizan con frecuencia transporte de contenedores, cajas y palés, picking, goods-to-person, clasificación, paletización, despaletización y asistencia al operador.",
+      },
+      {
+        question: "¿Pueden los robots transportar palés?",
+        answer:
+          "Sí, pero la selección depende del peso, dimensiones, soportes, puntos de recogida y entrega, anchura de rutas, tráfico e integración.",
+      },
+      {
+        question: "¿Cómo funciona goods-to-person?",
+        answer:
+          "Goods-to-person lleva mercancías, soportes o estanterías a un operador o estación. Requiere análisis de inventario, ergonomía, secuencia de tareas y control.",
+      },
+      {
+        question: "¿Qué datos preparar para RFQ?",
+        answer:
+          "Prepare unidades logísticas, pesos y dimensiones, flujos, puntos iniciales y finales, layout, entorno, WMS/WCS/ERP, disponibilidad y requisitos de servicio.",
+      },
+      {
+        question: "¿Cómo se integran los robots con WMS, WCS y ERP?",
+        answer:
+          "La integración suele cubrir órdenes, estados, prioridades, ubicación, excepciones de proceso e informes. El alcance depende de la arquitectura.",
+      },
+      {
+        question: "¿Cómo preparar la infraestructura del almacén?",
+        answer:
+          "Revise rutas, suelo, puntos de carga, docking, red, visibilidad, señalización, separación de tráfico y procedimientos para personas y equipos.",
+      },
+      {
+        question: "¿La implementación requiere análisis de seguridad?",
+        answer:
+          "Debe planificarse un análisis específico del proyecto, porque la seguridad depende del layout, tráfico, interacción humana, dispositivos y procedimientos.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Abrir sección de robótica",
+      primaryHref: "/es/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "Ver categorías de robótica",
+    },
+    seo: {
+      title: "Robótica de almacén AGV y AMR | LogiMarket",
+      description:
+        "Guía B2B de robótica de almacén: AGV, AMR, goods-to-person, palés, picking robotizado, integración WMS/WCS/ERP y preparación RFQ.",
+    },
+  },
+  {
+    intent: "warehouse-robotics",
+    locale: "uk",
+    slug: "robotyzatsiia-skladu",
+    path: "/uk/solutions/robotyzatsiia-skladu",
+    sectionLabel: "Рішення",
+    title: "Роботизація складу",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "Роботизація складу охоплює мобільних роботів, автоматизовані палетні потоки, goods-to-person, роботизований picking, інфраструктуру, програмну інтеграцію та послуги впровадження. Сторінка структурує підготовку RFQ і веде до релевантних категорій каталогу.",
+    procurementContextTitle: "Закупівельний контекст",
+    procurementContext: [
+      "Роботизація може підтримувати транспортування контейнерів, коробок, палет і важких вантажів, але вибір залежить від процесу, layout, носіїв вантажу, руху та взаємодії з людьми.",
+      "AGV зазвичай використовуються у більш контрольованих системах руху, а AMR зазвичай застосовують автономнішу навігацію та динамічне планування маршрутів.",
+      "Остаточна класифікація AGV або AMR залежить від конкретної системи виробника, інфраструктури, інтеграції та вимог безпеки.",
+      "Проєкт має враховувати заряджання, docking, живлення, оснащення, системи безпеки, fleet management, monitoring та інтеграцію з WMS, WCS і ERP.",
+      "Перед RFQ варто підготувати типи логістичних одиниць, вагу й розміри, точки забору та відкладання, ширину проходів, висоту зберігання, зміни, середовище та сервісні вимоги.",
+    ],
+    decisionGuidanceTitle: "Питання для рішення перед RFQ",
+    decisionFactors: [
+      {
+        title: "Процеси для роботизації",
+        description:
+          "Визначте, чи пріоритетом є транспорт контейнерів, палет, picking, goods-to-person, сортування посилок, палетизація, депалетизація або підтримка оператора.",
+      },
+      {
+        title: "AGV чи AMR",
+        description:
+          "AGV може підходити для стабільних маршрутів і контрольованого руху; AMR може підходити для змінного layout і динамічної навігації. Вибір треба перевіряти для проєкту.",
+      },
+      {
+        title: "Палети та важкі вантажі",
+        description:
+          "Для палет порівнюйте pallet AGV, pallet AMR, автономні палетні візки, автономні навантажувачі, reach truck і системи завантаження або розвантаження.",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person і shelf-to-person доставляють запас або носій до оператора та часто потребують аналізу SKU, ергономіки станції та інтеграції керування.",
+      },
+      {
+        title: "Picking і маніпуляція",
+        description:
+          "Robotic picking, pick-and-place, візійні захвати, cobot, палетизація й депалетизація потребують перевірки продуктів, пакування та допусків процесу.",
+      },
+      {
+        title: "Інфраструктура та безпека",
+        description:
+          "Врахуйте docking, заряджання, батареї, маркування маршрутів, розділення руху, видимість, зони взаємодії та аналіз безпеки конкретного проєкту.",
+      },
+      {
+        title: "ПЗ та інтеграції",
+        description:
+          "Перевірте потребу у fleet management, traffic management, monitoring, digital twin, WMS, WCS, ERP та чітких правилах обміну даними.",
+      },
+      {
+        title: "Готовність складу",
+        description:
+          "Підготовка може включати вимірювання layout, карту потоків, обмеження підлоги, точки заряджання, мережу, навігаційні позначення та процедури роботи.",
+      },
+      {
+        title: "Порівняння постачальників",
+        description:
+          "Порівнюйте не лише пристрої, а й аудит, концепт, запуск, SLA, обслуговування, навчання та відповідальність інтегратора.",
+      },
+    ],
+    relatedCategoriesTitle: "Пов'язані категорії каталогу",
+    relatedCategories: [
+      {
+        label: "Роботизація та автоматизація складу",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "Розділ каталогу для роботів, інфраструктури, програмного забезпечення та послуг.",
+      },
+      {
+        label: "Мобільні роботи AGV / AMR",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV, AMR, роботи для контейнерів, коробок, буксирування та платформ.",
+      },
+      {
+        label: "AGV / AMR для палет і важких вантажів",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "Транспорт палет, автономні візки та потоки завантаження або розвантаження.",
+      },
+      {
+        label: "Goods-to-person і автоматизація picking",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "Системи, де товар або носій прибуває до оператора чи станції.",
+      },
+      {
+        label: "Роботи для picking і маніпуляції",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Pick-and-place, палетизація, депалетизація, сортування та cobot.",
+      },
+      {
+        label: "Екзоскелети та підтримка праці",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "Системи підтримки операторів для піднімання і повторюваних складських задач.",
+      },
+      {
+        label: "Інфраструктура для роботизації складу",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "Заряджання, живлення, docking, маршрути, оснащення, безпека та запчастини.",
+      },
+      {
+        label: "ПЗ та інтеграція роботів",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management, інтеграція WMS/WCS/ERP, monitoring і симуляція.",
+      },
+      {
+        label: "Впровадження та підтримка роботизації",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "Аудит, концепт, запуск, модернізація процесу, сервіс і SLA.",
+      },
+      {
+        label: "AGV — automated guided vehicles",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "Транспортні засоби для контрольованих маршрутів і повторюваних потоків.",
+      },
+      {
+        label: "AMR — autonomous mobile robots",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "Мобільні роботи для динамічнішого планування маршрутів і змінних потоків.",
+      },
+      {
+        label: "AGV для палет",
+        categorySlug: "c-agv-do-palet",
+        context: "Автоматизація стабільних палетних потоків між визначеними точками процесу.",
+      },
+      {
+        label: "Автономні палетні візки",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "Рух палет між прийманням, зберіганням, picking і відвантаженням.",
+      },
+      {
+        label: "Роботи shelf-to-person",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "Системи, які доставляють запас або стелаж до оператора чи станції.",
+      },
+      {
+        label: "Роботи для комплектації замовлень",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "Автоматизація забору, відкладання та підтримки виконання замовлень.",
+      },
+      {
+        label: "Роботи для палетизації",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "Укладання коробок, контейнерів або продуктів на палети після аналізу продукту.",
+      },
+      {
+        label: "Роботи для депалетизації",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "Знімання вантажів з палет і передача до наступних етапів процесу.",
+      },
+      {
+        label: "Пасивні екзоскелети",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "Підтримка оператора при підніманні або статичних позах у складській роботі.",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "Керування флотом роботів, задачами, рухом і доступністю системи.",
+      },
+      {
+        label: "Інтеграція роботів з WMS / WCS / ERP",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "Обмін даними, транспортні завдання, статуси та логіка керування.",
+      },
+      {
+        label: "Аудит роботизації складу",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "Аналіз процесу, даних та обмежень перед інвестиційним рішенням.",
+      },
+    ],
+    relatedIntentsTitle: "Пов'язані рішення",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "Пов'язані терміни",
+    relatedGlossaryTerms: [
+      {
+        label: "Комплектація замовлень",
+        glossarySlug: "kompletacja-zamowien",
+        context: "Процес, що впливає на goods-to-person, роботизований picking і дизайн станцій.",
+      },
+      {
+        label: "Євроконтейнер",
+        glossarySlug: "pojemnik-euro",
+        context: "Стандартизований носій, важливий для аналізу транспорту контейнерів.",
+      },
+      {
+        label: "Палетний стелаж",
+        glossarySlug: "regal-paletowy",
+        context: "Орієнтир для палетних потоків та інтеграції зі зоною зберігання.",
+      },
+    ],
+    faqTitle: "FAQ закупівель",
+    faq: [
+      {
+        question: "Чим відрізняються AGV і AMR?",
+        answer:
+          "AGV зазвичай працює у контрольованішій системі руху, а AMR зазвичай використовує автономнішу навігацію. Класифікацію треба перевірити для системи і процесу.",
+      },
+      {
+        question: "Які складські процеси можна роботизувати?",
+        answer:
+          "Часто аналізують транспорт контейнерів, коробок і палет, picking, goods-to-person, сортування, палетизацію, депалетизацію та підтримку операторів.",
+      },
+      {
+        question: "Чи можуть роботи транспортувати палети?",
+        answer:
+          "Так, але вибір залежить від ваги, розмірів, носіїв, точок забору і відкладання, ширини маршрутів, руху та інтеграції.",
+      },
+      {
+        question: "Як працює goods-to-person?",
+        answer:
+          "Goods-to-person доставляє товар, носій або стелаж до оператора чи станції. Потрібні аналіз запасу, ергономіки, черги задач і керування.",
+      },
+      {
+        question: "Які дані підготувати для RFQ?",
+        answer:
+          "Підготуйте логістичні одиниці, вагу й розміри, потоки, початкові та кінцеві точки, layout, середовище, WMS/WCS/ERP, доступність і сервіс.",
+      },
+      {
+        question: "Як роботи інтегруються з WMS, WCS і ERP?",
+        answer:
+          "Інтеграція зазвичай охоплює завдання, статуси, пріоритети, мапування локацій, винятки процесу і звітність. Обсяг залежить від архітектури.",
+      },
+      {
+        question: "Як підготувати інфраструктуру складу?",
+        answer:
+          "Перевірте маршрути, підлогу, точки заряджання, docking, мережу, видимість, позначення, розділення руху та процедури для людей і пристроїв.",
+      },
+      {
+        question: "Чи впровадження потребує аналізу безпеки?",
+        answer:
+          "Аналіз для конкретного проєкту слід запланувати, бо безпека залежить від layout, руху, взаємодії з людьми, пристроїв і процедур.",
+      },
+    ],
+    cta: {
+      primaryLabel: "Відкрити розділ роботизації",
+      primaryHref: "/uk/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "Переглянути категорії роботизації",
+    },
+    seo: {
+      title: "Роботизація складу AGV і AMR | LogiMarket",
+      description:
+        "B2B-гід з роботизації складу: AGV, AMR, goods-to-person, палети, роботизований picking, інтеграція WMS/WCS/ERP і підготовка RFQ.",
+    },
+  },
+  {
+    intent: "warehouse-robotics",
+    locale: "zh",
+    slug: "warehouse-robotics",
+    path: "/zh/solutions/warehouse-robotics",
+    sectionLabel: "解决方案",
+    title: "仓库机器人",
+    eyebrow: "B2B purchase intent",
+    intro:
+      "仓库机器人涵盖移动机器人、托盘流程自动化、goods-to-person、机器人拣选、基础设施、软件集成和实施服务。本页用于组织RFQ准备工作，并链接到相关目录类别。",
+    procurementContextTitle: "采购背景",
+    procurementContext: [
+      "机器人可以支持料箱、纸箱、托盘和重载搬运，但选型取决于流程、layout、载具、交通流以及人与设备的互动方式。",
+      "AGV通常用于更受控的导引和交通系统，AMR通常使用更自主的导航和动态路径规划。",
+      "最终应将系统归类为AGV还是AMR，取决于具体厂商系统、基础设施、集成范围和安全要求。",
+      "项目应考虑充电、docking、供电、附件、安全系统、fleet management、monitoring以及与WMS、WCS和ERP的集成。",
+      "RFQ之前应准备物流单元类型、重量和尺寸范围、取放点、通道宽度、存储高度、班次、工作环境和服务要求。",
+    ],
+    decisionGuidanceTitle: "RFQ前的决策问题",
+    decisionFactors: [
+      {
+        title: "可机器人化的流程",
+        description:
+          "明确优先事项是料箱搬运、托盘搬运、picking、goods-to-person、包裹分拣、码垛、拆垛还是操作员辅助。",
+      },
+      {
+        title: "AGV还是AMR",
+        description:
+          "AGV可能适合稳定路线和受控交通；AMR可能适合可变layout和动态导航。选择应针对具体项目验证。",
+      },
+      {
+        title: "托盘和重载",
+        description:
+          "针对托盘，应比较pallet AGV、pallet AMR、自动托盘车、自动叉车、reach truck以及装卸系统。",
+      },
+      {
+        title: "Goods-to-person",
+        description:
+          "Goods-to-person和shelf-to-person将库存或载具送到操作员，通常需要SKU分析、工作站人体工学和控制系统集成。",
+      },
+      {
+        title: "拣选和搬运",
+        description:
+          "Robotic picking、pick-and-place、视觉夹具、cobot、码垛和拆垛需要评估产品、包装和流程公差。",
+      },
+      {
+        title: "基础设施和安全",
+        description:
+          "包括docking、充电、电池、路线标识、交通隔离、可视性、人机互动区域和项目安全分析。",
+      },
+      {
+        title: "软件和集成",
+        description:
+          "确认是否需要fleet management、traffic management、monitoring、digital twin、WMS、WCS、ERP以及清晰的数据交换规则。",
+      },
+      {
+        title: "仓库准备",
+        description:
+          "准备工作可能包括layout测量、流程地图、地面限制、充电点、网络覆盖、标识和操作程序。",
+      },
+      {
+        title: "供应商比较",
+        description:
+          "比较的不只是设备，还包括审计、概念设计、调试、SLA、维护、培训和集成商责任。",
+      },
+    ],
+    relatedCategoriesTitle: "相关目录类别",
+    relatedCategories: [
+      {
+        label: "仓库机器人与自动化",
+        categorySlug: "c-robotyzacja-magazynu",
+        context: "机器人、基础设施、软件和机器人服务的目录板块。",
+      },
+      {
+        label: "AGV / AMR移动机器人",
+        categorySlug: "c-roboty-mobilne-agv-amr",
+        context: "AGV、AMR、料箱和纸箱机器人、牵引机器人和平台机器人。",
+      },
+      {
+        label: "用于托盘和重载的AGV / AMR",
+        categorySlug: "c-agv-amr-do-palet-i-ciezkich-ladunkow",
+        context: "托盘搬运、自动车辆以及装载或卸载流程。",
+      },
+      {
+        label: "Goods-to-person与拣选自动化",
+        categorySlug: "c-goods-to-person-i-automatyzacja-kompletacji",
+        context: "货物或载具移动到操作员或拣选站的系统。",
+      },
+      {
+        label: "拣选和操作机器人",
+        categorySlug: "c-roboty-kompletacyjne-i-manipulacyjne",
+        context: "Pick-and-place、码垛、拆垛、包裹分拣和仓库cobot。",
+      },
+      {
+        label: "外骨骼和工作辅助",
+        categorySlug: "c-egzoszkielety-i-wspomaganie-pracy",
+        context: "用于举升和重复性任务的操作员支持系统。",
+      },
+      {
+        label: "仓库机器人基础设施",
+        categorySlug: "c-infrastruktura-do-robotyzacji-magazynu",
+        context: "充电、供电、docking、路线、附件、安全和备件。",
+      },
+      {
+        label: "机器人软件和集成",
+        categorySlug: "c-oprogramowanie-i-integracja-robotow",
+        context: "Fleet management、WMS/WCS/ERP集成、monitoring和仿真。",
+      },
+      {
+        label: "机器人实施和维护",
+        categorySlug: "c-wdrozenie-i-utrzymanie-robotyzacji",
+        context: "审计、概念设计、调试、流程改造、服务和SLA。",
+      },
+      {
+        label: "AGV — automated guided vehicles",
+        categorySlug: "c-agv-automatyczne-pojazdy-prowadzone",
+        context: "用于受控路线和重复性内部物料流的车辆。",
+      },
+      {
+        label: "AMR — autonomous mobile robots",
+        categorySlug: "c-amr-autonomiczne-roboty-mobilne",
+        context: "用于更动态路径规划和可变流程的移动机器人。",
+      },
+      {
+        label: "托盘AGV",
+        categorySlug: "c-agv-do-palet",
+        context: "在定义好的流程点之间自动化稳定的托盘流。",
+      },
+      {
+        label: "自动托盘车",
+        categorySlug: "c-autonomiczne-wozki-paletowe",
+        context: "托盘在收货、存储、picking和发货区域之间移动。",
+      },
+      {
+        label: "Shelf-to-person机器人",
+        categorySlug: "c-roboty-regalowe-shelf-to-person",
+        context: "将库存或货架送到操作员或工作站的系统。",
+      },
+      {
+        label: "订单拣选机器人",
+        categorySlug: "c-roboty-do-kompletacji-zamowien",
+        context: "自动化抓取、放置和订单履行辅助。",
+      },
+      {
+        label: "码垛机器人",
+        categorySlug: "c-roboty-do-paletyzacji",
+        context: "在产品评估后，将纸箱、料箱或产品堆叠到托盘上。",
+      },
+      {
+        label: "拆垛机器人",
+        categorySlug: "c-roboty-do-depaletyzacji",
+        context: "从托盘上取下负载并传递到后续流程。",
+      },
+      {
+        label: "被动外骨骼",
+        categorySlug: "c-egzoszkielety-pasywne",
+        context: "支持仓库作业中的举升或保持姿势。",
+      },
+      {
+        label: "Fleet management AGV / AMR",
+        categorySlug: "c-fleet-management-agv-amr",
+        context: "机器人车队、任务、交通和系统可用性管理。",
+      },
+      {
+        label: "机器人与WMS / WCS / ERP集成",
+        categorySlug: "c-integracja-robotow-z-wms-wcs-erp",
+        context: "数据交换、运输任务、任务状态和控制逻辑。",
+      },
+      {
+        label: "仓库机器人审计",
+        categorySlug: "c-audyt-robotyzacji-magazynu",
+        context: "投资决策前的流程、数据和限制分析。",
+      },
+    ],
+    relatedIntentsTitle: "相关解决方案",
+    relatedIntents: [
+      "intralogistics",
+      "warehouse-equipment",
+      "picking-packing",
+      "ecommerce-warehouse",
+      "distribution-center",
+      "warehouse-safety",
+    ],
+    relatedGlossaryTitle: "相关术语",
+    relatedGlossaryTerms: [
+      {
+        label: "订单拣选",
+        glossarySlug: "kompletacja-zamowien",
+        context: "影响goods-to-person、机器人picking和工作站设计的流程。",
+      },
+      {
+        label: "Euro容器",
+        glossarySlug: "pojemnik-euro",
+        context: "在料箱运输分析中可能相关的标准化载具。",
+      },
+      {
+        label: "托盘货架",
+        glossarySlug: "regal-paletowy",
+        context: "托盘流和存储区域集成的参考对象。",
+      },
+    ],
+    faqTitle: "采购FAQ",
+    faq: [
+      {
+        question: "AGV和AMR有什么区别？",
+        answer:
+          "AGV通常在更受控的导引系统中运行，AMR通常使用更自主的导航。应针对具体系统和流程确认分类。",
+      },
+      {
+        question: "哪些仓库流程可以机器人化？",
+        answer:
+          "常见分析对象包括料箱、纸箱和托盘搬运，picking，goods-to-person，分拣，码垛，拆垛以及操作员辅助。",
+      },
+      {
+        question: "机器人可以搬运托盘吗？",
+        answer:
+          "可以，但选型取决于重量、尺寸、载具、取放点、路线宽度、交通流和系统集成。",
+      },
+      {
+        question: "Goods-to-person如何工作？",
+        answer:
+          "Goods-to-person将货物、载具或货架送到操作员或工作站，需要分析库存、人体工学、任务顺序和控制系统。",
+      },
+      {
+        question: "RFQ需要准备哪些数据？",
+        answer:
+          "准备物流单元、重量和尺寸、流程、起点和终点、layout、环境、WMS/WCS/ERP、可用性和服务要求。",
+      },
+      {
+        question: "机器人如何与WMS、WCS和ERP集成？",
+        answer:
+          "集成通常包括任务、状态、优先级、位置映射、流程异常和报告。范围取决于仓库系统架构。",
+      },
+      {
+        question: "如何准备仓库基础设施？",
+        answer:
+          "检查路线、地面、充电点、docking、网络、可视性、标识、交通隔离以及人员和设备的操作程序。",
+      },
+      {
+        question: "实施是否需要安全分析？",
+        answer:
+          "应为具体项目计划安全分析，因为安全取决于layout、交通、人机互动、设备和操作程序。",
+      },
+    ],
+    cta: {
+      primaryLabel: "打开机器人目录板块",
+      primaryHref: "/zh/katalog/c-robotyzacja-magazynu",
+      secondaryLabel: "查看机器人类别",
+    },
+    seo: {
+      title: "仓库机器人 AGV 和 AMR | LogiMarket",
+      description:
+        "仓库机器人B2B指南：AGV、AMR、goods-to-person、托盘、机器人picking、WMS/WCS/ERP集成和RFQ准备。",
+    },
+  },
 ] satisfies LandingPageContent[];

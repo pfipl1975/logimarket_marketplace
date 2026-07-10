@@ -8,6 +8,7 @@ export type LandingLocale = Extract<
 export type LandingIntent =
   | "warehouse-equipment"
   | "intralogistics"
+  | "warehouse-robotics"
   | "picking-packing"
   | "ecommerce-warehouse"
   | "distribution-center"
@@ -54,6 +55,8 @@ export interface LandingPageContent {
   decisionFactors: LandingDecisionFactor[];
   relatedCategoriesTitle: string;
   relatedCategories: LandingCategoryLink[];
+  relatedIntentsTitle?: string;
+  relatedIntents?: LandingIntent[];
   relatedGlossaryTitle: string;
   relatedGlossaryTerms: LandingGlossaryLink[];
   faqTitle: string;

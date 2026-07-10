@@ -23,6 +23,7 @@ import { locales, type Locale } from "@/lib/i18n/config";
 const INTENT_ORDER: LandingIntent[] = [
   "warehouse-equipment",
   "intralogistics",
+  "warehouse-robotics",
   "storage-systems",
   "picking-packing",
   "packaging-load-securing",
@@ -267,7 +268,7 @@ export async function SolutionsIndexPage({ locale }: SolutionsIndexPageProps) {
   const homePath = getHomePath(locale as Locale);
   const t = labels[locale];
 
-  // All 10 landings for this locale, sorted by INTENT_ORDER
+  // All 11 landings for this locale, sorted by INTENT_ORDER
   const allLandings = getLandingPagesByLocale(locale);
   const sortedLandings = INTENT_ORDER.map((intent) =>
     allLandings.find((p) => p.intent === intent)

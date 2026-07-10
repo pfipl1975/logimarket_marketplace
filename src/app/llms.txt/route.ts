@@ -1,4 +1,11 @@
+import { getLandingSitemapEntries } from "@/lib/landing";
+
 export async function GET() {
+  const landingEntries = getLandingSitemapEntries();
+  const landingRoutes = landingEntries
+    .map((entry) => `- ${entry.path} (${entry.locale.toUpperCase()} ${entry.intent} purchase-intent page)`)
+    .join("\n");
+
   const content = `# LogiMarket
 
 ## Context
@@ -28,7 +35,7 @@ LogiMarket is an industrial B2B procurement marketplace and intralogistics direc
 - RFQ Flow, E-Commerce cart, checkout, and technical user endpoints are operational and excluded from public indexing.
 
 ## Solutions Index Pages
-Solutions index pages are multilingual editorial hubs listing all 10 purchase-intent landing pages for each supported locale. They are informational and navigational only — no prices, no offers, no partner data.
+Solutions index pages are multilingual editorial hubs listing all 11 purchase-intent landing pages for each supported locale. They are informational and navigational only — no prices, no offers, no partner data.
 Valid canonical solutions index pages:
 - /rozwiazania (PL solutions index)
 - /en/solutions (EN solutions index)
@@ -41,36 +48,7 @@ Valid canonical solutions index pages:
 ## Purchase Intent Landing Pages
 Landing pages are strictly content/structural hubs for search intent, not product/offer detail pages. They do not represent individual products, and must not have \`Product\`, \`Offer\`, \`price\`, \`availability\`, or \`seller\` properties in schema or retrieval contexts.
 Valid canonical landing pages:
-- /rozwiazania/wyposazenie-magazynu (PL warehouse equipment purchase-intent page)
-- /rozwiazania/intralogistyka (PL intralogistics purchase-intent page)
-- /rozwiazania/kompletacja-i-pakowanie (PL picking and packing purchase-intent page)
-- /rozwiazania/magazyn-e-commerce (PL e-commerce warehouse purchase-intent page)
-- /rozwiazania/centrum-dystrybucyjne (PL distribution center purchase-intent page)
-- /rozwiazania/strefa-przyjec-i-wysylek (PL receiving and shipping area purchase-intent page)
-- /rozwiazania/systemy-skladowania (PL storage systems purchase-intent page)
-- /rozwiazania/pakowanie-i-zabezpieczenie-ladunku (PL packaging and load securing purchase-intent page)
-- /rozwiazania/bezpieczenstwo-magazynu (PL warehouse safety purchase-intent page)
-- /rozwiazania/osprzet-do-wozkow-widlowych (PL forklift attachments purchase-intent page)
-- /en/solutions/warehouse-equipment (EN warehouse equipment purchase-intent page)
-- /en/solutions/intralogistics (EN intralogistics purchase-intent page)
-- /en/solutions/picking-and-packing (EN picking and packing purchase-intent page)
-- /en/solutions/ecommerce-warehouse (EN e-commerce warehouse purchase-intent page)
-- /en/solutions/distribution-center (EN distribution center purchase-intent page)
-- /en/solutions/receiving-and-shipping-area (EN receiving and shipping area purchase-intent page)
-- /en/solutions/storage-systems (EN storage systems purchase-intent page)
-- /en/solutions/packaging-and-load-securing (EN packaging and load securing purchase-intent page)
-- /en/solutions/warehouse-safety (EN warehouse safety purchase-intent page)
-- /en/solutions/forklift-attachments (EN forklift attachments purchase-intent page)
-- /de/loesungen/lagerausstattung (DE warehouse equipment purchase-intent page)
-- /de/loesungen/intralogistik (DE intralogistics purchase-intent page)
-- /de/loesungen/kommissionierung-und-verpackung (DE picking and packing purchase-intent page)
-- /de/loesungen/e-commerce-lager (DE e-commerce warehouse purchase-intent page)
-- /de/loesungen/distributionszentrum (DE distribution center purchase-intent page)
-- /de/loesungen/wareneingang-und-versand (DE receiving and shipping area purchase-intent page)
-- /de/loesungen/lagersysteme (DE storage systems purchase-intent page)
-- /de/loesungen/verpackung-und-ladungssicherung (DE packaging and load securing purchase-intent page)
-- /de/loesungen/lagersicherheit (DE warehouse safety purchase-intent page)
-- /de/loesungen/gabelstapler-anbaugeraete (DE forklift attachments purchase-intent page)
+${landingRoutes}
 
 Invalid cross-locale landing route combinations are 404 routes and are not canonical content.
 
