@@ -54,7 +54,7 @@ export async function ProductGroupTiles({ locale }: ProductGroupTilesProps) {
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         {rootCategories.map((category) => {
           const categoryLabel = resolveCategoryName({
             slug: category.slug,
