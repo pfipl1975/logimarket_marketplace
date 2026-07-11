@@ -4,15 +4,15 @@ export const enGlossaryContent: GlossaryContentMap = {
   "pojemnik-euro": {
     slug: "pojemnik-euro",
     term: "Euro container",
-    shortDefinition: "A standardized plastic transport and storage container dimensioned to fit optimally on a standard Euro pallet.",
+    shortDefinition: "A standardized plastic transport and storage container dimensioned to fit optimally on standard pallet modules.",
     definition: [
-      "Euro containers (also known as Euro stacking containers) are fundamental load units in warehouse logistics, retail distribution, and industrial manufacturing. Their external dimensions are strictly standardized based on the 1200x800 mm logistic module (the footprint of a standard Euro pallet), enabling optimal space utilization during transport and storage.",
-      "They are typically manufactured from high-density polyethylene (HDPE) or polypropylene (PP), ensuring excellent mechanical strength, crack resistance, and durability against acids, oils, and alkalis. The robust structural design allows safe stacking of loaded containers without risking damage to the contents."
+      "Euro containers (also known as Euro stacking containers) are standard load units in warehouse logistics, retail distribution, and industrial manufacturing. Their external dimensions are standardized based on the 1200x800 mm logistic module (footprint of a standard Euro pallet), enabling optimal space utilization during transport and storage.",
+      "They are typically manufactured from high-density polyethylene (HDPE) or polypropylene (PP), which provides appropriate mechanical strength, crack resistance, and resistance to selected chemical substances. The structural design allows safe stacking of loaded containers according to the manufacturer's recommended load limits."
     ],
     applications: [
       "Parts storage and transport along manufacturing assembly lines",
       "Order picking and packing in distribution centers and e-commerce hubs",
-      "Automated small parts storage systems (AS/RS mini-load systems)",
+      "Automated small parts storage systems (containerized mini-load systems)",
       "Safe food-grade transport and handling (using certified food-safe versions)"
     ],
     synonyms: ["Euro stacking box", "Euro crate", "Plastic Euro container"],
@@ -21,25 +21,25 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What is the difference between a reinforced base and a standard base in Euro containers?",
-        answer: "A reinforced base (such as a ribbed or double base) prevents sagging under heavy point loads. This feature is critical in automated warehouses and roller conveyor systems, where any base deflection could jam the transport system."
+        answer: "A reinforced base (such as a ribbed base) reduces sagging under heavy point loads. This feature is commonly used in automated warehouses and roller conveyor systems, where excessive base deflection could affect the smooth operation of the transport system."
       },
       {
         question: "Are Euro containers suitable for automated industrial washing?",
-        answer: "Yes, PP and HDPE plastics are highly resistant to the water temperatures typically used in industrial automatic washing systems (up to +80°C) as well as standard chemical cleaning agents."
+        answer: "Yes, PP and HDPE plastics can be washed in industrial washing systems. The water temperature and cleaning agents used should comply with the manufacturer's technical specifications and material standards."
       }
     ]
   },
   "regal-paletowy": {
     slug: "regal-paletowy",
     term: "Pallet racking",
-    shortDefinition: "A heavy-duty storage system designed to safely store palletized goods in a multi-level layout.",
+    shortDefinition: "A storage system designed to support palletized goods in a multi-level layout.",
     definition: [
-      "Pallet racking systems (primarily selective single-deep racks) form the structural backbone of most modern warehouses. They provide direct access to every single pallet (100% accessibility principle) and allow warehouses to maximize their vertical space. The system consists of vertical steel frames and horizontal load beams on which the pallets rest.",
-      "Designing and installing selective pallet racking requires strict adherence to safety standards (such as EN 15635), regular technical inspections, and the implementation of column protectors and barrier guards to shield the uprights from forklift impacts."
+      "Pallet racking systems (primarily selective single-deep racks) form a key component of many modern warehouses. They provide direct access to unit loads and allow warehouses to utilize their vertical space. The system consists of vertical frames and horizontal load beams on which the pallets rest.",
+      "Designing, installing, and operating pallet racking requires adherence to relevant safety standards (such as EN 15635), regular technical inspections, and the implementation of appropriate safety protections to shield the uprights from forklift impacts in work areas."
     ],
     applications: [
-      "Multi-level high-bay warehouses and logistics hubs",
-      "Building material distributors and industrial wholesalers",
+      "Multi-level pallet storage warehouses and logistics hubs",
+      "Building material distributors and industrial warehouses",
       "Buffer zones and staging areas in shipping docks",
       "Cold storage facilities requiring optimal cubic space utilization"
     ],
@@ -49,21 +49,21 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What are the most common types of pallet rack damage?",
-        answer: "The most common damage occurs on the lower parts of the vertical uprights and diagonal bracing, typically caused by forklift collisions during maneuvering. Implementing heavy-duty column protectors is essential to minimize this risk."
+        answer: "The most common damage occurs on the lower parts of the vertical uprights and diagonal bracing, typically caused by forklift collisions during maneuvering. Implementing column protectors is standard practice to reduce this risk."
       },
       {
         question: "Is it permissible to alter beam levels on a pallet rack independently?",
-        answer: "No, modifying the height of load levels alters the load distribution and stability calculation of the rack. Any changes require approval from the manufacturer or recalculation of the structural load capacities by an engineer."
+        answer: "Modifying the height of load levels alters the stability calculation and load capacity of the racking system. Any changes require prior verification and approval from the manufacturer or a qualified structural engineer."
       }
     ]
   },
   "antresola-magazynowa": {
     slug: "antresola-magazynowa",
     term: "Warehouse mezzanine",
-    shortDefinition: "A free-standing steel structure that creates additional raised floor levels above the main floor, increasing usable space without building expansion.",
+    shortDefinition: "A steel structure that creates additional raised floor levels above the main floor, increasing usable operational space.",
     definition: [
-      "A warehouse mezzanine (also referred to as a structural steel work platform) is an advanced system designed to utilize the vertical space of high-ceilinged industrial halls. It creates additional floor levels that can accommodate picking zones, packing areas, assembly lines, or office spaces.",
-      "The structure is supported by steel columns, primary beams, and secondary purlins. The decking is commonly made of heavy-duty particle boards (such as P5 tongue-and-groove boards, often fire-retardant) or steel gratings, which allow light and air flow and facilitate the performance of sprinkler systems."
+      "A warehouse mezzanine (also referred to as a structural steel work platform) is a system designed to utilize the vertical space of high-ceilinged industrial halls. It creates additional floor levels that can accommodate picking zones, packing areas, assembly lines, or secondary storage.",
+      "The structure is supported by steel columns, primary beams, and secondary purlins. The decking is commonly made of heavy-duty particle boards (such as P5 tongue-and-groove boards, often fire-retardant) or steel gratings, which allow ventilation and facilitate sprinkler system performance."
     ],
     applications: [
       "Increasing picking zones in e-commerce fulfillment centers (multi-tier structures)",
@@ -77,21 +77,21 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "Does the installation of a steel mezzanine require a building permit?",
-        answer: "Free-standing, demountable steel mezzanines anchored only to the slab are typically classified as warehouse equipment rather than a permanent building expansion. Therefore, they often do not require a full building permit, though they must comply with fire safety regulations and require floor loading verification."
+        answer: "The legal classification of a steel mezzanine (as equipment or building expansion) depends on its design, connection to the building, intended use, and local building codes. A formal review, slab load capacity verification, and fire safety consultation are necessary prior to implementation to determine appropriate compliance steps."
       },
       {
         question: "What is the typical load capacity of a warehouse mezzanine?",
-        answer: "Mezzanine load capacities generally range from 250 kg/m² to 1000 kg/m² and are engineered specifically based on the intended use, such as hand pallet truck traffic, shelving layouts, or heavy equipment."
+        answer: "Typical mezzanine load capacities generally range from 250 kg/m² to 1000 kg/m² and are engineered specifically based on the intended use, such as hand pallet truck traffic, shelving layouts, or specific point loads."
       }
     ]
   },
   "stol-pakowy": {
     slug: "stol-pakowy",
     term: "Packing table",
-    shortDefinition: "An ergonomic workstation equipped with integrated holders for packing materials, designed to streamline parcel inspection and packing.",
+    shortDefinition: "A workstation equipped with integrated holders for packing materials, designed to support parcel inspection and packing.",
     definition: [
-      "Packing tables and packing workstations are essential components of shipping areas in distribution centers, particularly in e-commerce logistics. They are designed to minimize order processing times and reduce worker fatigue through ergonomic layouts, such as height adjustment and immediate access to accessories.",
-      "The modular design of these stations allows customization for specific packing workflows. Standard accessories include overhead shelves for cardboard cartons, roll dispensers for bubble wrap or paper, brackets for monitors and label printers, and integrated LED task lighting."
+      "Packing tables and packing workstations are essential components of shipping areas in distribution centers, particularly in e-commerce logistics. They are designed to streamline order processing and support operator ergonomics through organized layouts and convenient access to tools.",
+      "The modular design of these stations allows customization for specific packing workflows. Optional accessories include overhead shelves for cardboard cartons, roll dispensers for bubble wrap or paper, brackets for monitors and label printers, and task lighting."
     ],
     applications: [
       "Courier shipping and parcel packing stations in e-commerce fulfillment",
@@ -105,11 +105,11 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What are the optimal dimensions for a packing table countertop?",
-        answer: "The most common sizes are 1600 to 1800 mm in width and 800 mm in depth. This space comfortably accommodates large shipping boxes while keeping packing materials within easy, ergonomic reach."
+        answer: "In typical configurations, the countertop width ranges from 1600 to 1800 mm, with a depth of approximately 800 mm. This space comfortably accommodates standard shipping boxes while keeping packing materials within easy reach."
       },
       {
         question: "Why should a packing station feature height adjustability?",
-        answer: "Height adjustment (especially electric) allows the workstation to be tailored to the height of individual operators and supports sitting, standing, or sit-to-stand operations, reducing spinal strain and improving efficiency."
+        answer: "Height adjustment (such as electric) allows the workstation to be tailored to the height of individual operators and supports sitting, standing, or sit-to-stand operations, reducing physical strain and supporting operational efficiency."
       }
     ]
   },
@@ -118,8 +118,8 @@ export const enGlossaryContent: GlossaryContentMap = {
     term: "Forklift truck",
     shortDefinition: "A powered industrial vehicle equipped with a mast and forks to lift, transport, and stack palletized loads.",
     definition: [
-      "Forklift trucks (also referred to as industrial counterbalanced lift trucks) are critical material handling machines used in warehouses, ports, manufacturing plants, and construction yards. Their primary benefit is the ability to lift heavy loads vertically to high elevations and maneuver precisely within confined aisle spaces.",
-      "Depending on the power source, forklifts are divided into internal combustion engine trucks (LPG, Diesel) for outdoor operations, and quiet, emission-free electric trucks (lead-acid or modern Li-Ion batteries) for indoor use. Specialized variants, such as Reach Trucks or Very Narrow Aisle (VNA) system trucks, can service pallet racks at heights exceeding 12 meters."
+      "Forklift trucks (also referred to as industrial counterbalanced lift trucks) are critical material handling machines used in warehouses, manufacturing plants, and construction yards. They are designed to lift loads vertically and maneuver in designated aisles and material paths.",
+      "Depending on the power source, forklifts are divided into internal combustion engine trucks (LPG, Diesel) for outdoor operations, and quiet, emission-free electric trucks (lead-acid or modern Li-Ion batteries) for indoor use. Specialized variants, such as Reach Trucks or Very Narrow Aisle (VNA) system trucks, can service pallet racks at significant heights."
     ],
     applications: [
       "Unloading and loading truck trailers, shipping containers, and flatbeds",
@@ -133,11 +133,11 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What characterizes a Reach Truck compared to a standard forklift?",
-        answer: "A Reach Truck (high-reach warehouse truck) features a mast that extends forward, allowing it to retrieve pallets and operate in much narrower working aisles (often less than 2.9 meters wide) than classic counterbalanced trucks."
+        answer: "A Reach Truck (high-reach warehouse truck) features a mast that extends forward, allowing it to retrieve pallets and operate in narrower working aisles (often less than 2.9 to 3.1 meters wide, depending on configuration and load) than classic counterbalanced trucks."
       },
       {
         question: "Why are lithium-ion batteries replacing lead-acid batteries in electric forklifts?",
-        answer: "Li-Ion batteries require zero maintenance (no water refilling), do not release gases during charging (eliminating the need for dedicated charging rooms), and support opportunity charging during short breaks."
+        answer: "Li-Ion batteries require simplified maintenance (no water refilling), do not release gases during charging (eliminating the need for dedicated charging rooms with ventilation), and support opportunity charging during short breaks."
       }
     ]
   },
@@ -146,12 +146,12 @@ export const enGlossaryContent: GlossaryContentMap = {
     term: "Rack load capacity",
     shortDefinition: "The maximum allowable load weight that a racking structure can support per beam level or per entire upright frame column.",
     definition: [
-      "Rack load capacity is a fundamental safety parameter in industrial warehousing. It is categorized into beam level capacity (the maximum weight that can be placed on a single pair of load beams or shelf) and bay capacity (the total maximum combined weight of all levels between two adjacent vertical upright frames).",
+      "Rack load capacity is a fundamental safety parameter in industrial warehousing. It is categorized into beam level capacity (the maximum weight that can be placed on a single pair of load beams or shelf) and bay capacity (the total maximum combined weight of all levels between two adjacent vertical upright frames, taking into account the beam spacing).",
       "Load capacities must be clearly displayed on load signs (load charts) installed at the end of each racking row. Overloading is a severe safety hazard that can cause structural failure and collapse. Calculations are based on static, uniformly distributed loads (UDL)."
     ],
     applications: [
       "Designing and engineering racking systems according to specific load weights",
-      "Verifying structural safety parameters during annual expert inspections",
+      "Verifying structural safety parameters during regular expert inspections",
       "Planning optimal storage layouts in the warehouse based on pallet weights"
     ],
     synonyms: ["Safe working load", "Shelf load capacity", "Frame load capacity"],
@@ -160,11 +160,11 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What does UDL mean in the context of warehouse racking?",
-        answer: "UDL stands for Uniformly Distributed Load, meaning the weight is spread evenly across the entire surface of the shelf or load beams. Racks are engineered specifically for UDL; concentrated point loads drastically reduce structural capacity."
+        answer: "UDL stands for Uniformly Distributed Load, meaning the weight is spread evenly across the entire surface of the shelf or load beams. Racking structures are designed with this load distribution in mind; concentrated point loads can reduce structural capacity."
       },
       {
         question: "Where should rack load capacity signs be positioned?",
-        answer: "Load signs must be permanently mounted in prominent, highly visible locations at the end of every racking block or aisle, according to the EN 15635 standard."
+        answer: "Load signs must be permanently mounted in prominent, highly visible locations on the racking structure (e.g., at the end of every racking block), according to standard safety guidelines (such as EN 15635)."
       }
     ]
   },
@@ -173,8 +173,8 @@ export const enGlossaryContent: GlossaryContentMap = {
     term: "Order picking",
     shortDefinition: "The process of retrieving specific items from storage locations to fulfill a customer order.",
     definition: [
-      "Order picking is one of the most labor-intensive and costly processes in warehouse logistics, often accounting for up to 50-60% of total warehouse operating costs. It involves retrieving items from inventory in quantities specified by a customer order and delivering them to the packing and shipping zone.",
-      "Picking methods range from standard 'picker-to-goods' (where operators travel through the warehouse aisles) to automated 'goods-to-picker' (using conveyor systems, shuttles, or robots to bring goods to the workstation). Optimization technologies such as Pick-by-Light, Voice Picking, or WMS-calculated picking paths are used to increase throughput."
+      "Order picking is one of the most labor-intensive processes in warehouse logistics, which can represent a substantial portion of total warehouse operating costs. It involves retrieving items from inventory in quantities specified by a customer order and delivering them to the packing and shipping zone.",
+      "Picking methods range from standard 'picker-to-goods' (where operators travel through the warehouse aisles) to automated 'goods-to-picker' (using conveyor systems, shuttles, or robots to bring goods to the workstation). Optimization technologies such as Pick-by-Light, Voice Picking, or WMS-calculated paths are used to increase throughput."
     ],
     applications: [
       "Fulfillment of retail and consumer orders in e-commerce logistics",
@@ -191,7 +191,7 @@ export const enGlossaryContent: GlossaryContentMap = {
       },
       {
         question: "How does a Warehouse Management System (WMS) optimize picking times?",
-        answer: "A WMS automatically calculates the shortest picking path, minimizes empty travel distance, batches orders with similar profiles, and guides workers through the optimal retrieval sequence."
+        answer: "A WMS automatically calculates the suggested picking path to reduce empty travel distance, batches orders with similar profiles, and guides workers through the optimal retrieval sequence."
       }
     ]
   },
@@ -215,11 +215,11 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What is the difference between Autonomous Mobile Robots (AMRs) and traditional AGVs?",
-        answer: "AMRs navigate independently using built-in maps and sensors, allowing them to dynamically bypass obstacles. Traditional AGVs (Automated Guided Vehicles) follow pre-defined tracks (like magnetic tape) and stop in front of obstacles until they are removed."
+        answer: "AGVs typically follow predefined paths (e.g., using magnetic tape or induction loops), while AMRs often use spatial mapping for more flexible route planning. Actual obstacle bypass and stopping capabilities depend on the specific manufacturer's safety system and system configuration."
       },
       {
         question: "What are the primary benefits of automating internal material transport?",
-        answer: "Automation enables a continuous 24/7 material flow, eliminates human error, significantly reduces workplace accidents, and lowers operational costs associated with manual material handling."
+        answer: "Automation can support process repeatability, reduce manual handling steps, and increase material flow control. Implementation requires detailed process analysis, safety assessment of shared workspaces, and planning for system availability and maintenance."
       }
     ]
   }
