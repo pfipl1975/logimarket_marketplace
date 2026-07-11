@@ -77,7 +77,7 @@ export const plGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "Czy budowa antresoli stalowej wymaga pozwolenia na budowę?",
-        answer: "Kwalifikacja prawna antresoli (jako urządzenia lub rozbudowy obiektu) zależy od jej konstrukcji, sposobu połączenia z budynkiem, przeznaczenia oraz lokalnych przepisów prawa budowlanego. Przed realizacją konieczna jest weryfikacja formalna, analiza konstrukcyjna posadzki oraz uzgodnienie z rzeczoznawcą ds. zabezpieczeń ppoż. w celu wypracowania bezpiecznego rozwiązania."
+        answer: "Zakres wymaganych procedur zależy od konkretnej inwestycji. Weryfikacja formalna, analiza konstrukcji i nośności posadzki oraz uzgodnienia przeciwpożarowe mogą być wymagane zależnie od konstrukcji, sposobu montażu, przeznaczenia, budynku i lokalnych regulacji. Zakres należy potwierdzić z właściwymi specjalistami lub organem."
       },
       {
         question: "Jakie jest typowe dopuszczalne obciążenie antresoli?",
@@ -119,7 +119,7 @@ export const plGlossaryContent: GlossaryContentMap = {
     shortDefinition: "Pojazd o napędzie silnikowym przystosowany do podnoszenia, przewożenia i układania ładunków, najczęściej na paletach.",
     definition: [
       "Wózki widłowe (jezdniowe podnośnikowe) to urządzenia transportu bliskiego stosowane w magazynach, fabrykach oraz na placach składowych. Służą do pionowego podnoszenia ładunków oraz manewrowania w wyznaczonych drogach transportowych i korytarzach roboczych.",
-      "Zależnie od napędu wyróżnia się wózki spalinowe (LPG, Diesel) dedykowane na otwarte przestrzenie oraz ciche wózki elektryczne (z akumulatorami kwasowo-ołowiowymi lub litowo-jonowymi) do pracy wewnątrz hal. Specjalistyczne wersje, takie jak wózki wysokiego składowania (Reach Truck) lub wózki systemowe (VNA), pozwalają na obsługę regałów na znacznych wysokościach."
+      "Zależnie od napędu wyróżnia się wózki spalinowe (LPG, Diesel) dedykowane na otwarte przestrzenie oraz ciche wózki elektryczne (z akumulatorami kwasowo-ołowiowymi lub litowo-jonowymi, charakteryzujące się brakiem lokalnych spalin podczas pracy, zależnie od konfiguracji) do pracy wewnątrz hal. Specjalistyczne wersje, takie jak wózki wysokiego składowania (Reach Truck) lub wózki systemowe (VNA), pozwalają na obsługę regałów na znacznych wysokościach."
     ],
     applications: [
       "Rozładunek i załadunek pojazdów dostawczych oraz kontenerów",
@@ -133,11 +133,11 @@ export const plGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "Czym charakteryzuje się wózek widłowy typu Reach Truck?",
-        answer: "Reach Truck (wózek wysokiego składowania) posiada maszt wysuwany do przodu, co pozwala na ograniczenie gabarytów pojazdu i pracę w węższych korytarzach roboczych (często poniżej 2,9-3,1 m w zależności od modelu i ładunku) w porównaniu do klasycznych wózków czołowych."
+        answer: "Schubmast pozwala ograniczyć wymaganą szerokość korytarza w porównaniu z wieloma wózkami czołowymi. Rzeczywiste wymagania zależą od modelu, ładunku, wysokości składowania i projektu układu magazynu."
       },
       {
         question: "Dlaczego baterie litowo-jonowe są coraz powszechniej stosowane w wózkach?",
-        answer: "Baterie litowo-jonowe (Li-Ion) cechują się uproszczoną obsługą eksploatacyjną (brak konieczności uzupełniania wody), nie wymagają dedykowanych akumulatorowni z wentylacją wymuszoną (brak emisji gazów) oraz umożliwiają doładowywanie w czasie przerw."
+        answer: "Akumulatory litowo-jonowe zwykle nie wymagają uzupełniania wody i mogą umożliwiać ładowanie podczas przerw. Wymagania dotyczące stanowiska ładowania, wentylacji, ochrony przeciwpożarowej i obsługi zależą od technologii baterii, systemu ładowania, dokumentacji producenta, oceny ryzyka oraz lokalnych przepisów."
       }
     ]
   },

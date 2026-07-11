@@ -77,7 +77,7 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "Does the installation of a steel mezzanine require a building permit?",
-        answer: "The legal classification of a steel mezzanine (as equipment or building expansion) depends on its design, connection to the building, intended use, and local building codes. A formal review, slab load capacity verification, and fire safety consultation are necessary prior to implementation to determine appropriate compliance steps."
+        answer: "The required procedure depends on the specific project. Formal, structural, slab-capacity and fire-safety reviews may be required depending on the design, installation method, intended use, building and local regulations. The scope should be confirmed with the appropriate specialists or authority."
       },
       {
         question: "What is the typical load capacity of a warehouse mezzanine?",
@@ -119,7 +119,7 @@ export const enGlossaryContent: GlossaryContentMap = {
     shortDefinition: "A powered industrial vehicle equipped with a mast and forks to lift, transport, and stack palletized loads.",
     definition: [
       "Forklift trucks (also referred to as industrial counterbalanced lift trucks) are critical material handling machines used in warehouses, manufacturing plants, and construction yards. They are designed to lift loads vertically and maneuver in designated aisles and material paths.",
-      "Depending on the power source, forklifts are divided into internal combustion engine trucks (LPG, Diesel) for outdoor operations, and quiet, emission-free electric trucks (lead-acid or modern Li-Ion batteries) for indoor use. Specialized variants, such as Reach Trucks or Very Narrow Aisle (VNA) system trucks, can service pallet racks at significant heights."
+      "Depending on the power source, forklifts are divided into internal combustion engine trucks (LPG, Diesel) for outdoor operations, and quiet electric trucks (lead-acid or modern Li-Ion batteries) operating without local exhaust emissions during operation for indoor use. Specialized variants, such as Reach Trucks or Very Narrow Aisle (VNA) system trucks, can service pallet racks at significant heights."
     ],
     applications: [
       "Unloading and loading truck trailers, shipping containers, and flatbeds",
@@ -133,11 +133,11 @@ export const enGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "What characterizes a Reach Truck compared to a standard forklift?",
-        answer: "A Reach Truck (high-reach warehouse truck) features a mast that extends forward, allowing it to retrieve pallets and operate in narrower working aisles (often less than 2.9 to 3.1 meters wide, depending on configuration and load) than classic counterbalanced trucks."
+        answer: "The reach mechanism can reduce aisle-width requirements compared with many counterbalanced trucks. Actual requirements depend on the model, load, storage height and warehouse-layout design."
       },
       {
         question: "Why are lithium-ion batteries replacing lead-acid batteries in electric forklifts?",
-        answer: "Li-Ion batteries require simplified maintenance (no water refilling), do not release gases during charging (eliminating the need for dedicated charging rooms with ventilation), and support opportunity charging during short breaks."
+        answer: "Lithium-ion batteries generally do not require water refilling and may support opportunity charging. Charging-area, ventilation, fire-safety and operating requirements depend on the battery technology, charging system, manufacturer documentation, risk assessment and local regulations."
       }
     ]
   },

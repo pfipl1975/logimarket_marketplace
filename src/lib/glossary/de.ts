@@ -77,7 +77,7 @@ export const deGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "Erfordert die Errichtung einer Lagerbühne eine Baugenehmigung?",
-        answer: "Die rechtliche Einstufung einer Lagerbühne (als Betriebseinrichtung oder als Gebäudeweiterung) hängt von der Konstruktion, der Verbindung mit dem Gebäude, dem Einsatzzweck und den lokalen Bauvorschriften ab. Vor der Realisierung sind eine formelle Prüfung, eine statische Überprüfung der Bodenplatte und eine Abstimmung mit dem Brandschutzbeauftragten erforderlich, um die notwendigen behördlichen Schritte festzulegen."
+        answer: "Das erforderliche Verfahren hängt vom konkreten Vorhaben ab. Formelle, statische, bodenbezogene und brandschutztechnische Prüfungen können je nach Konstruktion, Montageart, Nutzung, Gebäude und örtlichen Vorschriften erforderlich sein. Der Umfang ist mit den zuständigen Fachleuten oder Behörden abzustimmen."
       },
       {
         question: "Welche Tragfähigkeit hat eine typische Lagerbühne?",
@@ -119,7 +119,7 @@ export const deGlossaryContent: GlossaryContentMap = {
     shortDefinition: "Ein motorisiertes Flurförderzeug mit Hubgerüst und Gabelzinken zum Heben, Transportieren und Stapeln von palettierten Lasten.",
     definition: [
       "Gabelstapler (Flurförderzeuge mit Hubeinrichtung) sind wichtige Maschinen für den innerbetrieblichen Materialtransport in Lagern, Fabriken und auf Baustellen. Sie dienen zum vertikalen Heben von Lasten und zum Manövrieren in ausgewiesenen Fahrwegen und Arbeitsgängen.",
-      "Je nach Antrieb unterscheidet man Verbrennungsstapler (Treibgas, Diesel) für den Außenbereich und leise, emissionsfreie Elektrostapler (mit Blei-Säure- oder Lithium-Ionen-Batterien) für den Inneneinsatz. Spezialversionen wie Schubmaststapler oder Schmalgangstapler (VNA) bedienen Regalanlagen in großen Höhen."
+      "Je nach Antrieb unterscheidet man Verbrennungsstapler (Treibgas, Diesel) für den Außenbereich und leise Elektrostapler (mit Blei-Säure- oder Lithium-Ionen-Batterien) ohne lokale Abgasemissionen im Betrieb für den Inneneinsatz. Spezialversionen wie Schubmaststapler oder Schmalgangstapler (VNA) bedienen Regalanlagen in großen Höhen."
     ],
     applications: [
       "Be- und Entladen von Lkw-Aufliegern, Seecontainern und Pritschenwagen",
@@ -133,11 +133,11 @@ export const deGlossaryContent: GlossaryContentMap = {
     faq: [
       {
         question: "Was zeichnet einen Schubmaststapler aus?",
-        answer: "Ein Schubmaststapler (Reach Truck) besitzt ein vorschubfähiges Hubgerüst. Dies ermöglicht kompaktere Fahrzeugmaße und das Arbeiten in engeren Arbeitsgängen (oft unter 2,9 bis 3,1 Metern Breite, je nach Modell und Last) im Vergleich zu herkömmlichen Frontstaplern."
+        answer: "Der Schubmast kann den erforderlichen Arbeitsgang gegenüber vielen Frontstaplern reduzieren. Die tatsächlichen Anforderungen hängen vom Modell, der Last, der Lagerhöhe und der Lagerlayoutplanung ab."
       },
       {
         question: "Warum ersetzen Lithium-Ionen-Batterien Blei-Säure-Batterien bei Staplern?",
-        answer: "Lithium-Ionen-Batterien (Li-Ion) zeichnen sich durch einen vereinfachten Betrieb aus (kein Wassernachfüllen), erfordern keine speziellen Batterieladeräume mit Zwangsbelüftung (keine Gasentwicklung) und erlauben schnelles Zwischenladen während der Pausen."
+        answer: "Lithium-Ionen-Batterien benötigen in der Regel kein Nachfüllen von Wasser und können Zwischenladungen ermöglichen. Die Anforderungen an Ladebereich, Belüftung, Brandschutz und Betrieb hängen von der Batterietechnologie, dem Ladesystem, der Herstellerdokumentation, der Gefährdungsbeurteilung und den örtlichen Vorschriften ab."
       }
     ]
   },
