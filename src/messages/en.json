@@ -58,6 +58,14 @@
     "ecommerceLegend": "E-Commerce - Add to cart",
     "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
   },
+  "solutions": {
+    "catalogHeading": "Warehouse solutions",
+    "catalogIntro": "Explore solution pages to compare approaches to warehouse processes and prepare your procurement.",
+    "catalogCta": "Explore warehouse solutions",
+    "relatedHeading": "Related solutions",
+    "relatedIntro": "Explore B2B solutions relevant to this catalog area.",
+    "allSolutionsCta": "View all solutions"
+  },
   "categories": {
     "bySlug": {
       "wozki-widlowe-czolowe": "Counterbalance forklifts",

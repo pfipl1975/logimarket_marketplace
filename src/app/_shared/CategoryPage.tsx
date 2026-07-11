@@ -33,6 +33,8 @@ import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
 import type { Locale } from "@/lib/i18n/types";
 import type { CatalogOffer } from "@/app/actions";
 import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
+import { resolveCategorySolutionLinks } from "@/lib/landing";
+import { RelatedSolutions } from "@/components/landing/RelatedSolutions";
 
 interface CategoryPageProps {
   locale: Locale;
@@ -326,6 +328,14 @@ export async function CategoryPage({
   const inquiryChecklistDescription = categoryContent?.inquiryChecklist?.description || null;
   const faqItems = categoryContent?.faq || null;
   const glossaryLinks = resolveGlossaryLinksForCategory(category.slug, locale as any);
+  const relatedSolutionLinks = resolveCategorySolutionLinks({
+    categorySlug: category.slug,
+    ancestorSlugs: breadcrumbs.map((breadcrumb) => breadcrumb.slug),
+    locale,
+  }).map((link) => ({
+    href: link.href,
+    label: link.label ?? dict.solutions.allSolutionsCta,
+  }));
 
   // ── JSON-LD: FAQPage ──────────────────────────────────────────────────────
   const faqJsonLd = createFaqPageJsonLd({
@@ -755,6 +765,12 @@ export async function CategoryPage({
         <CategoryRelatedLinks
           links={relatedLinks}
           heading={headings.relatedLinks}
+        />
+
+        <RelatedSolutions
+          links={relatedSolutionLinks}
+          heading={dict.solutions.relatedHeading}
+          intro={dict.solutions.relatedIntro}
         />
 
           </div>

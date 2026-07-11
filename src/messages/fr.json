@@ -58,6 +58,14 @@
     "ecommerceLegend": "E-Commerce — Ajouter au panier",
     "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
   },
+  "solutions": {
+    "catalogHeading": "Solutions pour l'entrepôt",
+    "catalogIntro": "Explorez les pages de solutions pour comparer les approches des processus d'entrepôt et préparer vos achats.",
+    "catalogCta": "Découvrir les solutions d'entrepôt",
+    "relatedHeading": "Solutions associées",
+    "relatedIntro": "Explorez les solutions B2B liées à cette partie du catalogue.",
+    "allSolutionsCta": "Voir toutes les solutions"
+  },
   "categories": {
     "bySlug": {
       "wozki-widlowe-czolowe": "Chariots élévateurs frontaux",

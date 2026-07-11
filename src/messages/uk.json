@@ -58,6 +58,14 @@
     "ecommerceLegend": "E-Commerce — Додати до кошика",
     "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
   },
+  "solutions": {
+    "catalogHeading": "Рішення для складу",
+    "catalogIntro": "Перегляньте сторінки рішень, щоб порівняти підходи до складських процесів і підготувати закупівлю.",
+    "catalogCta": "Переглянути рішення для складу",
+    "relatedHeading": "Пов’язані рішення",
+    "relatedIntro": "Перегляньте B2B-рішення, пов’язані з цією частиною каталогу.",
+    "allSolutionsCta": "Переглянути всі рішення"
+  },
   "categories": {
     "bySlug": {
       "wozki-widlowe-czolowe": "Фронтальні навантажувачі",

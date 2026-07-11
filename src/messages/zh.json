@@ -58,6 +58,14 @@
     "ecommerceLegend": "E-Commerce — 加入购物车",
     "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
   },
+  "solutions": {
+    "catalogHeading": "仓库解决方案",
+    "catalogIntro": "浏览解决方案页面，比较仓库流程方法并为采购做好准备。",
+    "catalogCta": "探索仓库解决方案",
+    "relatedHeading": "相关解决方案",
+    "relatedIntro": "查看与此目录领域相关的 B2B 解决方案。",
+    "allSolutionsCta": "查看所有解决方案"
+  },
   "categories": {
     "bySlug": {
       "wozki-widlowe-czolowe": "平衡重式叉车",

@@ -12,6 +12,7 @@ import { buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree"
 import { JsonLdScript } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
+import { getSolutionsIndexPath } from "@/lib/landing";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CatalogPageProps {
@@ -226,6 +227,21 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
               {dict.meta.description}
             </p>
           </div>
+
+          <section className="border-l-2 border-brand-teal bg-white px-5 py-4" aria-labelledby="catalog-solutions-heading">
+            <h2 id="catalog-solutions-heading" className="text-base font-bold text-brand-navy">
+              {dict.solutions.catalogHeading}
+            </h2>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {dict.solutions.catalogIntro}
+            </p>
+            <Link
+              href={getSolutionsIndexPath(locale)}
+              className="mt-3 inline-flex text-sm font-semibold text-brand-teal transition-colors hover:text-brand-navy"
+            >
+              {dict.solutions.catalogCta} <span aria-hidden="true">→</span>
+            </Link>
+          </section>
 
           {categoryTree.length === 0 ? (
             <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">

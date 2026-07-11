@@ -8,6 +8,8 @@ import {
   createFaqPageJsonLd,
 } from "@/lib/seo/json-ld";
 import { absoluteUrl } from "@/lib/seo/urls";
+import { resolveGlossarySolutionLinks } from "@/lib/landing";
+import { RelatedSolutions } from "@/components/landing/RelatedSolutions";
 
 interface GlossaryTermPageProps {
   locale: GlossaryContentLocale;
@@ -67,6 +69,10 @@ export async function GlossaryTermPage({ locale, slug, basePath }: GlossaryTermP
   const pageUrl = absoluteUrl(`${basePath}/${term.slug}`);
   const setUrl = absoluteUrl(basePath);
   const localizedLabels = labels[locale] || labels.pl;
+  const relatedSolutionLinks = resolveGlossarySolutionLinks(term.slug, locale).map((link) => ({
+    href: link.href,
+    label: link.label ?? dict.solutions.allSolutionsCta,
+  }));
 
   const termJsonLd = createDefinedTermJsonLd({
     term: term.term,
@@ -253,6 +259,12 @@ export async function GlossaryTermPage({ locale, slug, basePath }: GlossaryTermP
                 </ul>
               </div>
             )}
+
+            <RelatedSolutions
+              links={relatedSolutionLinks}
+              heading={dict.solutions.relatedHeading}
+              intro={dict.solutions.relatedIntro}
+            />
           </aside>
 
         </div>

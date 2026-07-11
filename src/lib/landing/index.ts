@@ -20,6 +20,14 @@ export {
   solutionsIndexPaths,
 } from "./links";
 
+export {
+  categorySolutionRelationSlugs,
+  glossarySolutionRelationSlugs,
+  resolveCategorySolutionLinks,
+  resolveGlossarySolutionLinks,
+  type ResolvedSolutionLink,
+} from "./relations";
+
 export const landingLocales = [
   "pl",
   "en",

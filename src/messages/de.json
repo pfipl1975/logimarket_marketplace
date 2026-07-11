@@ -58,6 +58,14 @@
     "ecommerceLegend": "E-Commerce — In den Warenkorb",
     "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
   },
+  "solutions": {
+    "catalogHeading": "Lagerlösungen",
+    "catalogIntro": "Entdecken Sie Lösungsseiten, um Ansätze für Lagerprozesse zu vergleichen und Ihre Beschaffung vorzubereiten.",
+    "catalogCta": "Lagerlösungen entdecken",
+    "relatedHeading": "Passende Lösungen",
+    "relatedIntro": "Entdecken Sie B2B-Lösungen, die zu diesem Katalogbereich passen.",
+    "allSolutionsCta": "Alle Lösungen ansehen"
+  },
   "categories": {
     "bySlug": {
       "wozki-widlowe-czolowe": "Frontstapler",

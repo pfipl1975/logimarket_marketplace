@@ -58,6 +58,14 @@
     "ecommerceLegend": "E-Commerce — Dodaj do koszyka",
     "platformNotice": "LogiMarket.pl to hybrydowa platforma B2B. Dla ciężkiego sprzętu oferujemy model RFQ (zapytanie ofertowe), dla artykułów powtarzalnych — model E-Commerce z koszykiem. Sprzedaż i realizacja zamówień odbywa się bezpośrednio u partnera. LogiMarket.pl nie jest stroną transakcji."
   },
+  "solutions": {
+    "catalogHeading": "Rozwiązania dla magazynu",
+    "catalogIntro": "Przejdź do stron rozwiązań, aby porównać podejścia do procesów magazynowych i przygotować zakup.",
+    "catalogCta": "Zobacz rozwiązania dla magazynu",
+    "relatedHeading": "Powiązane rozwiązania",
+    "relatedIntro": "Sprawdź rozwiązania B2B powiązane z tym obszarem katalogu.",
+    "allSolutionsCta": "Zobacz wszystkie rozwiązania"
+  },
   "categories": {
     "bySlug": {
       "wozki-widlowe-czolowe": "Wózki widłowe czołowe",
