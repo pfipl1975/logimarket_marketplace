@@ -317,6 +317,12 @@
       "title": "Domaines d'approvisionnement",
       "subtitle": "Accédez aux groupes de produits les plus importants pour l'entreposage, l'intralogistique et l'emballage.",
       "cta": "Voir la catégorie"
+    },
+    "solutionsDiscovery": {
+      "label": "Solutions pour l'entrepôt",
+      "title": "Trouvez la solution adaptée à vos opérations",
+      "description": "Explorez les domaines d'achat et reliez vos besoins opérationnels aux catégories d'équipements appropriées.",
+      "viewAll": "Voir toutes les solutions"
     }
   }
 }

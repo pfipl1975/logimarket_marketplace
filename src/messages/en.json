@@ -317,6 +317,12 @@
       "title": "Procurement areas",
       "subtitle": "Go to the most important product groups for warehousing, intralogistics, and packaging.",
       "cta": "View category"
+    },
+    "solutionsDiscovery": {
+      "label": "Warehouse solutions",
+      "title": "Find the right solution for your operation",
+      "description": "Explore procurement areas and use our guides to connect operational requirements with the right equipment categories.",
+      "viewAll": "View all solutions"
     }
   }
 }

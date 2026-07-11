@@ -8,6 +8,7 @@ import { OfferCard } from "@/components/OfferCard";
 import { OfferListItem } from "@/components/offers/OfferListItem";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomeLocaleLinks, getHomePath, getOfferPath } from "@/lib/i18n/paths";
+import { HomepageSolutionsDiscovery } from "@/components/home/HomepageSolutionsDiscovery";
 import { ProductGroupTiles } from "@/components/home/ProductGroupTiles";
 import type { Locale } from "@/lib/i18n/types";
 
@@ -123,6 +124,10 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
         <ProductGroupTiles locale={locale} />
+        <HomepageSolutionsDiscovery
+          locale={locale}
+          labels={dict.home.solutionsDiscovery}
+        />
 
         <div className="flex flex-col gap-2">
           <h2 className="text-xl font-bold text-brand-navy">

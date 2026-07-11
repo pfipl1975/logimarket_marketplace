@@ -317,6 +317,12 @@
       "title": "Áreas de compras",
       "subtitle": "Vaya a los grupos de productos más importantes para almacenamiento, intralogística y embalaje.",
       "cta": "Ver categoría"
+    },
+    "solutionsDiscovery": {
+      "label": "Soluciones para almacenes",
+      "title": "Encuentra la solución adecuada para tu operación",
+      "description": "Explora áreas de compra y relaciona los requisitos operativos con las categorías de equipamiento adecuadas.",
+      "viewAll": "Ver todas las soluciones"
     }
   }
 }

@@ -317,6 +317,12 @@
       "title": "Beschaffungsbereiche",
       "subtitle": "Gehen Sie zu den wichtigsten Produktgruppen für Lagerung, Intralogistik und Verpackung.",
       "cta": "Kategorie ansehen"
+    },
+    "solutionsDiscovery": {
+      "label": "Lagerlösungen",
+      "title": "Finden Sie die passende Lösung für Ihren Prozess",
+      "description": "Entdecken Sie Beschaffungsbereiche und verknüpfen Sie betriebliche Anforderungen mit den passenden Ausrüstungskategorien.",
+      "viewAll": "Alle Lösungen ansehen"
     }
   }
 }

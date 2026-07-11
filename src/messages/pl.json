@@ -317,6 +317,12 @@
       "title": "Obszary zakupowe",
       "subtitle": "Przejdź do najważniejszych grup produktów dla magazynu, intralogistyki i pakowania.",
       "cta": "Zobacz kategorię"
+    },
+    "solutionsDiscovery": {
+      "label": "Rozwiązania dla magazynu",
+      "title": "Znajdź rozwiązanie dla swojego procesu",
+      "description": "Porównaj obszary zakupowe i przejdź do przewodników, które łączą wymagania operacyjne z właściwymi kategoriami wyposażenia.",
+      "viewAll": "Zobacz wszystkie rozwiązania"
     }
   }
 }
