@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Workbench frame -->
+  <rect x="6" y="24" width="36" height="4" rx="1" fill="#141c2c" />
+  <rect x="8" y="28" width="4" height="14" fill="#141c2c" />
+  <rect x="36" y="28" width="4" height="14" fill="#141c2c" />
+  <rect x="12" y="38" width="24" height="4" fill="#147487" />
+
+  <!-- Tool Pegboard -->
+  <rect x="8" y="8" width="32" height="14" fill="#147487" opacity="0.9" />
+
+  <!-- Tools on pegboard -->
+  <rect x="14" y="10" width="3" height="8" rx="0.5" fill="#141c2c" />
+  <circle cx="15.5" cy="18" r="2" fill="#eab308" />
+
+  <path d="M 28 10 L 32 14 L 30 16 L 26 12 Z" fill="#141c2c" />
+
+  <!-- Small storage bin on workbench -->
+  <path d="M 20 20 L 26 20 L 25 24 L 21 24 Z" fill="#eab308" />
+</svg>

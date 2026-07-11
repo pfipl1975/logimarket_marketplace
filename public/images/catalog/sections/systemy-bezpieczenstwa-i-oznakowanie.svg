@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Shield Outline -->
+  <path d="M 12 6 L 36 6 C 36 6 38 18 36 28 C 34 38 24 44 24 44 C 24 44 14 38 12 28 C 10 18 12 6 12 6 Z" fill="#141c2c" />
+
+  <!-- Inner Shield Highlight -->
+  <path d="M 15 9 L 33 9 C 33 9 34.5 19 33 27 C 31.5 35 24 40 24 40 C 24 40 16.5 35 15 27 C 13.5 19 15 9 15 9 Z" fill="#147487" />
+
+  <!-- Safety Cross / Icon inside -->
+  <rect x="22" y="15" width="4" height="14" fill="#eab308" />
+  <rect x="17" y="20" width="14" height="4" fill="#eab308" />
+</svg>

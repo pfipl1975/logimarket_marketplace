@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Cardboard Box -->
+  <polygon points="24,6 42,14 42,34 24,42 6,34 6,14" fill="#141c2c" />
+
+  <!-- Top flaps highlight -->
+  <polygon points="24,6 33,10 24,14 15,10" fill="#147487" />
+  <polygon points="24,14 42,14 33,22 15,22" fill="#147487" opacity="0.8" />
+
+  <!-- Tape sealing the box -->
+  <path d="M 24 6 L 24 42" stroke="#eab308" stroke-width="3" stroke-linecap="round" fill="none" />
+  <path d="M 15 10 L 33 22" stroke="#eab308" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.6" />
+</svg>

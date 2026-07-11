@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Human outline facing right -->
+  <circle cx="24" cy="11" r="4.5" fill="#141c2c" />
+  <path d="M 21 16 L 27 16 C 27 16 30 22 28 32 L 25 43 L 21 43 L 23 32 L 21 24 Z" fill="#141c2c" />
+
+  <!-- Exoskeleton spine frame -->
+  <path d="M 19 18 C 19 18 17 26 19 32 L 20 38" stroke="#147487" stroke-width="2.5" fill="none" stroke-linecap="round" />
+  <path d="M 20 38 L 22 42" stroke="#147487" stroke-width="2" fill="none" />
+
+  <!-- Joint actuator -->
+  <circle cx="20.5" cy="30" r="2.5" fill="#eab308" />
+  <circle cx="18.5" cy="18" r="1.5" fill="#147487" />
+</svg>

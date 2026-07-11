@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Package } from "lucide-react";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { getCategories } from "@/app/actions";
@@ -13,6 +14,7 @@ import { JsonLdScript } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
 import { getSolutionsIndexPath } from "@/lib/landing";
+import { getGroupIconPath, getSectionIconPath } from "@/lib/catalog/group-icons";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CatalogPageProps {
@@ -28,6 +30,7 @@ type DirectoryLink = {
 
 type DirectoryGroup = {
   id: number;
+  slug: string;
   label: string;
   href: string | null;
   categoryLinks: DirectoryLink[];
@@ -35,6 +38,7 @@ type DirectoryGroup = {
 
 type DirectorySection = {
   id: number;
+  slug: string;
   label: string;
   href: string | null;
   groups: DirectoryGroup[];
@@ -115,10 +119,12 @@ function buildDirectorySections({
 }): DirectorySection[] {
   return categoryTree.map((section) => ({
     id: section.id,
+    slug: section.slug,
     label: resolveDirectoryLabel(section, localeBySlug, fallbackBySlug),
     href: getCatalogCategoryHref(categoryFilterBasePath, section.slug, routeableSlugSet),
     groups: section.children.map((group) => ({
       id: group.id,
+      slug: group.slug,
       label: resolveDirectoryLabel(group, localeBySlug, fallbackBySlug),
       href: getCatalogCategoryHref(categoryFilterBasePath, group.slug, routeableSlugSet),
       categoryLinks: collectDirectoryCategoryLinks(
@@ -278,42 +284,62 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
                       key={section.id}
                       className="rounded border border-border bg-white p-5 shadow-sm"
                     >
-                      <div className="border-b border-border pb-4">
-                        {section.href ? (
-                          <Link
-                            href={section.href}
-                            className="text-lg font-bold text-brand-navy transition-colors hover:text-brand-teal"
-                          >
-                            {section.label}
-                          </Link>
-                        ) : (
-                          <h3 className="text-lg font-bold text-brand-navy">
-                            {section.label}
-                          </h3>
-                        )}
-                        {section.groups.length > 0 && (
-                          <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                            {dict.catalog.directoryGroupsHeading}
-                          </p>
-                        )}
+                      <div className="border-b border-border pb-4 flex items-center gap-3">
+                        <div className="relative h-8 w-8 shrink-0">
+                          <Image
+                            src={getSectionIconPath(section.slug)}
+                            alt=""
+                            width={32}
+                            height={32}
+                            className="size-8 object-contain"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          {section.href ? (
+                            <Link
+                              href={section.href}
+                              className="text-lg font-bold text-brand-navy transition-colors hover:text-brand-teal"
+                            >
+                              {section.label}
+                            </Link>
+                          ) : (
+                            <h3 className="text-lg font-bold text-brand-navy">
+                              {section.label}
+                            </h3>
+                          )}
+                          {section.groups.length > 0 && (
+                            <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                              {dict.catalog.directoryGroupsHeading}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
                       {section.groups.length > 0 && (
                         <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
                           {section.groups.map((group) => (
                             <div key={group.id} className="min-w-0">
-                              {group.href ? (
-                                <Link
-                                  href={group.href}
-                                  className="text-sm font-bold text-brand-navy transition-colors hover:text-brand-teal"
-                                >
-                                  {group.label}
-                                </Link>
-                              ) : (
-                                <h4 className="text-sm font-bold text-brand-navy">
-                                  {group.label}
-                                </h4>
-                              )}
+                              <div className="flex items-center gap-2 mb-2">
+                                <Image
+                                  src={getGroupIconPath(group.slug)}
+                                  alt=""
+                                  width={24}
+                                  height={24}
+                                  className="size-6 shrink-0 object-contain"
+                                />
+                                {group.href ? (
+                                  <Link
+                                    href={group.href}
+                                    className="text-sm font-bold text-brand-navy transition-colors hover:text-brand-teal"
+                                  >
+                                    {group.label}
+                                  </Link>
+                                ) : (
+                                  <h4 className="text-sm font-bold text-brand-navy">
+                                    {group.label}
+                                  </h4>
+                                )}
+                              </div>
 
                               {group.categoryLinks.length > 0 && (
                                 <ul className="mt-2 space-y-1.5 border-l border-border pl-3">

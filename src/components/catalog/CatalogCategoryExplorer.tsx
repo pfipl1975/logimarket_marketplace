@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { getSectionIconPath } from "@/lib/catalog/group-icons";
 
 export type CatalogExplorerNode = {
   id: number;
@@ -145,7 +147,16 @@ export function CatalogCategoryExplorer({
                       : "border-transparent text-brand-navy hover:text-brand-teal hover:bg-white/50"
                   }`}
                 >
-                  <span>{section.label}</span>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={getSectionIconPath(section.slug)}
+                      alt=""
+                      width={16}
+                      height={16}
+                      className="size-4 shrink-0 object-contain"
+                    />
+                    <span>{section.label}</span>
+                  </div>
                   <ChevronRight className="h-4 w-4 opacity-50" />
                 </button>
               </div>
@@ -161,13 +172,22 @@ export function CatalogCategoryExplorer({
               >
                 {/* Header with link to section */}
                 <div className="col-span-3 border-b border-border pb-3 mb-2 flex items-center justify-between">
-                  <Link
-                    href={section.href}
-                    onClick={() => setIsOpen(false)}
-                    className="text-lg font-bold text-brand-navy hover:text-brand-teal transition-colors"
-                  >
-                    {section.label}
-                  </Link>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={getSectionIconPath(section.slug)}
+                      alt=""
+                      width={24}
+                      height={24}
+                      className="size-6 shrink-0 object-contain"
+                    />
+                    <Link
+                      href={section.href}
+                      onClick={() => setIsOpen(false)}
+                      className="text-lg font-bold text-brand-navy hover:text-brand-teal transition-colors"
+                    >
+                      {section.label}
+                    </Link>
+                  </div>
                   <Link
                     href={section.href}
                     onClick={() => setIsOpen(false)}
@@ -211,7 +231,16 @@ export function CatalogCategoryExplorer({
                   aria-expanded={isExpanded}
                   className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-bold text-brand-navy hover:bg-brand-light-gray/20 transition-colors"
                 >
-                  <span>{section.label}</span>
+                  <div className="flex items-center gap-2">
+                    <Image
+                      src={getSectionIconPath(section.slug)}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className="size-5 shrink-0 object-contain"
+                    />
+                    <span>{section.label}</span>
+                  </div>
                   <ChevronDown
                     className={`h-4 w-4 transition-transform ${isExpanded ? "rotate-180" : ""}`}
                   />

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Counterweight & body -->
+  <path d="M 8 22 L 20 22 L 24 28 L 32 28 L 34 34 L 8 34 Z" fill="#141c2c" />
+
+  <!-- Cabin overhead guard -->
+  <path d="M 12 22 L 18 10 L 24 10 L 20 22 Z" fill="#141c2c" />
+
+  <!-- Wheels -->
+  <circle cx="13" cy="36" r="4.5" fill="#141c2c" />
+  <circle cx="13" cy="36" r="1.5" fill="#147487" />
+  <circle cx="29" cy="36" r="4.5" fill="#141c2c" />
+  <circle cx="29" cy="36" r="1.5" fill="#147487" />
+
+  <!-- Mast & Forks -->
+  <rect x="34" y="8" width="2" height="26" fill="#147487" />
+  <path d="M 36 28 L 42 28 L 42 30 L 34 30 Z" fill="#141c2c" />
+
+  <!-- Load -->
+  <rect x="37" y="18" width="5" height="10" rx="0.5" fill="#147487" />
+
+  <!-- Warning light (kogut) -->
+  <circle cx="22" cy="8.5" r="1.5" fill="#eab308" />
+</svg>

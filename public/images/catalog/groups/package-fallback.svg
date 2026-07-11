@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Box -->
+  <polygon points="24,8 40,16 40,32 24,40 8,32 8,16" fill="#141c2c" />
+  <polygon points="24,8 32,12 24,16 16,12" fill="#147487" />
+  <polygon points="24,16 40,16 32,24 16,24" fill="#147487" opacity="0.8" />
+
+  <circle cx="24" cy="24" r="2.5" fill="#eab308" />
+</svg>

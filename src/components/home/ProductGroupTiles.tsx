@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 import { getCategories } from "@/app/actions";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
@@ -6,6 +7,7 @@ import { getHomePath } from "@/lib/i18n/paths";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { defaultLocale } from "@/lib/i18n/config";
 import { MVP_HOMEPAGE_ROOT_SLUGS } from "@/lib/catalog/homepage-groups";
+import { getSectionIconPath } from "@/lib/catalog/group-icons";
 import type { Locale } from "@/lib/i18n/types";
 
 interface ProductGroupTilesProps {
@@ -79,6 +81,17 @@ export async function ProductGroupTiles({ locale }: ProductGroupTilesProps) {
               className="group flex flex-col justify-between rounded-lg border border-[#d9dde2] bg-white p-4 shadow-sm transition-all duration-200 hover:border-brand-teal hover:shadow-md"
             >
               <div>
+                <div className="mb-3 flex items-center justify-start">
+                  <div className="relative h-12 w-12 shrink-0">
+                    <Image
+                      src={getSectionIconPath(category.slug)}
+                      alt=""
+                      width={48}
+                      height={48}
+                      className="size-12 object-contain"
+                    />
+                  </div>
+                </div>
                 <h3 className="text-sm font-bold text-brand-navy transition-colors group-hover:text-brand-teal">
                   {categoryLabel}
                 </h3>

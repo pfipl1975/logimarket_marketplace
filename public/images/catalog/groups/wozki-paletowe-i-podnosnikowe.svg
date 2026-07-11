@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Tiller and handle -->
+  <path d="M 10 32 L 14 14 L 11 11 L 13 9 L 17 13 L 13 32 Z" fill="#141c2c" />
+  <circle cx="15" cy="11.5" r="1.5" fill="#eab308" />
+
+  <!-- Battery compartment / hydraulics casing -->
+  <rect x="12" y="24" width="8" height="10" rx="1" fill="#141c2c" />
+
+  <!-- Forks -->
+  <rect x="20" y="30" width="22" height="3" fill="#147487" />
+
+  <!-- Wheels -->
+  <circle cx="16" cy="37" r="4" fill="#141c2c" />
+  <circle cx="16" cy="37" r="1.5" fill="#147487" />
+  <circle cx="38" cy="35" r="2" fill="#141c2c" />
+</svg>
