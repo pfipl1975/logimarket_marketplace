@@ -12,6 +12,7 @@ import {
   check,
   unique,
   foreignKey,
+  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -455,12 +456,93 @@ export const migrationOaovTargets = pgTable(
   ]
 );
 
+export const categoryAttributeAssignments = pgTable(
+  "category_attribute_assignments",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    categoryId: bigint("category_id", { mode: "number" }).notNull(),
+    attributeDefinitionId: bigint("attribute_definition_id", { mode: "number" }).notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    isFilterable: boolean("is_filterable").notNull().default(false),
+    isComparable: boolean("is_comparable").notNull().default(false),
+    isRequired: boolean("is_required").notNull().default(false),
+    isVisible: boolean("is_visible").notNull().default(true),
+    unitCode: varchar("unit_code", { length: 20 }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique("uq_caa_category_attribute").on(t.categoryId, t.attributeDefinitionId),
+    check("chk_caa_sort_order", sql`${t.sortOrder} >= 0`),
+    foreignKey({
+      name: "fk_caa_category",
+      columns: [t.categoryId],
+      foreignColumns: [categories.id],
+    }),
+    foreignKey({
+      name: "fk_caa_attribute_definition",
+      columns: [t.attributeDefinitionId],
+      foreignColumns: [attributeDefinitions.id],
+    }),
+    index("idx_caa_cat_visible_sort").on(t.categoryId, t.isVisible, t.sortOrder),
+    index("idx_caa_cat_filterable_sort").on(t.categoryId, t.isFilterable, t.sortOrder),
+    index("idx_caa_attribute").on(t.attributeDefinitionId),
+  ]
+);
+
+export const attributeDefinitionTranslations = pgTable(
+  "attribute_definition_translations",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    attributeDefinitionId: bigint("attribute_definition_id", { mode: "number" }).notNull(),
+    locale: varchar("locale", { length: 10 }).notNull(),
+    name: text("name").notNull(),
+    shortLabel: varchar("short_label", { length: 100 }),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique("uq_adt_attribute_locale").on(t.attributeDefinitionId, t.locale),
+    check("chk_adt_locale", sql`${t.locale} IN ('pl','en','de','fr','uk','es','zh')`),
+    foreignKey({
+      name: "fk_adt_attribute_definition",
+      columns: [t.attributeDefinitionId],
+      foreignColumns: [attributeDefinitions.id],
+    }),
+  ]
+);
+
+export const controlledOptionValueTranslations = pgTable(
+  "controlled_option_value_translations",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    controlledOptionValueId: bigint("controlled_option_value_id", { mode: "number" }).notNull(),
+    locale: varchar("locale", { length: 10 }).notNull(),
+    label: text("label").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique("uq_covt_option_locale").on(t.controlledOptionValueId, t.locale),
+    check("chk_covt_locale", sql`${t.locale} IN ('pl','en','de','fr','uk','es','zh')`),
+    foreignKey({
+      name: "fk_covt_controlled_option_value",
+      columns: [t.controlledOptionValueId],
+      foreignColumns: [controlledOptionValues.id],
+    }),
+  ]
+);
+
 export type Partner = typeof partners.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
 export type TechnicalAttributes = Record<string, string | number>;
 
-export type AttributeDefinition = typeof attributeDefinitions.$inferSelect;
+export type CategoryAttributeAssignment = typeof categoryAttributeAssignments.$inferSelect;
+export type AttributeDefinitionTranslation = typeof attributeDefinitionTranslations.$inferSelect;
+export type ControlledOptionValueTranslation = typeof controlledOptionValueTranslations.$inferSelect;
 export type ControlledOptionValue = typeof controlledOptionValues.$inferSelect;
 export type OfferAttributeValue = typeof offerAttributeValues.$inferSelect;
 export type OfferAttributeOptionValue = typeof offerAttributeOptionValues.$inferSelect;

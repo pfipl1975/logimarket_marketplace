@@ -255,12 +255,28 @@ try {
     Run-Sql 'INSERT INTO public.orders (id, company_name, contact_name, email) VALUES (50, ''Client Co'', ''Client Name'', ''client@test.com'');'
     Run-Sql 'INSERT INTO public.order_items (id, order_id, offer_id, title, quantity) VALUES (1, 50, 100, ''Sentinel Offer'', 2);'
 
-    # A09: first migrate applies
+    # Create isolated Sprint 44 migration folder (0000 + 0001 only)
+    $isolatedMigrations = Join-Path $env:TEMP "lm44_${guid}_migrations"
+    $isolatedMeta = Join-Path $isolatedMigrations "meta"
+    New-Item -ItemType Directory -Path $isolatedMeta -Force | Out-Null
+    Copy-Item "drizzle/0000_*.sql" $isolatedMigrations
+    Copy-Item "drizzle/0001_*.sql" $isolatedMigrations
+    $journal = Get-Content "drizzle/meta/_journal.json" -Raw | ConvertFrom-Json
+    $filteredEntries = $journal.entries | Where-Object { $_.idx -eq 0 -or $_.idx -eq 1 }
+    $isolatedJournal = @{
+        version = $journal.version
+        dialect = $journal.dialect
+        entries = $filteredEntries
+    } | ConvertTo-Json -Depth 10
+    [System.IO.File]::WriteAllText((Join-Path $isolatedMeta "_journal.json"), $isolatedJournal, (New-Object System.Text.UTF8Encoding $false))
+
+    # A09: first migrate applies (isolated Sprint 44 migrations only)
+    $env:LM44_MIGRATIONS_FOLDER = $isolatedMigrations
     Invoke-NativeChecked -Command "node" -Arguments @("scripts/run-lm44-drizzle-migrations.mjs")
     $historyCount = Run-Sql "SELECT count(*) FROM drizzle.__drizzle_migrations;"
     if ($historyCount -eq 2) {
         Write-Host "  PASS: A09"
-        $results.Add("A09|PASS|history count = 2")
+        $results.Add("A09|PASS|history count = 2 (Sprint 44 isolated)")
     } else {
         Write-Host "  FAIL: A09"
         $results.Add("A09|FAIL|history count = $historyCount")
@@ -276,6 +292,8 @@ try {
         Write-Host "  FAIL: A10"
         $results.Add("A10|FAIL|second migrate altered history")
     }
+    Remove-Item $isolatedMigrations -Recurse -Force -ErrorAction SilentlyContinue
+    Remove-Item Env:\LM44_MIGRATIONS_FOLDER -ErrorAction SilentlyContinue
 
     # A06 verification
     $categoriesCount = Run-Sql "SELECT count(*) FROM public.categories WHERE id = 10;"
@@ -290,15 +308,22 @@ try {
     # A12: Drizzle round-trip check
     $oldFiles = Get-ChildItem drizzle\ -Recurse | Select-Object -ExpandProperty FullName
     $oldJournal = Get-Content drizzle\meta\_journal.json -Raw
-    $oldSnapshot = Get-Content drizzle\meta\0001_snapshot.json -Raw
+    $oldSnapshots = Get-ChildItem drizzle\meta\*_snapshot.json | Sort-Object Name | ForEach-Object { Get-Content $_.FullName -Raw }
     
     $genResult = npm exec -- drizzle-kit generate 2>&1
     
     $newFiles = Get-ChildItem drizzle\ -Recurse | Select-Object -ExpandProperty FullName
     $newJournal = Get-Content drizzle\meta\_journal.json -Raw
-    $newSnapshot = Get-Content drizzle\meta\0001_snapshot.json -Raw
+    $newSnapshots = Get-ChildItem drizzle\meta\*_snapshot.json | Sort-Object Name | ForEach-Object { Get-Content $_.FullName -Raw }
 
-    if ($oldFiles.Count -eq $newFiles.Count -and $oldJournal -eq $newJournal -and $oldSnapshot -eq $newSnapshot) {
+    $snapshotsMatch = ($oldSnapshots.Count -eq $newSnapshots.Count)
+    if ($snapshotsMatch) {
+        for ($i = 0; $i -lt $oldSnapshots.Count; $i++) {
+            if ($oldSnapshots[$i] -ne $newSnapshots[$i]) { $snapshotsMatch = $false }
+        }
+    }
+
+    if ($oldFiles.Count -eq $newFiles.Count -and $oldJournal -eq $newJournal -and $snapshotsMatch) {
         Write-Host "  PASS: A12"
         $results.Add("A12|PASS|round-trip generated no diff")
     } else {

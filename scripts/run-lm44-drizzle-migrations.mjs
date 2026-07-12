@@ -11,12 +11,14 @@ async function main() {
     process.exit(1);
   }
 
+  const migrationsFolder = process.env.LM44_MIGRATIONS_FOLDER || "./drizzle";
+
   console.log("Connecting to database and running migrations...");
   const pool = new Pool({ connectionString });
   const db = drizzle(pool);
 
   try {
-    await migrate(db, { migrationsFolder: "./drizzle" });
+    await migrate(db, { migrationsFolder });
     console.log("Migrations applied successfully!");
     await pool.end();
     process.exit(0);
