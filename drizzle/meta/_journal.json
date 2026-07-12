@@ -15,6 +15,13 @@
       "when": 1783841575861,
       "tag": "0001_rich_lord_hawal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1783852992449,
+      "tag": "0002_nebulous_hannibal_king",
+      "breakpoints": true
     }
   ]
 }

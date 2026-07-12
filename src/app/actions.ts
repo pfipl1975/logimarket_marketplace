@@ -10,6 +10,9 @@ import {
 import type { TechnicalAttributes, OfferPublicationStatus } from "@/lib/schema";
 import { getCategoryDescendantIds } from "@/lib/catalog/tree";
 import type { CatalogCategoryRow } from "@/lib/catalog/tree";
+import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model";
+import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model";
+import { isLocale, type Locale } from "@/lib/i18n/config";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -288,4 +291,25 @@ export async function submitRfq(data: {
     email: data.email, phone: data.phone ?? null, message: data.message ?? null,
   });
   return { ok: true, code: "RFQ_SENT" };
+}
+
+export async function getCategoryAttributeConfiguration(
+  categoryId: number,
+  locale: string,
+  onlyVisible = true,
+  onlyFilterable = false
+): Promise<CategoryAttributeConfiguration[]> {
+  if (!isLocale(locale)) {
+    throw new Error(`Invalid locale: ${locale}`);
+  }
+  if (!Number.isFinite(categoryId) || categoryId <= 0) {
+    throw new Error(`Invalid categoryId: ${categoryId}`);
+  }
+  return getCategoryAttributeConfigurationFromDb(
+    db,
+    categoryId,
+    locale as Locale,
+    onlyVisible,
+    onlyFilterable
+  );
 }

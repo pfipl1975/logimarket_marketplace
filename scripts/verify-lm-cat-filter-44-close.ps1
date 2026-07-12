@@ -258,9 +258,9 @@ try {
     # A09: first migrate applies
     Invoke-NativeChecked -Command "node" -Arguments @("scripts/run-lm44-drizzle-migrations.mjs")
     $historyCount = Run-Sql "SELECT count(*) FROM drizzle.__drizzle_migrations;"
-    if ($historyCount -eq 2) {
+    if ($historyCount -eq 3) {
         Write-Host "  PASS: A09"
-        $results.Add("A09|PASS|history count = 2")
+        $results.Add("A09|PASS|history count = 3")
     } else {
         Write-Host "  FAIL: A09"
         $results.Add("A09|FAIL|history count = $historyCount")
@@ -269,7 +269,7 @@ try {
     # A10: second migrate is no-op
     Invoke-NativeChecked -Command "node" -Arguments @("scripts/run-lm44-drizzle-migrations.mjs")
     $historyCount2 = Run-Sql "SELECT count(*) FROM drizzle.__drizzle_migrations;"
-    if ($historyCount2 -eq 2) {
+    if ($historyCount2 -eq 3) {
         Write-Host "  PASS: A10"
         $results.Add("A10|PASS|second migrate no-op")
     } else {
