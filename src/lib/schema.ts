@@ -314,7 +314,7 @@ export const migrationSourceEntries = pgTable(
         AND ${t.frequency} > 0
       )
     `),
-    check("chk_mse_source_payload_version", sql`${t.sourcePayloadVersion} IN ('lm-source-v1')`),
+    check("chk_mse_source_payload_version", sql`${t.sourcePayloadVersion} IN ('lm-source-v1', 'lm-source-v2')`),
     unique("uq_mse_source_identity").on(t.batchId, t.sourceOfferId, t.sourceKey),
     unique("uq_mse_id_batch").on(t.id, t.batchId),
     foreignKey({
@@ -338,12 +338,15 @@ export const migrationOavTargets = pgTable(
     targetOptionId: bigint("target_option_id", { mode: "number" }),
     targetHashAtCreation: text("target_hash_at_creation").notNull(),
     canonicalPayloadVersion: varchar("canonical_payload_version", { length: 20 }).notNull(),
+    targetProvenance: varchar("target_provenance", { length: 30 }).notNull(),
     rollbackStatus: varchar("rollback_status", { length: 30 }).notNull().default("pending"),
     rollbackReason: text("rollback_reason"),
     targetDeletedAt: timestamp("target_deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    check("chk_mot_provenance", sql`${t.targetProvenance} IN ('created_by_batch', 'unknown_legacy')`),
+    check("chk_mot_canonical_version", sql`${t.canonicalPayloadVersion} IN ('lm-source-v1', 'lm-source-v2')`),
     check("chk_mot_rollback_status", sql`${t.rollbackStatus} IN ('pending','cleaned_up','rollback_conflict')`),
     check("chk_mot_hash_format", sql`${t.targetHashAtCreation} ~ '^[0-9a-f]{64}$'`),
     check("chk_mot_row_ids", sql`${t.targetRowIdCurrent} IS NULL OR ${t.targetRowIdCurrent} = ${t.targetRowIdOriginal}`),
@@ -406,12 +409,15 @@ export const migrationOaovTargets = pgTable(
     targetOptionId: bigint("target_option_id", { mode: "number" }).notNull(),
     targetHashAtCreation: text("target_hash_at_creation").notNull(),
     canonicalPayloadVersion: varchar("canonical_payload_version", { length: 20 }).notNull(),
+    targetProvenance: varchar("target_provenance", { length: 30 }).notNull(),
     rollbackStatus: varchar("rollback_status", { length: 30 }).notNull().default("pending"),
     rollbackReason: text("rollback_reason"),
     targetDeletedAt: timestamp("target_deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    check("chk_mott_provenance", sql`${t.targetProvenance} IN ('created_by_batch', 'unknown_legacy')`),
+    check("chk_mott_canonical_version", sql`${t.canonicalPayloadVersion} IN ('lm-source-v1', 'lm-source-v2')`),
     check("chk_mott_rollback_status", sql`${t.rollbackStatus} IN ('pending','cleaned_up','rollback_conflict')`),
     check("chk_mott_hash_format", sql`${t.targetHashAtCreation} ~ '^[0-9a-f]{64}$'`),
     check("chk_mott_row_ids", sql`${t.targetRowIdCurrent} IS NULL OR ${t.targetRowIdCurrent} = ${t.targetRowIdOriginal}`),
@@ -550,4 +556,87 @@ export type MigrationBatch = typeof migrationBatches.$inferSelect;
 export type MigrationSourceEntry = typeof migrationSourceEntries.$inferSelect;
 export type MigrationOavTarget = typeof migrationOavTargets.$inferSelect;
 export type MigrationOaovTarget = typeof migrationOaovTargets.$inferSelect;
+
+export const migrationRollbackAttempts = pgTable(
+  "migration_rollback_attempts",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    batchId: bigint("batch_id", { mode: "number" }).notNull(),
+    attemptNumber: integer("attempt_number").notNull(),
+    status: varchar("status", { length: 30 }).notNull(),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    finishedAt: timestamp("finished_at", { withTimezone: true }),
+    sqlstate: varchar("sqlstate", { length: 5 }),
+    constraintName: text("constraint_name"),
+    message: text("message"),
+    detail: text("detail"),
+    hint: text("hint"),
+    targetsDeletedCount: integer("targets_deleted_count").notNull().default(0),
+    targetsSkippedCount: integer("targets_skipped_count").notNull().default(0),
+    targetsConflictCount: integer("targets_conflict_count").notNull().default(0),
+    initiatedBy: text("initiated_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("uq_mra_batch_attempt").on(t.batchId, t.attemptNumber),
+    check("chk_mra_attempt_number", sql`${t.attemptNumber} > 0`),
+    check("chk_mra_deleted_nonnegative", sql`${t.targetsDeletedCount} >= 0`),
+    check("chk_mra_skipped_nonnegative", sql`${t.targetsSkippedCount} >= 0`),
+    check("chk_mra_conflict_nonnegative", sql`${t.targetsConflictCount} >= 0`),
+    check("chk_mra_status_check", sql`${t.status} IN ('running', 'succeeded', 'failed', 'conflict')`),
+    check("chk_mra_lifecycle", sql`
+      (
+        ${t.status} = 'running'
+        AND ${t.finishedAt} IS NULL
+        AND ${t.sqlstate} IS NULL
+        AND ${t.constraintName} IS NULL
+        AND ${t.message} IS NULL
+        AND ${t.detail} IS NULL
+        AND ${t.hint} IS NULL
+        AND ${t.targetsDeletedCount} = 0
+        AND ${t.targetsSkippedCount} = 0
+        AND ${t.targetsConflictCount} = 0
+      )
+      OR
+      (
+        ${t.status} = 'succeeded'
+        AND ${t.finishedAt} IS NOT NULL
+        AND ${t.sqlstate} IS NULL
+        AND ${t.constraintName} IS NULL
+        AND ${t.message} IS NULL
+        AND ${t.detail} IS NULL
+        AND ${t.hint} IS NULL
+        AND ${t.targetsDeletedCount} > 0
+        AND ${t.targetsConflictCount} = 0
+      )
+      OR
+      (
+        ${t.status} = 'failed'
+        AND ${t.finishedAt} IS NOT NULL
+        AND ${t.sqlstate} IS NOT NULL
+        AND char_length(${t.sqlstate}) = 5
+        AND ${t.message} IS NOT NULL
+      )
+      OR
+      (
+        ${t.status} = 'conflict'
+        AND ${t.finishedAt} IS NOT NULL
+        AND ${t.targetsConflictCount} > 0
+        AND ${t.sqlstate} IS NULL
+        AND ${t.constraintName} IS NULL
+        AND ${t.message} IS NULL
+        AND ${t.detail} IS NULL
+        AND ${t.hint} IS NULL
+      )
+    `),
+    check("chk_mra_sqlstate", sql`${t.sqlstate} IS NULL OR char_length(${t.sqlstate}) = 5`),
+    foreignKey({
+      name: "fk_mra_batch",
+      columns: [t.batchId],
+      foreignColumns: [migrationBatches.id]
+    }).onDelete("restrict"),
+  ]
+);
+
+export type MigrationRollbackAttempt = typeof migrationRollbackAttempts.$inferSelect;
 
