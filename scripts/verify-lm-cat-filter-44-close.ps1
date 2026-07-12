@@ -1041,8 +1041,6 @@ try {
     if ($nodeExitCode -ne 0 -and ($nodeLines | Measure-Object).Count -eq 0) {
         Write-Host "  FAIL: L06 (node script produced no result lines; exit $nodeExitCode)"
         $results.Add("L06|FAIL|node script exit $nodeExitCode")
-        Write-Host "  FAIL: L06b (node script produced no result lines; exit $nodeExitCode)"
-        $results.Add("L06b|FAIL|node script exit $nodeExitCode")
     }
 
     # L07: rollback status becomes cleaned_up
@@ -1104,11 +1102,51 @@ foreach ($res in $results) {
 }
 
 Write-Host "=== TEST SUMMARY ==="
+
+# Mechanical test-ID audit
+$uniqueIds = New-Object System.Collections.Generic.HashSet[string]
+foreach ($res in $results) {
+    $idPart = $res.Split('|')[0]
+    [void]$uniqueIds.Add($idPart)
+}
+$expectedIds = @(
+    'A01','A02','A03','A04','A05','A06','A07','A08','A09','A10','A11','A12',
+    'B01','B02','B03','B04','B05','B06',
+    'C01','C02','C03','C04','C05',
+    'D01','D02','D03','D04','D05','D06','D07','D08','D09','D10','D11',
+    'E01','E02','E03','E04','E05','E06','E07','E08','E09','E10',
+    'F01','F02','F03','F04','F05','F06','F07','F08','F09','F10','F11','F12','F13','F14','F15',
+    'G01','G02','G03','G04','G05','G06','G07',
+    'H01','H02','H03','H04','H05',
+    'I01','I02','I03','I04','I05','I06','I07','I08','I09','I10','I11',
+    'J01','J02','J03','J04','J05','J06','J07','J08','J09','J10','J11','J12','J13','J14','J15','J16','J17','J18',
+    'K01','K02','K03','K04','K05','K06','K07','K08','K09','K10','K11','K12',
+    'L01','L02','L03','L04','L05','L06','L07','L08','L09','L10'
+)
+$missingIds = $expectedIds | Where-Object { -not $uniqueIds.Contains($_) }
+$unknownIds = $uniqueIds | Where-Object { $_ -notin $expectedIds }
+$duplicateIds = $results | ForEach-Object { $_.Split('|')[0] } | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name }
+
+Write-Host "EXPECTED UNIQUE IDS: 122"
+Write-Host "ACTUAL UNIQUE IDS: $($uniqueIds.Count)"
+Write-Host "DUPLICATE IDS: $(@($duplicateIds).Count)"
+Write-Host "UNKNOWN IDS: $(@($unknownIds).Count)"
+Write-Host "MISSING IDS: $(@($missingIds).Count)"
+
+if ($uniqueIds.Count -ne 122 -or @($duplicateIds).Count -gt 0 -or @($unknownIds).Count -gt 0 -or @($missingIds).Count -gt 0) {
+    Write-Error "Test ID audit failed: expected 122 unique IDs, found $($uniqueIds.Count). Duplicates: $($duplicateIds -join ', '). Unknown: $($unknownIds -join ', '). Missing: $($missingIds -join ', ')."
+    exit 1
+}
+
 $total = $results.Count
-$expected = 123
+$expected = 122
 $skipped = $expected - $total
 if ($skipped -lt 0) { $skipped = 0 }
-Write-Host "expected $expected, executed $total, passed $passed, failed $failed, skipped $skipped"
+Write-Host "EXPECTED TEST COUNT: $expected"
+Write-Host "EXECUTED TEST COUNT: $total"
+Write-Host "PASSED TEST COUNT: $passed"
+Write-Host "FAILED TEST COUNT: $failed"
+Write-Host "SKIPPED TEST COUNT: $skipped"
 
 if ($failed -gt 0 -or $total -ne $expected) {
     Write-Error "Test harness failed: expected $expected, executed $total, passed $passed, failed $failed."

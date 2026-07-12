@@ -1,7 +1,7 @@
 /**
  * lm44-deferred-fk-test.mjs
  *
- * Node.js pg-driver transaction tests for L06 (OAV) and L06b (OAOV).
+ * Node.js pg-driver transaction tests for L06 (OAV + OAOV subchecks).
  * Validates that fk_mot_oav_target_current and fk_mott_oaov_target_current
  * fire at COMMIT when deferred via SET CONSTRAINTS <exact-name> DEFERRED.
  *
@@ -13,8 +13,8 @@
  *   node scripts/lm44-deferred-fk-test.mjs <host> <port> <user> <dbname>
  *
  * Exit codes:
- *   0 — both tests passed
- *   1 — at least one test failed
+ *   0 — both subchecks passed (canonical L06 = PASS)
+ *   1 — at least one subcheck failed (canonical L06 = FAIL)
  */
 
 import pg from 'pg';
@@ -35,20 +35,16 @@ const pool = new pg.Pool({
   max: 2,
 });
 
-let allPassed = true;
-
 /**
- * Run a single deferred-FK test.
+ * Run a single deferred-FK subcheck.
  *
- * @param {string}   testId           - Test identifier (e.g. 'L06')
  * @param {string}   constraintName   - Exact FK constraint name to defer
  * @param {string}   deleteSql        - DELETE statement that will transiently
  *                                     violate the FK after deferral
- * @param {string[]} results          - Mutable array to push result lines into
+ * @returns {object}  { passed: boolean, detail: string }
  */
-async function runDeferredFkTest(testId, constraintName, deleteSql, results) {
+async function runDeferredFkSubcheck(constraintName, deleteSql) {
   const client = await pool.connect();
-  let passed = false;
   try {
     await client.query('BEGIN');
     // Defer only the named constraint — never SET CONSTRAINTS ALL DEFERRED.
@@ -57,29 +53,21 @@ async function runDeferredFkTest(testId, constraintName, deleteSql, results) {
     // COMMIT must trigger the deferred FK check and raise 23503.
     await client.query('COMMIT');
     // If COMMIT succeeds the FK was not enforced — that is a test failure.
-    console.error(`  FAIL: ${testId} — expected 23503 at COMMIT but statement succeeded`);
-    results.push(`${testId}|FAIL|COMMIT succeeded — FK not enforced`);
-    allPassed = false;
+    return { passed: false, detail: `COMMIT succeeded — FK ${constraintName} not enforced` };
   } catch (err) {
     try { await client.query('ROLLBACK'); } catch (_) { /* ignore */ }
     if (err.code === '23503' && err.constraint === constraintName) {
-      console.log(`  PASS: ${testId}`);
-      results.push(`${testId}|PASS|code=23503 constraint=${constraintName}`);
-      passed = true;
+      return { passed: true, detail: `code=23503 constraint=${constraintName}` };
     } else {
-      const detail = `code=${err.code ?? 'none'} constraint=${err.constraint ?? 'none'} msg=${err.message}`;
-      console.error(`  FAIL: ${testId} — ${detail}`);
-      results.push(`${testId}|FAIL|${detail}`);
-      allPassed = false;
+      return { passed: false, detail: `code=${err.code ?? 'none'} constraint=${err.constraint ?? 'none'} msg=${err.message}` };
     }
   } finally {
     client.release();
   }
-  return passed;
 }
 
 async function main() {
-  const results = [];
+  const subchecks = [];
 
   // Resolve the OAV row and OAOV row that have active manifest targets.
   // These are inserted by the PowerShell harness before this script runs.
@@ -93,8 +81,7 @@ async function main() {
     );
     if (oavRes.rows.length === 0) {
       console.error('FAIL: L06 precondition — no OAV row for offer=100 attr=2');
-      results.push('L06|FAIL|precondition: no OAV row');
-      allPassed = false;
+      subchecks.push({ passed: false, detail: 'precondition: no OAV row' });
     } else {
       oavRowId = oavRes.rows[0].id;
     }
@@ -105,9 +92,8 @@ async function main() {
        LIMIT 1`
     );
     if (oaovRes.rows.length === 0) {
-      console.error('FAIL: L06b precondition — no OAOV row for offer=100 attr=3 opt=201');
-      results.push('L06b|FAIL|precondition: no OAOV row');
-      allPassed = false;
+      console.error('FAIL: L06 precondition — no OAOV row for offer=100 attr=3 opt=201');
+      subchecks.push({ passed: false, detail: 'precondition: no OAOV row' });
     } else {
       oaovRowId = oaovRes.rows[0].id;
     }
@@ -115,32 +101,40 @@ async function main() {
     client.release();
   }
 
-  // L06: OAV FK fires at COMMIT when fk_mot_oav_target_current is deferred
+  // L06/OAV: OAV FK fires at COMMIT when fk_mot_oav_target_current is deferred
   if (oavRowId != null) {
-    await runDeferredFkTest(
-      'L06',
+    const result = await runDeferredFkSubcheck(
       'fk_mot_oav_target_current',
-      `DELETE FROM public.offer_attribute_values WHERE id = ${oavRowId}`,
-      results
+      `DELETE FROM public.offer_attribute_values WHERE id = ${oavRowId}`
     );
+    subchecks.push(result);
+    console.log(result.passed ? '  PASS: L06/OAV' : `  FAIL: L06/OAV — ${result.detail}`);
   }
 
-  // L06b: OAOV FK fires at COMMIT when fk_mott_oaov_target_current is deferred
+  // L06/OAOV: OAOV FK fires at COMMIT when fk_mott_oaov_target_current is deferred
   if (oaovRowId != null) {
-    await runDeferredFkTest(
-      'L06b',
+    const result = await runDeferredFkSubcheck(
       'fk_mott_oaov_target_current',
-      `DELETE FROM public.offer_attribute_option_values WHERE id = ${oaovRowId}`,
-      results
+      `DELETE FROM public.offer_attribute_option_values WHERE id = ${oaovRowId}`
     );
+    subchecks.push(result);
+    console.log(result.passed ? '  PASS: L06/OAOV' : `  FAIL: L06/OAOV — ${result.detail}`);
   }
 
   await pool.end();
 
-  // Emit machine-readable result lines on stdout for the PowerShell harness.
-  for (const line of results) {
-    process.stdout.write(line + '\n');
+  // Aggregate subchecks into one canonical L06 result.
+  const allPassed = subchecks.every(s => s.passed);
+  const details = subchecks.map(s => s.detail).join('; ');
+
+  if (allPassed) {
+    console.log('  PASS: L06');
+  } else {
+    console.error('  FAIL: L06');
   }
+
+  // Emit exactly one machine-readable result line for the PowerShell harness.
+  process.stdout.write(`L06|${allPassed ? 'PASS' : 'FAIL'}|${details}\n`);
 
   process.exit(allPassed ? 0 : 1);
 }
