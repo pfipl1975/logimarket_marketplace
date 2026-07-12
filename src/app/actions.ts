@@ -12,6 +12,7 @@ import { getCategoryDescendantIds } from "@/lib/catalog/tree";
 import type { CatalogCategoryRow } from "@/lib/catalog/tree";
 import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model";
 import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model";
+import { validateCategoryId } from "@/lib/catalog/category-attribute-read-model-core";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 
 export type CatalogOffer = {
@@ -302,9 +303,7 @@ export async function getCategoryAttributeConfiguration(
   if (!isLocale(locale)) {
     throw new Error(`Invalid locale: ${locale}`);
   }
-  if (!Number.isFinite(categoryId) || categoryId <= 0) {
-    throw new Error(`Invalid categoryId: ${categoryId}`);
-  }
+  validateCategoryId(categoryId);
   return getCategoryAttributeConfigurationFromDb(
     db,
     categoryId,

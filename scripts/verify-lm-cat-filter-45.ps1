@@ -171,9 +171,10 @@ try {
         Register-Result -Id "A01" -Status "FAIL" -Detail $drizzleKitVer
     }
 
-    # A02: drizzle-orm version
-    $drizzleOrmVer = $packageJson.dependencies."drizzle-orm"
-    if ($drizzleOrmVer -match "0\.45\.1") {
+    # A02: drizzle-orm version (installed, not package.json range)
+    $drizzleOrmInstalled = npm ls drizzle-orm --depth=0 --json 2>$null | ConvertFrom-Json
+    $drizzleOrmVer = $drizzleOrmInstalled.dependencies."drizzle-orm".version
+    if ($drizzleOrmVer -eq "0.45.2") {
         Write-Host "  PASS: A02"
         Register-Result -Id "A02" -Status "PASS" -Detail $drizzleOrmVer
     } else {
@@ -545,287 +546,21 @@ $$;
     Run-Sql 'INSERT INTO public.category_attribute_assignments (id, category_id, attribute_definition_id, sort_order, is_visible, is_filterable) VALUES (6, 10, 105, 60, true, false);'
     Run-Sql 'INSERT INTO public.category_attribute_assignments (id, category_id, attribute_definition_id, sort_order, is_visible, is_filterable) VALUES (7, 10, 106, 70, true, false);'
 
-    # D01-D10: Test via Node.js TypeScript with inline read model logic
-    $testScript = @"
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
-import * as schema from './src/lib/schema.ts';
-
-const { Pool } = pg;
-const connectionString = process.env.DATABASE_URL;
-if (!connectionString) { console.error('Missing DATABASE_URL'); process.exit(1); }
-
-const pool = new Pool({ connectionString });
-const db = drizzle(pool, { schema });
-
-const {
-  categoryAttributeAssignments,
-  attributeDefinitions,
-  attributeDefinitionTranslations,
-  controlledOptionValues,
-  controlledOptionValueTranslations,
-} = schema;
-
-function resolveTranslation(rows, requestedLocale, defaultLocale) {
-  return rows.find(r => r.locale === requestedLocale) ?? rows.find(r => r.locale === defaultLocale);
-}
-
-async function getCategoryAttributeConfigurationFromDb(dbConn, categoryId, locale, onlyVisible = true, onlyFilterable = false) {
-  if (!Number.isFinite(categoryId) || categoryId <= 0) {
-    throw new Error('Invalid categoryId: ' + categoryId);
-  }
-  const defaultLocale = 'pl';
-  const conditions = [eq(categoryAttributeAssignments.categoryId, categoryId)];
-  if (onlyVisible) conditions.push(eq(categoryAttributeAssignments.isVisible, true));
-  if (onlyFilterable) conditions.push(eq(categoryAttributeAssignments.isFilterable, true));
-
-  const assignmentRows = await dbConn
-    .select({ assignment: categoryAttributeAssignments, attribute: attributeDefinitions })
-    .from(categoryAttributeAssignments)
-    .innerJoin(attributeDefinitions, eq(categoryAttributeAssignments.attributeDefinitionId, attributeDefinitions.id))
-    .where(and(...conditions))
-    .orderBy(asc(categoryAttributeAssignments.sortOrder), asc(attributeDefinitions.stableKey), asc(categoryAttributeAssignments.id));
-
-  if (assignmentRows.length === 0) return [];
-
-  const attributeIds = assignmentRows.map(r => r.attribute.id);
-  const attrTransRows = await dbConn.select().from(attributeDefinitionTranslations).where(inArray(attributeDefinitionTranslations.attributeDefinitionId, attributeIds));
-  const transByAttr = new Map();
-  for (const row of attrTransRows) {
-    const list = transByAttr.get(row.attributeDefinitionId) || [];
-    list.push(row);
-    transByAttr.set(row.attributeDefinitionId, list);
-  }
-
-  const attrsWithOptions = assignmentRows.filter(r => r.attribute.dataType === 'enum' || r.attribute.dataType === 'multi_enum');
-  let optionRows = [];
-  let optTransRows = [];
-  if (attrsWithOptions.length > 0) {
-    const optAttrIds = attrsWithOptions.map(r => r.attribute.id);
-    optionRows = await dbConn.select().from(controlledOptionValues)
-      .where(and(inArray(controlledOptionValues.attributeId, optAttrIds), eq(controlledOptionValues.isActive, true)))
-      .orderBy(asc(controlledOptionValues.stableKey), asc(controlledOptionValues.id));
-    if (optionRows.length > 0) {
-      const optIds = optionRows.map(o => o.id);
-      optTransRows = await dbConn.select().from(controlledOptionValueTranslations).where(inArray(controlledOptionValueTranslations.controlledOptionValueId, optIds));
-    }
-  }
-
-  const optsByAttr = new Map();
-  for (const row of optionRows) {
-    const list = optsByAttr.get(row.attributeId) || [];
-    list.push(row);
-    optsByAttr.set(row.attributeId, list);
-  }
-  const optTransByOpt = new Map();
-  for (const row of optTransRows) {
-    const list = optTransByOpt.get(row.controlledOptionValueId) || [];
-    list.push(row);
-    optTransByOpt.set(row.controlledOptionValueId, list);
-  }
-
-  const result = [];
-  for (const { assignment, attribute } of assignmentRows) {
-    const attrTrans = transByAttr.get(attribute.id) || [];
-    const resolvedAttr = resolveTranslation(attrTrans, locale, defaultLocale);
-    const name = resolvedAttr?.name ?? attribute.stableKey;
-    const shortLabel = resolvedAttr?.shortLabel ?? null;
-    const description = resolvedAttr?.description ?? null;
-    const options = [];
-    const attrOpts = optsByAttr.get(attribute.id) || [];
-    for (const opt of attrOpts) {
-      const optTrans = optTransByOpt.get(opt.id) || [];
-      const resolvedOpt = resolveTranslation(optTrans, locale, defaultLocale);
-      options.push({ optionId: opt.id, stableKey: opt.stableKey, label: resolvedOpt?.label ?? opt.stableKey, description: resolvedOpt?.description ?? null });
-    }
-    result.push({ assignmentId: assignment.id, attributeId: attribute.id, stableKey: attribute.stableKey, dataType: attribute.dataType, name, shortLabel, description, unitCode: assignment.unitCode, sortOrder: assignment.sortOrder, isFilterable: assignment.isFilterable, isComparable: assignment.isComparable, isRequired: assignment.isRequired, isVisible: assignment.isVisible, options });
-  }
-  return result;
-}
-
-import { eq, and, inArray, asc } from 'drizzle-orm';
-
-async function run() {
-  const results = [];
-
-  const d01 = await getCategoryAttributeConfigurationFromDb(db, 10, 'pl', true, false);
-  const d01Ids = d01.map(a => a.attributeId);
-  results.push(['D01', d01Ids.includes(100) ? 'PASS' : 'FAIL', d01Ids.join(',')]);
-  results.push(['D02', d01Ids.includes(103) ? 'FAIL' : 'PASS', 'hidden excluded']);
-
-  const d03 = await getCategoryAttributeConfigurationFromDb(db, 10, 'pl', true, true);
-  const d03Ids = d03.map(a => a.attributeId);
-  results.push(['D03', d03Ids.includes(100) && d03Ids.includes(104) && !d03Ids.includes(101) ? 'PASS' : 'FAIL', d03Ids.join(',')]);
-
-  const d04 = await getCategoryAttributeConfigurationFromDb(db, 10, 'pl', true, false);
-  const d04Ids = d04.map(a => a.attributeId);
-  results.push(['D04', d04Ids.includes(101) ? 'PASS' : 'FAIL', d04Ids.join(',')]);
-
-  const d05 = d04.find(a => a.attributeId === 101);
-  results.push(['D05', d05 && d05.options.length > 0 ? 'PASS' : 'FAIL', d05 ? d05.options.length.toString() : 'none']);
-
-  const d06 = d04.find(a => a.attributeId === 104);
-  results.push(['D06', d06 && d06.options.length > 0 ? 'PASS' : 'FAIL', d06 ? d06.options.length.toString() : 'none']);
-
-  const d07 = d04.filter(a => ['text','number','boolean','date','year'].includes(a.dataType));
-  const d07AllEmpty = d07.every(a => a.options.length === 0);
-  results.push(['D07', d07AllEmpty ? 'PASS' : 'FAIL', d07.map(a => a.dataType + '=' + a.options.length).join(';')]);
-
-  const d08 = d04.map(a => a.attributeId);
-  const d08Expected = [100, 101, 102, 104, 105, 106];
-  results.push(['D08', JSON.stringify(d08) === JSON.stringify(d08Expected) ? 'PASS' : 'FAIL', d08.join(',')]);
-
-  const d09 = d05 ? d05.options.map(o => o.stableKey) : [];
-  results.push(['D09', JSON.stringify(d09) === JSON.stringify(['blue','red']) ? 'PASS' : 'FAIL', d09.join(',')]);
-
-  const d10 = JSON.stringify(d04);
-  results.push(['D10', d10.length > 0 && !d10.includes('BigInt') && !d10.includes('pool') ? 'PASS' : 'FAIL', 'serializable']);
-
-  for (const [id, st, dt] of results) {
-    console.log(id + '|' + st + '|' + dt);
-  }
-
-  await pool.end();
-}
-
-run().catch(e => { console.error(e); process.exit(1); });
-"@
-
-    $testFile = Join-Path "." "lm45_test_${guid}.mjs"
-    [System.IO.File]::WriteAllText($testFile, $testScript, (New-Object System.Text.UTF8Encoding $false))
-    try {
-        $testOutput = node --no-warnings --experimental-strip-types $testFile 2>&1
-        foreach ($line in $testOutput) {
-            if ($line -match "^([A-Z]\d+)\|(PASS|FAIL)\|(.+)$") {
-                $id = $Matches[1]
-                $status = $Matches[2]
-                $detail = $Matches[3]
-                Write-Host "  $status`: $id"
-                Register-Result -Id $id -Status $status -Detail $detail
-            }
+    # D01-D10 + E01-E04: Execute actual production core via tsx
+    $env:DATABASE_URL = "postgres://postgres@localhost:$dbPort/$dbName"
+    $tsxOutput = npx --no-install tsx scripts/lm45-read-model-integration.ts 2>&1
+    foreach ($line in $tsxOutput) {
+        if ($line -match "^([A-Z]\d+)\|(PASS|FAIL)\|(.+)$") {
+            $id = $Matches[1]
+            $status = $Matches[2]
+            $detail = $Matches[3]
+            Write-Host "  $status`: $id"
+            Register-Result -Id $id -Status $status -Detail $detail
         }
-    } finally {
-        if (Test-Path $testFile) { Remove-Item $testFile -Force }
     }
 
     Write-Host ""
     Write-Host "=== SECTION E: VALIDATION, SCOPE AND REGRESSION ==="
-
-    # E01: invalid locale rejected
-    $e01Script = @"
-import { isLocale } from './src/lib/i18n/config.ts';
-const r1 = isLocale('xx') ? 'FAIL' : 'PASS';
-const r2 = isLocale('pl') ? 'PASS' : 'FAIL';
-const overall = (r1 === 'PASS' && r2 === 'PASS') ? 'PASS' : 'FAIL';
-console.log('E01|' + overall + '|invalid=' + r1 + ' valid=' + r2);
-"@
-    $e01File = Join-Path "." "lm45_e01_${guid}.mjs"
-    [System.IO.File]::WriteAllText($e01File, $e01Script, (New-Object System.Text.UTF8Encoding $false))
-    try {
-        $e01Output = node --no-warnings --experimental-strip-types $e01File 2>&1
-        foreach ($line in $e01Output) {
-            if ($line -match "^(E01)\|(PASS|FAIL)\|(.+)$") {
-                $id = $Matches[1]
-                $status = $Matches[2]
-                $detail = $Matches[3]
-                Write-Host "  $status`: $id"
-                Register-Result -Id $id -Status $status -Detail $detail
-            }
-        }
-    } finally {
-        if (Test-Path $e01File) { Remove-Item $e01File -Force }
-    }
-
-    # E02: invalid categoryId rejected by helper validation
-    $e02Script = @"
-function validateCategoryId(categoryId) {
-  if (!Number.isFinite(categoryId) || categoryId <= 0) {
-    throw new Error('Invalid categoryId: ' + categoryId);
-  }
-}
-let r1, r2, r3;
-try { validateCategoryId(-1); r1 = 'FAIL'; } catch (e) { r1 = 'PASS'; }
-try { validateCategoryId(0); r2 = 'FAIL'; } catch (e) { r2 = 'PASS'; }
-try { validateCategoryId(NaN); r3 = 'FAIL'; } catch (e) { r3 = 'PASS'; }
-const overall = (r1 === 'PASS' && r2 === 'PASS' && r3 === 'PASS') ? 'PASS' : 'FAIL';
-console.log('E02|' + overall + '|negative=' + r1 + ' zero=' + r2 + ' NaN=' + r3);
-"@
-    # Need to set DATABASE_URL for the action
-    $env:DATABASE_URL = "postgres://postgres@localhost:$dbPort/$dbName"
-    $e02File = Join-Path "." "lm45_e02_${guid}.mjs"
-    [System.IO.File]::WriteAllText($e02File, $e02Script, (New-Object System.Text.UTF8Encoding $false))
-    try {
-        $e02Output = node --no-warnings --experimental-strip-types $e02File 2>&1
-        foreach ($line in $e02Output) {
-            if ($line -match "^(E02)\|(PASS|FAIL)\|(.+)$") {
-                $id = $Matches[1]
-                $status = $Matches[2]
-                $detail = $Matches[3]
-                Write-Host "  $status`: $id"
-                Register-Result -Id $id -Status $status -Detail $detail
-            }
-        }
-    } finally {
-        if (Test-Path $e02File) { Remove-Item $e02File -Force }
-    }
-
-    # E03: unknown valid categoryId returns []
-    $e03Script = @"
-import { drizzle } from 'drizzle-orm/node-postgres';
-import pg from 'pg';
-import * as schema from './src/lib/schema.ts';
-import { eq, and, inArray, asc } from 'drizzle-orm';
-
-const { Pool } = pg;
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const db = drizzle(pool, { schema });
-
-const { categoryAttributeAssignments, attributeDefinitions } = schema;
-
-async function getCategoryAttributeConfigurationFromDb(dbConn, categoryId) {
-  const conditions = [eq(categoryAttributeAssignments.categoryId, categoryId), eq(categoryAttributeAssignments.isVisible, true)];
-  const rows = await dbConn
-    .select({ assignment: categoryAttributeAssignments, attribute: attributeDefinitions })
-    .from(categoryAttributeAssignments)
-    .innerJoin(attributeDefinitions, eq(categoryAttributeAssignments.attributeDefinitionId, attributeDefinitions.id))
-    .where(and(...conditions))
-    .orderBy(asc(categoryAttributeAssignments.sortOrder));
-  return rows;
-}
-
-async function run() {
-  const result = await getCategoryAttributeConfigurationFromDb(db, 99999);
-  console.log('E03|' + (result.length === 0 ? 'PASS' : 'FAIL') + '|unknown category returns empty');
-  await pool.end();
-}
-run().catch(e => { console.error(e); process.exit(1); });
-"@
-    $e03File = Join-Path "." "lm45_e03_${guid}.mjs"
-    [System.IO.File]::WriteAllText($e03File, $e03Script, (New-Object System.Text.UTF8Encoding $false))
-    try {
-        $e03Output = node --no-warnings --experimental-strip-types $e03File 2>&1
-        foreach ($line in $e03Output) {
-            if ($line -match "^(E03)\|(PASS|FAIL)\|(.+)$") {
-                $id = $Matches[1]
-                $status = $Matches[2]
-                $detail = $Matches[3]
-                Write-Host "  $status`: $id"
-                Register-Result -Id $id -Status $status -Detail $detail
-            }
-        }
-    } finally {
-        if (Test-Path $e03File) { Remove-Item $e03File -Force }
-    }
-
-    # E04: DTO is plain-serializable (already covered by D10, but verify explicitly)
-    $e04 = Run-Sql "SELECT jsonb_build_object('test', 1)::text;"
-    if ($e04 -match "test") {
-        Write-Host "  PASS: E04"
-        Register-Result -Id "E04" -Status "PASS" -Detail "jsonb serializable"
-    } else {
-        Write-Host "  FAIL: E04"
-        Register-Result -Id "E04" -Status "FAIL" -Detail $e04
-    }
 
     # E05: no production seeds/backfill
     $seedFiles = @(Get-ChildItem -Path "src","scripts" -Recurse -Filter "*seed*" -ErrorAction SilentlyContinue)
@@ -841,6 +576,8 @@ run().catch(e => { console.error(e); process.exit(1); });
     # E06: no cart/RFQ/outbound/UI filter changes
     $gitDiffOutput = cmd /c "git diff --name-only HEAD 2>nul"
     $gitDiffFiles = $gitDiffOutput | Where-Object { $_ -notmatch "^warning:" }
+    # Exclude test harness files from pattern matching
+    $gitDiffFiles = $gitDiffFiles | Where-Object { $_ -notmatch "verify-lm-cat-filter" -and $_ -notmatch "lm45-read-model" -and $_ -notmatch "lm44-" }
     $forbiddenChanges = $false
     $forbiddenPatterns = @('cart','checkout','RfqDialog','outbound','/go/','filter','ui','client')
     foreach ($pattern in $forbiddenPatterns) {
@@ -898,6 +635,25 @@ Write-Host "MISSING IDS: $(if ($missingIds) { $missingIds -join ', ' } else { '0
 
 if ($duplicateIds -or $unknownIds -or $missingIds -or $actualSet.Count -ne $expectedIds.Count) {
     Write-Host "TEST ID AUDIT FAILED"
+}
+
+# Forbidden-pattern audit: harness must not contain inline read-model logic
+Write-Host ""
+Write-Host "=== FORBIDDEN PATTERN AUDIT ==="
+$harnessContent = Get-Content $PSCommandPath -Raw
+$harnessForbidden = $false
+# Check for inline SQL that duplicates production query logic
+if ($harnessContent -match "SELECT\s+.*\s+FROM\s+public\.category_attribute_assignments.*INNER JOIN") { $harnessForbidden = $true }
+# Check for copied mapping logic (match function calls, not the check text itself)
+if ($harnessContent -match "resolveTranslation\(|optionsByAttribute\.get\(|optionsByAttribute\.set\(") { $harnessForbidden = $true }
+# Check for copied DTO mapping logic
+if ($harnessContent -match "CategoryAttributeConfiguration\s*\{\s*assignmentId|attributeId:\s*number\s*stableKey") { $harnessForbidden = $true }
+# Verify the harness delegates to tsx for read-model tests
+if (-not ($harnessContent -match "npx\s+--no-install\s+tsx\s+scripts/lm45-read-model-integration\.ts")) { $harnessForbidden = $true }
+if ($harnessForbidden) {
+    Write-Host "FORBIDDEN PATTERN DETECTED IN HARNESS"
+} else {
+    Write-Host "FORBIDDEN PATTERN AUDIT PASSED"
 }
 
 # Final summary
