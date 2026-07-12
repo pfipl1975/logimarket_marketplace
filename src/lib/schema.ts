@@ -9,7 +9,12 @@ import {
   timestamp,
   varchar,
   integer,
+  check,
+  unique,
+  foreignKey,
 } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
+
 
 export const partners = pgTable("partners", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
@@ -106,7 +111,361 @@ export const orderItems = pgTable("order_items", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+// Faceted Filter & Relational Attribute Model
+
+export const attributeDefinitions = pgTable(
+  "attribute_definitions",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    stableKey: text("stable_key").notNull(),
+    dataType: varchar("data_type", { length: 30 }).notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("uq_ad_stable_key").on(t.stableKey),
+    check("chk_ad_data_type", sql`${t.dataType} IN ('text','number','boolean','date','year','enum','multi_enum')`),
+  ]
+);
+
+export const controlledOptionValues = pgTable(
+  "controlled_option_values",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    attributeId: bigint("attribute_id", { mode: "number" }).notNull(),
+    stableKey: text("stable_key").notNull(),
+    isActive: boolean("is_active").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("uq_cov_attr_option").on(t.attributeId, t.stableKey),
+    foreignKey({
+      name: "fk_cov_attribute",
+      columns: [t.attributeId],
+      foreignColumns: [attributeDefinitions.id]
+    }),
+  ]
+);
+
+export const offerAttributeValues = pgTable(
+  "offer_attribute_values",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    offerId: bigint("offer_id", { mode: "number" }).notNull(),
+    attributeId: bigint("attribute_id", { mode: "number" }).notNull(),
+    valueText: text("value_text"),
+    valueNumber: numeric("value_number"),
+    valueBoolean: boolean("value_boolean"),
+    valueDate: timestamp("value_date", { withTimezone: true, mode: "date" }),
+    valueYear: integer("value_year"),
+    optionId: bigint("option_id", { mode: "number" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("uq_oav_offer_attribute").on(t.offerId, t.attributeId),
+    check("chk_oav_value_exclusivity", sql`
+      num_nonnulls(
+        value_text,
+        value_number,
+        value_boolean,
+        value_date,
+        value_year,
+        option_id
+      ) = 1
+    `),
+    foreignKey({
+      name: "fk_oav_offer",
+      columns: [t.offerId],
+      foreignColumns: [offers.id]
+    }),
+    foreignKey({
+      name: "fk_oav_attribute",
+      columns: [t.attributeId],
+      foreignColumns: [attributeDefinitions.id]
+    }),
+    foreignKey({
+      name: "fk_oav_option",
+      columns: [t.optionId],
+      foreignColumns: [controlledOptionValues.id]
+    }),
+  ]
+);
+
+export const offerAttributeOptionValues = pgTable(
+  "offer_attribute_option_values",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    offerId: bigint("offer_id", { mode: "number" }).notNull(),
+    attributeId: bigint("attribute_id", { mode: "number" }).notNull(),
+    optionId: bigint("option_id", { mode: "number" }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique("uq_oaov_offer_attribute_option").on(t.offerId, t.attributeId, t.optionId),
+    foreignKey({
+      name: "fk_oaov_offer",
+      columns: [t.offerId],
+      foreignColumns: [offers.id]
+    }),
+    foreignKey({
+      name: "fk_oaov_attribute",
+      columns: [t.attributeId],
+      foreignColumns: [attributeDefinitions.id]
+    }),
+    foreignKey({
+      name: "fk_oaov_option",
+      columns: [t.optionId],
+      foreignColumns: [controlledOptionValues.id]
+    }),
+  ]
+);
+
+export const migrationBatches = pgTable(
+  "migration_batches",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    status: varchar("status", { length: 30 }).notNull().default("running"),
+    startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    sourceDescription: text("source_description").notNull(),
+    createdBy: text("created_by").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("chk_mb_status", sql`${t.status} IN ('running','completed','rollback_in_progress','rolled_back','rollback_conflict','failed')`),
+  ]
+);
+
+export const migrationSourceEntries = pgTable(
+  "migration_source_entries",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    batchId: bigint("batch_id", { mode: "number" }).notNull(),
+    sourceOfferId: bigint("source_offer_id", { mode: "number" }).notNull(),
+    sourceKey: text("source_key").notNull(),
+    rawValue: jsonb("raw_value").notNull(),
+    sourceHash: text("source_hash").notNull(),
+    sourcePayloadVersion: varchar("source_payload_version", { length: 20 }).notNull(),
+    processingStatus: varchar("processing_status", { length: 30 }).notNull().default("pending"),
+    classificationStatus: varchar("classification_status", { length: 30 }),
+    classificationReason: text("classification_reason"),
+    expectedTargetCount: integer("expected_target_count").notNull(),
+    frequency: integer("frequency").notNull().default(1),
+    approvedReason: text("approved_reason"),
+    scopeOwner: text("scope_owner"),
+    decisionTimestamp: timestamp("decision_timestamp", { withTimezone: true }),
+    fallbackStatus: text("fallback_status"),
+    processingErrorCode: varchar("processing_error_code", { length: 64 }),
+    processingErrorMessage: text("processing_error_message"),
+    processingFailedAt: timestamp("processing_failed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("chk_mse_proc_status", sql`${t.processingStatus} IN ('pending','processing','processed','failed')`),
+    check("chk_mse_class_status", sql`${t.classificationStatus} IN ('migrated','intentionally_skipped','manual_review_required','out_of_scope')`),
+    check("chk_mse_technical_error_state_matrix", sql`
+      (
+        ${t.processingStatus} IN ('pending', 'processing')
+        AND ${t.classificationStatus} IS NULL
+        AND ${t.processingErrorCode} IS NULL
+        AND ${t.processingErrorMessage} IS NULL
+        AND ${t.processingFailedAt} IS NULL
+      )
+      OR
+      (
+        ${t.processingStatus} = 'processed'
+        AND ${t.classificationStatus} IS NOT NULL
+        AND ${t.processingErrorCode} IS NULL
+        AND ${t.processingErrorMessage} IS NULL
+        AND ${t.processingFailedAt} IS NULL
+      )
+      OR
+      (
+        ${t.processingStatus} = 'failed'
+        AND ${t.classificationStatus} IS NULL
+        AND ${t.processingErrorCode} IS NOT NULL
+        AND ${t.processingErrorMessage} IS NOT NULL
+        AND ${t.processingFailedAt} IS NOT NULL
+      )
+    `),
+    check("chk_mse_expected_nonnegative", sql`${t.expectedTargetCount} >= 0`),
+    check("chk_mse_expected_by_classification", sql`
+      (
+        ${t.classificationStatus} = 'migrated'
+        AND ${t.expectedTargetCount} >= 1
+      )
+      OR
+      (
+        ${t.classificationStatus} IN ('intentionally_skipped', 'manual_review_required', 'out_of_scope')
+        AND ${t.expectedTargetCount} = 0
+      )
+      OR
+      ${t.classificationStatus} IS NULL
+    `),
+    check("chk_mse_out_of_scope_governance", sql`
+      ${t.classificationStatus} <> 'out_of_scope'
+      OR (
+        ${t.approvedReason} IS NOT NULL
+        AND ${t.scopeOwner} IS NOT NULL
+        AND ${t.decisionTimestamp} IS NOT NULL
+        AND ${t.fallbackStatus} IS NOT NULL
+        AND ${t.frequency} > 0
+      )
+    `),
+    check("chk_mse_source_payload_version", sql`${t.sourcePayloadVersion} IN ('lm-source-v1')`),
+    unique("uq_mse_source_identity").on(t.batchId, t.sourceOfferId, t.sourceKey),
+    unique("uq_mse_id_batch").on(t.id, t.batchId),
+    foreignKey({
+      name: "fk_mse_batch",
+      columns: [t.batchId],
+      foreignColumns: [migrationBatches.id]
+    }),
+  ]
+);
+
+export const migrationOavTargets = pgTable(
+  "migration_oav_targets",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    batchId: bigint("batch_id", { mode: "number" }).notNull(),
+    sourceEntryId: bigint("source_entry_id", { mode: "number" }).notNull(),
+    targetRowIdCurrent: bigint("target_row_id_current", { mode: "number" }),
+    targetRowIdOriginal: bigint("target_row_id_original", { mode: "number" }).notNull(),
+    targetOfferId: bigint("target_offer_id", { mode: "number" }).notNull(),
+    targetAttributeId: bigint("target_attribute_id", { mode: "number" }).notNull(),
+    targetOptionId: bigint("target_option_id", { mode: "number" }),
+    targetHashAtCreation: text("target_hash_at_creation").notNull(),
+    canonicalPayloadVersion: varchar("canonical_payload_version", { length: 20 }).notNull(),
+    rollbackStatus: varchar("rollback_status", { length: 30 }).notNull().default("pending"),
+    rollbackReason: text("rollback_reason"),
+    targetDeletedAt: timestamp("target_deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("chk_mot_rollback_status", sql`${t.rollbackStatus} IN ('pending','cleaned_up','rollback_conflict')`),
+    check("chk_mot_hash_format", sql`${t.targetHashAtCreation} ~ '^[0-9a-f]{64}$'`),
+    check("chk_mot_row_ids", sql`${t.targetRowIdCurrent} IS NULL OR ${t.targetRowIdCurrent} = ${t.targetRowIdOriginal}`),
+    check("chk_mot_lifecycle", sql`
+      (
+        ${t.rollbackStatus} = 'pending'
+        AND ${t.targetRowIdCurrent} IS NOT NULL
+        AND ${t.targetDeletedAt} IS NULL
+        AND ${t.rollbackReason} IS NULL
+      )
+      OR
+      (
+        ${t.rollbackStatus} = 'cleaned_up'
+        AND ${t.targetRowIdCurrent} IS NULL
+        AND ${t.targetDeletedAt} IS NOT NULL
+        AND ${t.rollbackReason} = 'deleted_by_batch_rollback'
+      )
+      OR
+      (
+        ${t.rollbackStatus} = 'rollback_conflict'
+        AND ${t.rollbackReason} IS NOT NULL
+        AND ${t.targetDeletedAt} IS NULL
+      )
+    `),
+    unique("uq_mot_target_original").on(t.targetRowIdOriginal),
+    unique("uq_mot_target_current").on(t.targetRowIdCurrent),
+    foreignKey({
+      name: "fk_mot_oav_target_current",
+      columns: [t.targetRowIdCurrent],
+      foreignColumns: [offerAttributeValues.id]
+    }).onDelete("no action"),
+    foreignKey({
+      name: "fk_mot_option",
+      columns: [t.targetOptionId],
+      foreignColumns: [controlledOptionValues.id]
+    }),
+    foreignKey({
+      name: "fk_mot_source_entry",
+      columns: [t.sourceEntryId, t.batchId],
+      foreignColumns: [migrationSourceEntries.id, migrationSourceEntries.batchId]
+    }),
+    foreignKey({
+      name: "fk_mot_batch",
+      columns: [t.batchId],
+      foreignColumns: [migrationBatches.id]
+    }),
+  ]
+);
+
+export const migrationOaovTargets = pgTable(
+  "migration_oaov_targets",
+  {
+    id: bigserial("id", { mode: "number" }).primaryKey(),
+    batchId: bigint("batch_id", { mode: "number" }).notNull(),
+    sourceEntryId: bigint("source_entry_id", { mode: "number" }).notNull(),
+    targetRowIdCurrent: bigint("target_row_id_current", { mode: "number" }),
+    targetRowIdOriginal: bigint("target_row_id_original", { mode: "number" }).notNull(),
+    targetOfferId: bigint("target_offer_id", { mode: "number" }).notNull(),
+    targetAttributeId: bigint("target_attribute_id", { mode: "number" }).notNull(),
+    targetOptionId: bigint("target_option_id", { mode: "number" }).notNull(),
+    targetHashAtCreation: text("target_hash_at_creation").notNull(),
+    canonicalPayloadVersion: varchar("canonical_payload_version", { length: 20 }).notNull(),
+    rollbackStatus: varchar("rollback_status", { length: 30 }).notNull().default("pending"),
+    rollbackReason: text("rollback_reason"),
+    targetDeletedAt: timestamp("target_deleted_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("chk_mott_rollback_status", sql`${t.rollbackStatus} IN ('pending','cleaned_up','rollback_conflict')`),
+    check("chk_mott_hash_format", sql`${t.targetHashAtCreation} ~ '^[0-9a-f]{64}$'`),
+    check("chk_mott_row_ids", sql`${t.targetRowIdCurrent} IS NULL OR ${t.targetRowIdCurrent} = ${t.targetRowIdOriginal}`),
+    check("chk_mott_lifecycle", sql`
+      (
+        ${t.rollbackStatus} = 'pending'
+        AND ${t.targetRowIdCurrent} IS NOT NULL
+        AND ${t.targetDeletedAt} IS NULL
+        AND ${t.rollbackReason} IS NULL
+      )
+      OR
+      (
+        ${t.rollbackStatus} = 'cleaned_up'
+        AND ${t.targetRowIdCurrent} IS NULL
+        AND ${t.targetDeletedAt} IS NOT NULL
+        AND ${t.rollbackReason} = 'deleted_by_batch_rollback'
+      )
+      OR
+      (
+        ${t.rollbackStatus} = 'rollback_conflict'
+        AND ${t.rollbackReason} IS NOT NULL
+        AND ${t.targetDeletedAt} IS NULL
+      )
+    `),
+    unique("uq_mott_target_original").on(t.targetRowIdOriginal),
+    unique("uq_mott_target_current").on(t.targetRowIdCurrent),
+    foreignKey({
+      name: "fk_mott_oaov_target_current",
+      columns: [t.targetRowIdCurrent],
+      foreignColumns: [offerAttributeOptionValues.id]
+    }).onDelete("no action"),
+    foreignKey({
+      name: "fk_mott_source_entry",
+      columns: [t.sourceEntryId, t.batchId],
+      foreignColumns: [migrationSourceEntries.id, migrationSourceEntries.batchId]
+    }),
+    foreignKey({
+      name: "fk_mott_batch",
+      columns: [t.batchId],
+      foreignColumns: [migrationBatches.id]
+    }),
+  ]
+);
+
 export type Partner = typeof partners.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
 export type TechnicalAttributes = Record<string, string | number>;
+
+export type AttributeDefinition = typeof attributeDefinitions.$inferSelect;
+export type ControlledOptionValue = typeof controlledOptionValues.$inferSelect;
+export type OfferAttributeValue = typeof offerAttributeValues.$inferSelect;
+export type OfferAttributeOptionValue = typeof offerAttributeOptionValues.$inferSelect;
+export type MigrationBatch = typeof migrationBatches.$inferSelect;
+export type MigrationSourceEntry = typeof migrationSourceEntries.$inferSelect;
+export type MigrationOavTarget = typeof migrationOavTargets.$inferSelect;
+export type MigrationOaovTarget = typeof migrationOaovTargets.$inferSelect;
+
