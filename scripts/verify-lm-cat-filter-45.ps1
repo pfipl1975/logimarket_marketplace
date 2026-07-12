@@ -577,7 +577,7 @@ $$;
     $gitDiffOutput = cmd /c "git diff --name-only HEAD 2>nul"
     $gitDiffFiles = $gitDiffOutput | Where-Object { $_ -notmatch "^warning:" }
     # Exclude test harness files from pattern matching
-    $gitDiffFiles = $gitDiffFiles | Where-Object { $_ -notmatch "verify-lm-cat-filter" -and $_ -notmatch "lm45-read-model" -and $_ -notmatch "lm44-" }
+    $gitDiffFiles = $gitDiffFiles | Where-Object { $_ -notmatch "verify-lm-cat-filter" -and $_ -notmatch "lm45-read-model" -and $_ -notmatch "lm44-" -and $_ -notmatch "lm-cat-filter-46" }
     $forbiddenChanges = $false
     $forbiddenPatterns = @('cart','checkout','RfqDialog','outbound','/go/','filter','ui','client')
     foreach ($pattern in $forbiddenPatterns) {
