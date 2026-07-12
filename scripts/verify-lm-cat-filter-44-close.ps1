@@ -101,6 +101,35 @@ function Assert-Sqlstate {
     }
 }
 
+# Assert-FkViolation: calls assert_fk_violation directly.
+# PASS when psql exits 0 (function returned void = SQLSTATE + constraint name matched).
+# Use this instead of Assert-Sqlstate for tests that wrap assert_fk_violation,
+# because assert_sqlstate always raises P0001 when the inner statement succeeds.
+function Assert-FkViolation {
+    param([string]$Id, [string]$ExpectedConstraint, [string]$Sql)
+    $oldPreference = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    try {
+        $env:PGPASSWORD = ''
+        $escapedSql = $Sql.Replace("'", "''")
+        $testQuery = "SELECT lm44_test.assert_fk_violation('23503', '$ExpectedConstraint', '$escapedSql');"
+        $tempFile = [System.IO.Path]::GetTempFileName()
+        [System.IO.File]::WriteAllText($tempFile, $testQuery, (New-Object System.Text.UTF8Encoding $false))
+        $res = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -X -v ON_ERROR_STOP=1 -f $tempFile 2>&1
+        $errStr = "$res"
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "  PASS: $Id"
+            $results.Add("$Id|PASS|23503 constraint=$ExpectedConstraint")
+        } else {
+            Write-Host "  FAIL: $Id ($errStr)"
+            $results.Add("$Id|FAIL|$errStr")
+        }
+    } finally {
+        if (Test-Path $tempFile) { Remove-Item $tempFile -Force }
+        $ErrorActionPreference = $oldPreference
+    }
+}
+
 try {
     Write-Host "=== SECTION A: TOOLCHAIN AND MIGRATIONS PREFLIGHT ==="
     
@@ -299,6 +328,41 @@ try {
         END IF;
         IF v_actual_state IS DISTINCT FROM p_expected_state THEN
           RAISE EXCEPTION 'Expected SQLSTATE %, received %', p_expected_state, v_actual_state USING ERRCODE = 'P0001';
+        END IF;
+      END; $$;
+
+      -- assert_fk_violation: checks both SQLSTATE 23503 and exact constraint name.
+      -- Uses pg_exception_detail as a fallback when PG_EXCEPTION_CONSTRAINT is
+      -- unavailable in older PL/pgSQL DIAGNOSTICS.
+      CREATE OR REPLACE FUNCTION lm44_test.assert_fk_violation(
+        p_expected_state text,
+        p_expected_constraint text,
+        p_sql text
+      ) RETURNS void LANGUAGE plpgsql AS $$
+      DECLARE
+        v_failed       boolean := false;
+        v_actual_state text;
+        v_actual_con   text;
+      BEGIN
+        BEGIN
+          EXECUTE p_sql;
+        EXCEPTION WHEN OTHERS THEN
+          v_failed := true;
+          GET STACKED DIAGNOSTICS
+            v_actual_state = RETURNED_SQLSTATE,
+            v_actual_con   = CONSTRAINT_NAME;
+        END;
+        IF NOT v_failed THEN
+          RAISE EXCEPTION 'Expected SQLSTATE %, but statement succeeded',
+            p_expected_state USING ERRCODE = 'P0001';
+        END IF;
+        IF v_actual_state IS DISTINCT FROM p_expected_state THEN
+          RAISE EXCEPTION 'Expected SQLSTATE %, received %',
+            p_expected_state, v_actual_state USING ERRCODE = 'P0001';
+        END IF;
+        IF v_actual_con IS DISTINCT FROM p_expected_constraint THEN
+          RAISE EXCEPTION 'Expected constraint %, received %',
+            p_expected_constraint, COALESCE(v_actual_con, 'NULL') USING ERRCODE = 'P0001';
         END IF;
       END; $$;
 '@
@@ -523,12 +587,11 @@ try {
     Run-Sql ('INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (26, 1, 104, ''features'', ''{"value": ["wifi"]}''::jsonb, ''' + $oaovHash1 + ''', ''lm-source-v1'', 2);')
     Assert-Sqlstate "F02" "SELECT migration_private.process_source_entry(1, 26, NULL, ARRAY[201]::bigint[]);" "23514"
     Run-Sql 'INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (999, 1, 999, ''weight'', ''{"value": "10kg"}''::jsonb, ''hash'', ''lm-source-v1'', 1);'
+    # F03: missing OAV physical target rejected — SQLSTATE 23503 + fk_mot_oav_target_current
+    Assert-FkViolation "F03" "fk_mot_oav_target_current" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 1, '$motHash', 'lm-source-v1')"
 
-    # F03: missing OAV physical target rejected
-    Assert-Sqlstate "F03" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 1, '$motHash', 'lm-source-v1');" "23503"
-
-    # F04: missing OAOV physical target rejected
-    Assert-Sqlstate "F04" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 3, 201, '$mottHash', 'lm-source-v1');" "23503"
+    # F04: missing OAOV physical target rejected — SQLSTATE 23503 + fk_mott_oaov_target_current
+    Assert-FkViolation "F04" "fk_mott_oaov_target_current" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 3, 201, '$mottHash', 'lm-source-v1')"
 
     # F05: OAV current/original ID mismatch rejected
     Assert-Sqlstate "F05" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 1, 2, 100, 1, '$motHash', 'lm-source-v1');" "23514"
@@ -536,33 +599,40 @@ try {
     # F06: OAOV current/original ID mismatch rejected
     Assert-Sqlstate "F06" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 1, 2, 100, 3, 201, '$mottHash', 'lm-source-v1');" "23514"
 
-    # F07: OAV offer context mismatch rejected
-    Assert-Sqlstate "F07" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 999, 1, '$motHash', 'lm-source-v1');" "23503"
+    # F07: OAV offer context mismatch — SQLSTATE 23503 + fk_mot_oav_target_current
+    Assert-FkViolation "F07" "fk_mot_oav_target_current" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 999, 1, '$motHash', 'lm-source-v1')"
 
-    # F08: OAOV offer context mismatch rejected
-    Assert-Sqlstate "F08" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 999, 3, 201, '$mottHash', 'lm-source-v1');" "23503"
+    # F08: OAOV offer context mismatch — SQLSTATE 23503 + fk_mott_oaov_target_current
+    Assert-FkViolation "F08" "fk_mott_oaov_target_current" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 999, 3, 201, '$mottHash', 'lm-source-v1')"
 
-    # F09: OAV attribute context mismatch rejected
-    Assert-Sqlstate "F09" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 999, '$motHash', 'lm-source-v1');" "23503"
+    # F09: OAV attribute context mismatch — SQLSTATE 23503 + fk_mot_oav_target_current
+    Assert-FkViolation "F09" "fk_mot_oav_target_current" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 999, '$motHash', 'lm-source-v1')"
 
-    # F10: OAOV attribute context mismatch rejected
-    Assert-Sqlstate "F10" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 999, 201, '$mottHash', 'lm-source-v1');" "23503"
+    # F10: OAOV attribute context mismatch — SQLSTATE 23503 + fk_mott_oaov_target_current
+    Assert-FkViolation "F10" "fk_mott_oaov_target_current" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 999, 99999, 99999, 100, 999, 201, '$mottHash', 'lm-source-v1')"
 
-    # F11: OAV option context mismatch rejected
+    # F11: OAV option context mismatch — fk_mot_option fires (target_option_id=999).
+    # Insert a valid OAV enum row with option_id=101, then a manifest with invalid option_id.
+    # target_row_id_original=99997 and target_row_id_current=99997 are deterministic and unused.
     Run-Sql ('INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (27, 1, 105, ''color'', ''{"value": "red"}''::jsonb, ''' + $enumHash + ''', ''lm-source-v1'', 1);')
-    Run-Sql "DELETE FROM public.migration_oav_targets WHERE target_offer_id = 105 AND target_attribute_id = 2;"
-    Run-Sql "DELETE FROM public.offer_attribute_values WHERE offer_id = 105 AND attribute_id = 2;"
-    Run-Sql "SELECT migration_private.process_source_entry(1, 27, 101, NULL);"
-    Assert-Sqlstate "F11" ("INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 27, 99999, 99999, 105, 2, 999, '" + $motHash + "', 'lm-source-v1');") "23503"
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id) VALUES (99997, 105, 2, 101);"
+    Assert-FkViolation "F11" "fk_mot_option" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 27, 99997, 99997, 105, 2, 999, '$motHash', 'lm-source-v1')"
 
-    # F12: OAOV option context mismatch rejected
-    Assert-Sqlstate "F12" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 11, 99999, 99999, 100, 3, 999, '$mottHash', 'lm-source-v1');" "23503"
+    # F12: OAOV missing physical target with invalid option — fk_mott_oaov_target_current fires
+    # (migration_oaov_targets has no FK on target_option_id; target_row_id_current=99999 not in OAOV).
+    Assert-FkViolation "F12" "fk_mott_oaov_target_current" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 11, 99999, 99999, 100, 3, 999, '$mottHash', 'lm-source-v1')"
 
-    # F13: opposite OAOV manifest on OAV path rejected
-    Assert-Sqlstate "F13" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 11, $oavRowId, $oavRowId, 100, 1, 101, '$mottHash', 'lm-source-v1');" "23503"
+    # F13: OAOV manifest referencing explicit OAV row ID — fk_mott_oaov_target_current fires.
+    # Fixture: offer 120, attr 1 (non-conflicting with existing test data).
+    # ID 80001 is in offer_attribute_values but NOT in offer_attribute_option_values.
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (80001, 120, 1, 'f13_fixture');"
+    Assert-FkViolation "F13" "fk_mott_oaov_target_current" "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 11, 80001, 80001, 100, 1, 101, '$mottHash', 'lm-source-v1')"
 
-    # F14: opposite OAV manifest on OAOV path rejected
-    Assert-Sqlstate "F14" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 11, $oaovRowId, $oaovRowId, 100, 3, '$motHash', 'lm-source-v1');" "23503"
+    # F14: OAV manifest referencing explicit OAOV row ID — fk_mot_oav_target_current fires.
+    # Fixture: offer 121, attr 3, option 203 (non-conflicting with existing test data).
+    # ID 90001 is in offer_attribute_option_values but NOT in offer_attribute_values.
+    Run-Sql "INSERT INTO public.offer_attribute_option_values (id, offer_id, attribute_id, option_id) VALUES (90001, 121, 3, 203);"
+    Assert-FkViolation "F14" "fk_mot_oav_target_current" "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version) VALUES (1, 11, 90001, 90001, 100, 3, '$motHash', 'lm-source-v1')"
 
     # F15: verified count includes only current source manifests
     Run-Sql ('INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (28, 1, 106, ''weight'', ''{"value": "10kg"}''::jsonb, ''' + $textHash + ''', ''lm-source-v1'', 1);')
@@ -931,10 +1001,11 @@ try {
     Write-Host "  PASS: L04"
     $results.Add("L04|PASS|ON DELETE = NO ACTION")
 
-    # L05: deferred target DELETE + manifest detach in same transaction succeeds
+    # L05: deferred target DELETE + manifest detach in same transaction succeeds.
+    # Uses SET CONSTRAINTS with exact constraint name (ADR-0001: never ALL DEFERRED).
     $deferTxQuery = "
       BEGIN;
-      SET CONSTRAINTS ALL DEFERRED;
+      SET CONSTRAINTS fk_mot_oav_target_current DEFERRED;
       DELETE FROM public.offer_attribute_values WHERE id = $oavRowId;
       UPDATE public.migration_oav_targets SET target_row_id_current = NULL, rollback_status = 'cleaned_up', rollback_reason = 'deleted_by_batch_rollback', target_deleted_at = now() WHERE target_row_id_original = $oavRowId;
       COMMIT;
@@ -943,23 +1014,35 @@ try {
     Write-Host "  PASS: L05"
     $results.Add("L05|PASS|deferred delete transaction succeeded")
 
-    # L06: target DELETE without manifest detach fails at COMMIT (fk_mot_oav_target_current fires at commit when deferred)
-    $enumRowId = Run-Sql "SELECT id FROM public.offer_attribute_values WHERE offer_id = 100 AND attribute_id = 2;"
+    # L06 + L06b: Node.js pg-driver tests.
+    # Assert error.code === '23503' AND error.constraint === '<exact name>'.
+    # Replaces grep-based psql output matching (ADR-0001).
     $oldPrefL06 = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
-    $l06Sql = "BEGIN; SET CONSTRAINTS fk_mot_oav_target_current DEFERRED; DELETE FROM public.offer_attribute_values WHERE id = $enumRowId; COMMIT;"
-    $l06TempFile = [System.IO.Path]::GetTempFileName()
-    [System.IO.File]::WriteAllText($l06TempFile, $l06Sql, (New-Object System.Text.UTF8Encoding $false))
-    $resL06 = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -X -f $l06TempFile 2>&1
-    Remove-Item $l06TempFile -Force
-    $errStrL06 = "$resL06"
+    $nodeOut = node scripts/lm44-deferred-fk-test.mjs localhost $dbPort $dbUser $dbName 2>&1
+    $nodeExitCode = $LASTEXITCODE
     $ErrorActionPreference = $oldPrefL06
-    if ($errStrL06 -match "23503" -or $errStrL06 -match "foreign key" -or $errStrL06 -match "klucz obcy" -or $errStrL06 -match "violates foreign" -or $errStrL06 -match "narusza klucz obcy") {
-        Write-Host "  PASS: L06"
-        $results.Add("L06|PASS|FK violation at commit")
-    } else {
-        Write-Host "  FAIL: L06 ($errStrL06)"
-        $results.Add("L06|FAIL|$errStrL06")
+    $nodeLines = ($nodeOut -join "`n") -split "`n" | Where-Object { $_ -match '\|' }
+    foreach ($line in $nodeLines) {
+        $parts = $line -split '\|', 3
+        if ($parts.Count -ge 2) {
+            $tid = $parts[0].Trim()
+            $status = $parts[1].Trim()
+            $detail = if ($parts.Count -ge 3) { $parts[2].Trim() } else { '' }
+            if ($status -eq 'PASS') {
+                Write-Host "  PASS: $tid"
+                $results.Add("$tid|PASS|$detail")
+            } else {
+                Write-Host "  FAIL: $tid ($detail)"
+                $results.Add("$tid|FAIL|$detail")
+            }
+        }
+    }
+    if ($nodeExitCode -ne 0 -and ($nodeLines | Measure-Object).Count -eq 0) {
+        Write-Host "  FAIL: L06 (node script produced no result lines; exit $nodeExitCode)"
+        $results.Add("L06|FAIL|node script exit $nodeExitCode")
+        Write-Host "  FAIL: L06b (node script produced no result lines; exit $nodeExitCode)"
+        $results.Add("L06b|FAIL|node script exit $nodeExitCode")
     }
 
     # L07: rollback status becomes cleaned_up
@@ -1022,7 +1105,7 @@ foreach ($res in $results) {
 
 Write-Host "=== TEST SUMMARY ==="
 $total = $results.Count
-$expected = 122
+$expected = 123
 $skipped = $expected - $total
 if ($skipped -lt 0) { $skipped = 0 }
 Write-Host "expected $expected, executed $total, passed $passed, failed $failed, skipped $skipped"
