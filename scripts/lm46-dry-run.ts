@@ -1,4 +1,4 @@
-import * as fs from 'fs';
+﻿import * as fs from 'fs';
 import * as path from 'path';
 
 // Define paths
@@ -65,7 +65,7 @@ function runDryRun() {
   let expectedOaovCount = 0;
   let canonicalFailures = 0;
   let unsupportedValues = 0;
-  
+
   let attributeOccurrenceCount = 0;
   const uniqueMappedKeys = new Set<string>();
   const uniqueSkippedKeys = new Set<string>();
@@ -171,7 +171,7 @@ function runDryRun() {
   reportBody.push(`source-key count: ${sourceKeys.size}`);
   reportBody.push(`attribute occurrence count: ${attributeOccurrenceCount}`);
   reportBody.push(``);
-  
+
   reportBody.push(`## 2. DECISIONS AND STATS`);
   reportBody.push(`mapped count: ${uniqueMappedKeys.size}`);
   reportBody.push(`manual-review count: ${uniqueManualReviewKeys.size}`);
@@ -201,13 +201,13 @@ function runDryRun() {
   reportBody.push(`================================================================`);
 
   const finalReport = reportBody.join('\n');
-  
+
   // Output timestamp outside the report body
   console.error(`Dry-run execution timestamp: ${new Date().toISOString()}`);
-  
+
   // Print canonical report to stdout
   console.log(finalReport);
-  
+
   // Write canonical report to file
   fs.writeFileSync(reportPath, finalReport, 'utf8');
 }

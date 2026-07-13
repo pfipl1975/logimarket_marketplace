@@ -1,4 +1,4 @@
-CREATE TABLE "migration_rollback_attempts" (
+﻿CREATE TABLE "migration_rollback_attempts" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"batch_id" bigint NOT NULL,
 	"attempt_number" integer NOT NULL,
@@ -311,7 +311,7 @@ BEGIN
     RAISE EXCEPTION 'Batch % is not in runnable state', p_batch_id USING ERRCODE = 'check_violation';
   END IF;
 
-  SELECT * INTO v_entry_record FROM public.migration_source_entries 
+  SELECT * INTO v_entry_record FROM public.migration_source_entries
   WHERE id = p_source_entry_id AND batch_id = p_batch_id FOR UPDATE;
 
   IF NOT FOUND THEN
@@ -376,11 +376,11 @@ BEGIN
     ELSIF v_attr_type = 'date' THEN
       v_raw_date_str := v_entry_record.raw_value ->> 'value';
       IF v_raw_date_str IS NULL THEN RAISE EXCEPTION 'Date value cannot be null' USING ERRCODE = 'check_violation'; END IF;
-      
+
       IF NOT (v_raw_date_str ~* 'Z' OR v_raw_date_str ~* '[\+\-]\d{2}(:\d{2})?$') THEN
         RAISE EXCEPTION 'Offset-free timestamp rejected' USING ERRCODE = 'check_violation';
       END IF;
-      
+
       v_val_date := v_raw_date_str::timestamp with time zone;
       v_canonical_hash := migration_private.sha256_hex(concat('v2:date:', to_char(v_val_date AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')));
     ELSIF v_attr_type = 'year' THEN
@@ -423,7 +423,7 @@ BEGIN
       WHERE id = ANY(v_sorted_approved_option_ids)
         AND attribute_id = v_attr_id
         AND is_active = true;
-        
+
       IF v_opt_count <> cardinality(v_sorted_approved_option_ids) THEN
         RAISE EXCEPTION 'Some option IDs are inactive or mismatch attribute definitions' USING ERRCODE = 'check_violation';
       END IF;
@@ -578,21 +578,21 @@ BEGIN
   v_actor := SESSION_USER::text;
   v_attempt_timestamp := clock_timestamp();
 
-  SELECT status INTO v_batch_status 
-  FROM public.migration_batches 
-  WHERE id = p_batch_id 
+  SELECT status INTO v_batch_status
+  FROM public.migration_batches
+  WHERE id = p_batch_id
   FOR UPDATE;
-  
+
   IF NOT FOUND THEN
     RAISE EXCEPTION 'Batch % not found', p_batch_id USING ERRCODE = 'undefined_column';
   END IF;
-  
+
   IF v_batch_status IS DISTINCT FROM 'completed' AND v_batch_status IS DISTINCT FROM 'rollback_conflict' AND v_batch_status IS DISTINCT FROM 'failed' THEN
     RAISE EXCEPTION 'Batch % is not in a rollbackable state (status: %)', p_batch_id, v_batch_status USING ERRCODE = 'check_violation';
   END IF;
 
-  UPDATE public.migration_batches 
-  SET status = 'rollback_in_progress' 
+  UPDATE public.migration_batches
+  SET status = 'rollback_in_progress'
   WHERE id = p_batch_id;
 
   SELECT COALESCE(max(attempt_number), 0) + 1 INTO v_attempt_num
@@ -616,35 +616,35 @@ BEGIN
     ORDER BY id ASC
     FOR UPDATE;
 
-    PERFORM id FROM public.migration_oav_targets 
-    WHERE batch_id = p_batch_id 
-    ORDER BY id ASC 
+    PERFORM id FROM public.migration_oav_targets
+    WHERE batch_id = p_batch_id
+    ORDER BY id ASC
     FOR UPDATE;
 
-    PERFORM id FROM public.offer_attribute_values 
+    PERFORM id FROM public.offer_attribute_values
     WHERE id IN (
-      SELECT target_row_id_current 
-      FROM public.migration_oav_targets 
+      SELECT target_row_id_current
+      FROM public.migration_oav_targets
       WHERE batch_id = p_batch_id AND target_row_id_current IS NOT NULL
-    ) 
-    ORDER BY id ASC 
+    )
+    ORDER BY id ASC
     FOR UPDATE;
 
-    PERFORM id FROM public.migration_oaov_targets 
-    WHERE batch_id = p_batch_id 
-    ORDER BY id ASC 
+    PERFORM id FROM public.migration_oaov_targets
+    WHERE batch_id = p_batch_id
+    ORDER BY id ASC
     FOR UPDATE;
 
-    PERFORM id FROM public.offer_attribute_option_values 
+    PERFORM id FROM public.offer_attribute_option_values
     WHERE id IN (
-      SELECT target_row_id_current 
-      FROM public.migration_oaov_targets 
+      SELECT target_row_id_current
+      FROM public.migration_oaov_targets
       WHERE batch_id = p_batch_id AND target_row_id_current IS NOT NULL
-    ) 
-    ORDER BY id ASC 
+    )
+    ORDER BY id ASC
     FOR UPDATE;
 
-    FOR v_mot_rec IN 
+    FOR v_mot_rec IN
       SELECT mot.*, oav.offer_id, oav.attribute_id, oav.option_id, oav.value_text, oav.value_number, oav.value_boolean, oav.value_date, oav.value_year
       FROM public.migration_oav_targets mot
       LEFT JOIN public.offer_attribute_values oav ON oav.id = mot.target_row_id_current
@@ -715,14 +715,14 @@ BEGIN
         rollback_reason = 'deleted_by_batch_rollback',
         target_deleted_at = v_attempt_timestamp
       WHERE id = v_mot_rec.id;
-      
+
       GET DIAGNOSTICS v_update_cnt = ROW_COUNT;
       IF v_update_cnt <> 1 THEN
         RAISE EXCEPTION 'Manifest update failed for id %', v_mot_rec.id USING ERRCODE = 'check_violation';
       END IF;
 
       DELETE FROM public.offer_attribute_values WHERE id = v_mot_rec.target_row_id_current;
-      
+
       GET DIAGNOSTICS v_delete_cnt = ROW_COUNT;
       IF v_delete_cnt <> 1 THEN
         RAISE EXCEPTION 'Physical delete failed for target id %', v_mot_rec.target_row_id_current USING ERRCODE = 'check_violation';
@@ -732,13 +732,13 @@ BEGIN
     END LOOP;
 
     FOR v_mott_group IN
-      SELECT DISTINCT source_entry_id 
-      FROM public.migration_oaov_targets 
+      SELECT DISTINCT source_entry_id
+      FROM public.migration_oaov_targets
       WHERE batch_id = p_batch_id
     LOOP
-      PERFORM id FROM public.migration_oaov_targets 
-      WHERE batch_id = p_batch_id AND source_entry_id = v_mott_group.source_entry_id 
-      ORDER BY id ASC 
+      PERFORM id FROM public.migration_oaov_targets
+      WHERE batch_id = p_batch_id AND source_entry_id = v_mott_group.source_entry_id
+      ORDER BY id ASC
       FOR UPDATE;
 
       SELECT COUNT(*) INTO v_manifest_count
@@ -764,7 +764,7 @@ BEGIN
           v_conflict_count := v_conflict_count + 1;
           RAISE EXCEPTION 'Partial rollback state detected for group source_entry_id %', v_mott_group.source_entry_id USING ERRCODE = 'check_violation';
         END IF;
-        
+
         v_skipped_count := v_skipped_count + v_manifest_count;
         CONTINUE;
       END IF;
@@ -848,8 +848,8 @@ BEGIN
       targets_conflict_count = 0
     WHERE id = v_attempt_id;
 
-    UPDATE public.migration_batches 
-    SET status = 'rolled_back' 
+    UPDATE public.migration_batches
+    SET status = 'rolled_back'
     WHERE id = p_batch_id;
 
     RETURN 'succeeded';
@@ -881,8 +881,8 @@ BEGIN
           hint = NULL
         WHERE id = v_attempt_id;
 
-        UPDATE public.migration_batches 
-        SET status = 'rollback_conflict' 
+        UPDATE public.migration_batches
+        SET status = 'rollback_conflict'
         WHERE id = p_batch_id;
 
         RETURN 'conflict';
@@ -900,8 +900,8 @@ BEGIN
           hint = v_hint
         WHERE id = v_attempt_id;
 
-        UPDATE public.migration_batches 
-        SET status = 'failed' 
+        UPDATE public.migration_batches
+        SET status = 'failed'
         WHERE id = p_batch_id;
 
         RETURN 'failed';
