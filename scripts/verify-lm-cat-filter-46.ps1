@@ -94,6 +94,14 @@ function Assert-Sqlstate {
     Assert-Test -Id $Id -Sql "SELECT lm46_test.assert_sqlstate('$ExpectedState', '$escapedSql');" -Expected "PASS"
 }
 
+# Capture Git baseline before any test mutations
+$GitStatusBaseline = @(git status --porcelain=v1 --untracked-files=all)
+$GitDiffBaseline = @(git diff --binary)
+$GitCachedBaseline = @(git diff --cached --binary)
+$BaselineHash0003 = git hash-object "drizzle/0003_wet_scarlet_spider.sql" 2>$null
+$BaselineHashSchema = git hash-object "src/lib/schema.ts" 2>$null
+$BaselineHash46 = git hash-object "scripts/verify-lm-cat-filter-46.ps1" 2>$null
+
 try {
     # ==================================================================
     # R001–R010: FIXTURE, MANIFEST AND DELIVERY INTEGRITY
@@ -811,14 +819,37 @@ $$;
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (517, 5015, 50013, 50013, 128, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
     Assert-Test -Id "R097" -Sql "SELECT migration_private.rollback_batch(517);" -Expected "conflict"
 
-    # R098: Rollback batch ID mismatch conflict
-    # Tested by checking that rollback_batch fails if the targets belong to a different batch
-    # Already covered by rollback_batch logic checking only targets where batch_id = p_batch_id
-    Register-Result -Id "R098" -Status "PASS" -Detail "batch ID check verified"
+    # R098: Rollback batch ownership mismatch — target_provenance = 'unknown_legacy'
+    # Create batch with a target that was NOT created by this batch (provenance mismatch)
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (519, 'completed', 'Batch 519', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5018, 519, 130, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50015, 130, 1, 'Elektryczny');" | Out-Null
+    # Manifest claims provenance 'unknown_legacy' — batch does not own this target
+    Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (519, 5018, 50015, 50015, 130, 1, '$napedHash', 'lm-source-v2', 'unknown_legacy');" | Out-Null
+    $resR098 = Run-Sql "SELECT migration_private.rollback_batch(519);"
+    $physR098 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50015;"
+    $motR098 = Run-Sql "SELECT rollback_status FROM public.migration_oav_targets WHERE source_entry_id = 5018;"
+    if ($resR098 -eq "conflict" -and $physR098 -eq "1" -and $motR098 -eq "pending") {
+        Register-Result -Id "R098" -Status "PASS" -Detail "target provenance ownership mismatch conflict"
+    } else {
+        Register-Result -Id "R098" -Status "FAIL" -Detail "res=$resR098 phys=$physR098 mot=$motR098"
+    }
 
-    # R099: Rollback source entry ID mismatch conflict
-    # Handled by rollback_batch checking source entries integrity
-    Register-Result -Id "R099" -Status "PASS" -Detail "source entry check verified"
+    # R099: Rollback source entry integrity mismatch — legacy canonical version
+    # Create a manifest with legacy v1 canonical version — automatic rollback forbidden
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (521, 'completed', 'Batch 521', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5019, 521, 131, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50016, 131, 1, 'Elektryczny');" | Out-Null
+    # Manifest with legacy v1 canonical version — integrity mismatch with current runtime
+    Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (521, 5019, 50016, 50016, 131, 1, '$napedHash', 'lm-source-v1', 'created_by_batch');" | Out-Null
+    $resR099 = Run-Sql "SELECT migration_private.rollback_batch(521);"
+    $physR099 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50016;"
+    $motR099 = Run-Sql "SELECT rollback_status FROM public.migration_oav_targets WHERE source_entry_id = 5019;"
+    if ($resR099 -eq "conflict" -and $physR099 -eq "1" -and $motR099 -eq "pending") {
+        Register-Result -Id "R099" -Status "PASS" -Detail "legacy canonical version integrity mismatch conflict"
+    } else {
+        Register-Result -Id "R099" -Status "FAIL" -Detail "res=$resR099 phys=$physR099 mot=$motR099"
+    }
 
     # R100: Rollback non-pending target lifecycle conflict
     Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (518, 'completed', 'Batch 518', 'TestRunner');" | Out-Null
@@ -860,16 +891,68 @@ $$;
     # R104: Rollback attempt status conflict check
     Assert-Test -Id "R104" -Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 512;" -Expected "conflict"
 
-    # R105: Rollback attempt status failed check
-    # Tested by verifying failure path on database constraint or force fail
-    # We will insert a dummy failed attempt directly for testing
-    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (501, 'completed', 'Batch 501', 'TestRunner');" | Out-Null
-    Run-Sql "INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, finished_at, sqlstate, message, initiated_by) VALUES (501, 99, 'failed', now(), '40001', 'Serialization failure', 'TestRunner');" | Out-Null
-    Assert-Test -Id "R105" -Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 501 AND attempt_number = 99;" -Expected "failed"
+    # R105: Rollback attempt status failed check — REAL technical failure via trigger injection
+    # Create a disposable trigger that forces DELETE failure on a specific target
+    # lm46_test schema already created during test setup (line 220)
+    Run-Sql "CREATE OR REPLACE FUNCTION lm46_test.force_rollback_delete_failure()
+RETURNS trigger LANGUAGE plpgsql AS `$`$
+BEGIN
+  IF OLD.id = 50017 THEN
+    RAISE EXCEPTION 'LM46_TEST_FORCED_ROLLBACK_FAILURE'
+      USING ERRCODE = 'P0001',
+            DETAIL = 'LM46_TEST_DETAIL',
+            HINT = 'LM46_TEST_HINT';
+  END IF;
+  RETURN OLD;
+END;
+`$`$;" | Out-Null
+    Run-Sql "CREATE TRIGGER trg_force_rollback_delete
+BEFORE DELETE ON public.offer_attribute_values
+FOR EACH ROW
+EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
 
-    # R106: Rollback GET STACKED DIAGNOSTICS fields check
-    # Check that failed rollback attempt records sqlstate
-    Assert-Test -Id "R106" -Sql "SELECT sqlstate FROM public.migration_rollback_attempts WHERE batch_id = 501 AND attempt_number = 99;" -Expected "40001"
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (523, 'completed', 'Batch 523', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5021, 523, 132, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50017, 132, 1, 'Elektryczny');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (523, 5021, 50017, 50017, 132, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
+
+    # Execute rollback_batch with ErrorActionPreference=Continue to avoid ErrorRecord from trigger
+    $tempRbFile = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllText($tempRbFile, "SELECT migration_private.rollback_batch(523);", (New-Object System.Text.UTF8Encoding $false))
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $resR105 = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -t -A -X -v ON_ERROR_STOP=1 -f $tempRbFile 2>&1
+    $rbExit = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
+    if ($rbExit -ne 0) { $resR105 = "error" }
+    if (Test-Path $tempRbFile) { Remove-Item $tempRbFile -Force }
+
+    $physR105 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50017;"
+    $attemptR105 = Run-Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+
+    # Cleanup trigger immediately after test
+    Run-Sql "DROP TRIGGER IF EXISTS trg_force_rollback_delete ON public.offer_attribute_values;" | Out-Null
+    Run-Sql "DROP FUNCTION IF EXISTS lm46_test.force_rollback_delete_failure();" | Out-Null
+
+    if ($resR105 -eq "failed" -and $physR105 -eq "1" -and $attemptR105 -eq "failed") {
+        Register-Result -Id "R105" -Status "PASS" -Detail "real technical failure via trigger"
+    } else {
+        Register-Result -Id "R105" -Status "FAIL" -Detail "res=$resR105 phys=$physR105 attempt=$attemptR105"
+    }
+
+    # R106: Rollback GET STACKED DIAGNOSTICS fields check — uses REAL attempt from R105
+    $diagMessage = Run-Sql "SELECT message FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+    $diagDetail = Run-Sql "SELECT detail FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+    $diagHint = Run-Sql "SELECT hint FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+    $diagSqlstate = Run-Sql "SELECT sqlstate FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+    if ($diagMessage -like "*LM46_TEST_FORCED_ROLLBACK_FAILURE*" -and
+        $diagDetail -like "*LM46_TEST_DETAIL*" -and
+        $diagHint -like "*LM46_TEST_HINT*" -and
+        $diagSqlstate -eq "P0001") {
+        Register-Result -Id "R106" -Status "PASS" -Detail "GET STACKED DIAGNOSTICS from real failure"
+    } else {
+        Register-Result -Id "R106" -Status "FAIL" -Detail "msg=$diagMessage detail=$diagDetail hint=$diagHint sqlstate=$diagSqlstate"
+    }
 
     # ==================================================================
     # R107–R114: REAL MULTI-SESSION CONCURRENCY
@@ -1120,28 +1203,73 @@ $$;
     # R123–R130: REGRESSION AND QUALITY GATES
     # ==================================================================
 
-    # R123: Git clean working tree check
-    # Check git status (ignoring lm46-dry-run-report.txt, etc.)
-    $gitStatus = git status --short --untracked-files=all
-    $cleanTree = $true
-    foreach ($line in ($gitStatus -split "`n")) {
-        if ($line -ne "" -and $line -notmatch "scripts/lm46-dry-run" -and $line -notmatch "scripts/sql/fixtures/lm-cat-filter-46-map-v1.json" -and $line -notmatch "scripts/sql/fixtures/lm46-test-matrix-v1.json" -and $line -notmatch "scripts/verify-lm-cat-filter-46.ps1" -and $line -notmatch "scripts/verify-lm-cat-filter-45.ps1") {
-            $cleanTree = $false
-        }
-    }
-    if ($cleanTree) {
-        Register-Result -Id "R123" -Status "PASS" -Detail "clean tree"
-    } else {
-        Register-Result -Id "R123" -Status "FAIL" -Detail "dirty tree: $gitStatus"
+    # R123: Git clean working tree check — REAL immutability with baseline
+    $gitStatusEnd = @(git status --porcelain=v1 --untracked-files=all)
+    $gitDiffEnd = @(git diff --binary)
+    $gitCachedEnd = @(git diff --cached --binary)
+
+    $r123Pass = $true
+    $r123Detail = ""
+
+    # Compare status against baseline (no new tracked mutations allowed)
+    $statusBaselineStr = $GitStatusBaseline -join "`n"
+    $statusEndStr = $gitStatusEnd -join "`n"
+    if ($statusBaselineStr -ne $statusEndStr) {
+        $r123Pass = $false
+        $r123Detail += "status changed vs baseline; "
     }
 
-    # R124: HEAD commit contains required Sprint 46 DDL migrations
-    # Checked by verifying 0003_wet_scarlet_spider.sql in HEAD (or git history / git show)
-    # We will verify that the migration file is listed in git log history or the workspace
-    if (Test-Path "drizzle/0003_wet_scarlet_spider.sql") {
-        Register-Result -Id "R124" -Status "PASS" -Detail "migration present"
+    # Compare diff against baseline
+    $diffBaselineStr = $GitDiffBaseline -join "`n"
+    $diffEndStr = $gitDiffEnd -join "`n"
+    if ($diffBaselineStr -ne $diffEndStr) {
+        $r123Pass = $false
+        $r123Detail += "diff changed vs baseline; "
+    }
+
+    # Compare cached diff against baseline
+    $cachedBaselineStr = $GitCachedBaseline -join "`n"
+    $cachedEndStr = $gitCachedEnd -join "`n"
+    if ($cachedBaselineStr -ne $cachedEndStr) {
+        $r123Pass = $false
+        $r123Detail += "cached diff changed vs baseline; "
+    }
+
+    # Check critical file hashes unchanged during test run (baseline vs end)
+    $endHash0003 = git hash-object "drizzle/0003_wet_scarlet_spider.sql" 2>$null
+    $endHashSchema = git hash-object "src/lib/schema.ts" 2>$null
+    $endHash46 = git hash-object "scripts/verify-lm-cat-filter-46.ps1" 2>$null
+
+    if ($BaselineHash0003 -ne $endHash0003) {
+        $r123Pass = $false
+        $r123Detail += "0003 hash changed during test; "
+    }
+    if ($BaselineHashSchema -ne $endHashSchema) {
+        $r123Pass = $false
+        $r123Detail += "schema hash changed during test; "
+    }
+    if ($BaselineHash46 -ne $endHash46) {
+        $r123Pass = $false
+        $r123Detail += "harness hash changed during test; "
+    }
+
+    if ($r123Pass) {
+        Register-Result -Id "R123" -Status "PASS" -Detail "no tracked mutations vs baseline"
     } else {
-        Register-Result -Id "R124" -Status "FAIL" -Detail "migration missing"
+        Register-Result -Id "R123" -Status "FAIL" -Detail $r123Detail
+    }
+
+    # R124: HEAD commit contains required Sprint 46 DDL migrations — EXACT HEAD tree proof
+    git cat-file -e "HEAD:drizzle/0003_wet_scarlet_spider.sql" 2>$null
+    $catFileExit = $LASTEXITCODE
+    $trackedPath = git ls-tree -r --name-only HEAD -- "drizzle/0003_wet_scarlet_spider.sql" 2>$null
+    $headBlob = git rev-parse "HEAD:drizzle/0003_wet_scarlet_spider.sql" 2>$null
+    $workBlob = git hash-object "drizzle/0003_wet_scarlet_spider.sql" 2>$null
+
+    if ($catFileExit -eq 0 -and $trackedPath -eq "drizzle/0003_wet_scarlet_spider.sql" -and $headBlob -eq $workBlob) {
+        Register-Result -Id "R124" -Status "PASS" -Detail "exact HEAD tree match"
+    } else {
+        Register-Result -Id "R124" -Status "FAIL" -Detail "catFile=$catFileExit path=$trackedPath head=$headBlob work=$workBlob"
     }
 
     # R125: HEAD is descendant of Sprint 45 check
