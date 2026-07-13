@@ -79,6 +79,15 @@ function Assert-Test {
     }
 }
 
+function Assert-Value {
+    param([string]$Id, $Actual, $Expected, [string]$Detail)
+    if ($Actual -eq $Expected) {
+        Register-Result -Id $Id -Status "PASS" -Detail $Detail
+    } else {
+        Register-Result -Id $Id -Status "FAIL" -Detail "Expected '$Expected', got '$Actual'. Detail: $Detail"
+    }
+}
+
 function Assert-Sqlstate {
     param([string]$Id, [string]$Sql, [string]$ExpectedState)
     $escapedSql = $Sql.Replace("'", "''")
@@ -89,7 +98,7 @@ try {
     # ==================================================================
     # R001–R010: FIXTURE, MANIFEST AND DELIVERY INTEGRITY
     # ==================================================================
-    
+
     # R001: Fixture file contains valid JSON
     try {
         $fixtureContent = Get-Content "scripts/sql/fixtures/lm46-technical-attributes-sanitized.json" -Raw
@@ -235,7 +244,7 @@ $$;
     # ==================================================================
     # R011–R030: SCHEMA, DDL, PROVENANCE AND ATTEMPT-STATE CONSTRAINTS
     # ==================================================================
-    
+
     # R011: target_provenance exists on migration_oav_targets
     Assert-Test -Id "R011" -Sql "SELECT count(*) FROM information_schema.columns WHERE table_name = 'migration_oav_targets' AND column_name = 'target_provenance';" -Expected "1"
 
@@ -268,7 +277,7 @@ $$;
     # R015: target_provenance allows created_by_batch in OAV
     Assert-Test -Id "R015" -Sql "
         WITH cte AS (
-            INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) 
+            INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance)
             VALUES (10, 100, 9999, 9999, 150, 99, '1234567890123456789012345678901234567890123456789012345678901234', 'lm-source-v2', 'created_by_batch') RETURNING 'PASS' AS val
         ) SELECT val FROM cte;
     " -Expected "PASS"
@@ -276,21 +285,21 @@ $$;
     # R016: target_provenance allows unknown_legacy in OAV
     Assert-Test -Id "R016" -Sql "
         WITH cte AS (
-            INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) 
+            INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance)
             VALUES (10, 101, 9898, 9898, 150, 98, '1234567890123456789012345678901234567890123456789012345678901234', 'lm-source-v2', 'unknown_legacy') RETURNING 'PASS' AS val
         ) SELECT val FROM cte;
     " -Expected "PASS"
 
     # R017: target_provenance rejects other values in OAV
     Assert-Sqlstate -Id "R017" -Sql "
-        INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) 
+        INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance)
         VALUES (10, 102, 9997, 9997, 100, 1, '1234567890123456789012345678901234567890123456789012345678901234', 'lm-source-v2', 'custom_provenance')
     " -ExpectedState "23514"
 
     # R018: target_provenance allows created_by_batch in OAOV
     Assert-Test -Id "R018" -Sql "
         WITH cte AS (
-            INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance) 
+            INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance)
             VALUES (10, 103, 9999, 9999, 150, 99, 99, '1234567890123456789012345678901234567890123456789012345678901234', 'lm-source-v2', 'created_by_batch') RETURNING 'PASS' AS val
         ) SELECT val FROM cte;
     " -Expected "PASS"
@@ -298,14 +307,14 @@ $$;
     # R019: target_provenance allows unknown_legacy in OAOV
     Assert-Test -Id "R019" -Sql "
         WITH cte AS (
-            INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance) 
+            INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance)
             VALUES (10, 104, 9898, 9898, 150, 98, 98, '1234567890123456789012345678901234567890123456789012345678901234', 'lm-source-v2', 'unknown_legacy') RETURNING 'PASS' AS val
         ) SELECT val FROM cte;
     " -Expected "PASS"
 
     # R020: target_provenance rejects other values in OAOV
     Assert-Sqlstate -Id "R020" -Sql "
-        INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance) 
+        INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance)
         VALUES (10, 105, 9997, 9997, 100, 1, 1, '1234567890123456789012345678901234567890123456789012345678901234', 'lm-source-v2', 'custom_provenance')
     " -ExpectedState "23514"
 
@@ -324,50 +333,50 @@ $$;
 
     # R024: attempt_number positive constraint
     Assert-Sqlstate -Id "R024" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, initiated_by)
         VALUES (10, 0, 'running', 'user')
     " -ExpectedState "23514"
 
     # R025: targets_deleted_count non-negative constraint
     Assert-Sqlstate -Id "R025" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, targets_deleted_count, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, targets_deleted_count, initiated_by)
         VALUES (10, 1, 'running', -1, 'user')
     " -ExpectedState "23514"
 
     # R026: targets_skipped_count non-negative constraint
     Assert-Sqlstate -Id "R026" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, targets_skipped_count, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, targets_skipped_count, initiated_by)
         VALUES (10, 1, 'running', -2, 'user')
     " -ExpectedState "23514"
 
     # R027: targets_conflict_count non-negative constraint
     Assert-Sqlstate -Id "R027" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, targets_conflict_count, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, targets_conflict_count, initiated_by)
         VALUES (10, 1, 'running', -3, 'user')
     " -ExpectedState "23514"
 
     # R028: status check constraint
     Assert-Sqlstate -Id "R028" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, initiated_by)
         VALUES (10, 1, 'invalid_status', 'user')
     " -ExpectedState "23514"
 
     # R029: lifecycle check constraint for running state
     Assert-Sqlstate -Id "R029" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, finished_at, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, finished_at, initiated_by)
         VALUES (10, 1, 'running', now(), 'user')
     " -ExpectedState "23514"
 
     # R030: lifecycle check constraint for succeeded state
     Assert-Sqlstate -Id "R030" -Sql "
-        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, finished_at, targets_deleted_count, initiated_by) 
+        INSERT INTO public.migration_rollback_attempts (batch_id, attempt_number, status, finished_at, targets_deleted_count, initiated_by)
         VALUES (10, 1, 'succeeded', NULL, 5, 'user')
     " -ExpectedState "23514"
 
     # ==================================================================
     # R031–R045: CANONICAL V2 PARSING AND DETERMINISTIC SERIALIZATION
     # ==================================================================
-    
+
     # R031: sha256_hex formats text correctly
     Assert-Test -Id "R031" -Sql "SELECT migration_private.sha256_hex('v2:text:Value');" -Expected "03414a356236315ae7ce1b8fd9f6e36a5698853513a5dffa045f30064c45c71d"
 
@@ -431,7 +440,7 @@ $$;
     # ==================================================================
     # R046–R063: OAV FORWARD RUNTIME
     # ==================================================================
-    
+
     # Seed batch 50 for Section 3
     Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (50, 'running', 'Batch 50', 'TestRunner');" | Out-Null
 
@@ -528,7 +537,7 @@ $$;
     # ==================================================================
     # R064–R081: OAOV FORWARD RUNTIME
     # ==================================================================
-    
+
     # Seed batch 70 for Section 4
     Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (70, 'running', 'Batch 70', 'TestRunner');" | Out-Null
 
@@ -598,7 +607,7 @@ $$;
 
     # R078: OAOV expected target count check
     Assert-Sqlstate -Id "R078" -Sql "
-        INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) 
+        INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count)
         VALUES (410, 70, 110, 'features', '{`"value`": [`"triplex`", `"duplex`"]}'::jsonb, '$oaovHash', 'lm-source-v2', 1);
         SELECT migration_private.process_source_entry(70, 410, NULL, ARRAY[10,20]::bigint[]);
     " -ExpectedState "23514"
@@ -612,21 +621,21 @@ $$;
 
     # R081: OAOV deterministic set reconstruction check
     Assert-Test -Id "R081" -Sql "
-        SELECT array_to_string(array_agg(option_id ORDER BY option_id ASC), ',') 
-        FROM public.offer_attribute_option_values 
+        SELECT array_to_string(array_agg(option_id ORDER BY option_id ASC), ',')
+        FROM public.offer_attribute_option_values
         WHERE offer_id = 111 AND attribute_id = 3;
     " -Expected "10,20"
 
     # ==================================================================
     # R082–R106: ROLLBACK, OWNERSHIP, LIFECYCLE AND AUDIT
     # ==================================================================
-    
+
     # R082: Rollback OAV text target
     Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (502, 'completed', 'Batch 502', 'TestRunner');" | Out-Null
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5000, 502, 112, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50000, 112, 1, 'Elektryczny');" | Out-Null
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (502, 5000, 50000, 50000, 112, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR082 = Run-Sql "SELECT migration_private.rollback_batch(502);"
     if ($resR082 -eq "succeeded") {
         $motStatus = Run-Sql "SELECT rollback_status FROM public.migration_oav_targets WHERE source_entry_id = 5000;"
@@ -645,7 +654,7 @@ $$;
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5001, 503, 112, 'udzwig', '{`"value`": 1200}'::jsonb, '$udzwigHash', 'lm-source-v2', 1);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_number) VALUES (50001, 112, 2, 1200);" | Out-Null
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (503, 5001, 50001, 50001, 112, 2, '$udzwigHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR083 = Run-Sql "SELECT migration_private.rollback_batch(503);"
     if ($resR083 -eq "succeeded") {
         $physExists = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50001;"
@@ -657,7 +666,7 @@ $$;
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5002, 504, 112, 'is_new', '{`"value`": true}'::jsonb, '$boolHash', 'lm-source-v2', 1);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_boolean) VALUES (50002, 112, 5, true);" | Out-Null
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (504, 5002, 50002, 50002, 112, 5, '$boolHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR084 = Run-Sql "SELECT migration_private.rollback_batch(504);"
     if ($resR084 -eq "succeeded") {
         $physExists = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50002;"
@@ -669,7 +678,7 @@ $$;
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5003, 505, 112, 'production_year', '{`"value`": 2026}'::jsonb, '$yearHash', 'lm-source-v2', 1);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_year) VALUES (50003, 112, 6, 2026);" | Out-Null
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (505, 5003, 50003, 50003, 112, 6, '$yearHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR085 = Run-Sql "SELECT migration_private.rollback_batch(505);"
     if ($resR085 -eq "succeeded") {
         $physExists = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50003;"
@@ -681,7 +690,7 @@ $$;
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5004, 506, 112, 'color', '{`"value`": `"red`"}'::jsonb, '$enumHash', 'lm-source-v2', 1);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id) VALUES (50004, 112, 7, 30);" | Out-Null
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (506, 5004, 50004, 50004, 112, 7, 30, '$enumHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR086 = Run-Sql "SELECT migration_private.rollback_batch(506);"
     if ($resR086 -eq "succeeded") {
         $physExists = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50004;"
@@ -693,7 +702,7 @@ $$;
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5005, 507, 112, 'date_attr', '{`"value`": `"2026-07-12T18:25:55.000Z`"}'::jsonb, '$dateHashZ', 'lm-source-v2', 1);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_date) VALUES (50005, 112, 4, '2026-07-12T18:25:55.000Z'::timestamp with time zone);" | Out-Null
     Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (507, 5005, 50005, 50005, 112, 4, '$dateHashZ', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR087 = Run-Sql "SELECT migration_private.rollback_batch(507);"
     if ($resR087 -eq "succeeded") {
         $physExists = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50005;"
@@ -705,7 +714,7 @@ $$;
     Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5006, 508, 113, 'features', '{`"value`": [`"triplex`", `"duplex`"]}'::jsonb, '$oaovHash', 'lm-source-v2', 2);" | Out-Null
     Run-Sql "INSERT INTO public.offer_attribute_option_values (id, offer_id, attribute_id, option_id) VALUES (70000, 113, 3, 10), (70001, 113, 3, 20);" | Out-Null
     Run-Sql "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (508, 5006, 70000, 70000, 113, 3, 10, '$oaovHash', 'lm-source-v2', 'created_by_batch'), (508, 5006, 70001, 70001, 113, 3, 20, '$oaovHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR088 = Run-Sql "SELECT migration_private.rollback_batch(508);"
     if ($resR088 -eq "succeeded") {
         $physExists = Run-Sql "SELECT count(*) FROM public.offer_attribute_option_values WHERE id IN (70000, 70001);"
@@ -718,7 +727,7 @@ $$;
     Run-Sql "INSERT INTO public.offer_attribute_option_values (id, offer_id, attribute_id, option_id) VALUES (70002, 113, 3, 10), (70003, 113, 3, 20);" | Out-Null
     # Missing option 20 manifest for R089 test!
     Run-Sql "INSERT INTO public.migration_oaov_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (509, 5007, 70002, 70002, 113, 3, 10, '$oaovHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
-    
+
     $resR089 = Run-Sql "SELECT migration_private.rollback_batch(509);"
     if ($resR089 -eq "conflict") {
         Register-Result -Id "R089" -Status "PASS" -Detail "single-manifest rollback blocked"
@@ -821,13 +830,29 @@ $$;
     Run-Sql "UPDATE public.migration_oav_targets SET rollback_status = 'rollback_conflict', rollback_reason = 'Manually marked conflict' WHERE source_entry_id = 5016;" | Out-Null
     Assert-Test -Id "R100" -Sql "SELECT migration_private.rollback_batch(518);" -Expected "conflict"
 
+    # Seed for R102 physical delete count check
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (522, 'completed', 'Batch 522', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (50022, 522, 112, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50022, 112, 1, 'Elektryczny');" | Out-Null
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_number) VALUES (50023, 112, 2, 1200);" | Out-Null
+    Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (522, 50022, 50022, 50022, 112, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
+
     # R101: Rollback manifest update count check
-    # Verified by checking GET DIAGNOSTICS ROW_COUNT assertions in rollback_batch
-    Register-Result -Id "R101" -Status "PASS" -Detail "ROW_COUNT check verified"
+    Assert-Test -Id "R101" -Sql "
+        SELECT COALESCE(SUM(c), 0) FROM (
+            SELECT COUNT(*) AS c FROM public.migration_oav_targets WHERE batch_id = 502 AND rollback_status = 'cleaned_up' AND target_row_id_current IS NULL AND target_deleted_at IS NOT NULL
+            UNION ALL
+            SELECT COUNT(*) AS c FROM public.migration_oaov_targets WHERE batch_id = 508 AND rollback_status = 'cleaned_up' AND target_row_id_current IS NULL AND target_deleted_at IS NOT NULL
+        ) t;
+    " -Expected "3"
 
     # R102: Rollback physical delete count check
-    # Verified by checking GET DIAGNOSTICS ROW_COUNT assertions on physical delete
-    Register-Result -Id "R102" -Status "PASS" -Detail "delete count check verified"
+    $preExists = Run-Sql "SELECT EXISTS(SELECT 1 FROM public.offer_attribute_values WHERE id = 50022);"
+    $rbResult = Run-Sql "SELECT migration_private.rollback_batch(522);"
+    $postExists = Run-Sql "SELECT EXISTS(SELECT 1 FROM public.offer_attribute_values WHERE id = 50022);"
+    $unrelatedExists = Run-Sql "SELECT EXISTS(SELECT 1 FROM public.offer_attribute_values WHERE id = 50023);"
+    $r102Pass = ($preExists -eq "t" -and $rbResult -eq "succeeded" -and $postExists -eq "f" -and $unrelatedExists -eq "t")
+    Assert-Value -Id "R102" -Actual $r102Pass -Expected $true -Detail "Physical delete check (pre=$preExists, res=$rbResult, post=$postExists, unrelated=$unrelatedExists)"
 
     # R103: Rollback attempt status succeeded check
     Assert-Test -Id "R103" -Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 502;" -Expected "succeeded"
@@ -858,7 +883,7 @@ $$;
 
     # R107: Concurrency Scenario A: Session A starts transaction and locks target offer
     Write-Host "Starting Session A to lock offer 110..."
-    $sessionASql = "BEGIN; SELECT id FROM public.offers WHERE id = 110 FOR UPDATE; SELECT pg_sleep(5); COMMIT;"
+    $sessionASql = "BEGIN; SELECT 'SESSION_A_PID:' || pg_backend_pid(); SELECT id FROM public.offers WHERE id = 110 FOR UPDATE; SELECT pg_sleep(5); COMMIT;"
     $tempSqlFile = [System.IO.Path]::GetTempFileName()
     [System.IO.File]::WriteAllText($tempSqlFile, $sessionASql, (New-Object System.Text.UTF8Encoding $false))
 
@@ -869,11 +894,47 @@ $$;
     $sessionAJob = Start-Job -ScriptBlock {
         param($bin, $port, $user, $db, $file)
         $env:PGPASSWORD = ''
-        & "$bin\psql.exe" -h localhost -p $port -U $user -d $db -f $file 2>&1
+        & "$bin\psql.exe" -h localhost -p $port -U $user -d $db -t -A -f $file 2>&1
     } -ArgumentList $pgBinLocal, $dbPortLocal, $dbUserLocal, $dbNameLocal, $tempSqlFile
-    Start-Sleep -Seconds 2 # Wait 2 seconds to ensure Session A has acquired the lock
 
-    Register-Result -Id "R107" -Status "PASS" -Detail "Session A holding lock on offer 110"
+    # Poll Receive-Job to capture Session A's PID
+    $pidConfirmed = $null
+    $timeoutSec = 10
+    $elapsed = 0
+    while ($null -eq $pidConfirmed -and $elapsed -lt $timeoutSec) {
+        Start-Sleep -Milliseconds 500
+        $elapsed += 0.5
+        $jobOut = Receive-Job -Job $sessionAJob -Keep
+        if ($jobOut) {
+            $jobOutStr = ($jobOut | Out-String).Trim()
+            if ($jobOutStr -match "SESSION_A_PID:(\d+)") {
+                $pidConfirmed = [int]$Matches[1]
+                Write-Host "Captured Session A PID: $pidConfirmed"
+            }
+        }
+    }
+
+    # Poll pg_locks to confirm Session A holds RowShareLock on public.offers
+    $lockConfirmed = $false
+    $elapsed = 0
+    while ($elapsed -lt 10 -and $null -ne $pidConfirmed) {
+        $lockCount = Run-Sql "
+            SELECT count(*)
+            FROM pg_locks
+            WHERE pid = $pidConfirmed
+              AND relation = 'public.offers'::regclass
+              AND mode = 'RowShareLock'
+              AND granted = true;
+        "
+        if ($lockCount -eq "1") {
+            $lockConfirmed = $true
+            break
+        }
+        Start-Sleep -Milliseconds 500
+        $elapsed += 0.5
+    }
+
+    Assert-Value -Id "R107" -Actual $lockConfirmed -Expected $true -Detail "Session A active and holding RowShareLock on offer 110"
 
     # R108: Concurrency Scenario A: Session B process_source_entry blocks on locked offer
     # Source entry 9080 targets offer 110 which is locked by Session A
@@ -884,47 +945,105 @@ $$;
     # R109: Concurrency Scenario A: After Session A exits, lock is released
     # Wait for Session A job to finish (15 second timeout)
     $null = Wait-Job -Job $sessionAJob -Timeout 15
+    $jobState = $sessionAJob.State
+    $jobOutput = Receive-Job -Job $sessionAJob | Out-String
     Remove-Job -Job $sessionAJob -Force
     if (Test-Path $tempSqlFile) { Remove-Item $tempSqlFile -Force }
 
-    # Verify Session A completed by checking batch 920 is still in running state
-    Assert-Test -Id "R109" -Sql "SELECT status FROM public.migration_batches WHERE id = 920;" -Expected "running"
+    $lockCountAfter = 0
+    if ($null -ne $pidConfirmed) {
+        $lockCountAfter = [int](Run-Sql "
+            SELECT count(*)
+            FROM pg_locks
+            WHERE pid = $pidConfirmed
+              AND relation = 'public.offers'::regclass
+              AND mode = 'RowShareLock';
+        ")
+    }
+
+    $sAExited = ($jobState -eq "Completed" -and $lockCountAfter -eq 0)
+    Assert-Value -Id "R109" -Actual $sAExited -Expected $true -Detail "Session A finished successfully, lock released"
 
     # R110: Concurrency Scenario A: Session B can now process successfully (lock released)
-    Assert-Test -Id "R110" -Sql "SELECT migration_private.process_source_entry(920, 9080, NULL, NULL);" -Expected "migrated"
+    $resR110 = Run-Sql "SELECT migration_private.process_source_entry(920, 9080, NULL, NULL);"
+    $targetCount = Run-Sql "SELECT count(*) FROM public.migration_oav_targets WHERE source_entry_id = 9080;"
+    $physCount = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE offer_id = 110 AND attribute_id = 9;"
+    $sBSuccess = ($resR110 -eq "migrated" -and $targetCount -eq "1" -and $physCount -eq "1")
+    Assert-Value -Id "R110" -Actual $sBSuccess -Expected $true -Detail "Session B successfully processed after release"
+
+    # Concurrency Scenario B Setup
+    $oaovHashB = Run-Sql "SELECT migration_private.sha256_hex('v2:multi_enum:10,20');"
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (930, 'running', 'OAOV Concurrency Batch A', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (931, 'running', 'OAOV Concurrency Batch B', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (9090, 930, 130, 'features', '{`"value`": [`"triplex`", `"duplex`"]}'::jsonb, '$oaovHashB', 'lm-source-v2', 2);" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (9091, 931, 130, 'features', '{`"value`": [`"triplex`", `"duplex`"]}'::jsonb, '$oaovHashB', 'lm-source-v2', 2);" | Out-Null
 
     # R111: Concurrency Scenario B: Two sessions establish separate connection channels
-    Register-Result -Id "R111" -Status "PASS" -Detail "Separate connection channels verified"
-
-    # R112: Concurrency Scenario B: Session B waits for Session A on offer 111
+    Write-Host "Starting Session A for OAOV concurrency on offer 130..."
+    $sessionASqlB = "BEGIN; SELECT 'SESSION_B_PID:' || pg_backend_pid(); SELECT migration_private.process_source_entry(930, 9090, NULL, ARRAY[10,20]::bigint[]); SELECT pg_sleep(5); COMMIT;"
     $tempSqlFileB = [System.IO.Path]::GetTempFileName()
-    [System.IO.File]::WriteAllText($tempSqlFileB, "BEGIN; SELECT id FROM public.offers WHERE id = 111 FOR UPDATE; SELECT pg_sleep(3); COMMIT;", (New-Object System.Text.UTF8Encoding $false))
-    $sessionBJob = Start-Job -ScriptBlock {
+    [System.IO.File]::WriteAllText($tempSqlFileB, $sessionASqlB, (New-Object System.Text.UTF8Encoding $false))
+
+    $sessionAJobB = Start-Job -ScriptBlock {
         param($bin, $port, $user, $db, $file)
         $env:PGPASSWORD = ''
-        & "$bin\psql.exe" -h localhost -p $port -U $user -d $db -f $file 2>&1
+        & "$bin\psql.exe" -h localhost -p $port -U $user -d $db -t -A -f $file 2>&1
     } -ArgumentList $pgBinLocal, $dbPortLocal, $dbUserLocal, $dbNameLocal, $tempSqlFileB
-    Start-Sleep -Seconds 1
 
-    # Assert lock wait timeout on offer 111
-    Assert-Sqlstate -Id "R112" -Sql "SET lock_timeout = '1s'; SELECT id FROM public.offers WHERE id = 111 FOR UPDATE;" -ExpectedState "55P03"
+    # Poll to capture Session A B's PID
+    $pidB = $null
+    $elapsedB = 0
+    while ($null -eq $pidB -and $elapsedB -lt 10) {
+        Start-Sleep -Milliseconds 500
+        $elapsedB += 0.5
+        $jobOutB = Receive-Job -Job $sessionAJobB -Keep
+        if ($jobOutB) {
+            $jobOutStrB = ($jobOutB | Out-String).Trim()
+            if ($jobOutStrB -match "SESSION_B_PID:(\d+)") {
+                $pidB = [int]$Matches[1]
+                Write-Host "Captured Session A B PID: $pidB"
+            }
+        }
+    }
 
-    $null = Wait-Job -Job $sessionBJob -Timeout 15
-    Remove-Job -Job $sessionBJob -Force
+    # Assert distinct PIDs
+    Assert-Test -Id "R111" -Sql "
+        SELECT count(DISTINCT pid)
+        FROM pg_stat_activity
+        WHERE pid IN ($pidB, pg_backend_pid());
+    " -Expected "2"
+
+    # R112: Concurrency Scenario B: Session B waits for Session A
+    $lockTimeoutSqlB = "SET lock_timeout = '2s'; SELECT migration_private.process_source_entry(931, 9091, NULL, ARRAY[10,20]::bigint[]);"
+    Assert-Sqlstate -Id "R112" -Sql $lockTimeoutSqlB -ExpectedState "55P03"
+
+    # Wait for Session A to finish
+    $null = Wait-Job -Job $sessionAJobB -Timeout 15
+    $jobStateB = $sessionAJobB.State
+    $jobOutputB = Receive-Job -Job $sessionAJobB | Out-String
+    Remove-Job -Job $sessionAJobB -Force
     if (Test-Path $tempSqlFileB) { Remove-Item $tempSqlFileB -Force }
 
-    # R113: Concurrency Scenario B: Single target row insert confirmed
-    Register-Result -Id "R113" -Status "PASS" -Detail "Exactly one target row created"
+    # R113: Concurrency Scenario B: Single target row insert
+    Assert-Test -Id "R113" -Sql "
+        SELECT array_to_string(array_agg(option_id ORDER BY option_id ASC), ',')
+        FROM public.offer_attribute_option_values
+        WHERE offer_id = 130 AND attribute_id = 3;
+    " -Expected "10,20"
 
-    # R114: Concurrency Scenario B: Duplicate insert triggers unique constraint
-    Assert-Sqlstate -Id "R114" -Sql "
-        INSERT INTO public.offer_attribute_values (offer_id, attribute_id, value_text) VALUES (100, 1, 'Dup');
-    " -ExpectedState "23505"
+    # R114: Concurrency Scenario B: Manifest count validation
+    Assert-Test -Id "R114" -Sql "
+        SELECT concat(
+            (SELECT count(*) FROM public.migration_oaov_targets WHERE batch_id = 930 AND target_offer_id = 130 AND source_entry_id = 9090 AND rollback_status = 'pending'),
+            ',',
+            (SELECT count(*) FROM public.migration_oaov_targets WHERE batch_id = 931 AND target_offer_id = 130 AND source_entry_id = 9091)
+        );
+    " -Expected "2,0"
 
     # ==================================================================
     # R115–R122: MAPPING AND DRY-RUN DETERMINISM
     # ==================================================================
-    
+
     # R115: Dry-run execution zero exit code on valid manifest
     # Run the tsx script and capture exit code
     $prevEAP = $ErrorActionPreference
@@ -1000,7 +1119,7 @@ $$;
     # ==================================================================
     # R123–R130: REGRESSION AND QUALITY GATES
     # ==================================================================
-    
+
     # R123: Git clean working tree check
     # Check git status (ignoring lm46-dry-run-report.txt, etc.)
     $gitStatus = git status --short --untracked-files=all
@@ -1043,26 +1162,78 @@ $$;
     }
 
     # R127: TypeScript build compilation check
-    # Next.js build compilation is checked in Phase 9, here we verify the build status
-    # We will assume build completed successfully in Phase 9 if it exits 0
-    Register-Result -Id "R127" -Status "PASS" -Detail "build compilation verified in Phase 9"
+    Write-Host "Running Next.js production build check..."
+    $oldDbUrl = $env:DATABASE_URL
+    try {
+        $env:DATABASE_URL = "postgres://postgres@localhost:$dbPort/$dbName"
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        & npm.cmd run build 2>&1 | Out-Null
+        $ErrorActionPreference = $prevEAP
+        $buildExit = $LASTEXITCODE
+    } finally {
+        if ($null -eq $oldDbUrl) {
+            Remove-Item Env:\DATABASE_URL -ErrorAction SilentlyContinue
+        } else {
+            $env:DATABASE_URL = $oldDbUrl
+        }
+    }
+    Assert-Value -Id "R127" -Actual $buildExit -Expected 0 -Detail "Next.js build compilation exit code"
 
     # R128: Git diff check check
-    # Checks formatting/whitespace check on git diff
     $prevEAP = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     & git diff --check 2>&1 | Out-Null
     $ErrorActionPreference = $prevEAP
-    # Git diff --check exits 0 if no whitespace errors are found
-    Register-Result -Id "R128" -Status "PASS" -Detail "git diff check verified"
+    $diffCheckExit = $LASTEXITCODE
+    Assert-Value -Id "R128" -Actual $diffCheckExit -Expected 0 -Detail "git diff check exit code"
 
     # R129: verify-lm-cat-filter-44-close.ps1 runs and passes completely
-    # Verified by checking the exit code of Sprint 44 run in Phase 8
-    Register-Result -Id "R129" -Status "PASS" -Detail "Sprint 44 regression verified in Phase 8"
+    Write-Host "Running Sprint 44 regression tests..."
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $s44Output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/verify-lm-cat-filter-44-close.ps1" 2>&1
+    $ErrorActionPreference = $prevEAP
+    $s44Exit = $LASTEXITCODE
+    $s44Pass = $false
+    if ($s44Exit -eq 0 -and $s44Output -match "ALL TESTS PASSED") {
+        $s44Pass = $true
+    }
+    Assert-Value -Id "R129" -Actual $s44Pass -Expected $true -Detail "Sprint 44 regression run result (exit=$s44Exit)"
 
     # R130: verify-lm-cat-filter-45.ps1 runs and passes completely
-    # Verified by checking the exit code of Sprint 45 run in Phase 8
-    Register-Result -Id "R130" -Status "PASS" -Detail "Sprint 45 regression verified in Phase 8"
+    Write-Host "Running Sprint 45 regression tests with migration cutoff..."
+    $cutoffGuid = [guid]::NewGuid().ToString("N")
+    $cutoffDir = Join-Path $env:TEMP "lm45_cutoff_$cutoffGuid"
+    $cutoffMeta = Join-Path $cutoffDir "meta"
+    New-Item -ItemType Directory -Path $cutoffMeta -Force | Out-Null
+    Copy-Item "drizzle/0000_*.sql" $cutoffDir
+    Copy-Item "drizzle/0001_*.sql" $cutoffDir
+    Copy-Item "drizzle/0002_*.sql" $cutoffDir
+    $journalPath = "drizzle/meta/_journal.json"
+    if (Test-Path $journalPath) {
+        $journal = Get-Content $journalPath -Raw | ConvertFrom-Json
+        $filteredEntries = $journal.entries | Where-Object { $_.idx -eq 0 -or $_.idx -eq 1 -or $_.idx -eq 2 }
+        $isolatedJournal = @{
+            version = $journal.version
+            dialect = $journal.dialect
+            entries = $filteredEntries
+        } | ConvertTo-Json -Depth 10
+        [System.IO.File]::WriteAllText((Join-Path $cutoffMeta "_journal.json"), $isolatedJournal, (New-Object System.Text.UTF8Encoding $false))
+    }
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $env:LM44_MIGRATIONS_FOLDER = $cutoffDir
+    $s45Output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File "scripts/verify-lm-cat-filter-45.ps1" 2>&1
+    $s45Exit = $LASTEXITCODE # Captured immediately!
+    Remove-Item Env:\LM44_MIGRATIONS_FOLDER -ErrorAction SilentlyContinue
+    $ErrorActionPreference = $prevEAP
+    Remove-Item $cutoffDir -Recurse -Force -ErrorAction SilentlyContinue
+    $s45Pass = $false
+    if ($s45Exit -eq 0 -and $s45Output -match "ALL TESTS PASSED") {
+        $s45Pass = $true
+    }
+    Assert-Value -Id "R130" -Actual $s45Pass -Expected $true -Detail "Sprint 45 regression run result (exit=$s45Exit)"
 
 } finally {
     # Cleanup database instance
@@ -1083,9 +1254,11 @@ $$;
 Write-Host ""
 Write-Host "=== TEST ID AUDIT ==="
 $expectedIds = @()
+$expectedAssertionIds = @()
 $testMatrix = Get-Content "scripts/sql/fixtures/lm46-test-matrix-v1.json" -Raw | ConvertFrom-Json
 foreach ($t in $testMatrix) {
     $expectedIds += $t.id
+    $expectedAssertionIds += $t.assertionId
 }
 
 $actualIds = $testIds | Sort-Object
@@ -1095,19 +1268,62 @@ $actualSet = New-Object System.Collections.Generic.HashSet[string]
 foreach ($id in $actualIds) { $actualSet.Add($id) | Out-Null }
 
 $duplicateIds = $testIds | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name }
+$duplicateAssertionIds = $expectedAssertionIds | Group-Object | Where-Object { $_.Count -gt 1 } | ForEach-Object { $_.Name }
 $unknownIds = $actualSet | Where-Object { -not $expectedSet.Contains($_) }
 $missingIds = $expectedSet | Where-Object { -not $actualSet.Contains($_) }
 
 Write-Host "EXPECTED UNIQUE IDS: $($expectedIds.Count)"
 Write-Host "ACTUAL UNIQUE IDS: $($actualSet.Count)"
 Write-Host "DUPLICATE IDS: $(if ($duplicateIds) { $duplicateIds -join ', ' } else { '0' })"
+Write-Host "DUPLICATE ASSERTION IDS: $(if ($duplicateAssertionIds) { $duplicateAssertionIds -join ', ' } else { '0' })"
 Write-Host "UNKNOWN IDS: $(if ($unknownIds) { $unknownIds -join ', ' } else { '0' })"
 Write-Host "MISSING IDS: $(if ($missingIds) { $missingIds -join ', ' } else { '0' })"
 
-if ($duplicateIds -or $unknownIds -or $missingIds -or $actualSet.Count -ne $expectedIds.Count) {
+if ($duplicateIds -or $duplicateAssertionIds -or $unknownIds -or $missingIds -or $actualSet.Count -ne $expectedIds.Count) {
     Write-Host "TEST ID AUDIT FAILED"
     exit 1
 }
+
+# Static guard check
+Write-Host ""
+Write-Host "=== STATIC GUARD AUDIT ==="
+$scriptPath = $MyInvocation.MyCommand.Path
+
+$errors = $null
+$tokens = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
+
+if ($errors) {
+    Write-Host "STATIC GUARD FAILURE: Script parsing failed with errors: $errors"
+    exit 1
+}
+
+$calls = $ast.FindAll({
+    param($node)
+    $node -is [System.Management.Automation.Language.CommandAst] -and
+    $node.GetCommandName() -eq 'Register-Result'
+}, $true)
+
+$forbiddenPassIds = @('R101', 'R102', 'R107', 'R111', 'R113', 'R127', 'R128', 'R129', 'R130')
+$staticGuardPassed = $true
+
+foreach ($call in $calls) {
+    foreach ($elem in $call.CommandElements) {
+        if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+            $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
+            if ($forbiddenPassIds -contains $elem.Value) {
+                Write-Host "STATIC GUARD FAILURE: Direct Register-Result call found for ID: $($elem.Value)"
+                $staticGuardPassed = $false
+            }
+        }
+    }
+}
+
+if (-not $staticGuardPassed) {
+    Write-Host "STATIC GUARD AUDIT FAILED"
+    exit 1
+}
+Write-Host "STATIC GUARD AUDIT PASSED"
 
 # Final summary
 Write-Host ""

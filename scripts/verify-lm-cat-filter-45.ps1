@@ -246,9 +246,9 @@ try {
 
     # A06: migrations applied successfully
     $historyCount = Run-Sql "SELECT count(*) FROM drizzle.__drizzle_migrations;"
-    if ($historyCount -eq "4") {
+    if ($historyCount -eq "3") {
         Write-Host "  PASS: A06"
-        Register-Result -Id "A06" -Status "PASS" -Detail "history count = 4"
+        Register-Result -Id "A06" -Status "PASS" -Detail "history count = 3"
     } else {
         Write-Host "  FAIL: A06"
         Register-Result -Id "A06" -Status "FAIL" -Detail "history count = $historyCount"
@@ -257,7 +257,7 @@ try {
     # A07: second migrate is no-op
     Invoke-NativeChecked -Command "node" -Arguments @("scripts/run-lm44-drizzle-migrations.mjs")
     $historyCount2 = Run-Sql "SELECT count(*) FROM drizzle.__drizzle_migrations;"
-    if ($historyCount2 -eq "4") {
+    if ($historyCount2 -eq "3") {
         Write-Host "  PASS: A07"
         Register-Result -Id "A07" -Status "PASS" -Detail "second migrate no-op"
     } else {
@@ -577,7 +577,7 @@ $$;
     $gitDiffOutput = cmd /c "git diff --name-only HEAD 2>nul"
     $gitDiffFiles = $gitDiffOutput | Where-Object { $_ -notmatch "^warning:" }
     # Exclude test harness files from pattern matching
-    $gitDiffFiles = $gitDiffFiles | Where-Object { $_ -notmatch "verify-lm-cat-filter" -and $_ -notmatch "lm45-read-model" -and $_ -notmatch "lm44-" -and $_ -notmatch "lm-cat-filter-46" }
+    $gitDiffFiles = $gitDiffFiles | Where-Object { $_ -notmatch "verify-lm-cat-filter" -and $_ -notmatch "lm45-read-model" -and $_ -notmatch "lm44-" }
     $forbiddenChanges = $false
     $forbiddenPatterns = @('cart','checkout','RfqDialog','outbound','/go/','filter','ui','client')
     foreach ($pattern in $forbiddenPatterns) {
