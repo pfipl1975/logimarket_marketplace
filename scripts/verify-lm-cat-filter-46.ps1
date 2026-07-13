@@ -857,24 +857,19 @@ $$;
     Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50040, 140, 1, 'Elektryczny');" | Out-Null
     # Attempt to create manifest with batch_id=540 but source_entry_id=5040 (belongs to batch 541)
     # This violates the composite FK: migration_oav_targets(batch_id, source_entry_id) -> migration_source_entries(batch_id, id)
-    $prevEAP = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
+    # Expected SQLSTATE: 23503 (foreign_key_violation)
     $fkSql = "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (540, 5040, 50040, 50040, 140, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');"
-    $tempFkFile = [System.IO.Path]::GetTempFileName()
-    [System.IO.File]::WriteAllText($tempFkFile, $fkSql, (New-Object System.Text.UTF8Encoding $false))
-    $fkRes = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -t -A -X -v ON_ERROR_STOP=1 -f $tempFkFile 2>&1
-    $fkExit = $LASTEXITCODE
-    $ErrorActionPreference = $prevEAP
-    if (Test-Path $tempFkFile) { Remove-Item $tempFkFile -Force }
+    $escapedFkSql = $fkSql.Replace("'", "''")
+    $fkStateResult = Run-Sql "SELECT lm46_test.assert_sqlstate('23503', '$escapedFkSql');"
 
     $invalidManifestCount = Run-Sql "SELECT count(*) FROM public.migration_oav_targets WHERE batch_id = 540 AND source_entry_id = 5040;"
     $physR099 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50040;"
     $sourceEntryR099 = Run-Sql "SELECT count(*) FROM public.migration_source_entries WHERE id = 5040;"
 
-    if ($fkExit -ne 0 -and $invalidManifestCount -eq "0" -and $physR099 -eq "1" -and $sourceEntryR099 -eq "1") {
-        Register-Result -Id "R099" -Status "PASS" -Detail "composite FK rejected cross-batch source entry"
+    if ($fkStateResult -eq "PASS" -and $invalidManifestCount -eq "0" -and $physR099 -eq "1" -and $sourceEntryR099 -eq "1") {
+        Register-Result -Id "R099" -Status "PASS" -Detail "composite FK rejected cross-batch source entry with SQLSTATE 23503"
     } else {
-        Register-Result -Id "R099" -Status "FAIL" -Detail "fkExit=$fkExit invalidCount=$invalidManifestCount phys=$physR099 source=$sourceEntryR099"
+        Register-Result -Id "R099" -Status "FAIL" -Detail "expected SQLSTATE 23503; helperResult=$fkStateResult invalidCount=$invalidManifestCount phys=$physR099 source=$sourceEntryR099"
     }
 
     # R100: Rollback non-pending target lifecycle conflict
@@ -1429,11 +1424,16 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     } catch {
         Write-Host "  (cleanup warning ignored)"
     }
-    # Cleanup dry-run report backup
-    if ($DryRunReportExistedAtBaseline -and (Test-Path $DryRunReportBackup)) {
-        Copy-Item $DryRunReportBackup $DryRunReportPath -Force
-        Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
-    } elseif (Test-Path $DryRunReportBackup) {
+    # Cleanup dry-run report backup with failure-path safety
+    try {
+        if ($DryRunReportExistedAtBaseline) {
+            if (Test-Path $DryRunReportBackup) {
+                Copy-Item $DryRunReportBackup $DryRunReportPath -Force
+            }
+        } else {
+            Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
+        }
+    } finally {
         Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
     }
 }
@@ -1549,52 +1549,219 @@ foreach ($call in $calls) {
 
     $directLiteralPassCount++
 
-    # Check if this call is inside a conditional structure (IfStatementAst or TryStatementAst)
+    # Find the nearest control-flow ancestor (IfStatementAst or TryStatementAst)
     $parent = $call.Parent
-    $isConditional = $false
+    $cfAncestor = $null
     while ($null -ne $parent) {
         if ($parent -is [System.Management.Automation.Language.IfStatementAst] -or
             $parent -is [System.Management.Automation.Language.TryStatementAst]) {
-            $isConditional = $true
+            $cfAncestor = $parent
             break
         }
         $parent = $parent.Parent
     }
-    if (-not $isConditional) {
+    if ($null -eq $cfAncestor) {
         $unconditionalPassCount++
         Write-Host "AST AUDIT: Unconditional PASS for $literalId at line $($call.Extent.StartLineNumber)"
     }
 
-    # Check for matching FAIL branch with same literal ID anywhere in the script
+    # Check for matching FAIL in the corresponding alternate branch of the SAME control-flow ancestor
     $hasMatchingFail = $false
-    foreach ($otherCall in $calls) {
-        $otherId = $null
-        foreach ($elem in $otherCall.CommandElements) {
-            if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
-                $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
-                if ($elem.Value -eq $literalId) {
-                    $otherId = $elem.Value
-                    break
+    if ($cfAncestor -is [System.Management.Automation.Language.IfStatementAst]) {
+        # PASS must be in one of the If clauses; FAIL must be in an alternate clause of the same If
+        foreach ($clause in $cfAncestor.Clauses) {
+            # Find if PASS is in this clause's Item2 (StatementBlockAst)
+            $passInClause = $false
+            $clauseBody = $clause.Item2
+            if ($null -ne $clauseBody) {
+                $clauseCalls = $clauseBody.FindAll({
+                    param($n)
+                    $n -is [System.Management.Automation.Language.CommandAst] -and
+                    $n.GetCommandName() -eq 'Register-Result'
+                }, $true)
+                foreach ($cc in $clauseCalls) {
+                    if ($cc.Extent.StartLineNumber -eq $call.Extent.StartLineNumber -and
+                        $cc.Extent.StartColumnNumber -eq $call.Extent.StartColumnNumber) { $passInClause = $true; break }
+                }
+            }
+            if ($passInClause) {
+                # Look for FAIL in other clauses of the same IfStatement
+                foreach ($otherClause in $cfAncestor.Clauses) {
+                    if ($otherClause -eq $clause) { continue }
+                    $otherBody = $otherClause.Item2
+                    if ($null -eq $otherBody) { continue }
+                    $otherCalls = $otherBody.FindAll({
+                        param($n)
+                        $n -is [System.Management.Automation.Language.CommandAst] -and
+                        $n.GetCommandName() -eq 'Register-Result'
+                    }, $true)
+                    foreach ($oc in $otherCalls) {
+                        $ocId = $null
+                        foreach ($elem in $oc.CommandElements) {
+                            if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
+                                if ($elem.Value -eq $literalId) { $ocId = $elem.Value; break }
+                            }
+                        }
+                        if ($ocId -ne $literalId) { continue }
+                        for ($j = 0; $j -lt $oc.CommandElements.Count - 1; $j++) {
+                            $ce = $oc.CommandElements[$j]
+                            if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
+                                $ce.ParameterName -eq 'Status') {
+                                $next = $oc.CommandElements[$j + 1]
+                                if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                     $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
+                                    $next.Value -eq 'FAIL') {
+                                    $hasMatchingFail = $true
+                                    break
+                                }
+                            }
+                        }
+                        if ($hasMatchingFail) { break }
+                    }
+                    if ($hasMatchingFail) { break }
+                }
+                # Also check ElseClause (ElseClause is StatementBlockAst directly)
+                if (-not $hasMatchingFail -and $null -ne $cfAncestor.ElseClause) {
+                    $elseBody = $cfAncestor.ElseClause
+                    if ($null -ne $elseBody) {
+                        $elseCalls = $elseBody.FindAll({
+                            param($n)
+                            $n -is [System.Management.Automation.Language.CommandAst] -and
+                            $n.GetCommandName() -eq 'Register-Result'
+                        }, $true)
+                        foreach ($ec in $elseCalls) {
+                            $ecId = $null
+                            foreach ($elem in $ec.CommandElements) {
+                                if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                    $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
+                                    if ($elem.Value -eq $literalId) { $ecId = $elem.Value; break }
+                                }
+                            }
+                            if ($ecId -ne $literalId) { continue }
+                            for ($j = 0; $j -lt $ec.CommandElements.Count - 1; $j++) {
+                                $ce = $ec.CommandElements[$j]
+                                if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
+                                    $ce.ParameterName -eq 'Status') {
+                                    $next = $ec.CommandElements[$j + 1]
+                                    if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                         $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
+                                        $next.Value -eq 'FAIL') {
+                                        $hasMatchingFail = $true
+                                        break
+                                    }
+                                }
+                            }
+                            if ($hasMatchingFail) { break }
+                        }
+                    }
+                }
+                break
+            }
+        }
+    } elseif ($cfAncestor -is [System.Management.Automation.Language.TryStatementAst]) {
+        # PASS in try block: FAIL must be in a catch block of the same TryStatement
+        $tryBody = $cfAncestor.Body
+        $passInTry = $false
+        if ($null -ne $tryBody) {
+            $tryCalls = $tryBody.FindAll({
+                param($n)
+                $n -is [System.Management.Automation.Language.CommandAst] -and
+                $n.GetCommandName() -eq 'Register-Result'
+            }, $true)
+            foreach ($tc in $tryCalls) {
+                if ($tc.Extent.StartLineNumber -eq $call.Extent.StartLineNumber -and
+                    $tc.Extent.StartColumnNumber -eq $call.Extent.StartColumnNumber) { $passInTry = $true; break }
+            }
+        }
+        if ($passInTry) {
+            foreach ($catchClause in $cfAncestor.CatchClauses) {
+                $catchBody = $catchClause.Body
+                if ($null -eq $catchBody) { continue }
+                $catchCalls = $catchBody.FindAll({
+                    param($n)
+                    $n -is [System.Management.Automation.Language.CommandAst] -and
+                    $n.GetCommandName() -eq 'Register-Result'
+                }, $true)
+                foreach ($cc in $catchCalls) {
+                    $ccId = $null
+                    foreach ($elem in $cc.CommandElements) {
+                        if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                            $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
+                            if ($elem.Value -eq $literalId) { $ccId = $elem.Value; break }
+                        }
+                    }
+                    if ($ccId -ne $literalId) { continue }
+                    for ($j = 0; $j -lt $cc.CommandElements.Count - 1; $j++) {
+                        $ce = $cc.CommandElements[$j]
+                        if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
+                            $ce.ParameterName -eq 'Status') {
+                            $next = $cc.CommandElements[$j + 1]
+                            if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                 $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
+                                $next.Value -eq 'FAIL') {
+                                $hasMatchingFail = $true
+                                break
+                            }
+                        }
+                    }
+                    if ($hasMatchingFail) { break }
+                }
+                if ($hasMatchingFail) { break }
+            }
+        }
+        # PASS in catch block: FAIL must be in try block of the same TryStatement
+        $passInCatch = $false
+        foreach ($catchClause in $cfAncestor.CatchClauses) {
+            $catchBody = $catchClause.Body
+            if ($null -eq $catchBody) { continue }
+            $catchCalls = $catchBody.FindAll({
+                param($n)
+                $n -is [System.Management.Automation.Language.CommandAst] -and
+                $n.GetCommandName() -eq 'Register-Result'
+            }, $true)
+            foreach ($cc in $catchCalls) {
+                if ($cc.Extent.StartLineNumber -eq $call.Extent.StartLineNumber -and
+                    $cc.Extent.StartColumnNumber -eq $call.Extent.StartColumnNumber) { $passInCatch = $true; break }
+            }
+            if ($passInCatch) { break }
+        }
+        if ($passInCatch) {
+            $tryBody = $cfAncestor.Body
+            if ($null -ne $tryBody) {
+                $tryCalls = $tryBody.FindAll({
+                    param($n)
+                    $n -is [System.Management.Automation.Language.CommandAst] -and
+                    $n.GetCommandName() -eq 'Register-Result'
+                }, $true)
+                foreach ($tc in $tryCalls) {
+                    $tcId = $null
+                    foreach ($elem in $tc.CommandElements) {
+                        if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                            $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
+                            if ($elem.Value -eq $literalId) { $tcId = $elem.Value; break }
+                        }
+                    }
+                    if ($tcId -ne $literalId) { continue }
+                    for ($j = 0; $j -lt $tc.CommandElements.Count - 1; $j++) {
+                        $ce = $tc.CommandElements[$j]
+                        if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
+                            $ce.ParameterName -eq 'Status') {
+                            $next = $tc.CommandElements[$j + 1]
+                            if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                                 $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
+                                $next.Value -eq 'FAIL') {
+                                $hasMatchingFail = $true
+                                break
+                            }
+                        }
+                    }
+                    if ($hasMatchingFail) { break }
                 }
             }
         }
-        if ($otherId -ne $literalId) { continue }
-
-        for ($j = 0; $j -lt $otherCall.CommandElements.Count - 1; $j++) {
-            $ce = $otherCall.CommandElements[$j]
-            if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
-                $ce.ParameterName -eq 'Status') {
-                $next = $otherCall.CommandElements[$j + 1]
-                if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
-                     $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
-                    $next.Value -eq 'FAIL') {
-                    $hasMatchingFail = $true
-                    break
-                }
-            }
-        }
-        if ($hasMatchingFail) { break }
     }
+
     if (-not $hasMatchingFail) {
         $passWithoutMatchingFail++
         Write-Host "AST AUDIT: PASS without matching FAIL for $literalId at line $($call.Extent.StartLineNumber)"
