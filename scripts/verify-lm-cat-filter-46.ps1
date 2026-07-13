@@ -215,7 +215,7 @@ try {
 
     # Initialize PostgreSQL cluster
     New-Item -ItemType Directory -Path $dbData -Force | Out-Null
-    Invoke-NativeChecked -Command "$pgBin\initdb.exe" -Arguments @('-D', $dbData, '-U', $dbUser, '--auth-local=trust', '--auth-host=trust')
+    Invoke-NativeChecked -Command "$pgBin\initdb.exe" -Arguments @('-D', $dbData, '-U', $dbUser, '--auth-local=trust', '--auth-host=trust', '--encoding=UTF8', '--locale=C')
 
     & "$pgBin\pg_ctl.exe" -D $dbData -o "-F -p $dbPort" -l $dbLog start
     Start-Sleep -Seconds 4
@@ -954,11 +954,15 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
 
         $physR105 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50017;"
         $attemptR105 = Run-Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+        $motStatusR105 = Run-Sql "SELECT rollback_status FROM public.migration_oav_targets WHERE batch_id = 523;"
+        $motCurrentR105 = Run-Sql "SELECT target_row_id_current FROM public.migration_oav_targets WHERE batch_id = 523;"
+        $motDeletedR105 = Run-Sql "SELECT target_deleted_at FROM public.migration_oav_targets WHERE batch_id = 523;"
 
-        if ($resR105 -eq "failed" -and $physR105 -eq "1" -and $attemptR105 -eq "failed") {
-            Register-Result -Id "R105" -Status "PASS" -Detail "real technical failure via trigger"
+        if ($resR105 -eq "failed" -and $physR105 -eq "1" -and $attemptR105 -eq "failed" -and
+            $motStatusR105 -eq "pending" -and $motCurrentR105 -ne "" -and $motDeletedR105 -eq "") {
+            Register-Result -Id "R105" -Status "PASS" -Detail "real technical failure via trigger, manifest unchanged"
         } else {
-            Register-Result -Id "R105" -Status "FAIL" -Detail "res=$resR105 phys=$physR105 attempt=$attemptR105"
+            Register-Result -Id "R105" -Status "FAIL" -Detail "res=$resR105 phys=$physR105 attempt=$attemptR105 motStatus=$motStatusR105 motCurrent=$motCurrentR105 motDeleted=$motDeletedR105"
         }
     } finally {
         if ($null -ne $tempRbFile -and (Test-Path $tempRbFile)) { Remove-Item $tempRbFile -Force }
@@ -1154,7 +1158,7 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     # ==================================================================
 
     # R115: Dry-run execution zero exit code on valid manifest
-    # Run the tsx script and capture exit code
+    # Run the tsx script and capture exit code (default: stdout only, no file)
     $prevEAP = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     & npx.cmd --no-install tsx scripts/lm46-dry-run.ts 2>&1 | Out-Null
@@ -1180,7 +1184,11 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
         Register-Result -Id "R116" -Status "FAIL" -Detail "did not fail on missing file"
     }
 
-    # Read the dry-run report content
+    # R117-R122: Read the dry-run report content — requires explicit --write-report flag
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    & npx.cmd --no-install tsx scripts/lm46-dry-run.ts --write-report 2>&1 | Out-Null
+    $ErrorActionPreference = $prevEAP
     $report = Get-Content "scripts/lm46-dry-run-report.txt" -Raw
 
     # R117: Dry-run report contract version check
@@ -1412,29 +1420,122 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     Assert-Value -Id "R130" -Actual $s45Pass -Expected $true -Detail "Sprint 45 regression run result (exit=$s45Exit)"
 
 } finally {
-    # Cleanup database instance
-    Write-Host "Stopping and destroying temporary PostgreSQL instance..."
+    # ==================================================================
+    # OUTERMOST CLEANUP — must run regardless of failure location
+    # ==================================================================
+    $cleanupErrors = New-Object System.Collections.Generic.List[string]
+
+    # 1. Stop all background jobs
     try {
-        & "$pgBin\pg_ctl.exe" -D $dbData stop -m immediate 2>&1 | Out-Null
+        $jobs = Get-Job -ErrorAction SilentlyContinue
+        foreach ($job in $jobs) {
+            try {
+                Stop-Job $job -ErrorAction SilentlyContinue | Out-Null
+                Remove-Job $job -Force -ErrorAction SilentlyContinue | Out-Null
+            } catch {
+                $cleanupErrors.Add("job cleanup: $_")
+            }
+        }
     } catch {
-        Write-Host "  (stop warning ignored)"
+        $cleanupErrors.Add("job enumeration: $_")
     }
+
+    # 2. Stop PostgreSQL instance
+    Write-Host "Stopping temporary PostgreSQL instance..."
+    $pgStopped = $false
     try {
-        Remove-Item (Join-Path $env:TEMP "lm46_$guid") -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+        $pgStatus = & "$pgBin\pg_ctl.exe" -D $dbData status 2>&1
+        if ($pgStatus -match "server is running") {
+            & "$pgBin\pg_ctl.exe" -D $dbData stop -m immediate 2>&1 | Out-Null
+            Start-Sleep -Seconds 2
+            $pgStatusAfter = & "$pgBin\pg_ctl.exe" -D $dbData status 2>&1
+            if ($pgStatusAfter -notmatch "server is running") {
+                $pgStopped = $true
+                Write-Host "  PostgreSQL stopped successfully"
+            } else {
+                $cleanupErrors.Add("PostgreSQL still running after stop")
+            }
+        } else {
+            $pgStopped = $true
+            Write-Host "  PostgreSQL was not running"
+        }
     } catch {
-        Write-Host "  (cleanup warning ignored)"
+        $cleanupErrors.Add("PostgreSQL stop: $_")
     }
-    # Cleanup dry-run report backup with failure-path safety
+
+    # 3. Verify no postgres process with our data directory
+    try {
+        $procs = Get-Process -Name "postgres" -ErrorAction SilentlyContinue | Where-Object {
+            $_.Path -like "*$dbData*"
+        }
+        if ($procs) {
+            foreach ($proc in $procs) {
+                try {
+                    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+                } catch {
+                    $cleanupErrors.Add("process kill pid=$($proc.Id): $_")
+                }
+            }
+        }
+    } catch {
+        $cleanupErrors.Add("process check: $_")
+    }
+
+    # 4. Remove data directory
+    $dataDir = Join-Path $env:TEMP "lm46_$guid"
+    try {
+        if (Test-Path $dataDir) {
+            Remove-Item $dataDir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+            if (-not (Test-Path $dataDir)) {
+                Write-Host "  Data directory removed"
+            } else {
+                $cleanupErrors.Add("data directory not removed: $dataDir")
+            }
+        }
+    } catch {
+        $cleanupErrors.Add("data directory removal: $_")
+    }
+
+    # 5. Restore dry-run report to baseline state
     try {
         if ($DryRunReportExistedAtBaseline) {
             if (Test-Path $DryRunReportBackup) {
                 Copy-Item $DryRunReportBackup $DryRunReportPath -Force
+                Write-Host "  Dry-run report restored to baseline"
+            } else {
+                $cleanupErrors.Add("dry-run report backup missing")
             }
         } else {
-            Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
+            if (Test-Path $DryRunReportPath) {
+                Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
+                if (-not (Test-Path $DryRunReportPath)) {
+                    Write-Host "  Dry-run report removed (was absent at baseline)"
+                } else {
+                    $cleanupErrors.Add("dry-run report not removed")
+                }
+            }
         }
-    } finally {
-        Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
+    } catch {
+        $cleanupErrors.Add("dry-run report restore: $_")
+    }
+
+    # 6. Remove dry-run report backup
+    try {
+        if (Test-Path $DryRunReportBackup) {
+            Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
+        }
+    } catch {
+        $cleanupErrors.Add("backup removal: $_")
+    }
+
+    # 7. Report cleanup status
+    if ($cleanupErrors.Count -gt 0) {
+        Write-Host "CLEANUP WARNINGS ($($cleanupErrors.Count)):"
+        foreach ($err in $cleanupErrors) {
+            Write-Host "  - $err"
+        }
+    } else {
+        Write-Host "Cleanup completed successfully"
     }
 }
 

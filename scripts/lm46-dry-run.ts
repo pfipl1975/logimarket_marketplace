@@ -1,4 +1,4 @@
-﻿import * as fs from 'fs';
+import * as fs from 'fs';
 import * as path from 'path';
 
 // Define paths
@@ -41,6 +41,9 @@ interface MapEntry {
 }
 
 function runDryRun() {
+  // Check for --write-report flag
+  const writeReportFlag = process.argv.includes('--write-report');
+
   let fixture: Fixture;
   let mappings: MapEntry[];
 
@@ -202,14 +205,16 @@ function runDryRun() {
 
   const finalReport = reportBody.join('\n');
 
-  // Output timestamp outside the report body
+  // Output timestamp to stderr (non-canonical, not part of deterministic output)
   console.error(`Dry-run execution timestamp: ${new Date().toISOString()}`);
 
   // Print canonical report to stdout
   console.log(finalReport);
 
-  // Write canonical report to file
-  fs.writeFileSync(reportPath, finalReport, 'utf8');
+  // Write canonical report to file only when explicitly requested
+  if (writeReportFlag) {
+    fs.writeFileSync(reportPath, finalReport, 'utf8');
+  }
 }
 
 runDryRun();

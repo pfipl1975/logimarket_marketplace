@@ -1,4 +1,4 @@
-﻿CREATE TABLE "migration_rollback_attempts" (
+CREATE TABLE "migration_rollback_attempts" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"batch_id" bigint NOT NULL,
 	"attempt_number" integer NOT NULL,
