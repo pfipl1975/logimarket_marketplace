@@ -101,6 +101,20 @@ $GitCachedBaseline = @(git diff --cached --binary)
 $BaselineHash0003 = git hash-object "drizzle/0003_wet_scarlet_spider.sql" 2>$null
 $BaselineHashSchema = git hash-object "src/lib/schema.ts" 2>$null
 $BaselineHash46 = git hash-object "scripts/verify-lm-cat-filter-46.ps1" 2>$null
+$BaselineHash45 = git hash-object "scripts/verify-lm-cat-filter-45.ps1" 2>$null
+$BaselineHashMatrix = git hash-object "scripts/sql/fixtures/lm46-test-matrix-v1.json" 2>$null
+$BaselineHashDryRun = git hash-object "scripts/lm46-dry-run.ts" 2>$null
+
+# Dry-run report backup for reproducibility (R123)
+$DryRunReportPath = "scripts/lm46-dry-run-report.txt"
+$DryRunReportExistedAtBaseline = Test-Path $DryRunReportPath
+$DryRunReportBackup = Join-Path $env:TEMP "lm46-dry-run-report-$([guid]::NewGuid().ToString('N')).bak"
+if ($DryRunReportExistedAtBaseline) {
+    Copy-Item $DryRunReportPath $DryRunReportBackup -Force
+} else {
+    # Ensure report does not exist at baseline for clean test
+    Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
+}
 
 try {
     # ==================================================================
@@ -835,20 +849,32 @@ $$;
         Register-Result -Id "R098" -Status "FAIL" -Detail "res=$resR098 phys=$physR098 mot=$motR098"
     }
 
-    # R099: Rollback source entry integrity mismatch — legacy canonical version
-    # Create a manifest with legacy v1 canonical version — automatic rollback forbidden
-    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (521, 'completed', 'Batch 521', 'TestRunner');" | Out-Null
-    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5019, 521, 131, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
-    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50016, 131, 1, 'Elektryczny');" | Out-Null
-    # Manifest with legacy v1 canonical version — integrity mismatch with current runtime
-    Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (521, 5019, 50016, 50016, 131, 1, '$napedHash', 'lm-source-v1', 'created_by_batch');" | Out-Null
-    $resR099 = Run-Sql "SELECT migration_private.rollback_batch(521);"
-    $physR099 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50016;"
-    $motR099 = Run-Sql "SELECT rollback_status FROM public.migration_oav_targets WHERE source_entry_id = 5019;"
-    if ($resR099 -eq "conflict" -and $physR099 -eq "1" -and $motR099 -eq "pending") {
-        Register-Result -Id "R099" -Status "PASS" -Detail "legacy canonical version integrity mismatch conflict"
+    # R099: Source-entry batch ownership composite FK rejection
+    # Create batch A and batch B, then try to create manifest with source_entry from batch B under batch A
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (540, 'completed', 'Batch A', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (541, 'completed', 'Batch B', 'TestRunner');" | Out-Null
+    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5040, 541, 140, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
+    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50040, 140, 1, 'Elektryczny');" | Out-Null
+    # Attempt to create manifest with batch_id=540 but source_entry_id=5040 (belongs to batch 541)
+    # This violates the composite FK: migration_oav_targets(batch_id, source_entry_id) -> migration_source_entries(batch_id, id)
+    $prevEAP = $ErrorActionPreference
+    $ErrorActionPreference = 'Continue'
+    $fkSql = "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (540, 5040, 50040, 50040, 140, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');"
+    $tempFkFile = [System.IO.Path]::GetTempFileName()
+    [System.IO.File]::WriteAllText($tempFkFile, $fkSql, (New-Object System.Text.UTF8Encoding $false))
+    $fkRes = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -t -A -X -v ON_ERROR_STOP=1 -f $tempFkFile 2>&1
+    $fkExit = $LASTEXITCODE
+    $ErrorActionPreference = $prevEAP
+    if (Test-Path $tempFkFile) { Remove-Item $tempFkFile -Force }
+
+    $invalidManifestCount = Run-Sql "SELECT count(*) FROM public.migration_oav_targets WHERE batch_id = 540 AND source_entry_id = 5040;"
+    $physR099 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50040;"
+    $sourceEntryR099 = Run-Sql "SELECT count(*) FROM public.migration_source_entries WHERE id = 5040;"
+
+    if ($fkExit -ne 0 -and $invalidManifestCount -eq "0" -and $physR099 -eq "1" -and $sourceEntryR099 -eq "1") {
+        Register-Result -Id "R099" -Status "PASS" -Detail "composite FK rejected cross-batch source entry"
     } else {
-        Register-Result -Id "R099" -Status "FAIL" -Detail "res=$resR099 phys=$physR099 mot=$motR099"
+        Register-Result -Id "R099" -Status "FAIL" -Detail "fkExit=$fkExit invalidCount=$invalidManifestCount phys=$physR099 source=$sourceEntryR099"
     }
 
     # R100: Rollback non-pending target lifecycle conflict
@@ -894,7 +920,12 @@ $$;
     # R105: Rollback attempt status failed check — REAL technical failure via trigger injection
     # Create a disposable trigger that forces DELETE failure on a specific target
     # lm46_test schema already created during test setup (line 220)
-    Run-Sql "CREATE OR REPLACE FUNCTION lm46_test.force_rollback_delete_failure()
+    $tempRbFile = $null
+    $resR105 = ""
+    $physR105 = ""
+    $attemptR105 = ""
+    try {
+        Run-Sql "CREATE OR REPLACE FUNCTION lm46_test.force_rollback_delete_failure()
 RETURNS trigger LANGUAGE plpgsql AS `$`$
 BEGIN
   IF OLD.id = 50017 THEN
@@ -906,38 +937,38 @@ BEGIN
   RETURN OLD;
 END;
 `$`$;" | Out-Null
-    Run-Sql "CREATE TRIGGER trg_force_rollback_delete
+        Run-Sql "CREATE TRIGGER trg_force_rollback_delete
 BEFORE DELETE ON public.offer_attribute_values
 FOR EACH ROW
 EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
 
-    Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (523, 'completed', 'Batch 523', 'TestRunner');" | Out-Null
-    Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5021, 523, 132, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
-    Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50017, 132, 1, 'Elektryczny');" | Out-Null
-    Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (523, 5021, 50017, 50017, 132, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
+        Run-Sql "INSERT INTO public.migration_batches (id, status, source_description, created_by) VALUES (523, 'completed', 'Batch 523', 'TestRunner');" | Out-Null
+        Run-Sql "INSERT INTO public.migration_source_entries (id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, expected_target_count) VALUES (5021, 523, 132, 'naped', '{`"value`": `"Elektryczny`"}'::jsonb, '$napedHash', 'lm-source-v2', 1);" | Out-Null
+        Run-Sql "INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (50017, 132, 1, 'Elektryczny');" | Out-Null
+        Run-Sql "INSERT INTO public.migration_oav_targets (batch_id, source_entry_id, target_row_id_original, target_row_id_current, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance) VALUES (523, 5021, 50017, 50017, 132, 1, '$napedHash', 'lm-source-v2', 'created_by_batch');" | Out-Null
 
-    # Execute rollback_batch with ErrorActionPreference=Continue to avoid ErrorRecord from trigger
-    $tempRbFile = [System.IO.Path]::GetTempFileName()
-    [System.IO.File]::WriteAllText($tempRbFile, "SELECT migration_private.rollback_batch(523);", (New-Object System.Text.UTF8Encoding $false))
-    $prevEAP = $ErrorActionPreference
-    $ErrorActionPreference = 'Continue'
-    $resR105 = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -t -A -X -v ON_ERROR_STOP=1 -f $tempRbFile 2>&1
-    $rbExit = $LASTEXITCODE
-    $ErrorActionPreference = $prevEAP
-    if ($rbExit -ne 0) { $resR105 = "error" }
-    if (Test-Path $tempRbFile) { Remove-Item $tempRbFile -Force }
+        # Execute rollback_batch with ErrorActionPreference=Continue to avoid ErrorRecord from trigger
+        $tempRbFile = [System.IO.Path]::GetTempFileName()
+        [System.IO.File]::WriteAllText($tempRbFile, "SELECT migration_private.rollback_batch(523);", (New-Object System.Text.UTF8Encoding $false))
+        $prevEAP = $ErrorActionPreference
+        $ErrorActionPreference = 'Continue'
+        $resR105 = & "$pgBin\psql.exe" -h localhost -p $dbPort -U $dbUser -d $dbName -t -A -X -v ON_ERROR_STOP=1 -f $tempRbFile 2>&1
+        $rbExit = $LASTEXITCODE
+        $ErrorActionPreference = $prevEAP
+        if ($rbExit -ne 0) { $resR105 = "error" }
 
-    $physR105 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50017;"
-    $attemptR105 = Run-Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 523;"
+        $physR105 = Run-Sql "SELECT count(*) FROM public.offer_attribute_values WHERE id = 50017;"
+        $attemptR105 = Run-Sql "SELECT status FROM public.migration_rollback_attempts WHERE batch_id = 523;"
 
-    # Cleanup trigger immediately after test
-    Run-Sql "DROP TRIGGER IF EXISTS trg_force_rollback_delete ON public.offer_attribute_values;" | Out-Null
-    Run-Sql "DROP FUNCTION IF EXISTS lm46_test.force_rollback_delete_failure();" | Out-Null
-
-    if ($resR105 -eq "failed" -and $physR105 -eq "1" -and $attemptR105 -eq "failed") {
-        Register-Result -Id "R105" -Status "PASS" -Detail "real technical failure via trigger"
-    } else {
-        Register-Result -Id "R105" -Status "FAIL" -Detail "res=$resR105 phys=$physR105 attempt=$attemptR105"
+        if ($resR105 -eq "failed" -and $physR105 -eq "1" -and $attemptR105 -eq "failed") {
+            Register-Result -Id "R105" -Status "PASS" -Detail "real technical failure via trigger"
+        } else {
+            Register-Result -Id "R105" -Status "FAIL" -Detail "res=$resR105 phys=$physR105 attempt=$attemptR105"
+        }
+    } finally {
+        if ($null -ne $tempRbFile -and (Test-Path $tempRbFile)) { Remove-Item $tempRbFile -Force }
+        Run-Sql "DROP TRIGGER IF EXISTS trg_force_rollback_delete ON public.offer_attribute_values;" | Out-Null
+        Run-Sql "DROP FUNCTION IF EXISTS lm46_test.force_rollback_delete_failure();" | Out-Null
     }
 
     # R106: Rollback GET STACKED DIAGNOSTICS fields check — uses REAL attempt from R105
@@ -1203,6 +1234,13 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     # R123–R130: REGRESSION AND QUALITY GATES
     # ==================================================================
 
+    # Restore dry-run report to baseline state before R123 comparison
+    if ($DryRunReportExistedAtBaseline) {
+        Copy-Item $DryRunReportBackup $DryRunReportPath -Force
+    } else {
+        Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
+    }
+
     # R123: Git clean working tree check — REAL immutability with baseline
     $gitStatusEnd = @(git status --porcelain=v1 --untracked-files=all)
     $gitDiffEnd = @(git diff --binary)
@@ -1239,6 +1277,9 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     $endHash0003 = git hash-object "drizzle/0003_wet_scarlet_spider.sql" 2>$null
     $endHashSchema = git hash-object "src/lib/schema.ts" 2>$null
     $endHash46 = git hash-object "scripts/verify-lm-cat-filter-46.ps1" 2>$null
+    $endHash45 = git hash-object "scripts/verify-lm-cat-filter-45.ps1" 2>$null
+    $endHashMatrix = git hash-object "scripts/sql/fixtures/lm46-test-matrix-v1.json" 2>$null
+    $endHashDryRun = git hash-object "scripts/lm46-dry-run.ts" 2>$null
 
     if ($BaselineHash0003 -ne $endHash0003) {
         $r123Pass = $false
@@ -1251,6 +1292,18 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     if ($BaselineHash46 -ne $endHash46) {
         $r123Pass = $false
         $r123Detail += "harness hash changed during test; "
+    }
+    if ($BaselineHash45 -ne $endHash45) {
+        $r123Pass = $false
+        $r123Detail += "sprint45 harness hash changed during test; "
+    }
+    if ($BaselineHashMatrix -ne $endHashMatrix) {
+        $r123Pass = $false
+        $r123Detail += "test matrix hash changed during test; "
+    }
+    if ($BaselineHashDryRun -ne $endHashDryRun) {
+        $r123Pass = $false
+        $r123Detail += "dry-run hash changed during test; "
     }
 
     if ($r123Pass) {
@@ -1376,6 +1429,13 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     } catch {
         Write-Host "  (cleanup warning ignored)"
     }
+    # Cleanup dry-run report backup
+    if ($DryRunReportExistedAtBaseline -and (Test-Path $DryRunReportBackup)) {
+        Copy-Item $DryRunReportBackup $DryRunReportPath -Force
+        Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
+    } elseif (Test-Path $DryRunReportBackup) {
+        Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
+    }
 }
 
 # Summary and test audit
@@ -1432,26 +1492,124 @@ $calls = $ast.FindAll({
     $node.GetCommandName() -eq 'Register-Result'
 }, $true)
 
-$forbiddenPassIds = @('R101', 'R102', 'R107', 'R111', 'R113', 'R127', 'R128', 'R129', 'R130')
-$staticGuardPassed = $true
+# Global AST authenticity audit — no manual ID list
+Write-Host ""
+Write-Host "=== AST AUTHENTICITY AUDIT ==="
+$scriptPath = $MyInvocation.MyCommand.Path
+
+$errors = $null
+$tokens = $null
+$ast = [System.Management.Automation.Language.Parser]::ParseFile($scriptPath, [ref]$tokens, [ref]$errors)
+
+if ($errors) {
+    Write-Host "AST AUDIT FAILURE: Script parsing failed with errors: $errors"
+    exit 1
+}
+
+$calls = $ast.FindAll({
+    param($node)
+    $node -is [System.Management.Automation.Language.CommandAst] -and
+    $node.GetCommandName() -eq 'Register-Result'
+}, $true)
+
+$directLiteralPassCount = 0
+$passWithoutMatchingFail = 0
+$unconditionalPassCount = 0
 
 foreach ($call in $calls) {
+    # Extract literal R-ID from this call
+    $literalId = $null
     foreach ($elem in $call.CommandElements) {
         if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
             $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
-            if ($forbiddenPassIds -contains $elem.Value) {
-                Write-Host "STATIC GUARD FAILURE: Direct Register-Result call found for ID: $($elem.Value)"
-                $staticGuardPassed = $false
+            if ($elem.Value -match '^R\d+$') {
+                $literalId = $elem.Value
+                break
             }
         }
     }
+    if ($null -eq $literalId) { continue }
+
+    # Check if this call has -Status "PASS" literal
+    $hasPassLiteral = $false
+    for ($i = 0; $i -lt $call.CommandElements.Count - 1; $i++) {
+        $ce = $call.CommandElements[$i]
+        if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
+            $ce.ParameterName -eq 'Status') {
+            $next = $call.CommandElements[$i + 1]
+            if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                 $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
+                $next.Value -eq 'PASS') {
+                $hasPassLiteral = $true
+                break
+            }
+        }
+    }
+    if (-not $hasPassLiteral) { continue }
+
+    $directLiteralPassCount++
+
+    # Check if this call is inside a conditional structure (IfStatementAst or TryStatementAst)
+    $parent = $call.Parent
+    $isConditional = $false
+    while ($null -ne $parent) {
+        if ($parent -is [System.Management.Automation.Language.IfStatementAst] -or
+            $parent -is [System.Management.Automation.Language.TryStatementAst]) {
+            $isConditional = $true
+            break
+        }
+        $parent = $parent.Parent
+    }
+    if (-not $isConditional) {
+        $unconditionalPassCount++
+        Write-Host "AST AUDIT: Unconditional PASS for $literalId at line $($call.Extent.StartLineNumber)"
+    }
+
+    # Check for matching FAIL branch with same literal ID anywhere in the script
+    $hasMatchingFail = $false
+    foreach ($otherCall in $calls) {
+        $otherId = $null
+        foreach ($elem in $otherCall.CommandElements) {
+            if ($elem -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                $elem -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) {
+                if ($elem.Value -eq $literalId) {
+                    $otherId = $elem.Value
+                    break
+                }
+            }
+        }
+        if ($otherId -ne $literalId) { continue }
+
+        for ($j = 0; $j -lt $otherCall.CommandElements.Count - 1; $j++) {
+            $ce = $otherCall.CommandElements[$j]
+            if ($ce -is [System.Management.Automation.Language.CommandParameterAst] -and
+                $ce.ParameterName -eq 'Status') {
+                $next = $otherCall.CommandElements[$j + 1]
+                if (($next -is [System.Management.Automation.Language.StringConstantExpressionAst] -or
+                     $next -is [System.Management.Automation.Language.ExpandableStringExpressionAst]) -and
+                    $next.Value -eq 'FAIL') {
+                    $hasMatchingFail = $true
+                    break
+                }
+            }
+        }
+        if ($hasMatchingFail) { break }
+    }
+    if (-not $hasMatchingFail) {
+        $passWithoutMatchingFail++
+        Write-Host "AST AUDIT: PASS without matching FAIL for $literalId at line $($call.Extent.StartLineNumber)"
+    }
 }
 
-if (-not $staticGuardPassed) {
-    Write-Host "STATIC GUARD AUDIT FAILED"
+Write-Host "DIRECT LITERAL PASS CALLS: $directLiteralPassCount"
+Write-Host "PASS CALLS WITHOUT MATCHING FAIL: $passWithoutMatchingFail"
+Write-Host "UNCONDITIONAL PASS CALLS: $unconditionalPassCount"
+
+if ($passWithoutMatchingFail -gt 0 -or $unconditionalPassCount -gt 0) {
+    Write-Host "AST AUTHENTICITY AUDIT FAILED"
     exit 1
 }
-Write-Host "STATIC GUARD AUDIT PASSED"
+Write-Host "AST AUTHENTICITY AUDIT PASSED"
 
 # Final summary
 Write-Host ""
