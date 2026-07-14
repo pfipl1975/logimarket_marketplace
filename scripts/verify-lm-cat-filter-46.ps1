@@ -34,6 +34,7 @@ $dbName = "lm46_$guid"
 
 $results = New-Object System.Collections.Generic.List[string]
 $testIds = New-Object System.Collections.Generic.List[string]
+$HarnessJobs = New-Object System.Collections.Generic.List[object]
 
 function Register-Result {
     param([string]$Id, [string]$Status, [string]$Detail)
@@ -109,8 +110,28 @@ $BaselineHashDryRun = git hash-object "scripts/lm46-dry-run.ts" 2>$null
 $DryRunReportPath = "scripts/lm46-dry-run-report.txt"
 $DryRunReportExistedAtBaseline = Test-Path $DryRunReportPath
 $DryRunReportBackup = Join-Path $env:TEMP "lm46-dry-run-report-$([guid]::NewGuid().ToString('N')).bak"
+$DryRunReportBaselineHash = $null
+
+function Get-Sha256Hex {
+    param([string]$FilePath)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $stream = [System.IO.File]::OpenRead($FilePath)
+        try {
+            $hashBytes = $sha256.ComputeHash($stream)
+            $hex = [BitConverter]::ToString($hashBytes).Replace("-", "").ToLowerInvariant()
+            return $hex
+        } finally {
+            $stream.Close()
+        }
+    } finally {
+        $sha256.Dispose()
+    }
+}
+
 if ($DryRunReportExistedAtBaseline) {
     Copy-Item $DryRunReportPath $DryRunReportBackup -Force
+    $DryRunReportBaselineHash = Get-Sha256Hex -FilePath $DryRunReportPath
 } else {
     # Ensure report does not exist at baseline for clean test
     Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
@@ -1009,6 +1030,7 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
         $env:PGPASSWORD = ''
         & "$bin\psql.exe" -h localhost -p $port -U $user -d $db -t -A -f $file 2>&1
     } -ArgumentList $pgBinLocal, $dbPortLocal, $dbUserLocal, $dbNameLocal, $tempSqlFile
+    $HarnessJobs.Add($sessionAJob)
 
     # Poll Receive-Job to capture Session A's PID
     $pidConfirmed = $null
@@ -1102,6 +1124,7 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
         $env:PGPASSWORD = ''
         & "$bin\psql.exe" -h localhost -p $port -U $user -d $db -t -A -f $file 2>&1
     } -ArgumentList $pgBinLocal, $dbPortLocal, $dbUserLocal, $dbNameLocal, $tempSqlFileB
+    $HarnessJobs.Add($sessionAJobB)
 
     # Poll to capture Session A B's PID
     $pidB = $null
@@ -1423,36 +1446,64 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
     # ==================================================================
     # OUTERMOST CLEANUP — must run regardless of failure location
     # ==================================================================
-    $cleanupErrors = New-Object System.Collections.Generic.List[string]
+    $cleanupFailed = $false
+    $cleanupErrors = [System.Collections.Generic.List[string]]::new()
 
-    # 1. Stop all background jobs
+    # 1. Stop tracked background jobs only
     try {
-        $jobs = Get-Job -ErrorAction SilentlyContinue
-        foreach ($job in $jobs) {
+        foreach ($job in $HarnessJobs) {
             try {
-                Stop-Job $job -ErrorAction SilentlyContinue | Out-Null
+                if ($job.State -eq 'Running') {
+                    Stop-Job $job -ErrorAction SilentlyContinue | Out-Null
+                }
                 Remove-Job $job -Force -ErrorAction SilentlyContinue | Out-Null
             } catch {
-                $cleanupErrors.Add("job cleanup: $_")
+                $cleanupFailed = $true
+                $cleanupErrors.Add("job cleanup id=$($job.Id): $_")
             }
         }
+        # Verify no tracked jobs remain
+        $remainingTracked = Get-Job -ErrorAction SilentlyContinue | Where-Object {
+            $rj = $_
+            $HarnessJobs | Where-Object { $_.Id -eq $rj.Id }
+        }
+        if ($remainingTracked) {
+            $cleanupFailed = $true
+            $cleanupErrors.Add("tracked jobs still present: $($remainingTracked.Id -join ', ')")
+        }
     } catch {
+        $cleanupFailed = $true
         $cleanupErrors.Add("job enumeration: $_")
     }
 
-    # 2. Stop PostgreSQL instance
+    # 2. Stop PostgreSQL instance — Check A: pg_ctl status
     Write-Host "Stopping temporary PostgreSQL instance..."
     $pgStopped = $false
+    $postmasterPid = $null
     try {
+        # Read postmaster.pid for Check B
+        $pidFile = Join-Path $dbData "postmaster.pid"
+        if (Test-Path $pidFile) {
+            $pidContent = Get-Content $pidFile -TotalCount 1
+            if ($pidContent -match '^\d+$') {
+                $postmasterPid = [int]$pidContent
+            }
+        }
+
+        # Check A: pg_ctl status
         $pgStatus = & "$pgBin\pg_ctl.exe" -D $dbData status 2>&1
-        if ($pgStatus -match "server is running") {
+        $pgStatusExit = $LASTEXITCODE
+        if ($pgStatusExit -eq 0 -and ($pgStatus -match "server is running")) {
             & "$pgBin\pg_ctl.exe" -D $dbData stop -m immediate 2>&1 | Out-Null
             Start-Sleep -Seconds 2
+            # Verify stop
             $pgStatusAfter = & "$pgBin\pg_ctl.exe" -D $dbData status 2>&1
-            if ($pgStatusAfter -notmatch "server is running") {
+            $pgStatusAfterExit = $LASTEXITCODE
+            if ($pgStatusAfterExit -ne 0 -or ($pgStatusAfter -match "no server running")) {
                 $pgStopped = $true
                 Write-Host "  PostgreSQL stopped successfully"
             } else {
+                $cleanupFailed = $true
                 $cleanupErrors.Add("PostgreSQL still running after stop")
             }
         } else {
@@ -1460,71 +1511,90 @@ EXECUTE FUNCTION lm46_test.force_rollback_delete_failure();" | Out-Null
             Write-Host "  PostgreSQL was not running"
         }
     } catch {
+        $cleanupFailed = $true
         $cleanupErrors.Add("PostgreSQL stop: $_")
     }
 
-    # 3. Verify no postgres process with our data directory
-    try {
-        $procs = Get-Process -Name "postgres" -ErrorAction SilentlyContinue | Where-Object {
-            $_.Path -like "*$dbData*"
-        }
-        if ($procs) {
-            foreach ($proc in $procs) {
+    # 3. Check B: postmaster PID verification
+    if ($null -ne $postmasterPid) {
+        try {
+            $proc = Get-Process -Id $postmasterPid -ErrorAction SilentlyContinue
+            if ($proc) {
                 try {
-                    Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue
+                    Stop-Process -Id $postmasterPid -Force -ErrorAction SilentlyContinue
+                    Start-Sleep -Seconds 1
+                    $procAfter = Get-Process -Id $postmasterPid -ErrorAction SilentlyContinue
+                    if ($procAfter) {
+                        $cleanupFailed = $true
+                        $cleanupErrors.Add("postmaster PID $postmasterPid still alive after force kill")
+                    }
                 } catch {
-                    $cleanupErrors.Add("process kill pid=$($proc.Id): $_")
+                    $cleanupFailed = $true
+                    $cleanupErrors.Add("postmaster PID $postmasterPid kill failed: $_")
                 }
             }
+        } catch {
+            $cleanupFailed = $true
+            $cleanupErrors.Add("postmaster PID check: $_")
         }
-    } catch {
-        $cleanupErrors.Add("process check: $_")
     }
 
-    # 4. Remove data directory
+    # 4. Remove data directory — strict
     $dataDir = Join-Path $env:TEMP "lm46_$guid"
     try {
         if (Test-Path $dataDir) {
-            Remove-Item $dataDir -Recurse -Force -ErrorAction SilentlyContinue | Out-Null
+            Remove-Item $dataDir -Recurse -Force -ErrorAction Stop
             if (-not (Test-Path $dataDir)) {
                 Write-Host "  Data directory removed"
             } else {
-                $cleanupErrors.Add("data directory not removed: $dataDir")
+                $cleanupFailed = $true
+                $cleanupErrors.Add("data directory still present after removal: $dataDir")
             }
         }
     } catch {
+        $cleanupFailed = $true
         $cleanupErrors.Add("data directory removal: $_")
     }
 
-    # 5. Restore dry-run report to baseline state
+    # 5. Restore dry-run report to baseline state with SHA256 verification
     try {
         if ($DryRunReportExistedAtBaseline) {
             if (Test-Path $DryRunReportBackup) {
                 Copy-Item $DryRunReportBackup $DryRunReportPath -Force
-                Write-Host "  Dry-run report restored to baseline"
+                $restoredHash = Get-Sha256Hex -FilePath $DryRunReportPath
+                if ($restoredHash -eq $DryRunReportBaselineHash) {
+                    Write-Host "  Dry-run report restored to baseline (SHA256 verified)"
+                } else {
+                    $cleanupFailed = $true
+                    $cleanupErrors.Add("dry-run report hash mismatch: restored=$restoredHash baseline=$DryRunReportBaselineHash")
+                }
             } else {
+                $cleanupFailed = $true
                 $cleanupErrors.Add("dry-run report backup missing")
             }
         } else {
             if (Test-Path $DryRunReportPath) {
-                Remove-Item $DryRunReportPath -Force -ErrorAction SilentlyContinue
+                Remove-Item $DryRunReportPath -Force -ErrorAction Stop
                 if (-not (Test-Path $DryRunReportPath)) {
                     Write-Host "  Dry-run report removed (was absent at baseline)"
                 } else {
-                    $cleanupErrors.Add("dry-run report not removed")
+                    $cleanupFailed = $true
+                    $cleanupErrors.Add("dry-run report still present after removal")
                 }
             }
         }
     } catch {
+        $cleanupFailed = $true
         $cleanupErrors.Add("dry-run report restore: $_")
     }
 
     # 6. Remove dry-run report backup
     try {
         if (Test-Path $DryRunReportBackup) {
-            Remove-Item $DryRunReportBackup -Force -ErrorAction SilentlyContinue
+            Remove-Item $DryRunReportBackup -Force -ErrorAction Stop
         }
     } catch {
+        $cleanupFailed = $true
         $cleanupErrors.Add("backup removal: $_")
     }
 
@@ -1899,10 +1969,14 @@ foreach ($res in $results) {
     Write-Host "TEST ID: $($parts[0]), TEST FILE: scripts/verify-lm-cat-filter-46.ps1, TEST NAME: $($parts[0]), RESULT: $($parts[1])$detailInfo"
 }
 
-if ($failCount -eq 0 -and $execCount -eq 130) {
+if ($failCount -eq 0 -and $execCount -eq 130 -and -not $cleanupFailed) {
     Write-Host ""
     Write-Host "ALL TESTS PASSED successfully!"
     exit 0
+} elseif ($failCount -eq 0 -and $execCount -eq 130 -and $cleanupFailed) {
+    Write-Host ""
+    Write-Host "TESTS PASSED BUT CLEANUP FAILED"
+    exit 1
 } else {
     Write-Host ""
     Write-Host "SOME TESTS FAILED"
