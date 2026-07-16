@@ -14,6 +14,11 @@ import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-
 import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model";
 import { validateCategoryId } from "@/lib/catalog/category-attribute-read-model";
 import { isLocale, type Locale } from "@/lib/i18n/config";
+import { catalogOfferOrder } from "@/lib/catalog/catalog-offer-order";
+import { getFilteredCategoryOffersFromDb } from "@/lib/catalog/filter-query";
+import { parseFilterQueryInput } from "@/lib/filters/parser";
+import { normalizeFilterQuery } from "@/lib/filters/validation";
+import type { FilterValidationError } from "@/lib/filters/types";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -24,6 +29,10 @@ export type CatalogOffer = {
   partnerWebsite: string | null; partnerEmail: string;
   publicationStatus: OfferPublicationStatus;
 };
+
+export type FilterQueryResult =
+  | { ok: true; items: CatalogOffer[]; total: number; page: number | null; pageSize: number | null }
+  | { ok: false; errors: FilterValidationError[] };
 
 function rowToOffer(row: {
   offer: typeof offers.$inferSelect;
@@ -103,9 +112,26 @@ export async function getCategoryOffers(categorySlug: string): Promise<CatalogOf
         inArray(offers.categoryId, targetIds)
       )
     )
-    .orderBy(desc(offers.isFeatured), desc(offers.createdAt));
+    .orderBy(...catalogOfferOrder());
 
   return rows.map(rowToOffer);
+}
+
+/** Publiczny, cienki Server Action: parser → normalizacja → rdzeń DB → istniejąca projekcja. */
+export async function getFilteredCategoryOffers(rawInput: unknown): Promise<FilterQueryResult> {
+  const parsed = parseFilterQueryInput(rawInput);
+  if (!parsed.ok) return { ok: false, errors: parsed.errors.map((code) => ({ code })) };
+  const normalized = normalizeFilterQuery(parsed.value);
+  if (!normalized.ok) return { ok: false, errors: normalized.errors };
+  const result = await getFilteredCategoryOffersFromDb(normalized.value);
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    items: result.rows.map(rowToOffer),
+    total: result.total,
+    page: normalized.value.page ?? null,
+    pageSize: normalized.value.pageSize ?? null,
+  };
 }
 
 export async function getCategoryOffersCount(categorySlug: string): Promise<number> {
@@ -141,7 +167,7 @@ export async function getOffers(categorySlug?: string): Promise<CatalogOffer[]> 
     .leftJoin(categories, eq(offers.categoryId, categories.id))
     .leftJoin(partners, eq(offers.partnerId, partners.id))
     .where(and(...conditions))
-    .orderBy(desc(offers.isFeatured), desc(offers.createdAt));
+    .orderBy(...catalogOfferOrder());
   return rows.map(rowToOffer);
 }
 
