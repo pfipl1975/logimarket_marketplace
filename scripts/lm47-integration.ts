@@ -8,8 +8,8 @@ import { parseFilterQueryInput } from "../src/lib/filters/parser";
 import { normalizeFilterQuery } from "../src/lib/filters/validation-core";
 
 class SqlLogger implements Logger {
-  entries: string[] = [];
-  logQuery(query: string) { this.entries.push(query.replace(/\s+/g, " ").trim()); }
+  entries: Array<{ query: string; params: unknown[] }> = [];
+  logQuery(query: string, params: unknown[]) { this.entries.push({ query: query.replace(/\s+/g, " ").trim(), params: [...params] }); }
   reset() { this.entries = []; }
 }
 
@@ -46,7 +46,7 @@ async function run(id: string, input: unknown, expected: { queries: number; code
   logger.reset();
   try {
     const result = await invoke(input);
-    assert(logger.entries.length === expected.queries, `query count ${logger.entries.length}, expected ${expected.queries}; ${logger.entries.join(' || ')}`);
+    assert(logger.entries.length === expected.queries, `query count ${logger.entries.length}, expected ${expected.queries}; ${logger.entries.map((entry) => entry.query).join(' || ')}`);
     if (expected.code) assert(!result.ok && result.errors.some((error) => error.code === expected.code), `expected error ${expected.code}`);
     else {
       assert(result.ok, `unexpected errors ${JSON.stringify(result)}`);
@@ -55,7 +55,7 @@ async function run(id: string, input: unknown, expected: { queries: number; code
       if (expected.ids) assert(JSON.stringify(ids) === JSON.stringify(expected.ids), `ids ${ids}`);
       if (expected.predicate) assert(expected.predicate(ids), `predicate failed for ${ids}`);
     }
-    console.log(`${id}|PASS|queries=${logger.entries.length}|${logger.entries.map((entry) => entry.slice(0, 48)).join(' / ')}`);
+    console.log(`${id}|PASS|queries=${logger.entries.length}|${logger.entries.map((entry) => entry.query.slice(0, 48)).join(' / ')}`);
   } catch (error) { failures++; console.log(`${id}|FAIL|${error instanceof Error ? error.message : String(error)}`); }
 }
 
@@ -66,11 +66,11 @@ async function main() {
   await run('R02', [], { queries: 0, code: 'INVALID_INPUT' });
   await run('R03', { categoryId: 0 }, { queries: 0, code: 'INVALID_IDENTIFIER' });
   await run('R04', { categoryId: 1, controlled: {} }, { queries: 0, code: 'INVALID_INPUT' });
-  await run('R05', { categoryId: 1, controlled: [{ attributeId: 11, optionIds: [] }] }, { queries: 0, code: 'INVALID_INPUT' });
+  await run('R05', { categoryId: 1, controlled: [{ attributeId: 11, optionIds: [] }] }, { queries: 0, code: 'EMPTY_OPTION_ARRAY' });
   await run('R06', { categoryId: 1, numbers: [{ attributeId: 13, min: 1 }], years: [{ attributeId: 13, min: 2020 }] }, { queries: 0, code: 'DUPLICATE_ATTRIBUTE_FILTER' });
-  await run('R07', { categoryId: 1, numbers: [{ attributeId: 13 }] }, { queries: 0, code: 'INVALID_RANGE' });
-  await run('R08', { categoryId: 1, years: [{ attributeId: 14, min: 2020.5 }] }, { queries: 0, code: 'INVALID_RANGE' });
-  await run('R09', { categoryId: 1, numbers: [{ attributeId: 13, min: Infinity }] }, { queries: 0, code: 'INVALID_RANGE' });
+  await run('R07', { categoryId: 1, numbers: [{ attributeId: 13 }] }, { queries: 0, code: 'INVALID_NUMERIC_BOUNDS' });
+  await run('R08', { categoryId: 1, years: [{ attributeId: 14, min: 2020.5 }] }, { queries: 0, code: 'INVALID_YEAR_BOUNDS' });
+  await run('R09', { categoryId: 1, numbers: [{ attributeId: 13, min: Infinity }] }, { queries: 0, code: 'NON_FINITE_NUMBER' });
   await run('R10', { categoryId: 1, page: 1 }, { queries: 0, code: 'INVALID_PAGINATION' });
   await run('R11', { categoryId: 1, page: 1, pageSize: 101 }, { queries: 0, code: 'INVALID_PAGINATION' });
   // Category first, then exactly one configuration query when attributes exist.

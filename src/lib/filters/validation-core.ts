@@ -11,10 +11,11 @@ export function normalizeFilterQuery(input: FilterQueryInput): { ok: true; value
     if (seen.has(filter.attributeId)) errors.push({ code: "DUPLICATE_ATTRIBUTE_FILTER", attributeId: filter.attributeId });
     seen.add(filter.attributeId);
   }
-  for (const filter of controlled) if (filter.optionIds.length === 0) errors.push({ code: "INVALID_INPUT", attributeId: filter.attributeId });
+  for (const filter of controlled) if (filter.optionIds.length === 0) errors.push({ code: "EMPTY_OPTION_ARRAY", attributeId: filter.attributeId });
   for (const [kind, filters] of [["number", numbers], ["year", years]] as const) for (const filter of filters) {
     const invalidBound = (value: number | undefined) => value !== undefined && !Number.isFinite(value);
-    if (filter.min === undefined && filter.max === undefined || invalidBound(filter.min) || invalidBound(filter.max) || (filter.min !== undefined && filter.max !== undefined && filter.min > filter.max) || (kind === "year" && ((filter.min !== undefined && !Number.isInteger(filter.min)) || (filter.max !== undefined && !Number.isInteger(filter.max))))) errors.push({ code: "INVALID_RANGE", attributeId: filter.attributeId });
+    if (invalidBound(filter.min) || invalidBound(filter.max)) errors.push({ code: kind === "year" ? "INVALID_YEAR_BOUNDS" : "NON_FINITE_NUMBER", attributeId: filter.attributeId });
+    else if (filter.min === undefined && filter.max === undefined || (filter.min !== undefined && filter.max !== undefined && filter.min > filter.max) || (kind === "year" && ((filter.min !== undefined && !Number.isInteger(filter.min)) || (filter.max !== undefined && !Number.isInteger(filter.max))))) errors.push({ code: kind === "year" ? "INVALID_YEAR_BOUNDS" : "INVALID_NUMERIC_BOUNDS", attributeId: filter.attributeId });
   }
   if (errors.length) return { ok: false, errors };
   return { ok: true, value: {

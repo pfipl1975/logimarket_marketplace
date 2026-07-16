@@ -17,7 +17,7 @@ import { isLocale, type Locale } from "@/lib/i18n/config";
 import { catalogOfferOrder } from "@/lib/catalog/catalog-offer-order";
 import { getFilteredCategoryOffersFromDb } from "@/lib/catalog/filter-query";
 import { parseFilterQueryInput } from "@/lib/filters/parser";
-import { normalizeFilterQuery } from "@/lib/filters/validation-core";
+import { normalizeFilterQuery } from "@/lib/filters/validation";
 import type { FilterValidationError } from "@/lib/filters/types";
 
 export type CatalogOffer = {

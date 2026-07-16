@@ -24,11 +24,13 @@ async function validateConfiguration(db: Db, input: NormalizedFilterQuery): Prom
   const attributeIds = requestedAttributeIds(input);
   if (attributeIds.length === 0) return { errors: [], dataTypes: new Map() };
   const optionIds = input.controlled.flatMap((filter) => filter.optionIds);
+  const optionAttributeIds = input.controlled.flatMap((filter) => filter.optionIds.map(() => filter.attributeId));
+  const filterKinds = [...input.controlled.map(() => "controlled"), ...input.numbers.map(() => "number"), ...input.years.map(() => "year"), ...input.booleans.map(() => "boolean")];
   const rows = await db.execute(sql`
-    WITH requested_attributes(id) AS (
-      SELECT unnest(${sql.param(attributeIds)}::bigint[])
-    ), requested_options(id) AS (
-      SELECT unnest(${sql.param(optionIds)}::bigint[])
+    WITH requested_attributes(id, filter_kind) AS (
+      SELECT * FROM unnest(${sql.param(attributeIds)}::bigint[], ${sql.param(filterKinds)}::text[])
+    ), requested_options(id, requested_attribute_id) AS (
+      SELECT * FROM unnest(${sql.param(optionIds)}::bigint[], ${sql.param(optionAttributeIds)}::bigint[])
     )
     SELECT
       requested_attributes.id AS requested_attribute_id,
@@ -44,7 +46,7 @@ async function validateConfiguration(db: Db, input: NormalizedFilterQuery): Prom
     LEFT JOIN attribute_definitions ON attribute_definitions.id = requested_attributes.id
     LEFT JOIN category_attribute_assignments ON category_attribute_assignments.category_id = ${input.categoryId}
       AND category_attribute_assignments.attribute_definition_id = requested_attributes.id
-    LEFT JOIN requested_options ON TRUE
+    LEFT JOIN requested_options ON requested_options.requested_attribute_id = requested_attributes.id
     LEFT JOIN controlled_option_values ON controlled_option_values.id = requested_options.id
     ORDER BY requested_attributes.id, controlled_option_values.id
   `);
