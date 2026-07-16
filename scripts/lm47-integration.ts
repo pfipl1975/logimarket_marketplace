@@ -115,16 +115,23 @@ async function seed() {
     VALUES (1, 'LM47 Partner', 'https://example.test/logo.png', 'https://example.test', 'lm47@example.test')`);
   await db.execute(sql`INSERT INTO categories (id, name, slug, parent_id) VALUES
     (1,'Root','root',NULL),(2,'Child','child',1),(3,'Other','other',NULL),
-    (4,'Legacy Root','legacy-root',NULL),(5,'Legacy Child','legacy-child',4)`);
+    (4,'Legacy Root','legacy-root',NULL),(5,'Legacy Child','legacy-child',4),
+    (20,'Visibility Root','visibility-root',NULL),(21,'Visibility Child','visibility-child',20)`);
   await db.execute(sql`INSERT INTO attribute_definitions (id,stable_key,data_type,is_active) VALUES
     (11,'color','enum',true),(12,'features','multi_enum',true),(13,'capacity','number',true),
     (14,'year','year',true),(15,'available','boolean',true),(16,'hidden_filter','number',true),
-    (17,'disabled_filter','number',true),(18,'inactive','number',false),(19,'unassigned','number',true)`);
+    (17,'disabled_filter','number',true),(18,'inactive','number',false),(19,'unassigned','number',true),
+    (30,'visibility_inactive','enum',true),(31,'visibility_draft','enum',true),
+    (32,'visibility_hidden','enum',true),(33,'descendant_features','multi_enum',true),
+    (34,'descendant_mode','enum',true)`);
   await db.execute(sql`INSERT INTO category_attribute_assignments (category_id,attribute_definition_id,is_filterable,is_visible) VALUES
     (1,11,true,true),(1,12,true,true),(1,13,true,true),(1,14,true,true),(1,15,true,true),
-    (1,16,true,false),(1,17,false,true),(1,18,true,true)`);
+    (1,16,true,false),(1,17,false,true),(1,18,true,true),
+    (20,30,true,true),(20,31,true,true),(20,32,true,true),(20,33,true,true),(20,34,true,true)`);
   await db.execute(sql`INSERT INTO controlled_option_values (id,attribute_id,stable_key,is_active) VALUES
-    (101,11,'red',true),(102,11,'blue',true),(103,11,'inactive',false),(201,12,'wifi',true),(202,12,'gps',true)`);
+    (101,11,'red',true),(102,11,'blue',true),(103,11,'inactive',false),(201,12,'wifi',true),(202,12,'gps',true),
+    (301,30,'inactive-visibility',true),(311,31,'draft-visibility',true),(321,32,'hidden-visibility',true),
+    (331,33,'descendant-alpha',true),(332,33,'descendant-beta',true),(341,34,'descendant-mode',true)`);
   await db.execute(sql`INSERT INTO offers
     (id,partner_id,category_id,title,description,image_url,price_brutto,price_on_request,offer_model,conversion_type,outbound_url,is_featured,is_active,publication_status,technical_attributes,created_at)
     VALUES
@@ -139,11 +146,21 @@ async function seed() {
     (116,1,1,'Hidden',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'hidden','{}','2026-01-01T00:00:00Z'),
     (117,1,4,'Legacy Featured',NULL,NULL,NULL,true,'rfq','rfq',NULL,true,true,'published','{}','2024-04-01T00:00:00Z'),
     (118,1,5,'Legacy Child',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2023-04-01T00:00:00Z'),
-    (119,1,4,'Legacy Older',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2022-04-01T00:00:00Z')`);
+    (119,1,4,'Legacy Older',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2022-04-01T00:00:00Z'),
+    (2001,1,20,'Inactive matching visibility filter',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,false,'published','{}','2026-02-01T00:00:00Z'),
+    (2002,1,20,'Visible inactive control',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2026-02-01T00:00:00Z'),
+    (2003,1,20,'Draft matching visibility filter',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'draft','{}','2026-02-01T00:00:00Z'),
+    (2004,1,20,'Visible draft control',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2026-02-01T00:00:00Z'),
+    (2005,1,20,'Hidden matching visibility filter',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'hidden','{}','2026-02-01T00:00:00Z'),
+    (2006,1,20,'Visible hidden control',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2026-02-01T00:00:00Z'),
+    (2007,1,21,'Descendant uniqueness control',NULL,NULL,NULL,true,'rfq','rfq',NULL,false,true,'published','{}','2026-02-01T00:00:00Z')`);
   await db.execute(sql`INSERT INTO offer_attribute_values (offer_id,attribute_id,option_id) VALUES
-    (108,11,101),(109,11,101),(110,11,101),(111,11,102),(112,11,101),(116,11,101)`);
+    (108,11,101),(109,11,101),(110,11,101),(111,11,102),(112,11,101),(116,11,101),
+    (2001,30,301),(2002,30,301),(2003,31,311),(2004,31,311),(2005,32,321),(2006,32,321),
+    (2007,34,341)`);
   await db.execute(sql`INSERT INTO offer_attribute_option_values (offer_id,attribute_id,option_id) VALUES
-    (108,12,201),(109,12,202),(110,12,201),(110,12,202),(116,12,201)`);
+    (108,12,201),(109,12,202),(110,12,201),(110,12,202),(116,12,201),
+    (2007,33,331),(2007,33,332)`);
   await db.execute(sql`INSERT INTO offer_attribute_values (offer_id,attribute_id,value_number) VALUES
     (108,13,2000),(109,13,2000),(110,13,2000),(111,13,1000),(112,13,1500),(116,13,2000),(108,16,1),(108,17,1)`);
   await db.execute(sql`INSERT INTO offer_attribute_values (offer_id,attribute_id,value_year) VALUES
@@ -355,6 +372,36 @@ const matrix: MatrixRecord[] = [
     assert(scaleBaseline !== null, "missing scale baseline");
     equal({ count: entries.length, classes: entries.map((entry) => entry.queryClass) }, scaleBaseline, "offer-count query independence");
   }, () => addScaleOffers(100)),
+  record("R92", "visibility-inactive-matching-filter", { categoryId: 20, controlled: [{ attributeId: 30, optionIds: [301] }] }, "success", null, [2002], 1, 4, q4, (result) => {
+    assert(result.ok, "R92 result");
+    const ids = result.rows.map((row) => row.offer.id);
+    assert(ids.includes(2002), "inactive visibility control must be returned");
+    assert(!ids.includes(2001), "inactive matching offer must be excluded");
+    assert(result.total === 1, "inactive matching offer must be excluded from total");
+  }),
+  record("R93", "visibility-draft-matching-filter", { categoryId: 20, controlled: [{ attributeId: 31, optionIds: [311] }] }, "success", null, [2004], 1, 4, q4, (result) => {
+    assert(result.ok, "R93 result");
+    const ids = result.rows.map((row) => row.offer.id);
+    assert(ids.includes(2004), "draft visibility control must be returned");
+    assert(!ids.includes(2003), "draft matching offer must be excluded");
+    assert(result.total === 1, "draft matching offer must be excluded from total");
+  }),
+  record("R94", "visibility-hidden-matching-filter", { categoryId: 20, controlled: [{ attributeId: 32, optionIds: [321] }] }, "success", null, [2006], 1, 4, q4, (result) => {
+    assert(result.ok, "R94 result");
+    const ids = result.rows.map((row) => row.offer.id);
+    assert(ids.includes(2006), "hidden visibility control must be returned");
+    assert(!ids.includes(2005), "hidden matching offer must be excluded");
+    assert(result.total === 1, "hidden matching offer must be excluded from total");
+  }),
+  record("R95", "descendant-multi-filter-no-duplicates", { categoryId: 20, controlled: [{ attributeId: 33, optionIds: [331, 332] }, { attributeId: 34, optionIds: [341] }] }, "success", null, [2007], 1, 4, q4, (result) => {
+    assert(result.ok, "R95 result");
+    const ids = result.rows.map((row) => row.offer.id);
+    assert(ids.length === new Set(ids).size, "descendant multi-filter result contains duplicates");
+    assert(ids.filter((id) => id === 2007).length === 1, "child offer must occur exactly once");
+    const child = result.rows.find((row) => row.offer.id === 2007);
+    assert(child?.offer.categoryId === 21, "child offer must retain its descendant category");
+    assert(result.total === 1, "descendant total must equal the unique expected offer count");
+  }),
 ];
 
 async function auditMatrix() {
