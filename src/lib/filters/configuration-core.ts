@@ -58,31 +58,52 @@ function parseInput(input: CatalogFilterConfigurationInput): { categoryId: numbe
   return { categoryId, locale: input.locale };
 }
 
+function rejectInvalidConfiguration(): never {
+  throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
+}
+
+function isCanonicalArrayIndex(key: string, length: number): boolean {
+  if (!/^(0|[1-9]\d*)$/.test(key)) return false;
+  const index = Number(key);
+  return Number.isSafeInteger(index) && index >= 0 && index < length && String(index) === key;
+}
+
 function assertPlainJsonValue(value: unknown, activePath = new WeakSet<object>()): void {
   if (value === null || typeof value === "string" || typeof value === "boolean") return;
   if (typeof value === "number") {
     if (Number.isFinite(value)) return;
-    throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
+    rejectInvalidConfiguration();
   }
   if (typeof value !== "object" || activePath.has(value)) {
-    throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
+    rejectInvalidConfiguration();
   }
   if (value instanceof Date || value instanceof Map || value instanceof Set || value instanceof WeakMap || value instanceof WeakSet || value instanceof RegExp || ArrayBuffer.isView(value)) {
-    throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
+    rejectInvalidConfiguration();
   }
   activePath.add(value);
   if (Array.isArray(value)) {
+    if (Object.getPrototypeOf(value) !== Array.prototype) rejectInvalidConfiguration();
+    for (const key of Reflect.ownKeys(value)) {
+      if (typeof key === "symbol") rejectInvalidConfiguration();
+      const descriptor = Object.getOwnPropertyDescriptor(value, key);
+      if (!descriptor || !("value" in descriptor)) rejectInvalidConfiguration();
+      if (key === "length") {
+        if (descriptor.value !== value.length || descriptor.writable !== true || descriptor.enumerable !== false || descriptor.configurable !== false) rejectInvalidConfiguration();
+        continue;
+      }
+      if (!isCanonicalArrayIndex(key, value.length) || descriptor.writable !== true || descriptor.enumerable !== true || descriptor.configurable !== true) rejectInvalidConfiguration();
+    }
     for (let index = 0; index < value.length; index++) {
-      if (!Object.hasOwn(value, index)) throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
-      assertPlainJsonValue(value[index], activePath);
+      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+      if (!descriptor || !("value" in descriptor) || descriptor.writable !== true || descriptor.enumerable !== true || descriptor.configurable !== true) rejectInvalidConfiguration();
+      assertPlainJsonValue(descriptor.value, activePath);
     }
   } else {
-    if (Object.getPrototypeOf(value) !== Object.prototype || Object.getOwnPropertySymbols(value).length !== 0) {
-      throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
-    }
-    for (const key of Object.keys(value)) {
+    if (Object.getPrototypeOf(value) !== Object.prototype) rejectInvalidConfiguration();
+    for (const key of Reflect.ownKeys(value)) {
+      if (typeof key === "symbol") rejectInvalidConfiguration();
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
-      if (!descriptor || !("value" in descriptor)) throw new CatalogFilterConfigurationError("INVALID_CONFIGURATION_DTO");
+      if (!descriptor || !("value" in descriptor) || descriptor.enumerable !== true || descriptor.writable !== true || descriptor.configurable !== true) rejectInvalidConfiguration();
       assertPlainJsonValue(descriptor.value, activePath);
     }
   }

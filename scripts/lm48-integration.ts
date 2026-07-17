@@ -21,15 +21,19 @@ type MatrixRecord = {
   expectedCode: string | null; expectedFilterIds: number[] | null; expectedQueryCount: number; expectedClasses: QueryClass[];
   independentFailure: true; before?: () => Promise<void>; verify?: (result: Result, entries: LoggedQuery[]) => void;
 };
+type ValidatorRecord = {
+  id: string; assertionId: string; expected: "accept" | "reject"; input: () => unknown;
+  validate: (value: unknown) => void; independentFailure: true; verify?: () => void;
+};
 
 function classify(query: string): QueryClass {
-  if (/\bfrom\s+"?(offers|offer_attribute)/i.test(query)) return "forbidden";
+  if (/(?:^|[^A-Za-z0-9_])(offers|offer_attribute_values|offer_attribute_option_values)(?=$|[^A-Za-z0-9_])/i.test(query)) return "forbidden";
   if (/WITH RECURSIVE/i.test(query)) return "configuration";
   return "options";
 }
 class SqlLogger implements Logger {
   entries: LoggedQuery[] = [];
-  logQuery(query: string, params: unknown[]): void { this.entries.push({ query: query.replace(/\s+/g, " ").trim(), params: [...params], queryClass: classify(query) }); }
+  logQuery(query: string, params: unknown[]): void { const queryClass = classify(query); if (queryClass === "forbidden") throw new Error("forbidden offer-domain query"); this.entries.push({ query: query.replace(/\s+/g, " ").trim(), params: [...params], queryClass }); }
   reset() { this.entries = []; }
 }
 
@@ -40,6 +44,8 @@ const pool = new Pool({ connectionString: url });
 const db = drizzle(pool, { schema, logger });
 const executed = new Set<string>();
 const reached = new Set<string>();
+const validatorExecuted = new Set<string>();
+const validatorReached = new Set<string>();
 let failures = 0;
 
 function assert(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
@@ -53,11 +59,11 @@ async function seed() {
   await db.execute(sql`INSERT INTO attribute_definitions (id,stable_key,data_type,is_active) VALUES
     (100,'root-enum','enum',true),(101,'root-number','number',true),(102,'parent-year','year',true),
     (103,'child-boolean','boolean',true),(104,'hidden-filter','enum',true),(105,'text','text',true),
-    (106,'empty-enum','enum',true),(107,'inactive-enum','enum',false),(108,'multi','multi_enum',true),(109,'sibling-only','enum',true),(110,'other-option','enum',true)`);
+    (106,'empty-enum','enum',true),(107,'inactive-enum','enum',false),(108,'multi','multi_enum',true),(109,'sibling-only','enum',true),(110,'other-option','enum',true),(111,'date-only','date',true)`);
   await db.execute(sql`INSERT INTO category_attribute_assignments (category_id,attribute_definition_id,sort_order,is_filterable,is_visible,unit_code) VALUES
     (1,100,50,true,true,'root-unit'),(1,101,9,true,true,'kg'),(2,102,20,true,true,'year'),
     (3,103,10,true,true,NULL),(3,104,0,true,false,NULL),(3,105,1,true,true,NULL),(3,106,2,true,true,NULL),
-    (3,107,3,true,true,NULL),(3,108,10,true,true,NULL),(4,109,1,true,true,NULL),(3,110,11,true,true,NULL),(7,101,1,true,true,'kg')`);
+    (3,107,3,true,true,NULL),(3,108,10,true,true,NULL),(3,111,4,true,true,NULL),(4,109,1,true,true,NULL),(3,110,11,true,true,NULL),(7,101,1,true,true,'kg')`);
   await db.execute(sql`INSERT INTO controlled_option_values (id,attribute_id,stable_key,is_active) VALUES
     (501,100,'zeta',true),(502,100,'alpha',true),(503,100,'inactive',false),(541,104,'hidden-option',true),
     (581,108,'multi-z',true),(582,108,'multi-a',true),(591,109,'sibling-option',true),(601,110,'other',true)`);
@@ -111,11 +117,11 @@ const matrix: MatrixRecord[] = [
     equal(result.filters.find((filter) => filter.attributeId === 108)?.options.map((option) => option.label), ["multi-z", "multi-a"], "stable key option fallback");
     equal(Object.keys(result.filters[0]).sort(), ["attributeId", "filterKind", "label", "options", "sortOrder", "unit"], "no public stable key");
     assert(!result.filters.find((filter) => filter.attributeId === 100)?.options.some((option) => option.optionId === 503 || option.optionId === 601), "inactive and cross-attribute options excluded");
-    assert(!ids(result).includes(105) && !ids(result).includes(107) && !ids(result).includes(109), "unsupported/inactive/sibling excluded");
+    assert(!ids(result).includes(105) && !ids(result).includes(107) && !ids(result).includes(109) && !ids(result).includes(111), "unsupported/inactive/date/sibling excluded");
     equal(ids(result).length, new Set(ids(result)).size, "no duplicate localized filter rows");
   }),
-  record("R09", { categoryId: 3, locale: "en" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2, (result) => { assert(result, "R09 result"); equal(result.filters.find((filter) => filter.attributeId === 100)?.label, "Root", "requested locale"); }),
-  record("R10", { categoryId: 3, locale: "de" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2, (result) => { assert(result, "R10 result"); equal(result.filters.find((filter) => filter.attributeId === 100)?.label, "Główny", "pl fallback"); }),
+  record("R09", { categoryId: 3, locale: "en" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2, (result) => { assert(result, "R09 result"); equal(result.filters.find((filter) => filter.attributeId === 100)?.label, "Root", "requested locale"); equal(result.filters.find((filter) => filter.attributeId === 100)?.options.find((option) => option.optionId === 501)?.label, "Zeta EN", "requested option locale"); }),
+  record("R10", { categoryId: 3, locale: "de" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2, (result) => { assert(result, "R10 result"); equal(result.filters.find((filter) => filter.attributeId === 100)?.label, "Główny", "pl fallback"); const options = result.filters.find((filter) => filter.attributeId === 100)?.options ?? []; equal(options.find((option) => option.optionId === 501)?.label, "Zeta PL", "pl option fallback"); equal(options.length, new Set(options.map((option) => option.optionId)).size, "fallback option deduplication"); }),
   record("R11", { categoryId: 3, locale: "pl" }, "result", null, [104, 100, 106, 101, 103, 108, 110, 102], 2, q2, (result) => { assert(result, "R11 result"); const f = result.filters.find((filter) => filter.attributeId === 100); equal(f?.unit, "child-unit", "child unit"); equal(f?.sortOrder, 1, "child sort"); }, async () => { await db.execute(sql`INSERT INTO category_attribute_assignments (category_id,attribute_definition_id,sort_order,is_filterable,is_visible,unit_code) VALUES (3,100,1,true,true,'child-unit')`); }),
   record("R12", { categoryId: 3, locale: "pl" }, "result", null, [104, 106, 101, 103, 108, 110, 102], 2, q2, undefined, async () => { await db.execute(sql`INSERT INTO category_attribute_assignments (category_id,attribute_definition_id,sort_order,is_filterable,is_visible) VALUES (3,100,1,false,true)`); }),
   record("R13", { categoryId: 5, locale: "pl" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2),
@@ -132,18 +138,93 @@ const matrix: MatrixRecord[] = [
   record("R24", { categoryId: 3, locale: "pl" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2, undefined, async () => { await db.execute(sql`INSERT INTO category_attribute_assignments (category_id,attribute_definition_id,sort_order,is_filterable,is_visible) VALUES (5,109,1,true,true)`); }),
 ];
 
-function testValidators() {
-  const rejected = [new Date(), BigInt(1), undefined, new Map(), new Set(), new WeakMap(), new WeakSet(), () => undefined, Symbol("x"), new Uint8Array([1]), Object.create({ x: 1 }), [1, , 3], Number.NaN, Infinity];
-  for (const value of rejected) { let failed = false; try { assertPlainJsonDTO(value); } catch { failed = true; } assert(failed, `plain guard ${String(value)}`); }
-  const cyclic: Record<string, unknown> = {}; cyclic.self = cyclic; let cyclicFailed = false; try { assertPlainJsonDTO(cyclic); } catch { cyclicFailed = true; } assert(cyclicFailed, "cycle plain guard");
-  const accessor: Record<string, unknown> = {}; Object.defineProperty(accessor, "value", { enumerable: true, get: () => "must not execute" }); let accessorFailed = false; try { assertPlainJsonDTO(accessor); } catch { accessorFailed = true; } assert(accessorFailed, "accessor rejected without invocation");
-  for (const value of ["9007199254740992", "1.5", "1x", 0, -1]) { let failed = false; try { parsePositiveSafeId(value); } catch { failed = true; } assert(failed, `id parser ${String(value)}`); }
-  let domainFailed = false; try { assertCatalogFilterConfigurationDTO({ categoryId: 1, filters: [{ attributeId: 2, filterKind: "number", label: "x", unit: null, sortOrder: 0, options: [{ optionId: 3, label: "bad" }] }] }); } catch { domainFailed = true; } assert(domainFailed, "scalar options rejected");
+class CustomArray extends Array<unknown> {}
+
+function validDto(): any {
+  return { categoryId: 1, filters: [{ attributeId: 2, filterKind: "enum", label: "Filter", unit: null, sortOrder: 0, options: [{ optionId: 3, label: "Option" }] }] };
+}
+
+function validatorRecord(id: string, expected: ValidatorRecord["expected"], input: ValidatorRecord["input"], validate: ValidatorRecord["validate"], verify?: ValidatorRecord["verify"]): ValidatorRecord {
+  return { id, assertionId: `LM48-${id}`, expected, input, validate, independentFailure: true, verify };
+}
+
+let arrayGetterRead = false;
+let objectGetterRead = false;
+const validatorMatrix: ValidatorRecord[] = [
+  validatorRecord("V01", "accept", () => null, assertPlainJsonDTO),
+  validatorRecord("V02", "accept", () => "primitive", assertPlainJsonDTO),
+  validatorRecord("V03", "accept", () => [1, { nested: true }], assertPlainJsonDTO),
+  validatorRecord("V04", "accept", () => ({ nested: [1, false] }), assertPlainJsonDTO),
+  validatorRecord("V05", "reject", () => new Date(), assertPlainJsonDTO),
+  validatorRecord("V06", "reject", () => BigInt(1), assertPlainJsonDTO),
+  validatorRecord("V07", "reject", () => undefined, assertPlainJsonDTO),
+  validatorRecord("V08", "reject", () => new Map(), assertPlainJsonDTO),
+  validatorRecord("V09", "reject", () => new Set(), assertPlainJsonDTO),
+  validatorRecord("V10", "reject", () => new WeakMap(), assertPlainJsonDTO),
+  validatorRecord("V11", "reject", () => new WeakSet(), assertPlainJsonDTO),
+  validatorRecord("V12", "reject", () => /x/, assertPlainJsonDTO),
+  validatorRecord("V13", "reject", () => new Uint8Array([1]), assertPlainJsonDTO),
+  validatorRecord("V14", "reject", () => () => undefined, assertPlainJsonDTO),
+  validatorRecord("V15", "reject", () => Symbol("x"), assertPlainJsonDTO),
+  validatorRecord("V16", "reject", () => Number.NaN, assertPlainJsonDTO),
+  validatorRecord("V17", "reject", () => Infinity, assertPlainJsonDTO),
+  validatorRecord("V18", "reject", () => [1, , 3], assertPlainJsonDTO),
+  validatorRecord("V19", "reject", () => Object.create({ inherited: true }), assertPlainJsonDTO),
+  validatorRecord("V20", "reject", () => Object.create(null), assertPlainJsonDTO),
+  validatorRecord("V21", "reject", () => CustomArray.of(1), assertPlainJsonDTO),
+  validatorRecord("V22", "reject", () => { const value = [1]; Object.setPrototypeOf(value, {}); return value; }, assertPlainJsonDTO),
+  validatorRecord("V23", "reject", () => { const value = [1] as unknown as Record<PropertyKey, unknown>; value[Symbol("hidden")] = 2; return value; }, assertPlainJsonDTO),
+  validatorRecord("V24", "reject", () => { const value: Record<PropertyKey, unknown> = {}; value[Symbol("hidden")] = 2; return value; }, assertPlainJsonDTO),
+  validatorRecord("V25", "reject", () => { const value = [1] as unknown as Record<string, unknown>; value.extra = 2; return value; }, assertPlainJsonDTO),
+  validatorRecord("V26", "reject", () => { arrayGetterRead = false; const value = [1]; Object.defineProperty(value, "extra", { enumerable: true, get: () => { arrayGetterRead = true; throw new Error("must not execute"); } }); return value; }, assertPlainJsonDTO, () => assert(!arrayGetterRead, "array getter not executed")),
+  validatorRecord("V27", "reject", () => { objectGetterRead = false; const value: Record<string, unknown> = {}; Object.defineProperty(value, "extra", { enumerable: true, get: () => { objectGetterRead = true; throw new Error("must not execute"); } }); return value; }, assertPlainJsonDTO, () => assert(!objectGetterRead, "object getter not executed")),
+  validatorRecord("V28", "reject", () => { const value: Record<string, unknown> = {}; Object.defineProperty(value, "hidden", { enumerable: false, value: 1 }); return value; }, assertPlainJsonDTO),
+  validatorRecord("V29", "reject", () => { const value: Record<string, unknown> = {}; value.self = value; return value; }, assertPlainJsonDTO),
+  validatorRecord("V30", "reject", () => { const value: unknown[] = []; value.push(value); return value; }, assertPlainJsonDTO),
+  validatorRecord("V31", "accept", () => { const shared = { value: 1 }; return { left: shared, right: shared }; }, assertPlainJsonDTO),
+  validatorRecord("V32", "accept", validDto, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V33", "reject", () => { const value = validDto(); value.categoryId = 0; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V34", "reject", () => { const value = validDto(); value.filters[0].attributeId = 0; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V35", "reject", () => { const value = validDto(); value.filters[0].options[0].optionId = 0; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V36", "reject", () => { const value = validDto(); value.filters[0].filterKind = "unknown"; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V37", "reject", () => { const value = validDto(); value.filters.push({ ...value.filters[0], options: [] }); return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V38", "reject", () => { const value = validDto(); value.filters[0].options.push({ optionId: 3, label: "Duplicate" }); return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V39", "reject", () => { const value = validDto(); value.filters[0].filterKind = "number"; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V40", "reject", () => ({ ...validDto(), extra: true }), assertCatalogFilterConfigurationDTO),
+  validatorRecord("V41", "reject", () => { const value = validDto(); return { ...value, filters: [{ ...value.filters[0], extra: true }] }; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V42", "reject", () => { const value = validDto(); return { ...value, filters: [{ ...value.filters[0], options: [{ ...value.filters[0].options[0], extra: true }] }] }; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V43", "reject", () => { const value = validDto() as { categoryId: number; filters: Array<Record<string, unknown>> }; delete value.filters[0].label; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V44", "reject", () => { const value = validDto(); value.filters[0].label = ""; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V45", "reject", () => { const value = validDto(); value.filters[0].options[0].label = ""; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V46", "reject", () => { const value = validDto(); value.filters[0].sortOrder = -1; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V47", "reject", () => { const value = validDto(); value.filters[0].sortOrder = 1.5; return value; }, assertCatalogFilterConfigurationDTO),
+  validatorRecord("V48", "reject", () => { const value = validDto(); value.filters[0].unit = 1; return value; }, assertCatalogFilterConfigurationDTO),
+];
+
+function executeValidator(record: ValidatorRecord) {
+  try {
+    let accepted = true;
+    try { record.validate(record.input()); } catch { accepted = false; }
+    equal(accepted ? "accept" : "reject", record.expected, `${record.id} result`);
+    record.verify?.();
+    validatorReached.add(record.id); validatorExecuted.add(record.id);
+    console.log(`${record.id}|PASS|assertion=${record.assertionId}`);
+  } catch (error) { validatorExecuted.add(record.id); failures++; console.log(`${record.id}|FAIL|assertion=${record.assertionId}|${error instanceof Error ? error.message : String(error)}`); }
+}
+
+function runValidatorMatrix(source: string) {
+  for (const record of validatorMatrix) executeValidator(record);
+  const idsInMatrix = validatorMatrix.map((record) => record.id); const assertions = validatorMatrix.map((record) => record.assertionId);
+  const duplicateIds = idsInMatrix.filter((id, index) => idsInMatrix.indexOf(id) !== index); const duplicateAssertions = assertions.filter((id, index) => assertions.indexOf(id) !== index);
+  const missing = idsInMatrix.filter((id) => !validatorExecuted.has(id)); const unknown = [...validatorExecuted].filter((id) => !idsInMatrix.includes(id)); const missed = idsInMatrix.filter((id) => !validatorReached.has(id));
+  const unconditional = (source.match(/console\.log\([^\n]*\|PASS\|/g) ?? []).filter((line) => !line.includes("record.id")).length;
+  console.log(`VALIDATOR_MATRIX_RECORDS=${validatorMatrix.length}`); console.log(`VALIDATOR_EXECUTED_RECORDS=${validatorExecuted.size}`); console.log(`VALIDATOR_UNIQUE_IDS=${new Set(idsInMatrix).size}`); console.log(`VALIDATOR_UNIQUE_ASSERTION_IDS=${new Set(assertions).size}`); console.log(`VALIDATOR_MISSING_IDS=${missing.length}`); console.log(`VALIDATOR_UNKNOWN_IDS=${unknown.length}`); console.log(`VALIDATOR_DUPLICATE_IDS=${duplicateIds.length}`); console.log(`VALIDATOR_DUPLICATE_ASSERTION_IDS=${duplicateAssertions.length}`); console.log(`VALIDATOR_RUNTIME_ASSERTIONS_MISSED=${missed.length}`); console.log(`VALIDATOR_UNCONDITIONAL_PASS_FINDINGS=${unconditional}`);
+  assert(duplicateIds.length === 0 && duplicateAssertions.length === 0 && missing.length === 0 && unknown.length === 0 && missed.length === 0 && unconditional === 0, "validator matrix authenticity");
 }
 
 async function main() {
-  testValidators();
   const source = readFileSync(new URL(import.meta.url), "utf8");
+  runValidatorMatrix(source);
   for (const record of matrix) await execute(record);
   const idsInMatrix = matrix.map((record) => record.id); const assertions = matrix.map((record) => record.assertionId);
   const duplicateIds = idsInMatrix.filter((id, index) => idsInMatrix.indexOf(id) !== index); const duplicateAssertions = assertions.filter((id, index) => assertions.indexOf(id) !== index);
