@@ -140,6 +140,7 @@ export const controlledOptionValues = pgTable(
   },
   (t) => [
     unique("uq_cov_attr_option").on(t.attributeId, t.stableKey),
+    unique("uq_cov_attribute_id_pair").on(t.attributeId, t.id),
     foreignKey({
       name: "fk_cov_attribute",
       columns: [t.attributeId],
@@ -190,6 +191,11 @@ export const offerAttributeValues = pgTable(
       columns: [t.optionId],
       foreignColumns: [controlledOptionValues.id]
     }),
+    foreignKey({
+      name: "fk_oav_attribute_option_pair",
+      columns: [t.attributeId, t.optionId],
+      foreignColumns: [controlledOptionValues.attributeId, controlledOptionValues.id]
+    }),
   ]
 );
 
@@ -218,6 +224,11 @@ export const offerAttributeOptionValues = pgTable(
       name: "fk_oaov_option",
       columns: [t.optionId],
       foreignColumns: [controlledOptionValues.id]
+    }),
+    foreignKey({
+      name: "fk_oaov_attribute_option_pair",
+      columns: [t.attributeId, t.optionId],
+      foreignColumns: [controlledOptionValues.attributeId, controlledOptionValues.id]
     }),
   ]
 );
