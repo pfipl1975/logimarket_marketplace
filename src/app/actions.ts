@@ -19,6 +19,8 @@ import { getFilteredCategoryOffersFromDb } from "@/lib/catalog/filter-query";
 import { parseFilterQueryInput } from "@/lib/filters/parser";
 import { normalizeFilterQuery } from "@/lib/filters/validation";
 import type { FilterValidationError } from "@/lib/filters/types";
+import { getCatalogFilterConfigurationFromDb } from "@/lib/filters/configuration";
+import type { CatalogFilterConfiguration } from "@/lib/filters/configuration-types";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -132,6 +134,13 @@ export async function getFilteredCategoryOffers(rawInput: unknown): Promise<Filt
     page: normalized.value.page ?? null,
     pageSize: normalized.value.pageSize ?? null,
   };
+}
+
+export async function getCatalogFilterConfiguration(
+  categoryId: unknown,
+  locale: unknown,
+): Promise<CatalogFilterConfiguration | null> {
+  return getCatalogFilterConfigurationFromDb({ categoryId, locale });
 }
 
 export async function getCategoryOffersCount(categorySlug: string): Promise<number> {
