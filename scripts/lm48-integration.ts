@@ -129,6 +129,7 @@ const matrix: MatrixRecord[] = [
   record("R21", { categoryId: 1.5, locale: "pl" }, "error", "INVALID_CATEGORY_ID", null, 0, q0),
   record("R22", { categoryId: Number.NaN, locale: "pl" }, "error", "INVALID_CATEGORY_ID", null, 0, q0),
   record("R23", { categoryId: Infinity, locale: "pl" }, "error", "INVALID_CATEGORY_ID", null, 0, q0),
+  record("R24", { categoryId: 3, locale: "pl" }, "result", null, [104, 106, 101, 103, 108, 110, 102, 100], 2, q2, undefined, async () => { await db.execute(sql`INSERT INTO category_attribute_assignments (category_id,attribute_definition_id,sort_order,is_filterable,is_visible) VALUES (5,109,1,true,true)`); }),
 ];
 
 function testValidators() {
