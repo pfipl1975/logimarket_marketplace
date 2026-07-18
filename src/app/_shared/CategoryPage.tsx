@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getCategories, getCategoryBySlug, getCategoryOffers } from "@/app/actions";
+import { getCategories, getCategoryAttributeConfiguration, getCategoryBySlug, getFilteredCategoryOffers } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { OfferCard } from "@/components/OfferCard";
 import { OfferProcurementListRow } from "@/components/offers/OfferProcurementListRow";
 import { CategoryOfferFilters } from "@/components/catalog/CategoryOfferFilters";
+import { CategoryAttributeFilters } from "@/components/catalog/CategoryAttributeFilters";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
@@ -17,6 +18,7 @@ import {
   type CategoryOfferFilters as CategoryOfferFiltersState,
   type OfferModelFilter,
 } from "@/lib/catalog/query";
+import { resolveAttributeFilterUrlState } from "@/lib/catalog/attribute-filter-url";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
 import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
@@ -144,11 +146,10 @@ export async function CategoryPage({
   view = "grid",
   filters = {},
 }: CategoryPageProps) {
-  const [dict, category, allCategories, offers] = await Promise.all([
+  const [dict, category, allCategories] = await Promise.all([
     getDictionary(locale),
     getCategoryBySlug(categorySlug),
     getCategories(),
-    getCategoryOffers(categorySlug),
   ]);
 
   const fallbackDict =
@@ -157,6 +158,19 @@ export async function CategoryPage({
   if (!category) {
     notFound();
   }
+
+  const attributeDefinitions = await getCategoryAttributeConfiguration(category.id, locale, true, true);
+  const attributeState = resolveAttributeFilterUrlState(attributeDefinitions, filters.attributeParams);
+  const effectiveFilters: CategoryOfferFiltersState = {
+    ...filters,
+    attributeParams: attributeState.params,
+  };
+  const filteredResult = await getFilteredCategoryOffers({
+    categoryId: category.id,
+    controlled: attributeState.input.controlled,
+    numbers: attributeState.input.numbers,
+  });
+  const offers = filteredResult.ok ? filteredResult.items : [];
 
   const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
   const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
@@ -346,9 +360,9 @@ export async function CategoryPage({
   const headings = blockHeadings[locale] || blockHeadings.pl;
   const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
   const hasNestedSubcategories = subcategories.some((sub) => sub.children.length > 0);
-  const queryState = { view, filters };
-  const hasActiveFilters = hasActiveCategoryOfferFilters(filters);
-  const filteredOffers = applyCategoryOfferFilters(offers, filters);
+  const queryState = { view, filters: effectiveFilters };
+  const hasActiveFilters = hasActiveCategoryOfferFilters(effectiveFilters);
+  const filteredOffers = applyCategoryOfferFilters(offers, effectiveFilters);
   const renderedOffers = hasActiveFilters ? filteredOffers : offers;
   const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "grid" });
   const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "list" });
@@ -608,7 +622,7 @@ export async function CategoryPage({
           <CategoryOfferFilters
             basePath={viewBasePath}
             view={view}
-            filters={filters}
+            filters={effectiveFilters}
             labels={{
               filtersHeading: dict.catalog.filtersHeading,
               filtersSummary: dict.catalog.filtersSummary,
@@ -622,6 +636,21 @@ export async function CategoryPage({
             }}
           />
         )}
+
+        <CategoryAttributeFilters
+          basePath={viewBasePath}
+          view={view}
+          filters={effectiveFilters}
+          definitions={attributeDefinitions}
+          labels={{
+            heading: dict.catalog.attributeFiltersHeading,
+            summary: dict.catalog.attributeFiltersSummary,
+            from: dict.catalog.attributeFiltersFrom,
+            to: dict.catalog.attributeFiltersTo,
+            apply: dict.catalog.attributeFiltersApply,
+            clear: dict.catalog.attributeFiltersClear,
+          }}
+        />
 
         <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
           <div>
