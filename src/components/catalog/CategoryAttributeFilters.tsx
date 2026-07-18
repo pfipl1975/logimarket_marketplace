@@ -81,7 +81,7 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
 
   return (
     <aside className="mt-6 w-full border border-border bg-white p-4">
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">{labels.heading}</h2>
         <form action={basePath} className="mt-4 space-y-5">
           <input type="hidden" name="view" value={view} />
@@ -92,7 +92,7 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
           </div>
         </form>
       </div>
-      <details className="lg:hidden">
+      <details className="md:hidden">
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">{labels.summary}</summary>
         <form action={basePath} className="mt-4 space-y-5 border-t border-border pt-4">
           <input type="hidden" name="view" value={view} />
