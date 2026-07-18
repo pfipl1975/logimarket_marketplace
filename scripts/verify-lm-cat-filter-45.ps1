@@ -562,15 +562,79 @@ $$;
     Write-Host ""
     Write-Host "=== SECTION E: VALIDATION, SCOPE AND REGRESSION ==="
 
-    # E05: no production seeds/backfill
-    $seedFiles = @(Get-ChildItem -Path "src","scripts" -Recurse -Filter "*seed*" -ErrorAction SilentlyContinue)
-    $backfillFiles = @(Get-ChildItem -Path "src","scripts" -Recurse -Filter "*backfill*" -ErrorAction SilentlyContinue)
-    if ($seedFiles.Count -eq 0 -and $backfillFiles.Count -eq 0) {
+    # E05: no seeds; exact allowlist for the approved, manual LM51AB backfill package
+    $repositoryRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path.TrimEnd('\', '/')
+    $allowedScriptBackfills = @(
+        'scripts/sql/production/lm-cat-filter-51ab-pilot-offer-attribute-backfill.sql',
+        'scripts/sql/production/lm-cat-filter-51ab-rollback-pilot-offer-attribute-backfill.sql',
+        'scripts/sql/tests/lm-cat-filter-51ab/backfill-contract.sql'
+    )
+    $productionBackfillNames = @(
+        'lm-cat-filter-51ab-pilot-offer-attribute-backfill.sql',
+        'lm-cat-filter-51ab-rollback-pilot-offer-attribute-backfill.sql'
+    )
+
+    function Get-RepositoryRelativePath {
+        param([System.IO.FileInfo]$File)
+        return $File.FullName.Substring($repositoryRoot.Length).TrimStart('\', '/').Replace('\', '/')
+    }
+
+    function Test-AllowedBackfillArtifactPath {
+        param([string]$RelativePath)
+        return $allowedScriptBackfills -contains $RelativePath.Replace('\', '/')
+    }
+
+    $seedFiles = @(Get-ChildItem -Path (Join-Path $repositoryRoot 'src'), (Join-Path $repositoryRoot 'scripts') -Recurse -File -Filter '*seed*' -ErrorAction SilentlyContinue)
+    $srcBackfillFiles = @(Get-ChildItem -Path (Join-Path $repositoryRoot 'src') -Recurse -File -Filter '*backfill*' -ErrorAction SilentlyContinue)
+    $scriptBackfillFiles = @(Get-ChildItem -Path (Join-Path $repositoryRoot 'scripts') -Recurse -File -Filter '*backfill*' -ErrorAction SilentlyContinue | ForEach-Object { Get-RepositoryRelativePath $_ })
+    $unexpectedScriptBackfills = @($scriptBackfillFiles | Where-Object { -not (Test-AllowedBackfillArtifactPath $_) })
+
+    $automaticBackfillReferences = New-Object System.Collections.Generic.List[string]
+    $packageJsonPath = Join-Path $repositoryRoot 'package.json'
+    if (Test-Path $packageJsonPath) {
+        $packageJson = Get-Content -LiteralPath $packageJsonPath -Raw | ConvertFrom-Json
+        if ($null -ne $packageJson.scripts) {
+            foreach ($scriptProperty in $packageJson.scripts.PSObject.Properties) {
+                foreach ($productionBackfillName in $productionBackfillNames) {
+                    if ($scriptProperty.Value -match [regex]::Escape($productionBackfillName)) {
+                        $automaticBackfillReferences.Add("package.json scripts.$($scriptProperty.Name) references $productionBackfillName")
+                    }
+                }
+            }
+        }
+    }
+
+    $automationSurfaceFiles = @()
+    $srcPath = Join-Path $repositoryRoot 'src'
+    if (Test-Path $srcPath) { $automationSurfaceFiles += Get-ChildItem -Path $srcPath -Recurse -File }
+    $automationSurfaceFiles += @(Get-ChildItem -Path $repositoryRoot -File -Filter 'next.config.*' -ErrorAction SilentlyContinue)
+    $vercelConfigPath = Join-Path $repositoryRoot 'vercel.json'
+    if (Test-Path $vercelConfigPath) { $automationSurfaceFiles += Get-Item -LiteralPath $vercelConfigPath }
+    $workflowPath = Join-Path $repositoryRoot '.github/workflows'
+    if (Test-Path $workflowPath) { $automationSurfaceFiles += Get-ChildItem -Path $workflowPath -Recurse -File }
+
+    foreach ($automationSurfaceFile in @($automationSurfaceFiles | Sort-Object FullName -Unique)) {
+        foreach ($productionBackfillName in $productionBackfillNames) {
+            if (Select-String -LiteralPath $automationSurfaceFile.FullName -SimpleMatch $productionBackfillName -Quiet) {
+                $automaticBackfillReferences.Add("$(Get-RepositoryRelativePath $automationSurfaceFile) references $productionBackfillName")
+            }
+        }
+    }
+
+    $policyPositiveSelfCheck = @($allowedScriptBackfills | Where-Object { -not (Test-AllowedBackfillArtifactPath $_) }).Count -eq 0
+    $policyNegativeSelfCheck = -not (Test-AllowedBackfillArtifactPath 'src/app/automatic-backfill.ts') -and
+        -not (Test-AllowedBackfillArtifactPath 'scripts/automatic-backfill.ps1') -and
+        -not (Test-AllowedBackfillArtifactPath 'scripts/sql/production/unapproved-backfill.sql') -and
+        -not (Test-AllowedBackfillArtifactPath 'scripts/sql/tests/lm-cat-filter-51ab/seed.sql')
+
+    $e05Pass = $seedFiles.Count -eq 0 -and $srcBackfillFiles.Count -eq 0 -and $unexpectedScriptBackfills.Count -eq 0 -and
+        $automaticBackfillReferences.Count -eq 0 -and $policyPositiveSelfCheck -and $policyNegativeSelfCheck
+    if ($e05Pass) {
         Write-Host "  PASS: E05"
-        Register-Result -Id "E05" -Status "PASS" -Detail "no seeds/backfill"
+        Register-Result -Id "E05" -Status "PASS" -Detail "exact LM51AB backfill allowlist and execution-surface guards passed"
     } else {
         Write-Host "  FAIL: E05"
-        Register-Result -Id "E05" -Status "FAIL" -Detail "seed/backfill files found"
+        Register-Result -Id "E05" -Status "FAIL" -Detail "seed=$($seedFiles.Count); src-backfill=$($srcBackfillFiles.Count); unexpected-script-backfill=$($unexpectedScriptBackfills.Count); automatic-references=$($automaticBackfillReferences.Count); self-check=$($policyPositiveSelfCheck -and $policyNegativeSelfCheck)"
     }
 
     # E06: no cart/RFQ/outbound/UI filter changes
