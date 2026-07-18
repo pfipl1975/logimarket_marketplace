@@ -26,7 +26,7 @@ type Props = {
 function AttributeControls({ definitions, filters, labels }: Pick<Props, "definitions" | "filters" | "labels">) {
   const values = filters.attributeParams ?? {};
   return (
-    <div className="space-y-5">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {definitions.map((definition) => {
         const key = definition.stableKey;
         if (definition.dataType === "number") {
@@ -34,19 +34,19 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
             <fieldset key={definition.attributeId} className="min-w-0">
               <legend className="text-sm font-semibold text-brand-navy">{definition.name}</legend>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <label className="text-xs text-muted-foreground">
+                <label className="min-w-0 text-xs text-muted-foreground">
                   {labels.from}
                   <span className="sr-only"> {definition.name}</span>
                   <div className="relative mt-1">
-                    <input name={`af_${key}_min`} defaultValue={values[`af_${key}_min`]?.[0] ?? ""} inputMode="decimal" className="w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal" />
+                    <input name={`af_${key}_min`} defaultValue={values[`af_${key}_min`]?.[0] ?? ""} inputMode="decimal" className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal" />
                     {definition.unitCode && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{definition.unitCode}</span>}
                   </div>
                 </label>
-                <label className="text-xs text-muted-foreground">
+                <label className="min-w-0 text-xs text-muted-foreground">
                   {labels.to}
                   <span className="sr-only"> {definition.name}</span>
                   <div className="relative mt-1">
-                    <input name={`af_${key}_max`} defaultValue={values[`af_${key}_max`]?.[0] ?? ""} inputMode="decimal" className="w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal" />
+                    <input name={`af_${key}_max`} defaultValue={values[`af_${key}_max`]?.[0] ?? ""} inputMode="decimal" className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal" />
                     {definition.unitCode && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{definition.unitCode}</span>}
                   </div>
                 </label>
@@ -57,7 +57,7 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
 
         if (definition.dataType === "enum" || definition.dataType === "multi_enum") {
           return (
-            <label key={definition.attributeId} className="block text-sm font-semibold text-brand-navy">
+            <label key={definition.attributeId} className="block min-w-0 text-sm font-semibold text-brand-navy">
               {definition.name}
               <select name={`af_${key}`} defaultValue={values[`af_${key}`]?.[0] ?? ""} className="mt-2 w-full rounded border border-border bg-white px-3 py-2 text-sm font-normal text-brand-navy outline-none focus:border-brand-teal">
                 <option value="">—</option>
@@ -80,13 +80,13 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
   const controls = <AttributeControls definitions={definitions} filters={filters} labels={labels} />;
 
   return (
-    <aside className="mt-6 border border-border bg-white p-4 lg:max-w-xs">
+    <aside className="mt-6 w-full border border-border bg-white p-4">
       <div className="hidden lg:block">
         <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">{labels.heading}</h2>
         <form action={basePath} className="mt-4 space-y-5">
           <input type="hidden" name="view" value={view} />
           {hiddenModel}{hiddenFeatured}{controls}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-end gap-3">
             <button type="submit" className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal">{labels.apply}</button>
             <Link href={clearHref} className="text-sm font-semibold text-muted-foreground hover:text-brand-teal">{labels.clear}</Link>
           </div>
@@ -97,9 +97,9 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
         <form action={basePath} className="mt-4 space-y-5 border-t border-border pt-4">
           <input type="hidden" name="view" value={view} />
           {hiddenModel}{hiddenFeatured}{controls}
-          <div className="flex items-center gap-3">
-            <button type="submit" className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal">{labels.apply}</button>
-            <Link href={clearHref} className="text-sm font-semibold text-muted-foreground hover:text-brand-teal">{labels.clear}</Link>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <button type="submit" className="w-full rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal sm:w-auto">{labels.apply}</button>
+            <Link href={clearHref} className="text-center text-sm font-semibold text-muted-foreground hover:text-brand-teal">{labels.clear}</Link>
           </div>
         </form>
       </details>
