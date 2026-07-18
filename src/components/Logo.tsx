@@ -20,7 +20,7 @@ export default function Logo({
 
   const dimensionsClass = markOnly
     ? compact
-      ? "h-[87px] w-[87px] sm:h-[107px] sm:w-[107px] lg:h-[140px] lg:w-[140px] xl:h-[160px] xl:w-[160px] 2xl:h-[174px] 2xl:w-[174px]"
+      ? "h-14 w-14 sm:h-16 sm:w-16 lg:h-24 lg:w-24 xl:h-28 xl:w-28 2xl:h-32 2xl:w-32"
       : "h-[140px] w-[140px] md:h-[174px] md:w-[174px]"
     : compact
       ? "h-[87px] w-[260px] sm:h-[107px] sm:w-[320px] lg:h-[140px] lg:w-[420px] xl:h-[160px] xl:w-[480px] 2xl:h-[174px] 2xl:w-[520px]"
@@ -36,7 +36,7 @@ export default function Logo({
 
   const imageSizes = markOnly
     ? compact
-      ? "(min-width: 1536px) 174px, (min-width: 1280px) 160px, (min-width: 1024px) 140px, (min-width: 640px) 107px, 87px"
+      ? "(min-width: 1536px) 128px, (min-width: 1280px) 112px, (min-width: 1024px) 96px, (min-width: 640px) 64px, 56px"
       : "(min-width: 768px) 174px, 140px"
     : compact
       ? "(min-width: 1536px) 520px, (min-width: 1280px) 480px, (min-width: 1024px) 420px, (min-width: 640px) 320px, 260px"
