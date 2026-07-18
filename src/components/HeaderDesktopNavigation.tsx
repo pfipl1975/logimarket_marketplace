@@ -22,7 +22,7 @@ export function HeaderDesktopNavigation({ items }: HeaderDesktopNavigationProps)
   const pathname = usePathname();
 
   return (
-    <nav className="hidden md:flex min-w-0 flex-1 items-center gap-1">
+    <nav className="hidden lg:flex min-w-0 flex-1 items-center gap-1">
       {items.map((item) => {
         const isActive = !item.external && isNavItemActive(pathname, item.href);
         const className = cn(

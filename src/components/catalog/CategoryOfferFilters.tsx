@@ -130,7 +130,7 @@ export function CategoryOfferFilters({
 
   return (
     <section className="mt-5 rounded border border-border bg-white p-3 shadow-sm sm:px-4 sm:py-3">
-      <div className="hidden lg:block">
+      <div className="hidden md:block">
         <div className="mb-3 flex items-center justify-between gap-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">
             {labels.filtersHeading}
@@ -139,7 +139,7 @@ export function CategoryOfferFilters({
         {renderControls()}
       </div>
 
-      <details className="lg:hidden">
+      <details className="md:hidden">
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">
           {labels.filtersSummary}
         </summary>
