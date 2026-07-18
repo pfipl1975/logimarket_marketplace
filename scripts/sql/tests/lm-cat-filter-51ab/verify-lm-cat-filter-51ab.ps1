@@ -247,9 +247,71 @@ try {
   Invoke-Case 'T09_T20' {
     $db = New-Database 'T09'
 
-    # Snapshot before running forward
+    # Deterministic JSONB snapshot across all 5 configuration tables.
+    # Uses stable_key as join key (no serial IDs), explicit ORDER BY for determinism.
+    $configSnapshotSql = "SELECT jsonb_build_object(
+  'ad', (
+    SELECT jsonb_agg(jsonb_build_object(
+      'stable_key', stable_key,
+      'data_type', data_type,
+      'is_active', is_active
+    ) ORDER BY stable_key)
+    FROM public.attribute_definitions
+  ),
+  'adt', (
+    SELECT jsonb_agg(jsonb_build_object(
+      'attr_key', ad.stable_key,
+      'locale', adt.locale,
+      'name', adt.name,
+      'short_label', adt.short_label,
+      'description', adt.description
+    ) ORDER BY ad.stable_key, adt.locale)
+    FROM public.attribute_definition_translations adt
+    JOIN public.attribute_definitions ad ON ad.id = adt.attribute_definition_id
+  ),
+  'cov', (
+    SELECT jsonb_agg(jsonb_build_object(
+      'attr_key', ad.stable_key,
+      'opt_key', cov.stable_key,
+      'is_active', cov.is_active
+    ) ORDER BY ad.stable_key, cov.stable_key)
+    FROM public.controlled_option_values cov
+    JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id
+  ),
+  'covt', (
+    SELECT jsonb_agg(jsonb_build_object(
+      'attr_key', ad.stable_key,
+      'opt_key', cov.stable_key,
+      'locale', covt.locale,
+      'label', covt.label,
+      'description', covt.description
+    ) ORDER BY ad.stable_key, cov.stable_key, covt.locale)
+    FROM public.controlled_option_value_translations covt
+    JOIN public.controlled_option_values cov ON cov.id = covt.controlled_option_value_id
+    JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id
+  ),
+  'caa', (
+    SELECT jsonb_agg(jsonb_build_object(
+      'cat_slug', cat.slug,
+      'attr_key', ad.stable_key,
+      'sort_order', caa.sort_order,
+      'unit_code', caa.unit_code,
+      'is_filterable', caa.is_filterable,
+      'is_comparable', caa.is_comparable,
+      'is_required', caa.is_required,
+      'is_visible', caa.is_visible
+    ) ORDER BY cat.slug, ad.stable_key)
+    FROM public.category_attribute_assignments caa
+    JOIN public.attribute_definitions ad ON ad.id = caa.attribute_definition_id
+    JOIN public.categories cat ON cat.id = caa.category_id
+  )
+)::text"
+
+    # Capture full deterministic config snapshot before forward
+    $beforeConfigSnapshot = Get-Scalar $db $configSnapshotSql
+
+    # Snapshot offers before running forward
     $beforeOffers = Get-Scalar $db "SELECT jsonb_agg(offers ORDER BY id) FROM public.offers WHERE id IN (5, 6)"
-    $beforeConfig = Get-Scalar $db "SELECT count(*) FROM public.attribute_definitions"
 
     # Run forward
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
@@ -283,9 +345,24 @@ try {
     Assert-That ($oaovCnt -eq '0') "expected 0 OAOV rows"
     Record-TestPass -Id 'T13'
 
-    # T14: no inactive attribute values
-    $inactiveCnt = Get-Scalar $db "SELECT count(*) FROM public.offer_attribute_values oav JOIN public.attribute_definitions ad ON ad.id = oav.attribute_id WHERE oav.offer_id IN (5, 6) AND ad.is_active = false"
-    Assert-That ($inactiveCnt -eq '0') "expected 0 inactive rows"
+    # T14: offers 5 and 6 must have NO OAV rows for future-only attributes.
+    # esd_protection, load_capacity, stackable are defined in the pilot config
+    # but are NOT part of the backfill scope for this sprint.
+    # Positive check: count must be 0.
+    $futureKeysCntBefore = Get-Scalar $db "SELECT count(*) FROM public.offer_attribute_values oav JOIN public.attribute_definitions ad ON ad.id = oav.attribute_id WHERE oav.offer_id IN (5, 6) AND ad.stable_key IN ('esd_protection', 'load_capacity', 'stackable')"
+    Assert-That ($futureKeysCntBefore -eq '0') "T14: future-key rows present after forward, expected 0, got $futureKeysCntBefore"
+
+    # T14 negative proof: insert a correctly-typed value for load_capacity on offer 5,
+    # verify the check detects it (non-zero count), then roll back via SAVEPOINT.
+    $t14NegSql = "BEGIN; SAVEPOINT t14_neg; INSERT INTO public.offer_attribute_values (offer_id, attribute_id, value_number) SELECT 5, ad.id, 500 FROM public.attribute_definitions ad WHERE ad.stable_key = 'load_capacity'; COMMIT;"
+    Invoke-Psql -Database $db -Sql $t14NegSql -File $null | Out-Null
+    $futureKeysCntNeg = Get-Scalar $db "SELECT count(*) FROM public.offer_attribute_values oav JOIN public.attribute_definitions ad ON ad.id = oav.attribute_id WHERE oav.offer_id IN (5, 6) AND ad.stable_key IN ('esd_protection', 'load_capacity', 'stackable')"
+    Assert-That ($futureKeysCntNeg -eq '1') "T14 negative proof: inserted future-key row not detected, expected 1, got $futureKeysCntNeg"
+    # Roll back the inserted row
+    Invoke-Psql -Database $db -Sql "DELETE FROM public.offer_attribute_values WHERE offer_id = 5 AND attribute_id = (SELECT id FROM public.attribute_definitions WHERE stable_key = 'load_capacity')" -File $null | Out-Null
+    # Confirm restored to 0
+    $futureKeysCntAfter = Get-Scalar $db "SELECT count(*) FROM public.offer_attribute_values oav JOIN public.attribute_definitions ad ON ad.id = oav.attribute_id WHERE oav.offer_id IN (5, 6) AND ad.stable_key IN ('esd_protection', 'load_capacity', 'stackable')"
+    Assert-That ($futureKeysCntAfter -eq '0') "T14 negative proof cleanup failed: rows still present, got $futureKeysCntAfter"
     Record-TestPass -Id 'T14'
 
     # T15: exact numeric values for offer 5
@@ -315,14 +392,39 @@ try {
     Assert-That ($nonExclusives -eq '0') "exclusivity violated"
     Record-TestPass -Id 'T18'
 
-    # T19 verification
+    # T19 verification: offers must not be mutated by forward
     $afterOffers = Get-Scalar $db "SELECT jsonb_agg(offers ORDER BY id) FROM public.offers WHERE id IN (5, 6)"
     Assert-That ($beforeOffers -eq $afterOffers) "offers modified by backfill: before=$beforeOffers, after=$afterOffers"
     Record-TestPass -Id 'T19'
 
-    # T20 verification
-    $afterConfig = Get-Scalar $db "SELECT count(*) FROM public.attribute_definitions"
-    Assert-That ($beforeConfig -eq $afterConfig) "configuration modified by backfill: before=$beforeConfig, after=$afterConfig"
+    # T20: exact configuration immutability — full deterministic 5-table snapshot comparison.
+    # After forward the snapshot must be byte-identical to the before-forward snapshot.
+    $afterConfigSnapshot = Get-Scalar $db $configSnapshotSql
+    Assert-That ($beforeConfigSnapshot -eq $afterConfigSnapshot) "T20: configuration snapshot mutated by forward"
+
+    # Verify exact per-table counts: ad=8, adt=56, cov=2, covt=14, caa=8 => total=88
+    $cntAd = Get-Scalar $db 'SELECT count(*) FROM public.attribute_definitions'
+    $cntAdt = Get-Scalar $db 'SELECT count(*) FROM public.attribute_definition_translations'
+    $cntCov = Get-Scalar $db 'SELECT count(*) FROM public.controlled_option_values'
+    $cntCovt = Get-Scalar $db 'SELECT count(*) FROM public.controlled_option_value_translations'
+    $cntCaa = Get-Scalar $db 'SELECT count(*) FROM public.category_attribute_assignments'
+    Assert-That ($cntAd -eq '8') "T20: attribute_definitions count wrong: expected 8, got $cntAd"
+    Assert-That ($cntAdt -eq '56') "T20: attribute_definition_translations count wrong: expected 56, got $cntAdt"
+    Assert-That ($cntCov -eq '2') "T20: controlled_option_values count wrong: expected 2, got $cntCov"
+    Assert-That ($cntCovt -eq '14') "T20: controlled_option_value_translations count wrong: expected 14, got $cntCovt"
+    Assert-That ($cntCaa -eq '8') "T20: category_attribute_assignments count wrong: expected 8, got $cntCaa"
+    $totalCfg = [int]$cntAd + [int]$cntAdt + [int]$cntCov + [int]$cntCovt + [int]$cntCaa
+    Assert-That ($totalCfg -eq 88) "T20: total configuration rows wrong: expected 88, got $totalCfg"
+
+    # T20 negative proof: mutate sort_order for one assignment, verify snapshot changes,
+    # then restore and verify snapshot matches original again.
+    Invoke-Psql -Database $db -Sql "UPDATE public.category_attribute_assignments SET sort_order = sort_order + 999 WHERE attribute_definition_id = (SELECT id FROM public.attribute_definitions WHERE stable_key = 'external_length')" -File $null | Out-Null
+    $mutatedSnapshot = Get-Scalar $db $configSnapshotSql
+    Assert-That ($beforeConfigSnapshot -ne $mutatedSnapshot) "T20 negative proof: snapshot did not change after sort_order mutation"
+    # Restore
+    Invoke-Psql -Database $db -Sql "UPDATE public.category_attribute_assignments SET sort_order = sort_order - 999 WHERE attribute_definition_id = (SELECT id FROM public.attribute_definitions WHERE stable_key = 'external_length')" -File $null | Out-Null
+    $restoredSnapshot = Get-Scalar $db $configSnapshotSql
+    Assert-That ($beforeConfigSnapshot -eq $restoredSnapshot) "T20 negative proof: snapshot not restored after sort_order rollback"
     Record-TestPass -Id 'T20'
   }
 
