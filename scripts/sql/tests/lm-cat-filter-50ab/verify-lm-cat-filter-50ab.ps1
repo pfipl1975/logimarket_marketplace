@@ -85,10 +85,10 @@ function New-Database {
   param([string]$CaseId)
   $database = 'lm50ab_' + $CaseId.ToLowerInvariant() + '_' + [guid]::NewGuid().ToString('N').Substring(0, 8)
   Invoke-Psql -Database 'postgres' -Sql "CREATE DATABASE $database" -File $null | Out-Null
-  
+
   # Load legacy compatible fixture
   Invoke-Psql -Database $database -Sql $null -File $fixture | Out-Null
-  
+
   # Insert categories matching production hierarchy for pilot
   $categorySetup = @"
 INSERT INTO public.categories (id, name, slug, parent_id) VALUES
@@ -98,10 +98,10 @@ INSERT INTO public.categories (id, name, slug, parent_id) VALUES
 ON CONFLICT (id) DO NOTHING;
 "@
   Invoke-Psql -Database $database -Sql $categorySetup -File $null | Out-Null
-  
+
   # Load base runtime schema from 49C
   Invoke-Psql -Database $database -Sql $null -File $schema49c | Out-Null
-  
+
   return $database
 }
 
@@ -148,17 +148,17 @@ try {
   # T03 to T17 — first forward execution & contract check
   Invoke-Case 'T03_T17' {
     $db = New-Database 'T03'
-    
+
     # Save legacy table counts
     $beforeOffers = Get-Scalar $db "SELECT count(*) FROM public.offers"
     $beforeCategories = Get-Scalar $db "SELECT count(*) FROM public.categories"
-    
+
     # Apply forward configuration
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
-    
+
     # Run the contract assertions SQL file
     Invoke-Psql -Database $db -Sql $null -File $contract | Out-Null
-    
+
     # Verify legacy row counts unchanged
     $afterOffers = Get-Scalar $db "SELECT count(*) FROM public.offers"
     $afterCategories = Get-Scalar $db "SELECT count(*) FROM public.categories"
@@ -170,10 +170,10 @@ try {
   Invoke-Case 'T18_T20' {
     $db = New-Database 'T18'
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
-    
+
     # Run second time
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
-    
+
     # Verify counts remain correct
     Invoke-Psql -Database $db -Sql $null -File $contract | Out-Null
   }
@@ -182,21 +182,21 @@ try {
   Invoke-Case 'T21_T24' {
     $db = New-Database 'T21'
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
-    
+
     # Apply rollback
     Invoke-Psql -Database $db -Sql $null -File $rollback | Out-Null
-    
+
     # Verify pilot attributes, translations, options, and assignments are gone
     $attrCount = Get-Scalar $db "SELECT count(*) FROM public.attribute_definitions WHERE stable_key = ANY(ARRAY['external_length', 'external_width', 'external_height', 'capacity', 'material', 'esd_protection', 'load_capacity', 'stackable'])"
     Assert-That ($attrCount -eq '0') "attributes remained after rollback: $attrCount"
-    
+
     $assignCount = Get-Scalar $db "SELECT count(*) FROM public.category_attribute_assignments caa JOIN public.categories c ON c.id = caa.category_id WHERE c.slug = 'pojemniki-plastikowe-euro'"
     Assert-That ($assignCount -eq '0') "assignments remained after rollback: $assignCount"
-    
+
     # Verify runtime tables still exist but are empty
     $targetTablesCount = Get-Scalar $db "SELECT count(*) FROM pg_class WHERE relnamespace='public'::regnamespace AND relkind='r' AND relname IN ('attribute_definitions','controlled_option_values','offer_attribute_values','offer_attribute_option_values','attribute_definition_translations','category_attribute_assignments','controlled_option_value_translations')"
     Assert-That ($targetTablesCount -eq '7') "runtime tables disappeared: $targetTablesCount"
-    
+
     $recordsInRuntime = Get-Scalar $db "SELECT (SELECT count(*) FROM public.attribute_definitions) + (SELECT count(*) FROM public.category_attribute_assignments)"
     Assert-That ($recordsInRuntime -eq '0') "runtime tables are not empty: $recordsInRuntime"
   }
@@ -206,7 +206,7 @@ try {
     $db = New-Database 'T25'
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
     Invoke-Psql -Database $db -Sql $null -File $rollback | Out-Null
-    
+
     # Reapply
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
     Invoke-Psql -Database $db -Sql $null -File $contract | Out-Null
@@ -216,20 +216,20 @@ try {
   Invoke-Case 'T26_T27' {
     $db = New-Database 'T26'
     Invoke-Psql -Database $db -Sql $null -File $forward | Out-Null
-    
+
     # Simulate offer dependency by inserting values referencing a pilot attribute
     $attrId = Get-Scalar $db "SELECT id FROM public.attribute_definitions WHERE stable_key = 'external_length'"
     $offerId = Get-Scalar $db "SELECT min(id) FROM public.offers"
-    
+
     Invoke-Psql -Database $db -Sql "INSERT INTO public.offer_attribute_values (offer_id, attribute_id, value_number) VALUES ($offerId, $attrId, 400)" -File $null | Out-Null
-    
+
     # Rollback must FAIL now
     $res = Invoke-Psql -Database $db -Sql $null -File $rollback -ExpectSuccess $false
     Assert-That ($res.Output -match 'cannot rollback because offer_attribute_values exist') "unexpected rollback error message: $($res.Output)"
-    
+
     # Cleanup dependency
     Invoke-Psql -Database $db -Sql "DELETE FROM public.offer_attribute_values WHERE attribute_id = $attrId" -File $null | Out-Null
-    
+
     # Rollback should succeed now
     Invoke-Psql -Database $db -Sql $null -File $rollback | Out-Null
   }
@@ -237,10 +237,10 @@ try {
   # T28 — semantic conflict blocks forward migration
   Invoke-Case 'T28' {
     $db = New-Database 'T28'
-    
+
     # Pre-insert conflicting stable_key with different type
     Invoke-Psql -Database $db -Sql "INSERT INTO public.attribute_definitions (stable_key, data_type) VALUES ('external_length', 'boolean')" -File $null | Out-Null
-    
+
     # Forward SQL must fail now
     $res = Invoke-Psql -Database $db -Sql $null -File $forward -ExpectSuccess $false
     Assert-That ($res.Output -match 'semantic conflict for attribute external_length') "unexpected forward error message: $($res.Output)"

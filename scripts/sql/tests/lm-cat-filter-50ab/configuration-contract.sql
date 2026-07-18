@@ -115,7 +115,7 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'post-forward contract mismatch: empty/fallback translation names' USING ERRCODE = 'check_violation';
   END IF;
-  
+
   -- 11. Check option translations label
   IF EXISTS (
     SELECT 1 FROM public.controlled_option_value_translations covt
@@ -142,7 +142,7 @@ BEGIN
   IF invalid_locale_count > 0 THEN
     RAISE EXCEPTION 'post-forward contract mismatch: invalid locales found' USING ERRCODE = 'check_violation';
   END IF;
-  
+
   -- Check for duplicates locale per attribute
   IF EXISTS (
     SELECT 1 FROM public.attribute_definition_translations adt
@@ -160,7 +160,7 @@ BEGIN
   ) THEN
     RAISE EXCEPTION 'post-forward contract mismatch: duplicate translation locales' USING ERRCODE = 'check_violation';
   END IF;
-  
+
   -- Verify no modifications on offer values tables
   IF EXISTS (SELECT 1 FROM public.offer_attribute_values LIMIT 1) THEN
     RAISE EXCEPTION 'post-forward contract mismatch: offer_attribute_values nonempty' USING ERRCODE = 'check_violation';

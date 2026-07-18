@@ -193,7 +193,7 @@ BEGIN
   WHERE oav.attribute_id = ad.id
     AND oav.offer_id IN (5, 6)
     AND ad.stable_key = ANY(ARRAY['external_length', 'external_width', 'external_height', 'capacity', 'material']);
-    
+
   GET DIAGNOSTICS deleted_count = ROW_COUNT;
   IF deleted_count <> 10 THEN
     RAISE EXCEPTION 'LM51AB rollback: expected 10 rows deleted, got %', deleted_count USING ERRCODE = 'check_violation';
@@ -213,7 +213,7 @@ BEGIN
   FROM public.offer_attribute_values oav
   JOIN public.attribute_definitions ad ON ad.id = oav.attribute_id
   WHERE oav.offer_id IN (5, 6) AND ad.stable_key = ANY(pilot_attribute_keys);
-  
+
   IF remaining_count <> 0 THEN
     RAISE EXCEPTION 'LM51AB rollback post-check: some pilot offer values still remain' USING ERRCODE = 'check_violation';
   END IF;
