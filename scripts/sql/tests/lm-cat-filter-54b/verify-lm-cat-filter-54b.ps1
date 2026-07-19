@@ -326,7 +326,7 @@ try {
     $db = New-Database 'T12'
     Invoke-Psql -Database $db -Sql "INSERT INTO public.attribute_definitions (stable_key, data_type, is_active) VALUES ('lifting_height', 'number', true)" -File $null | Out-Null
     $attrId = Get-Scalar $db "SELECT id FROM public.attribute_definitions WHERE stable_key = 'lifting_height'"
-    Invoke-Psql -Database $db -Sql "INSERT INTO public.category_attribute_assignments (category_id, attribute_definition_id, sort_order, is_filterable, is_comparable, is_required, is_visible, unit_code) VALUES (21, $attrId, 20, true, true, true, true, 'mm')" -File $null | Out-Null
+    Invoke-Psql -Database $db -Sql "INSERT INTO public.category_attribute_assignments (category_id, attribute_definition_id, sort_order, is_filterable, is_comparable, is_required, is_visible, unit_code) VALUES (21, $attrId, 20, true, true, false, true, 'mm')" -File $null | Out-Null
 
     Invoke-Psql -Database $db -Sql $null -File $apply | Out-Null
     Invoke-Psql -Database $db -Sql $null -File $contract | Out-Null

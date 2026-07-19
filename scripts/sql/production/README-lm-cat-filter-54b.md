@@ -36,10 +36,12 @@ Wszystkie 4 wartości backfillu zostały zweryfikowane na produkcji (audyt read-
 ## 5. Przypisania kategorii 21 (category_attribute_assignments)
 | Atrybut | sort_order | is_filterable | is_comparable | is_required | is_visible | unit_code |
 |---|---|---|---|---|---|---|
-| `load_capacity` | 10 | true | true | true | true | `kg` |
-| `lifting_height` | 20 | true | true | true | true | `mm` |
-| `drive_type` | 30 | true | true | true | true | NULL |
-| `mast_type` | 40 | true | true | true | true | NULL |
+| `load_capacity` | 10 | true | true | false | true | `kg` |
+| `lifting_height` | 20 | true | true | false | true | `mm` |
+| `drive_type` | 30 | true | true | false | true | NULL |
+| `mast_type` | 40 | true | true | false | true | NULL |
+
+Semantyka flag (audyt LM-CAT-FILTER-54B-R1): wartości techniczne są filtrowalne (`is_filterable=true`) i porównywalne (`is_comparable=true`), ale **nie są wymagane** (`is_required=false`) do utworzenia ani utrzymania oferty. Audyt repozytorium nie wykazał żadnego konsumenta runtime flagi `is_required` (flaga jest jedynie mapowana w read modelu `category-attribute-read-model-core.ts`, bez odczytu), więc brak istniejącego kontraktu biznesowego uzasadniającego `is_required=true`.
 
 ## 6. Model bezpieczeństwa i idempotencji
 - **Naturalne klucze:** wszystko adresowane przez stable_key, slug kategorii i id oferty 1 — nigdy jawne ID wierszy runtime (bigserial).

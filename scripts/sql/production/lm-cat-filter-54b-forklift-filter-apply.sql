@@ -261,10 +261,10 @@ INSERT INTO public.category_attribute_assignments (category_id, attribute_defini
 SELECT cat.id, ad.id, assign.sort_order, assign.is_filterable, assign.is_comparable, assign.is_required, assign.is_visible, assign.unit_code
 FROM (
   VALUES
-    ('load_capacity', 10, true, true, true, true, 'kg'),
-    ('lifting_height', 20, true, true, true, true, 'mm'),
-    ('drive_type', 30, true, true, true, true, NULL::varchar),
-    ('mast_type', 40, true, true, true, true, NULL::varchar)
+    ('load_capacity', 10, true, true, false, true, 'kg'),
+    ('lifting_height', 20, true, true, false, true, 'mm'),
+    ('drive_type', 30, true, true, false, true, NULL::varchar),
+    ('mast_type', 40, true, true, false, true, NULL::varchar)
 ) assign(stable_key, sort_order, is_filterable, is_comparable, is_required, is_visible, unit_code)
 CROSS JOIN (SELECT id FROM public.categories WHERE slug = 'wozki-widlowe-elektryczne') cat
 JOIN public.attribute_definitions ad ON ad.stable_key = assign.stable_key
@@ -395,10 +395,10 @@ BEGIN
   IF EXISTS (
     SELECT 1 FROM (
       VALUES
-        ('load_capacity', 10, true, true, true, true, 'kg'),
-        ('lifting_height', 20, true, true, true, true, 'mm'),
-        ('drive_type', 30, true, true, true, true, NULL::varchar),
-        ('mast_type', 40, true, true, true, true, NULL::varchar)
+        ('load_capacity', 10, true, true, false, true, 'kg'),
+        ('lifting_height', 20, true, true, false, true, 'mm'),
+        ('drive_type', 30, true, true, false, true, NULL::varchar),
+        ('mast_type', 40, true, true, false, true, NULL::varchar)
     ) m(stable_key, sort_order, is_filterable, is_comparable, is_required, is_visible, unit_code)
     FULL OUTER JOIN (
       SELECT ad.stable_key, caa.sort_order, caa.is_filterable, caa.is_comparable, caa.is_required, caa.is_visible, caa.unit_code
