@@ -48,13 +48,13 @@ export function SiteHeader({
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
       <div className="bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-3 py-3 sm:px-4 md:gap-8 md:px-6 md:py-4">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-3 py-2 sm:px-4 sm:py-2.5 md:gap-6 md:px-6 md:py-3">
           <Link href={homeHref} className="flex shrink-0 items-center" aria-label="LogiMarket B2B Marketplace">
             <Logo variant="light" compact markOnly />
           </Link>
 
-          <div className="min-w-0 flex-1 border-l border-white/15 pl-4 md:pl-8">
-            <p className="text-xs font-bold uppercase tracking-wider text-white sm:text-sm md:text-base lg:text-lg xl:text-xl">
+          <div className="min-w-0 flex-1 border-l border-white/15 pl-4 md:pl-6">
+            <p className="text-xs font-bold uppercase leading-tight tracking-wider text-white sm:text-sm md:text-base lg:text-lg xl:text-xl">
               {navLabels.constructionNotice ?? "MARKETPLACE W BUDOWIE / MARKETPLACE UNDER CONSTRUCTION"}
             </p>
           </div>

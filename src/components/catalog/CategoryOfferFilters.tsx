@@ -81,12 +81,12 @@ export function CategoryOfferFilters({
 
   function renderControls() {
     return (
-      <div className="space-y-4">
-        <div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-3">
+        <div className="flex flex-wrap items-center gap-2">
           <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
             {labels.filtersModelHeading}
           </p>
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2">
             {modelOptions.map((option) => (
               <Link
                 key={option.key}
@@ -102,7 +102,7 @@ export function CategoryOfferFilters({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 lg:border-l lg:border-border lg:pl-5">
           <Link
             href={featuredHref}
             aria-current={filters.featured ? "page" : undefined}
@@ -129,9 +129,9 @@ export function CategoryOfferFilters({
   }
 
   return (
-    <section className="mt-6 rounded border border-border bg-white p-4 shadow-sm">
-      <div className="hidden lg:block">
-        <div className="mb-4 flex items-center justify-between gap-4">
+    <section className="mt-5 rounded border border-border bg-white p-3 shadow-sm sm:px-4 sm:py-3">
+      <div className="hidden md:block">
+        <div className="mb-3 flex items-center justify-between gap-4">
           <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">
             {labels.filtersHeading}
           </h2>
@@ -139,11 +139,11 @@ export function CategoryOfferFilters({
         {renderControls()}
       </div>
 
-      <details className="lg:hidden">
+      <details className="md:hidden">
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">
           {labels.filtersSummary}
         </summary>
-        <div className="mt-4 border-t border-border pt-4">{renderControls()}</div>
+        <div className="mt-3 border-t border-border pt-3">{renderControls()}</div>
       </details>
     </section>
   );

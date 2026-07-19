@@ -106,7 +106,7 @@ export function MobileNavigation({
   };
 
   return (
-    <div className="relative md:hidden">
+    <div className="relative lg:hidden">
       {/* Trigger Button */}
       <button
         ref={triggerRef}
