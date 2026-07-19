@@ -20,7 +20,7 @@ export default function Logo({
 
   const dimensionsClass = markOnly
     ? compact
-      ? "h-14 w-14 sm:h-16 sm:w-16 lg:h-24 lg:w-24 xl:h-28 xl:w-28 2xl:h-32 2xl:w-32"
+      ? "h-9 w-9 sm:h-11 sm:w-11 lg:h-16 lg:w-16 xl:h-18 xl:w-18 2xl:h-20 2xl:w-20"
       : "h-[140px] w-[140px] md:h-[174px] md:w-[174px]"
     : compact
       ? "h-[87px] w-[260px] sm:h-[107px] sm:w-[320px] lg:h-[140px] lg:w-[420px] xl:h-[160px] xl:w-[480px] 2xl:h-[174px] 2xl:w-[520px]"

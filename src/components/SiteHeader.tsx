@@ -48,7 +48,7 @@ export function SiteHeader({
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
       <div className="bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center gap-4 px-3 py-2 sm:px-4 sm:py-2.5 md:gap-6 md:px-6 md:py-3">
+        <div className="mx-auto flex max-w-7xl items-center gap-4 px-3 py-1.5 sm:px-4 sm:py-2 md:gap-6 md:px-6 md:py-2">
           <Link href={homeHref} className="flex shrink-0 items-center" aria-label="LogiMarket B2B Marketplace">
             <Logo variant="light" compact markOnly />
           </Link>
@@ -62,7 +62,7 @@ export function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-2 sm:px-4 md:px-6">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-1.5 sm:px-4 md:px-6">
           {/* Desktop Navigation Links */}
           <HeaderDesktopNavigation items={desktopNavItems} />
 
