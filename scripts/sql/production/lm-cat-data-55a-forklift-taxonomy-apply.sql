@@ -7,33 +7,33 @@ DO $$
 DECLARE
   v_slug_21 text;
   v_slug_25 text;
-  
+
   -- Snapshot variables
   v_orig_category_id bigint;
   v_orig_updated_at timestamptz;
   v_orig_hash text;
   v_orig_immutable jsonb;
-  
+
   v_updated_rows integer;
-  
+
   -- Postcheck variables
   v_post_category_id bigint;
   v_post_updated_at timestamptz;
   v_post_immutable jsonb;
-  
+
   v_post_slug_21 text;
   v_post_slug_25 text;
   v_post_offer_1_cat bigint;
 BEGIN
   -- 1. Deterministyczne blokowanie kategorii (rosnąco po ID)
   PERFORM id FROM public.categories WHERE id IN (21, 25) ORDER BY id FOR UPDATE;
-  
+
   -- Weryfikacja slugów kategorii po zablokowaniu
   SELECT slug INTO v_slug_21 FROM public.categories WHERE id = 21;
   IF v_slug_21 IS DISTINCT FROM 'wozki-widlowe-elektryczne' THEN
     RAISE EXCEPTION 'LM55A apply: source category slug mismatch or category missing' USING ERRCODE = 'check_violation';
   END IF;
-  
+
   SELECT slug INTO v_slug_25 FROM public.categories WHERE id = 25;
   IF v_slug_25 IS DISTINCT FROM 'elektryczne-wozki-paletowe' THEN
     RAISE EXCEPTION 'LM55A apply: target category slug mismatch or category missing' USING ERRCODE = 'check_violation';
@@ -77,7 +77,7 @@ BEGIN
     SET category_id = 25,
         updated_at = now()
     WHERE id = 8 AND category_id = 21;
-    
+
     GET DIAGNOSTICS v_updated_rows = ROW_COUNT;
     IF v_updated_rows <> 1 THEN
       RAISE EXCEPTION 'LM55A apply: expected 1 row updated, got %', v_updated_rows USING ERRCODE = 'check_violation';
@@ -112,7 +112,7 @@ BEGIN
   IF v_orig_category_id = 21 AND v_post_updated_at IS NOT DISTINCT FROM v_orig_updated_at THEN
     RAISE EXCEPTION 'LM55A apply postcheck: updated_at was not updated' USING ERRCODE = 'check_violation';
   END IF;
-  
+
   IF v_orig_category_id = 25 AND v_post_updated_at IS DISTINCT FROM v_orig_updated_at THEN
     RAISE EXCEPTION 'LM55A apply postcheck: updated_at changed on NOOP' USING ERRCODE = 'check_violation';
   END IF;

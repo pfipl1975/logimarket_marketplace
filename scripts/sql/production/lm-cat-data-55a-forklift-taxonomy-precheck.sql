@@ -7,7 +7,7 @@ DO $$
 DECLARE
   v_target_cat_count integer;
   v_source_cat_count integer;
-  
+
   v_category_id bigint;
   v_hash text;
   v_exists boolean;

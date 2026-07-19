@@ -7,12 +7,12 @@ DO $$
 DECLARE
   v_category_id bigint;
   v_hash text;
-  
+
   v_offer_1_cat bigint;
-  
+
   v_slug_21 text;
   v_slug_25 text;
-  
+
   v_cat_21_count integer;
   v_cat_25_count integer;
 BEGIN
