@@ -26,7 +26,7 @@ type Props = {
 function AttributeControls({ definitions, filters, labels }: Pick<Props, "definitions" | "filters" | "labels">) {
   const values = filters.attributeParams ?? {};
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <>
       {definitions.map((definition) => {
         const key = definition.stableKey;
         if (definition.dataType === "number") {
@@ -38,16 +38,34 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
                   {labels.from}
                   <span className="sr-only"> {definition.name}</span>
                   <div className="relative mt-1">
-                    <input name={`af_${key}_min`} defaultValue={values[`af_${key}_min`]?.[0] ?? ""} inputMode="decimal" className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal" />
-                    {definition.unitCode && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{definition.unitCode}</span>}
+                    <input
+                      name={`af_${key}_min`}
+                      defaultValue={values[`af_${key}_min`]?.[0] ?? ""}
+                      inputMode="decimal"
+                      className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal h-[38px]"
+                    />
+                    {definition.unitCode && (
+                      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                        {definition.unitCode}
+                      </span>
+                    )}
                   </div>
                 </label>
                 <label className="min-w-0 text-xs text-muted-foreground">
                   {labels.to}
                   <span className="sr-only"> {definition.name}</span>
                   <div className="relative mt-1">
-                    <input name={`af_${key}_max`} defaultValue={values[`af_${key}_max`]?.[0] ?? ""} inputMode="decimal" className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal" />
-                    {definition.unitCode && <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">{definition.unitCode}</span>}
+                    <input
+                      name={`af_${key}_max`}
+                      defaultValue={values[`af_${key}_max`]?.[0] ?? ""}
+                      inputMode="decimal"
+                      className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal h-[38px]"
+                    />
+                    {definition.unitCode && (
+                      <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-muted-foreground">
+                        {definition.unitCode}
+                      </span>
+                    )}
                   </div>
                 </label>
               </div>
@@ -59,16 +77,24 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
           return (
             <label key={definition.attributeId} className="block min-w-0 text-sm font-semibold text-brand-navy">
               {definition.name}
-              <select name={`af_${key}`} defaultValue={values[`af_${key}`]?.[0] ?? ""} className="mt-2 w-full rounded border border-border bg-white px-3 py-2 text-sm font-normal text-brand-navy outline-none focus:border-brand-teal">
+              <select
+                name={`af_${key}`}
+                defaultValue={values[`af_${key}`]?.[0] ?? ""}
+                className="mt-2 w-full rounded border border-border bg-white px-3 py-2 text-sm font-normal text-brand-navy outline-none focus:border-brand-teal h-[38px]"
+              >
                 <option value="">—</option>
-                {definition.options.map((option) => <option key={option.optionId} value={option.stableKey}>{option.label}</option>)}
+                {definition.options.map((option) => (
+                  <option key={option.optionId} value={option.stableKey}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
           );
         }
         return null;
       })}
-    </div>
+    </>
   );
 }
 
@@ -77,29 +103,53 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
   const clearHref = buildCategoryOfferQueryHref(basePath, { view, filters }, { clearAttributeFilters: true });
   const hiddenModel = filters.model ? <input type="hidden" name="model" value={filters.model} /> : null;
   const hiddenFeatured = filters.featured ? <input type="hidden" name="featured" value="1" /> : null;
-  const controls = <AttributeControls definitions={definitions} filters={filters} labels={labels} />;
 
   return (
     <aside className="mt-6 w-full border border-border bg-white p-4">
+      {/* Desktop Navigation & Filters */}
       <div className="hidden md:block">
         <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">{labels.heading}</h2>
-        <form action={basePath} className="mt-4 space-y-5">
+        <form action={basePath} className="mt-4">
           <input type="hidden" name="view" value={view} />
-          {hiddenModel}{hiddenFeatured}{controls}
-          <div className="flex items-center justify-end gap-3">
-            <button type="submit" className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal">{labels.apply}</button>
-            <Link href={clearHref} className="text-sm font-semibold text-muted-foreground hover:text-brand-teal">{labels.clear}</Link>
+          {hiddenModel}
+          {hiddenFeatured}
+          <div className="grid gap-4 items-end md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <AttributeControls definitions={definitions} filters={filters} labels={labels} />
+            <div className="flex items-center gap-3 pb-0.5 xl:justify-start">
+              <button
+                type="submit"
+                className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal whitespace-nowrap h-[38px]"
+              >
+                {labels.apply}
+              </button>
+              <Link href={clearHref} className="text-sm font-semibold text-muted-foreground hover:text-brand-teal whitespace-nowrap">
+                {labels.clear}
+              </Link>
+            </div>
           </div>
         </form>
       </div>
+
+      {/* Mobile Accordion & Filters */}
       <details className="md:hidden">
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">{labels.summary}</summary>
         <form action={basePath} className="mt-4 space-y-5 border-t border-border pt-4">
           <input type="hidden" name="view" value={view} />
-          {hiddenModel}{hiddenFeatured}{controls}
+          {hiddenModel}
+          {hiddenFeatured}
+          <div className="grid gap-4 grid-cols-1">
+            <AttributeControls definitions={definitions} filters={filters} labels={labels} />
+          </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <button type="submit" className="w-full rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal sm:w-auto">{labels.apply}</button>
-            <Link href={clearHref} className="text-center text-sm font-semibold text-muted-foreground hover:text-brand-teal">{labels.clear}</Link>
+            <button
+              type="submit"
+              className="w-full rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal sm:w-auto h-[38px]"
+            >
+              {labels.apply}
+            </button>
+            <Link href={clearHref} className="text-center text-sm font-semibold text-muted-foreground hover:text-brand-teal">
+              {labels.clear}
+            </Link>
           </div>
         </form>
       </details>
