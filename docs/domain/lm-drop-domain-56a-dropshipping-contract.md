@@ -79,7 +79,7 @@ W architekturze LogiMarket rozdzielamy pojęcie sposobu zakupu na marketplace (`
 ### Zdefiniowane Role Domenowe:
 1. **Kupujący B2B (Customer / Buyer)**: Podmiot gospodarczy składający zamówienie w LogiMarket, podający dane do faktury i dostawy oraz opłacający zamówienie.
 2. **Operator LogiMarket (Marketplace Operator)**: Centralny zespół LogiMarket zarządza katalogiem, umowami, weryfikuje zamówienia, zleca wysyłki dostawcom, kontroluje rozliczenia i obsługuje wyjątki.
-3. **Partner Dropshippingowy (Supplier / Vendor)**: Podmiot zewnętrznyutrzymujący stock, pakujący i wysyłający towar bezpośrednio do Kupującego B2B na zlecenie Operatora.
+3. **Partner Dropshippingowy (Supplier / Vendor)**: Podmiot zewnętrzny utrzymujący stock, pakujący i wysyłający towar bezpośrednio do Kupującego B2B na zlecenie Operatora.
 4. **Przewoźnik (Carrier)**: Firma kurierska/logistyczna realizująca przewóz i dostarczająca dane statusowe tracking.
 5. **Dostawca Płatności (Payment Service Provider / PSP)**: Podmiot procesujący płatność bezgotówkową (np. Stripe — *nazwa podana wyłącznie jako niewiążący przykład rynkowy*), autoryzacje, pobrania oraz zwroty środków.
 
@@ -101,25 +101,25 @@ W architekturze LogiMarket rozdzielamy pojęcie sposobu zakupu na marketplace (`
 
 ---
 
-## 5. CYKL ŻYCIA ZAMÓWIENIA I 11 ZDEKOMPONOWANYCH OSI STATUSOWYCH
+## 5. CYKL ŻYCIA ZAMÓWIENIA I ZDEKOMPONOWANE OSIE STATUSOWE
 
 Zamówienie dropshippingowe opisane jest zestawem **ortogonalnych maszyn stanów**, a nie jedną liniową kolumną statusu.
 
 ```
-                          11 ZDEKOMPONOWANYCH OSI STATUSOWYCH
+                          ZDEKOMPONOWANE OSIE STATUSOWE
 +-----------------------------------------------------------------------------------+
 | 1. Customer Order Status:   draft -> placed -> processing -> completed -> cancelled|
 | 2. Payment Status:          pending -> authorized -> captured -> refunded -> failed|
-| 3. Supplier Order Status:   unsubmitted -> pending_confirmation -> confirmed -> rejected|
-| 4. Fulfillment Status:      unfulfilled -> processing -> shipped -> delivered      |
-| 5. Shipment Status:         manifested -> in_transit -> delivered -> exception     |
-| 6. Cancellation Status:     none -> requested -> approved -> rejected              |
-| 7. Refund Status:           none -> pending -> partial -> full -> failed            |
-| 8. Return Status:           none -> requested -> authorized -> received -> rejected|
-| 9. Complaint Status:        none -> open -> under_review -> resolved -> rejected   |
-| 10. Settlement Status:      unsettled -> ready_for_payout -> paid -> disputed     |
-| 11. Supplier Confirm Status: pending -> accepted -> rejected                      |
-+-----------------------------------------------------------------------------------+
+| 3. Supplier Order Status:   draft -> created -> transmitted -> active -> completed -> cancelled|
+| 4. Supplier Confirmation Status: not_requested -> pending -> partially_confirmed -> confirmed -> declined -> expired|
+| 5. Fulfillment Status:      unfulfilled -> processing -> shipped -> delivered      |
+| 6. Shipment Status:         manifested -> in_transit -> delivered -> exception     |
+| 7. Cancellation Status:     none -> requested -> approved -> declined              |
+| 8. Refund Status:           none -> pending -> partial -> full -> failed            |
+| 9. Return Status:           none -> requested -> authorized -> received -> declined|
+| 10. Complaint Status:       none -> open -> under_review -> resolved -> declined   |
+| 11. Settlement Status:      unsettled -> ready_for_payout -> paid -> disputed     |
++-----------------------------------------------------------------------------------++
 ```
 
 ### Wymagane Scenariusze i Wyjątki Domenowe:
@@ -139,10 +139,34 @@ Maszyny stanów muszą formalnie obsługiwać:
 
 | STATE_AXIS | FROM | EVENT | TO | ACTOR | PRECONDITIONS | SIDE_EFFECTS | FAILURE_PATH | RETRY_POLICY | IDEMPOTENCY_SCOPE | IDEMPOTENCY_KEY | AUDIT_EVENT | NOTIFICATION | ALLOWED_ADMIN_ACTION | FORBIDDEN_ADMIN_ACTION |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `Payment Status` | `pending` | `AUTH_PAYMENT` | `authorized` | PSP Webhook | Valid checkout session | Reserve funds, emit `PAYMENT_AUTH_SUCCESS` | `payment_failed` | Max 3 retries | Order Session | `pay_auth_{order_id}` | `PAYMENT_AUTHORIZED` | Email to Buyer | View details | Manual status override without PSP check |
-| `Supplier Order` | `unsubmitted` | `TRANSMIT_ORDER` | `pending_confirmation` | Operator / System | Payment authorized | Generate Supplier Order record & spec PDF | `transmission_failed` | Exponential backoff | Supplier Order | `sup_trans_{sup_order_id}` | `SUPPLIER_ORDER_TRANSMITTED` | Email to Supplier | Re-transmit email | Edit line items after transmission |
-| `Supplier Order` | `pending_confirmation` | `SUPPLIER_CONFIRM` | `confirmed` | Operator (for Supplier) | SLA active | Lock buy price, update status | `supplier_rejected` | Manual resolution | Supplier Order | `sup_conf_{sup_order_id}` | `SUPPLIER_CONFIRMED` | Email to Buyer | Confirm on behalf | Confirm without item availability check |
-| `Fulfillment` | `processing` | `DISPATCH_SHIPMENT` | `shipped` | Operator (for Supplier) | Valid tracking number & carrier | Capture authorized funds, emit tracking link | `dispatch_failed` | Manual check | Shipment | `ship_disp_{shipment_id}` | `SHIPMENT_DISPATCHED` | Email with tracking URL | Enter tracking info | Mark shipped without tracking number |
+| Payment Status | pending | PAYMENT_FAILURE | failed | PSP Webhook | CONDITIONAL_ON_DEC_DROP_21 | Log failure | payment_failed | Retry on PSP | Order Session | pay_fail_{order_id} | PAYMENT_FAILED | Email to Buyer | View details | Manual override |
+| Payment Status | pending | PAYMENT_AUTHORIZATION | authorized | PSP Webhook | CONDITIONAL_ON_DEC_DROP_21 | Reserve funds | auth_failed | Retry on PSP | Order Session | pay_auth_{order_id} | PAYMENT_AUTHORIZED | Email to Buyer | View details | Manual override |
+| Payment Status | authorized | PAYMENT_CAPTURE | captured | PSP Webhook | CONDITIONAL_ON_DEC_DROP_21 | Capture funds | capture_failed | Retry on PSP | Order Session | pay_cap_{order_id} | PAYMENT_CAPTURED | None | View details | Manual override |
+| Supplier Order | draft | SUPPLIER_TRANSMISSION | transmitted | Operator LogiMarket | Payment authorized | Generate spec | transmission_failed | Exponential backoff | Supplier Order | sup_trans_{sup_order_id} | SUPPLIER_ORDER_TRANSMITTED | Email to Supplier | Re-transmit email | Edit items |
+| Supplier Confirmation | pending | SUPPLIER_CONFIRMATION | confirmed | Operator LogiMarket | SLA active | Lock buy price | confirmation_failed | Manual check | Supplier Order | sup_conf_{sup_order_id} | SUPPLIER_CONFIRMED | Email to Buyer | Confirm on behalf | Confirm without stock check |
+| Supplier Confirmation | pending | PARTIAL_SUPPLIER_CONFIRMATION | partially_confirmed | Operator LogiMarket | SLA active | Lock buy price partial | confirmation_failed | Manual check | Supplier Order | sup_pconf_{sup_order_id} | SUPPLIER_PARTIALLY_CONFIRMED | Email to Buyer | Confirm on behalf | Confirm without stock check |
+| Supplier Confirmation | pending | SUPPLIER_DECLINE | declined | Operator LogiMarket | SLA active | Cancel order | decline_failed | Manual check | Supplier Order | sup_rej_{sup_order_id} | SUPPLIER_DECLINED | Email to Buyer | Reject on behalf | Reject without reason |
+| Cancellation | none | CANCELLATION_BEFORE_SUPPLIER_CONFIRMATION | requested | Operator LogiMarket | Before confirmation | Emit cancellation | cancel_failed | Manual check | Order | cancel_req_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
+| Cancellation | none | CANCELLATION_AFTER_CONFIRMATION | requested | Operator LogiMarket | After confirmation | Emit cancellation | cancel_failed | Manual check | Order | cancel_req2_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
+| Cancellation | none | CANCELLATION_AFTER_SHIPMENT | requested | Operator LogiMarket | After shipment | Emit cancellation | cancel_failed | Manual check | Order | cancel_req3_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
+| Fulfillment | unfulfilled | FULFILLMENT_START | processing | Operator LogiMarket | Confirmed | Update status | start_failed | Manual check | Supplier Order | ful_start_{sup_order_id} | FULFILLMENT_STARTED | None | Start | Start without confirm |
+| Shipment | manifested | SPLIT_SHIPMENT | in_transit | Operator LogiMarket | CONDITIONAL_ON_DEC_DROP_22 | Update tracking | shipment_failed | Manual check | Shipment | ship_split_{shipment_id} | SHIPMENT_SPLIT | None | Add tracking | Split without tracking |
+| Shipment | manifested | PARTIAL_SHIPMENT | in_transit | Operator LogiMarket | CONDITIONAL_ON_DEC_DROP_22 | Update tracking | shipment_failed | Manual check | Shipment | ship_part_{shipment_id} | SHIPMENT_PARTIAL | None | Add tracking | Split without tracking |
+| Shipment | in_transit | SHIPMENT_EXCEPTION | exception | Carrier | In transit | Log exception | exception_failed | Manual check | Shipment | ship_exc_{shipment_id} | SHIPMENT_EXCEPTION | Alert Operator | View | Ignore exception |
+| Shipment | in_transit | DELIVERY | delivered | Carrier | In transit | Update status | delivery_failed | Manual check | Shipment | ship_del_{shipment_id} | SHIPMENT_DELIVERED | Email to Buyer | View | Mark delivered manually |
+| Refund | none | REFUND_REQUEST | pending | Operator LogiMarket | Captured | Request refund | request_failed | Manual check | Order | ref_req_{order_id} | REFUND_REQUESTED | None | Request | Approve without review |
+| Refund | pending | PARTIAL_REFUND | partial | PSP Webhook | Pending | Execute refund | refund_failed | Retry on PSP | Order | ref_part_{order_id} | REFUND_PARTIAL | Email to Buyer | View | Execute without PSP |
+| Refund | pending | FULL_REFUND | full | PSP Webhook | Pending | Execute refund | refund_failed | Retry on PSP | Order | ref_full_{order_id} | REFUND_FULL | Email to Buyer | View | Execute without PSP |
+| Refund | pending | REFUND_FAILURE | failed | PSP Webhook | Pending | Log failure | refund_failed | Retry on PSP | Order | ref_fail_{order_id} | REFUND_FAILED | Alert Operator | View | Ignore failure |
+| Return | none | RETURN_REQUEST | requested | Operator LogiMarket | Delivered | Request return | request_failed | Manual check | Order | ret_req_{order_id} | RETURN_REQUESTED | Email to Supplier | Request | Approve without review |
+| Complaint | none | COMPLAINT_OPENING | open | Operator LogiMarket | Delivered | Open complaint | open_failed | Manual check | Order | comp_open_{order_id} | COMPLAINT_OPENED | Email to Supplier | Open | Close without review |
+| Complaint | open | COMPLAINT_RESOLUTION | resolved | Operator LogiMarket | Open | Resolve complaint | resolve_failed | Manual check | Order | comp_res_{order_id} | COMPLAINT_RESOLVED | Email to Buyer | Resolve | Reopen without reason |
+| Settlement | unsettled | SETTLEMENT_READY | ready_for_payout | Operator LogiMarket | Delivered | Mark ready | ready_failed | Manual check | Supplier Order | set_ready_{sup_order_id} | SETTLEMENT_READY | None | Mark | Mark without delivery |
+| Settlement | ready_for_payout | SETTLEMENT_PAID | paid | Operator LogiMarket | Ready | Mark paid | paid_failed | Manual check | Supplier Order | set_paid_{sup_order_id} | SETTLEMENT_PAID | Email to Supplier | Mark | Mark without proof |
+| Settlement | ready_for_payout | SETTLEMENT_DISPUTED | disputed | Operator LogiMarket | Ready | Mark disputed | dispute_failed | Manual check | Supplier Order | set_disp_{sup_order_id} | SETTLEMENT_DISPUTED | Email to Supplier | Mark | Resolve without proof |
+| Any | Any | DUPLICATE_EVENT | Any | System | Any | Drop | None | Drop | Any | Any | DUPLICATE_IGNORED | None | None | None |
+| Any | Any | OUT_OF_ORDER_EVENT | Any | System | Any | Queue/Drop | None | Queue | Any | Any | OUT_OF_ORDER_IGNORED | None | None | None |
+| Any | Any | MANUAL_OPERATOR_CORRECTION | Any | Operator LogiMarket | Any | Update status | correction_failed | Manual | Any | man_corr_{id} | MANUAL_CORRECTION | Alert Admin | Correct | Correct without note |
 
 ---
 
@@ -172,7 +196,7 @@ Ze względu na ograniczenia biznesowe MVP (brak portalu dostawcy i braku automat
 
 ## 9. WYSYŁKA I TRACKING (SHIPMENT & TRACKING CONTRACT)
 
-Encja domenowa `shipments` reprezentuje przesyłkę kurierską/paletową (*przykładowa nazwa techniczna: ILLUSTRATIVE NAME — SUBJECT TO DATA MODEL REVIEW*).
+Encja domenowa `shipments` reprezentuje przesyłkę kurierską/paletową (*ILLUSTRATIVE NAME — SUBJECT TO DATA MODEL REVIEW*).
 > **Ścieżka `/go/[id]`** jest wyłącznie mechanizmem śledzenia kliknięć w oferty typu *Outbound* i pod żadnym pozorem nie może być wykorzystywana do śledzenia przesyłek kurierskich!
 
 ---
@@ -217,7 +241,7 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 3. **Nieedytowalny Audit Log (`domain_audit_logs`)**: Zapis historii każdego zdarzenia biznesowego wraz z autorem, starym i nowym stanem oraz kluczem idempotencyjnym (`idempotency_key`).
 4. **Zabezpieczenie przed Podwójnym Fulfillmentem i Refundem**: Wymuszenie unikalności kluczy transakcyjnych i operacyjnych.
 5. **Minimalizacja PII i Retencja Danych**: Ochrona danych osobowych kupującego przekazywanych partnerowi.
-6. **Zabezpieczenia Webhooków**: Weryfikacja kryptograficzna nagłówków sygnatur (np. Webhook HMAC-SHA256), ochrona przed atakami typu replay attack (timestamp verification).
+6. **Zabezpieczenia Webhooków**: Weryfikacja podpisu webhooka zgodnie z mechanizmem wybranego dostawcy, kontrola timestampu i ochrona przed replay.
 
 ---
 
@@ -232,13 +256,14 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **DOMAIN_BOUNDARY**: Zarządzanie strukturą firmy kupującej, profilami członków, adresami dostaw i fakturowania oraz akceptacjami.
 * **RELATION_TO_DROPSHIPPING**: Dropshipping realizuje wysyłkę na adres końcowy wskazany w zamówieniu firmowym.
 * **CURRENT_REPOSITORY_SUPPORT**: Brak (`orders` przechowywane są per `sessionHash` bez kont użytkowników).
-* **MVP_RELEVANCE**: Niska (w MVP dane firmy wprowadzane są jednorazowo w checkout). Pole `customer_po_number` (*ILLUSTRATIVE NAME*) jest rekomendowane dla przyszłego kontraktu zamówień.
-* **FUTURE_RELEVANCE**: Krytyczna dla klientów korporacyjnych B2B.
+* **MVP_RELEVANCE**: Niska (w MVP dane firmy wprowadzane są jednorazowo w checkout). Zgodnie z decyzją DEC-DROP-23, Customer PO może wejść do MVP order core.
+* **FUTURE_RELEVANCE**: Pełne konta organizacyjne i approval workflow pozostają post-MVP.
 * **BLOCKING_DECISIONS**: Decyzja o wdrożeniu systemu kont i IAM dla Kupujących.
 * **LEGAL_DEPENDENCIES**: Regulamin kont firmowych B2B i odpowiedzialność reprezentantów.
 * **SECURITY_DEPENDENCIES**: Multi-tenant data isolation, RBAC po stronie kupującego.
 * **PROPOSED_FUTURE_SPRINT**: `LM-B2B-ACCOUNT-58A — CORPORATE ACCOUNTS AND PURCHASE APPROVAL DOMAIN`.
-* **STATUS**: `OUT_OF_SCOPE_FOR_DROP_MVP` / `FUTURE_REQUIRED`.
+* **CAPABILITY_STATUS**: `FUTURE_REQUIRED`
+* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
 
 ---
 
@@ -247,28 +272,30 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **DOMAIN_BOUNDARY**: Silnik wyceny transportu ciężkiego (Freight Engine), kalkulacja LTL/FTL oraz wycena odroczona (*Deferred Freight Quote*).
 * **RELATION_TO_DROPSHIPPING**: Dostawca dropshippingowy często realizuje wysyłkę dedykowanym transportem własnym lub siecią paletową.
 * **CURRENT_REPOSITORY_SUPPORT**: Brak (koszyk nie wylicza kosztów transportu ciężkiego).
-* **MVP_RELEVANCE**: Wyłączona z wyceny automatycznej checkoutu MVP. Oferta `offerModel=ecommerce` może wymagać ręcznego potwiedzenia transportu bez stawania się ofertą `rfq`.
+* **MVP_RELEVANCE**: Zależy od DEC-DROP-22. Nie jest automatycznie post-MVP. Oferta `offerModel=ecommerce` może wymagać ręcznego potwierdzenia transportu bez stawania się ofertą `rfq`.
 * **FUTURE_RELEVANCE**: Wysoka dla kategorii urządzeń magazynowych i wielkogabarytowych.
 * **BLOCKING_DECISIONS**: Wybór modelu kalkulacji kosztów transportu (fixed vs rule-based vs deferred quote).
 * **LEGAL_DEPENDENCIES**: Warunki dostawy Incoterms / prawo przewozowe B2B.
 * **SECURITY_DEPENDENCIES**: Autoryzacja aktualizacji kosztu zamówienia przed pobraniem płatności.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-FREIGHT-57B — HEAVY FREIGHT QUOTATION AND DELIVERY TERMS`.
-* **STATUS**: `OUT_OF_SCOPE_FOR_DROP_MVP` / `OPEN_BUSINESS_DECISION`.
+* **CAPABILITY_STATUS**: `OPEN_BUSINESS_DECISION`
+* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
 
 ---
 
 ### CAP-B2B-CREDIT-03 — Trade Credit and Deferred Payment Domain
 * **BUSINESS_PROBLEM**: Transakcje B2B często wymagają płatności odroczonej (np. 14, 30 dni), faktury proforma lub limitu kupieckiego (*Trade Credit*), a nie płatności natychmiastowej kartą/przelewem.
-* **DOMAIN_BOUNDARY**: Ocena ryzyka kredytowego, limit kupiecki, weryfikacja ubezpieczyciela (np. Euler Hermes/Enfused), zarządzanie terminami płatności.
+* **DOMAIN_BOUNDARY**: Ocena ryzyka kredytowego, limit kupiecki, weryfikacja ubezpieczyciela, zarządzanie terminami płatności.
 * **RELATION_TO_DROPSHIPPING**: Wyznacza moment realizacji zamówienia przez dostawcę przed lub po otrzymaniu wpłaty od kupującego.
 * **CURRENT_REPOSITORY_SUPPORT**: Brak.
-* **MVP_RELEVANCE**: Wyłączona w MVP (MVP zakłada płatność bezgotówkową z góry przed przekazaniem do dostawcy).
+* **MVP_RELEVANCE**: Zależy od DEC-DROP-21.
 * **FUTURE_RELEVANCE**: Wysoka dla zwiększenia wolumenu wartościowych zamówień B2B.
 * **BLOCKING_DECISIONS**: `DEC-DROP-01`, `DEC-DROP-04` oraz wybór partnera finansowania B2B (Faktoring / Kredyt kupiecki).
 * **LEGAL_DEPENDENCIES**: Umowa ramowa kredytu kupieckiego, cesja wierzytelności.
 * **SECURITY_DEPENDENCIES**: Zabezpieczenie przed wyłudzeniami i nadużyciem limitu.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-CREDIT-57C — B2B TRADE CREDIT AND DEFERRED PAYMENT DOMAIN`.
-* **STATUS**: `OUT_OF_SCOPE_FOR_DROP_MVP` / `LEGAL_REVIEW_REQUIRED`.
+* **CAPABILITY_STATUS**: `LEGAL_REVIEW_REQUIRED`
+* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
 
 ---
 
@@ -283,22 +310,24 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **LEGAL_DEPENDENCIES**: Brak.
 * **SECURITY_DEPENDENCIES**: Walidacja typów danych wejściowych.
 * **PROPOSED_FUTURE_SPRINT**: `LM-CAT-ATTR-54C — TECHNICAL ATTRIBUTE NORMALIZATION ENGINE`.
-* **STATUS**: `PARTIALLY_SUPPORTED` / `FUTURE_OPTIONAL`.
+* **CAPABILITY_STATUS**: `PARTIALLY_SUPPORTED`
+* **MVP_SCOPE_CLASSIFICATION**: `FUTURE_OPTIONAL`
 
 ---
 
 ### CAP-DROP-SLA-05 — Supplier Performance and SLA Engine
 * **BUSINESS_PROBLEM**: Jakość dropshippingu zależy od terminowości dostawców (czas potwierdzenia SLA, czas wysyłki, wskaźnik odrzuceń, wskaźnik uszkodzeń w transporcie).
-* **DOMAIN_BOUNDARY**: Gromadzenie zdarzeń operacyjnych, wyliczanie metryk SLA, wskaźników jakości oraz ewentualnego wływu na ranking ofert.
+* **DOMAIN_BOUNDARY**: Gromadzenie zdarzeń operacyjnych, wyliczanie metryk SLA, wskaźników jakości oraz ewentualnego wpływu na ranking ofert.
 * **RELATION_TO_DROPSHIPPING**: Umożliwia Operatorowi ocenę i moderację partnerów dropshippingowych.
 * **CURRENT_REPOSITORY_SUPPORT**: Brak.
-* **MVP_RELEVANCE**: Gromadzenie surowych zdarzeń w logu audytowym jest wymaganiem MVP; automatyczny scoring i wpływ na pozycję w katalogu jest wariantem post-MVP.
+* **MVP_RELEVANCE**: Raw event capture = MVP_REQUIRED. Calculated metrics = POST_MVP. Automatic score = POST_MVP. Ranking influence = osobna decyzja i LEG-GATE-14.
 * **FUTURE_RELEVANCE**: Wysoka dla automatyzacji nadzoru nad jakością dostawców.
 * **BLOCKING_DECISIONS**: Zasady transparentności rankingu i wyliczania ocen dostawców.
 * **LEGAL_DEPENDENCIES**: Zgodność z rozporządzeniem P2B (Platform-to-Business) dotyczącym kryteriów plasowania ofert.
 * **SECURITY_DEPENDENCIES**: Nieedytowalność zdarzeń źródłowych, kontrola dostępu do korekt ręcznych.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-SLA-57D — SUPPLIER PERFORMANCE AND SLA ENGINE`.
-* **STATUS**: `OUT_OF_SCOPE_FOR_DROP_MVP` / `FUTURE_OPTIONAL`.
+* **CAPABILITY_STATUS**: `FUTURE_OPTIONAL`
+* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
 
 ---
 

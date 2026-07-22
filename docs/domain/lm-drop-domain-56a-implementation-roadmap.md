@@ -12,7 +12,7 @@
 Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało podzielone na wyizolowane, sekwencyjne sprinty techniczne.
 
 ### Nadrzędne Zasady Wdrożenia:
-1. **Współzależność od Zamknięcia Decyzji (Decisions First)**: Żaden sprint bazodanowy (`56B1+`) ani aplikacyjny nie może wystartować przed formalnym zamknięciem otwartych decyzji blokujących w sprincie `LM-DROP-DOMAIN-56A-R2`.
+1. **Współzależność od Zamknięcia Decyzji (Decisions First)**: Żaden sprint bazodanowy (`56B1+`) ani aplikacyjny nie może wystartować przed formalnym zamknięciem otwartych decyzji blokujących w sprincie `LM-DROP-DOMAIN-56A-R2B`.
 2. **Dekompozycja Zmian Bazodanowych**: Zmiany schematu bazy danych zostały rozbite na 7 mikrostroków (`56B0` do `56B6`), unikając monolitycznej migracji.
 3. **Audyt i RBAC Przed Mutacjami Administracyjnymi**: Fundamenty uprawnień RBAC i rejestracji audytowej muszą wyprzedzać mutacje danych w panelu administracyjnym LogiMarket.
 4. **Wsteczna Kompatybilność**: Zachowanie 100% sprawności istniejących modeli ofert (`rfq`, `ecommerce`, `outbound`).
@@ -30,12 +30,8 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| LM-DROP-DOMAIN-56A-R2A: Business Decision Closure (MoR, SoR, Payment)             |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| LM-DROP-DOMAIN-56A-R2B: Legal & Tax Gates (Terms, Returns, VAT, Carrier)          |
+| LM-DROP-DOMAIN-56A-R2A: Business Decision Pack Preparation
+| LM-DROP-DOMAIN-56A-R2B: Approved Decision Incorporation    |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
@@ -66,7 +62,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 | LM-DROP-PAYMENT-56E: Payment Integration & Capture / Refund State Machine         |
 | LM-DROP-FULFILLMENT-56F: Shipment & Courier Tracking Management Core              |
 | LM-DROP-RETURNS-56G: B2B Cancellations, Returns & Quality Complaints Module       |
-| LM-DROP-AUDIT-56H: Domain Audit Trail & Operator RBAC Controls                    |
+| LM-DROP-AUDIT-56H: audit read models, operational reports, anomaly detection, retention operations and compliance exports.                    |
 | LM-DROP-QA-56I: QA, Integration Testing & Production Hardening                    |
 +-----------------------------------------------------------------------------------+
 ```
@@ -77,46 +73,33 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ---
 
-### SPRINT: LM-DROP-DOMAIN-56A-R2A — BUSINESS DECISION CLOSURE
-* **CEL**: Przygotowanie kontrolowanego pakietu decyzji dla Właściciela Biznesowego i Dyrektora Finansowego.
-* **ZALEŻNOŚCI**: Pomyślne odebranie LM-DROP-DOMAIN-56A-R1.
+### SPRINT: LM-DROP-DOMAIN-56A-R2A — BUSINESS AND LEGAL DECISION PACK PREPARATION
+* **CEL**: Przygotowanie kontrolowanego pakietu decyzji.
+* **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1C`.
 * **SCOPE**:
-  - Formalne zatwierdzenie wyboru Merchant of Record (DEC-DROP-01) i Seller of Record (DEC-DROP-02).
-  - Zatwierdzenie modelu rozliczeń (odsprzedaż vs agencja) oraz fakturowania (DEC-DROP-03).
-  - Rozstrzygnięcie modelu podmiotu pobierającego płatność (DEC-DROP-04) oraz własności środków (DEC-DROP-05).
+  - Agent może: przygotować formularze; porównać opcje; opisać konsekwencje; przygotować listę dokumentów; przygotować pytania dla Business Owner/CFO/Legal/Tax.
+  - Agent nie może: zatwierdzać; uzyskiwać opinii; podpisywać dokumentów; ustawiać DECIDED.
 * **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
-* **ACCEPTANCE CRITERIA**: Uzyskanie udokumentowanych wpisów CLOSED.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
+* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
 
 ---
 
-### SPRINT: LM-DROP-DOMAIN-56A-R2B — LEGAL & TAX GATES CLOSURE
-* **CEL**: Zatwierdzenie aspektów prawno-podatkowych dropshippingu przez Kancelarię i Doradcę Podatkowego.
-* **ZALEŻNOŚCI**: Pomyślne zamknięcie biznesowe w LM-DROP-DOMAIN-56A-R2A.
+### SPRINT: LM-DROP-DOMAIN-56A-R2B — APPROVED DECISION INCORPORATION
+* **CEL**: Wprowadzenie decyzji przekazanych przez uprawnione osoby.
+* **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R2A`.
 * **SCOPE**:
-  - Podpisanie ramowych wzorców umów partnerskich i warunków zwrotów B2B (DEC-DROP-11, DEC-DROP-14).
-  - Regulaminy, dokumentacja VAT i rozliczeń celnych.
-* **FORBIDDEN SCOPE**: Edycja kodu źródłowego.
-* **ACCEPTANCE CRITERIA**: Zamknięcie wymaganych bramek LEG-GATE.
+  - Agent może: wprowadzić decyzje przekazane przez uprawnione osoby; zapisać APPROVED_BY; zapisać APPROVED_AT; zapisać APPROVAL_SOURCE.
+  - Agent nie może: wymyślać zatwierdzeń.
+* **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
+* **ACCEPTANCE CRITERIA**: Uzyskanie udokumentowanych wpisów `DECIDED`.
 * **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
 
-* **CEL**: Przygotowanie kontrolowanego pakietu decyzji dla Właściciela Biznesowego, Dyrektora Finansowego oraz Kancelarii Prawnej w celu formalnego rozstrzygnięcia otwartych kwestii blokujących.
-* **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1`.
-* **SCOPE**:
-  - Formalne zatwierdzenie wyboru Merchant of Record (`DEC-DROP-01`) i Seller of Record (`DEC-DROP-02`).
-  - Zatwierdzenie modelu rozliczeń (odsprzedaż vs agencja) oraz fakturowania (`DEC-DROP-03`).
-  - Rozstrzygnięcie modelu podmiotu pobierającego płatność (`DEC-DROP-04`) oraz własności środków (`DEC-DROP-05`).
-  - Podpisanie ramowych wzorców umów partnerskich i warunków zwrotów B2B (`DEC-DROP-11`, `DEC-DROP-14`).
-  - Formalne zatwierdzenie podziału zamówień wielopartnerskich w koszyku MVP (`DEC-DROP-17`).
-* **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
-* **ACCEPTANCE CRITERIA**: Uzyskanie udokumentowanych wpisów `DECIDED` wraz z podaniem `APPROVED_BY`, `APPROVED_AT` oraz `APPROVAL_SOURCE` dla decyzji blokujących.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
 
 ---
 
 ### SPRINT: LM-DROP-DATA-MODEL-56B0 — LOGICAL DATA MODEL SPECIFICATION
 * **CEL**: Zdefiniowanie logiki relacyjnej, agregatów, kluczy obcych i niezmienników (invariants) nowego modelu danych w postaci dokumentacji technicznej przed wykonaniem zmian w Drizzle ORM.
-* **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2`.
+* **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2B`.
 * **SCOPE**:
   - Przygotowanie kompletnego dokumentu ERD i specyfikacji tabel (`supplier_profiles`, `supplier_orders`, `order_items` snapshot, `shipments`, `payment_transactions`, `domain_audit_logs`).
   - Określenie ograniczeń integralnościowych (CHECK constraints, FOREIGN KEY rules, UNIQUE indexes).
@@ -133,7 +116,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 2. **LM-DROP-SCHEMA-56B2 — Shipment & Courier Tracking Schema**: Utworzenie tabeli `shipments` powiązanej relacją z `supplier_orders`.
 3. **LM-DROP-SCHEMA-56B3 — Payment, Refund & Settlement Ledger Schema**: Utworzenie tabel `payment_transactions` oraz `settlement_records` (*dopiero po zatwierdzeniu decyzji finansowych*).
 4. **LM-DROP-SCHEMA-56B4 — Returns & Quality Complaints Schema**: Utworzenie tabel `return_requests` i `complaints`.
-5. **LM-DROP-SCHEMA-56B5 — Audit & Security Support Structures**: Utworzenie tabeli `domain_audit_logs` wspierającej nieedytowalny rejestr zdarzeń.
+5. **LM-DROP-SCHEMA-56B5 — Audit & Security Support Structures**: persistence structures and integrity constraints.
 6. **LM-DROP-SCHEMA-56B6 — Controlled Migration Execution**: Wykonanie zweryfikowanych transakcyjnie migracji Drizzle w środowisku Supabase/PostgreSQL i walidacja danych.
 
 ---
@@ -143,7 +126,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 * **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R1` oraz `LM-DROP-SCHEMA-56B5`.
 * **SCOPE**:
   - Projekt architektury modułu Admin MVP w ramach Next.js App Router (`/src/app/admin` lub odpowiedniej ścieżki).
-  - Implementacja kontroli uprawnień (Operator, Finance Admin, Support Agent).
+  - authentication, authorization, role enforcement and operator UX.
   - Powiązanie akcji administracyjnych z nieedytowalnym logiem audytowym (`domain_audit_logs`).
 * **FORBIDDEN SCOPE**: Tworzenie panelu self-service dla dostawców.
 
@@ -153,41 +136,37 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 | SPRINT | WYMAGANE DECYZJE BIZNESOWE | WYMAGANE BRAMKI PRAWNE | WYMAGANA BAZA BEZPIECZEŃSTWA | ZALEŻNOŚCI TECHNICZNE | ZAKAZANE PRZEDWCZESNE ZAŁOŻENIA |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `56A-R2` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `56A-R1` | Zakładanie zatwierdzenia rekomendacji |
-| `56B0` | `DEC-DROP-01, 02, 04, 17` | `LEG-GATE-01, 02` | N/A | `56A-R2` | Pisanie kodu schema.ts przed specyfikacją |
-| `56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `56B0` | Modyfikowanie istniejącego offerModel |
-| `56B2` | `DEC-DROP-11` | `LEG-GATE-06` | N/A | `56B1` | Używanie /go/[id] do śledzenia paczek |
-| `56B3` | `DEC-DROP-01, 04, 06, 08` | `LEG-GATE-01, 02, 09` | Transakcyjny Ledger | `56B1` | Zakładanie konkretnego dostawcy PSP |
-| `56B4` | `DEC-DROP-09, 12, 14` | `LEG-GATE-04, 05` | Audit Log | `56B1` | Bezwarunkowe zwroty konsumenckie w B2B |
-| `56B5` | Brak | `LEG-GATE-07, 08` | Immutability check | `56B0` | Możliwość edycji historii logów |
-| `56B6` | Brak | Brak | Backup & Rollback plan | `56B1..56B5` | Wykonywanie migracji bez sprawdzania braku destruktywności |
-| `57A` | Brak | Brak | RBAC & Audit | `56B5` | Dostęp bez uwierzytelnienia operacyjnego |
+| `56A-R2B` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `56A-R1` | Zakładanie zatwierdzenia rekomendacji |
+| `LM-DROP-SCHEMA-56B0` | `DEC-DROP-01, 02, 04, 17` | `LEG-GATE-01, 02` | N/A | `56A-R2B` | Pisanie kodu schema.ts przed specyfikacją |
+| `LM-DROP-SCHEMA-56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `LM-DROP-SCHEMA-56B0` | Modyfikowanie istniejącego offerModel |
+| `LM-DROP-SCHEMA-56B2` | `DEC-DROP-11` | `LEG-GATE-06` | N/A | `LM-DROP-SCHEMA-56B1` | Używanie /go/[id] do śledzenia paczek |
+| `LM-DROP-SCHEMA-56B3` | `DEC-DROP-01, 04, 06, 08` | `LEG-GATE-01, 02, 09` | Transakcyjny Ledger | `LM-DROP-SCHEMA-56B1` | Zakładanie konkretnego dostawcy PSP |
+| `LM-DROP-SCHEMA-56B4` | `DEC-DROP-09, 12, 14` | `LEG-GATE-04, 05` | Audit Log | `LM-DROP-SCHEMA-56B1` | Bezwarunkowe zwroty konsumenckie w B2B |
+| `LM-DROP-SCHEMA-56B5` | Brak | `LEG-GATE-07, 08` | Immutability check | `LM-DROP-SCHEMA-56B0` | Możliwość edycji historii logów |
+| `LM-DROP-SCHEMA-56B6` | Brak | Brak | Backup & Rollback plan | `56B1..56B5` | Wykonywanie migracji bez sprawdzania braku destruktywności |
+| `LM-ADMIN-57A` | Brak | Brak | RBAC & Audit | `LM-DROP-SCHEMA-56B5` | Dostęp bez uwierzytelnienia operacyjnego |
 
 ---
 
 ## 5. REJESTR BRAMEK PRAWNYCH (LEGAL GATES REGISTER)
 
-| LEGAL_GATE_ID | SUBJECT | BLOCKED_SPRINTS | OWNER | REQUIRED_DELIVERABLE | STATUS | APPROVAL_EVIDENCE |
+| LEGAL_GATE_ID | SUBJECT | BL&#79;CKED_SPRINTS | OWNER | REQUIRED_DELIVERABLE | STATUS | APPROVAL_EVIDENCE |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `LEG-GATE-01` | Podmiotowość MoR i SoR | `56B3, 56C, 56E` | Legal Counsel | Opinia prawna określająca status sprzedawcy | `OPEN` | NULL |
-| `LEG-GATE-02` | Klasyfikacja Podatkowa VAT i KSeF | `56B3, 56C` | Tax Advisor | Analiza schematu fakturowania i matrycy VAT | `OPEN` | NULL |
-| `LEG-GATE-03` | Umowa Ramowa Dropshippingu | `56B1, 56D` | Legal Counsel | Wzorzec umowy partnerskiej z dostawcami | `OPEN` | NULL |
-| `LEG-GATE-04` | Warunki Zwrotów i Odstąpień B2B | `56B4, 56G` | Legal Counsel | Regulamin zwrotów i reklamacji B2B | `OPEN` | NULL |
-| `LEG-GATE-05` | Warunki Rękojmi i Gwarancji | `56B4, 56G` | Legal Counsel | Zapisy dotyczące odpowiedzialności za wady | `OPEN` | NULL |
-| `LEG-GATE-06` | Odpowiedzialność Przewozowa | `56B2, 56F` | Legal / Ops | Ustalenia odpowiedzialności za szkody w transporcie | `OPEN` | NULL |
-| `LEG-GATE-07` | Powierzenie i Przetwarzanie PII | `56B5, 56D` | DPO / Legal | Umowa powierzenia danych osobowych (RODO) | `OPEN` | NULL |
-| `LEG-GATE-08` | Polityka Retencji Danych | `56B5, 56H` | DPO / Legal | Zasady okresu przechowywania danych transakcyjnych | `OPEN` | NULL |
-| `LEG-GATE-09` | Odpowiedzialność za Chargeback | `56B3, 56E` | Legal / CFO | Procedura obsługi sporów kartowych z PSP | `OPEN` | NULL |
+| `LEG-GATE-10` | Payment Flow and Funds Handling | `LM-DROP-PAYMENT-56E` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
+| `LEG-GATE-11` | Refund Responsibility and Financial Corrections | `LM-DROP-PAYMENT-56E, LM-DROP-RETURNS-56G` | Legal Counsel | Procedura refundacji | `OPEN` | NULL |
+| `LEG-GATE-12` | Trade Credit and External Financing | `LM-DROP-PAYMENT-56E` | Legal Counsel | Umowa ramowa kredytu kupieckiego | `OPEN` | NULL |
+| `LEG-GATE-13` | Credit Risk Ownership and Debt Collection | `LM-DROP-PAYMENT-56E` | Legal Counsel | Procedura windykacyjna | `OPEN` | NULL |
+| `LEG-GATE-14` | Supplier Scoring and P2B Ranking Transparency | `LM-DROP-SUPPLIER-56D` | Legal Counsel | Regulamin plasowania ofert (P2B) | `OPEN` | NULL |
 
 ---
 
 ## 6. ROADMAPA PRZYSZŁYCH CAPABILITIES B2B (`FUTURE B2B CAPABILITY ROADMAP`)
 
-| CAPABILITY_ID | CAPABILITY_NAME | MVP_SCOPE_CLASSIFICATION | DEPENDENT_ON | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
+| CAPABILITY_ID | CAPABILITY_NAME | MVP_REQUIRED | POST_MVP | DEPENDENT_ON | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
 | :--- | :--- | :---: | :---: | :--- | :--- | :---: |
 | `CAP-B2B-ACCOUNT-01` | Corporate B2B Accounts & Approvals | NO | YES | Konta Użytkowników | `LM-B2B-ACCOUNT-58A` | NO |
 | `CAP-B2B-FREIGHT-02` | Heavy Freight & Deferred Quote | NO | YES | System Transportowy | `LM-DROP-FREIGHT-57B` | NO |
-| `CAP-B2B-CREDIT-03` | Trade Credit & Deferred Payment | NO | YES | `56E`, Partner Finansowy | `LM-DROP-CREDIT-57C` | NO |
+| `CAP-B2B-CREDIT-03` | Trade Credit & Deferred Payment | NO | YES | `LM-DROP-PAYMENT-56E`, Partner Finansowy | `LM-DROP-CREDIT-57C` | NO |
 | `CAP-CATALOG-ATTR-04`| Technical Attribute Normalization | NO | YES | `LM-CAT-FILTER-54B` | `LM-CAT-ATTR-54C` | NO |
 | `CAP-DROP-SLA-05` | Supplier Performance & SLA Engine | NO | YES | `56H` Audit Trail | `LM-DROP-SLA-57D` | NO |
 
