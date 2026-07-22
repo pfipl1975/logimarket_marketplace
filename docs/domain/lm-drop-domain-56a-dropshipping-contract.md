@@ -1,6 +1,6 @@
-# LOGIMARKET — KONTRAKT BIZNESOWY I DOMENOWY DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1E)
+# LOGIMARKET — KONTRAKT BIZNESOWY I DOMENOWY DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1F)
 
-**Wersja:** 1.2.1
+**Wersja:** 1.2.2
 **Data:** 2026-07-22
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** LogiMarket Marketplace Domain Contract
@@ -104,6 +104,15 @@ W architekturze LogiMarket rozdzielamy pojęcie sposobu zakupu na marketplace (`
 ## 5. CYKL ŻYCIA ZAMÓWIENIA I ZDEKOMPONOWANE OSIE STATUSOWE
 
 Zamówienie dropshippingowe opisane jest zestawem **ortogonalnych maszyn stanów**, a nie jedną liniową kolumną statusu.
+
+All state names in this section are ILLUSTRATIVE STATE SETS —
+SUBJECT TO LOGICAL DATA MODEL REVIEW.
+
+Payment Status states and transitions are additionally
+CONDITIONAL_ON_DEC_DROP_21.
+
+The arrows illustrate possible lifecycle relationships and do not
+define one mandatory linear payment flow.
 
 ```
                           ZDEKOMPONOWANE OSIE STATUSOWE

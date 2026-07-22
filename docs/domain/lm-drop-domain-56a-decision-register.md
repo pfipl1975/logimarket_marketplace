@@ -1,6 +1,6 @@
-# LOGIMARKET — REJESTR DECYZJI BIZNESOWYCH I PRAWNYCH DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1E)
+# LOGIMARKET — REJESTR DECYZJI BIZNESOWYCH I PRAWNYCH DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1F)
 
-**Wersja:** 1.2.1
+**Wersja:** 1.2.2
 **Data:** 2026-07-22
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** Decision Register for Dropshipping Architecture
@@ -108,7 +108,7 @@ Niniejszy rejestr zawiera pełne zestawienie kluczowych decyzji handlowych, praw
   1. Konto operacyjne LogiMarket Sp. z o.o.
   2. Sub-konto dostawcy w wybranym PSP.
 * **RECOMMENDED_OPTION**: Option 1 (LogiMarket pobiera płatność na własne konto operacyjne).
-* **RATIONALE**: Zgodne z funkcją Merchant of Record.
+* **RATIONALE**: Zgodne z rekomendowanym, lecz niezatwierdzonym wariantem, w którym LogiMarket pełni funkcję Merchant of Record.
 * **RISKS**: Wymagany kapitał obrotowy oraz precyzyjny mechanizm settlementów.
 * **OWNER**: CFO.
 * **STATUS**: `OPEN_BLOCKING_BUSINESS_DECISION`
