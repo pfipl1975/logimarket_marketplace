@@ -2,171 +2,53 @@
 
 **Wersja:** 1.0.0
 **Data:** 2026-07-22
-**Cel:** Karty decyzji priorytetowych z zakresu operacji, zwrotów, wsparcia oraz struktury zamówień (DEC-DROP-12, DEC-DROP-17, DEC-DROP-21, DEC-DROP-22).
+**Cel:** Neutralna analiza wariantów operacyjnych procesu zamówień, płatności i logistyki.
 
-> Decyzje w tym dokumencie skupiają się na doświadczeniu użytkownika końcowego B2B oraz mechanizmach fizycznej integracji z systemami magazynowymi Partnerów Dropshippingowych.
+Wszystkie warianty poniżej przedstawione są neutralnie do czasu ich formalnego zatwierdzenia przez biznes.
+Żadne zadanie opisane w tym dokumencie nie jest z góry uznane za obowiązujący proces.
 
-## DEC-DROP-12: Podmiot Obsługujący Refund
-1. **Decision question**: Jak realizowany jest finansowy zwrot środków do Kupującego B2B w przypadku anulowania zamówienia lub uznania zwrotu?
-2. **Why the decision is required**: Stanowi bazowy mechanizm budowy kontrolerów Drizzle w `LM-DROP-SCHEMA-56B4` dla ścieżki anulowania transakcji.
-3. **Options**: Option 1 (Wyłącznie centralnie przez Operatora LogiMarket), Option 2 (Bezpośrednio przez partnera ze swoich środków / bramki).
-4. **Current architectural recommendation**: Option 1 (Centralnie).
-5. **Business consequences**: Niezależnie kto wydał towar i przyjął zwrot, środki zawsze wracają od nadawcy głównej faktury sprzedaży (zapewnia to spójność B2B).
-6. **Legal and tax consequences**: Ścisłe powiązanie fakturowania z realizacją płatności z DEC-DROP-03.
-7. **Financial consequences**: Płatność refundowana zawsze potrącana jest z bieżącego/przyszłego Settlementu Partnera; ryzyko debetowe Partnera.
-8. **Operational consequences**: Operator musi nadzorować fizyczne dotarcie zwrotu do magazynu dostawcy przed zleceniem Refund w panelu.
-9. **Technical consequences**: Model zwrotów wymaga implementacji dwufazowego procesu (Authorised -> Executed / PSP webhook update).
-10. **Risks**: Brak zapłaty za zaległe rozliczenia, gdy dostawca staje się niewypłacalny.
-11. **Reversibility**: Proste technicznie, ale trudne biznesowo.
-12. **Required approvers**: CFO, Customer Service.
-13. **Required evidence**: Zatwierdzona polityka "Refund Policy".
-14. **Blocked sprints**: `LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3, LM-DROP-SCHEMA-56B4`.
-15. **Questions that remain unanswered**: W jakim czasie od zatwierdzenia przez Admina następuje realizacja z bramki?
+## DECISION CARDS CONDITIONALS
 
-## DEC-DROP-17: Zamówienie z Produktami Wielu Partnerów (Multi-Partner Order)
-1. **Decision question**: Czy kupujący B2B może w jednym procesie koszykowym złożyć zamówienie, na które składają się produkty od wielu różnych dostawców dropshippingowych?
-2. **Why the decision is required**: Determinuje fundamentalną strukturę bazy danych (Order -> SupplierOrders -> Shipments) oraz UI Checkoutu i widoków po zakupowych ("My Orders").
-3. **Options**: Option 1 (TAK – automatyczny podział na sub-zamówienia), Option 2 (NIE – blokada checkoutu; 1 Order = 1 Partner).
-4. **Current architectural recommendation**: Option 1 (TAK).
-5. **Business consequences**: Maksymalizuje współczynniki konwersji i obrót na marketplace (GMV), budując wartość platformową zintegrowanego koszyka przemysłowego B2B.
-6. **Legal and tax consequences**: W modelu agencyjnym (Model B z DEC-DROP-02), jeden zakup (jeden koszyk B2B) zmusi Kupującego B2B do wprowadzania N niezależnych faktur od N podmiotów do swojego systemu ERP, co stanowi ogromną przeszkodę psychologiczną dla księgowości B2B. Opcja 1 drastycznie wspiera wariant LogiMarket jako Sprzedawcy (Model A).
-7. **Financial consequences**: Pozytywne (wzrost koszyka).
-8. **Operational consequences**: Logistyka rozdzielania zgłoszeń anulowania dla określonych sub-poziomów zamówienia. Operatorzy rozwiązują spory oddzielnie dla każdej z części składowych tego samego numeru zamówienia klienta.
-9. **Technical consequences**: Narzuca budowę kompleksowej relacji Parent-Child w bazie (`orders` 1:N `supplier_orders`), skomplikowane procesowanie statusów zagregowanych (status globalnego orderu na podstawie stanów sub-orderów).
-10. **Risks**: Wymaga klarownej wizualizacji kosztów dostaw i przewidywanego terminu (z różnych lokalizacji).
-11. **Reversibility**: Pójście w Option 1 i przejście na Option 2 jest proste (nałożenie walidatora przed zapisem bazy). Opcja odwrotna po zrobieniu Option 2 – wymaga przepisania całego układu encji zamówień, płatności i wysyłek (gigantyczny koszt refactoringu `LM-DROP-ORDER-56C`).
-12. **Required approvers**: Product Manager.
-13. **Required evidence**: Analiza wariantów potwierdzona w dokumentacji R2B.
-14. **Blocked sprints**: `LM-DROP-DATA-MODEL-56B0, LM-DROP-ORDER-56C`.
-15. **Questions that remain unanswered**: W jaki sposób prezentujemy na checkoucie fakturę za rozbite koszty transportu? Czy sumujemy do jednej stawki "Dostawa LogiMarket", czy pokazujemy podział na magazyny partnerskie?
+* **DEC-DROP-12 (Refund Processing):** Jeśli wariant scentralizowany zostanie zatwierdzony, to LogiMarket będzie wyłącznym podmiotem wykonującym fizyczny zwrot środków (refund) dla Kupującego w systemie płatności.
+* **DEC-DROP-17 (Multi-Partner Order):** Jeśli dzielenie koszyka zostanie zatwierdzone, to jedno zamówienie główne klienta będzie w systemie mapowane na wiele sub-zamówień (per dostawca), co wymusi wieloelementową obsługę dostawy i płatności.
+* **DEC-DROP-21 (Payment Methods):** Zestawienie wariantów znajduje się poniżej (PAYMENT MATRIX). Logika księgowa dla koszyka uruchomi się po wskazaniu wybranego modelu dla MVP.
+* **DEC-DROP-22 (Freight Methods):** Zestawienie wariantów logistycznych znajduje się poniżej (FREIGHT MATRIX). Mechanizmy wyceny i realizacji wysyłek zostaną oparte na wybranym i zatwierdzonym wariancie.
 
-## DEC-DROP-21: MVP Payment Methods & Timing
-1. **Decision question**: Jakie metody i cykle płatności obsługujemy dla transakcji B2B w MVP?
-2. **Why the decision is required**: Architektura płatności determinuje statusy `payment_status` w systemie.
-3. **Options**:
-   - Option 1 (online payment with immediate capture)
-   - Option 2 (authorization and later capture)
-   - Option 3 (bank transfer prepayment)
-   - Option 4 (pro forma)
-   - Option 5 (deferred payment)
-   - Option 6 (external B2B financing)
-4. **Current architectural recommendation**: Option 1, Option 3, Option 4.
-5. **Business consequences**: Różnorodność opcji w B2B zwiększa konwersję (tzw. elastyczność finansowania). Zbyt rygorystyczne opcje obniżają koszyk w B2B.
-6. **Legal and tax consequences**: Moment powstania obowiązku podatkowego różni się w zależności od natychmiastowej zapłaty a opóźnionej.
-7. **Financial consequences**: Prowizje od różnych form finansowania.
-8. **Operational consequences**: Ręczne przypisywanie przelewów bankowych wydłuża fulfillment.
-9. **Technical consequences**: Złożoność maszyny stanów zamówienia.
-10. **Risks**: Odroczona płatność zwiększa ryzyko niewypłacalności (credit-risk).
-11. **Reversibility**: Możliwe dodawanie metod w toku działania platformy.
-12. **Required approvers**: Finance, Product Manager.
-13. **Required evidence**: Formalna specyfikacja metod płatności na checkout.
-14. **Blocked sprints**: `LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3, LM-DROP-PAYMENT-56E`.
-15. **Questions that remain unanswered**: Czy integrujemy ubezpieczenie należności dla płatności odroczonych?
+---
 
-### PORÓWNANIE WARIANTÓW PŁATNOŚCI (PAYMENT DECISION PACK)
+## 1. PAYMENT MATRIX (DEC-DROP-21)
 
-**Variant 1: Online payment with immediate capture (np. BLIK, Pay-by-link, Karta)**
-* **When customer order becomes placed**: Natychmiast po udanej autoryzacji i capture w bramce PSP.
-* **When supplier handoff is allowed**: Natychmiast po wpłacie (Captured).
-* **When funds are considered available**: Zależnie od warunków wypłaty z PSP (np. D+1, D+3).
-* **Failure and expiry path**: Krótki czas (TTL) sesji, zazwyczaj do 1-2 godzin przed automatycznym anulowaniem.
-* **Refund path**: Zwrot przez API bramki PSP (automatyczny proces `refund_requested`).
-* **Cancellation path**: Anulowanie powoduje konieczność potrącenia prowizji bramki, która przepada po wykonaniu Capture.
-* **Accounting impact**: Wymaga natychmiastowej faktury zaliczkowej lub faktury końcowej (przy szybkiej dostawie).
-* **Credit-risk impact**: Brak. Środki wpłynęły.
-* **Required legal review**: Standardowy regulamin płatności online.
-* **Technical implications**: Najprostszy wariant – stan liniowy dla zapłaty opłaconej z góry.
+Poniższa tabela zbiera 6 możliwych wariantów płatności w MVP dla modelu dropshipping.
 
-**Variant 2: Authorization and later capture (Karta autoryzowana, ale obciążona po potwierdzeniu przez dostawcę)**
-* **When customer order becomes placed**: Po założeniu blokady na karcie klienta (Authorized).
-* **When supplier handoff is allowed**: Gdy blokada jest potwierdzona (Authorized). Handoff nie wymaga Capture.
-* **When funds are considered available**: Dopiero po potwierdzeniu przez dostawcę dostępności towaru i wywołaniu akcji Capture na bramce (do 7 dni).
-* **Failure and expiry path**: Autoryzacja wygasa (zwykle po 7 dniach) bez kosztów, jeśli dostawca nie zrealizuje zamówienia.
-* **Refund path**: Jeśli zamówienie anulowane jest przed Capture, to Void (brak kosztów). Jeśli po Capture - standardowy Refund.
-* **Cancellation path**: Bez kosztowa rezygnacja z transakcji w okresie autoryzacji (Void).
-* **Accounting impact**: Uniknięcie wystawiania faktur zaliczkowych w przypadku braku towaru.
-* **Credit-risk impact**: Niskie - środki są zablokowane u klienta.
-* **Required legal review**: Informowanie klienta o momencie obciążenia karty (regulamin usługi).
-* **Technical implications**: Wymaga rozwidlenia stanu maszyny na `PAYMENT_AUTHORIZED`, która przechodzi w `CAPTURED` pod wpływem zdarzenia z innej domeny (np. `SUPPLIER_ACCEPTED`).
+| PAYMENT_VARIANT | ORDER_PLACED_WHEN | SUPPLIER_HANDOFF_WHEN | FUNDS_AVAILABLE_WHEN | FAILURE_PATH | EXPIRY_PATH | REFUND_PATH | CANCELLATION_PATH | ACCOUNTING_IMPACT | CREDIT_RISK | LEGAL_GATES | TECHNICAL_IMPLICATIONS | OPEN_QUESTIONS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1: Online payment with immediate capture** | Z chwilą poprawnej płatności | Natychmiast po `placed` | T+0 (bramka) / T+1 (konto) | Błąd bramki -> Retry / Cancel | N/A (odrzucenie natychmiastowe) | Zwrot z konta bramki | Przerwanie sesji płatniczej | Natychmiastowy obowiązek FV | Brak dla platformy | LEG-GATE-10, LEG-GATE-11 | Konieczność integracji z webhookami PSP (np. PayU, Stripe) | Co jeśli dostawca odrzuci w pełni opłacone zamówienie z braku stanu? |
+| **2: Authorization and later capture** | Z chwilą udanej autoryzacji karty | Po udanej autoryzacji (`authorized`) | Z chwilą capture (zwykle wysyłka) | Autoryzacja odrzucona | Wygaśnięcie autoryzacji (np. 7 dni) | Void autoryzacji / Partial capture | Zwolnienie blokady na karcie | FV dopiero przy capture (moment sprzedaży) | Brak, jeśli capture wykonane w terminie | LEG-GATE-10 | Wymaga skomplikowanego cyklu życia płatności (Auth/Capture/Void) | Czy wszyscy polscy klienci B2B posiadają karty kredytowe służbowe? |
+| **3: Bank transfer prepayment** | Z chwilą kliknięcia "Zamawiam i płacę" | Po ręcznym zaksięgowaniu wpłaty | Gdy przelew trafi na konto | Brak wpłaty | Anulowanie po X dniach bez wpłaty | Tradycyjny przelew zwrotny | Zamówienie anulowane przed wpłatą | Rozliczanie ręczne wyciągów bankowych | Brak (przedpłata) | LEG-GATE-10 | Ręczne przypisywanie wpłat do Order ID (duży narzut w panelu admina) | Ile dni czekać na przelew przed auto-cancellation? |
+| **4: Pro forma** | Z chwilą kliknięcia "Zamawiam z obow. zapłaty" | Po potwierdzeniu opłacenia pro formy | Gdy przelew z pro formy trafi na konto | Niezapłacona pro forma | Wygaśnięcie pro formy (np. 14 dni) | Przelew zwrotny | Korekta dokumentu / Anulacja | FV Zaliczkowa / FV Końcowa | Brak (przedpłata) | LEG-GATE-10, LEG-GATE-02 | Generowanie poprawnego dokumentu pro forma z danymi konta w PDF | Kto wystawia pro formę w modelu B (Agencyjnym)? |
+| **5: Deferred payment (Kredyt Kupiecki)** | Z chwilą zatwierdzenia limitu / kliknięcia | Natychmiast po `placed` | Zgodnie z terminem faktury (np. 14, 30 dni) | Brak spłaty po terminie | N/A | Zwrot przez korektę salda / przelew | Korekta faktury / dokumentu | Należność własna z odroczonym terminem | PEŁNE ryzyko LogiMarket | LEG-GATE-12, LEG-GATE-13 | System limitów kupieckich (Scoring klientów B2B) i automatycznych monitów | Kto ponosi koszt windykacji w przypadku braku wpłaty? |
+| **6: External B2B financing** | Po zatwierdzeniu wniosku przez zewnętrznego faktora | Po zatwierdzeniu przez faktora | Od faktora w T+1/T+2 | Faktor odrzuca wniosek klienta | Wniosek u faktora wygasa | Zwrot do faktora | Rezygnacja u faktora | Środki otrzymywane od podmiotu 3-go | Przejmuje faktor (za prowizję) | LEG-GATE-12 | Integracja z zewnętrznym API B2B (np. PragmaGO, PayPo B2B) | Jak obsługiwać częściowe zwroty z zewnętrznym faktorem? |
 
-**Variant 3: Bank transfer prepayment (Tradycyjny przelew bankowy)**
-* **When customer order becomes placed**: Zamówienie przyjmuje status "Pending Payment" zaraz po przejściu koszyka.
-* **When supplier handoff is allowed**: Dopiero po ręcznym zaksięgowaniu wpłaty na koncie (w przyszłości: integracja Open Banking).
-* **When funds are considered available**: Po zaksięgowaniu wyciągu MT940 na koncie LogiMarket.
-* **Failure and expiry path**: TTL rzędu 5-14 dni oczekiwania na przelew.
-* **Refund path**: Zwrot wymaga zebrania numeru konta bankowego B2B od klienta i ręcznego zlecenia przelewu.
-* **Cancellation path**: Automatyczne anulowanie, darmowe.
-* **Accounting impact**: Wymaga procedur rozpoznawania wpłat na podstawie tytułów przelewów.
-* **Credit-risk impact**: Brak.
-* **Required legal review**: Niskie.
-* **Technical implications**: Wymaga ręcznej akcji administratora (oznacz "Zapłacono") lub modułu Open Banking (wyciągi).
+---
 
-**Variant 4: Pro forma (Zamówienie z obowiązkiem przedpłaty na podstawie dokumentu księgowego)**
-* **When customer order becomes placed**: Po kliknięciu "Zamawiam". System od razu generuje PDF Pro-forma.
-* **When supplier handoff is allowed**: Po opłaceniu Pro-formy.
-* **When funds are considered available**: Po zaksięgowaniu.
-* **Failure and expiry path**: Jak w przelewie.
-* **Refund path**: Ręczny przelew zwrotny.
-* **Cancellation path**: Darmowe anulowanie faktury pro-forma.
-* **Accounting impact**: Pro-forma nie jest fakturą VAT w świetle przepisów, nie wchodzi do KSeF jako dokument sprzedażowy, dopóki nie zostanie zamieniona na zaliczkową po opłaceniu.
-* **Credit-risk impact**: Brak.
-* **Required legal review**: Poprawność wygenerowanego dokumentu.
-* **Technical implications**: Wymaga wbudowanego silnika PDF i systemu numeracji dokumentów "pro forma" (DEC-DROP-03).
+## 2. FREIGHT MATRIX (DEC-DROP-22)
 
-**Variant 5: Deferred payment (Kredyt kupiecki wewnątrz platformy / Odroczony termin płatności np. 14 dni)**
-* **When customer order becomes placed**: Natychmiast po pozytywnym scoringu (jeśli system zautomatyzowany) lub manualnej akceptacji kredytu kupieckiego.
-* **When supplier handoff is allowed**: Natychmiast po akceptacji zamówienia.
-* **When funds are considered available**: Po 14 dniach (lub opóźnione), kiedy klient B2B opłaci fakturę terminową.
-* **Failure and expiry path**: Niewypłacalność w terminie uruchamia windykację (braki płatności na platformie).
-* **Refund path**: Skomplikowane przy braku zapłaty – realizowane jako korekta faktury na saldo zadłużenia.
-* **Cancellation path**: Wystawienie faktury korygującej na 100%.
-* **Accounting impact**: Moment powstania przychodu występuje przed zapłatą (w momencie wydania/wysyłki towaru).
-* **Credit-risk impact**: BARDZO WYSOKI. Ryzyko niewypłacalności spółki w całości obciąża kapitał LogiMarket.
-* **Required legal review**: Ubezpieczenie należności, twarda windykacja, KRD, weryfikacja spółek.
-* **Technical implications**: Wymaga systemu zarządzania kredytem kupieckim (limity dla poszczególnych klientów B2B).
+Poniższa tabela zbiera 6 możliwych wariantów logistycznych (wyceny i odpowiedzialności za dostawę).
 
-**Variant 6: External B2B financing (Integracja zewnętrznego faktoringu, BNPL dla firm np. PragmaGO)**
-* **When customer order becomes placed**: Po zatwierdzeniu limitu/kredytu u partnera faktoringowego (w trybie online API).
-* **When supplier handoff is allowed**: Natychmiast.
-* **When funds are considered available**: Faktor wypłaca LogiMarket 100% kwoty w np. 24h.
-* **Failure and expiry path**: Klient nie spłaca długu w firmie faktoringowej. LogiMarket otrzymał środki.
-* **Refund path**: Wymaga zwrócenia kwoty do firmy BNPL/faktoringowej wg dedykowanego API korekt.
-* **Cancellation path**: Konieczność notyfikacji faktora.
-* **Accounting impact**: Cesja wierzytelności B2B. Zależnie od struktury prawnej faktoringu jawnego.
-* **Credit-risk impact**: Niskie dla LogiMarket. Faktor przejmuje ryzyko niewypłacalności w faktoringu pełnym (bez regresu).
-* **Required legal review**: Zewnętrzna umowa B2B między platformą a faktorem.
-* **Technical implications**: Złożona integracja API obcej instytucji finansowej w ścieżkę zamówienia.
+| FREIGHT_VARIANT | ELIGIBLE_CATEGORIES | CHECKOUT_BEHAVIOR | ORDER_TOTAL_FINAL | PAYMENT_CAPTURE_RULE | OPERATOR_INTERVENTION | SUPPLIER_RESPONSIBILITY | CARRIER_RESPONSIBILITY | RETURN_LOGISTICS | LEGAL_GATES | OFFER_MODEL_IMPACT | FULFILLMENT_MODEL_IMPACT | OPEN_QUESTIONS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1: Parcel (Kurier Standard)** | Małe gabaryty, waga do 31kg | Cena znana od razu (Fixed rate z tabeli) | Tak, potwierdzone w checkoucie | Standard Capture | Brak | Pakowanie i wydanie kurierowi | Standardowy regulamin kuriera | Wysyłka zwrotna paczką | LEG-GATE-06 | Płaskie koszty transportu dodawane do oferty | Wymaga generowania etykiet lub zrzucenia tego na dostawcę | Czy etykietę generuje LogiMarket czy dostawca na własnej umowie kurierskiej? |
+| **2: Pallet (Przesyłki Paletowe)** | Gabaryty, waga >31kg do 1000kg | Cena znana z góry (Strefy / Kody pocztowe) | Tak, potwierdzone w checkoucie | Standard Capture | Brak / Tylko monitorowanie wyjątków | Pakowanie na palecie, przygotowanie listu | Ubezpieczenie palety, czas tranzytu B2B | Paletowy zwrot (kosztowny) | LEG-GATE-06, LEG-GATE-04 | Wymaga tabel wyceny palet od dostawców | Dostawca musi posiadać infrastrukturę do obsługi palet (wózki) | Czy dopuszczamy zwroty B2B produktów paletowych? |
+| **3: Own transport (Transport własny dostawcy)** | Ciężkie maszyny, produkty specjalistyczne | Cena znana od razu lub wg odległości (zł/km) | Tak / Konfiguracja algorytmu KM | Standard Capture | Minimalna | Pełna obsługa logistyki i rozładunku | Brak (Dostawca jest przewoźnikiem) | Odbiór własnym transportem | LEG-GATE-06, LEG-GATE-11 | Wymaga pobierania cenników per KM od dostawcy | Odbicie dowodu dostawy (PoD) w systemie manualnie przez dostawcę | Jak potwierdzić odbiór i przenieść ryzyko, skoro LogiMarket nie ma trackingu od integratora? |
+| **4: Manually quoted freight (Przed zamówieniem)** | Niestandardowe, gabaryty powyżej palety | Klient wysyła zapytanie (RFQ), cena nieznana w koszyku | Nie, zamówienie blokowane do wyceny | Capture zablokowane do akceptacji wyceny | Wycena transportu u przewoźników i podanie ceny | Przygotowanie towaru po akceptacji wyceny przez klienta | Zależnie od wybranego dedykowanego transportu | Ustalane indywidualnie | LEG-GATE-06 | Konwertuje produkt w proces RFQ (oferty) | Zmiana ścieżki na "Zamów z wyceną" | Jak długo klient ma ważną ofertę na transport niestandardowy? |
+| **5: Deferred freight quote (Po dodaniu do koszyka)** | Każdy trudny asortyment logistycznie | Zamówienie "zawieszone", dostawca/operator dodaje koszt po fakcie, klient dopłaca/akceptuje | Nie, koszt dostawy dodany później | Autoryzacja na kwotę koszyka, dopłata osobnym linkiem | Obowiązkowa (dodanie kosztu transportu do zamówienia) | Przygotowanie wyceny i oczekiwanie na wpłatę | Zależnie od przewoźnika | Indywidualnie | LEG-GATE-06 | Produkt w koszyku, ale finalna kwota nieznana w sekundzie 0 | Wymaga stanu *Awaiting Freight Confirmation* i mechanizmu dopłaty (Payment Link) | Czy klient może anulować zamówienie bezpłatnie, jeśli koszt dostawy mu się nie spodoba? |
+| **6: Kategorie dopuszczone do MVP** | Decyzja Biznesowa (np. tylko Parcel + Pallet) | Standardowy checkout dla małych/średnich | Tak | Standard Capture | Brak | Standardowa | Standardowa | Standardowa | Brak | Odrzucenie na starcie trudnych kategorii | Prostszy model | Które kategorie ostatecznie odrzucamy w V1? |
 
-## DEC-DROP-22: MVP Shipping and Freight Scope
-1. **Decision question**: W jakim zakresie transportowym obsługujemy MVP dla produktów przemysłowych?
-2. **Why the decision is required**: Modeluje checkout (sekcja Delivery). Produkty ponadgabarytowe uniemożliwiają wycenę z tabeli API wprost na checkoucie.
-3. **Options**:
-   - Option 1 (parcel shipment)
-   - Option 2 (pallet shipment)
-   - Option 3 (supplier own transport)
-   - Option 4 (manually quoted freight)
-   - Option 5 (deferred freight quote)
-   - Option 6 (excluded product categories)
-4. **Current architectural recommendation**: Option 1 (Kuryer/Paczki) + Option 2 (Palety ze zdefiniowanym cennikiem).
-5. **Business consequences**: Ogranicza katalog produktów do takich, które można wycenić w koszyku w standardowych trybach. Opcje ręcznych wycen drastycznie zdejmują automatyzację checkoutu.
-6. **Legal and tax consequences**: Odpowiedzialność przewoźnika.
-7. **Financial consequences**: Koszt dostawy musi być jednoznacznie pokryty przez kupującego B2B, przedpłacony przez LogiMarket lub zafakturowany.
-8. **Operational consequences**: Brak obsługi wyceny ręcznej (Opcja 4/5) odciąża customer service z ciągłego podawania wycen dla ciężkich przesyłek, ale uderza w potencjał rynkowy ciężkiego sprzętu.
-9. **Technical consequences**: Prosta reguła wyliczania na podstawie macierzy (waga/wymiar) -> Cennik w opcji 1 i 2.
-10. **Risks**: Porzucanie koszyków przy braku zaufanego transportu w specyficznym segmencie przemysłowym.
-11. **Reversibility**: Zawsze można rozszerzyć.
-12. **Required approvers**: Operations, Product.
-13. **Required evidence**: Formalna definicja wariantów przewozu do MVP.
-14. **Blocked sprints**: `LM-DROP-SCHEMA-56B2, LM-DROP-FULFILLMENT-56F`.
-15. **Questions that remain unanswered**: Jak traktujemy zwroty gabarytowe?
+### ILLUSTRATIVE STATES — SUBJECT TO DATA MODEL REVIEW
 
-### PORÓWNANIE WARIANTÓW WYSYŁKI (SHIPPING AND FREIGHT DECISION PACK)
-* **Option 1 (parcel shipment)**: Dotyczy małych pudełek. Checkout liczy wg cennika z wagą (np. DPD, InPost). Żadna interwencja operatora. Wymaga wymiarów lub wagi na produkcie.
-* **Option 2 (pallet shipment)**: Dotyczy europalet (np. Raben, JAS-FBG). Checkout korzysta ze statycznej matrycy (Województwo, waga -> cena).
-* **Option 3 (supplier own transport)**: Dostawca narzuca sztywną stawkę za dowiezienie (np. stawkę za kilometr).
-* **Option 4 (manually quoted freight)**: Cały proces jest zablokowany przed płatnością. Koszyk jest wysyłany do zespołu operacyjnego, który dogaduje stawkę transportu wielkogabarytowego i aktualizuje Order, po czym klient B2B może dopłacić. UWAGA: Różni się od Offer RFQ (zapytania ofertowego). Tutaj cena towaru jest ustalona (dodany do koszyka), negocjujemy wyłącznie wycenę transportu (freight quote) po dodaniu do checkoutu.
-* **Option 5 (deferred freight quote)**: Klient płaci za towar w koszyku, a transport (Deferred freight quote) opłaca osobnym procesem / dokumentem później. Również oddzielone od Offer RFQ. Skomplikowane procesy rozliczania długu i dopłat za logistykę po zakończeniu zakupów głównego towaru.
-* **Option 6 (excluded product categories)**: Całkowity zakaz sprzedaży przedmiotów niemieszczących się na palecie w modelu MVP (maszyny CNC, dźwigi) – wyrzucenie ich z katalogu.
+W wariantach `Deferred freight quote` i `Manually quoted freight` mogą być wymagane stany koszyka/zamówienia takie jak:
 
-* **Impact on offerModel**: Należy zdefiniować na ofercie typ gabarytu transportowego i wagę. Zgodnie z wytycznymi biznesowymi, mechanizm Deferred Freight Quote jest całkowicie oddzielony od ścieżki "Zapytanie ofertowe (Offer RFQ)". W procesie RFQ negocjowana jest cena wyrobu (przed zakupem), a w Deferred Freight Quote urealniana jest cena transportu towaru już zamówionego.
-* **Impact on fulfillmentModel**: Mapowanie usług partnerskich na cenniki przewoźników kurierskich. Ograniczenie gabarytu uderza w specyficzne rynki.
+1. `FREIGHT_QUOTE_PENDING`
+2. `AWAITING_FREIGHT_CONFIRMATION`
+3. `FREIGHT_CONFIRMED`
+4. `FREIGHT_REJECTED`
