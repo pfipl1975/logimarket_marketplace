@@ -1,8 +1,8 @@
 # LOGIMARKET — KONTRAKT BIZNESOWY I DOMENOWY DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1)
 
-**Wersja:** 1.1.0 (R1 — Domain Contract Review Fixes & B2B Capability Boundaries)
+**Wersja:** 1.2.0 (R1D — Final Semantic Consistency and PR Closure)
 **Data:** 2026-07-22
-**Status:** PROPOSAL / SPECIFICATION FOR DOMAIN REVIEW
+**Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** LogiMarket Marketplace Domain Contract
 
 ---
@@ -139,34 +139,34 @@ Maszyny stanów muszą formalnie obsługiwać:
 
 | STATE_AXIS | FROM | EVENT | TO | ACTOR | PRECONDITIONS | SIDE_EFFECTS | FAILURE_PATH | RETRY_POLICY | IDEMPOTENCY_SCOPE | IDEMPOTENCY_KEY | AUDIT_EVENT | NOTIFICATION | ALLOWED_ADMIN_ACTION | FORBIDDEN_ADMIN_ACTION |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| Payment Status | pending | PAYMENT_FAILURE | failed | PSP Webhook | CONDITIONAL_ON_DEC_DROP_21 | Log failure | payment_failed | Retry on PSP | Order Session | pay_fail_{order_id} | PAYMENT_FAILED | Email to Buyer | View details | Manual override |
-| Payment Status | pending | PAYMENT_AUTHORIZATION | authorized | PSP Webhook | CONDITIONAL_ON_DEC_DROP_21 | Reserve funds | auth_failed | Retry on PSP | Order Session | pay_auth_{order_id} | PAYMENT_AUTHORIZED | Email to Buyer | View details | Manual override |
-| Payment Status | authorized | PAYMENT_CAPTURE | captured | PSP Webhook | CONDITIONAL_ON_DEC_DROP_21 | Capture funds | capture_failed | Retry on PSP | Order Session | pay_cap_{order_id} | PAYMENT_CAPTURED | None | View details | Manual override |
-| Supplier Order | draft | SUPPLIER_TRANSMISSION | transmitted | Operator LogiMarket | Payment authorized | Generate spec | transmission_failed | Exponential backoff | Supplier Order | sup_trans_{sup_order_id} | SUPPLIER_ORDER_TRANSMITTED | Email to Supplier | Re-transmit email | Edit items |
+| Payment Status | pending | PAYMENT_FAILURE | failed | Payment Adapter or Operator — CONDITIONAL_ON_DEC_DROP_21 | CONDITIONAL_ON_DEC_DROP_21 | Log failure | payment_failed | Retry | Order Session | pay_fail_{order_id} | PAYMENT_FAILED | Email to Buyer | View details | Manual override |
+| Payment Status | pending | PAYMENT_AUTHORIZATION | authorized | Payment Adapter or Operator — CONDITIONAL_ON_DEC_DROP_21 | CONDITIONAL_ON_DEC_DROP_21 | Reserve funds | auth_failed | Retry | Order Session | pay_auth_{order_id} | PAYMENT_AUTHORIZED | Email to Buyer | View details | Manual override |
+| Payment Status | authorized | PAYMENT_CAPTURE | captured | Payment Adapter or Operator — CONDITIONAL_ON_DEC_DROP_21 | CONDITIONAL_ON_DEC_DROP_21 | Capture funds | capture_failed | Retry | Order Session | pay_cap_{order_id} | PAYMENT_CAPTURED | None | View details | Manual override |
+| Supplier Order | draft | SUPPLIER_TRANSMISSION | transmitted | Operator LogiMarket | CONDITIONAL_ON_DEC_DROP_21 | Generate spec | transmission_failed | Exponential backoff | Supplier Order | sup_trans_{sup_order_id} | SUPPLIER_ORDER_TRANSMITTED | Email to Supplier | Re-transmit email | Edit items |
 | Supplier Confirmation | pending | SUPPLIER_CONFIRMATION | confirmed | Operator LogiMarket | SLA active | Lock buy price | confirmation_failed | Manual check | Supplier Order | sup_conf_{sup_order_id} | SUPPLIER_CONFIRMED | Email to Buyer | Confirm on behalf | Confirm without stock check |
 | Supplier Confirmation | pending | PARTIAL_SUPPLIER_CONFIRMATION | partially_confirmed | Operator LogiMarket | SLA active | Lock buy price partial | confirmation_failed | Manual check | Supplier Order | sup_pconf_{sup_order_id} | SUPPLIER_PARTIALLY_CONFIRMED | Email to Buyer | Confirm on behalf | Confirm without stock check |
-| Supplier Confirmation | pending | SUPPLIER_DECLINE | declined | Operator LogiMarket | SLA active | Cancel order | decline_failed | Manual check | Supplier Order | sup_rej_{sup_order_id} | SUPPLIER_DECLINED | Email to Buyer | Reject on behalf | Reject without reason |
+| Supplier Confirmation | pending | SUPPLIER_DECLINE | declined | Operator LogiMarket | SLA active | Trigger DEC-DROP-15 and DEC-DROP-17 side effect | decline_failed | Manual check | Supplier Order | sup_rej_{sup_order_id} | SUPPLIER_DECLINED | Email to Buyer | Reject on behalf | Reject without reason |
 | Cancellation | none | CANCELLATION_BEFORE_SUPPLIER_CONFIRMATION | requested | Operator LogiMarket | Before confirmation | Emit cancellation | cancel_failed | Manual check | Order | cancel_req_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
 | Cancellation | none | CANCELLATION_AFTER_CONFIRMATION | requested | Operator LogiMarket | After confirmation | Emit cancellation | cancel_failed | Manual check | Order | cancel_req2_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
-| Cancellation | none | CANCELLATION_AFTER_SHIPMENT | requested | Operator LogiMarket | After shipment | Emit cancellation | cancel_failed | Manual check | Order | cancel_req3_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
+| Cancellation | none | CANCELLATION_AFTER_SHIPMENT | requested | Operator LogiMarket | After shipment | Emit return/recall/complaint | cancel_failed | Manual check | Order | cancel_req3_{order_id} | CANCELLATION_REQUESTED | Email to Supplier | Cancel | Reject cancellation |
 | Fulfillment | unfulfilled | FULFILLMENT_START | processing | Operator LogiMarket | Confirmed | Update status | start_failed | Manual check | Supplier Order | ful_start_{sup_order_id} | FULFILLMENT_STARTED | None | Start | Start without confirm |
 | Shipment | manifested | SPLIT_SHIPMENT | in_transit | Operator LogiMarket | CONDITIONAL_ON_DEC_DROP_22 | Update tracking | shipment_failed | Manual check | Shipment | ship_split_{shipment_id} | SHIPMENT_SPLIT | None | Add tracking | Split without tracking |
 | Shipment | manifested | PARTIAL_SHIPMENT | in_transit | Operator LogiMarket | CONDITIONAL_ON_DEC_DROP_22 | Update tracking | shipment_failed | Manual check | Shipment | ship_part_{shipment_id} | SHIPMENT_PARTIAL | None | Add tracking | Split without tracking |
 | Shipment | in_transit | SHIPMENT_EXCEPTION | exception | Carrier | In transit | Log exception | exception_failed | Manual check | Shipment | ship_exc_{shipment_id} | SHIPMENT_EXCEPTION | Alert Operator | View | Ignore exception |
 | Shipment | in_transit | DELIVERY | delivered | Carrier | In transit | Update status | delivery_failed | Manual check | Shipment | ship_del_{shipment_id} | SHIPMENT_DELIVERED | Email to Buyer | View | Mark delivered manually |
-| Refund | none | REFUND_REQUEST | pending | Operator LogiMarket | Captured | Request refund | request_failed | Manual check | Order | ref_req_{order_id} | REFUND_REQUESTED | None | Request | Approve without review |
-| Refund | pending | PARTIAL_REFUND | partial | PSP Webhook | Pending | Execute refund | refund_failed | Retry on PSP | Order | ref_part_{order_id} | REFUND_PARTIAL | Email to Buyer | View | Execute without PSP |
-| Refund | pending | FULL_REFUND | full | PSP Webhook | Pending | Execute refund | refund_failed | Retry on PSP | Order | ref_full_{order_id} | REFUND_FULL | Email to Buyer | View | Execute without PSP |
-| Refund | pending | REFUND_FAILURE | failed | PSP Webhook | Pending | Log failure | refund_failed | Retry on PSP | Order | ref_fail_{order_id} | REFUND_FAILED | Alert Operator | View | Ignore failure |
+| Refund | none | REFUND_REQUEST | pending | Operator LogiMarket | CONDITIONAL_ON_DEC_DROP_21_AND_DEC_DROP_12 | Request refund | request_failed | Manual check | Order | ref_req_{order_id} | REFUND_REQUESTED | None | Request | Approve without review |
+| Refund | pending | PARTIAL_REFUND | partial | Payment Adapter or Operator — CONDITIONAL_ON_DEC_DROP_21 | CONDITIONAL_ON_DEC_DROP_21_AND_DEC_DROP_12 | Execute refund | refund_failed | Retry | Order | ref_part_{order_id} | REFUND_PARTIAL | Email to Buyer | View | Execute without PSP |
+| Refund | pending | FULL_REFUND | full | Payment Adapter or Operator — CONDITIONAL_ON_DEC_DROP_21 | CONDITIONAL_ON_DEC_DROP_21_AND_DEC_DROP_12 | Execute refund | refund_failed | Retry | Order | ref_full_{order_id} | REFUND_FULL | Email to Buyer | View | Execute without PSP |
+| Refund | pending | REFUND_FAILURE | failed | Payment Adapter or Operator — CONDITIONAL_ON_DEC_DROP_21 | CONDITIONAL_ON_DEC_DROP_21_AND_DEC_DROP_12 | Log failure | refund_failed | Retry | Order | ref_fail_{order_id} | REFUND_FAILED | Alert Operator | View | Ignore failure |
 | Return | none | RETURN_REQUEST | requested | Operator LogiMarket | Delivered | Request return | request_failed | Manual check | Order | ret_req_{order_id} | RETURN_REQUESTED | Email to Supplier | Request | Approve without review |
 | Complaint | none | COMPLAINT_OPENING | open | Operator LogiMarket | Delivered | Open complaint | open_failed | Manual check | Order | comp_open_{order_id} | COMPLAINT_OPENED | Email to Supplier | Open | Close without review |
 | Complaint | open | COMPLAINT_RESOLUTION | resolved | Operator LogiMarket | Open | Resolve complaint | resolve_failed | Manual check | Order | comp_res_{order_id} | COMPLAINT_RESOLVED | Email to Buyer | Resolve | Reopen without reason |
 | Settlement | unsettled | SETTLEMENT_READY | ready_for_payout | Operator LogiMarket | Delivered | Mark ready | ready_failed | Manual check | Supplier Order | set_ready_{sup_order_id} | SETTLEMENT_READY | None | Mark | Mark without delivery |
 | Settlement | ready_for_payout | SETTLEMENT_PAID | paid | Operator LogiMarket | Ready | Mark paid | paid_failed | Manual check | Supplier Order | set_paid_{sup_order_id} | SETTLEMENT_PAID | Email to Supplier | Mark | Mark without proof |
 | Settlement | ready_for_payout | SETTLEMENT_DISPUTED | disputed | Operator LogiMarket | Ready | Mark disputed | dispute_failed | Manual check | Supplier Order | set_disp_{sup_order_id} | SETTLEMENT_DISPUTED | Email to Supplier | Mark | Resolve without proof |
-| Any | Any | DUPLICATE_EVENT | Any | System | Any | Drop | None | Drop | Any | Any | DUPLICATE_IGNORED | None | None | None |
-| Any | Any | OUT_OF_ORDER_EVENT | Any | System | Any | Queue/Drop | None | Queue | Any | Any | OUT_OF_ORDER_IGNORED | None | None | None |
-| Any | Any | MANUAL_OPERATOR_CORRECTION | Any | Operator LogiMarket | Any | Update status | correction_failed | Manual | Any | man_corr_{id} | MANUAL_CORRECTION | Alert Admin | Correct | Correct without note |
+| Any | Any | DUPLICATE_EVENT | Any | System | Any | Drop | None | Drop | stable external_event_id or operation id | Any | DUPLICATE_IGNORED | None | None | None |
+| Any | Any | OUT_OF_ORDER_EVENT | Any | System | Any | Queue/Drop | None | Queue | event ordering/version rule | Any | OUT_OF_ORDER_IGNORED | None | None | None |
+| Any | Any | MANUAL_OPERATOR_CORRECTION | Any | Operator LogiMarket (requires actor identity) | requires reason | Update status | correction_failed | Manual | requires before/after snapshot | immutable audit event | MANUAL_CORRECTION | Alert Admin | Correct | Correct without validation |
 
 ---
 
@@ -264,6 +264,7 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **PROPOSED_FUTURE_SPRINT**: `LM-B2B-ACCOUNT-58A — CORPORATE ACCOUNTS AND PURCHASE APPROVAL DOMAIN`.
 * **CAPABILITY_STATUS**: `FUTURE_REQUIRED`
 * **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
+* **DECISION_DEPENDENCY**: Customer PO pozostaje osobną decyzją DEC-DROP-23.
 
 ---
 
@@ -279,7 +280,8 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **SECURITY_DEPENDENCIES**: Autoryzacja aktualizacji kosztu zamówienia przed pobraniem płatności.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-FREIGHT-57B — HEAVY FREIGHT QUOTATION AND DELIVERY TERMS`.
 * **CAPABILITY_STATUS**: `OPEN_BUSINESS_DECISION`
-* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
+* **MVP_SCOPE_CLASSIFICATION**: `MVP_OPTIONAL`
+* **DECISION_DEPENDENCY**: DEC-DROP-22
 
 ---
 
@@ -295,7 +297,8 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **SECURITY_DEPENDENCIES**: Zabezpieczenie przed wyłudzeniami i nadużyciem limitu.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-CREDIT-57C — B2B TRADE CREDIT AND DEFERRED PAYMENT DOMAIN`.
 * **CAPABILITY_STATUS**: `LEGAL_REVIEW_REQUIRED`
-* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
+* **MVP_SCOPE_CLASSIFICATION**: `MVP_OPTIONAL`
+* **DECISION_DEPENDENCY**: DEC-DROP-21
 
 ---
 
@@ -311,7 +314,7 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **SECURITY_DEPENDENCIES**: Walidacja typów danych wejściowych.
 * **PROPOSED_FUTURE_SPRINT**: `LM-CAT-ATTR-54C — TECHNICAL ATTRIBUTE NORMALIZATION ENGINE`.
 * **CAPABILITY_STATUS**: `PARTIALLY_SUPPORTED`
-* **MVP_SCOPE_CLASSIFICATION**: `FUTURE_OPTIONAL`
+* **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
 
 ---
 
@@ -328,6 +331,17 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-SLA-57D — SUPPLIER PERFORMANCE AND SLA ENGINE`.
 * **CAPABILITY_STATUS**: `FUTURE_OPTIONAL`
 * **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
+
+### SKŁADOWE SLA (ROZDZIAŁ MVP VS POST-MVP):
+* **RAW_EVENT_CAPTURE**:
+  * **MVP_SCOPE_CLASSIFICATION**: `MVP_REQUIRED`
+* **DERIVED_METRICS**:
+  * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
+* **AUTOMATIC_SCORE**:
+  * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
+* **RANKING_INFLUENCE**:
+  * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
+  * **LEGAL_GATE**: `LEG-GATE-14`
 
 ---
 
