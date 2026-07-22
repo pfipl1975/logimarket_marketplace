@@ -1,6 +1,6 @@
-# LOGIMARKET — ROADMAPA IMPLEMENTACJI MODUŁU DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1)
+# LOGIMARKET — ROADMAPA IMPLEMENTACJI MODUŁU DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1E)
 
-**Wersja:** 1.2.0 (R1D — Final Semantic Consistency and PR Closure)
+**Wersja:** 1.2.1
 **Data:** 2026-07-22
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** Dropshipping Implementation Roadmap
@@ -25,7 +25,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 +-----------------------------------------------------------------------------------+
 |                        DROPSHIPPING IMPLEMENTATION ROADMAP                        |
 +-----------------------------------------------------------------------------------+
-| LM-DROP-DOMAIN-56A-R1: Contract Review & B2B Capability Boundaries [NINIEJSZY]    |
+| LM-DROP-DOMAIN-56A-R1E: Contract Review & B2B Capability Boundaries [NINIEJSZY]   |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
@@ -75,7 +75,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ### SPRINT: LM-DROP-DOMAIN-56A-R2A — BUSINESS AND LEGAL DECISION PACK PREPARATION
 * **CEL**: Przygotowanie kontrolowanego pakietu decyzji.
-* **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1C`.
+* **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1E`.
 * **SCOPE**:
   - Agent może: przygotować formularze; porównać opcje; opisać konsekwencje; przygotować listę dokumentów; przygotować pytania dla Business Owner/CFO/Legal/Tax.
   - Agent nie może: zatwierdzać; uzyskiwać opinii; podpisywać dokumentów; ustawiać DECIDED.
@@ -123,7 +123,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ### SPRINT: LM-ADMIN-57A — ADMIN MVP ARCHITECTURE & ACCESS CONTROL (RBAC)
 * **CEL**: Opracowanie architektury panelu operatora LogiMarket oraz wdrożenie bezpiecznego modelu kontroli dostępu opartego na rolach (RBAC) i audycie.
-* **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R1` oraz `LM-DROP-SCHEMA-56B5`.
+* **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R1E` oraz `LM-DROP-SCHEMA-56B5`.
 * **SCOPE**:
   - Projekt architektury modułu Admin MVP w ramach Next.js App Router (`/src/app/admin` lub odpowiedniej ścieżki).
   - authentication, authorization, role enforcement and operator UX.
@@ -136,7 +136,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 | SPRINT | WYMAGANE DECYZJE BIZNESOWE | WYMAGANE BRAMKI PRAWNE | WYMAGANA BAZA BEZPIECZEŃSTWA | ZALEŻNOŚCI TECHNICZNE | ZAKAZANE PRZEDWCZESNE ZAŁOŻENIA |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| `LM-DROP-DOMAIN-56A-R2B` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `LM-DROP-DOMAIN-56A-R1` | Zakładanie zatwierdzenia rekomendacji |
+| `LM-DROP-DOMAIN-56A-R2B` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `LM-DROP-DOMAIN-56A-R1E` | Zakładanie zatwierdzenia rekomendacji |
 | `LM-DROP-DATA-MODEL-56B0` | Wszystkie decyzje blokujące projektowanie agregatów | `LEG-GATE-01, 02` | N/A | `LM-DROP-DOMAIN-56A-R2B` | Pisanie kodu schema.ts przed specyfikacją |
 | `LM-DROP-SCHEMA-56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `LM-DROP-DATA-MODEL-56B0` | Modyfikowanie istniejącego offerModel |
 | `LM-DROP-SCHEMA-56B2` | `DEC-DROP-11; DEC-DROP-16; DEC-DROP-22` | `LEG-GATE-06` | N/A | `LM-DROP-SCHEMA-56B1` | Używanie /go/[id] do śledzenia paczek |
@@ -173,7 +173,9 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 | CAPABILITY_ID | CAPABILITY_COMPONENT | CAPABILITY_STATUS | MVP_SCOPE_CLASSIFICATION | DECISION_DEPENDENCY | LEGAL_GATE | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `CAP-B2B-ACCOUNT-01` | Corporate B2B Accounts & Approvals | `FUTURE_REQUIRED` | `OUT_OF_SCOPE_FOR_DROP_MVP` | `DEC-DROP-23` | NULL | `LM-B2B-ACCOUNT-58A` | NO |
+| `CAP-B2B-ACCOUNT-01` | CUSTOMER_PO_NUMBER | `OPEN_BUSINESS_DECISION` | `MVP_OPTIONAL` | `DEC-DROP-23` | NULL | `LM-B2B-ACCOUNT-58A` | NO |
+| `CAP-B2B-ACCOUNT-01` | CORPORATE_ACCOUNT_HIERARCHY | `FUTURE_REQUIRED` | `POST_MVP` | NULL | NULL | `LM-B2B-ACCOUNT-58A` | NO |
+| `CAP-B2B-ACCOUNT-01` | PURCHASE_APPROVAL_WORKFLOW | `FUTURE_REQUIRED` | `POST_MVP` | NULL | NULL | `LM-B2B-ACCOUNT-58A` | NO |
 | `CAP-B2B-FREIGHT-02` | Heavy Freight & Deferred Quote | `OPEN_BUSINESS_DECISION` | `MVP_OPTIONAL` | `DEC-DROP-22` | NULL | `LM-DROP-FREIGHT-57B` | NO |
 | `CAP-B2B-CREDIT-03` | Trade Credit & Deferred Payment | `LEGAL_REVIEW_REQUIRED` | `MVP_OPTIONAL` | `DEC-DROP-21` | NULL | `LM-DROP-CREDIT-57C` | NO |
 | `CAP-CATALOG-ATTR-04`| Technical Attribute Normalization | `PARTIALLY_SUPPORTED` | `POST_MVP` | NULL | NULL | `LM-CAT-ATTR-54C` | NO |

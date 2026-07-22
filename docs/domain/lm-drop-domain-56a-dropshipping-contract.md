@@ -1,6 +1,6 @@
-# LOGIMARKET — KONTRAKT BIZNESOWY I DOMENOWY DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1)
+# LOGIMARKET — KONTRAKT BIZNESOWY I DOMENOWY DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1E)
 
-**Wersja:** 1.2.0 (R1D — Final Semantic Consistency and PR Closure)
+**Wersja:** 1.2.1
 **Data:** 2026-07-22
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** LogiMarket Marketplace Domain Contract
@@ -11,7 +11,7 @@
 
 Niniejszy dokument stanowi specyfikację domenową i biznesową dla obsługi modelu **Dropshipping** w marketplace **LogiMarket** (`logimarket.eu`).
 
-Sprint **LM-DROP-DOMAIN-56A-R1** jest etapem wyłącznie analityczno-dokumentacyjnym. W ramach sprintu **nie wprowadzono żadnych zmian** w kodzie źródłowym aplikacji (`src/`), schemacie bazy danych (`/src/lib/schema.ts`), migracjach PostgreSQL ani skryptach.
+Sprint **LM-DROP-DOMAIN-56A-R1E** jest etapem wyłącznie analityczno-dokumentacyjnym. W ramach sprintu **nie wprowadzono żadnych zmian** w kodzie źródłowym aplikacji (`src/`), schemacie bazy danych (`/src/lib/schema.ts`), migracjach PostgreSQL ani skryptach.
 
 ### Nadrzędna Zasada Klasyfikacji Informacji:
 Każde sformułowanie w niniejszym dokumencie oraz powiązanych plikach należy interpretować według następujących kategorii:
@@ -164,9 +164,9 @@ Maszyny stanów muszą formalnie obsługiwać:
 | Settlement | unsettled | SETTLEMENT_READY | ready_for_payout | Operator LogiMarket | Delivered | Mark ready | ready_failed | Manual check | Supplier Order | set_ready_{sup_order_id} | SETTLEMENT_READY | None | Mark | Mark without delivery |
 | Settlement | ready_for_payout | SETTLEMENT_PAID | paid | Operator LogiMarket | Ready | Mark paid | paid_failed | Manual check | Supplier Order | set_paid_{sup_order_id} | SETTLEMENT_PAID | Email to Supplier | Mark | Mark without proof |
 | Settlement | ready_for_payout | SETTLEMENT_DISPUTED | disputed | Operator LogiMarket | Ready | Mark disputed | dispute_failed | Manual check | Supplier Order | set_disp_{sup_order_id} | SETTLEMENT_DISPUTED | Email to Supplier | Mark | Resolve without proof |
-| Any | Any | DUPLICATE_EVENT | Any | System | Any | Drop | None | Drop | stable external_event_id or operation id | Any | DUPLICATE_IGNORED | None | None | None |
-| Any | Any | OUT_OF_ORDER_EVENT | Any | System | Any | Queue/Drop | None | Queue | event ordering/version rule | Any | OUT_OF_ORDER_IGNORED | None | None | None |
-| Any | Any | MANUAL_OPERATOR_CORRECTION | Any | Operator LogiMarket (requires actor identity) | requires reason | Update status | correction_failed | Manual | requires before/after snapshot | immutable audit event | MANUAL_CORRECTION | Alert Admin | Correct | Correct without validation |
+| Any Applicable Axis | current_state | DUPLICATE_EVENT | current_state | System | external_event_id or operation_id already processed | no domain mutation; record duplicate observation | audit write failure | no domain retry | External Event or Operation | external_event_id or operation_id | DUPLICATE_EVENT_IGNORED | None | View audit record | Replay without explicit recovery procedure |
+| Any Applicable Axis | current_state | OUT_OF_ORDER_EVENT | current_state | System | incoming event version is not the expected next version | queue for reconciliation or reject without domain mutation | None | Queue | Aggregate Event Stream | aggregate_id:event_version | OUT_OF_ORDER_EVENT_DETECTED | None | None | None |
+| Any Applicable Axis | validated_current_state | MANUAL_OPERATOR_CORRECTION | validated_target_state | Operator LogiMarket | actor identity present; reason present; target transition allowed by correction policy; before snapshot captured | validated domain mutation; after snapshot captured; immutable audit event | correction_failed | Manual check | Manual Correction Operation | correction_operation_id | MANUAL_OPERATOR_CORRECTION_APPLIED | Alert Admin | Correct | Correct without validation |
 
 ---
 
@@ -256,15 +256,26 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **DOMAIN_BOUNDARY**: Zarządzanie strukturą firmy kupującej, profilami członków, adresami dostaw i fakturowania oraz akceptacjami.
 * **RELATION_TO_DROPSHIPPING**: Dropshipping realizuje wysyłkę na adres końcowy wskazany w zamówieniu firmowym.
 * **CURRENT_REPOSITORY_SUPPORT**: Brak (`orders` przechowywane są per `sessionHash` bez kont użytkowników).
-* **MVP_RELEVANCE**: Niska (w MVP dane firmy wprowadzane są jednorazowo w checkout). Zgodnie z decyzją DEC-DROP-23, Customer PO może wejść do MVP order core.
+* **MVP_RELEVANCE**: Niska (w MVP dane firmy wprowadzane są jednorazowo w checkout).
 * **FUTURE_RELEVANCE**: Pełne konta organizacyjne i approval workflow pozostają post-MVP.
 * **BLOCKING_DECISIONS**: Decyzja o wdrożeniu systemu kont i IAM dla Kupujących.
 * **LEGAL_DEPENDENCIES**: Regulamin kont firmowych B2B i odpowiedzialność reprezentantów.
 * **SECURITY_DEPENDENCIES**: Multi-tenant data isolation, RBAC po stronie kupującego.
 * **PROPOSED_FUTURE_SPRINT**: `LM-B2B-ACCOUNT-58A — CORPORATE ACCOUNTS AND PURCHASE APPROVAL DOMAIN`.
-* **CAPABILITY_STATUS**: `FUTURE_REQUIRED`
-* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
-* **DECISION_DEPENDENCY**: Customer PO pozostaje osobną decyzją DEC-DROP-23.
+
+### SKŁADOWE KONT KORPORACYJNYCH (ROZDZIAŁ MVP VS POST-MVP):
+* **CUSTOMER_PO_NUMBER**:
+  * **CAPABILITY_STATUS**: `OPEN_BUSINESS_DECISION`
+  * **MVP_SCOPE_CLASSIFICATION**: `MVP_OPTIONAL`
+  * **DECISION_DEPENDENCY**: `DEC-DROP-23`
+* **CORPORATE_ACCOUNT_HIERARCHY**:
+  * **CAPABILITY_STATUS**: `FUTURE_REQUIRED`
+  * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
+  * **DECISION_DEPENDENCY**: `NULL`
+* **PURCHASE_APPROVAL_WORKFLOW**:
+  * **CAPABILITY_STATUS**: `FUTURE_REQUIRED`
+  * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
+  * **DECISION_DEPENDENCY**: `NULL`
 
 ---
 
@@ -328,18 +339,18 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **BLOCKING_DECISIONS**: Zasady transparentności rankingu i wyliczania ocen dostawców.
 * **LEGAL_DEPENDENCIES**: Zgodność z rozporządzeniem P2B (Platform-to-Business) dotyczącym kryteriów plasowania ofert.
 * **SECURITY_DEPENDENCIES**: Nieedytowalność zdarzeń źródłowych, kontrola dostępu do korekt ręcznych.
-* **PROPOSED_FUTURE_SPRINT**: `LM-DROP-SLA-57D — SUPPLIER PERFORMANCE AND SLA ENGINE`.
-* **CAPABILITY_STATUS**: `FUTURE_OPTIONAL`
-* **MVP_SCOPE_CLASSIFICATION**: `OUT_OF_SCOPE_FOR_DROP_MVP`
-
 ### SKŁADOWE SLA (ROZDZIAŁ MVP VS POST-MVP):
 * **RAW_EVENT_CAPTURE**:
+  * **CAPABILITY_STATUS**: `FUTURE_REQUIRED`
   * **MVP_SCOPE_CLASSIFICATION**: `MVP_REQUIRED`
 * **DERIVED_METRICS**:
+  * **CAPABILITY_STATUS**: `FUTURE_OPTIONAL`
   * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
 * **AUTOMATIC_SCORE**:
+  * **CAPABILITY_STATUS**: `FUTURE_OPTIONAL`
   * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
 * **RANKING_INFLUENCE**:
+  * **CAPABILITY_STATUS**: `LEGAL_REVIEW_REQUIRED`
   * **MVP_SCOPE_CLASSIFICATION**: `POST_MVP`
   * **LEGAL_GATE**: `LEG-GATE-14`
 
