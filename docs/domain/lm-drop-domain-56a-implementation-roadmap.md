@@ -1,20 +1,21 @@
-# LOGIMARKET — ROADMAPA IMPLEMENTACJI MODUŁU DROPSHIPPINGU (LM-DROP-DOMAIN-56A)
+# LOGIMARKET — ROADMAPA IMPLEMENTACJI MODUŁU DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1)
 
-**Wersja:** 1.0.0  
-**Data:** 2026-07-22  
-**Status:** PROPOSAL / ROADMAP  
-**Moduł:** Dropshipping Implementation Roadmap  
+**Wersja:** 1.1.0 (R1 — Refined Dependency Architecture & Decomposed Schema Roadmap)
+**Data:** 2026-07-22
+**Status:** PROPOSAL / ROADMAP
+**Moduł:** Dropshipping Implementation Roadmap
 
 ---
 
 ## 1. STRATEGIA WDROŻENIA I ETAPOWANIE
 
-Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało podzielone na 8 wyspecjalizowanych, sekwencyjnych sprintów technicznych (`56B` do `56I`).
+Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało podzielone na wyizolowane, sekwencyjne sprinty techniczne.
 
-Prace realizowane są w myśl zasady **Fail-Fast & Zero-Regression**:
-1. Żaden sprint bazodanowy lub aplikacyjny nie może wystartować przed zatwierdzeniem otwartych decyzji blokujących biznesowo-prawnych z dokumentu `lm-drop-domain-56a-decision-register.md`.
-2. Każdy sprint dostarcza autonomiczny, zweryfikowany fragment funkcjonalności z zachowaniem 100% wstecznej kompatybilności dla istniejących modeli ofert (`rfq`, `ecommerce`, `outbound`).
-3. Kod źródłowy oraz migracje bazy danych są wprowadzane przy użyciu transakcyjnych i odwracalnych kroków.
+### Nadrzędne Zasady Wdrożenia:
+1. **Współzależność od Zamknięcia Decyzji (Decisions First)**: Żaden sprint bazodanowy (`56B1+`) ani aplikacyjny nie może wystartować przed formalnym zamknięciem otwartych decyzji blokujących w sprincie `LM-DROP-DOMAIN-56A-R2`.
+2. **Dekompozycja Zmian Bazodanowych**: Zmiany schematu bazy danych zostały rozbite na 7 mikrostroków (`56B0` do `56B6`), unikając monolitycznej migracji.
+3. **Audyt i RBAC Przed Mutacjami Administracyjnymi**: Fundamenty uprawnień RBAC i rejestracji audytowej muszą wyprzedzać mutacje danych w panelu administracyjnym LogiMarket.
+4. **Wsteczna Kompatybilność**: Zachowanie 100% sprawności istniejących modeli ofert (`rfq`, `ecommerce`, `outbound`).
 
 ---
 
@@ -24,223 +25,144 @@ Prace realizowane są w myśl zasady **Fail-Fast & Zero-Regression**:
 +-----------------------------------------------------------------------------------+
 |                        DROPSHIPPING IMPLEMENTATION ROADMAP                        |
 +-----------------------------------------------------------------------------------+
-| 56A: Business Domain Contract & Decision Register [NINIEJSZY SPRINT - ARCHITEKTURA]|
+| LM-DROP-DOMAIN-56A-R1: Contract Review & B2B Capability Boundaries [NINIEJSZY]    |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| 56B: Database Schema Extension & Drizzle Migrations (Tables & FKs)                |
+| LM-DROP-DOMAIN-56A-R2: Business Decision Closure (MoR, SoR, Legal & Tax Gates)    |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| 56C: Order Core & Multi-Supplier Split Engine (Cart & Checkout Actions)           |
+| LM-DROP-DATA-MODEL-56B0: Logical Data Model, Invariants & Aggregate Specifications|
+| (Dokumentacja modeli danych. Brak zmian w schema.ts / brak migracji SQL)           |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| 56D: Supplier Handoff & Manual/Email Confirmation Workflow                        |
+| LM-DROP-SCHEMA-56B1: Core Fulfillment & Supplier-Order Schema                     |
+| LM-DROP-SCHEMA-56B2: Shipment & Courier Tracking Schema                           |
+| LM-DROP-SCHEMA-56B3: Payment, Refund & Settlement Ledger Schema                   |
+| LM-DROP-SCHEMA-56B4: Returns & Quality Complaints Schema                          |
+| LM-DROP-SCHEMA-56B5: Audit & Security Support Structures                          |
+| LM-DROP-SCHEMA-56B6: Controlled Migration Execution & Production Verification    |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| 56E: Payment Integration & Capture / Refund State Machine                         |
+| LM-ADMIN-57A: Admin MVP Architecture and Access Control (RBAC Foundation)        |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| 56F: Shipment & Courier Tracking Management Core                                  |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| 56G: B2B Cancellations, Returns & Quality Complaints Module                       |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| 56H: Domain Audit Trail & Operator RBAC Controls                                   |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| 56I: QA, E2E Integration Testing & Production Hardening                           |
+| LM-DROP-ORDER-56C: Order Core & Multi-Supplier Split Engine                       |
+| LM-DROP-SUPPLIER-56D: Supplier Handoff & Confirmation Workflow                    |
+| LM-DROP-PAYMENT-56E: Payment Integration & Capture / Refund State Machine         |
+| LM-DROP-FULFILLMENT-56F: Shipment & Courier Tracking Management Core              |
+| LM-DROP-RETURNS-56G: B2B Cancellations, Returns & Quality Complaints Module       |
+| LM-DROP-AUDIT-56H: Domain Audit Trail & Operator RBAC Controls                    |
+| LM-DROP-QA-56I: QA, Integration Testing & Production Hardening                    |
 +-----------------------------------------------------------------------------------+
 ```
 
 ---
 
-## 3. SZCZEGÓŁOWA SPECYFIKACJA SPRINTÓW
+## 3. SZCZEGÓŁOWY OPIS SPRINTÓW ZAMKNIĘCIA I ARCHITEKTURY
 
 ---
 
-### SPRINT: LM-DROP-SCHEMA-56B — DATABASE SCHEMA EXTENSION
-
-* **CEL**: Utworzenie tabel bazy danych i relacji Drizzle ORM dla poparcia kontraktu dropshippingu (bez zmiany zachowania istniejących zapytań).
-* **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A` oraz rozstrzygnięcie decyzji `DEC-DROP-01`, `DEC-DROP-04`, `DEC-DROP-17`.
+### SPRINT: LM-DROP-DOMAIN-56A-R2 — BUSINESS DECISION CLOSURE
+* **CEL**: Przygotowanie kontrolowanego pakietu decyzji dla Właściciela Biznesowego, Dyrektora Finansowego oraz Kancelarii Prawnej w celu formalnego rozstrzygnięcia otwartych kwestii blokujących.
+* **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1`.
 * **SCOPE**:
-  - Dodanie kolumny `fulfillment_model` do tabeli `offers` (z domyślną wartością `'logimarket_stock'`).
-  - Utworzenie nowej tabeli `supplier_profiles` (powiązanej z `partners`).
-  - Utworzenie tabeli `supplier_orders` (sub-zamówienia dostawców).
-  - Rozszerzenie tabeli `order_items` o pola snapshotu (`unit_buy_price_brutto`, `supplier_order_id`, `sku_snapshot`).
-  - Utworzenie tabel `shipments`, `payment_transactions`, `domain_audit_logs`.
-  - Przygotowanie bezpiecznej migracji SQL i uruchomienie w środowisku Supabase/PostgreSQL.
-* **FORBIDDEN SCOPE**:
-  - Brak zmian w kodzie UI ani Server Actions w tym sprincie.
-  - Brak zmian wartości domyślnych istniejących rekordów w bazie.
-* **ACCEPTANCE CRITERIA**:
-  - `npm run build` i `tsc --noEmit` przechodzą bez błędów.
-  - Migracja Drizzle generuje czysty SQL i daje się transakcyjnie wycofać.
-  - Istniejące testy oraz zapytania katalogowe działają w 100% bez zmian.
-* **RISKS**: Konflikty kluczy obcych lub naruszenie unikalności przy rozszerzaniu istniejących tabel.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK (`DEC-DROP-01`, `DEC-DROP-04`, `DEC-DROP-17`).
+  - Formalne zatwierdzenie wyboru Merchant of Record (`DEC-DROP-01`) i Seller of Record (`DEC-DROP-02`).
+  - Zatwierdzenie modelu rozliczeń (odsprzedaż vs agencja) oraz fakturowania (`DEC-DROP-03`).
+  - Rozstrzygnięcie modelu podmiotu pobierającego płatność (`DEC-DROP-04`) oraz własności środków (`DEC-DROP-05`).
+  - Podpisanie ramowych wzorców umów partnerskich i warunków zwrotów B2B (`DEC-DROP-11`, `DEC-DROP-14`).
+  - Formalne zatwierdzenie podziału zamówień wielopartnerskich w koszyku MVP (`DEC-DROP-17`).
+* **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
+* **ACCEPTANCE CRITERIA**: Uzyskanie udokumentowanych wpisów `DECIDED` wraz z podaniem `APPROVED_BY`, `APPROVED_AT` oraz `APPROVAL_SOURCE` dla decyzji blokujących.
+* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
 
 ---
 
-### SPRINT: LM-DROP-ORDER-56C — ORDER CORE & MULTI-SUPPLIER SPLIT
-
-* **CEL**: Zaimplementowanie silnika rozbicia koszyka i koszykowego checkoutu na odrębne sub-zamówienia dostawców (*Supplier Orders*).
-* **ZALEŻNOŚCI**: `LM-DROP-SCHEMA-56B`.
+### SPRINT: LM-DROP-DATA-MODEL-56B0 — LOGICAL DATA MODEL SPECIFICATION
+* **CEL**: Zdefiniowanie logiki relacyjnej, agregatów, kluczy obcych i niezmienników (invariants) nowego modelu danych w postaci dokumentacji technicznej przed wykonaniem zmian w Drizzle ORM.
+* **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2`.
 * **SCOPE**:
-  - Aktualizacja formularza w `CheckoutModal.tsx` o kompletne dane adresowe B2B i NIP.
-  - Aktualizacja Server Action `submitCheckout` w `/src/app/actions.ts`:
-    - Generowanie głównego zamówienia `orders` (*Master Order*).
-    - Grupowanie pozycji koszyka wg `partner_id` oferty.
-    - Tworzenie dedykowanych rekordów `supplier_orders` dla każdego partnera.
-    - Kopiowanie nieedytowalnych snapshotów cen, nazw i SKU do `order_items`.
-* **FORBIDDEN SCOPE**:
-  - Modyfikacja mechanizmu RFQ lub Outbound (`/go/[id]`).
-  - Tworzenie portalu dostawcy.
-* **ACCEPTANCE CRITERIA**:
-  - Zamówienie z produktami 2 różnych dostawców tworzy 1 `order` oraz 2 obiekty `supplier_orders`.
-  - Czyszczenie koszyka po udanym checkoucie działa poprawnie.
-* **RISKS**: Błędy zaokrągleń przy wyliczaniu sum końcowych rozbitych pozycji.
+  - Przygotowanie kompletnego dokumentu ERD i specyfikacji tabel (`supplier_profiles`, `supplier_orders`, `order_items` snapshot, `shipments`, `payment_transactions`, `domain_audit_logs`).
+  - Określenie ograniczeń integralnościowych (CHECK constraints, FOREIGN KEY rules, UNIQUE indexes).
+  - Opracowanie odwracalnego planu migracji bazodanowej.
+* **FORBIDDEN SCOPE**: Edycja kodu `src/lib/schema.ts`, uruchamianie migracji SQL na bazie produkcyjnej.
+* **ACCEPTANCE CRITERIA**: Kompletny dokument specyfikacji logiki danych zwoływany do przeglądu architektonicznego.
 * **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
 
 ---
 
-### SPRINT: LM-DROP-SUPPLIER-56D — SUPPLIER HANDOFF & CONFIRMATION WORKFLOW
+### SPRINTY ZMIAN SCHEMATU BAZY DANYCH (`56B1` do `56B6`)
 
-* **CEL**: Zaimplementowanie mechanizmu powiadamiania partnerów o nowym zamówieniu oraz rejestracji ich potwierdzenia/odrzucenia.
-* **ZALEŻNOŚCI**: `LM-DROP-ORDER-56C`.
-* **SCOPE**:
-  - Generator powiadomień e-mail / specyfikacji zamówienia dla Dostawcy.
-  - Implementacja akcji potwierdzenia (`supplier_confirmed`) oraz odrzucenia (`supplier_rejected`) w logice serwerowej.
-  - Mechanizm automatycznej eskalacji do Operatora po przekroczeniu SLA odpowiedzi (np. 24h).
-* **FORBIDDEN SCOPE**:
-  - Automatyczne integracje EDI/REST API z zewnętrznymi systemami ERP dostawców w 1. fazie.
-* **ACCEPTANCE CRITERIA**:
-  - Operator może w systemie odnotować potwierdzenie od dostawcy.
-  - Odrzucenie zamówienia przez dostawcę zmienia status sub-zamówienia i generuje wpis w logu zdarzeń.
-* **RISKS**: Nieterminowe odpowiedzi partnerów generujące opóźnienia realizacji.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
+1. **LM-DROP-SCHEMA-56B1 — Core Fulfillment & Supplier-Order Schema**: Utworzenie tabel `supplier_profiles`, `supplier_orders` oraz dodanie kolumny `fulfillment_model` do `offers`.
+2. **LM-DROP-SCHEMA-56B2 — Shipment & Courier Tracking Schema**: Utworzenie tabeli `shipments` powiązanej relacją z `supplier_orders`.
+3. **LM-DROP-SCHEMA-56B3 — Payment, Refund & Settlement Ledger Schema**: Utworzenie tabel `payment_transactions` oraz `settlement_records` (*dopiero po zatwierdzeniu decyzji finansowych*).
+4. **LM-DROP-SCHEMA-56B4 — Returns & Quality Complaints Schema**: Utworzenie tabel `return_requests` i `complaints`.
+5. **LM-DROP-SCHEMA-56B5 — Audit & Security Support Structures**: Utworzenie tabeli `domain_audit_logs` wspierającej nieedytowalny rejestr zdarzeń.
+6. **LM-DROP-SCHEMA-56B6 — Controlled Migration Execution**: Wykonanie zweryfikowanych transakcyjnie migracji Drizzle w środowisku Supabase/PostgreSQL i walidacja danych.
 
 ---
 
-### SPRINT: LM-DROP-PAYMENT-56E — PAYMENT INTEGRATION & CAPTURE ENGINE
-
-* **CEL**: Podłączenie bramki płatności (np. Stripe) i wdrożenie transakcyjnej maszyny stanów (Autoryzacja → Pobranie → Refund).
-* **ZALEŻNOŚCI**: `LM-DROP-ORDER-56C`.
+### SPRINT: LM-ADMIN-57A — ADMIN MVP ARCHITECTURE & ACCESS CONTROL (RBAC)
+* **CEL**: Opracowanie architektury panelu operatora LogiMarket oraz wdrożenie bezpiecznego modelu kontroli dostępu opartego na rolach (RBAC) i audycie.
+* **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R1` oraz `LM-DROP-SCHEMA-56B5`.
 * **SCOPE**:
-  - Utworzenie autoryzacji płatności (`payment_authorized`) przy checkoucie.
-  - Automatyczne pobranie środków (`payment_captured`) po potwierdzeniu dostawy przez dostawcę lub nadaniu przesyłki.
-  - Webhooki transakcyjne PSP i obsługa błędów autoryzacji.
-  - Dedykowana obsługa pełnego i częściowego refundu.
-* **FORBIDDEN SCOPE**:
-  - Zapisywanie danych kart płatniczych po stronie bazy LogiMarket (zgodność z PCI-DSS).
-* **ACCEPTANCE CRITERIA**:
-  - Webhooki bramki bezbłędnie aktualizują `payment_status` zamówienia.
-  - Wycofanie autoryzacji przy odrzuceniu przez dostawcę następuje bezobsługowo.
-* **RISKS**: Problemy z wywołaniami webhooków w środowiskach deweloperskich/lokalnych.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK (`DEC-DROP-01`, `DEC-DROP-04`, `DEC-DROP-12`).
+  - Projekt architektury modułu Admin MVP w ramach Next.js App Router (`/src/app/admin` lub odpowiedniej ścieżki).
+  - Implementacja kontroli uprawnień (Operator, Finance Admin, Support Agent).
+  - Powiązanie akcji administracyjnych z nieedytowalnym logiem audytowym (`domain_audit_logs`).
+* **FORBIDDEN SCOPE**: Tworzenie panelu self-service dla dostawców.
 
 ---
 
-### SPRINT: LM-DROP-FULFILLMENT-56F — SHIPMENTS & TRACKING CORE
+## 4. MACIERZ ZALEŻNOŚCI SPRINTÓW I BRAMEK KONTROLNYCH
 
-* **CEL**: Wdrożenie obsługi wysyłek, rejestru paczek/palet oraz udostępnienie linków śledzenia dla kupującego.
-* **ZALEŻNOŚCI**: `LM-DROP-SUPPLIER-56D`.
-* **SCOPE**:
-  - Obsługa encji `shipments` powiązanej z `supplier_orders`.
-  - Wprowadzanie numeru listu przewozowego (`tracking_number`) oraz kodów przewoźników (DHL, DPD, InPost, Geodis itp.).
-  - Powiadomienie e-mail dla kupującego z bezpośrednim linkiem do śledzenia przesyłki kurierskiej.
-  - Aktualizacja statusu realizacji na `shipped` oraz `delivered`.
-* **FORBIDDEN SCOPE**:
-  - Używanie przekierowania `/go/[id]` do śledzenia przesyłek.
-* **ACCEPTANCE CRITERIA**:
-  - Wprowadzenie listu przewozowego zmienia status `fulfillment_status` sub-zamówienia na `shipped`.
-  - Kupujący otrzymuje link bezpośrednio do strony śledzenia wybranego kuriera.
-* **RISKS**: Błędne formaty URL śledzenia poszczególnych firm kurierskich.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
+| SPRINT | WYMAGANE DECYZJE BIZNESOWE | WYMAGANE BRAMKI PRAWNE | WYMAGANA BAZA BEZPIECZEŃSTWA | ZALEŻNOŚCI TECHNICZNE | ZAKAZANE PRZEDWCZESNE ZAŁOŻENIA |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `56A-R2` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `56A-R1` | Zakładanie zatwierdzenia rekomendacji |
+| `56B0` | `DEC-DROP-01, 02, 04, 17` | `LEG-GATE-01, 02` | N/A | `56A-R2` | Pisanie kodu schema.ts przed specyfikacją |
+| `56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `56B0` | Modyfikowanie istniejącego offerModel |
+| `56B2` | `DEC-DROP-11` | `LEG-GATE-06` | N/A | `56B1` | Używanie /go/[id] do śledzenia paczek |
+| `56B3` | `DEC-DROP-01, 04, 06, 08` | `LEG-GATE-01, 02, 09` | Transakcyjny Ledger | `56B1` | Zakładanie konkretnego dostawcy PSP |
+| `56B4` | `DEC-DROP-09, 12, 14` | `LEG-GATE-04, 05` | Audit Log | `56B1` | Bezwarunkowe zwroty konsumenckie w B2B |
+| `56B5` | Brak | `LEG-GATE-07, 08` | Immutability check | `56B0` | Możliwość edycji historii logów |
+| `56B6` | Brak | Brak | Backup & Rollback plan | `56B1..56B5` | Wykonywanie migracji bez sprawdzania braku destruktywności |
+| `57A` | Brak | Brak | RBAC & Audit | `56B5` | Dostęp bez uwierzytelnienia operacyjnego |
 
 ---
 
-### SPRINT: LM-DROP-RETURNS-56G — B2B CANCELLATIONS, RETURNS & COMPLAINTS
+## 5. REJESTR BRAMEK PRAWNYCH (LEGAL GATES REGISTER)
 
-* **CEL**: Zbudowanie modułu obsługi wyjątków transakcyjnych (anulowania, reklamacje z powodu uszkodzeń w transporcie, wady jakościowe).
-* **ZALEŻNOŚCI**: `LM-DROP-PAYMENT-56E`, `LM-DROP-FULFILLMENT-56F`.
-* **SCOPE**:
-  - Dedykowane formularze zgłoszeń reklamacyjnych / zwrotnych B2B dla Operatora.
-  - Procedura zatwierdzania zwrotu i generowania protokołu reklamacyjnego.
-  - Integracja z silnikiem refundów finansowych z `56E`.
-* **FORBIDDEN SCOPE**:
-  - Automatyczne uznawanie zwrotów konsumenckich bez weryfikacji warunków B2B.
-* **ACCEPTANCE CRITERIA**:
-  - Przeprocesowanie reklamacji aktualizuje status `return_complaint_status` i rejestruje korektę finansową.
-* **RISKS**: Brak spójności proceduralnej między regulaminem LogiMarket a umowami dostawców.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK (`DEC-DROP-09`, `DEC-DROP-11`, `DEC-DROP-14`).
-
----
-
-### SPRINT: LM-DROP-AUDIT-56H — DOMAIN AUDIT TRAIL & OPERATOR RBAC CONTROLS
-
-* **CEL**: Wdrożenie ścieżki audytowej i zabezpieczeń RBAC dla działań operatorów w panelu administracyjnym.
-* **ZALEŻNOŚCI**: `LM-DROP-SCHEMA-56B` do `56G`.
-* **SCOPE**:
-  - Nieedytowalny rejestr zdarzeń `domain_audit_logs` zapisujący historię każdej akcji finansowej i statusowej.
-  - Kontrola uprawnień ról operacyjnych (np. Operator, Finance Admin, Support Agent).
-  - Maskowanie danych wrażliwych i PII w logach systemowych.
-* **FORBIDDEN SCOPE**:
-  - Tworzenie panelu self-service dla dostawców.
-* **ACCEPTANCE CRITERIA**:
-  - Każda zmiana statusu zamówienia tworzy wpis z datą, identyfikatorem operatora i starym/nowym stanem.
-  - Logi nie zawierają niezaszyfrowanych haseł ani pełnych numerów kart płatniczych.
-* **RISKS**: Narzut wydajnościowy przy intensywnym zapisie audytowym.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
+| LEGAL_GATE_ID | SUBJECT | BLOCKED_SPRINTS | OWNER | REQUIRED_DELIVERABLE | STATUS | APPROVAL_EVIDENCE |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `LEG-GATE-01` | Podmiotowość MoR i SoR | `56B3, 56C, 56E` | Legal Counsel | Opinia prawna określająca status sprzedawcy | `OPEN` | NULL |
+| `LEG-GATE-02` | Klasyfikacja Podatkowa VAT i KSeF | `56B3, 56C` | Tax Advisor | Analiza schematu fakturowania i matrycy VAT | `OPEN` | NULL |
+| `LEG-GATE-03` | Umowa Ramowa Dropshippingu | `56B1, 56D` | Legal Counsel | Wzorzec umowy partnerskiej z dostawcami | `OPEN` | NULL |
+| `LEG-GATE-04` | Warunki Zwrotów i Odstąpień B2B | `56B4, 56G` | Legal Counsel | Regulamin zwrotów i reklamacji B2B | `OPEN` | NULL |
+| `LEG-GATE-05` | Warunki Rękojmi i Gwarancji | `56B4, 56G` | Legal Counsel | Zapisy dotyczące odpowiedzialności za wady | `OPEN` | NULL |
+| `LEG-GATE-06` | Odpowiedzialność Przewozowa | `56B2, 56F` | Legal / Ops | Ustalenia odpowiedzialności za szkody w transporcie | `OPEN` | NULL |
+| `LEG-GATE-07` | Powierzenie i Przetwarzanie PII | `56B5, 56D` | DPO / Legal | Umowa powierzenia danych osobowych (RODO) | `OPEN` | NULL |
+| `LEG-GATE-08` | Polityka Retencji Danych | `56B5, 56H` | DPO / Legal | Zasady okresu przechowywania danych transakcyjnych | `OPEN` | NULL |
+| `LEG-GATE-09` | Odpowiedzialność za Chargeback | `56B3, 56E` | Legal / CFO | Procedura obsługi sporów kartowych z PSP | `OPEN` | NULL |
 
 ---
 
-### SPRINT: LM-DROP-QA-56I — INTEGRATION TESTING & PRODUCTION HARDENING
+## 6. ROADMAPA PRZYSZŁYCH CAPABILITIES B2B (`FUTURE B2B CAPABILITY ROADMAP`)
 
-* **CEL**: Testy E2E pełnego cyklu życia zamówienia dropshippingowego, walidacja scenariuszy skrajnych (edge cases) oraz przygotowanie do wdrożenia produkcyjnego.
-* **ZALEŻNOŚCI**: Wszystkie poprzednie sprinty `56B-56H`.
-* **SCOPE**:
-  - Testy symulacyjne zamówień wielopartnerskich, anulowań, odrzuceń i reklamacji.
-  - Weryfikacja spójności bazy danych pod kątem kluczy obcych i spójności transakcyjnej.
-  - Testy wydajnościowe i sprawdzenie skryptów roboczych Quality Gate (`npm run build`, `tsc --noEmit`, `git diff --check`).
-* **FORBIDDEN SCOPE**:
-  - Tworzenie nowych funkcji biznesowych nieujętych w kontrakcie.
-* **ACCEPTANCE CRITERIA**:
-  - 100% testów przechodzi pomyślnie w środowisku stagingowym.
-  - Brak regresji dla istniejących funkcji RFQ i Outbound.
-  - Wszystkie dokumenty i instrukcje operacyjne są aktualne.
-* **RISKS**: Wykrycie nierozstrzygniętych scenariuszy brzegowych na etapie odbioru końcowego.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
-
----
-
-## 4. MACIERZ GOTOWOŚCI I ZALEŻNOŚCI DECYZYJNYCH
-
-| Sprint | Wymagane Decyzje Blokujące z Register | Status Gotowości do Implementacji |
-| :--- | :--- | :--- |
-| **56B (Schema)** | `DEC-DROP-01`, `DEC-DROP-04`, `DEC-DROP-17` | **BLOKOWANY** (Wymaga akceptacji decyzji) |
-| **56C (Order Core)** | `DEC-DROP-17` | **BLOKOWANY** |
-| **56D (Supplier Handoff)** | Brak | Gotowy po 56C |
-| **56E (Payments)** | `DEC-DROP-01`, `DEC-DROP-04`, `DEC-DROP-12` | **BLOKOWANY** |
-| **56F (Shipments)** | Brak | Gotowy po 56D |
-| **56G (Returns)** | `DEC-DROP-09`, `DEC-DROP-11`, `DEC-DROP-14` | **BLOKOWANY** |
-| **56H (Audit)** | Brak | Gotowy po 56G |
-| **56I (QA)** | Brak | Gotowy po 56H |
+| CAPABILITY_ID | CAPABILITY_NAME | MVP_REQUIRED | POST_MVP | DEPENDENT_ON | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
+| :--- | :--- | :---: | :---: | :--- | :--- | :---: |
+| `CAP-B2B-ACCOUNT-01` | Corporate B2B Accounts & Approvals | NO | YES | Konta Użytkowników | `LM-B2B-ACCOUNT-58A` | NO |
+| `CAP-B2B-FREIGHT-02` | Heavy Freight & Deferred Quote | NO | YES | System Transportowy | `LM-DROP-FREIGHT-57B` | NO |
+| `CAP-B2B-CREDIT-03` | Trade Credit & Deferred Payment | NO | YES | `56E`, Partner Finansowy | `LM-DROP-CREDIT-57C` | NO |
+| `CAP-CATALOG-ATTR-04`| Technical Attribute Normalization | NO | YES | `LM-CAT-FILTER-54B` | `LM-CAT-ATTR-54C` | NO |
+| `CAP-DROP-SLA-05` | Supplier Performance & SLA Engine | NO | YES | `56H` Audit Trail | `LM-DROP-SLA-57D` | NO |
 
 ---
 
