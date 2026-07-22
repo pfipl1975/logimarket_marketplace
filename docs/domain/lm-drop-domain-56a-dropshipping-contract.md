@@ -101,12 +101,12 @@ W architekturze LogiMarket rozdzielamy pojęcie sposobu zakupu na marketplace (`
 
 ---
 
-## 5. CYKL ŻYCIA ZAMÓWIENIA I ZDEKOMPONOWANE OSIE STATUSOWE
+## 5. CYKL ŻYCIA ZAMÓWIENIA I 11 ZDEKOMPONOWANYCH OSI STATUSOWYCH
 
 Zamówienie dropshippingowe opisane jest zestawem **ortogonalnych maszyn stanów**, a nie jedną liniową kolumną statusu.
 
 ```
-                          ZDEKOMPONOWANE OSIE STATUSOWE
+                          11 ZDEKOMPONOWANYCH OSI STATUSOWYCH
 +-----------------------------------------------------------------------------------+
 | 1. Customer Order Status:   draft -> placed -> processing -> completed -> cancelled|
 | 2. Payment Status:          pending -> authorized -> captured -> refunded -> failed|
@@ -118,6 +118,7 @@ Zamówienie dropshippingowe opisane jest zestawem **ortogonalnych maszyn stanów
 | 8. Return Status:           none -> requested -> authorized -> received -> rejected|
 | 9. Complaint Status:        none -> open -> under_review -> resolved -> rejected   |
 | 10. Settlement Status:      unsettled -> ready_for_payout -> paid -> disputed     |
+| 11. Supplier Confirm Status: pending -> accepted -> rejected                      |
 +-----------------------------------------------------------------------------------+
 ```
 
@@ -216,7 +217,7 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 3. **Nieedytowalny Audit Log (`domain_audit_logs`)**: Zapis historii każdego zdarzenia biznesowego wraz z autorem, starym i nowym stanem oraz kluczem idempotencyjnym (`idempotency_key`).
 4. **Zabezpieczenie przed Podwójnym Fulfillmentem i Refundem**: Wymuszenie unikalności kluczy transakcyjnych i operacyjnych.
 5. **Minimalizacja PII i Retencja Danych**: Ochrona danych osobowych kupującego przekazywanych partnerowi.
-6. **Zabezpieczenia Webhooków**: Wyszukiwanie nagłówków podwójnego podpisu (HMAC), ochrona przed atakami typu replay attack (timestamp verification).
+6. **Zabezpieczenia Webhooków**: Weryfikacja kryptograficzna nagłówków sygnatur (np. Webhook HMAC-SHA256), ochrona przed atakami typu replay attack (timestamp verification).
 
 ---
 

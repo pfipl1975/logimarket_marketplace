@@ -30,7 +30,12 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| LM-DROP-DOMAIN-56A-R2: Business Decision Closure (MoR, SoR, Legal & Tax Gates)    |
+| LM-DROP-DOMAIN-56A-R2A: Business Decision Closure (MoR, SoR, Payment)             |
++-----------------------------------------------------------------------------------+
+                                         |
+                                         v
++-----------------------------------------------------------------------------------+
+| LM-DROP-DOMAIN-56A-R2B: Legal & Tax Gates (Terms, Returns, VAT, Carrier)          |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
@@ -72,7 +77,29 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ---
 
-### SPRINT: LM-DROP-DOMAIN-56A-R2 — BUSINESS DECISION CLOSURE
+### SPRINT: LM-DROP-DOMAIN-56A-R2A — BUSINESS DECISION CLOSURE
+* **CEL**: Przygotowanie kontrolowanego pakietu decyzji dla Właściciela Biznesowego i Dyrektora Finansowego.
+* **ZALEŻNOŚCI**: Pomyślne odebranie LM-DROP-DOMAIN-56A-R1.
+* **SCOPE**:
+  - Formalne zatwierdzenie wyboru Merchant of Record (DEC-DROP-01) i Seller of Record (DEC-DROP-02).
+  - Zatwierdzenie modelu rozliczeń (odsprzedaż vs agencja) oraz fakturowania (DEC-DROP-03).
+  - Rozstrzygnięcie modelu podmiotu pobierającego płatność (DEC-DROP-04) oraz własności środków (DEC-DROP-05).
+* **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
+* **ACCEPTANCE CRITERIA**: Uzyskanie udokumentowanych wpisów CLOSED.
+* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
+
+---
+
+### SPRINT: LM-DROP-DOMAIN-56A-R2B — LEGAL & TAX GATES CLOSURE
+* **CEL**: Zatwierdzenie aspektów prawno-podatkowych dropshippingu przez Kancelarię i Doradcę Podatkowego.
+* **ZALEŻNOŚCI**: Pomyślne zamknięcie biznesowe w LM-DROP-DOMAIN-56A-R2A.
+* **SCOPE**:
+  - Podpisanie ramowych wzorców umów partnerskich i warunków zwrotów B2B (DEC-DROP-11, DEC-DROP-14).
+  - Regulaminy, dokumentacja VAT i rozliczeń celnych.
+* **FORBIDDEN SCOPE**: Edycja kodu źródłowego.
+* **ACCEPTANCE CRITERIA**: Zamknięcie wymaganych bramek LEG-GATE.
+* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
+
 * **CEL**: Przygotowanie kontrolowanego pakietu decyzji dla Właściciela Biznesowego, Dyrektora Finansowego oraz Kancelarii Prawnej w celu formalnego rozstrzygnięcia otwartych kwestii blokujących.
 * **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1`.
 * **SCOPE**:
@@ -156,7 +183,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ## 6. ROADMAPA PRZYSZŁYCH CAPABILITIES B2B (`FUTURE B2B CAPABILITY ROADMAP`)
 
-| CAPABILITY_ID | CAPABILITY_NAME | MVP_REQUIRED | POST_MVP | DEPENDENT_ON | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
+| CAPABILITY_ID | CAPABILITY_NAME | MVP_SCOPE_CLASSIFICATION | DEPENDENT_ON | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
 | :--- | :--- | :---: | :---: | :--- | :--- | :---: |
 | `CAP-B2B-ACCOUNT-01` | Corporate B2B Accounts & Approvals | NO | YES | Konta Użytkowników | `LM-B2B-ACCOUNT-58A` | NO |
 | `CAP-B2B-FREIGHT-02` | Heavy Freight & Deferred Quote | NO | YES | System Transportowy | `LM-DROP-FREIGHT-57B` | NO |
