@@ -4,7 +4,7 @@
 **Status:** PENDING_EXTERNAL_VALIDATION
 **Moduł:** Dropshipping Entity Specifications
 
-Zgodnie z wymogami kompletności modelu, niniejszy inwentarz definiuje 56 unikalnych konceptów i encji w obrębie dropshippingu B2B (LogiMarket). 
+Zgodnie z wymogami kompletności modelu, niniejszy inwentarz definiuje 56 unikalnych konceptów i encji w obrębie dropshippingu B2B (LogiMarket).
 
 | Field Type Classification | Description |
 | :--- | :--- |

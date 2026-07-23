@@ -8,27 +8,27 @@ Zgodnie z wymaganiami MVP zdefiniowano 11 ortogonalnych (wzajemnie niezależnych
 
 ## 1. OSIE STATUSOWE (11 AXES)
 
-1. **Customer Order Status**: 
+1. **Customer Order Status**:
    - `DRAFT` -> `PLACED` -> `SUSPENDED_FOR_REVIEW` -> `PARTIALLY_FULFILLED` -> `FULFILLED` -> `CANCELLED`
-2. **Payment Status**: 
+2. **Payment Status**:
    - `PENDING` -> `AUTHORIZED` -> `CAPTURED` -> `FAILED` -> `REFUNDED`
-3. **Supplier Order Status**: 
+3. **Supplier Order Status**:
    - `DRAFT` -> `CREATED` -> `TRANSMITTED` -> `ACTIVE` -> `PENDING_CONFIRMATION` -> `ACCEPTED` -> `REJECTED` -> `PROCESSING` -> `SHIPPED` -> `COMPLETED` -> `CANCELLED`
-4. **Supplier Confirmation Status**: 
+4. **Supplier Confirmation Status**:
    - `NOT_REQUESTED` -> `AWAITING` -> `FULLY_CONFIRMED` -> `PARTIALLY_CONFIRMED` -> `DECLINED` -> `STOCK_FAILURE` -> `EXPIRED`
-5. **Fulfillment Status**: 
+5. **Fulfillment Status**:
    - `UNFULFILLED` -> `PROCESSING` -> `PARTIALLY_FULFILLED` -> `FULFILLED` -> `SHIPPED` -> `DELIVERED`
-6. **Shipment Status**: 
+6. **Shipment Status**:
    - `MANIFESTED` -> `LABEL_CREATED` -> `IN_TRANSIT` -> `DELIVERED` -> `EXCEPTION`
-7. **Cancellation Status**: 
+7. **Cancellation Status**:
    - `NOT_REQUESTED` -> `REQUESTED_BY_BUYER` -> `APPROVED` -> `REJECTED`
-8. **Refund Status**: 
+8. **Refund Status**:
    - `NONE` -> `REQUESTED` -> `PENDING` -> `PARTIAL` -> `EXECUTED` / `FULL` -> `FAILED`
-9. **Return Status**: 
+9. **Return Status**:
    - `NONE` -> `REQUESTED` -> `AUTHORIZED` -> `RECEIVED` / `RETURNED_TO_SUPPLIER` -> `DECLINED` / `REJECTED`
-10. **Complaint Status**: 
+10. **Complaint Status**:
    - `NONE` -> `OPENED` / `OPEN` -> `UNDER_REVIEW` / `ESCALATED` -> `RESOLVED_WARRANTY` / `RESOLVED` -> `RESOLVED_REJECTED` / `DECLINED`
-11. **Settlement Status**: 
+11. **Settlement Status**:
    - `UNSETTLED` -> `INVOICE_MATCHED` -> `READY_FOR_PAYOUT` -> `PLANNED_FOR_RUN` -> `PAID` -> `DISPUTED`
 
 ## 2. SCENARIUSZE TRANZYCJI (TRANSITION PATHS)
