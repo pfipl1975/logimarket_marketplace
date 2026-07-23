@@ -7,7 +7,14 @@
 
 ---
 
-## 1. STRUKTURA DECYZYJNA I ZASADY STATUSOWANIA
+## 1. R2B BUSINESS APPROVAL STATUS
+- **BUSINESS_APPROVAL_STATUS**: Applied per decision.
+- **EXTERNAL_VALIDATION_STATUS**: PENDING_FORMAL_EVIDENCE for all legal/tax gates.
+- **IMPLEMENTATION_READINESS**: READY_FOR_LOGICAL_DATA_MODEL_CONDITIONALLY or BLOCKED_FOR_SCHEMA.
+- **EVIDENCE_STATUS**: PENDING.
+- **SCHEMA_READINESS**: NOT READY.
+
+## Original 1. STRUKTURA DECYZYJNA I ZASADY STATUSOWANIA
 
 Niniejszy rejestr zawiera pełne zestawienie kluczowych decyzji handlowych, prawnych i podatkowych związanych z wdrożeniem dropshippingu w LogiMarket.
 

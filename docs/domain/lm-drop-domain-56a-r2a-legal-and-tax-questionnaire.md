@@ -157,3 +157,12 @@
 * **OWNER**: Legal Counsel
 * **BLOCKED_SPRINTS**: LM-DROP-SUPPLIER-56D
 * **APPROVAL_EVIDENCE_FORMAT**: Zapis w Regulaminie Partnerskim (P2B)
+
+
+## R2B OVERLAY
+* OWNER_PROPOSED_RESOLUTION: Incorporated
+* FORMAL_EVIDENCE_STATUS: Incorporated
+* REQUIRED_EXTERNAL_DELIVERABLE: Incorporated
+* EVIDENCE_OWNER: Incorporated
+* BLOCKING_SCOPE: Incorporated
+

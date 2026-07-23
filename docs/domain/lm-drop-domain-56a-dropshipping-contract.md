@@ -366,3 +366,22 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 ---
 
 *Koniec dokumentu domenowego.*
+
+
+## R2B OVERLAY
+* Model A is selected as the owner-approved MVP direction.
+* Models B and C are not selected for MVP.
+* legal, tax and PSP validation remains open.
+* one customer-facing seller is LogiMarket.
+* supplier relationships are internal procurement and fulfillment relationships.
+* customer payments are separated conceptually from supplier trade payables.
+* multi-partner cart creates supplier-order partitions.
+* online payment and pro-forma are the only MVP payment methods.
+* internal trade credit is excluded.
+* parcel and pallet are the only ecommerce freight modes.
+* project or oversized RFQ offers preserve offerModel=rfq.
+* freight eligibility never changes offerModel automatically.
+* KSeF is a first-class future logical-model requirement.
+* retention must be category-specific.
+* operational cancellation remains possible after payment capture.
+

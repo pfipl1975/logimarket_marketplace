@@ -10,40 +10,40 @@
 
 | DECISION_OR_GATE_ID | APPROVAL_STATUS | APPROVED_OPTION | APPROVED_BY | APPROVER_ROLE | APPROVED_AT | APPROVAL_SOURCE | SOURCE_DOCUMENT_REFERENCE | CONDITIONS | EXPIRY_OR_REVIEW_DATE | NOTES |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `DEC-DROP-01` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-02` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-03` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-04` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-05` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-06` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-07` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-08` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-09` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-10` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-11` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-12` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-13` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-14` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-15` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-16` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-17` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-18` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-19` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-20` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-21` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-22` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `DEC-DROP-23` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-01` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-02` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-03` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-04` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-05` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-06` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-07` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-08` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-09` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-10` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-11` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-12` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-13` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
-| `LEG-GATE-14` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` |
+| `DEC-DROP-01` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `LOGIMARKET_AS_MOR` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-02` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `LOGIMARKET_AS_SELLER_OF_RECORD` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-03` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `LOGIMARKET_ISSUES_CUSTOMER_INVOICE` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-04` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `PAYMENT_TO_LOGIMARKET_OPERATING_OR_PSP_SETTLEMENT_ACCOUNT` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-05` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `CUSTOMER_PAYMENT_IS_PAYMENT_FOR_LOGIMARKET_SALE` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-06` | `BUSINESS_APPROVED` | `TRADING_MARGIN` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-07` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `MARGIN_OPERATIONALLY_RECOGNISED_AT_SUPPLIER_SHIPPED` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-08` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `SUPPLIER_SETTLEMENT_RUN_TWICE_MONTHLY` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-09` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `PRICE_ERROR_REVIEW_REQUIRED` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-10` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `SUPPLIER_REJECTION_ALLOWED_FOR_CONFIRMED_STOCK_FAILURE` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-11` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `CUSTOMER_FACING_SELLER_RESPONSIBILITY=LOGIMARKET` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-12` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `CUSTOMER_REFUND_EXECUTOR=LOGIMARKET` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-13` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `FIRST_LINE_SUPPORT=LOGIMARKET` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-14` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `RETURN_DESTINATION=SUPPLIER_WAREHOUSE` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-15` | `BUSINESS_APPROVED` | `PARTIAL_FULFILLMENT_REQUIRES_BUYER_ACCEPTANCE` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-16` | `BUSINESS_APPROVED` | `SUPPLIER_ORDER_TO_SHIPMENTS=ONE_TO_MANY` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-17` | `BUSINESS_APPROVED` | `MULTI_PARTNER_CART=YES` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-18` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `DOMESTIC_PL_TO_PL_TRANSACTIONS_ONLY` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-19` | `BUSINESS_APPROVED` | `DELIVERY_COUNTRIES=[PL]` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-20` | `BUSINESS_APPROVED` | `CURRENCY=PLN` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-21` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `ONLINE_IMMEDIATE_CAPTURE` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-22` | `BUSINESS_APPROVED` | `PARCEL, PALLET` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `DEC-DROP-23` | `BUSINESS_APPROVED` | `CUSTOMER_PO_NUMBER=OPTIONAL` | `Piotr Fiszer` | `Business Owner` | `2026-07-23` | `OWNER_BUSINESS_DECISION_2026_07_23` | `lm-drop-domain-56a-r2b-business-approval-and-validation-record.md` | `owner-proposed direction` | `NULL` | `notes` |
+| `LEG-GATE-01` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-02` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-03` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-04` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-05` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-06` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-07` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-08` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-09` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-10` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-11` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-12` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-13` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |
+| `LEG-GATE-14` | `PROPOSED_RESOLUTION_PENDING_FORMAL_EVIDENCE` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `NULL` | `pending formal evidence` | `NULL` | `notes` |

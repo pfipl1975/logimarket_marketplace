@@ -66,3 +66,11 @@ Ze względu na zablokowane decyzje, implementacja bazy danych (schema.ts) i chec
 | SOURCE_DECISION_REGISTER_ID | SUBJECT | SOURCE_STATUS | SOURCE_BLOCKS_IMPLEMENTATION | SOURCE_BLOCKED_SPRINTS | OWNER | REQUIRED_APPROVERS | RECOMMENDED_SEQUENCE | REQUIRED_EXTERNAL_INPUT | REQUIRED_APPROVAL_EVIDENCE | R2A_RECOMMENDATION_STATUS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
 | `DEC-DROP-23` | CUSTOMER PO NUMBER IN MVP ORDER CORE | `OPEN` | NO | `LM-DROP-ORDER-56C` | Product Manager | Product | 8 | None | Product Spec | REQUIRES_BUSINESS_INPUT |
+
+
+## R2B OVERLAY
+* BUSINESS_APPROVAL_STATUS: Incorporated
+* SELECTED_OPTION: Incorporated
+* EXTERNAL_VALIDATION_STATUS: Incorporated
+* SCHEMA_READINESS: Incorporated
+

@@ -13,7 +13,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ### Nadrzędne Zasady Wdrożenia:
 1. **Współzależność od Zamknięcia Decyzji (Decisions First)**: Żaden sprint bazodanowy (`56B1+`) ani aplikacyjny nie może wystartować przed formalnym zamknięciem otwartych decyzji blokujących w sprincie `LM-DROP-DOMAIN-56A-R2B`.
-2. **Dekompozycja Zmian Bazodanowych**: Zmiany schematu bazy danych zostały rozbite na 7 mikrostroków (`LM-DROP-DATA-MODEL-56B0` do `LM-DROP-SCHEMA-56B6`), unikając monolitycznej migracji.
+2. **Dekompozycja Zmian Bazodanowych**: Zmiany schematu bazy danych zostały rozbite na 7 mikrostroków (`LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
 3. **Audyt i RBAC Przed Mutacjami Administracyjnymi**: Fundamenty uprawnień RBAC i rejestracji audytowej muszą wyprzedzać mutacje danych w panelu administracyjnym LogiMarket.
 4. **Wsteczna Kompatybilność**: Zachowanie 100% sprawności istniejących modeli ofert (`rfq`, `ecommerce`, `outbound`).
 
@@ -31,12 +31,12 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
                                          v
 +-----------------------------------------------------------------------------------+
 | LM-DROP-DOMAIN-56A-R2A: Business Decision Pack Preparation
-| LM-DROP-DOMAIN-56A-R2B: Approved Decision Incorporation    |
+| LM-DROP-DOMAIN-56A-R2B: COMPLETED (Pending successful checks)    |
 +-----------------------------------------------------------------------------------+
                                          |
                                          v
 +-----------------------------------------------------------------------------------+
-| LM-DROP-DATA-MODEL-56B0: Logical Data Model, Invariants & Aggregate Specifications|
+| LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
 | (Dokumentacja modeli danych. Brak zmian w schema.ts / brak migracji SQL)           |
 +-----------------------------------------------------------------------------------+
                                          |
@@ -97,7 +97,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ---
 
-### SPRINT: LM-DROP-DATA-MODEL-56B0 — LOGICAL DATA MODEL SPECIFICATION
+### SPRINT: LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
 * **CEL**: Zdefiniowanie logiki relacyjnej, agregatów, kluczy obcych i niezmienników (invariants) nowego modelu danych w postaci dokumentacji technicznej przed wykonaniem zmian w Drizzle ORM.
 * **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2B`.
 * **SCOPE**:
@@ -137,12 +137,12 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 | SPRINT | WYMAGANE DECYZJE BIZNESOWE | WYMAGANE BRAMKI PRAWNE | WYMAGANA BAZA BEZPIECZEŃSTWA | ZALEŻNOŚCI TECHNICZNE | ZAKAZANE PRZEDWCZESNE ZAŁOŻENIA |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | `LM-DROP-DOMAIN-56A-R2B` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `LM-DROP-DOMAIN-56A-R1E` | Zakładanie zatwierdzenia rekomendacji |
-| `LM-DROP-DATA-MODEL-56B0` | Wszystkie decyzje blokujące projektowanie agregatów | `LEG-GATE-01, 02` | N/A | `LM-DROP-DOMAIN-56A-R2B` | Pisanie kodu schema.ts przed specyfikacją |
-| `LM-DROP-SCHEMA-56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `LM-DROP-DATA-MODEL-56B0` | Modyfikowanie istniejącego offerModel |
+| `LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
+| `LM-DROP-SCHEMA-56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
 | `LM-DROP-SCHEMA-56B2` | `DEC-DROP-11; DEC-DROP-16; DEC-DROP-22` | `LEG-GATE-06` | N/A | `LM-DROP-SCHEMA-56B1` | Używanie /go/[id] do śledzenia paczek |
 | `LM-DROP-SCHEMA-56B3` | `DEC-DROP-01; DEC-DROP-02; DEC-DROP-03; DEC-DROP-04; DEC-DROP-05; DEC-DROP-06; DEC-DROP-07; DEC-DROP-08; DEC-DROP-12; DEC-DROP-18; DEC-DROP-21` | `LEG-GATE-01, 02, 09, 10, 11` | Transakcyjny Ledger | `LM-DROP-SCHEMA-56B1` | Zakładanie konkretnego dostawcy PSP |
 | `LM-DROP-SCHEMA-56B4` | `DEC-DROP-09; DEC-DROP-12; DEC-DROP-13; DEC-DROP-14` | `LEG-GATE-04, 05, 11` | Audit Log | `LM-DROP-SCHEMA-56B1` | Bezwarunkowe zwroty konsumenckie w B2B |
-| `LM-DROP-SCHEMA-56B5` | Brak | `LEG-GATE-07, 08` | Immutability check | `LM-DROP-DATA-MODEL-56B0` | Możliwość edycji historii logów |
+| `LM-DROP-SCHEMA-56B5` | Brak | `LEG-GATE-07, 08` | Immutability check | `LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
 | `LM-DROP-SCHEMA-56B6` | Brak | Brak | Backup & Rollback plan | `LM-DROP-SCHEMA-56B1, LM-DROP-SCHEMA-56B2, LM-DROP-SCHEMA-56B3, LM-DROP-SCHEMA-56B4, LM-DROP-SCHEMA-56B5` | Wykonywanie migracji bez sprawdzania braku destruktywności |
 | `LM-ADMIN-57A` | Brak | Brak | RBAC & Audit | `LM-DROP-SCHEMA-56B5` | Dostęp bez uwierzytelnienia operacyjnego |
 
@@ -152,8 +152,8 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 | LEGAL_GATE_ID | SUBJECT | BLOCKED_SPRINTS | OWNER | REQUIRED_DELIVERABLE | STATUS | APPROVAL_EVIDENCE |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `LEG-GATE-01` | MoR and SoR | `LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-02` | VAT and KSeF | `LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
+| `LEG-GATE-01` | MoR and SoR | `LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
+| `LEG-GATE-02` | VAT and KSeF | `LM-DROP-DATA-MODEL-56B0: READY_TO_START_CONDITIONALLY (DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL)
 | `LEG-GATE-03` | Dropshipping Partner Agreement | `LM-DROP-SCHEMA-56B1` | Legal Counsel | Wzór umowy | `OPEN` | NULL |
 | `LEG-GATE-04` | B2B Returns | `LM-DROP-SCHEMA-56B4` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
 | `LEG-GATE-05` | Warranty and Complaints | `LM-DROP-SCHEMA-56B4` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
@@ -187,3 +187,10 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 ---
 
 *Koniec roadmapy implementacyjnej.*
+
+**Blocking conditions for schema:**
+- approved legal deliverables where required;
+- approved tax/accounting KSeF flow;
+- PSP feasibility confirmation;
+- reviewed logical data model;
+- explicit schema sprint authorization.

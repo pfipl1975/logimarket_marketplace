@@ -144,3 +144,10 @@ LogiMarket pełni rolę pośrednika (jak w Modelu B), ale przepływ środków je
 13. **Required evidence**: Zestawienie PSP.
 14. **Blocked sprints**: LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3, LM-DROP-PAYMENT-56E
 15. **Questions that remain unanswered**: Jak obsługiwane będą zagraniczne płatności?
+
+
+## R2B OVERLAY
+* MODEL A: BUSINESS_OWNER_SELECTED_FOR_MVP
+* MODEL B: NOT_SELECTED_FOR_MVP
+* MODEL C: NOT_SELECTED_FOR_MVP
+
