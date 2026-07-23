@@ -4,6 +4,9 @@
 **Data:** 2026-07-22
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** LogiMarket Marketplace Domain Contract
+**R2B_BUSINESS_DIRECTION:** MODEL_A_SELECTED_BY_BUSINESS_OWNER
+**EXTERNAL_VALIDATION_STATUS:** PENDING_FORMAL_EVIDENCE
+**SCHEMA_READINESS:** BLOCKED
 
 ---
 
@@ -214,6 +217,20 @@ Encja domenowa `shipments` reprezentuje przesyłkę kurierską/paletową (*ILLUS
 
 > **UWAGA CRITICAL:** Poniższy model finansowy jest wyłącznie REKOMENDACJĄ ARCHITEKTONICZNĄ i NIE ZOSTAŁ ZATWIERDZONY. Ostateczna architektura finansowa zależy bezwzględnie od zamknięcia decyzji biznesowych i prawnych: Merchant of Record (`DEC-DROP-01`), Seller of Record (`DEC-DROP-02`), podmiotu fakturującego (`DEC-DROP-03`), podmiotu pobierającego płatność (`DEC-DROP-04`), własności środków (`DEC-DROP-05`), modelu wynagrodzenia handlowego (`DEC-DROP-06`), settlementów (`DEC-DROP-08`), odpowiedzialności za refundy/chargebacki oraz opodatkowania VAT/KSeF (`DEC-DROP-18`).
 
+### Required Invariants
+* BUSINESS_MODEL=MODEL_A_BUY_SELL_BACK_TO_BACK
+* MERCHANT_OF_RECORD=LOGIMARKET
+* SELLER_OF_RECORD=LOGIMARKET
+* CUSTOMER_CONTRACTUAL_SELLER=LOGIMARKET
+* CUSTOMER_INVOICE_ISSUER=LOGIMARKET
+* SUPPLIER_INVOICE_RECIPIENT=LOGIMARKET
+* REVENUE_MODEL=TRADING_MARGIN
+* MVP_PAYMENT_SCOPE: ONLINE_IMMEDIATE_CAPTURE, PROFORMA_PREPAYMENT
+* INTERNAL_TRADE_CREDIT=OUT_OF_SCOPE_FOR_DROPSHIPPING_MVP
+* EXTERNAL_B2B_FINANCING=POST_MVP
+* FUTURE_SCOPE=LM-DROP-CREDIT-57C
+* PROVIDER_SELECTED=NO
+
 ### Precyzja Pojęć Ekonomicznych:
 * `Sell Price` (Cena Sprzedaży): Cena płacona przez Kupującego B2B na marketplace LogiMarket.
 * `Buy Price / Wholesale Price` (Cena Zakupu / Hurtowa): Cena należna Dostawcy za towar.
@@ -233,6 +250,28 @@ Encja domenowa `shipments` reprezentuje przesyłkę kurierską/paletową (*ILLUS
 3. **Model C — Marketplace PSP Split / Managed Pay-out**:
    - Dostawca płatności (PSP) obsługuje bezpośredni podział środków zgodnie z zasadami marketplace.
    - Wymaga osobnej analizy KYC, AML, regulacyjnej, podatkowej i umownej.
+
+### KSeF Logical Requirement List
+* KSEF_INVOICE_ID
+* KSEF_REFERENCE_NUMBER
+* KSEF_STATUS
+* KSEF_SUBMISSION_MODE
+* KSEF_SUBMITTED_AT
+* KSEF_ACCEPTED_AT
+* KSEF_REJECTED_AT
+* KSEF_ERROR_CODE
+* KSEF_ERROR_MESSAGE
+* KSEF_INVOICE_VERSION
+* INVOICE_CORRECTION_RELATION
+* CORRECTED_INVOICE_ID
+* KSEF_OFFLINE_OR_FAILURE_MODE
+* KSEF_QR_OR_VERIFICATION_REFERENCE
+* INVOICE_ISSUER_SNAPSHOT
+* CUSTOMER_TAX_ID_SNAPSHOT
+* SUPPLIER_TAX_ID_SNAPSHOT
+
+### Data Retention
+* RETENTION_POLICY=MATRIX_BY_DATA_CATEGORY
 
 ---
 
@@ -303,6 +342,12 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **MVP_SCOPE_CLASSIFICATION**: `MVP_OPTIONAL`
 * **DECISION_DEPENDENCY**: DEC-DROP-22
 
+### Freight Invariants
+* MVP_FREIGHT_SCOPE: PARCEL, PALLET
+* MANUAL_FREIGHT_ECOMMERCE=NOT_SELECTED_FOR_ECOMMERCE_MVP
+* DEFERRED_FREIGHT_ECOMMERCE=NOT_SELECTED_FOR_ECOMMERCE_MVP
+* OFFER_MODEL_IMPACT=NO_AUTOMATIC_OFFER_MODEL_CHANGE
+
 ---
 
 ### CAP-B2B-CREDIT-03 — Trade Credit and Deferred Payment Domain
@@ -365,9 +410,6 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 
 ---
 
-*Koniec dokumentu domenowego.*
-
-
 ## 14. R2B BUSINESS DECISION OVERLAY
 * MVP_MODEL_SELECTION: MODEL A (Resale / Trading Margin)
 * EXCLUDED_MODELS: MODEL B, MODEL C
@@ -385,3 +427,5 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * KSEF_SUPPORT: FUTURE_LOGICAL_REQUIREMENT
 * RECORD_RETENTION: CATEGORY_SPECIFIC_RETENTION_REQUIRED
 * EXTERNAL_VALIDATION_STATUS: PENDING_LEGAL_TAX_AND_PSP_REVIEW
+
+*Koniec dokumentu domenowego.*

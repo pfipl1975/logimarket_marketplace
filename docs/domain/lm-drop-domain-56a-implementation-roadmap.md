@@ -104,6 +104,10 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 * **CEL**: Zdefiniowanie logiki relacyjnej, agregatów, kluczy obcych i niezmienników (invariants) nowego modelu danych w postaci dokumentacji technicznej przed wykonaniem zmian w Drizzle ORM.
 * **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2B`.
 * **SCOPE**: DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL
+  - preparation of a complete logical ERD;
+  - aggregate definitions;
+  - table/entity specification;
+  - relationship cardinalities;
   - Określenie ograniczeń integralnościowych (CHECK constraints, FOREIGN KEY rules, UNIQUE indexes).
   - Opracowanie odwracalnego planu migracji bazodanowej.
 * **FORBIDDEN SCOPE**: Edycja kodu `src/lib/schema.ts`, uruchamianie migracji SQL na bazie produkcyjnej.
