@@ -25,8 +25,8 @@
 * **REQUIRED_EXTERNAL_DELIVERABLE**: Opinia prawna
 * **EVIDENCE_OWNER**: Legal Counsel
 * **MVP_APPLICABILITY**: IN_SCOPE
-* **BLOCKING_SCOPE**: LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3
-* **R2B_NOTES**: Gate explanation: Validating MoR model structure
+* **BLOCKING_SCOPE**: LM-DROP-SCHEMA-56B3; LM-DROP-PAYMENT-56E; PRODUCTION_IMPLEMENTATION
+* **R2B_NOTES**: LM-DROP-DATA-MODEL-56B0 may proceed conditionally as a documentation-only logical data model. Schema implementation, payment implementation and production rollout remain blocked until required formal legal, tax, accounting and PSP evidence is supplied.
 
 ## LEG-GATE-02: VAT and KSeF
 * **LEGAL_GATE_ID**: LEG-GATE-02
@@ -49,8 +49,8 @@
 * **REQUIRED_EXTERNAL_DELIVERABLE**: Opinia prawna
 * **EVIDENCE_OWNER**: Legal Counsel
 * **MVP_APPLICABILITY**: IN_SCOPE
-* **BLOCKING_SCOPE**: LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3
-* **R2B_NOTES**: Gate explanation: Validating SoR tax status
+* **BLOCKING_SCOPE**: LM-DROP-SCHEMA-56B3; LM-DROP-PAYMENT-56E; PRODUCTION_IMPLEMENTATION
+* **R2B_NOTES**: LM-DROP-DATA-MODEL-56B0 may proceed conditionally as a documentation-only logical data model. Schema implementation, payment implementation and production rollout remain blocked until required formal legal, tax, accounting and PSP evidence is supplied.
 
 ## LEG-GATE-03: Dropshipping Partner Agreement
 * **LEGAL_GATE_ID**: LEG-GATE-03
