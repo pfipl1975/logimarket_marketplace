@@ -74,6 +74,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 ---
 
 ### SPRINT: LM-DROP-DOMAIN-56A-R2A — BUSINESS AND LEGAL DECISION PACK PREPARATION
+* **STATUS**: COMPLETED
 * **CEL**: Przygotowanie kontrolowanego pakietu decyzji.
 * **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1E`.
 * **SCOPE**:
@@ -85,6 +86,7 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 ---
 
 ### SPRINT: LM-DROP-DOMAIN-56A-R2B — APPROVED DECISION INCORPORATION
+* **STATUS**: IN_PROGRESS_UNTIL_PR_MERGE
 * **CEL**: Wprowadzenie decyzji przekazanych przez uprawnione osoby.
 * **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R2A`.
 * **SCOPE**:
@@ -98,10 +100,14 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 ---
 
 ### SPRINT: LM-DROP-DATA-MODEL-56B0 — LOGICAL DATA MODEL SPECIFICATION
+* **STATUS**: READY_TO_START_CONDITIONALLY
 * **CEL**: Zdefiniowanie logiki relacyjnej, agregatów, kluczy obcych i niezmienników (invariants) nowego modelu danych w postaci dokumentacji technicznej przed wykonaniem zmian w Drizzle ORM.
 * **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2B`.
-* **SCOPE**:
-  - Przygotowanie kompletnego dokumentu ERD i specyfikacji tabel (`supplier_profiles`, `supplier_orders`, `order_items` snapshot, `shipments`, `payment_transactions`, `domain_audit_logs`).
+* **SCOPE**: DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL
+  - preparation of a complete logical ERD;
+  - aggregate definitions;
+  - table/entity specification;
+  - relationship cardinalities;
   - Określenie ograniczeń integralnościowych (CHECK constraints, FOREIGN KEY rules, UNIQUE indexes).
   - Opracowanie odwracalnego planu migracji bazodanowej.
 * **FORBIDDEN SCOPE**: Edycja kodu `src/lib/schema.ts`, uruchamianie migracji SQL na bazie produkcyjnej.
@@ -112,12 +118,25 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ### SPRINTY ZMIAN SCHEMATU BAZY DANYCH (`56B1` do `56B6`)
 
+* **SCHEMA BLOCKING CONDITIONS (for all schema sprints)**:
+  - formal legal deliverables where required;
+  - approved tax and accounting KSeF flow;
+  - PSP feasibility confirmation;
+  - reviewed logical data model;
+  - explicit authorization for the schema sprint.
+
 1. **LM-DROP-SCHEMA-56B1 — Core Fulfillment & Supplier-Order Schema**: Utworzenie tabel `supplier_profiles`, `supplier_orders` oraz dodanie kolumny `fulfillment_model` do `offers`.
+   * **STATUS**: BLOCKED
 2. **LM-DROP-SCHEMA-56B2 — Shipment & Courier Tracking Schema**: Utworzenie tabeli `shipments` powiązanej relacją z `supplier_orders`.
+   * **STATUS**: BLOCKED
 3. **LM-DROP-SCHEMA-56B3 — Payment, Refund & Settlement Ledger Schema**: Utworzenie tabel `payment_transactions` oraz `settlement_records` (*dopiero po zatwierdzeniu decyzji finansowych*).
+   * **STATUS**: BLOCKED
 4. **LM-DROP-SCHEMA-56B4 — Returns & Quality Complaints Schema**: Utworzenie tabel `return_requests` i `complaints`.
+   * **STATUS**: BLOCKED
 5. **LM-DROP-SCHEMA-56B5 — Audit & Security Support Structures**: persistence structures and integrity constraints.
+   * **STATUS**: BLOCKED
 6. **LM-DROP-SCHEMA-56B6 — Controlled Migration Execution**: Wykonanie zweryfikowanych transakcyjnie migracji Drizzle w środowisku Supabase/PostgreSQL i walidacja danych.
+   * **STATUS**: BLOCKED
 
 ---
 

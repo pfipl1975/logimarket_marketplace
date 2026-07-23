@@ -4,6 +4,9 @@
 **Data:** 2026-07-22
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** LogiMarket Marketplace Domain Contract
+**R2B_BUSINESS_DIRECTION:** MODEL_A_SELECTED_BY_BUSINESS_OWNER
+**EXTERNAL_VALIDATION_STATUS:** PENDING_FORMAL_EVIDENCE
+**SCHEMA_READINESS:** BLOCKED
 
 ---
 
@@ -210,9 +213,31 @@ Encja domenowa `shipments` reprezentuje przesyłkę kurierską/paletową (*ILLUS
 
 ---
 
-## 10. RECOMMENDED TARGET FINANCIAL MODEL — NOT APPROVED
+## 10. TARGET FINANCIAL MODEL (MODEL A)
 
-> **UWAGA CRITICAL:** Poniższy model finansowy jest wyłącznie REKOMENDACJĄ ARCHITEKTONICZNĄ i NIE ZOSTAŁ ZATWIERDZONY. Ostateczna architektura finansowa zależy bezwzględnie od zamknięcia decyzji biznesowych i prawnych: Merchant of Record (`DEC-DROP-01`), Seller of Record (`DEC-DROP-02`), podmiotu fakturującego (`DEC-DROP-03`), podmiotu pobierającego płatność (`DEC-DROP-04`), własności środków (`DEC-DROP-05`), modelu wynagrodzenia handlowego (`DEC-DROP-06`), settlementów (`DEC-DROP-08`), odpowiedzialności za refundy/chargebacki oraz opodatkowania VAT/KSeF (`DEC-DROP-18`).
+> **UWAGA CRITICAL:** During R2A, Model A was an architectural recommendation. During R2B, Piotr Fiszer selected Model A as Business Owner. This is a business-direction approval, not formal external validation. Formal legal, tax, accounting and PSP evidence is still pending. Models B and C are not selected for the dropshipping MVP.
+
+### Status History
+* R2A_HISTORICAL_STATUS=ARCHITECTURAL_RECOMMENDATION
+* R2B_BUSINESS_OWNER_STATUS=MODEL_A_SELECTED
+* EXTERNAL_LEGAL_VALIDATION=PENDING_FORMAL_EVIDENCE
+* EXTERNAL_TAX_VALIDATION=PENDING_FORMAL_EVIDENCE
+* ACCOUNTING_VALIDATION=PENDING_FORMAL_EVIDENCE
+* PSP_VALIDATION=PENDING_FORMAL_EVIDENCE
+
+### Required Invariants
+* BUSINESS_MODEL=MODEL_A_BUY_SELL_BACK_TO_BACK
+* MERCHANT_OF_RECORD=LOGIMARKET
+* SELLER_OF_RECORD=LOGIMARKET
+* CUSTOMER_CONTRACTUAL_SELLER=LOGIMARKET
+* CUSTOMER_INVOICE_ISSUER=LOGIMARKET
+* SUPPLIER_INVOICE_RECIPIENT=LOGIMARKET
+* REVENUE_MODEL=TRADING_MARGIN
+* MVP_PAYMENT_SCOPE: ONLINE_IMMEDIATE_CAPTURE, PROFORMA_PREPAYMENT
+* INTERNAL_TRADE_CREDIT=OUT_OF_SCOPE_FOR_DROPSHIPPING_MVP
+* EXTERNAL_B2B_FINANCING=POST_MVP
+* FUTURE_SCOPE=LM-DROP-CREDIT-57C
+* PROVIDER_SELECTED=NO
 
 ### Precyzja Pojęć Ekonomicznych:
 * `Sell Price` (Cena Sprzedaży): Cena płacona przez Kupującego B2B na marketplace LogiMarket.
@@ -233,6 +258,28 @@ Encja domenowa `shipments` reprezentuje przesyłkę kurierską/paletową (*ILLUS
 3. **Model C — Marketplace PSP Split / Managed Pay-out**:
    - Dostawca płatności (PSP) obsługuje bezpośredni podział środków zgodnie z zasadami marketplace.
    - Wymaga osobnej analizy KYC, AML, regulacyjnej, podatkowej i umownej.
+
+### KSeF Logical Requirement List
+* KSEF_INVOICE_ID
+* KSEF_REFERENCE_NUMBER
+* KSEF_STATUS
+* KSEF_SUBMISSION_MODE
+* KSEF_SUBMITTED_AT
+* KSEF_ACCEPTED_AT
+* KSEF_REJECTED_AT
+* KSEF_ERROR_CODE
+* KSEF_ERROR_MESSAGE
+* KSEF_INVOICE_VERSION
+* INVOICE_CORRECTION_RELATION
+* CORRECTED_INVOICE_ID
+* KSEF_OFFLINE_OR_FAILURE_MODE
+* KSEF_QR_OR_VERIFICATION_REFERENCE
+* INVOICE_ISSUER_SNAPSHOT
+* CUSTOMER_TAX_ID_SNAPSHOT
+* SUPPLIER_TAX_ID_SNAPSHOT
+
+### Data Retention
+* RETENTION_POLICY=MATRIX_BY_DATA_CATEGORY
 
 ---
 
@@ -300,8 +347,22 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **SECURITY_DEPENDENCIES**: Autoryzacja aktualizacji kosztu zamówienia przed pobraniem płatności.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-FREIGHT-57B — HEAVY FREIGHT QUOTATION AND DELIVERY TERMS`.
 * **CAPABILITY_STATUS**: `OPEN_BUSINESS_DECISION`
-* **MVP_SCOPE_CLASSIFICATION**: `MVP_OPTIONAL`
 * **DECISION_DEPENDENCY**: DEC-DROP-22
+
+### Freight Invariants
+* MVP_FREIGHT_SCOPE=PARCEL_AND_PALLET
+* PARCEL: MVP_SCOPE_CLASSIFICATION=MVP_SELECTED
+* PALLET: MVP_SCOPE_CLASSIFICATION=MVP_SELECTED
+* MANUAL_FREIGHT_ECOMMERCE: MVP_SCOPE_CLASSIFICATION=NOT_SELECTED_FOR_ECOMMERCE_MVP
+* DEFERRED_FREIGHT_ECOMMERCE: MVP_SCOPE_CLASSIFICATION=NOT_SELECTED_FOR_ECOMMERCE_MVP
+* OFFER_MODEL_IMPACT=NO_AUTOMATIC_OFFER_MODEL_CHANGE
+
+- Parcel and pallet are supported ecommerce MVP freight modes.
+- Manual freight ecommerce is not selected for MVP.
+- Deferred freight ecommerce is not selected for MVP.
+- Freight eligibility must never automatically change offerModel.
+- Oversized or project offers may remain offerModel=rfq.
+- An ecommerce offer must not automatically become RFQ because of freight eligibility.
 
 ---
 
@@ -317,8 +378,20 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 * **SECURITY_DEPENDENCIES**: Zabezpieczenie przed wyłudzeniami i nadużyciem limitu.
 * **PROPOSED_FUTURE_SPRINT**: `LM-DROP-CREDIT-57C — B2B TRADE CREDIT AND DEFERRED PAYMENT DOMAIN`.
 * **CAPABILITY_STATUS**: `LEGAL_REVIEW_REQUIRED`
-* **MVP_SCOPE_CLASSIFICATION**: `MVP_OPTIONAL`
 * **DECISION_DEPENDENCY**: DEC-DROP-21
+
+### Credit and Financing Invariants
+* INTERNAL_TRADE_CREDIT: MVP_SCOPE_CLASSIFICATION=OUT_OF_SCOPE_FOR_DROPSHIPPING_MVP
+* EXTERNAL_B2B_FINANCING: MVP_SCOPE_CLASSIFICATION=POST_MVP
+* FUTURE_SCOPE=LM-DROP-CREDIT-57C
+* PROVIDER_SELECTED=NO
+
+- internal deferred payment is not part of the dropshipping MVP;
+- no internal customer credit ledger is designed in the MVP;
+- external financing remains future scope;
+- no financing provider has been selected;
+- LEG-GATE-12 and LEG-GATE-13 must not block documentation-only 56B0;
+- schema and production implementation for financing remain outside the current sprint.
 
 ---
 
@@ -364,5 +437,23 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
   * **LEGAL_GATE**: `LEG-GATE-14`
 
 ---
+
+## 14. R2B BUSINESS DECISION OVERLAY
+* MVP_MODEL_SELECTION: MODEL A (Resale / Trading Margin)
+* EXCLUDED_MODELS: MODEL B, MODEL C
+* MERCHANT_OF_RECORD: LOGIMARKET
+* SELLER_OF_RECORD: LOGIMARKET
+* ACCOUNTING_MODEL: BUY_SELL_BACK_TO_BACK
+* CUSTOMER_INVOICING: LOGIMARKET_ISSUES_CUSTOMER_INVOICE
+* SUPPLIER_INVOICING: SUPPLIER_ISSUES_WHOLESALE_INVOICE_TO_LOGIMARKET
+* PAYMENT_FLOW: PAYMENT_TO_LOGIMARKET_OPERATING_OR_PSP_SETTLEMENT_ACCOUNT
+* CANCELLATION_CAPABILITY: SUPPORTED_AFTER_CAPTURE
+* MULTI_PARTNER_CART: SUPPORTED_IN_MVP
+* SUPPORTED_PAYMENT_METHODS: ONLINE_IMMEDIATE_CAPTURE, PROFORMA_PREPAYMENT
+* INTERNAL_TRADE_CREDIT: EXCLUDED_FROM_MVP
+* SUPPORTED_FREIGHT_METHODS: PARCEL, PALLET
+* KSEF_SUPPORT: FUTURE_LOGICAL_REQUIREMENT
+* RECORD_RETENTION: CATEGORY_SPECIFIC_RETENTION_REQUIRED
+* EXTERNAL_VALIDATION_STATUS: PENDING_LEGAL_TAX_AND_PSP_REVIEW
 
 *Koniec dokumentu domenowego.*

@@ -94,12 +94,12 @@ Poniższa tabela zbiera 6 możliwych wariantów płatności w MVP dla modelu dro
 
 | PAYMENT_VARIANT | ORDER_PLACED_WHEN | SUPPLIER_HANDOFF_WHEN | FUNDS_AVAILABLE_WHEN | FAILURE_PATH | EXPIRY_PATH | REFUND_PATH | CANCELLATION_PATH | ACCOUNTING_IMPACT | CREDIT_RISK | LEGAL_GATES | TECHNICAL_IMPLICATIONS | OPEN_QUESTIONS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1: Online payment with immediate capture** | Z chwilą poprawnej płatności | Natychmiast po `placed` | T+0 (bramka) / T+1 (konto) | Błąd bramki -> Retry / Cancel | N/A (odrzucenie natychmiastowe) | Zwrot z konta bramki | Przerwanie sesji płatniczej | Natychmiastowy obowiązek FV | Brak dla platformy | LEG-GATE-10, LEG-GATE-11 | Konieczność integracji z webhookami PSP | Co jeśli dostawca odrzuci w pełni opłacone zamówienie z braku stanu? |
-| **2: Authorization and later capture** | Z chwilą udanej autoryzacji karty | Po udanej autoryzacji (`authorized`) | Z chwilą capture (zwykle wysyłka) | Autoryzacja odrzucona | Wygaśnięcie autoryzacji (np. 7 dni) | Void autoryzacji / Partial capture | Zwolnienie blokady na karcie | FV dopiero przy capture (moment sprzedaży) | Brak, jeśli capture wykonane w terminie | LEG-GATE-10 | Wymaga skomplikowanego cyklu życia płatności (Auth/Capture/Void) | Czy wszyscy polscy klienci B2B posiadają karty kredytowe służbowe? |
-| **3: Bank transfer prepayment** | Z chwilą kliknięcia "Zamawiam i płacę" | Po ręcznym zaksięgowaniu wpłaty | Gdy przelew trafi na konto | Brak wpłaty | Anulowanie po X dniach bez wpłaty | Tradycyjny przelew zwrotny | Zamówienie anulowane przed wpłatą | Rozliczanie ręczne wyciągów bankowych | Brak (przedpłata) | LEG-GATE-10 | Ręczne przypisywanie wpłat do Order ID (duży narzut w panelu admina) | Ile dni czekać na przelew przed auto-cancellation? |
-| **4: Pro forma** | Z chwilą kliknięcia "Zamawiam z obow. zapłaty" | Po potwierdzeniu opłacenia pro formy | Gdy przelew z pro formy trafi na konto | Niezapłacona pro forma | Wygaśnięcie pro formy (np. 14 dni) | Przelew zwrotny | Korekta dokumentu / Anulacja | FV Zaliczkowa / FV Końcowa | Brak (przedpłata) | LEG-GATE-10, LEG-GATE-02 | Generowanie poprawnego dokumentu pro forma z danymi konta w PDF | Kto wystawia pro formę w modelu B (Agencyjnym)? |
-| **5: Deferred payment (Kredyt Kupiecki)** | Z chwilą zatwierdzenia limitu / kliknięcia | Natychmiast po `placed` | Zgodnie z terminem faktury (np. 14, 30 dni) | Brak spłaty po terminie | N/A | Zwrot przez korektę salda / przelew | Korekta faktury / dokumentu | Należność własna z odroczonym terminem | PEŁNE ryzyko LogiMarket | LEG-GATE-12, LEG-GATE-13 | System limitów kupieckich (Scoring klientów B2B) i automatycznych monitów | Kto ponosi koszt windykacji w przypadku braku wpłaty? |
-| **6: External B2B financing** | Po zatwierdzeniu wniosku przez zewnętrznego faktora (np. NON-BINDING MARKET EXAMPLE — NOT SELECTED: PragmaGO) | Po zatwierdzeniu przez faktora | Od faktora w T+1/T+2 | Faktor odrzuca wniosek klienta | Wniosek u faktora wygasa | Zwrot do faktora | Rezygnacja u faktora | Środki otrzymywane od podmiotu 3-go | Przejmuje faktor (za prowizję) | LEG-GATE-12 | Integracja z zewnętrznym API B2B | Jak obsługiwać częściowe zwroty z zewnętrznym faktorem? |
+| **1: Online payment with immediate capture** <br/> `BUSINESS_OWNER_SELECTED` | Z chwilą poprawnej płatności | Natychmiast po `placed` | T+0 (bramka) / T+1 (konto) | Błąd bramki -> Retry / Cancel | N/A (odrzucenie natychmiastowe) | Zwrot z konta bramki | Przerwanie sesji płatniczej | Natychmiastowy obowiązek FV | Brak dla platformy | LEG-GATE-10, LEG-GATE-11 | Konieczność integracji z webhookami PSP | Co jeśli dostawca odrzuci w pełni opłacone zamówienie z braku stanu? |
+| **2: Authorization and later capture** <br/> `NOT_SELECTED_FOR_MVP` | Z chwilą udanej autoryzacji karty | Po udanej autoryzacji (`authorized`) | Z chwilą capture (zwykle wysyłka) | Autoryzacja odrzucona | Wygaśnięcie autoryzacji (np. 7 dni) | Void autoryzacji / Partial capture | Zwolnienie blokady na karcie | FV dopiero przy capture (moment sprzedaży) | Brak, jeśli capture wykonane w terminie | LEG-GATE-10 | Wymaga skomplikowanego cyklu życia płatności (Auth/Capture/Void) | Czy wszyscy polscy klienci B2B posiadają karty kredytowe służbowe? |
+| **3: Bank transfer prepayment** <br/> `NOT_SELECTED_FOR_MVP` | Z chwilą kliknięcia "Zamawiam i płacę" | Po ręcznym zaksięgowaniu wpłaty | Gdy przelew trafi na konto | Brak wpłaty | Anulowanie po X dniach bez wpłaty | Tradycyjny przelew zwrotny | Zamówienie anulowane przed wpłatą | Rozliczanie ręczne wyciągów bankowych | Brak (przedpłata) | LEG-GATE-10 | Ręczne przypisywanie wpłat do Order ID (duży narzut w panelu admina) | Ile dni czekać na przelew przed auto-cancellation? |
+| **4: Pro forma** <br/> `BUSINESS_OWNER_SELECTED` | Z chwilą kliknięcia "Zamawiam z obow. zapłaty" | Po potwierdzeniu opłacenia pro formy | Gdy przelew z pro formy trafi na konto | Niezapłacona pro forma | Wygaśnięcie pro formy (np. 14 dni) | Przelew zwrotny | Korekta dokumentu / Anulacja | FV Zaliczkowa / FV Końcowa | Brak (przedpłata) | LEG-GATE-10, LEG-GATE-02 | Generowanie poprawnego dokumentu pro forma z danymi konta w PDF | Kto wystawia pro formę w modelu B (Agencyjnym)? |
+| **5: Deferred payment (Kredyt Kupiecki)** <br/> `NOT_SELECTED_FOR_MVP` | Z chwilą zatwierdzenia limitu / kliknięcia | Natychmiast po `placed` | Zgodnie z terminem faktury (np. 14, 30 dni) | Brak spłaty po terminie | N/A | Zwrot przez korektę salda / przelew | Korekta faktury / dokumentu | Należność własna z odroczonym terminem | PEŁNE ryzyko LogiMarket | LEG-GATE-12, LEG-GATE-13 | System limitów kupieckich (Scoring klientów B2B) i automatycznych monitów | Kto ponosi koszt windykacji w przypadku braku wpłaty? |
+| **6: External B2B financing** <br/> `NOT_SELECTED_FOR_MVP` | Po zatwierdzeniu wniosku przez zewnętrznego faktora (np. NON-BINDING MARKET EXAMPLE — NOT SELECTED: PragmaGO) | Po zatwierdzeniu przez faktora | Od faktora w T+1/T+2 | Faktor odrzuca wniosek klienta | Wniosek u faktora wygasa | Zwrot do faktora | Rezygnacja u faktora | Środki otrzymywane od podmiotu 3-go | Przejmuje faktor (za prowizję) | LEG-GATE-12 | Integracja z zewnętrznym API B2B | Jak obsługiwać częściowe zwroty z zewnętrznym faktorem? |
 
 ---
 
@@ -109,12 +109,12 @@ Poniższa tabela zbiera 6 możliwych wariantów logistycznych (wyceny i odpowied
 
 | FREIGHT_VARIANT | ELIGIBLE_CATEGORIES | CHECKOUT_BEHAVIOR | ORDER_TOTAL_FINAL | PAYMENT_CAPTURE_RULE | OPERATOR_INTERVENTION | SUPPLIER_RESPONSIBILITY | CARRIER_RESPONSIBILITY | RETURN_LOGISTICS | LEGAL_GATES | OFFER_MODEL_IMPACT | FULFILLMENT_MODEL_IMPACT | OPEN_QUESTIONS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1: Parcel (Kurier Standard)** | Małe gabaryty, waga do 31kg | Cena znana od razu (Fixed rate z tabeli) | Tak, potwierdzone w checkoucie | Standard Capture | Brak | Pakowanie i wydanie kurierowi (np. NON-BINDING MARKET EXAMPLE — NOT SELECTED: DPD) | Standardowy regulamin kuriera | Wysyłka zwrotna paczką | LEG-GATE-06 | NO OFFER MODEL CHANGE | Wymaga generowania etykiet lub zrzucenia tego na dostawcę | Czy etykietę generuje LogiMarket czy dostawca na własnej umowie kurierskiej? |
-| **2: Pallet (Przesyłki Paletowe)** | Gabaryty, waga >31kg do 1000kg | Cena znana z góry (Strefy / Kody pocztowe) | Tak, potwierdzone w checkoucie | Standard Capture | Brak / Tylko monitorowanie wyjątków | Pakowanie na palecie, przygotowanie listu | Ubezpieczenie palety, czas tranzytu B2B | Paletowy zwrot (kosztowny) | LEG-GATE-06, LEG-GATE-04 | NO OFFER MODEL CHANGE | Dostawca musi posiadać infrastrukturę do obsługi palet (wózki) | Czy dopuszczamy zwroty B2B produktów paletowych? |
-| **3: Own transport (Transport własny dostawcy)** | Ciężkie maszyny, produkty specjalistyczne | Cena znana od razu lub wg odległości (zł/km) | Tak / Konfiguracja algorytmu KM | Standard Capture | Minimalna | Pełna obsługa logistyki i rozładunku | Brak (Dostawca jest przewoźnikiem) | Odbiór własnym transportem | LEG-GATE-06, LEG-GATE-11 | NO OFFER MODEL CHANGE | Odbicie dowodu dostawy (PoD) w systemie manualnie przez dostawcę | Jak potwierdzić odbiór i przenieść ryzyko, skoro LogiMarket nie ma trackingu od integratora? |
-| **4: Manually quoted freight (Przed zamówieniem)** | Niestandardowe, gabaryty powyżej palety | Ręczna wycena logistyki przed realizacją zamówienia e-commerce | Nie, zamówienie blokowane do wyceny transportu | Capture zablokowane do akceptacji wyceny transportu | Wycena transportu u przewoźników i podanie ceny klientowi | Przygotowanie towaru po akceptacji wyceny transportu | Zależnie od wybranego dedykowanego transportu | Ustalane indywidualnie | LEG-GATE-06 | NO OFFER MODEL CHANGE | Zmiana ścieżki logistycznej na wycenę ręczną | Jak długo klient ma ważną ofertę na transport niestandardowy? |
-| **5: Deferred freight quote (Po dodaniu do koszyka)** | Każdy trudny asortyment logistycznie | Zamówienie "zawieszone", dostawca/operator dodaje koszt transportu po fakcie, klient dopłaca/akceptuje koszt transportu | Nie, koszt dostawy dodany później | Autoryzacja na kwotę koszyka, dopłata transportu osobnym linkiem | Obowiązkowa (dodanie kosztu transportu do zamówienia) | Przygotowanie wyceny transportu i oczekiwanie na wpłatę | Zależnie od przewoźnika | Indywidualnie | LEG-GATE-06 | NO OFFER MODEL CHANGE | Wymaga stanów wyceny transportu i mechanizmu dopłaty (Payment Link) | Czy klient może anulować zamówienie bezpłatnie, jeśli koszt dostawy mu się nie spodoba? |
-| **6: Kategorie dopuszczone do MVP** | Decyzja Biznesowa (np. tylko Parcel + Pallet) | Standardowy checkout dla małych/średnich | Tak | Standard Capture | Brak | Standardowa | Standardowa | Standardowa | Brak | NO OFFER MODEL CHANGE | Prostszy model logistyczny | Które kategorie ostatecznie odrzucamy w V1? |
+| **1: Parcel (Kurier Standard)** <br/> `BUSINESS_OWNER_SELECTED` | Małe gabaryty, waga do 31kg | Cena znana od razu (Fixed rate z tabeli) | Tak, potwierdzone w checkoucie | Standard Capture | Brak | Pakowanie i wydanie kurierowi (np. NON-BINDING MARKET EXAMPLE — NOT SELECTED: DPD) | Standardowy regulamin kuriera | Wysyłka zwrotna paczką | LEG-GATE-06 | NO OFFER MODEL CHANGE | Wymaga generowania etykiet lub zrzucenia tego na dostawcę | Czy etykietę generuje LogiMarket czy dostawca na własnej umowie kurierskiej? |
+| **2: Pallet (Przesyłki Paletowe)** <br/> `BUSINESS_OWNER_SELECTED` | Gabaryty, waga >31kg do 1000kg | Cena znana z góry (Strefy / Kody pocztowe) | Tak, potwierdzone w checkoucie | Standard Capture | Brak / Tylko monitorowanie wyjątków | Pakowanie na palecie, przygotowanie listu | Ubezpieczenie palety, czas tranzytu B2B | Paletowy zwrot (kosztowny) | LEG-GATE-06, LEG-GATE-04 | NO OFFER MODEL CHANGE | Dostawca musi posiadać infrastrukturę do obsługi palet (wózki) | Czy dopuszczamy zwroty B2B produktów paletowych? |
+| **3: Own transport (Transport własny dostawcy)** <br/> `NOT_SELECTED_FOR_ECOMMERCE_MVP` | Ciężkie maszyny, produkty specjalistyczne | Cena znana od razu lub wg odległości (zł/km) | Tak / Konfiguracja algorytmu KM | Standard Capture | Minimalna | Pełna obsługa logistyki i rozładunku | Brak (Dostawca jest przewoźnikiem) | Odbiór własnym transportem | LEG-GATE-06, LEG-GATE-11 | NO OFFER MODEL CHANGE | Odbicie dowodu dostawy (PoD) w systemie manualnie przez dostawcę | Jak potwierdzić odbiór i przenieść ryzyko, skoro LogiMarket nie ma trackingu od integratora? |
+| **4: Manually quoted freight (Przed zamówieniem)** <br/> `NOT_SELECTED_FOR_ECOMMERCE_MVP` | Niestandardowe, gabaryty powyżej palety | Ręczna wycena logistyki przed realizacją zamówienia e-commerce | Nie, zamówienie blokowane do wyceny transportu | Capture zablokowane do akceptacji wyceny transportu | Wycena transportu u przewoźników i podanie ceny klientowi | Przygotowanie towaru po akceptacji wyceny transportu | Zależnie od wybranego dedykowanego transportu | Ustalane indywidualnie | LEG-GATE-06 | NO OFFER MODEL CHANGE (offerModel=rfq is preserved) | Zmiana ścieżki logistycznej na wycenę ręczną | Jak długo klient ma ważną ofertę na transport niestandardowy? |
+| **5: Deferred freight quote (Po dodaniu do koszyka)** <br/> `NOT_SELECTED_FOR_ECOMMERCE_MVP` | Każdy trudny asortyment logistycznie | Zamówienie "zawieszone", dostawca/operator dodaje koszt transportu po fakcie, klient dopłaca/akceptuje koszt transportu | Nie, koszt dostawy dodany później | Autoryzacja na kwotę koszyka, dopłata transportu osobnym linkiem | Obowiązkowa (dodanie kosztu transportu do zamówienia) | Przygotowanie wyceny transportu i oczekiwanie na wpłatę | Zależnie od przewoźnika | Indywidualnie | LEG-GATE-06 | NO OFFER MODEL CHANGE | Wymaga stanów wyceny transportu i mechanizmu dopłaty (Payment Link) | Czy klient może anulować zamówienie bezpłatnie, jeśli koszt dostawy mu się nie spodoba? |
+| **6: Kategorie dopuszczone do MVP** <br/> `NOT_SELECTED_FOR_ECOMMERCE_MVP` | Decyzja Biznesowa (np. tylko Parcel + Pallet) | Standardowy checkout dla małych/średnich | Tak | Standard Capture | Brak | Standardowa | Standardowa | Standardowa | Brak | NO OFFER MODEL CHANGE | Prostszy model logistyczny | Które kategorie ostatecznie odrzucamy w V1? |
 
 ### ILLUSTRATIVE STATES — SUBJECT TO DATA MODEL REVIEW
 
@@ -124,3 +124,42 @@ W wariantach `Deferred freight quote` i `Manually quoted freight` mogą być wym
 2. `AWAITING_FREIGHT_CONFIRMATION`
 3. `FREIGHT_CONFIRMED`
 4. `FREIGHT_REJECTED`
+
+
+## 3. ONLINE PAYMENT FLOW
+* PAYMENT_INITIATED
+* PAYMENT_CAPTURED
+* PAID_AWAITING_SUPPLIER_ACCEPTANCE
+* SUPPLIER_ACCEPTED
+
+**Rejection branch:**
+* SUPPLIER_REJECTED
+* AUTO_REFUND_REQUIRED
+* REFUND_REQUESTED
+* REFUNDED
+
+## 4. PROFORMA FLOW
+* PROFORMA_ISSUED
+* AWAITING_BANK_TRANSFER
+* PAYMENT_CONFIRMED
+* PAID_AWAITING_SUPPLIER_ACCEPTANCE
+* SUPPLIER_ACCEPTED
+
+**Expiry branch:**
+* PAYMENT_EXPIRED
+* ORDER_CANCELLED
+
+## 5. PRICE ERROR FLOW
+* PRICE_ERROR_REVIEW_REQUIRED
+* ORDER_MAY_BE_SUSPENDED
+* MANUAL_LEGAL_DECISION_REQUIRED
+* CUSTOMER_NOTIFICATION_REQUIRED
+* WRITTEN_AVOIDANCE_DECLARATION_WHERE_APPLICABLE
+* REFUND_REQUIRED_IF_CAPTURED
+* AUDIT_TRAIL_REQUIRED
+
+## 6. TRANSPORT RESPONSIBILITY
+* CUSTOMER_FACING_SELLER_RESPONSIBILITY=LOGIMARKET
+* SUPPLIER_INTERNAL_FULFILLMENT_RESPONSIBILITY=PARTNER
+* SUPPLIER_RECOURSE_AND_INDEMNITY=REQUIRED
+* DELIVERY_TERM=DAP_NAMED_PLACE_INCOTERMS_2020
