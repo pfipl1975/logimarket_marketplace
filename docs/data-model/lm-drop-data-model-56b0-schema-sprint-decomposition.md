@@ -1,6 +1,6 @@
 # SCHEMA SPRINT DECOMPOSITION (LM-DROP-DATA-MODEL-56B0)
 
-**Wersja:** 1.0.0
+**Wersja:** 1.0.1
 **Status:** PENDING_EXTERNAL_VALIDATION
 **Moduł:** Dropshipping Schema Decomposition
 
@@ -133,4 +133,4 @@ Dopóki nie zostaną zamknięte blokujące furtki prawne i biznesowe (formal evi
 | 14. KSEF_QR_OR_VERIFICATION_REFERENCE| `ksef_submission` | `qr_reference_url` | Nullable | N/A | 10 YRS | N/A | `LEG-GATE-02` | `56B3` |
 | 15. INVOICE_ISSUER_SNAPSHOT | `invoice_document_snapshot`| `issuer_data` | Immutable | N/A | 10 YRS | N/A | `LEG-GATE-02` | `56B3` |
 | 16. CUSTOMER_TAX_ID_SNAPSHOT | `billing_address_snapshot`| `tax_identifier` | Immutable | N/A | 10 YRS | N/A | `LEG-GATE-02` | `56B1` |
-| 17. SUPPLIER_TAX_ID_SNAPSHOT | `supplier_profile` | `tax_identifier` | Immutable | N/A | 10 YRS | N/A | `LEG-GATE-02` | `56B1` |
+| 17. SUPPLIER_TAX_ID_SNAPSHOT | `supplier_identity` | `tax_identifier` | Immutable | N/A | 10 YRS | N/A | `LEG-GATE-02` | `56B1` |

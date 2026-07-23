@@ -1,24 +1,35 @@
 # STATE AND TRANSITION MODEL (LM-DROP-DATA-MODEL-56B0)
 
-**Wersja:** 1.0.0
+**Wersja:** 1.0.1
 **Status:** PENDING_EXTERNAL_VALIDATION
 **Moduł:** Dropshipping State and Transition Model
 
 Zgodnie z wymaganiami MVP zdefiniowano 11 ortogonalnych (wzajemnie niezależnych) osi statusowych. Model zabrania łączenia tych stanów w jedną płaską kolumnę statusową dla całego zamówienia.
 
-## 1. OSIE STATUSOWE
+## 1. OSIE STATUSOWE (11 AXES)
 
-1. **Customer Order Status**: `DRAFT`, `PLACED`, `SUSPENDED_FOR_REVIEW`, `PARTIALLY_FULFILLED`, `FULFILLED`, `CANCELLED`
-2. **Payment Status**: `PENDING`, `AUTHORIZED`, `CAPTURED`, `FAILED`, `REFUNDED`
-3. **Supplier Order Status**: `PENDING_CONFIRMATION`, `ACCEPTED`, `REJECTED`, `PROCESSING`, `SHIPPED`, `CANCELLED`
-4. **Supplier Confirmation Status**: `AWAITING`, `FULLY_CONFIRMED`, `PARTIALLY_CONFIRMED`, `STOCK_FAILURE`
-5. **Fulfillment Status**: `UNFULFILLED`, `PARTIALLY_FULFILLED`, `FULFILLED`
-6. **Shipment Status**: `LABEL_CREATED`, `IN_TRANSIT`, `DELIVERED`, `EXCEPTION`
-7. **Cancellation Status**: `NOT_REQUESTED`, `REQUESTED_BY_BUYER`, `APPROVED`, `REJECTED`
-8. **Refund Status**: `NONE`, `REQUESTED`, `EXECUTED`, `FAILED`
-9. **Return Status**: `NONE`, `REQUESTED`, `AUTHORIZED`, `RETURNED_TO_SUPPLIER`, `REJECTED`
-10. **Complaint Status**: `NONE`, `OPENED`, `ESCALATED`, `RESOLVED_WARRANTY`, `RESOLVED_REJECTED`
-11. **Settlement Status**: `UNSETTLED`, `INVOICE_MATCHED`, `PLANNED_FOR_RUN`, `PAID`
+1. **Customer Order Status**: 
+   - `DRAFT` -> `PLACED` -> `SUSPENDED_FOR_REVIEW` -> `PARTIALLY_FULFILLED` -> `FULFILLED` -> `CANCELLED`
+2. **Payment Status**: 
+   - `PENDING` -> `AUTHORIZED` -> `CAPTURED` -> `FAILED` -> `REFUNDED`
+3. **Supplier Order Status**: 
+   - `DRAFT` -> `CREATED` -> `TRANSMITTED` -> `ACTIVE` -> `PENDING_CONFIRMATION` -> `ACCEPTED` -> `REJECTED` -> `PROCESSING` -> `SHIPPED` -> `COMPLETED` -> `CANCELLED`
+4. **Supplier Confirmation Status**: 
+   - `NOT_REQUESTED` -> `AWAITING` -> `FULLY_CONFIRMED` -> `PARTIALLY_CONFIRMED` -> `DECLINED` -> `STOCK_FAILURE` -> `EXPIRED`
+5. **Fulfillment Status**: 
+   - `UNFULFILLED` -> `PROCESSING` -> `PARTIALLY_FULFILLED` -> `FULFILLED` -> `SHIPPED` -> `DELIVERED`
+6. **Shipment Status**: 
+   - `MANIFESTED` -> `LABEL_CREATED` -> `IN_TRANSIT` -> `DELIVERED` -> `EXCEPTION`
+7. **Cancellation Status**: 
+   - `NOT_REQUESTED` -> `REQUESTED_BY_BUYER` -> `APPROVED` -> `REJECTED`
+8. **Refund Status**: 
+   - `NONE` -> `REQUESTED` -> `PENDING` -> `PARTIAL` -> `EXECUTED` / `FULL` -> `FAILED`
+9. **Return Status**: 
+   - `NONE` -> `REQUESTED` -> `AUTHORIZED` -> `RECEIVED` / `RETURNED_TO_SUPPLIER` -> `DECLINED` / `REJECTED`
+10. **Complaint Status**: 
+   - `NONE` -> `OPENED` / `OPEN` -> `UNDER_REVIEW` / `ESCALATED` -> `RESOLVED_WARRANTY` / `RESOLVED` -> `RESOLVED_REJECTED` / `DECLINED`
+11. **Settlement Status**: 
+   - `UNSETTLED` -> `INVOICE_MATCHED` -> `READY_FOR_PAYOUT` -> `PLANNED_FOR_RUN` -> `PAID` -> `DISPUTED`
 
 ## 2. SCENARIUSZE TRANZYCJI (TRANSITION PATHS)
 

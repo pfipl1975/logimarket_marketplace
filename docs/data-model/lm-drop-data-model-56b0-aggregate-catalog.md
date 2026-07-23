@@ -1,6 +1,6 @@
 # AGGREGATE CATALOG (LM-DROP-DATA-MODEL-56B0)
 
-**Wersja:** 1.0.0
+**Wersja:** 1.0.1
 **Status:** PENDING_EXTERNAL_VALIDATION
 **Moduł:** Dropshipping Aggregate Catalog
 
@@ -59,7 +59,7 @@ Wszystkie operacje bazodanowe oparte będą na podejściu Domain-Driven Design (
 - **Aggregate Name**: Refund
 - **Purpose**: Zarządzanie zwrotami płatności dla Kupującego z powodu odrzucenia przez dostawcę, rezygnacji lub reklamacji.
 - **Root Entity**: `refund`
-- **Child Entities**: `refund_item`, `refund_event`
+- **Child Entities**: `refund_item`, `refund_event`, `refund_allocation`
 - **Commands**: `RequestRefund`, `ExecuteRefund`
 - **Emitted Events**: `RefundRequested`, `RefundExecuted`
 - **Invariants**: Wyeliminowanie podwójnych zwrotów (duplicate execution). Suma częściowych zwrotów nie może przekroczyć kwoty całkowitej `payment`. Operacja kontrolowana centralnie przez LogiMarket.
@@ -95,22 +95,22 @@ Wszystkie operacje bazodanowe oparte będą na podejściu Domain-Driven Design (
 ## 7. SUPPLIER PAYABLE
 
 - **Aggregate Name**: Supplier Payable
-- **Purpose**: Rejestracja zatwierdzonego zobowiązania handlowego LogiMarket wobec dostawcy. Płatność jest spłatą liability handlowego, nie marketplace payout (brak escrow w Model A).
+- **Purpose**: Rejestracja zatwierdzonego zobowiązania handlowego LogiMarket wobec dostawcy. Płatność jest spłatą liability handlowego (Trade Payable). Marketplace payouts i escrow account splits są wykluczone.
 - **Root Entity**: `supplier_payable`
 - **Child Entities**: `supplier_payable_adjustment`, `supplier_invoice_match`
 - **Commands**: `CreatePayable`, `AdjustPayable`
-- **Invariants**: Zobowiązanie powiązane z zatwierdzoną fakturą hurtową dostawcy. Rejestrowane w oparciu o marżę (Trading Margin).
+- **Invariants**: Zobowiązanie powiązane z zatwierdzoną fakturą hurtową dostawcy oraz wartością zamówienia (`SUPPLIER_PAYABLE_BASIS=VALID_SUPPLIER_INVOICE_AND_ELIGIBLE_SUPPLIER_ORDER_BUY_VALUE`). Rejestrowane w oparciu o marżę (Trading Margin).
 - **Mapped Decisions**: `DEC-DROP-05`, `DEC-DROP-06`, `DEC-DROP-07`
 - **Mapped Legal Gates**: `LEG-GATE-01`, `LEG-GATE-10`
 
 ## 8. SUPPLIER SETTLEMENT
 
 - **Aggregate Name**: Supplier Settlement Run
-- **Purpose**: Realizacja wypłat dla dostawców na podstawie zgromadzonych zobowiązań (Trade Payables).
+- **Purpose**: Realizacja spłaty zobowiązań (Trade Payables) dla dostawców na podstawie zgromadzonych zobowiązań.
 - **Root Entity**: `supplier_settlement_run`
 - **Child Entities**: `supplier_settlement_item`, `supplier_settlement_event`
 - **Commands**: `PlanSettlement`, `ExecuteSettlementRun`
-- **Invariants**: Obejmuje zatwierdzone wpisy `supplier_payable`. Harmonogram dwutygodniowy (dni 1 i 15).
+- **Invariants**: Obejmuje zatwierdzone wpisy `supplier_payable`. Częstotliwość rozliczeń wynosi dokładnie dwa razy w miesiącu (`SUPPLIER_SETTLEMENT_FREQUENCY=TWICE_MONTHLY`, `TARGET_DAYS=1_AND_15`). Wyrażenie "biweekly" jest wzbronione na rzecz twice monthly.
 - **Mapped Decisions**: `DEC-DROP-08`
 
 ## 9. SHIPMENT
@@ -129,6 +129,7 @@ Wszystkie operacje bazodanowe oparte będą na podejściu Domain-Driven Design (
 - **Aggregate Names**: Cancellation, Return, Complaint
 - **Purpose**: Obsługa reklamacji, rezygnacji i zwrotów do magazynu partnera (B2B Returns, Warranty).
 - **Root Entities**: `cancellation_request`, `return_request`, `complaint`
+- **Child Entities**: `cancellation_event`, `return_item`, `return_event`, `supplier_recourse_case`, `complaint_event`
 - **Invariants**: Odpowiedzialność dostawcy jako internal recourse. Zgłoszenia realizowane przez BOK LogiMarket w pierwszej linii.
 - **Mapped Decisions**: `DEC-DROP-13`, `DEC-DROP-14`
 - **Mapped Legal Gates**: `LEG-GATE-04`, `LEG-GATE-05`
@@ -137,7 +138,7 @@ Wszystkie operacje bazodanowe oparte będą na podejściu Domain-Driven Design (
 
 - **Aggregate Name**: Audit and Idempotency
 - **Purpose**: Systemowy szkielet dla ochrony procesów (webhooków) i wymuszania nieusuwalnego audytu dla mutacji finansowych i operacyjnych.
-- **Root Entities**: `domain_audit_log`, `idempotency_key`, `webhook_delivery`
+- **Root Entities**: `domain_audit_log`, `idempotency_key`, `webhook_delivery`, `domain_event`, `webhook_processing_attempt`, `legal_hold`
 - **Invariants**: Zabezpieczenie przed podwójnym wykonaniem callbacku z systemu zewnętrznego (np. płatności). Ochrona dowodów przed wykasowaniem.
 - **Mapped Decisions**: `DEC-DROP-09` (Audit Trail)
 - **Mapped Legal Gates**: `LEG-GATE-08`

@@ -1,6 +1,6 @@
 # LOGICAL ERD (LM-DROP-DATA-MODEL-56B0)
 
-**Wersja:** 1.0.0
+**Wersja:** 1.0.1
 **Status:** PENDING_EXTERNAL_VALIDATION
 **Moduł:** Dropshipping Logical Data Model
 
@@ -55,15 +55,19 @@ erDiagram
     customer_order ||--|{ payment : requires
     payment ||--|{ payment_attempt : executes
     payment ||--|{ payment_event : logs
+    payment ||--o| payment_provider_reference : has
 
     payment ||--o{ refund : triggers
+    refund ||--|{ refund_item : includes
     refund ||--|{ refund_allocation : targets
     refund ||--|{ refund_event : logs
 
     customer_order ||--|| customer_invoice : billed_with
     customer_invoice ||--|{ customer_invoice_line : details
     customer_invoice ||--o{ invoice_correction : has
+    invoice_correction ||--|{ invoice_correction_line : details
     customer_invoice ||--o| ksef_submission : reports
+    customer_invoice ||--|| invoice_document_snapshot : snapshots
 
     supplier_order ||--|| supplier_invoice : settled_with
     supplier_invoice ||--|{ supplier_invoice_line : details
@@ -73,6 +77,7 @@ erDiagram
     supplier_payable ||--|{ supplier_invoice_match : validated_by
 
     supplier_settlement_run ||--|{ supplier_settlement_item : groups
+    supplier_settlement_run ||--|{ supplier_settlement_event : logs
     supplier_settlement_item }|--|| supplier_payable : clears
 ```
 
@@ -84,6 +89,8 @@ erDiagram
     shipment ||--|{ shipment_item : carries
     shipment ||--|{ shipment_event : tracks
     shipment ||--|{ tracking_event : logs
+    shipment ||--|| carrier_reference : identified_by
+    shipment ||--|| delivery_term_snapshot : terms
 
     supplier_order ||--o{ cancellation_request : receives
     cancellation_request ||--|{ cancellation_event : logs
@@ -149,8 +156,8 @@ Wszystkie relacje mają charakter normatywny dla definicji modelu (LOGICAL_MODEL
 ## 9. ENTITY LIFECYCLE CLASSIFICATION
 
 - **Append-only log**: `domain_audit_log`, `domain_event`, `shipment_event`, `tracking_event`, `payment_event`, `webhook_delivery`
-- **Immutable Snapshots**: `billing_address_snapshot`, `delivery_address_snapshot`, `customer_order_party_snapshot`
-- **State Machine Nodes**: `customer_order`, `supplier_order`, `payment`, `refund`, `shipment`, `return_request`, `complaint`
+- **Immutable Snapshots**: `billing_address_snapshot`, `delivery_address_snapshot`, `customer_order_party_snapshot`, `invoice_document_snapshot`, `delivery_term_snapshot`
+- **State Machine Nodes**: `customer_order`, `supplier_order`, `payment`, `refund`, `shipment`, `return_request`, `complaint`, `supplier_settlement_run`, `cancellation_request`
 
 ## 10. MVP VS POST-MVP BOUNDARY
 

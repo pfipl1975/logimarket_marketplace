@@ -1,6 +1,6 @@
 # CONSTRAINTS, INDEXES AND INVARIANTS (LM-DROP-DATA-MODEL-56B0)
 
-**Wersja:** 1.0.0
+**Wersja:** 1.0.1
 **Status:** PENDING_EXTERNAL_VALIDATION
 **Moduł:** Dropshipping Integrity Rules
 
@@ -9,14 +9,14 @@
 - **Brak Floating-Point Money**: Wszystkie wartości finansowe (kwoty, ceny, podatki) muszą używać typów o stałej precyzji w docelowej bazie (np. w Drizzle jako `numeric` / logikalnie `DECIMAL`).
 - **Przechowywanie Waluty**: Każda kwota musi być zapisywana z odpowiadającym jej kodem waluty `currency` (zgodnie z `DEC-DROP-20`: waluta `PLN`).
 - **Korekty i Sumy**: Order totals muszą zgadzać się z item totals (ilość * cena) doliczając koszty dostawy, podatki oraz pomniejszając o zrealizowane zniżki i korekty faktur.
-- **Rozdział Należności i Zobowiązań**: Należności klientów (Customer Receivables) oraz zobowiązania logistyczne i hurtowe wobec dostawców (Supplier Payables) są całkowicie rozdzielone księgowo. System nie używa pojęcia 'marketplace payout', lecz rozlicza zobowiązania z tytułu zakupu hurtowego (`DEC-DROP-05`, `DEC-DROP-08`).
+- **Rozdział Należności i Zobowiązań**: Należności klientów (Customer Receivables) oraz zobowiązania logistyczne i hurtowe wobec dostawców (Supplier Payables) są całkowicie rozdzielone księgowo. Zgodnie ze standardami księgowymi modelu odsprzedaży i ustaleniami z `DEC-DROP-05` oraz `DEC-DROP-08`, system nie używa pojęcia 'marketplace payout' ani mechanizmów podziału środków (escrow splits). Wszelkie rozliczenia z partnerem klasyfikowane są i wyliczane na bazie fakturowanych Trade Payables. `SUPPLIER_PAYABLE_BASIS=VALID_SUPPLIER_INVOICE_AND_ELIGIBLE_SUPPLIER_ORDER_BUY_VALUE`.
 
 ## 2. LOGICAL CANDIDATES FOR KEYS AND INDEXES
 
 Poniższe reguły logiczne będą implementowane w przyszłych fizycznych schematach:
 
 1. **Primary Keys**:
-   - Typu `BIGSERIAL` (zgodnie z konwencją istniejącej bazy) lub w modelu biznesowym jako unikalny UUID tam, gdzie bezpieczeństwo predykcji identyfikatora jest krytyczne (np. płatności, faktury KSeF).
+   - Typu `BIGSERIAL` (zgodnie z konwencją istniejącej bazy) lub w modelu biznesowym jako unikalny UUID tam, gdzie bezpieczeństwo predykcji identyfikatora jest krytyczne (np. płatności, faktury KSeF, logi audytowe).
 2. **Foreign Keys**:
    - `supplier_order.customer_order_id` references `customer_order.id`.
    - `shipment.supplier_order_id` references `supplier_order.id`.
@@ -41,7 +41,12 @@ Zabezpieczenia bazodanowe zapobiegające błędom biznesowym:
 - **Settlement/Payable Allocation Integrity**: Relacja zapobiegająca zatwierdzeniu settlementu przekraczającego potwierdzoną wartość do wypłaty z `supplier_invoice`.
 - **Status-Transition Guards**: Część sprawdzeń zostanie nałożona logiką aplikacji, jednak wybrane, krytyczne biznesowo statusy mogą podlegać Check constraint w tabelach np. rozliczenie wymaga wcześniejszej zgody.
 
-## 4. RETENTION AND LEGAL HOLD
+## 4. RETENTION MATRIX BY DATA CATEGORY (LEG-GATE-08)
 
-- **Legal Hold**: Wszelkie encje biznesowe mogą zostać zamrożone (legal hold) na czas trwania sporu. Zależność od `LEG-GATE-08`. Relacja logiczna na poziomie logów audytowych o braku możliwości ich anonimizacji/soft-delete do czasu zniesienia blokady prawnej.
-- **Anonymization**: Retencja według Matrix by Data Category (Personal, Financial, Operational, Security), gdzie dane wrażliwe (PII) podlegają procesowi usuwania z bazy, pozostawiając same kwoty dla raportów księgowych po 10 latach lub 5 (zależnie od audytu podatkowego i legal).
+Zgodnie z wymaganiami minimalizacji PII i polityki retencji, schemat wymaga jawnego mapowania encji do klas retencji (Soft/Hard delete / Anonymization policy).
+
+- **`PERSONAL_OPERATIONAL_DATA`**: Dane wymagane tylko do procesu dostawy (Imię, Nazwisko, Telefon na liście przewozowym, `customer_order_party_snapshot`). Czas retencji jest ograniczony celem przetwarzania logistyki (`TIME_LIMITED`). Następuje nadpisanie (anonymization) po zakończeniu cyklu operacyjnego i upływie ewentualnej rękojmi, jeśli dane nie występują na fakturze.
+- **`KSEF_INVOICE_DATA`**: Wymóg zachowania przez 10 lat (`KSEF_STATUTORY_RETENTION_10_YEARS`). Obowiązuje dla `ksef_submission`, `customer_invoice`, `invoice_document_snapshot`.
+- **`ACCOUNTING_RECORDS`**: Podlegają ustawowej retencji wynikającej z obowiązków przechowywania dokumentacji skarbowej i rozliczeń dostawców (`STATUTORY_RETENTION_SUBJECT_TO_TAX_CONFIRMATION`). Dotyczy `supplier_invoice`, `payment`, `refund`, `supplier_payable`, snapshoty adresów VAT.
+- **`SECURITY_AUDIT_DATA`**: Logi bezpieczeństwa, `idempotency_key`, logi logowań. Podlegają czasowemu przechowywaniu i bezpiecznemu wygasaniu (`TIME_LIMITED_WITH_PERIODIC_REVIEW`).
+- **`LEGAL_HOLD`**: Flaga systemowa wymuszająca zamrożenie retencji dla wybranych Aggregate Roots w przypadku trwającego sporu z dostawcą lub kupującym, nadpisująca wszelkie auto-anonimizacje dla podpiętych zasobów (`SUPPORTED`).
