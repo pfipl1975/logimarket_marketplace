@@ -7,6 +7,12 @@
 Poniższe modele stanowią wyłączne opcje podlegające procesowi decyzyjnemu. Dokument ten ma na celu neutralne przedstawienie faktów dla doradców prawnych i podatkowych.
 
 ## MODEL A: Odsprzedaż (Buy/Sell Model)
+* BUSINESS_SELECTION_STATUS=BUSINESS_OWNER_SELECTED_FOR_MVP
+* EXTERNAL_LEGAL_VALIDATION=PENDING_FORMAL_EVIDENCE
+* EXTERNAL_TAX_VALIDATION=PENDING_FORMAL_EVIDENCE
+* ACCOUNTING_VALIDATION=PENDING_FORMAL_EVIDENCE
+* PSP_VALIDATION=PENDING_FORMAL_EVIDENCE
+
 LogiMarket występuje jako bezpośredni Sprzedawca dla Kupującego B2B, kupując wcześniej towar od Dostawcy.
 
 1. **Merchant of Record**: LogiMarket [MODEL_ASSUMPTION]
@@ -29,6 +35,8 @@ LogiMarket występuje jako bezpośredni Sprzedawca dla Kupującego B2B, kupując
 18. **main risks**: Odpowiedzialność za rękojmię, wady towaru, konieczność obsługi zwrotów konsumenckich [LEGAL_VALIDATION_REQUIRED]
 
 ## MODEL B: Model Agencyjny / Marketplace (Agency Model)
+* BUSINESS_SELECTION_STATUS=NOT_SELECTED_FOR_MVP
+
 LogiMarket występuje wyłącznie jako pośrednik dostarczający platformę. Kupujący nabywa towar bezpośrednio od Dostawcy.
 
 1. **Merchant of Record**: LogiMarket (pobiera środki w imieniu własnym) lub hybrydowo [MODEL_ASSUMPTION]
@@ -51,6 +59,8 @@ LogiMarket występuje wyłącznie jako pośrednik dostarczający platformę. Kup
 18. **main risks**: Kary od KNF za świadczenie usług płatniczych bez licencji, zablokowanie kont przez bank [LEGAL_VALIDATION_REQUIRED]
 
 ## MODEL C: Split Payment / Marketplace Payment Gateway
+* BUSINESS_SELECTION_STATUS=NOT_SELECTED_FOR_MVP
+
 LogiMarket pełni rolę pośrednika (jak w Modelu B), ale przepływ środków jest od razu dzielony przez licencjonowanego dostawcę płatności (PSP).
 
 1. **Merchant of Record**: MOR_ASSIGNMENT=OPEN — DEPENDS_ON_PSP_PRODUCT_AND_LEGAL_MODEL [PSP_CONFIRMATION_REQUIRED]
@@ -144,10 +154,4 @@ LogiMarket pełni rolę pośrednika (jak w Modelu B), ale przepływ środków je
 13. **Required evidence**: Zestawienie PSP.
 14. **Blocked sprints**: LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3, LM-DROP-PAYMENT-56E
 15. **Questions that remain unanswered**: Jak obsługiwane będą zagraniczne płatności?
-
-
-## R2B OVERLAY
-* MODEL A: BUSINESS_OWNER_SELECTED_FOR_MVP
-* MODEL B: NOT_SELECTED_FOR_MVP
-* MODEL C: NOT_SELECTED_FOR_MVP
 

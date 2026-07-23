@@ -368,20 +368,20 @@ Admin MVP jest modułem wewnętrznym przeznaczonym wyłącznie dla pracowników 
 *Koniec dokumentu domenowego.*
 
 
-## R2B OVERLAY
-* Model A is selected as the owner-approved MVP direction.
-* Models B and C are not selected for MVP.
-* legal, tax and PSP validation remains open.
-* one customer-facing seller is LogiMarket.
-* supplier relationships are internal procurement and fulfillment relationships.
-* customer payments are separated conceptually from supplier trade payables.
-* multi-partner cart creates supplier-order partitions.
-* online payment and pro-forma are the only MVP payment methods.
-* internal trade credit is excluded.
-* parcel and pallet are the only ecommerce freight modes.
-* project or oversized RFQ offers preserve offerModel=rfq.
-* freight eligibility never changes offerModel automatically.
-* KSeF is a first-class future logical-model requirement.
-* retention must be category-specific.
-* operational cancellation remains possible after payment capture.
-
+## 14. R2B BUSINESS DECISION OVERLAY
+* MVP_MODEL_SELECTION: MODEL A (Resale / Trading Margin)
+* EXCLUDED_MODELS: MODEL B, MODEL C
+* MERCHANT_OF_RECORD: LOGIMARKET
+* SELLER_OF_RECORD: LOGIMARKET
+* ACCOUNTING_MODEL: BUY_SELL_BACK_TO_BACK
+* CUSTOMER_INVOICING: LOGIMARKET_ISSUES_CUSTOMER_INVOICE
+* SUPPLIER_INVOICING: SUPPLIER_ISSUES_WHOLESALE_INVOICE_TO_LOGIMARKET
+* PAYMENT_FLOW: PAYMENT_TO_LOGIMARKET_OPERATING_OR_PSP_SETTLEMENT_ACCOUNT
+* CANCELLATION_CAPABILITY: SUPPORTED_AFTER_CAPTURE
+* MULTI_PARTNER_CART: SUPPORTED_IN_MVP
+* SUPPORTED_PAYMENT_METHODS: ONLINE_IMMEDIATE_CAPTURE, PROFORMA_PREPAYMENT
+* INTERNAL_TRADE_CREDIT: EXCLUDED_FROM_MVP
+* SUPPORTED_FREIGHT_METHODS: PARCEL, PALLET
+* KSEF_SUPPORT: FUTURE_LOGICAL_REQUIREMENT
+* RECORD_RETENTION: CATEGORY_SPECIFIC_RETENTION_REQUIRED
+* EXTERNAL_VALIDATION_STATUS: PENDING_LEGAL_TAX_AND_PSP_REVIEW
