@@ -8,6 +8,7 @@
 MVP_PLATFORM_ROLE=INTERMEDIARY_MARKETPLACE
 
 The global "Reseller-first" (Model A) assumption is superseded. The architecture is now a hybrid marketplace where the default MVP channel is intermediary (Partner is the Seller).
+LogiMarket is responsible for its platform service, orchestration, seller disclosure, security and rule enforcement, but is not the goods seller in the initial partner marketplace MVP.
 
 ## 2. HYBRID CONTRACT MODEL
 - `offerModel` dictates user interaction: `rfq`, `ecommerce`, `outbound`.
