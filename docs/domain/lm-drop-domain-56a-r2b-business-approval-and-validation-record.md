@@ -6,6 +6,12 @@
 **Approved By:** Piotr Fiszer
 **Approver Role:** Business Owner
 
+> **[R3 SUPERSESSION NOTICE]**
+> This R2B document is historically preserved. Its designation of LogiMarket as the global Seller of Record and default selection of Model A (Resale) have been **SUPERSEDED** by `lm-marketplace-domain-56a-r3-business-approval-and-validation-record.md`.
+> Model A is retained only as a future, offer-specific reseller channel (`active_in_initial_mvp=NO`).
+> The canonical MVP architecture is now **Hybrid Intermediary-First**.
+
+
 ## 1. SCOPE OF APPROVAL AND EXECUTIVE DECLARATION
 This document incorporates 23 business decisions approved by the Business Owner for the LogiMarket dropshipping domain MVP. The approved business direction is **Model A / Buy-Sell Back-to-Back**.
 

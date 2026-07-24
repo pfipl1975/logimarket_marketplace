@@ -8,6 +8,12 @@
 **EXTERNAL_VALIDATION_STATUS:** PENDING_FORMAL_EVIDENCE
 **SCHEMA_READINESS:** BLOCKED
 
+> **[R3 SUPERSESSION NOTICE]**
+> This R2B document is historically preserved. Its designation of LogiMarket as the global Seller of Record and default selection of Model A (Resale) have been **SUPERSEDED** by `lm-marketplace-domain-56a-r3-intermediary-contract.md`.
+> Model A is retained only as a future, offer-specific reseller channel (`active_in_initial_mvp=NO`).
+> The canonical MVP architecture is now **Hybrid Intermediary-First**.
+
+
 ---
 
 ## 1. EXECUTIVE SUMMARY & KLASYFIKACJA INFORMACJI

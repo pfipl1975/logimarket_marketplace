@@ -99,20 +99,10 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
 
 ---
 
-### SPRINT: LM-DROP-DATA-MODEL-56B0 — LOGICAL DATA MODEL SPECIFICATION
-* **STATUS**: READY_TO_START_CONDITIONALLY
-* **CEL**: Zdefiniowanie logiki relacyjnej, agregatów, kluczy obcych i niezmienników (invariants) nowego modelu danych w postaci dokumentacji technicznej przed wykonaniem zmian w Drizzle ORM.
-* **ZALEŻNOŚCI**: Zatwierdzenie `LM-DROP-DOMAIN-56A-R2B`.
-* **SCOPE**: DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL
-  - preparation of a complete logical ERD;
-  - aggregate definitions;
-  - table/entity specification;
-  - relationship cardinalities;
-  - Określenie ograniczeń integralnościowych (CHECK constraints, FOREIGN KEY rules, UNIQUE indexes).
-  - Opracowanie odwracalnego planu migracji bazodanowej.
-* **FORBIDDEN SCOPE**: Edycja kodu `src/lib/schema.ts`, uruchamianie migracji SQL na bazie produkcyjnej.
-* **ACCEPTANCE CRITERIA**: Kompletny dokument specyfikacji logiki danych zwoływany do przeglądu architektonicznego.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
+### NEXT SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0
+* **TYPE**: Schema and Migrations
+* **STATUS**: BLOCKED_PENDING_EXTERNAL_VALIDATION
+* **SCOPE**: Implement `contractModel` matrix in DB.
 
 ---
 
@@ -148,6 +138,13 @@ Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało pod
   - authentication, authorization, role enforcement and operator UX.
   - Powiązanie akcji administracyjnych z nieedytowalnym logiem audytowym (`domain_audit_logs`).
 * **FORBIDDEN SCOPE**: Tworzenie panelu self-service dla dostawców.
+
+---
+
+### CURRENT SPRINT: LM-MARKETPLACE-DOMAIN-56A-R3
+* **TYPE**: Domain Documentation
+* **STATUS**: IN_PROGRESS
+* **SCOPE**: Intermediary-First Architecture Reset
 
 ---
 
