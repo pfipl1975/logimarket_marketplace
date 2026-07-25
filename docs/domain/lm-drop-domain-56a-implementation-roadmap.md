@@ -1,210 +1,279 @@
-# LOGIMARKET — ROADMAPA IMPLEMENTACJI MODUŁU DROPSHIPPINGU (LM-DROP-DOMAIN-56A-R1F)
+# LOGIMARKET HYBRID INTERMEDIARY-FIRST MARKETPLACE IMPLEMENTATION ROADMAP
 
-**Wersja:** 1.2.2
-**Data:** 2026-07-22
-**Status:** READY FOR FINAL DOMAIN REVIEW
-**Moduł:** Dropshipping Implementation Roadmap
+TITLE=LOGIMARKET HYBRID INTERMEDIARY-FIRST MARKETPLACE IMPLEMENTATION ROADMAP
+DOCUMENT_ROLE=NORMATIVE_MARKETPLACE_IMPLEMENTATION_ROADMAP
+DOCUMENT_STATUS=R3_ROADMAP_CORRECTION_IN_PROGRESS
+MVP_PLATFORM_ROLE=INTERMEDIARY_MARKETPLACE
 
----
+R3_SUPERSEDES_RESELLER_FIRST_ROADMAP=YES
+HISTORICAL_MODEL_A_ROADMAP_PRESERVED_BY_REFERENCE=YES
+MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
 
-## 1. STRATEGIA WDROŻENIA I ETAPOWANIE
+VERSION=2.0.0
+EFFECTIVE_DATE=2026-07-25
 
-Wdrożenie pełnego kontraktu domenowego dropshippingu w LogiMarket zostało podzielone na wyizolowane, sekwencyjne sprinty techniczne.
+## 1. STRATEGIC IMPLEMENTATION PRINCIPLES
 
-### Nadrzędne Zasady Wdrożenia:
-1. **Współzależność od Zamknięcia Decyzji (Decisions First)**: Żaden sprint bazodanowy (`56B1+`) ani aplikacyjny nie może wystartować przed formalnym zamknięciem otwartych decyzji blokujących w sprincie `LM-DROP-DOMAIN-56A-R2B`.
-2. **Dekompozycja Zmian Bazodanowych**: Zmiany schematu bazy danych zostały rozbite na 7 mikrostroków (`LM-DROP-DATA-MODEL-56B0` do `LM-DROP-SCHEMA-56B6`), unikając monolitycznej migracji.
-3. **Audyt i RBAC Przed Mutacjami Administracyjnymi**: Fundamenty uprawnień RBAC i rejestracji audytowej muszą wyprzedzać mutacje danych w panelu administracyjnym LogiMarket.
-4. **Wsteczna Kompatybilność**: Zachowanie 100% sprawności istniejących modeli ofert (`rfq`, `ecommerce`, `outbound`).
+1. Domain decisions before logical modeling.
+2. Logical modeling before physical schema.
+3. Physical schema before application workflow implementation.
+4. offerModel and contractModel remain independent.
+5. Partner is default seller for RFQ and e-commerce.
+6. Outbound remains external redirect through /go/[id].
+7. Future LogiMarket reseller capability remains isolated and disabled.
+8. Payment implementation requires approved abstract PSP architecture.
+9. No LogiMarket self-custody or LogiMarket-operated escrow.
+10. Partner onboarding remains centrally curated.
+11. No automated vendor registration.
+12. No seller self-service or multi-vendor dashboard in initial MVP.
+13. Existing RFQ, cart and outbound behavior must remain operational.
+14. Each sprint requires separate review, selective staging and explicit authorization.
 
----
+## 2. COMPLETED AND SUPERSEDED HISTORY
 
-## 2. SEKWENCJA SPRINTÓW IMPLEMENTACYJNYCH
-
-```
-+-----------------------------------------------------------------------------------+
-|                        DROPSHIPPING IMPLEMENTATION ROADMAP                        |
-+-----------------------------------------------------------------------------------+
-| LM-DROP-DOMAIN-56A-R1E: Contract Review & B2B Capability Boundaries [NINIEJSZY]   |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| LM-DROP-DOMAIN-56A-R2A: Business Decision Pack Preparation
-| LM-DROP-DOMAIN-56A-R2B: Approved Decision Incorporation    |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| LM-DROP-DATA-MODEL-56B0: Logical Data Model, Invariants & Aggregate Specifications|
-| (Dokumentacja modeli danych. Brak zmian w schema.ts / brak migracji SQL)           |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| LM-DROP-SCHEMA-56B1: Core Fulfillment & Supplier-Order Schema                     |
-| LM-DROP-SCHEMA-56B2: Shipment & Courier Tracking Schema                           |
-| LM-DROP-SCHEMA-56B3: Payment, Refund & Settlement Ledger Schema                   |
-| LM-DROP-SCHEMA-56B4: Returns & Quality Complaints Schema                          |
-| LM-DROP-SCHEMA-56B5: Audit & Security Support Structures                          |
-| LM-DROP-SCHEMA-56B6: Controlled Migration Execution & Production Verification    |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| LM-ADMIN-57A: Admin MVP Architecture and Access Control (RBAC Foundation)        |
-+-----------------------------------------------------------------------------------+
-                                         |
-                                         v
-+-----------------------------------------------------------------------------------+
-| LM-DROP-ORDER-56C: Order Core & Multi-Supplier Split Engine                       |
-| LM-DROP-SUPPLIER-56D: Supplier Handoff & Confirmation Workflow                    |
-| LM-DROP-PAYMENT-56E: Payment Integration & Capture / Refund State Machine         |
-| LM-DROP-FULFILLMENT-56F: Shipment & Courier Tracking Management Core              |
-| LM-DROP-RETURNS-56G: B2B Cancellations, Returns & Quality Complaints Module       |
-| LM-DROP-AUDIT-56H: audit read models, operational reports, anomaly detection, retention operations and compliance exports.                    |
-| LM-DROP-QA-56I: QA, Integration Testing & Production Hardening                    |
-+-----------------------------------------------------------------------------------+
-```
-
----
-
-## 3. SZCZEGÓŁOWY OPIS SPRINTÓW ZAMKNIĘCIA I ARCHITEKTURY
-
----
-
-### SPRINT: LM-DROP-DOMAIN-56A-R2A — BUSINESS AND LEGAL DECISION PACK PREPARATION
-* **STATUS**: COMPLETED
-* **CEL**: Przygotowanie kontrolowanego pakietu decyzji.
-* **ZALEŻNOŚCI**: Pomyślne odebranie `LM-DROP-DOMAIN-56A-R1E`.
-* **SCOPE**:
-  - Agent może: przygotować formularze; porównać opcje; opisać konsekwencje; przygotować listę dokumentów; przygotować pytania dla Business Owner/CFO/Legal/Tax.
-  - Agent nie może: zatwierdzać; uzyskiwać opinii; podpisywać dokumentów; ustawiać DECIDED.
-* **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: NIE.
-
----
-
-### SPRINT: LM-DROP-DOMAIN-56A-R2B — APPROVED DECISION INCORPORATION
-* **STATUS**: IN_PROGRESS_UNTIL_PR_MERGE
-* **CEL**: Wprowadzenie decyzji przekazanych przez uprawnione osoby.
-* **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R2A`.
-* **SCOPE**:
-  - Agent może: wprowadzić decyzje przekazane przez uprawnione osoby; zapisać APPROVED_BY; zapisać APPROVED_AT; zapisać APPROVAL_SOURCE.
-  - Agent nie może: wymyślać zatwierdzeń.
-* **FORBIDDEN SCOPE**: Edycja kodu źródłowego, zmiana schema.ts, tworzenie migracji.
-* **ACCEPTANCE CRITERIA**: All supplied approvals are incorporated with APPROVED_BY, APPROVED_AT and APPROVAL_SOURCE; missing approvals remain open and keep dependent sprints blocked.
-* **WYMAGA DECYZJI BIZNESOWEJ/PRAWNEJ**: TAK.
-
-
----
-
-### NEXT SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0
-* **TYPE**: Schema and Migrations
-* **STATUS**: BLOCKED_PENDING_EXTERNAL_VALIDATION
-* **SCOPE**: Implement `contractModel` matrix in DB.
-
+LM-DROP-DOMAIN-56A-R2A=HISTORICAL_COMPLETED
+LM-DROP-DOMAIN-56A-R2B=SUPERSEDED_AS_GLOBAL_MVP_DEFAULT
 LM-DROP-DATA-MODEL-56B0=SUPERSEDED
 PR_16=SUPERSEDED_AND_CLOSED
 PR_16_MERGED=NO
-LM-MARKETPLACE-DATA-MODEL-56B0=NEXT_LOGICAL_DATA_MODEL_SPRINT
 
----
+LM-MARKETPLACE-DOMAIN-56A-R3=CURRENT_DOMAIN_RESET
+PR_17=CURRENT_REVIEW_PR
 
-### SPRINTY ZMIAN SCHEMATU BAZY DANYCH (`56B1` do `56B6`)
+Former Model A remains:
+FUTURE_LOGIMARKET_RESELLER_CHANNEL
 
-* **SCHEMA BLOCKING CONDITIONS (for all schema sprints)**:
-  - formal legal deliverables where required;
-  - approved tax and accounting KSeF flow;
-  - PSP feasibility confirmation;
-  - reviewed logical data model;
-  - explicit authorization for the schema sprint.
+## 3. NEXT SPRINT
 
-1. **LM-DROP-SCHEMA-56B1 — Core Fulfillment & Supplier-Order Schema**: Utworzenie tabel `supplier_profiles`, `supplier_orders` oraz dodanie kolumny `fulfillment_model` do `offers`.
-   * **STATUS**: BLOCKED
-2. **LM-DROP-SCHEMA-56B2 — Shipment & Courier Tracking Schema**: Utworzenie tabeli `shipments` powiązanej relacją z `supplier_orders`.
-   * **STATUS**: BLOCKED
-3. **LM-DROP-SCHEMA-56B3 — Payment, Refund & Settlement Ledger Schema**: Utworzenie tabel `payment_transactions` oraz `settlement_records` (*dopiero po zatwierdzeniu decyzji finansowych*).
-   * **STATUS**: BLOCKED
-4. **LM-DROP-SCHEMA-56B4 — Returns & Quality Complaints Schema**: Utworzenie tabel `return_requests` i `complaints`.
-   * **STATUS**: BLOCKED
-5. **LM-DROP-SCHEMA-56B5 — Audit & Security Support Structures**: persistence structures and integrity constraints.
-   * **STATUS**: BLOCKED
-6. **LM-DROP-SCHEMA-56B6 — Controlled Migration Execution**: Wykonanie zweryfikowanych transakcyjnie migracji Drizzle w środowisku Supabase/PostgreSQL i walidacja danych.
-   * **STATUS**: BLOCKED
+NEXT_SPRINT=LM-MARKETPLACE-DATA-MODEL-56B0
+TITLE=INTERMEDIARY-FIRST LOGICAL DATA MODEL
+TYPE=DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL
+STATUS=NEXT_AFTER_R3_MERGE
 
----
+APPLICATION_CODE_CHANGED=NO
+SCHEMA_CHANGED=NO
+MIGRATIONS_CHANGED=NO
+SQL_CHANGED=NO
+DATABASE_CHANGED=NO
 
-### SPRINT: LM-ADMIN-57A — ADMIN MVP ARCHITECTURE & ACCESS CONTROL (RBAC)
-* **CEL**: Opracowanie architektury panelu operatora LogiMarket oraz wdrożenie bezpiecznego modelu kontroli dostępu opartego na rolach (RBAC) i audycie.
-* **ZALEŻNOŚCI**: Odbiór `LM-DROP-DOMAIN-56A-R1E` oraz `LM-DROP-SCHEMA-56B5`.
-* **SCOPE**:
-  - Projekt architektury modułu Admin MVP w ramach Next.js App Router (`/src/app/admin` lub odpowiedniej ścieżki).
-  - authentication, authorization, role enforcement and operator UX.
-  - Powiązanie akcji administracyjnych z nieedytowalnym logiem audytowym (`domain_audit_logs`).
-* **FORBIDDEN SCOPE**: Tworzenie panelu self-service dla dostawców.
+The next sprint must design, not implement:
+- marketplace_order;
+- seller_order;
+- seller_order_item;
+- seller identity snapshot;
+- contractModel snapshot;
+- responsibility snapshot;
+- seller acceptance lifecycle;
+- payment abstraction;
+- payment allocation reference;
+- platform fee or commission abstraction;
+- seller settlement reference;
+- goods invoice responsibility;
+- platform-service invoice responsibility;
+- shipment;
+- complaint;
+- return;
+- refund;
+- chargeback/dispute;
+- audit;
+- idempotency;
+- privacy and retention configuration;
+- future reseller isolation.
 
----
+It must map current repository facts to the proposed logical model.
 
-### CURRENT SPRINT: LM-MARKETPLACE-DOMAIN-56A-R3
-* **TYPE**: Domain Documentation
-* **STATUS**: IN_PROGRESS
-* **SCOPE**: Intermediary-First Architecture Reset
+READY_FOR_LOGICAL_DATA_MODEL_RESET=YES_CONDITIONALLY_AFTER_R3_MERGE
+READY_FOR_PHYSICAL_SCHEMA=NO
 
----
+## 4. LOGICAL DATA-MODEL REVIEW GATE
 
-## 4. MACIERZ ZALEŻNOŚCI SPRINTÓW I BRAMEK KONTROLNYCH
+LM-MARKETPLACE-DATA-MODEL-56B0-R1=INDEPENDENT_LOGICAL_MODEL_REVIEW
 
-| SPRINT | WYMAGANE DECYZJE BIZNESOWE | WYMAGANE BRAMKI PRAWNE | WYMAGANA BAZA BEZPIECZEŃSTWA | ZALEŻNOŚCI TECHNICZNE | ZAKAZANE PRZEDWCZESNE ZAŁOŻENIA |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| `LM-DROP-DOMAIN-56A-R2B` | Wszystkie decyzje open | Wytyczne MoR/SoR/VAT | N/A | `LM-DROP-DOMAIN-56A-R1E` | Zakładanie zatwierdzenia rekomendacji |
-| `LM-DROP-DATA-MODEL-56B0` | Wszystkie decyzje blokujące projektowanie agregatów | `LEG-GATE-01, 02` | N/A | `LM-DROP-DOMAIN-56A-R2B` | Pisanie kodu schema.ts przed specyfikacją |
-| `LM-DROP-SCHEMA-56B1` | `DEC-DROP-17` | `LEG-GATE-03` | N/A | `LM-DROP-DATA-MODEL-56B0` | Modyfikowanie istniejącego offerModel |
-| `LM-DROP-SCHEMA-56B2` | `DEC-DROP-11; DEC-DROP-16; DEC-DROP-22` | `LEG-GATE-06` | N/A | `LM-DROP-SCHEMA-56B1` | Używanie /go/[id] do śledzenia paczek |
-| `LM-DROP-SCHEMA-56B3` | `DEC-DROP-01; DEC-DROP-02; DEC-DROP-03; DEC-DROP-04; DEC-DROP-05; DEC-DROP-06; DEC-DROP-07; DEC-DROP-08; DEC-DROP-12; DEC-DROP-18; DEC-DROP-21` | `LEG-GATE-01, 02, 09, 10, 11` | Transakcyjny Ledger | `LM-DROP-SCHEMA-56B1` | Zakładanie konkretnego dostawcy PSP |
-| `LM-DROP-SCHEMA-56B4` | `DEC-DROP-09; DEC-DROP-12; DEC-DROP-13; DEC-DROP-14` | `LEG-GATE-04, 05, 11` | Audit Log | `LM-DROP-SCHEMA-56B1` | Bezwarunkowe zwroty konsumenckie w B2B |
-| `LM-DROP-SCHEMA-56B5` | Brak | `LEG-GATE-07, 08` | Immutability check | `LM-DROP-DATA-MODEL-56B0` | Możliwość edycji historii logów |
-| `LM-DROP-SCHEMA-56B6` | Brak | Brak | Backup & Rollback plan | `LM-DROP-SCHEMA-56B1, LM-DROP-SCHEMA-56B2, LM-DROP-SCHEMA-56B3, LM-DROP-SCHEMA-56B4, LM-DROP-SCHEMA-56B5` | Wykonywanie migracji bez sprawdzania braku destruktywności |
-| `LM-ADMIN-57A` | Brak | Brak | RBAC & Audit | `LM-DROP-SCHEMA-56B5` | Dostęp bez uwierzytelnienia operacyjnego |
+Required before physical schema:
+- aggregate boundaries reviewed;
+- entity catalog reviewed;
+- invariants reviewed;
+- lifecycle/state machines reviewed;
+- snapshot policy reviewed;
+- current-schema mapping reviewed;
+- unresolved PSP decisions represented abstractly;
+- future reseller isolated;
+- no supplier-payable semantics in partner marketplace;
+- business approval recorded.
 
----
+LOGICAL_MODEL_REVIEW_REQUIRED=YES
+PHYSICAL_SCHEMA_BEFORE_LOGICAL_MODEL_REVIEW=NO
 
-## 5. REJESTR BRAMEK PRAWNYCH (LEGAL GATES REGISTER)
+## 5. ACTIVE PHYSICAL SCHEMA ROADMAP
 
-| LEGAL_GATE_ID | SUBJECT | BLOCKED_SPRINTS | OWNER | REQUIRED_DELIVERABLE | STATUS | APPROVAL_EVIDENCE |
+1. LM-MARKETPLACE-SCHEMA-56B1
+   SELLER IDENTITY AND OFFER CONTRACT CLASSIFICATION
+
+   Scope:
+   - curated seller identity;
+   - offer-to-seller relationship;
+   - explicit contractModel;
+   - seller and contract snapshots;
+   - no automated registration;
+   - no seller dashboard.
+
+2. LM-MARKETPLACE-SCHEMA-56B2
+   MARKETPLACE ORDER AND SELLER-ORDER CORE
+
+   Scope:
+   - marketplace order;
+   - seller orders;
+   - seller-order items;
+   - seller acceptance lifecycle;
+   - multi-seller grouping;
+   - preserve current cart behavior until application sprint.
+
+3. LM-MARKETPLACE-SCHEMA-56B3
+   PAYMENT ABSTRACTION, PLATFORM FEES AND SELLER SETTLEMENT REFERENCES
+
+   Scope:
+   - PSP-neutral payment records;
+   - allocation references;
+   - payout/settlement references;
+   - platform fee or commission records;
+   - no self-custody;
+   - no LogiMarket escrow;
+   - no specific PSP assumption.
+
+4. LM-MARKETPLACE-SCHEMA-56B4
+   INVOICING, REFUNDS, CHARGEBACKS AND DISPUTES
+
+   Scope:
+   - partner goods-invoice responsibility;
+   - LogiMarket platform-service invoices;
+   - refund financial liability;
+   - technical refund execution abstraction;
+   - chargeback and dispute evidence.
+
+5. LM-MARKETPLACE-SCHEMA-56B5
+   FULFILLMENT, SHIPMENTS, RETURNS AND COMPLAINTS
+
+   Scope:
+   - partner fulfillment responsibility;
+   - seller-order shipments;
+   - parcel and pallet;
+   - returns;
+   - goods complaints;
+   - platform-service complaints;
+   - no `/go/[id]` shipment tracking.
+
+6. LM-MARKETPLACE-SCHEMA-56B6
+   AUDIT, IDEMPOTENCY, PRIVACY AND RETENTION
+
+   Scope:
+   - audit records;
+   - domain events;
+   - idempotency;
+   - webhook inbox/outbox support;
+   - configurable retention;
+   - no predetermined privacy-controller role.
+
+7. LM-MARKETPLACE-SCHEMA-56B7
+   CONTROLLED MIGRATION AND DATA VERIFICATION
+
+   Scope:
+   - reviewed Drizzle migrations;
+   - rollback plan;
+   - fixtures;
+   - integrity assertions;
+   - non-destructive migration verification;
+   - explicit production authorization.
+
+Every schema sprint must be:
+STATUS=BLOCKED
+until its own dependencies and external gates are satisfied.
+
+## 6. APPLICATION WORKFLOW ROADMAP
+
+LM-MARKETPLACE-ORDER-56C
+Marketplace order and seller-order orchestration
+
+LM-MARKETPLACE-SELLER-56D
+Curated seller handoff, acceptance and SLA workflow
+
+LM-MARKETPLACE-PAYMENT-56E
+Licensed-PSP integration, allocation, refund and reconciliation
+
+LM-MARKETPLACE-FULFILLMENT-56F
+Partner fulfillment and shipment orchestration
+
+LM-MARKETPLACE-RETURNS-56G
+Returns, goods complaints and platform dispute support
+
+LM-MARKETPLACE-AUDIT-56H
+Audit read models, reports, anomaly detection and retention operations
+
+LM-MARKETPLACE-QA-56I
+Integration testing, end-to-end testing and launch hardening
+
+LM-ADMIN-57A
+Admin dashboard and seller-management foundations
+
+SELLER_SELF_SERVICE_DASHBOARD_IN_INITIAL_MVP=NO
+AUTOMATED_VENDOR_REGISTRATION_IN_INITIAL_MVP=NO
+
+## 7. DEPENDENCY MATRIX
+
+| SPRINT | DOMAIN_DECISIONS | LEGAL_OR_EXTERNAL_GATES | TECHNICAL_DEPENDENCIES | SAFE_DEFAULTS | FORBIDDEN_PREMATURE_ASSUMPTIONS | STATUS |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `LEG-GATE-01` | MoR and SoR | `LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-02` | VAT and KSeF | `LM-DROP-DATA-MODEL-56B0, LM-DROP-SCHEMA-56B3` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-03` | Dropshipping Partner Agreement | `LM-DROP-SCHEMA-56B1` | Legal Counsel | Wzór umowy | `OPEN` | NULL |
-| `LEG-GATE-04` | B2B Returns | `LM-DROP-SCHEMA-56B4` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-05` | Warranty and Complaints | `LM-DROP-SCHEMA-56B4` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-06` | Carrier Liability | `LM-DROP-SCHEMA-56B2` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-07` | PII Processing and Sharing | `LM-DROP-SCHEMA-56B5` | Legal Counsel | Umowa powierzenia | `OPEN` | NULL |
-| `LEG-GATE-08` | Data Retention | `LM-DROP-SCHEMA-56B5` | Legal Counsel | Polityka retencji | `OPEN` | NULL |
-| `LEG-GATE-09` | Chargeback Responsibility | `LM-DROP-SCHEMA-56B3` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-10` | Payment Flow and Funds Handling | `LM-DROP-SCHEMA-56B3, LM-DROP-PAYMENT-56E` | Legal Counsel | Opinia prawna | `OPEN` | NULL |
-| `LEG-GATE-11` | Refund Responsibility and Financial Corrections | `LM-DROP-SCHEMA-56B3, LM-DROP-SCHEMA-56B4, LM-DROP-PAYMENT-56E, LM-DROP-RETURNS-56G` | Legal Counsel | Procedura refundacji | `OPEN` | NULL |
-| `LEG-GATE-12` | Trade Credit and External Financing | `LM-DROP-PAYMENT-56E` | Legal Counsel | Umowa ramowa kredytu kupieckiego | `OPEN` | NULL |
-| `LEG-GATE-13` | Credit Risk Ownership and Debt Collection | `LM-DROP-PAYMENT-56E` | Legal Counsel | Procedura windykacyjna | `OPEN` | NULL |
-| `LEG-GATE-14` | Supplier Scoring and P2B Ranking Transparency | `LM-DROP-SUPPLIER-56D` | Legal Counsel | Regulamin plasowania ofert (P2B) | `OPEN` | NULL |
+| LM-MARKETPLACE-DATA-MODEL-56B0 | DEC-MKT-01 to 18, OMQ-MKT-01 to 12 | MAY_REMAIN_PENDING_IF_REPRESENTED_AS_ABSTRACT_OR_CONFIGURABLE | LM-MARKETPLACE-DOMAIN-56A-R3 | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | SPECIFIC_PSP_PROVIDER | NEXT |
+| LM-MARKETPLACE-DATA-MODEL-56B0-R1 | N/A | N/A | LM-MARKETPLACE-DATA-MODEL-56B0 | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B1 | DEC-MKT-01 to 18 | LEG-MKT-02, LEG-MKT-09, LEG-MKT-10 | LM-MARKETPLACE-DATA-MODEL-56B0-R1 | N/A | AUTOMATED_VENDOR_REGISTRATION | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B2 | DEC-MKT-01 to 18 | LEG-MKT-01, LEG-MKT-02, LEG-MKT-03 | LM-MARKETPLACE-SCHEMA-56B1 | N/A | SUPPLIER_ORDER_AS_ACTIVE_MVP_CORE | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B3 | DEC-MKT-01 to 18 | LEG-MKT-05, LEG-MKT-06 | LM-MARKETPLACE-SCHEMA-56B2 | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | DIRECT_PAYMENT_TO_PARTNER_SELECTED | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B4 | DEC-MKT-01 to 18 | LEG-MKT-07, LEG-MKT-08 | LM-MARKETPLACE-SCHEMA-56B3 | REFUND_TECHNICAL_EXECUTOR_UNRESOLVED | PSP_EXECUTES_REFUND_SELECTED | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B5 | DEC-MKT-01 to 18 | LEG-MKT-08 | LM-MARKETPLACE-SCHEMA-56B4 | N/A | GO_ROUTE_FOR_SHIPMENT_TRACKING | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B6 | DEC-MKT-01 to 18 | LEG-MKT-09 | LM-MARKETPLACE-SCHEMA-56B5 | N/A | JOINT_CONTROLLERSHIP_CONFIRMED | BLOCKED |
+| LM-MARKETPLACE-SCHEMA-56B7 | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-SCHEMA-56B6 | N/A | PRODUCTION_READY_WITHOUT_REVIEW | BLOCKED |
+| LM-ADMIN-57A | DEC-MKT-01 to 18 | N/A | LM-MARKETPLACE-SCHEMA-56B7, LM-MARKETPLACE-AUDIT-56H | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-ORDER-56C | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-SCHEMA-56B7 | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-SELLER-56D | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-ORDER-56C | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-PAYMENT-56E | DEC-MKT-01 to 18, OMQ-MKT-03, OMQ-MKT-04, OMQ-MKT-05, OMQ-MKT-08, OMQ-MKT-09 | LEG-MKT-05, LEG-MKT-07 | LM-MARKETPLACE-SELLER-56D | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-FULFILLMENT-56F | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-PAYMENT-56E | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-RETURNS-56G | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-FULFILLMENT-56F | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-AUDIT-56H | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-RETURNS-56G | N/A | N/A | BLOCKED |
+| LM-MARKETPLACE-QA-56I | DEC-MKT-01 to 18 | ALL GATES | LM-MARKETPLACE-AUDIT-56H | N/A | N/A | BLOCKED |
 
----
+## 8. LEGAL AND EXTERNAL GATE REGISTER
 
-## 6. ROADMAPA PRZYSZŁYCH CAPABILITIES B2B (`FUTURE B2B CAPABILITY ROADMAP`)
+| GATE_ID | SUBJECT | OWNER | REQUIRED_EVIDENCE | BLOCKED_FUTURE_SPRINT | SAFE_DOCUMENTATION_DEFAULT | STATUS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| LEG-MKT-01 | Customer Terms (Intermediary) | Legal Counsel | Formal Terms of Service | LM-MARKETPLACE-ORDER-56C | PENDING_TERMS | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-02 | E-commerce/RFQ Contract Formation | Legal Counsel | Formal Legal Memo | LM-MARKETPLACE-SCHEMA-56B1 | CONTRACT_FORMATION_EVENT_UNRESOLVED | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-03 | Seller Legal Identity & B2B/B2C Status | Legal Counsel | Verification Procedure | LM-MARKETPLACE-SCHEMA-56B2 | REQUIRES_EXPLICIT_EVIDENCE | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-04 | Partner Seller Terms & Conditions | Legal Counsel | Formal Seller Agreement | LM-MARKETPLACE-SELLER-56D | PENDING_SELLER_AGREEMENT | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-05 | PSP Architecture & KYB/KYC | Legal Counsel, FinOps | Approved PSP Contract & Flow | LM-MARKETPLACE-PAYMENT-56E | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-06 | Commission/Fee Tax Recognition & KSeF | Tax Advisor, Accounting | Tax Opinion | LM-MARKETPLACE-SCHEMA-56B3 | PENDING_TAX_AND_ACCOUNTING_VALIDATION | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-07 | Chargeback & Financial Dispute Liability | Legal Counsel, FinOps | Approved PSP Flow & Terms | LM-MARKETPLACE-SCHEMA-56B4 | CHARGEBACK_ALLOCATION_UNRESOLVED | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-08 | Returns & Physical Complaints Process | Legal Counsel | Authorized Process Policy | LM-MARKETPLACE-RETURNS-56G | PARTNER_RESPONSIBILITY | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-09 | Privacy Roles (Controller/Processor) | Data Protection Officer | RoPA & Privacy Policy Update | LM-MARKETPLACE-SCHEMA-56B1 | NO_PREDETERMINED_CONTROLLER_ROLE | PENDING_FORMAL_EVIDENCE |
+| LEG-MKT-10 | Future Reseller Activation Protocol | Legal Counsel | Complete Activation Readiness | LM-DROP-SCHEMA-56B3 (Future) | LOGIMARKET_RESELLER_DISABLED | PENDING_FORMAL_EVIDENCE |
 
-| CAPABILITY_ID | CAPABILITY_COMPONENT | CAPABILITY_STATUS | MVP_SCOPE_CLASSIFICATION | DECISION_DEPENDENCY | LEGAL_GATE | PROPOSED_SPRINT | BLOCKS_DROP_CORE |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| `CAP-B2B-ACCOUNT-01` | CUSTOMER_PO_NUMBER | `OPEN_BUSINESS_DECISION` | `MVP_OPTIONAL` | `DEC-DROP-23` | NULL | `LM-B2B-ACCOUNT-58A` | NO |
-| `CAP-B2B-ACCOUNT-01` | CORPORATE_ACCOUNT_HIERARCHY | `FUTURE_REQUIRED` | `POST_MVP` | NULL | NULL | `LM-B2B-ACCOUNT-58A` | NO |
-| `CAP-B2B-ACCOUNT-01` | PURCHASE_APPROVAL_WORKFLOW | `FUTURE_REQUIRED` | `POST_MVP` | NULL | NULL | `LM-B2B-ACCOUNT-58A` | NO |
-| `CAP-B2B-FREIGHT-02` | Heavy Freight & Deferred Quote | `OPEN_BUSINESS_DECISION` | `MVP_OPTIONAL` | `DEC-DROP-22` | NULL | `LM-DROP-FREIGHT-57B` | NO |
-| `CAP-B2B-CREDIT-03` | Trade Credit & Deferred Payment | `LEGAL_REVIEW_REQUIRED` | `MVP_OPTIONAL` | `DEC-DROP-21` | NULL | `LM-DROP-CREDIT-57C` | NO |
-| `CAP-CATALOG-ATTR-04`| Technical Attribute Normalization | `PARTIALLY_SUPPORTED` | `POST_MVP` | NULL | NULL | `LM-CAT-ATTR-54C` | NO |
-| `CAP-DROP-SLA-05` | RAW_EVENT_CAPTURE | `FUTURE_REQUIRED` | `MVP_REQUIRED` | NULL | NULL | `LM-DROP-SLA-57D` | NO |
-| `CAP-DROP-SLA-05` | DERIVED_METRICS | `FUTURE_OPTIONAL` | `POST_MVP` | NULL | NULL | `LM-DROP-SLA-57D` | NO |
-| `CAP-DROP-SLA-05` | AUTOMATIC_SCORE | `FUTURE_OPTIONAL` | `POST_MVP` | NULL | NULL | `LM-DROP-SLA-57D` | NO |
-| `CAP-DROP-SLA-05` | RANKING_INFLUENCE | `LEGAL_REVIEW_REQUIRED` | `POST_MVP` | NULL | `LEG-GATE-14` | `LM-DROP-SLA-57D` | NO |
+LEGACY_GATE_STATUS=MAPPED_THROUGH_R3_DECISION_OVERLAY
 
----
+## 9. FUTURE B2B CAPABILITIES
 
-*Koniec roadmapy implementacyjnej.*
+CUSTOMER_PO_NUMBER=MVP_OPTIONAL
+CORPORATE_ACCOUNT_HIERARCHY=POST_MVP
+PURCHASE_APPROVAL_WORKFLOW=POST_MVP
+HEAVY_FREIGHT_AND_DEFERRED_QUOTE=POST_MVP_OR_SEPARATE_RFQ_SCOPE
+TRADE_CREDIT_AND_DEFERRED_PAYMENT=OUT_OF_INITIAL_MVP
+TECHNICAL_ATTRIBUTE_NORMALIZATION=SEPARATE_CATALOG_ROADMAP
+SELLER_RAW_EVENT_CAPTURE=MVP_REQUIRED_WHERE_IMPLEMENTED
+AUTOMATIC_SELLER_SCORING=POST_MVP
+RANKING_INFLUENCE=POST_MVP_AND_LEGAL_REVIEW_REQUIRED
+
+## 10. READINESS
+
+R3_DOMAIN_RESET_STATUS=IN_PROGRESS_UNTIL_PR_17_MERGE
+NEXT_SPRINT=LM-MARKETPLACE-DATA-MODEL-56B0
+NEXT_SPRINT_TYPE=DOCUMENTATION_ONLY_LOGICAL_DATA_MODEL
+READY_FOR_LOGICAL_DATA_MODEL_RESET=YES_CONDITIONALLY_AFTER_R3_MERGE
+READY_FOR_SCHEMA_IMPLEMENTATION=NO
+READY_FOR_PRODUCTION_IMPLEMENTATION=NO
+PR_17_READY_TO_MERGE=NO_PENDING_FINAL_R3_REVIEW
