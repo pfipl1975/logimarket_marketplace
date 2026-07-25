@@ -97,7 +97,9 @@ GLOBAL_RESELLER_SWITCH=NO
    Note: RfqRequest is the conversion aggregate for offerModel=rfq.
    MarketplaceOrder is the conversion aggregate for offerModel=ecommerce.
    Contains: SellerDisclosureSnapshot (applies to both RfqRequest and MarketplaceOrder),
-             RfqRoutingEvent, RfqPartnerResponse, BuyerLegalContextSnapshot, BuyerIdentityReference
+             RfqRoutingEvent, RfqPartnerResponse, RfqBuyerLegalContextSnapshot,
+             EcommerceBuyerLegalContextSnapshot
+   External Reference: BuyerIdentityReference (owned by EXTERNAL_BUYER_IDENTITY_DOMAIN)
 
 3. SELLER_ORDER
    Root: SellerOrder
@@ -121,17 +123,23 @@ GLOBAL_RESELLER_SWITCH=NO
    GOODS_COMPLAINT_OWNER=PARTNER
    PLATFORM_SERVICE_COMPLAINT_OWNER=LOGIMARKET
    COMPLAINT_RESPONSIBILITY_CONFLATION_ALLOWED=NO
+   CHARGEBACK_RESPONSIBILITY_OWNER=UNRESOLVED
 
 8. AUDIT_IDEMPOTENCY_AND_PRIVACY
-   Logical persistence roots (conceptual; not all strict DDD aggregate roots):
-   - AuditJournal: persistence root for DomainAuditEvent entries
-   - IdempotencyRegistry: persistence root for IdempotencyRecord entries
-   - WebhookInboxMessage: persistence root for inbound PSP/external events
-   - OutboxDispatch: persistence root for OutboxMessage entries
-   - OutboundRedirectAuditLog: persistence root for OutboundRedirectEvent entries
-   Contains: DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage,
-             OutboundRedirectEvent, ExternalRedirectReference, RetentionPolicySnapshot,
-             PrivacyProcessingContext
+   Roots:
+   - AuditJournal
+   - IdempotencyRegistry
+   - WebhookInboxMessage
+   - OutboxDispatch
+   - OutboundRedirectAuditLog
+
+   Contains: DomainAuditEvent (owned by AuditJournal),
+             IdempotencyRecord (owned by IdempotencyRegistry),
+             OutboxMessage (owned by OutboxDispatch),
+             OutboundRedirectEvent (owned by OutboundRedirectAuditLog),
+             ExternalRedirectReference (owned by OutboundRedirectAuditLog),
+             RetentionPolicySnapshot (owned by AuditJournal),
+             PrivacyProcessingContext (owned by AuditJournal)
 
 ### Future Extension Boundaries (1)
 FUTURE_LOGIMARKET_RESELLER_EXTENSION
@@ -302,7 +310,7 @@ erDiagram
     SellerOrder ||--o{ Shipment : fulfilled_by
     SellerOrder ||--o{ ReturnCase : may_have
     SellerOrder ||--o{ GoodsComplaintCase : may_have_goods_complaint
-    SellerOrder ||--o{ PlatformServiceComplaintCase : may_have_platform_complaint
+    SellerProfile ||--o{ PlatformServiceComplaintCase : may_have_platform_complaint
     SellerOrder ||--o{ RefundCase : may_have
     SellerOrder ||--o{ ChargebackDispute : may_have
 
