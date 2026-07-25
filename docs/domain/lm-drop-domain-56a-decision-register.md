@@ -9,6 +9,14 @@
 > This R2B document is historically preserved. Its designation of LogiMarket as the global Seller of Record and default selection of Model A (Resale) have been **SUPERSEDED** by `lm-marketplace-domain-56a-r3-business-approval-and-validation-record.md`.
 > Model A is retained only as a future, offer-specific reseller channel (`active_in_initial_mvp=NO`).
 > The canonical MVP architecture is now **Hybrid Intermediary-First**.
+>
+> SUPERSEDED_AS_GLOBAL_MVP_DEFAULT=YES
+> SUPERSEDED_BY=LM-MARKETPLACE-DOMAIN-56A-R3
+> HISTORICAL_CONTENT_PRESERVED=YES
+> MODEL_A_RETAINED_AS=FUTURE_LOGIMARKET_RESELLER_CHANNEL
+> MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
+>
+> (Note: These supersession keys apply to the historical R2B portion of this document, not to the active R3 overlay.)
 
 
 ---
@@ -562,7 +570,7 @@ To zestawienie ma **najwyższy priorytet (precedence)** dla pierwszej iteracji M
 | `LEG-MKT-07` | refund, chargeback and seller liability | Who manages chargebacks operationally and financially? | PSP terms | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B4` | PARTNER_REFUND_LIABILITY; TECHNICAL_EXECUTOR_UNRESOLVED | Medium | Blocking | `PENDING_FORMAL_EVIDENCE` |
 | `LEG-MKT-08` | B2B and entrepreneur-with-consumer-rights analysis | Which protections apply to a natural-person entrepreneur, and how must buyer legal context be established without relying only on the presence of a NIP? | Legal memo | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B4` | DO_NOT_CLASSIFY_BUYER_STATUS_FROM_NIP_ONLY | Low | Blocking | `PENDING_FORMAL_EVIDENCE` |
 | `LEG-MKT-09` | privacy roles and retention | Are data controller roles properly defined between LogiMarket and the Partner? | DPA agreement | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B1` | NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION | Low | Blocking | `PENDING_FORMAL_EVIDENCE` |
-| `LEG-MKT-10` | future reseller activation | Under what legal conditions can a specific offer be switched to the reseller model? | Legal memo | Legal Counsel | `LM-DROP-SCHEMA-56B3` | LOGIMARKET_RESELLER_DISABLED | High | Non-Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-10` | future reseller activation | Under what legal conditions can a specific offer be switched to the reseller model? | Legal memo | Legal Counsel | `INITIAL_MVP_BLOCKING=NO; FUTURE_RESELLER_ONLY=YES; FUTURE_LOGIMARKET_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED` | LOGIMARKET_RESELLER_DISABLED | High | Non-Blocking | `PENDING_FORMAL_EVIDENCE` |
 
 ---
 

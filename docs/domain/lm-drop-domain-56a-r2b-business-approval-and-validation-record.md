@@ -10,6 +10,12 @@
 > This R2B document is historically preserved. Its designation of LogiMarket as the global Seller of Record and default selection of Model A (Resale) have been **SUPERSEDED** by `lm-marketplace-domain-56a-r3-business-approval-and-validation-record.md`.
 > Model A is retained only as a future, offer-specific reseller channel (`active_in_initial_mvp=NO`).
 > The canonical MVP architecture is now **Hybrid Intermediary-First**.
+>
+> SUPERSEDED_AS_GLOBAL_MVP_DEFAULT=YES
+> SUPERSEDED_BY=LM-MARKETPLACE-DOMAIN-56A-R3
+> HISTORICAL_CONTENT_PRESERVED=YES
+> MODEL_A_RETAINED_AS=FUTURE_LOGIMARKET_RESELLER_CHANNEL
+> MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
 
 
 ## 1. SCOPE OF APPROVAL AND EXECUTIVE DECLARATION

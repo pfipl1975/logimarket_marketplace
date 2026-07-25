@@ -502,7 +502,7 @@ Do not state that parties are automatically:
 | `OMQ-MKT-09` | chargeback responsibility and allocation | `CHARGEBACK_ALLOCATION_UNRESOLVED` | Legal Counsel | LEG-MKT-07 | LM-MARKETPLACE-SCHEMA-56B4 | Dispute tracking | Block webhooks |
 | `OMQ-MKT-10` | seller goods invoice and KSeF exchange | `NO_DELEGATED_INVOICING` | Tax Advisor | LEG-MKT-06 | LM-MARKETPLACE-SCHEMA-56B3 | Document storage | Block automation |
 | `OMQ-MKT-11` | privacy-role allocation and retention | `NO_PREDETERMINED_CONTROLLER_ROLE` | Legal Counsel | LEG-MKT-09 | LM-MARKETPLACE-SCHEMA-56B1 | Config retention | Block anonymization |
-| `OMQ-MKT-12` | future reseller activation | `LOGIMARKET_RESELLER_DISABLED` | Legal Counsel | LEG-MKT-10 | LM-DROP-SCHEMA-56B3 | Offer decoupling | Block reseller UI |
+| `OMQ-MKT-12` | future reseller activation | `LOGIMARKET_RESELLER_DISABLED; ACTIVE_IN_INITIAL_MVP=NO; AUTOMATIC_RESELLER_ACTIVATION=NO; GLOBAL_RESELLER_SWITCH=NO; OUTBOUND_RESELLER_COMBINATION_ALLOWED=NO` | Legal Counsel | LEG-MKT-10 | FUTURE_LOGIMARKET_RESELLER_ACTIVATION_SPRINT_NOT_YET_SCHEDULED | Offer decoupling | Block reseller UI |
 
 ## 18. IMPLEMENTATION READINESS
 
