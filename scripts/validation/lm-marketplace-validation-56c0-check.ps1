@@ -43,7 +43,8 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
         EVIDENCE_SECTION_EXTRA_IDS: 0,
         EVIDENCE_PACK_FORMAT_ERRORS: 0,
         REOPEN_POLICY_MISMATCHES: 0,
-        EARLIEST_SCHEMA_SPRINT_MISMATCHES: 0
+        EARLIEST_SCHEMA_SPRINT_MISMATCHES: 0,
+        REVIEWED_HEAD_SHA_MISMATCHES: 0
     };
 
     const expectedIds = [];
@@ -255,9 +256,10 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
     }
 
     const expStatus = {
-        "DOCUMENT_STATUS": "READY_FOR_INDEPENDENT_REVIEW",
+        "DOCUMENT_STATUS": "INDEPENDENT_REVIEW_PASSED",
+        "AUTHOR_VALIDATION_STATUS": "PASS_READY_FOR_RENEWED_INDEPENDENT_REVIEW",
         "AUTHOR_REMEDIATION_STATUS": "PASS_READY_FOR_FINAL_REREVIEW",
-        "INDEPENDENT_REVIEW_STATUS": "CHANGES_REQUESTED"
+        "INDEPENDENT_REVIEW_STATUS": "PASS"
     };
     for (const [k, v] of Object.entries(expStatus)) {
         const m = recTxt.match(new RegExp(`^${k}=(.*)$`, 'm'));
@@ -286,7 +288,9 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
     const mRevPerf = recTxt.match(/^- independent review performed: (.*)$/m);
     if (!mRevPerf || mRevPerf[1].trim() !== 'YES') { metrics.REVIEW_RECORD_REVIEW_STATE_MISMATCHES++; errors.push("Review performed mismatch"); }
     const mRevVerd = recTxt.match(/^- independent review verdict: (.*)$/m);
-    if (!mRevVerd || mRevVerd[1].trim() !== 'CHANGES_REQUESTED') { metrics.REVIEW_RECORD_REVIEW_STATE_MISMATCHES++; errors.push("Review verdict mismatch"); }
+    if (!mRevVerd || mRevVerd[1].trim() !== 'PASS') { metrics.REVIEW_RECORD_REVIEW_STATE_MISMATCHES++; errors.push("Review verdict mismatch"); }
+    const mRevSha = recTxt.match(/^- reviewed head SHA: (.*)$/m);
+    if (!mRevSha || mRevSha[1].trim() !== '192ce4780de41c65b8b6e8ffb283802f1943bee5') { metrics.REVIEWED_HEAD_SHA_MISMATCHES++; errors.push("Reviewed head SHA mismatch"); }
 
     const expectedSecMap = {
         "1": ["LEG-MKT-01", "LEG-MKT-02", "LEG-MKT-03", "LEG-MKT-04", "LEG-MKT-05", "LEG-MKT-07", "LEG-MKT-08", "LEG-MKT-09", "LEG-MKT-10", "OMQ-MKT-01", "OMQ-MKT-02", "OMQ-MKT-03", "OMQ-MKT-04", "OMQ-MKT-05", "OMQ-MKT-06", "OMQ-MKT-08", "OMQ-MKT-09", "OMQ-MKT-11", "OMQ-MKT-12"],
@@ -416,6 +420,9 @@ function run() {
     test("27. wrong preliminary parallel work", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\| Workstream A\s*\| Workstream E/, "| LEG-MKT-01 | Workstream A         | Workstream F"), baseEv, baseRec], "Preliminary parallel work mismatch");
     test("28. wrong 56B0 reopen policy", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\|([^\r\n]*)\| CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED\s*\|/, "| LEG-MKT-01 |$1| WRONG_POLICY |"), baseEv, baseRec], "Reopen policy mismatch");
     test("29. wrong earliest downstream schema sprint", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\|([^\r\n]*)\| LM-MARKETPLACE-SCHEMA-56B1\s*\|/, "| LEG-MKT-01 |$1| LM-MARKETPLACE-SCHEMA-WRONG |"), baseEv, baseRec], "Earliest schema sprint mismatch");
+    test("30. missing original author validation status", () => [baseReg, baseTpl, basePlan, baseEv, baseRec.replace(/AUTHOR_VALIDATION_STATUS=PASS_READY_FOR_RENEWED_INDEPENDENT_REVIEW/, "AUTHOR_VALIDATION_STATUS=MISSING")], "Record status mismatch for AUTHOR_VALIDATION_STATUS");
+    test("31. wrong independent review PASS status", () => [baseReg, baseTpl, basePlan, baseEv, baseRec.replace(/^- independent review verdict: PASS/m, "- independent review verdict: FAIL")], "Review verdict mismatch");
+    test("32. wrong reviewed head SHA", () => [baseReg, baseTpl, basePlan, baseEv, baseRec.replace(/^- reviewed head SHA: 192ce4780de41c65b8b6e8ffb283802f1943bee5/m, "- reviewed head SHA: WRONG_SHA")], "Reviewed head SHA mismatch");
 
     console.log(`NEGATIVE_SELF_TEST_COUNT=${selfTestCount}`);
     console.log(`NEGATIVE_SELF_TEST_FAILURES=${selfTestFailures}`);
