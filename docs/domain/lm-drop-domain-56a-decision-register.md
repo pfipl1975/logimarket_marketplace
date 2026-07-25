@@ -5,6 +5,20 @@
 **Status:** READY FOR FINAL DOMAIN REVIEW
 **Moduł:** Decision Register for Dropshipping Architecture
 
+> **[R3 SUPERSESSION NOTICE]**
+> This R2B document is historically preserved. Its designation of LogiMarket as the global Seller of Record and default selection of Model A (Resale) have been **SUPERSEDED** by `lm-marketplace-domain-56a-r3-business-approval-and-validation-record.md`.
+> Model A is retained only as a future, offer-specific reseller channel (`active_in_initial_mvp=NO`).
+> The canonical MVP architecture is now **Hybrid Intermediary-First**.
+>
+> SUPERSEDED_AS_GLOBAL_MVP_DEFAULT=YES
+> SUPERSEDED_BY=LM-MARKETPLACE-DOMAIN-56A-R3
+> HISTORICAL_CONTENT_PRESERVED=YES
+> MODEL_A_RETAINED_AS=FUTURE_LOGIMARKET_RESELLER_CHANNEL
+> MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
+>
+> (Note: These supersession keys apply to the historical R2B portion of this document, not to the active R3 overlay.)
+
+
 ---
 
 ## 1. R2B BUSINESS APPROVAL STATUS
@@ -466,6 +480,97 @@ DEC-DROP-22
 | `DEC-DROP-21` | `OPEN_BLOCKING_BUSINESS_DECISION` | `BUSINESS_APPROVED_PENDING_EXTERNAL_VALIDATION` | `ONLINE_IMMEDIATE_CAPTURE; PROFORMA_PREPAYMENT; INTERNAL_TRADE_CREDIT=NOT_IN_MVP; EXTERNAL_B2B_FINANCING=POST_MVP; FUTURE_SCOPE=LM-DROP-CREDIT-57C; PROVIDER_SELECTED=NO` | Piotr Fiszer | Business Owner | 2026-07-23 | OWNER_BUSINESS_DECISION_2026_07_23 | `PENDING_FORMAL_EVIDENCE` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `PENDING_FORMAL_EVIDENCE` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | Pending PSP and Legal confirmation | `READY_FOR_LOGICAL_DATA_MODEL_CONDITIONALLY` | Blocked for schema until validation |
 | `DEC-DROP-22` | `OPEN_BLOCKING_BUSINESS_DECISION` | `BUSINESS_APPROVED` | `PARCEL; PALLET; MANUAL_FREIGHT_ECOMMERCE=NOT_SELECTED_FOR_MVP; DEFERRED_FREIGHT_ECOMMERCE=NOT_SELECTED_FOR_MVP; OFFER_MODEL_IMPACT=NO_AUTOMATIC_OFFER_MODEL_CHANGE` | Piotr Fiszer | Business Owner | 2026-07-23 | OWNER_BUSINESS_DECISION_2026_07_23 | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | No external blocker | `READY_FOR_LOGICAL_DATA_MODEL` | Approved by owner |
 | `DEC-DROP-23` | `OPEN` | `BUSINESS_APPROVED` | `CUSTOMER_PO_NUMBER=OPTIONAL` | Piotr Fiszer | Business Owner | 2026-07-23 | OWNER_BUSINESS_DECISION_2026_07_23 | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | `NOT_REQUIRED_FOR_CURRENT_DECISION` | No external blocker | `READY_FOR_LOGICAL_DATA_MODEL` | Approved by owner |
+
+---
+
+## 6. R3 INTERMEDIARY-FIRST DECISION OVERLAY
+
+To zestawienie ma **najwyższy priorytet (precedence)** dla pierwszej iteracji MVP (Intermediary-First). Jeżeli decyzje R3 stoją w sprzeczności z decyzjami R2B (np. dotyczącymi statusu Merchant of Record lub logiki płatności), w pierwszej kolejności stosuje się decyzje z bloku R3. Poprzednie decyzje R2B zostały sklasyfikowane i ewentualnie zablokowane dla MVP w tabelach wpływu, pozostając jedynie wskaźnikiem przyszłych kierunków rozwoju (Future Reseller).
+
+### 6.1. DEC-MKT: NOWE DECYZJE ARCHITEKTONICZNE (1-18)
+
+| DECISION_ID | APPROVED_OPTION | STATUS | OWNER | EFFECTIVE_DATE | AFFECTED_OFFER_MODEL | AFFECTED_CONTRACT_MODEL | IMPLEMENTATION_IMPACT | LEGAL_PSP_TAX_DEPENDENCY | IMPLEMENTATION_READINESS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `DEC-MKT-01` | intermediary-first MVP | `DECIDED` | Piotr Fiszer | 2026-07-24 | All | partner_marketplace | Core marketplace mechanics | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-02` | independent offerModel and contractModel | `DECIDED` | Piotr Fiszer | 2026-07-24 | All | All | Schema separation of offer source and contract target | NO | `READY_FOR_LOGICAL_DATA_MODEL_RESET` |
+| `DEC-MKT-03` | RFQ partner marketplace active | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq | partner_marketplace | Default MVP flow for RFQ | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-04` | ecommerce partner marketplace active | `DECIDED` | Piotr Fiszer | 2026-07-24 | ecommerce | partner_marketplace | Default MVP flow for ecommerce | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-05` | outbound external redirect active | `DECIDED` | Piotr Fiszer | 2026-07-24 | outbound | external_redirect | Existing logic preservation via /go/[id] | NO | `READY_FOR_LOGICAL_DATA_MODEL_RESET` |
+| `DEC-MKT-06` | reseller future only | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | logimarket_reseller | Blocked in MVP schema validation | NO | `READY_FOR_LOGICAL_DATA_MODEL_RESET` |
+| `DEC-MKT-07` | Partner contractual seller and Seller of Record | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | P2B and Terms & Conditions | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-08` | Partner owns description, price, availability | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | Legal disclosures | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-09` | Partner owns fulfillment, delivery, complaints, returns, refunds | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | Operational separation | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-10` | LogiMarket owns platform orchestration and rule enforcement | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | Core admin features | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-11` | multi-seller checkout creates seller-specific relationships | `DECIDED` | Piotr Fiszer | 2026-07-24 | ecommerce | partner_marketplace | Checkout cart splitting logic | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-12` | Partner issues buyer goods invoice | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | B2B billing automation | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-13` | LogiMarket issues platform-service invoices | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | KSeF integration | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-14` | licensed PSP and validation required | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | Physical payment schema is blocked until an abstract PSP architecture, required capabilities and feasibility assumptions are approved. Specific PSP provider selection may remain unresolved during the documentation-only logical data-model sprint. | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-15` | no self-custody or LogiMarket escrow | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | NO_LOGIMARKET_SELF_CUSTODY; NO_LOGIMARKET_OPERATED_ESCROW; FINAL_PSP_ACCOUNT_AND_SETTLEMENT_REPRESENTATION_UNRESOLVED | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-16` | seller disclosure before contract formation | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | partner_marketplace | Pre-checkout UI requirements | YES | `READY_FOR_LOGICAL_DATA_MODEL_RESET_CONDITIONALLY` |
+| `DEC-MKT-17` | reseller activation explicit and offer-specific | `DECIDED` | Piotr Fiszer | 2026-07-24 | rfq, ecommerce | logimarket_reseller | Blocks global Reseller switches | NO | `READY_FOR_LOGICAL_DATA_MODEL_RESET` |
+| `DEC-MKT-18` | existing conversion behavior unchanged in R3 | `DECIDED` | Piotr Fiszer | 2026-07-24 | All | All | No frontend behavior changes | NO | `READY_FOR_LOGICAL_DATA_MODEL_RESET` |
+
+### 6.2. DEC-DROP IMPACT MATRIX: WPŁYW R3 NA DECYZJE R2B (1-23)
+
+| DECISION_ID | PREVIOUS_ASSUMPTION | R3_IMPACT_CLASSIFICATION | ACTIVE_MVP_INTERPRETATION | FUTURE_RESELLER_INTERPRETATION | BLOCKED_FUTURE_SPRINT | EVIDENCE_OWNER |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `DEC-DROP-01` | LogiMarket as MoR | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | PAYMENT_ARCHITECTURE=PENDING_PSP_VALIDATION | Preserved for Model A | `LM-DROP-PAYMENT-56E` | Business Owner |
+| `DEC-DROP-02` | LogiMarket as SoR | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | Partner is the primary goods-contract and goods-claim owner | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Business Owner |
+| `DEC-DROP-03` | LogiMarket goods invoices | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | PARTNER_GOODS_INVOICE; LOGIMARKET_PLATFORM_SERVICE_INVOICE | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Business Owner |
+| `DEC-DROP-04` | payment account / PSP settlement-account architecture | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | PAYMENT_ALLOCATION_MODEL=UNRESOLVED | Preserved for Model A | `LM-DROP-PAYMENT-56E` | Business Owner |
+| `DEC-DROP-05` | customer payment as LogiMarket sale plus supplier trade payable | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | SELLER_PAYOUT_MODEL=UNRESOLVED | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Business Owner |
+| `DEC-DROP-06` | trading margin | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | PLATFORM_REVENUE_MODEL=COMMISSION_OR_PLATFORM_SERVICE_FEE; FINAL_MONETIZATION_MODEL=UNRESOLVED; COMMISSION_RECOGNITION=PENDING_TAX_AND_ACCOUNTING_VALIDATION | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Business Owner |
+| `DEC-DROP-07` | Margin recognition | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | COMMISSION_RECOGNITION=PENDING_TAX_AND_ACCOUNTING_VALIDATION | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Business Owner |
+| `DEC-DROP-08` | Settlement frequency | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | SELLER_PAYOUT_MODEL=UNRESOLVED | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Business Owner |
+| `DEC-DROP-09` | Price error liability | `REQUIRES_REVALIDATION` | Partner owns pricing responsibility; price-error procedure requires legal validation; LogiMarket may support platform workflow and audit | N/A | `LM-DROP-SCHEMA-56B4` | Business Owner |
+| `DEC-DROP-10` | Overselling liability | `REQUIRES_REVALIDATION` | Partner owns stock and order-acceptance responsibility; platform may record SLA/scoring events; ranking impact remains gated | N/A | `LM-DROP-SUPPLIER-56D` | Business Owner |
+| `DEC-DROP-11` | customer-facing seller responsibility, fulfillment, packaging, carrier operation, recourse and delivery terms | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | Partner is fulfillment and delivery-responsible party; legal validation remains required | Preserved for Model A | `LM-DROP-SCHEMA-56B2` | Business Owner |
+| `DEC-DROP-12` | customer refund executor and supplier recourse | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | REFUND_FINANCIAL_LIABILITY=PARTNER_FOR_PARTNER_MARKETPLACE; REFUND_TECHNICAL_EXECUTOR=UNRESOLVED | Preserved for Model A | `LM-DROP-SCHEMA-56B4` | Business Owner |
+| `DEC-DROP-13` | first-line support and formal complaint process | `SUPERSEDED_FOR_INTERMEDIARY_MVP` | Partner is goods-complaint owner; LogiMarket may provide intake, communication and dispute support | Preserved for Model A | `LM-DROP-SCHEMA-56B4` | Business Owner |
+| `DEC-DROP-14` | Return destination | `PRESERVED_AS_CHANNEL_NEUTRAL` | return destination may remain partner warehouse; return rules require legal and operational validation | Partner warehouse | N/A | Business Owner |
+| `DEC-DROP-15` | Partial fulfillment | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve buyer acceptance and no silent partial fulfillment | Allowed | N/A | Business Owner |
+| `DEC-DROP-16` | Split shipment | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve one-to-many shipments; use seller-order terminology for intermediary MVP | Allowed | N/A | Business Owner |
+| `DEC-DROP-17` | Multi-partner cart | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve multi-partner cart; map marketplace order to seller orders one-to-many | Cart splitting required | N/A | Business Owner |
+| `DEC-DROP-18` | Cross-border scope | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve PL-PL | PL-PL only | N/A | Business Owner |
+| `DEC-DROP-19` | Delivery countries | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve PL delivery | PL only | N/A | Business Owner |
+| `DEC-DROP-20` | Currency and language | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve PLN and PL document-language assumptions | PLN and PL only | N/A | Business Owner |
+| `DEC-DROP-21` | Payment timing | `REQUIRES_REVALIDATION` | INTERNAL_TRADE_CREDIT=OUT_OF_INITIAL_MVP; EXTERNAL_FINANCING=FUTURE_SCOPE; PAYMENT_TIMING=UNRESOLVED; PAYMENT_ARCHITECTURE=PENDING_PSP_VALIDATION | N/A | `LM-DROP-PAYMENT-56E` | Business Owner |
+| `DEC-DROP-22` | Freight scope | `PRESERVED_AS_CHANNEL_NEUTRAL` | PARCEL=SELECTED; PALLET=SELECTED; MANUAL_FREIGHT_ECOMMERCE=NOT_SELECTED; DEFERRED_FREIGHT_ECOMMERCE=NOT_SELECTED; NO_AUTOMATIC_OFFER_MODEL_CHANGE | N/A | `LM-DROP-SCHEMA-56B2` | Business Owner |
+| `DEC-DROP-23` | PO number | `PRESERVED_AS_CHANNEL_NEUTRAL` | preserve optional customer PO number | Optional | N/A | Business Owner |
+
+### 6.3. LEG-GATE IMPACT MATRIX (1-14)
+
+| LEGAL_GATE_ID | PREVIOUS_SCOPE | R3_IMPACT_CLASSIFICATION | ACTIVE_MVP_INTERPRETATION | FUTURE_RESELLER_INTERPRETATION | BLOCKED_FUTURE_SPRINT | EVIDENCE_OWNER |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `LEG-GATE-01` | MoR and SoR | `REQUIRES_REVALIDATION` | Partner is contractual seller and Seller of Record; LogiMarket is intermediary; PSP must not be described as MoR automatically; legal qualification remains pending. | Preserved for Model A | `LM-DROP-SCHEMA-56B3` | Legal Counsel |
+| `LEG-GATE-02` | VAT and KSeF | `REQUIRES_REVALIDATION` | Partner issues buyer goods invoice; LogiMarket issues its own platform-service invoice; delegated seller invoicing is not selected; VAT/KSeF validation remains pending. | N/A | `LM-DROP-SCHEMA-56B3` | Legal Counsel |
+| `LEG-GATE-03` | Dropshipping Partner Agreement | `REQUIRES_REVALIDATION` | active MVP requires marketplace seller agreement; future reseller requires separate supplier/reseller agreement. | Preserved for Model A | `LM-DROP-SCHEMA-56B1` | Legal Counsel |
+| `LEG-GATE-04` | B2B Returns | `REQUIRES_REVALIDATION` | Partner is return owner for partner_marketplace; B2B and entrepreneur-with-consumer-rights rules remain pending. | N/A | `LM-DROP-SCHEMA-56B4` | Legal Counsel |
+| `LEG-GATE-05` | Warranty and Complaints | `REQUIRES_REVALIDATION` | Partner is goods-complaint and warranty owner; LogiMarket may provide dispute support; legal validation remains pending. | N/A | `LM-DROP-SCHEMA-56B4` | Legal Counsel |
+| `LEG-GATE-06` | Carrier Liability | `REQUIRES_REVALIDATION` | Partner is fulfillment and delivery-responsible party; carrier liability and platform orchestration remain to be validated. | N/A | `LM-DROP-SCHEMA-56B2` | Legal Counsel |
+| `LEG-GATE-07` | PII Processing and Sharing | `REQUIRES_REVALIDATION` | PRIVACY_ROLE_ALLOCATION=PENDING_PRIVACY_VALIDATION; do not assume joint controllership or independent controllership; document data flows and obtain privacy validation. | N/A | `LM-DROP-SCHEMA-56B5` | Legal Counsel |
+| `LEG-GATE-08` | Data Retention | `REQUIRES_REVALIDATION` | retention periods remain configurable and pending legal validation. | N/A | `LM-DROP-SCHEMA-56B5` | Legal Counsel |
+| `LEG-GATE-09` | Chargeback Responsibility | `REQUIRES_REVALIDATION` | chargeback operational and financial allocation remains unresolved. | N/A | `LM-DROP-SCHEMA-56B3` | Legal Counsel |
+| `LEG-GATE-10` | Payment Flow and Funds Handling | `REQUIRES_REVALIDATION` | PAYMENT_ARCHITECTURE=PENDING_PSP_VALIDATION; KYB_KYC_RESPONSIBILITY=PENDING_PSP_AND_LEGAL_VALIDATION; marketplace PSP architecture remains unresolved; no direct-to-partner payment assumption; no LogiMarket self-custody; no platform escrow. | N/A | `LM-DROP-PAYMENT-56E` | Legal Counsel |
+| `LEG-GATE-11` | Refund Responsibility and Financial Corrections | `REQUIRES_REVALIDATION` | REFUND_FINANCIAL_LIABILITY=PARTNER_FOR_PARTNER_MARKETPLACE; REFUND_TECHNICAL_EXECUTOR=UNRESOLVED; Partner carries refund liability for partner marketplace; technical refund executor remains unresolved. | N/A | `LM-DROP-SCHEMA-56B3` | Legal Counsel |
+| `LEG-GATE-12` | Trade Credit and External Financing | `REQUIRES_REVALIDATION` | internal trade credit remains outside initial MVP; external financing remains future scope. | N/A | `LM-DROP-PAYMENT-56E` | Legal Counsel |
+| `LEG-GATE-13` | Credit Risk Ownership and Debt Collection | `REQUIRES_REVALIDATION` | credit-risk and collection rules remain outside initial marketplace MVP unless deferred payment is later activated. | N/A | `LM-DROP-PAYMENT-56E` | Legal Counsel |
+| `LEG-GATE-14` | Supplier Scoring and P2B Ranking Transparency | `REQUIRES_REVALIDATION` | seller scoring, ranking effects and suspension rules require P2B/legal validation. | N/A | `LM-DROP-SUPPLIER-56D` | Legal Counsel |
+
+### 6.4. LEG-MKT: MARKETPLACE LEGAL GATES (1-10)
+
+| LEGAL_GATE_ID | QUESTION | BUSINESS_ASSUMPTION | EVIDENCE_REQUIRED | OWNER | BLOCKED_SPRINT | SAFE_DOCUMENTATION_DEFAULT | SCHEMA_IMPACT | PRODUCTION_IMPACT | STATUS |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| `LEG-MKT-01` | intermediary legal qualification and terms | Does the new model qualify strictly as intermediation without LogiMarket entering the contract of sale? | Legal memo | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B1` | LOGIMARKET_INTERMEDIARY_ONLY; NO_SELLER_ROLE_FOR_PARTNER_MARKETPLACE | High | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-02` | contract formation for RFQ and e-commerce | How exactly is the contract formed between buyer and seller in the UI? | Legal memo | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B1` | CONTRACT_FORMATION_EVENT_UNRESOLVED; MODEL_ORDER_INTENT_AND_SELLER_ACCEPTANCE_SEPARATELY | High | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-03` | seller identity and pre-contract disclosure | How is the seller presented to the buyer before checkout to meet legal standards? | UX Review | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B1` | DISPLAY_SELLER_IDENTITY_AND_RESPONSIBILITY_BEFORE_CONVERSION | Medium | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-04` | P2B terms, rankings, suspension, complaints | Do the terms of service comply with the P2B regulation for rankings and suspensions? | Legal memo | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B1` | NO_AUTOMATIC_RANKING_PENALTY_OR_SUSPENSION_EFFECT_WITHOUT_VALIDATED_RULES | Low | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-05` | PSP architecture, KYB/KYC, allocations, payouts | What licensed-PSP architecture can support seller KYB/KYC, payment allocation, settlement, payout, refunds and chargebacks without LogiMarket self-custody or LogiMarket-operated escrow? | PSP contract | Legal Counsel | `LM-MARKETPLACE-PAYMENT-56E` | NO_SELF_CUSTODY; NO_LOGIMARKET_ESCROW; ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | High | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-06` | VAT, accounting and KSeF split | How is the platform commission invoiced to the seller versus the goods invoice to the buyer? | Tax opinion | Tax Advisor | `LM-MARKETPLACE-SCHEMA-56B3` | PARTNER_GOODS_INVOICE; LOGIMARKET_PLATFORM_SERVICE_INVOICE; NO_DELEGATED_INVOICING | High | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-07` | refund, chargeback and seller liability | Who manages chargebacks operationally and financially? | PSP terms | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B4` | PARTNER_REFUND_LIABILITY; TECHNICAL_EXECUTOR_UNRESOLVED | Medium | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-08` | B2B and entrepreneur-with-consumer-rights analysis | Which protections apply to a natural-person entrepreneur, and how must buyer legal context be established without relying only on the presence of a NIP? | Legal memo | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B4` | DO_NOT_CLASSIFY_BUYER_STATUS_FROM_NIP_ONLY | Low | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-09` | privacy roles and retention | Are data controller roles properly defined between LogiMarket and the Partner? | DPA agreement | Legal Counsel | `LM-MARKETPLACE-SCHEMA-56B1` | NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION | Low | Blocking | `PENDING_FORMAL_EVIDENCE` |
+| `LEG-MKT-10` | future reseller activation | Under what legal conditions can a specific offer be switched to the reseller model? | Legal memo | Legal Counsel | `INITIAL_MVP_BLOCKING=NO; FUTURE_RESELLER_ONLY=YES; FUTURE_LOGIMARKET_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED` | LOGIMARKET_RESELLER_DISABLED | High | Non-Blocking | `PENDING_FORMAL_EVIDENCE` |
 
 ---
 
