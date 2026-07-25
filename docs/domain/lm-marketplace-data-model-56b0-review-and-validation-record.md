@@ -4,10 +4,10 @@ DOCUMENT_ROLE=NORMATIVE_TRACEABILITY
 DOCUMENT_STATUS=READY_FOR_INDEPENDENT_LOGICAL_MODEL_REVIEW
 
 ## 1. SPRINT IDENTITY
-- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A7
+- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A9
 
 ## 2. START AND CURRENT HEAD SHAS
-- INPUT_HEAD_SHA=19d59e5c28abfb2bbf77879b2c54320c6ed2afd4
+- INPUT_HEAD_SHA=a7919b1e3a8f4d9f57ada2442ab1d838af22f89a
 - BASE_MAIN_SHA=6a4560c8d2e55ab65863a6f44f30225e5e6272b8
 - DOCUMENT_COMMIT_SHA=RECORDED_BY_GIT_HISTORY_AND_FINAL_REPORT
 
@@ -64,6 +64,14 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 - DEC_MKT_08_REQUIRED_CATALOG_ELEMENTS_MISSING=0
 - UNSUPPORTED_CURRENT_PARTNER_AUTHORSHIP_CLAIMS=0
 - CURRENT_FACT_AND_TARGET_RESPONSIBILITY_CONFLATIONS=0
+- STALE_REVIEW_SPRINT_METADATA=0
+- STALE_INPUT_HEAD_METADATA=0
+- SELF_REFERENTIAL_COMMIT_SHA_REQUIREMENTS=0
+- DEC_MKT_08_VALIDATION_ONLY_ELEMENTS=0
+- DEC_MKT_08_CATALOG_ONLY_ELEMENTS=0
+- DEC_MKT_08_EXACT_CROSS_DOCUMENT_SET_MATCH=YES
+- DEC_MKT_10_CHARGEBACK_ELEMENT_OMISSIONS=0
+- DEC_MKT_10_CHARGEBACK_LIFECYCLE_OMISSIONS=0
 
 ## 8. EXACT DEC-MKT TRACEABILITY
 | DECISION_ID | NORMATIVE_MEANING | AFFECTED_AGGREGATES | AFFECTED_MODEL_ELEMENTS | AFFECTED_LIFECYCLES | LOGICAL_INVARIANTS | CURRENT_REPOSITORY_IMPACT | PHYSICAL_SCHEMA_BLOCKER |
@@ -75,9 +83,9 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 | DEC-MKT-05 | outbound external redirect active | AUDIT_IDEMPOTENCY_AND_PRIVACY | OfferConversionClassification, OutboundRedirectEvent, ExternalRedirectReference | no dedicated lifecycle | Audit domain records redirect; no marketplace transaction created. | /go/[id] preserves redirect behavior. | NO |
 | DEC-MKT-06 | reseller future only | FUTURE_LOGIMARKET_RESELLER_EXTENSION | OfferContractClassification, FutureResellerActivationPolicy | LC-16 | Activation policy explicitly inactive in initial MVP. | No automatic Reseller inference. | NO |
 | DEC-MKT-07 | Partner contractual seller and Seller of Record | SELLER_AND_OFFER_CLASSIFICATION | OfferSellerAssignment, SellerProfile, OfferContractClassification | LC-02C, LC-05 | 1:1 active seller assignment per offer required. | offers.partnerId application join mapped for extension. | YES |
-| DEC-MKT-08 | Partner owns offer description, price and availability | SELLER_AND_OFFER_CLASSIFICATION; SELLER_ORDER | Offer; OfferMarketplaceClassification; OfferSellerAssignment; OfferConversionClassification; SellerOrderItem | LC-02C; LC-05 | assigned seller owns commercial offer content prospectively; seller-order item stores immutable commercial snapshot | current offers are stored and centrally curated in the existing repository; the current schema does not encode commercial-content responsibility ownership; the logical R3 model assigns commercial responsibility to the assigned seller and preserves immutable seller-order item snapshots | YES |
+| DEC-MKT-08 | Partner owns offer description, price and availability | SELLER_AND_OFFER_CLASSIFICATION; SELLER_ORDER | Offer; OfferMarketplaceClassification; OfferSellerAssignment; SellerOrderItem | LC-02C; LC-05 | assigned seller owns commercial offer content prospectively; seller-order item stores immutable commercial snapshot | current offers are stored and centrally curated in the existing repository; the current schema does not encode commercial-content responsibility ownership; the logical R3 model assigns commercial responsibility to the assigned seller and preserves immutable seller-order item snapshots | YES |
 | DEC-MKT-09 | Partner owns fulfillment, delivery, goods complaints, returns and refund financial liability | AFTER_SALES_AND_DISPUTES, SELLER_ORDER | Shipment; ShipmentItemAllocation; DeliveryEvent; ReturnCase; GoodsComplaintCase; RefundCase; SellerResponsibilitySnapshot | LC-09; LC-10; LC-11A; LC-12 | Partner owns goods complaint and return responsibilities. CHARGEBACK_FINAL_RESPONSIBILITY_ASSIGNED_BY_DEC_MKT_09=NO | After-sales responsibilities mapped. | YES |
-| DEC-MKT-10 | LogiMarket owns platform orchestration, rule enforcement and platform-service complaints | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE, AFTER_SALES_AND_DISPUTES, AUDIT_IDEMPOTENCY_AND_PRIVACY | PlatformRevenueRecord, PlatformServiceComplaintCase, DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, RetentionPolicySnapshot, PrivacyProcessingContext | LC-01, LC-11B, LC-14 | LogiMarket owns platform complaints and audit retention. | Explicit separation of platform complaints from goods complaints. | YES |
+| DEC-MKT-10 | LogiMarket owns platform orchestration, rule enforcement and platform-service complaints | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE, AFTER_SALES_AND_DISPUTES, AUDIT_IDEMPOTENCY_AND_PRIVACY | PlatformRevenueRecord, PlatformServiceComplaintCase, DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, RetentionPolicySnapshot, PrivacyProcessingContext, ChargebackDispute | LC-01, LC-11B, LC-14, LC-13 | LogiMarket owns platform complaints and audit retention. DEC_MKT_10_CHARGEBACK_SCOPE=PLATFORM_ORCHESTRATION_ONLY; CHARGEBACK_RESPONSIBILITY_OWNER=UNRESOLVED; CHARGEBACK_FINANCIAL_ALLOCATION_OWNER=UNRESOLVED | Explicit separation of platform complaints from goods complaints. | YES |
 | DEC-MKT-11 | multi-seller checkout creates seller-specific relationships | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder, SellerOrder, EcommerceBuyerLegalContextSnapshot, BuyerIdentityReference | LC-04, LC-05 | Orchestration (MarketplaceOrder) decomposes into legal contracts (SellerOrder). | Multi-seller cart decomposition required. | YES |
 | DEC-MKT-12 | Partner issues buyer goods invoice | SELLER_ORDER | GoodsInvoiceResponsibilitySnapshot | LC-05 | Goods invoice responsibility explicitly snapshot. | Explicit goods invoice issuer recorded. | YES |
 | DEC-MKT-13 | LogiMarket issues platform-service invoices | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | PlatformRevenueRecord, PlatformServiceInvoiceReference | LC-14 | Distinct platform revenue lifecycle (LC-14) established. | Platform service revenue recorded separately. | YES |
