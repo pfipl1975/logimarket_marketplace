@@ -23,38 +23,46 @@ MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
 FUTURE_RESELLER_CHANNEL_SUPPORTED=YES
 FUTURE_RESELLER_CHANNEL_ENABLED=NO
 
+CURRENT_CONTRACT_MODEL_FIELD_EXISTS=NO
+OFFER_MODEL_AND_CONTRACT_MODEL_CONFLATION_ALLOWED=NO
+OFFER_MODEL_AND_CONTRACT_MODEL_ARE_INDEPENDENT=YES
+
+offers.offerModel is the current conversion-mode field (rfq/ecommerce/outbound).
+It is not equivalent to contractModel.
+contractModel is a logical construct with no current physical field.
+These two concepts are separately represented in the logical model.
+
 ## 4. APPROVED COMBINATION MATRIX
 
 ### Active MVP Combinations
 1.
-offerModel=rfq
+offerConversionMode=rfq
 contractModel=partner_marketplace
 seller=Partner
 
 2.
-offerModel=ecommerce
+offerConversionMode=ecommerce
 contractModel=partner_marketplace
 seller=Partner
 
 3.
-offerModel=outbound
+offerConversionMode=outbound
 contractModel=external_redirect
 seller=External Partner
 
 ### Future Combinations
 4.
-offerModel=rfq
+offerConversionMode=rfq
 contractModel=logimarket_reseller
 seller=LogiMarket
 active_in_initial_mvp=NO
 
 5.
-offerModel=ecommerce
+offerConversionMode=ecommerce
 contractModel=logimarket_reseller
 seller=LogiMarket
 active_in_initial_mvp=NO
 
-OFFER_MODEL_AND_CONTRACT_MODEL_ARE_INDEPENDENT=YES
 OUTBOUND_RESELLER_COMBINATION_ALLOWED=NO
 AUTOMATIC_CONTRACT_MODEL_INFERENCE=NO
 GLOBAL_RESELLER_SWITCH=NO
@@ -62,18 +70,49 @@ GLOBAL_RESELLER_SWITCH=NO
 ## 5. AGGREGATE BOUNDARIES
 
 ### Active Aggregate Boundaries (8)
-1. SELLER_AND_OFFER_CLASSIFICATION (Root: SellerProfile)
-2. MARKETPLACE_ORDER_ORCHESTRATION (Roots: RfqRequest, MarketplaceOrder)
-   - Note: Contains separate, mutually exclusive conversion aggregates: RfqRequest for offerModel=rfq, MarketplaceOrder for offerModel=ecommerce.
-3. SELLER_ORDER (Root: SellerOrder)
-4. PAYMENT_AND_ALLOCATION (Root: PaymentOrchestration)
-5. PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE (Root: PlatformRevenueRecord)
-6. FULFILLMENT_AND_SHIPMENT (Root: Shipment)
-7. AFTER_SALES_AND_DISPUTES (Roots: ReturnCase, ComplaintCase, RefundCase, ChargebackDispute)
-8. AUDIT_IDEMPOTENCY_AND_PRIVACY (Roots: DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, OutboundRedirectEvent)
+
+1. SELLER_AND_OFFER_CLASSIFICATION
+   Root: SellerProfile
+   Contains: SellerLegalIdentity, SellerEligibility, OfferSellerAssignment, OfferConversionClassification, OfferContractClassification
+
+2. MARKETPLACE_ORDER_ORCHESTRATION
+   Roots: RfqRequest, MarketplaceOrder (mutually exclusive per offerConversionMode)
+   Note: RfqRequest is the conversion aggregate for offerConversionMode=rfq.
+   MarketplaceOrder is the conversion aggregate for offerConversionMode=ecommerce.
+   These are separate, mutually exclusive conversion aggregates in this boundary.
+   Contains: SellerDisclosureSnapshot (applies to both RfqRequest and MarketplaceOrder), RfqRoutingEvent, BuyerLegalContextSnapshot, BuyerIdentityReference
+
+3. SELLER_ORDER
+   Root: SellerOrder
+   Contains: SellerOrderItem, SellerResponsibilitySnapshot, SellerAcceptanceDecision, GoodsInvoiceResponsibilitySnapshot
+
+4. PAYMENT_AND_ALLOCATION
+   Root: PaymentOrchestration
+   Contains: PSPTransactionReference, PaymentAllocation, SellerSettlementReference
+
+5. PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE
+   Root: PlatformRevenueRecord
+   Contains: PlatformServiceInvoiceReference
+
+6. FULFILLMENT_AND_SHIPMENT
+   Root: Shipment
+   Contains: ShipmentItemAllocation, DeliveryEvent
+
+7. AFTER_SALES_AND_DISPUTES
+   Roots: ReturnCase, ComplaintCase, RefundCase, ChargebackDispute
+
+8. AUDIT_IDEMPOTENCY_AND_PRIVACY
+   Logical persistence roots (conceptual; not all are aggregate roots in strict DDD sense):
+   - AuditJournal: persistence root for DomainAuditEvent entries
+   - IdempotencyRegistry: persistence root for IdempotencyRecord entries
+   - WebhookInboxMessage: persistence root for inbound PSP/external events
+   - OutboxDispatch: persistence root for OutboxMessage entries
+   - OutboundRedirectAuditLog: persistence root for OutboundRedirectEvent entries
+   Contains: DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, OutboundRedirectEvent, ExternalRedirectReference, RetentionPolicySnapshot, PrivacyProcessingContext
 
 ### Future Extension Boundaries (1)
 FUTURE_LOGIMARKET_RESELLER_EXTENSION
+Contains: FutureResellerActivationPolicy
 
 ## 6. LOGICAL INVARIANTS
 
@@ -113,6 +152,9 @@ RFQ_CREATES_SELLER_ORDER_IN_INITIAL_MVP=NO
 RFQ_REQUIRES_MARKETPLACE_PAYMENT_IN_INITIAL_MVP=NO
 RFQ_TO_SELLER_ORDER_CONVERSION=FUTURE_WORKFLOW
 
+RFQ_SELLER_DISCLOSURE_REQUIRED=YES
+ECOMMERCE_SELLER_DISCLOSURE_REQUIRED=YES
+
 OUTBOUND_CREATES_MARKETPLACE_ORDER=NO
 OUTBOUND_CREATES_SELLER_ORDER=NO
 OUTBOUND_CREATES_PAYMENT_ORCHESTRATION=NO
@@ -123,6 +165,9 @@ OUTBOUND_CREATES_PAYMENT_ORCHESTRATION=NO
 - PaymentAllocation N:1 SellerOrder
 - SellerOrder 1:N SellerOrderItem
 - SellerOrder 1:N Shipment
+
+PAYMENT_ALLOCATION_STATUS_AUTHORITATIVE_IN_SELLER_ORDER=NO
+PAYMENT_ALLOCATION_STATUS=DERIVED_PROJECTION_FROM_PAYMENT_AND_ALLOCATION
 
 ## 8. SNAPSHOT POLICY
 SNAPSHOT_POLICY_REQUIRED=YES
@@ -151,6 +196,7 @@ Required Immutable Snapshots at conversion or seller-order creation:
 - customer PO number where supplied.
 
 ## 9. TRANSACTION AND CONSISTENCY BOUNDARIES
+- rfq-request creation boundary;
 - marketplace-order creation boundary;
 - seller-order creation boundary;
 - seller acceptance boundary;
@@ -168,43 +214,57 @@ Representation uses domain events, idempotency keys, webhook inbox, outbox, retr
 - seller KYB/KYC status reference;
 - buyer payment intent;
 - PSP transaction reference;
-- seller-order allocation;
+- abstract seller-order allocation (model unresolved);
 - partial allocation;
-- partial refund;
+- partial refund (technical executor unresolved);
 - chargeback reference;
 - reconciliation identifier;
 - idempotency;
 - webhook ingestion;
-- payout/settlement reference.
+- settlement reference (model unresolved).
 
 NO_LOGIMARKET_SELF_CUSTODY=YES
 NO_LOGIMARKET_OPERATED_ESCROW=YES
 PAYMENT_ALLOCATION_MODEL=UNRESOLVED
 SELLER_PAYOUT_MODEL=UNRESOLVED
+DIRECT_TO_PARTNER_PAYOUT_SELECTED=NO
+SPLIT_PAYMENT_SELECTED=NO
 REFUND_TECHNICAL_EXECUTOR=UNRESOLVED
 PSP_PROVIDER_SELECTED=NO
 PSP_ARCHITECTURE_SELECTED=NO
 
-## 11. FUTURE RESELLER ISOLATION
+## 11. REFUND RESPONSIBILITIES
+FINANCIAL_LIABILITY_OWNER=PARTNER
+BUSINESS_DECISION_OWNER=PARTNER
+PLATFORM_ORCHESTRATION_ROLE=LOGIMARKET
+TECHNICAL_EXECUTOR=UNRESOLVED
+REFUND_RESPONSIBILITY_DIMENSIONS_PRESENT=YES
+REFUND_TECHNICAL_EXECUTOR_SELECTED=NO
+
+## 12. FUTURE RESELLER ISOLATION
 FUTURE_RESELLER_ACTIVE_IN_INITIAL_MVP=NO
 AUTOMATIC_RESELLER_ACTIVATION=NO
 GLOBAL_RESELLER_SWITCH=NO
 OUTBOUND_RESELLER_COMBINATION_ALLOWED=NO
 FUTURE_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED
 
-## 12. LOGICAL MERMAID DIAGRAM
+## 13. LOGICAL MERMAID DIAGRAM
 ```mermaid
 erDiagram
     Offer ||--o{ RfqRequest : triggers_rfq_flow
     Offer ||--o{ MarketplaceOrder : triggers_ecommerce_flow
     Offer ||--o{ OutboundRedirectEvent : triggers_outbound_flow
-    
+
+    RfqRequest ||--o{ SellerDisclosureSnapshot : requires_disclosure
+    MarketplaceOrder ||--o{ SellerDisclosureSnapshot : requires_disclosure
+
     MarketplaceOrder ||--|{ SellerOrder : decomposes_to
     MarketplaceOrder ||--o{ PaymentOrchestration : initiates
-    
+
     PaymentOrchestration ||--|{ PaymentAllocation : specifies
     PaymentAllocation }o--|| SellerOrder : allocates_funds_to
-    
+    PaymentOrchestration ||--o{ SellerSettlementReference : references_settlement
+
     SellerOrder ||--|{ SellerOrderItem : includes
     SellerOrder }o--|| SellerProfile : assigned_to
     SellerOrder ||--o{ Shipment : fulfilled_by
@@ -212,8 +272,11 @@ erDiagram
     SellerOrder ||--o{ ComplaintCase : may_have
     SellerOrder ||--o{ RefundCase : may_have
     SellerOrder ||--o{ ChargebackDispute : may_have
+
     SellerProfile ||--o{ OfferSellerAssignment : provides
+    SellerProfile ||--o{ OfferConversionClassification : classifies
+    SellerProfile ||--o{ OfferContractClassification : classifies_contract
 ```
 
-## 13. READINESS SUMMARY
+## 14. READINESS SUMMARY
 The logical data model defines requirements and rules safely supporting MVP combinations while explicitly managing unresolved decisions through snapshotting and PSP abstractions.
