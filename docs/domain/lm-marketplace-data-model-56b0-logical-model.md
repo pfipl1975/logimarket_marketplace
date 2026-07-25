@@ -23,6 +23,9 @@ MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
 FUTURE_RESELLER_CHANNEL_SUPPORTED=YES
 FUTURE_RESELLER_CHANNEL_ENABLED=NO
 
+CANONICAL_BUSINESS_KEY=offerModel
+LOGICAL_REPRESENTATION=OfferConversionClassification
+
 CURRENT_CONTRACT_MODEL_FIELD_EXISTS=NO
 OFFER_MODEL_AND_CONTRACT_MODEL_CONFLATION_ALLOWED=NO
 OFFER_MODEL_AND_CONTRACT_MODEL_ARE_INDEPENDENT=YES
@@ -30,35 +33,37 @@ OFFER_MODEL_AND_CONTRACT_MODEL_ARE_INDEPENDENT=YES
 offers.offerModel is the current conversion-mode field (rfq/ecommerce/outbound).
 It is not equivalent to contractModel.
 contractModel is a logical construct with no current physical field.
-These two concepts are separately represented in the logical model.
+These two concepts are separately represented in the logical model:
+  OfferConversionClassification — represents offers.offerModel (canonical business key: offerModel)
+  OfferContractClassification  — represents contractModel (NO_CURRENT_ELEMENT)
 
 ## 4. APPROVED COMBINATION MATRIX
 
 ### Active MVP Combinations
 1.
-offerConversionMode=rfq
+offerModel=rfq
 contractModel=partner_marketplace
 seller=Partner
 
 2.
-offerConversionMode=ecommerce
+offerModel=ecommerce
 contractModel=partner_marketplace
 seller=Partner
 
 3.
-offerConversionMode=outbound
+offerModel=outbound
 contractModel=external_redirect
 seller=External Partner
 
 ### Future Combinations
 4.
-offerConversionMode=rfq
+offerModel=rfq
 contractModel=logimarket_reseller
 seller=LogiMarket
 active_in_initial_mvp=NO
 
 5.
-offerConversionMode=ecommerce
+offerModel=ecommerce
 contractModel=logimarket_reseller
 seller=LogiMarket
 active_in_initial_mvp=NO
@@ -72,19 +77,32 @@ GLOBAL_RESELLER_SWITCH=NO
 ### Active Aggregate Boundaries (8)
 
 1. SELLER_AND_OFFER_CLASSIFICATION
-   Root: SellerProfile
-   Contains: SellerLegalIdentity, SellerEligibility, OfferSellerAssignment, OfferConversionClassification, OfferContractClassification
+   Root 1: SellerProfile
+   Owns: SellerLegalIdentity, SellerEligibility
+
+   Root 2: OfferMarketplaceClassification
+   Owns: OfferSellerAssignment, OfferConversionClassification, OfferContractClassification
+
+   External Reference: Offer
+   MODEL_ELEMENT_TYPE=EXTERNAL_REFERENCE
+   OWNING_AGGREGATE_ROOT=EXTERNAL_CURRENT_OFFER_DOMAIN
+   Note: Offer is the existing offers table entity. It is not owned by SellerProfile or OfferMarketplaceClassification. Classification aggregates reference it.
+
+   Audit-only element: ConversionTypeField
+   CURRENT_SCHEMA_AUDIT_REFERENCE_ONLY=YES
+   Note: offers.conversionType requires further audit; its semantic relationship to offerModel is unresolved. Not elevated to normative aggregate element.
 
 2. MARKETPLACE_ORDER_ORCHESTRATION
-   Roots: RfqRequest, MarketplaceOrder (mutually exclusive per offerConversionMode)
-   Note: RfqRequest is the conversion aggregate for offerConversionMode=rfq.
-   MarketplaceOrder is the conversion aggregate for offerConversionMode=ecommerce.
-   These are separate, mutually exclusive conversion aggregates in this boundary.
-   Contains: SellerDisclosureSnapshot (applies to both RfqRequest and MarketplaceOrder), RfqRoutingEvent, BuyerLegalContextSnapshot, BuyerIdentityReference
+   Roots: RfqRequest, MarketplaceOrder (mutually exclusive per offerModel value)
+   Note: RfqRequest is the conversion aggregate for offerModel=rfq.
+   MarketplaceOrder is the conversion aggregate for offerModel=ecommerce.
+   Contains: SellerDisclosureSnapshot (applies to both RfqRequest and MarketplaceOrder),
+             RfqRoutingEvent, RfqPartnerResponse, BuyerLegalContextSnapshot, BuyerIdentityReference
 
 3. SELLER_ORDER
    Root: SellerOrder
-   Contains: SellerOrderItem, SellerResponsibilitySnapshot, SellerAcceptanceDecision, GoodsInvoiceResponsibilitySnapshot
+   Contains: SellerOrderItem, SellerResponsibilitySnapshot, SellerAcceptanceDecision,
+             GoodsInvoiceResponsibilitySnapshot
 
 4. PAYMENT_AND_ALLOCATION
    Root: PaymentOrchestration
@@ -99,16 +117,21 @@ GLOBAL_RESELLER_SWITCH=NO
    Contains: ShipmentItemAllocation, DeliveryEvent
 
 7. AFTER_SALES_AND_DISPUTES
-   Roots: ReturnCase, ComplaintCase, RefundCase, ChargebackDispute
+   Roots: ReturnCase, GoodsComplaintCase, PlatformServiceComplaintCase, RefundCase, ChargebackDispute
+   GOODS_COMPLAINT_OWNER=PARTNER
+   PLATFORM_SERVICE_COMPLAINT_OWNER=LOGIMARKET
+   COMPLAINT_RESPONSIBILITY_CONFLATION_ALLOWED=NO
 
 8. AUDIT_IDEMPOTENCY_AND_PRIVACY
-   Logical persistence roots (conceptual; not all are aggregate roots in strict DDD sense):
+   Logical persistence roots (conceptual; not all strict DDD aggregate roots):
    - AuditJournal: persistence root for DomainAuditEvent entries
    - IdempotencyRegistry: persistence root for IdempotencyRecord entries
    - WebhookInboxMessage: persistence root for inbound PSP/external events
    - OutboxDispatch: persistence root for OutboxMessage entries
    - OutboundRedirectAuditLog: persistence root for OutboundRedirectEvent entries
-   Contains: DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, OutboundRedirectEvent, ExternalRedirectReference, RetentionPolicySnapshot, PrivacyProcessingContext
+   Contains: DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage,
+             OutboundRedirectEvent, ExternalRedirectReference, RetentionPolicySnapshot,
+             PrivacyProcessingContext
 
 ### Future Extension Boundaries (1)
 FUTURE_LOGIMARKET_RESELLER_EXTENSION
@@ -135,7 +158,7 @@ INV-MKT-16: The logical model must not require direct payment to Partner, split 
 INV-MKT-17: A refund has separate financial-liability and technical-execution concepts.
 INV-MKT-18: Partner carries refund financial liability for partner marketplace.
 INV-MKT-19: Technical refund executor remains unresolved.
-INV-MKT-20: Goods complaints and platform-service complaints are distinct.
+INV-MKT-20: Goods complaints and platform-service complaints are distinct and have distinct responsibility owners.
 INV-MKT-21: A seller order may have one-to-many shipments.
 INV-MKT-22: Partial fulfillment requires buyer acceptance and must not occur silently.
 INV-MKT-23: Parcel and pallet are selected MVP shipment modes.
@@ -146,6 +169,10 @@ INV-MKT-27: Buyer legal context must not be inferred solely from NIP.
 INV-MKT-28: Privacy-controller roles remain unresolved and configurable.
 INV-MKT-29: Future reseller activation is explicit, offer-specific and disabled.
 INV-MKT-30: No initial-MVP aggregate depends on activation of the future reseller channel.
+INV-MKT-31: RFQ initial MVP does not create a MarketplaceOrder, SellerOrder or PaymentOrchestration.
+INV-MKT-32: Outbound external redirect does not create any MarketplaceOrder or marketplace transaction.
+INV-MKT-33: Domain reset preserves current RFQ, cart, checkout and outbound behavior without modification.
+INV-MKT-34: GoodsComplaintCase and PlatformServiceComplaintCase have distinct responsibility owners and must not be conflated.
 
 RFQ_CREATES_MARKETPLACE_ORDER_IN_INITIAL_MVP=NO
 RFQ_CREATES_SELLER_ORDER_IN_INITIAL_MVP=NO
@@ -204,7 +231,8 @@ Required Immutable Snapshots at conversion or seller-order creation:
 - payment-allocation boundary;
 - shipment boundary;
 - refund boundary;
-- complaint boundary;
+- goods complaint boundary;
+- platform-service complaint boundary;
 - chargeback boundary;
 - audit/event boundary.
 
@@ -254,8 +282,12 @@ erDiagram
     Offer ||--o{ RfqRequest : triggers_rfq_flow
     Offer ||--o{ MarketplaceOrder : triggers_ecommerce_flow
     Offer ||--o{ OutboundRedirectEvent : triggers_outbound_flow
+    Offer ||--o{ OfferSellerAssignment : classified_by
+    Offer ||--o{ OfferConversionClassification : classified_by
+    Offer ||--o{ OfferContractClassification : classified_by
 
     RfqRequest ||--o{ SellerDisclosureSnapshot : requires_disclosure
+    RfqRequest ||--o{ RfqPartnerResponse : may_have_response
     MarketplaceOrder ||--o{ SellerDisclosureSnapshot : requires_disclosure
 
     MarketplaceOrder ||--|{ SellerOrder : decomposes_to
@@ -269,13 +301,15 @@ erDiagram
     SellerOrder }o--|| SellerProfile : assigned_to
     SellerOrder ||--o{ Shipment : fulfilled_by
     SellerOrder ||--o{ ReturnCase : may_have
-    SellerOrder ||--o{ ComplaintCase : may_have
+    SellerOrder ||--o{ GoodsComplaintCase : may_have_goods_complaint
+    SellerOrder ||--o{ PlatformServiceComplaintCase : may_have_platform_complaint
     SellerOrder ||--o{ RefundCase : may_have
     SellerOrder ||--o{ ChargebackDispute : may_have
 
-    SellerProfile ||--o{ OfferSellerAssignment : provides
-    SellerProfile ||--o{ OfferConversionClassification : classifies
-    SellerProfile ||--o{ OfferContractClassification : classifies_contract
+    SellerProfile ||--o{ SellerLegalIdentity : has_legal_identity
+    OfferMarketplaceClassification ||--o{ OfferSellerAssignment : owns
+    OfferMarketplaceClassification ||--o{ OfferConversionClassification : owns
+    OfferMarketplaceClassification ||--o{ OfferContractClassification : owns
 ```
 
 ## 14. READINESS SUMMARY

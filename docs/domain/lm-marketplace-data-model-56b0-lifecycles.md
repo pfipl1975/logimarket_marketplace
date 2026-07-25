@@ -3,6 +3,9 @@
 This document drafts the logical state machines for domain concepts.
 UNRESOLVED_LEGAL_EFFECTS_EXPLICIT=YES
 CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
+OFFER_MODEL_LIFECYCLE_INDEPENDENT=YES
+CONTRACT_MODEL_LIFECYCLE_INDEPENDENT=YES
+CROSS_AXIS_AUTOMATIC_TRANSITIONS=0
 
 ## 1. Seller eligibility
 - LIFECYCLE_ID: LC-01
@@ -22,19 +25,42 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - OPEN_MODEL_QUESTION_DEPENDENCY: NONE
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
-## 2. Offer conversion/contract assignment
-- LIFECYCLE_ID: LC-02
-- SUBJECT: OfferConversionClassification and OfferContractClassification
-- INITIAL_STATE: draft_assignment
-- NON_TERMINAL_STATES: active_assignment, suspended_assignment
-- TERMINAL_STATES: historical_snapshot
+## 2A. OfferConversionClassification lifecycle (offerModel axis)
+- LIFECYCLE_ID: LC-02A
+- SUBJECT: OfferConversionClassification (canonical business key: offerModel)
+- INDEPENDENT_FROM_CONTRACT_MODEL_LIFECYCLE: YES
+- NOTE: Changing offerModel does NOT automatically change contractModel. These are independent axes.
+- INITIAL_STATE: draft
+- NON_TERMINAL_STATES: active, suspended
+- TERMINAL_STATES: archived
 - ALLOWED_TRANSITIONS:
-  draft_assignment -> active_assignment
-  active_assignment -> suspended_assignment
-  suspended_assignment -> active_assignment
-  active_assignment -> historical_snapshot
-  suspended_assignment -> historical_snapshot
-- REJECTED_TRANSITIONS: historical_snapshot -> active_assignment
+  draft -> active
+  active -> suspended
+  suspended -> active
+  active -> archived
+  suspended -> archived
+- REJECTED_TRANSITIONS: archived -> active
+- TRANSITION_OWNER: LogiMarket
+- IDEMPOTENCY_REQUIREMENT: REQUIRED
+- AUDIT_REQUIREMENT: REQUIRED
+- OPEN_MODEL_QUESTION_DEPENDENCY: NONE
+- PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
+
+## 2B. OfferContractClassification lifecycle (contractModel axis)
+- LIFECYCLE_ID: LC-02B
+- SUBJECT: OfferContractClassification
+- INDEPENDENT_FROM_CONVERSION_MODEL_LIFECYCLE: YES
+- NOTE: Changing contractModel does NOT automatically change offerModel. These are independent axes.
+- INITIAL_STATE: classification_pending
+- NON_TERMINAL_STATES: classification_active, classification_suspended
+- TERMINAL_STATES: classification_retired
+- ALLOWED_TRANSITIONS:
+  classification_pending -> classification_active
+  classification_active -> classification_suspended
+  classification_suspended -> classification_active
+  classification_active -> classification_retired
+  classification_suspended -> classification_retired
+- REJECTED_TRANSITIONS: classification_retired -> classification_active
 - TRANSITION_OWNER: LogiMarket
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
@@ -55,10 +81,11 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
   request_submitted -> cancelled
   request_drafted -> cancelled
 - REJECTED_TRANSITIONS: partner_responded -> routed_to_partner
+- NOTE: partner_responded is a terminal state that records the existence of a RfqPartnerResponse. It does NOT imply contract formation. LEGAL_EFFECT=UNRESOLVED. No SellerOrder or payment created.
 - TRANSITION_OWNER: System (Platform Orchestration)
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-02 (RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-02 (RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED — mapped to RfqRequest and RfqPartnerResponse)
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 4. Marketplace order orchestration
@@ -74,7 +101,7 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
   pending_seller_review -> cancelled
   checkout_submitted -> cancelled
 - REJECTED_TRANSITIONS: completed -> pending_seller_review
-- NOTE: Payment-related statuses such as "payment_authorized" or "partial_fulfillment" are derived roll-up projections from PaymentOrchestration and PaymentAllocation aggregates, not authoritative MarketplaceOrder lifecycle states.
+- NOTE: Payment-related statuses are derived roll-up projections from PaymentOrchestration and PaymentAllocation. Not authoritative MarketplaceOrder lifecycle states.
 - TRANSITION_OWNER: System (Platform Orchestration)
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
@@ -95,16 +122,18 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
   submitted -> cancelled
   seller_accepted -> cancelled
 - REJECTED_TRANSITIONS: seller_rejected -> seller_accepted
-- NOTE: Payment allocation status is a DERIVED_PROJECTION_FROM_PAYMENT_AND_ALLOCATION aggregate and must not appear as an authoritative SellerOrder lifecycle state. PAYMENT_ALLOCATION_STATUS_AUTHORITATIVE_IN_SELLER_ORDER=NO
+- NOTE: Payment allocation status is DERIVED_PROJECTION_FROM_PAYMENT_AND_ALLOCATION. PAYMENT_ALLOCATION_STATUS_AUTHORITATIVE_IN_SELLER_ORDER=NO
 - TRANSITION_OWNER: Partner
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
 - OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-01 (CONTRACT_FORMATION_EVENT_UNRESOLVED)
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
-## 6. Seller acceptance decision
+## 6. Seller acceptance decision (e-commerce only)
 - LIFECYCLE_ID: LC-06
 - SUBJECT: SellerAcceptanceDecision
+- SCOPE: E-COMMERCE_FLOW_ONLY (offerModel=ecommerce)
+- NOTE: SellerAcceptanceDecision applies to e-commerce SellerOrder only. RFQ contract-formation evidence is represented by RfqPartnerResponse.
 - INITIAL_STATE: pending_seller_review
 - NON_TERMINAL_STATES: (none)
 - TERMINAL_STATES: seller_accepted, seller_rejected, expired
@@ -116,7 +145,7 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - TRANSITION_OWNER: Partner
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-01, OMQ-MKT-02 (CONTRACT_FORMATION_EVENT_UNRESOLVED)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-01 (CONTRACT_FORMATION_EVENT_UNRESOLVED — e-commerce only)
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 7. Payment orchestration
@@ -131,13 +160,12 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
   abstract_psp_pending -> abstract_psp_failure
   abstract_psp_pending -> abstract_psp_void
 - REJECTED_TRANSITIONS: abstract_psp_success -> abstract_psp_void
-- NOTE: States are abstract PSP capability representations only. No specific PSP authorization/capture semantics selected.
 - EXTERNAL_EVENT_SOURCE: LICENSED_PSP_CAPABILITY
 - DOMAIN_TRANSITION_OWNER: PLATFORM_ORCHESTRATION
 - FINANCIAL_ALLOCATION_OWNER: UNRESOLVED
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-03 (ABSTRACT_PSP_ALLOCATION_AND_PAYOUT), OMQ-MKT-04, OMQ-MKT-05
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-03, OMQ-MKT-04, OMQ-MKT-05
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 8. Payment allocation
@@ -155,7 +183,7 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - FINANCIAL_ALLOCATION_OWNER: UNRESOLVED
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-05 (NO_SELF_CUSTODY_NO_ESCROW)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-05
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 9. Shipment
@@ -196,24 +224,50 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
 - OPEN_MODEL_QUESTION_DEPENDENCY: NONE
-- LEGAL_GATE_CONTEXT: LEG-MKT-04, LEG-MKT-07
+- LEGAL_GATE_CONTEXT: LEG-MKT-07, LEG-MKT-08
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
-## 11. Complaint case
-- LIFECYCLE_ID: LC-11
-- SUBJECT: ComplaintCase
+## 11A. Goods complaint case
+- LIFECYCLE_ID: LC-11A
+- SUBJECT: GoodsComplaintCase
+- GOODS_AND_PLATFORM_COMPLAINT_MODELS_DISTINCT: YES
+- RESPONSIBILITY_OWNER: PARTNER
+- NOTE: Handles product quality complaints. Independent from PlatformServiceComplaintCase. Do not merge.
 - INITIAL_STATE: submitted
 - NON_TERMINAL_STATES: under_review, awaiting_buyer_info
-- TERMINAL_STATES: resolved_in_favor_of_buyer, resolved_in_favor_of_seller, dismissed
+- TERMINAL_STATES: resolved_accepted, resolved_rejected, dismissed
 - ALLOWED_TRANSITIONS:
   submitted -> under_review
   under_review -> awaiting_buyer_info
   awaiting_buyer_info -> under_review
-  under_review -> resolved_in_favor_of_buyer
-  under_review -> resolved_in_favor_of_seller
+  under_review -> resolved_accepted
+  under_review -> resolved_rejected
   under_review -> dismissed
 - REJECTED_TRANSITIONS: dismissed -> under_review
 - TRANSITION_OWNER: Partner
+- IDEMPOTENCY_REQUIREMENT: REQUIRED
+- AUDIT_REQUIREMENT: REQUIRED
+- OPEN_MODEL_QUESTION_DEPENDENCY: NONE
+- LEGAL_GATE_CONTEXT: LEG-MKT-07
+- PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
+
+## 11B. Platform service complaint case
+- LIFECYCLE_ID: LC-11B
+- SUBJECT: PlatformServiceComplaintCase
+- GOODS_AND_PLATFORM_COMPLAINT_MODELS_DISTINCT: YES
+- RESPONSIBILITY_OWNER: LOGIMARKET
+- NOTE: Handles platform governance complaints (P2B, rankings, suspension, seller governance). Independent from GoodsComplaintCase. Do not merge.
+- INITIAL_STATE: submitted
+- NON_TERMINAL_STATES: under_platform_review, pending_escalation
+- TERMINAL_STATES: resolved, dismissed, escalated_external
+- ALLOWED_TRANSITIONS:
+  submitted -> under_platform_review
+  under_platform_review -> pending_escalation
+  pending_escalation -> escalated_external
+  under_platform_review -> resolved
+  under_platform_review -> dismissed
+- REJECTED_TRANSITIONS: resolved -> under_platform_review
+- TRANSITION_OWNER: LogiMarket
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
 - OPEN_MODEL_QUESTION_DEPENDENCY: NONE
@@ -223,6 +277,10 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 ## 12. Refund case
 - LIFECYCLE_ID: LC-12
 - SUBJECT: RefundCase
+- FINANCIAL_LIABILITY_OWNER: PARTNER
+- BUSINESS_DECISION_OWNER: PARTNER
+- PLATFORM_ORCHESTRATION_ROLE: LOGIMARKET
+- TECHNICAL_EXECUTOR: UNRESOLVED
 - INITIAL_STATE: refund_requested
 - NON_TERMINAL_STATES: abstract_approval_granted, abstract_execution_pending
 - TERMINAL_STATES: abstract_execution_success, abstract_execution_failed, refund_rejected
@@ -233,11 +291,7 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
   abstract_execution_pending -> abstract_execution_failed
   refund_requested -> refund_rejected
 - REJECTED_TRANSITIONS: abstract_execution_success -> abstract_execution_failed
-- FINANCIAL_LIABILITY_OWNER: PARTNER
-- BUSINESS_DECISION_OWNER: PARTNER
-- PLATFORM_ORCHESTRATION_ROLE: LOGIMARKET
-- TECHNICAL_EXECUTOR: UNRESOLVED
-- NOTE: Orchestration states are recorded by LogiMarket but do not select the technical executor.
+- NOTE: Orchestration states recorded by LogiMarket; technical executor not selected.
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
 - OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-08 (REFUND_TECHNICAL_EXECUTOR_UNRESOLVED)
@@ -261,7 +315,7 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - FINANCIAL_ALLOCATION_OWNER: UNRESOLVED
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-09 (CHARGEBACK_ALLOCATION_UNRESOLVED)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-09
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 14. Platform revenue record
@@ -279,7 +333,7 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - TRANSITION_OWNER: LogiMarket
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-06 (COMMISSION_OR_PLATFORM_SERVICE_FEE), OMQ-MKT-07 (PENDING_TAX_AND_ACCOUNTING_VALIDATION)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-06, OMQ-MKT-07
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 15. Seller settlement reference
@@ -292,13 +346,12 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
   pending_abstract_payout -> abstract_payout_completed
   pending_abstract_payout -> abstract_payout_failed
 - REJECTED_TRANSITIONS: abstract_payout_completed -> abstract_payout_failed
-- NOTE: States are abstract representations of licensed-PSP settlement capability. No payout model selected.
 - EXTERNAL_EVENT_SOURCE: LICENSED_PSP_CAPABILITY
 - DOMAIN_TRANSITION_OWNER: UNRESOLVED
 - SELLER_PAYOUT_MODEL: UNRESOLVED
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-05 (NO_SELF_CUSTODY_NO_ESCROW)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-05
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
 
 ## 16. Future reseller activation
@@ -318,5 +371,25 @@ CROSS_AGGREGATE_AUTHORITATIVE_STATES=0
 - TRANSITION_OWNER: LogiMarket
 - IDEMPOTENCY_REQUIREMENT: REQUIRED
 - AUDIT_REQUIREMENT: REQUIRED
-- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-12 (LOGIMARKET_RESELLER_DISABLED)
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-12
+- PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
+
+## 17. RfqPartnerResponse
+- LIFECYCLE_ID: LC-17
+- SUBJECT: RfqPartnerResponse
+- LEGAL_EFFECT: UNRESOLVED
+- CREATES_SELLER_ORDER: NO
+- CREATES_PAYMENT: NO
+- INITIAL_STATE: pending_partner_response
+- NON_TERMINAL_STATES: (none)
+- TERMINAL_STATES: response_received, no_response
+- ALLOWED_TRANSITIONS:
+  pending_partner_response -> response_received
+  pending_partner_response -> no_response
+- REJECTED_TRANSITIONS: response_received -> no_response
+- NOTE: response_received records partner commercial response. Does not create SellerOrder or imply contract formation.
+- TRANSITION_OWNER: Partner
+- IDEMPOTENCY_REQUIREMENT: REQUIRED
+- AUDIT_REQUIREMENT: REQUIRED
+- OPEN_MODEL_QUESTION_DEPENDENCY: OMQ-MKT-02 (RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED)
 - PHYSICAL_IMPLEMENTATION_STATUS: UNDECIDED_PENDING_56B0_R1
