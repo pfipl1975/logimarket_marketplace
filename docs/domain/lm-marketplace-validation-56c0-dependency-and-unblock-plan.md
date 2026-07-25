@@ -97,27 +97,31 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 
 ## Dependency Matrix
 
-| Gate ID | Producing Workstream | Preliminary Parallel Work | Final Closure Depends On | Blocks MVP Schema | Blocks Future Schema | May Reopen 56B0 | Absorbed in 56B1 |
-|---------|----------------------|---------------------------|--------------------------|-------------------|----------------------|-----------------|------------------|
-| LEG-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
-| LEG-MKT-02 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
-| LEG-MKT-03 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
-| LEG-MKT-04 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
-| LEG-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | YES             | NO               |
-| LEG-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
-| LEG-MKT-07 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | YES             | NO               |
-| LEG-MKT-08 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | NO              | YES              |
-| LEG-MKT-09 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | NO              | YES              |
-| LEG-MKT-10 | Workstream F         | None                      | None                     | NO                | YES                  | YES             | NO               |
-| OMQ-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-02 | Workstream A         | Workstream E              | None                     | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-03 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-04 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-07 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-08 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-09 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-10 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-11 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-12 | Workstream F         | None                      | None                     | NO                | YES                  | NO              | NO               |
+| Gate ID | Producing Workstream | Preliminary Parallel Work | Final Closure Depends On | Blocks MVP Schema | Blocks Future Schema | 56B0 Reopen Policy | Earliest Downstream Schema Sprint |
+|---------|----------------------|---------------------------|--------------------------|-------------------|----------------------|--------------------|-----------------------------------|
+| LEG-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B1 |
+| LEG-MKT-02 | Workstream A         | Workstream E              | None                     | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B1 |
+| LEG-MKT-03 | Workstream A         | Workstream E              | None                     | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B1 |
+| LEG-MKT-04 | Workstream A         | Workstream E              | None                     | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B1 |
+| LEG-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| LEG-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| LEG-MKT-07 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| LEG-MKT-08 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B2 |
+| LEG-MKT-09 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B1 |
+| LEG-MKT-10 | Workstream F         | None                      | None                     | NO                | YES                  | FUTURE_EXTENSION_ONLY | FUTURE_RESELLER_ACTIVATION_SPRINT_NOT_SCHEDULED |
+| OMQ-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B2 |
+| OMQ-MKT-02 | Workstream A         | Workstream E              | None                     | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B2 |
+| OMQ-MKT-03 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-04 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-07 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-08 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-09 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
+| OMQ-MKT-10 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B4 |
+| OMQ-MKT-11 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B6 |
+| OMQ-MKT-12 | Workstream F         | None                      | None                     | NO                | YES                  | FUTURE_EXTENSION_ONLY | FUTURE_RESELLER_ACTIVATION_SPRINT_NOT_SCHEDULED |
+
+Earliest Downstream Schema Sprint identifies the first schema sprint whose
+scope is materially affected by closure of the gate. It does not authorize
+that sprint and does not mean later schema sprints are unaffected.

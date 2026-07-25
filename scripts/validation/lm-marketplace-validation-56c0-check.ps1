@@ -41,7 +41,9 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
         MATRIX_REGISTER_BLOCKER_MISMATCHES: 0,
         EVIDENCE_SECTION_MISSING_IDS: 0,
         EVIDENCE_SECTION_EXTRA_IDS: 0,
-        EVIDENCE_PACK_FORMAT_ERRORS: 0
+        EVIDENCE_PACK_FORMAT_ERRORS: 0,
+        REOPEN_POLICY_MISMATCHES: 0,
+        EARLIEST_SCHEMA_SPRINT_MISMATCHES: 0
     };
 
     const expectedIds = [];
@@ -160,6 +162,56 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
         "Workstream F": "None"
     };
 
+    const reopenPolicyById = {
+        "LEG-MKT-01": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-02": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-03": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-04": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-05": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-06": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-07": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-08": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-09": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "LEG-MKT-10": "FUTURE_EXTENSION_ONLY",
+        "OMQ-MKT-01": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-02": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-03": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-04": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-05": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-06": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-07": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-08": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-09": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-10": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-11": "CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED",
+        "OMQ-MKT-12": "FUTURE_EXTENSION_ONLY"
+    };
+
+    const earliestSchemaSprintById = {
+        "LEG-MKT-01": "LM-MARKETPLACE-SCHEMA-56B1",
+        "LEG-MKT-02": "LM-MARKETPLACE-SCHEMA-56B1",
+        "LEG-MKT-03": "LM-MARKETPLACE-SCHEMA-56B1",
+        "LEG-MKT-04": "LM-MARKETPLACE-SCHEMA-56B1",
+        "LEG-MKT-05": "LM-MARKETPLACE-SCHEMA-56B3",
+        "LEG-MKT-06": "LM-MARKETPLACE-SCHEMA-56B3",
+        "LEG-MKT-07": "LM-MARKETPLACE-SCHEMA-56B3",
+        "LEG-MKT-08": "LM-MARKETPLACE-SCHEMA-56B2",
+        "LEG-MKT-09": "LM-MARKETPLACE-SCHEMA-56B1",
+        "LEG-MKT-10": "FUTURE_RESELLER_ACTIVATION_SPRINT_NOT_SCHEDULED",
+        "OMQ-MKT-01": "LM-MARKETPLACE-SCHEMA-56B2",
+        "OMQ-MKT-02": "LM-MARKETPLACE-SCHEMA-56B2",
+        "OMQ-MKT-03": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-04": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-05": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-06": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-07": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-08": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-09": "LM-MARKETPLACE-SCHEMA-56B3",
+        "OMQ-MKT-10": "LM-MARKETPLACE-SCHEMA-56B4",
+        "OMQ-MKT-11": "LM-MARKETPLACE-SCHEMA-56B6",
+        "OMQ-MKT-12": "FUTURE_RESELLER_ACTIVATION_SPRINT_NOT_SCHEDULED"
+    };
+
     for (const m of matLines) {
         const id = m[1].trim();
         const ws = m[2].trim();
@@ -167,6 +219,8 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
         const closure = m[4].trim();
         const blkMvp = m[5].trim();
         const blkFut = m[6].trim();
+        const reopenPol = m[7].trim();
+        const schemaSpr = m[8].trim();
 
         if (!wsMap[ws] || !wsMap[ws].includes(id)) {
             metrics.PRODUCING_WORKSTREAM_MISMATCHES++;
@@ -179,6 +233,14 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
         if (prelimMap[ws] && prelim !== prelimMap[ws]) {
             metrics.PRELIMINARY_PARALLEL_WORK_MISMATCHES++;
             errors.push(`Preliminary parallel work mismatch for ${id}`);
+        }
+        if (reopenPolicyById[id] && reopenPol !== reopenPolicyById[id]) {
+            metrics.REOPEN_POLICY_MISMATCHES++;
+            errors.push(`Reopen policy mismatch for ${id}`);
+        }
+        if (earliestSchemaSprintById[id] && schemaSpr !== earliestSchemaSprintById[id]) {
+            metrics.EARLIEST_SCHEMA_SPRINT_MISMATCHES++;
+            errors.push(`Earliest schema sprint mismatch for ${id}`);
         }
 
         const r = regDict[id];
@@ -194,7 +256,7 @@ function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
 
     const expStatus = {
         "DOCUMENT_STATUS": "READY_FOR_INDEPENDENT_REVIEW",
-        "AUTHOR_VALIDATION_STATUS": "PASS_READY_FOR_RENEWED_INDEPENDENT_REVIEW",
+        "AUTHOR_REMEDIATION_STATUS": "PASS_READY_FOR_FINAL_REREVIEW",
         "INDEPENDENT_REVIEW_STATUS": "CHANGES_REQUESTED"
     };
     for (const [k, v] of Object.entries(expStatus)) {
@@ -352,6 +414,8 @@ function run() {
     test("25. ID assigned to wrong Evidence Pack section", () => [baseReg, baseTpl, basePlan, baseEv.replace(/- exact LEG-MKT and OMQ-MKT IDs: (.*)LEG-MKT-01, (.*)/, "- exact LEG-MKT and OMQ-MKT IDs: $1$2"), baseRec], "Sec 1 missing LEG-MKT-01");
     test("26. missing Evidence Pack instruction/assumptions block", () => [baseReg, baseTpl, basePlan, baseEv.replace(/- external review instruction:/, ""), baseRec], "Missing key");
     test("27. wrong preliminary parallel work", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\| Workstream A\s*\| Workstream E/, "| LEG-MKT-01 | Workstream A         | Workstream F"), baseEv, baseRec], "Preliminary parallel work mismatch");
+    test("28. wrong 56B0 reopen policy", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\|([^\r\n]*)\| CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED\s*\|/, "| LEG-MKT-01 |$1| WRONG_POLICY |"), baseEv, baseRec], "Reopen policy mismatch");
+    test("29. wrong earliest downstream schema sprint", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\|([^\r\n]*)\| LM-MARKETPLACE-SCHEMA-56B1\s*\|/, "| LEG-MKT-01 |$1| LM-MARKETPLACE-SCHEMA-WRONG |"), baseEv, baseRec], "Earliest schema sprint mismatch");
 
     console.log(`NEGATIVE_SELF_TEST_COUNT=${selfTestCount}`);
     console.log(`NEGATIVE_SELF_TEST_FAILURES=${selfTestFailures}`);
