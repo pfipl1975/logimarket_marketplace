@@ -657,7 +657,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: LOGIMARKET_RESELLER_DISABLED
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: DPO
+- supporting reviewers: UNASSIGNED
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED

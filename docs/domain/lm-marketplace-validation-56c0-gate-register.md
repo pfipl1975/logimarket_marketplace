@@ -434,7 +434,7 @@ STATUS=OPEN
 - exact unresolved question: future reseller activation
 - exact safe documentation default: LOGIMARKET_RESELLER_DISABLED
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: DPO
+- supporting reviewer: UNASSIGNED
 - affected aggregates: FUTURE_LOGIMARKET_RESELLER_EXTENSION
 - affected elements: FutureResellerActivationPolicy; OfferContractClassification
 - logical representation strategy: isolated disabled future-extension policy

@@ -106,18 +106,18 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 | LEG-MKT-05  | Workstream C        | WS A       | YES               | YES                  | YES             | NO               |
 | LEG-MKT-06  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
 | LEG-MKT-07  | Workstream D        | WS A, B    | YES               | YES                  | YES             | NO               |
-| LEG-MKT-08  | Workstream A, B     | WS A       | YES               | YES                  | NO              | YES              |
-| LEG-MKT-09  | Workstream A, B     | WS A       | YES               | YES                  | NO              | YES              |
+| LEG-MKT-08  | Workstream A, B      | WS A                      | WS B                     | YES               | YES                  | NO              | YES              |
+| LEG-MKT-09  | Workstream A, B      | WS A                      | WS B                     | YES               | YES                  | NO              | YES              |
 | LEG-MKT-10  | None                | None       | NO                | YES                  | YES             | NO               |
 | OMQ-MKT-01  | Workstream E        | None       | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-02  | Workstream E        | None       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-03  | Workstream C        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-04  | Workstream C        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-05  | Workstream C        | WS A       | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-03  | Workstream C         | Workstream B (PSP)        | WS B                     | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-04  | Workstream C         | Workstream B (PSP)        | WS B                     | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-05  | Workstream C         | Workstream B (PSP)        | WS B                     | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-06  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-07  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-08  | Workstream D        | WS A, B    | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-09  | Workstream D        | WS A, B    | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-10  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-11  | Workstream A, B     | WS A       | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-11  | Workstream A, B      | WS A                      | WS B                     | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-12  | None                | None       | NO                | YES                  | NO              | NO               |

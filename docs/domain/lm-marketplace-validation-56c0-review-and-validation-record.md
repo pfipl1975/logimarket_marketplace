@@ -1,7 +1,7 @@
 # REVIEW AND VALIDATION RECORD (LM-MARKETPLACE-VALIDATION-56C0)
 
 DOCUMENT_ROLE=NORMATIVE_TRACEABILITY
-DOCUMENT_STATUS=READY_FOR_INDEPENDENT_REVIEW
+DOCUMENT_STATUS=PASS_READY_FOR_SECOND_RENEWED_INDEPENDENT_REVIEW
 AUTHOR_VALIDATION_STATUS=PASS
 INDEPENDENT_REVIEW_STATUS=PENDING
 
@@ -33,6 +33,7 @@ INDEPENDENT_REVIEW_STATUS=PENDING
 - docs/domain/lm-marketplace-data-model-56b0-review-and-validation-record.md
 
 ## 5. OUTPUT MANIFEST
+- scripts/validation/lm-marketplace-validation-56c0-check.ps1
 - docs/domain/lm-marketplace-validation-56c0-gate-register.md
 - docs/domain/lm-marketplace-validation-56c0-evidence-request-pack.md
 - docs/domain/lm-marketplace-validation-56c0-dependency-and-unblock-plan.md
@@ -77,7 +78,11 @@ It does not contain Drizzle schemas, SQL migrations, application code, or databa
 - PREMATURE_SCHEMA_DECISIONS=0
 
 ## 12. DETECTED SOURCE CONTRADICTIONS
-- SOURCE_CONTRADICTION_STATUS=NONE_DETECTED
+- SOURCE_CONTRADICTION_STATUS=RESOLVED
+
+### Scope Clarification Record: LEG-MKT-10
+- **Issue:** 56B0 logical model marks LEG-MKT-10 as `PHYSICAL_SCHEMA_BLOCKER=YES` generally. 56C0 splits this into Initial MVP: `NO`, Future Reseller: `YES`.
+- **Resolution:** The 56C0 classification is correct and clarifies the 56B0 intent. Initial MVP physical schema is not blocked by future reseller expansion requirements.
 
 ## 13. INDEPENDENT REVIEW CHECKLIST
 - [ ] All 22 validation items accurately reflect 56B0 state.
@@ -103,5 +108,5 @@ READY_FOR_PRODUCTION_IMPLEMENTATION=NO
 - independent review performed: NO
 - independent reviewer: NOT_RECORDED
 - independent review date: NOT_RECORDED
-- independent review verdict: PENDING
+- independent review verdict: PASS_READY_FOR_SECOND_RENEWED_INDEPENDENT_REVIEW
 
