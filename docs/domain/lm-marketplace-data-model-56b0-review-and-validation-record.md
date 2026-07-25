@@ -1,14 +1,17 @@
-# REVIEW AND VALIDATION RECORD (LM-MARKETPLACE-DATA-MODEL-56B0)
+# REVIEW AND VALIDATION RECORD (LM-MARKETPLACE-DATA-MODEL-56B0-R1A)
 
 ## 1. SPRINT IDENTITY
-- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0
-- SOURCE SHAs: PRE_MERGE_MAIN_SHA=244aa83bbbc863458dcd46d32f99f0eff3e4a83a, START_MAIN_SHA=6a4560c8d2e55ab65863a6f44f30225e5e6272b8
+- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A
+- SOURCE SHAs: START_MAIN_SHA=6a4560c8d2e55ab65863a6f44f30225e5e6272b8
 
 ## 2. SOURCE-PRECEDENCE CONFIRMATION
-The design adheres to the precedence hierarchy: R3 business approval record > R3 intermediary-first contract > R3 decision overlay > R3 implementation roadmap > historical R2B > current repository facts. LogiMarket as global MVP default seller is rejected.
+The design adheres to the precedence hierarchy: R3 business approval record > R3 intermediary-first contract > R3 decision overlay > R3 implementation roadmap > historical R2B > current repository facts.
 
 ## 3. CURRENT REPOSITORY AUDIT COVERAGE
-Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. Mapped offerModel, offers, partners, rfqLeads, cartItems, orders, clicks. Verified no existing multi-seller split logic, payment, shipment, or idempotency structures.
+Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`, `src/components/RfqDialog.tsx`. 
+- Explicit current enforcement gaps found in Cart and Outbound.
+- RFQ does not currently create MarketplaceOrder or SellerOrder.
+- Current checkout creates order without seller-specific split or commercial snapshots.
 
 ## 4. DOCUMENT MANIFEST
 1. lm-marketplace-data-model-56b0-logical-model.md
@@ -20,106 +23,79 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 ## 5. COUNTS
 - ACTIVE_AGGREGATE_BOUNDARIES: 8
 - FUTURE_EXTENSION_BOUNDARIES: 1
-- MODEL_ELEMENT_COUNT: 33
-- LIFECYCLE_COUNT: 15
+- MODEL_ELEMENT_COUNT: 37
+- LIFECYCLE_COUNT: 16
 - INVARIANT_COUNT: 30
 - DEC_MKT_TRACEABILITY_ROWS: 18
 - LEG_MKT_TRACEABILITY_ROWS: 10
 - OMQ_MKT_TRACEABILITY_ROWS: 12
 - MISSING_TRACEABILITY_ROWS: 0
+- DEC_MKT_SEMANTIC_MISMATCHES: 0
+- LEG_MKT_SEMANTIC_MISMATCHES: 0
+- OMQ_MKT_SEMANTIC_MISMATCHES: 0
+- PREMATURE_OMQ_CLOSURES: 0
+- UNMAPPED_MODEL_ELEMENTS: 0
 
 ## 6. DECISION TRACEABILITY (DEC-MKT)
-| ID | MAPPED TO |
-|---|---|
-| DEC-MKT-01 | SellerProfile |
-| DEC-MKT-02 | SellerLegalIdentity |
-| DEC-MKT-03 | SellerEligibility |
-| DEC-MKT-04 | OfferSellerAssignment |
-| DEC-MKT-05 | OfferContractClassification |
-| DEC-MKT-06 | SellerDisclosureSnapshot |
-| DEC-MKT-07 | MarketplaceOrder |
-| DEC-MKT-08 | BuyerLegalContextSnapshot |
-| DEC-MKT-09 | SellerOrder |
-| DEC-MKT-10 | SellerOrderItem |
-| DEC-MKT-11 | SellerResponsibilitySnapshot |
-| DEC-MKT-12 | SellerAcceptanceDecision |
-| DEC-MKT-13 | PaymentOrchestration |
-| DEC-MKT-14 | PSPTransactionReference |
-| DEC-MKT-15 | PaymentAllocation |
-| DEC-MKT-16 | SellerSettlementReference |
-| DEC-MKT-17 | PlatformRevenueRecord |
-| DEC-MKT-18 | GoodsInvoiceResponsibilitySnapshot |
+| ID | NORMATIVE_MEANING | MAPPED ELEMENTS |
+|---|---|---|
+| DEC-MKT-01 | intermediary-first MVP | SellerProfile, MarketplaceOrder, SellerOrder, PaymentOrchestration |
+| DEC-MKT-02 | independent offerModel and contractModel | OfferContractClassification, FutureResellerActivationPolicy |
+| DEC-MKT-03 | RFQ partner marketplace active | RfqRequest, RfqRoutingEvent |
+| DEC-MKT-04 | ecommerce partner marketplace active | MarketplaceOrder, SellerOrder |
+| DEC-MKT-05 | outbound external redirect active | OutboundRedirectEvent, ExternalRedirectReference |
+| DEC-MKT-06 | reseller future only | FutureResellerActivationPolicy |
+| DEC-MKT-07 | Partner contractual seller and Seller of Record | SellerProfile, OfferSellerAssignment, SellerOrder |
+| DEC-MKT-08 | Partner owns description, price and availability | SellerProfile, SellerOrderItem |
+| DEC-MKT-09 | Partner owns fulfillment, delivery, complaints, returns and refunds | SellerResponsibilitySnapshot, Shipment, ReturnCase, ComplaintCase, RefundCase, ChargebackDispute, ShipmentItemAllocation, DeliveryEvent |
+| DEC-MKT-10 | LogiMarket owns platform orchestration and rule enforcement | PlatformRevenueRecord, DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, PrivacyProcessingContext, RetentionPolicySnapshot |
+| DEC-MKT-11 | multi-seller checkout creates seller-specific relationships | MarketplaceOrder, SellerOrder, BuyerLegalContextSnapshot |
+| DEC-MKT-12 | Partner issues buyer goods invoice | GoodsInvoiceResponsibilitySnapshot |
+| DEC-MKT-13 | LogiMarket issues platform-service invoices | PlatformServiceInvoiceReference, PlatformRevenueRecord |
+| DEC-MKT-14 | licensed PSP and validation required | SellerEligibility, SellerLegalIdentity, PaymentOrchestration, PSPTransactionReference |
+| DEC-MKT-15 | no self-custody or LogiMarket-operated escrow | PaymentOrchestration, PaymentAllocation, SellerSettlementReference |
+| DEC-MKT-16 | seller disclosure before contract formation | SellerDisclosureSnapshot, SellerAcceptanceDecision |
+| DEC-MKT-17 | reseller activation explicit and offer-specific | FutureResellerActivationPolicy |
+| DEC-MKT-18 | existing RFQ/cart/outbound behavior unchanged during domain reset | RfqRequest, OutboundRedirectEvent |
 
 ## 7. LEGAL GATE TRACEABILITY (LEG-MKT)
-| ID | MAPPED TO |
-|---|---|
-| LEG-MKT-01 | PaymentAllocation |
-| LEG-MKT-02 | SellerEligibility |
-| LEG-MKT-03 | SellerDisclosureSnapshot |
-| LEG-MKT-04 | SellerResponsibilitySnapshot, ReturnCase |
-| LEG-MKT-05 | SellerAcceptanceDecision |
-| LEG-MKT-06 | GoodsInvoiceResponsibilitySnapshot |
-| LEG-MKT-07 | RefundCase, ChargebackDispute |
-| LEG-MKT-08 | BuyerLegalContextSnapshot, SellerLegalIdentity |
-| LEG-MKT-09 | RetentionPolicySnapshot, PrivacyProcessingContext |
-| LEG-MKT-10 | FutureResellerActivationPolicy |
+| ID | NORMATIVE_MEANING | MAPPED ELEMENTS |
+|---|---|---|
+| LEG-MKT-01 | intermediary legal qualification and terms | SellerProfile, SellerLegalIdentity, OfferSellerAssignment, OfferContractClassification |
+| LEG-MKT-02 | contract formation for RFQ and e-commerce | RfqRequest, MarketplaceOrder, SellerOrder, SellerOrderItem, SellerAcceptanceDecision |
+| LEG-MKT-03 | seller identity and pre-contract disclosure | SellerDisclosureSnapshot |
+| LEG-MKT-04 | P2B terms, rankings, suspension and complaints | SellerProfile, SellerEligibility, SellerResponsibilitySnapshot, ReturnCase, ComplaintCase |
+| LEG-MKT-05 | PSP architecture, KYB/KYC, allocations and payouts | SellerEligibility, PaymentOrchestration, PSPTransactionReference, PaymentAllocation, SellerSettlementReference, IdempotencyRecord, WebhookInboxMessage |
+| LEG-MKT-06 | VAT, accounting and KSeF split | GoodsInvoiceResponsibilitySnapshot, PlatformRevenueRecord, PlatformServiceInvoiceReference |
+| LEG-MKT-07 | refund, chargeback and seller liability | SellerResponsibilitySnapshot, RefundCase, ChargebackDispute |
+| LEG-MKT-08 | B2B and entrepreneur-with-consumer-rights analysis | SellerLegalIdentity, BuyerLegalContextSnapshot, ReturnCase, ComplaintCase, RefundCase |
+| LEG-MKT-09 | privacy roles and retention | DomainAuditEvent, RetentionPolicySnapshot, PrivacyProcessingContext |
+| LEG-MKT-10 | future reseller activation | FutureResellerActivationPolicy |
 
 ## 8. OPEN MODEL QUESTION TRACEABILITY (OMQ-MKT)
+| ID | UNRESOLVED QUESTION | SAFE DEFAULT | MAPPED ELEMENTS |
+|---|---|---|---|
+| OMQ-MKT-01 | e-commerce contract-formation moment | CONTRACT_FORMATION_EVENT_UNRESOLVED | MarketplaceOrder, SellerOrder, SellerAcceptanceDecision |
+| OMQ-MKT-02 | RFQ contract-formation moment | RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED | RfqRequest, SellerAcceptanceDecision |
+| OMQ-MKT-03 | PSP marketplace architecture | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | PaymentOrchestration |
+| OMQ-MKT-04 | seller KYB/KYC responsibilities | PENDING_PSP_AND_LEGAL_VALIDATION | SellerLegalIdentity, SellerEligibility, PaymentOrchestration |
+| OMQ-MKT-05 | payment allocation and seller payout | NO_SELF_CUSTODY_NO_ESCROW | PaymentOrchestration, PaymentAllocation, SellerSettlementReference |
+| OMQ-MKT-06 | monetization and commission/platform-service-fee model | COMMISSION_OR_PLATFORM_SERVICE_FEE | PlatformRevenueRecord |
+| OMQ-MKT-07 | commission tax/accounting recognition | PENDING_TAX_AND_ACCOUNTING_VALIDATION | PlatformRevenueRecord |
+| OMQ-MKT-08 | refund technical execution | REFUND_TECHNICAL_EXECUTOR_UNRESOLVED | RefundCase |
+| OMQ-MKT-09 | chargeback responsibility and allocation | CHARGEBACK_ALLOCATION_UNRESOLVED | ChargebackDispute |
+| OMQ-MKT-10 | seller goods invoice and KSeF exchange | NO_DELEGATED_INVOICING | GoodsInvoiceResponsibilitySnapshot |
+| OMQ-MKT-11 | privacy-role allocation and retention | NO_PREDETERMINED_CONTROLLER_ROLE | RetentionPolicySnapshot, PrivacyProcessingContext |
+| OMQ-MKT-12 | future reseller activation | LOGIMARKET_RESELLER_DISABLED | FutureResellerActivationPolicy |
 
-| ID | Unresolved Question | Safe Default | Affected Aggregates | Affected Elements | Strategy | Logical Model Blocked | Schema Blocked | App Blocked | Owner |
-|---|---|---|---|---|---|---|---|---|---|
-| OMQ-MKT-01 | Who issues T&C? | PARTNER_ISSUES_TC | SELLER_ORDER | SellerAcceptanceDecision | Explicitly unresolved | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-02 | Contract conclusion moment | CONCLUSION_DEFERRED | SELLER_ORDER | SellerAcceptanceDecision | Explicitly unresolved | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-03 | Return policy authority | PARTNER_POLICY_APPLIES | AFTER_SALES | ReturnCase | Abstract | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-04 | Refund executor | EXECUTOR_UNRESOLVED | AFTER_SALES | RefundCase | Abstract | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-05 | PSP settlement recipient | SETTLEMENT_TO_PARTNER | REVENUE | SellerSettlementReference | Abstract | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-06 | Service complaint handling | COMPLAINT_SPLIT | AFTER_SALES | ComplaintCase | Abstract | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-07 | Commission vs Fee | REVENUE_MODEL_UNRESOLVED | REVENUE | PlatformRevenueRecord | Abstract | NO | YES | YES | Tax Advisor |
-| OMQ-MKT-08 | Payment flow structure | FLOW_UNRESOLVED | PAYMENT | PaymentAllocation | Abstract | NO | YES | YES | Tax Advisor |
-| OMQ-MKT-09 | Chargeback responsibility | ALLOCATION_UNRESOLVED | AFTER_SALES | ChargebackDispute | Abstract | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-10 | Delegated KSeF invoicing | NO_DELEGATED_INVOICING | SELLER_ORDER | GoodsInvoiceResponsibilitySnapshot | Configurable | NO | YES | YES | Tax Advisor |
-| OMQ-MKT-11 | Privacy controller roles | NO_PREDETERMINED_ROLE | PRIVACY | PrivacyProcessingContext | Snapshot-based | NO | YES | YES | Legal Counsel |
-| OMQ-MKT-12 | Future reseller switch | LOGIMARKET_RESELLER_DISABLED | RESELLER | FutureResellerActivationPolicy | Externally referenced | NO | NO | NO | Legal Counsel |
+## 9. VALIDATION
+- **Lifecycle Validation**: All non-terminal states participate in allowed transitions. No terminal state has outgoing transitions. Rejected transitions do not contradict allowed transitions. Transition owner does not resolve an open PSP/legal question. Cross-aggregate states are avoided.
+- **RFQ Model Validation**: RfqRequest added as AGGREGATE_ROOT in MARKETPLACE_ORDER_ORCHESTRATION. Initial RFQ flow does not create MarketplaceOrder or SellerOrder.
+- **Outbound Model Validation**: OutboundRedirectEvent added as AGGREGATE_ROOT in AUDIT_IDEMPOTENCY_AND_PRIVACY. Does not create MarketplaceOrder or SellerOrder.
+- **PSP-Neutrality Validation**: No assumptions on payout routing or technical execution. Uses UNRESOLVED values.
+- **Current Enforcements**: Cart and Outbound have identified gaps documented safely.
 
-PREMATURE_OMQ_CLOSURES=0
-
-## 9. REJECTED ASSUMPTIONS
-- LOGIMARKET_AS_GLOBAL_SELLER (Rejected)
-- LOGIMARKET_AS_DEFAULT_SELLER_OF_RECORD (Rejected)
-- LOGIMARKET_GOODS_INVOICE_FOR_PARTNER_MARKETPLACE (Rejected)
-- CUSTOMER_PAYMENT_AS_LOGIMARKET_GOODS_REVENUE (Rejected)
-- SUPPLIER_TRADE_PAYABLE_AS_MARKETPLACE_SETTLEMENT (Rejected)
-- TRADING_MARGIN_AS_DEFAULT_MARKETPLACE_REVENUE (Rejected)
-- SUPPLIER_ORDER_AS_ACTIVE_MARKETPLACE_CORE (Rejected)
-- PSP_AS_MERCHANT_OF_RECORD (Rejected)
-- DIRECT_PAYMENT_TO_PARTNER_SELECTED (Rejected)
-- PSP_EXECUTES_REFUND_SELECTED (Rejected)
-- BUYER_STATUS_FROM_NIP_ONLY (Rejected)
-- JOINT_CONTROLLERSHIP_CONFIRMED (Rejected)
-- OUTBOUND_RESELLER_ALLOWED (Rejected)
-- GO_ROUTE_USED_FOR_SHIPMENT_TRACKING (Rejected)
-- PHYSICAL_SCHEMA_READY (Rejected)
-
-ACTIVE_MODEL_A_CONTRADICTIONS=0
-PREMATURE_PSP_ASSUMPTIONS=0
-PREMATURE_LEGAL_CONCLUSIONS=0
-PREMATURE_TAX_CONCLUSIONS=0
-PREMATURE_PRIVACY_CONCLUSIONS=0
-
-## 10. EXTERNAL VALIDATION & SCHEMA BLOCKERS
-Unresolved external validations block the physical schema. 
-Physical schema implementation is BLOCKED until evidence closes OMQ-MKT items.
-
-## 11. REVIEW CHECKLIST FOR LM-MARKETPLACE-DATA-MODEL-56B0-R1
-- [ ] Aggregate boundaries accurately reflect R3 Intermediary-First model.
-- [ ] Logical invariants satisfy business rules.
-- [ ] OMQ handling strategy properly defers decisions to legal/tax without blocking logical drafting.
-- [ ] No Drizzle/PostgreSQL details leaked into logical design.
-
-## 12. ROLLBACK/REOPENING CONDITIONS
-If independent review discovers a logical leak of physical schema details, or an assumption of Model A behavior in an active aggregate, this sprint will be reopened.
-
-## 13. READINESS STATEMENT
+## 10. READINESS STATEMENT
 READY_FOR_INDEPENDENT_LOGICAL_MODEL_REVIEW=YES
 READY_FOR_PHYSICAL_SCHEMA=NO
 READY_FOR_APPLICATION_IMPLEMENTATION=NO

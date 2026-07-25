@@ -7,7 +7,7 @@ PHYSICAL_SCHEMA_STATUS=NOT_DESIGNED
 APPLICATION_IMPLEMENTATION_STATUS=NOT_STARTED
 
 ## 1. SCOPE AND EXCLUSIONS
-This normative logical data model defines the Intermediary-First Marketplace architecture (R3). It establishes aggregate boundaries, elements, lifecycles, and invariants for multi-seller commerce. It excludes physical database schema (tables, Drizzle), which remains blocked pending independent logical-model review. 
+This normative logical data model defines the Intermediary-First Marketplace architecture (R3). It establishes aggregate boundaries, elements, lifecycles, and invariants for multi-seller commerce. It excludes physical database schema (tables, Drizzle), which remains blocked pending independent logical-model review.
 
 ## 2. NORMATIVE SOURCE PRECEDENCE
 1. R3 business approval record
@@ -62,14 +62,15 @@ GLOBAL_RESELLER_SWITCH=NO
 ## 5. AGGREGATE BOUNDARIES
 
 ### Active Aggregate Boundaries (8)
-1. SELLER_AND_OFFER_CLASSIFICATION
-2. MARKETPLACE_ORDER_ORCHESTRATION
-3. SELLER_ORDER
-4. PAYMENT_AND_ALLOCATION
-5. PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE
-6. FULFILLMENT_AND_SHIPMENT
-7. AFTER_SALES_AND_DISPUTES
-8. AUDIT_IDEMPOTENCY_AND_PRIVACY
+1. SELLER_AND_OFFER_CLASSIFICATION (Root: SellerProfile)
+2. MARKETPLACE_ORDER_ORCHESTRATION (Roots: RfqRequest, MarketplaceOrder)
+   - Note: Contains separate, mutually exclusive conversion aggregates: RfqRequest for offerModel=rfq, MarketplaceOrder for offerModel=ecommerce.
+3. SELLER_ORDER (Root: SellerOrder)
+4. PAYMENT_AND_ALLOCATION (Root: PaymentOrchestration)
+5. PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE (Root: PlatformRevenueRecord)
+6. FULFILLMENT_AND_SHIPMENT (Root: Shipment)
+7. AFTER_SALES_AND_DISPUTES (Roots: ReturnCase, ComplaintCase, RefundCase, ChargebackDispute)
+8. AUDIT_IDEMPOTENCY_AND_PRIVACY (Roots: DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, OutboundRedirectEvent)
 
 ### Future Extension Boundaries (1)
 FUTURE_LOGIMARKET_RESELLER_EXTENSION
@@ -107,12 +108,21 @@ INV-MKT-28: Privacy-controller roles remain unresolved and configurable.
 INV-MKT-29: Future reseller activation is explicit, offer-specific and disabled.
 INV-MKT-30: No initial-MVP aggregate depends on activation of the future reseller channel.
 
+RFQ_CREATES_MARKETPLACE_ORDER_IN_INITIAL_MVP=NO
+RFQ_CREATES_SELLER_ORDER_IN_INITIAL_MVP=NO
+RFQ_REQUIRES_MARKETPLACE_PAYMENT_IN_INITIAL_MVP=NO
+RFQ_TO_SELLER_ORDER_CONVERSION=FUTURE_WORKFLOW
+
+OUTBOUND_CREATES_MARKETPLACE_ORDER=NO
+OUTBOUND_CREATES_SELLER_ORDER=NO
+OUTBOUND_CREATES_PAYMENT_ORCHESTRATION=NO
+
 ## 7. LOGICAL CARDINALITIES & OWNERSHIP
 - MarketplaceOrder 1:N SellerOrder
-- SellerOrder N:1 SellerProfile
+- PaymentOrchestration 1:N PaymentAllocation
+- PaymentAllocation N:1 SellerOrder
 - SellerOrder 1:N SellerOrderItem
 - SellerOrder 1:N Shipment
-- MarketplaceOrder 1:N PaymentAllocation
 
 ## 8. SNAPSHOT POLICY
 SNAPSHOT_POLICY_REQUIRED=YES
@@ -169,6 +179,9 @@ Representation uses domain events, idempotency keys, webhook inbox, outbox, retr
 
 NO_LOGIMARKET_SELF_CUSTODY=YES
 NO_LOGIMARKET_OPERATED_ESCROW=YES
+PAYMENT_ALLOCATION_MODEL=UNRESOLVED
+SELLER_PAYOUT_MODEL=UNRESOLVED
+REFUND_TECHNICAL_EXECUTOR=UNRESOLVED
 PSP_PROVIDER_SELECTED=NO
 PSP_ARCHITECTURE_SELECTED=NO
 
@@ -182,14 +195,23 @@ FUTURE_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED
 ## 12. LOGICAL MERMAID DIAGRAM
 ```mermaid
 erDiagram
-    MarketplaceOrder ||--|{ SellerOrder : contains
-    MarketplaceOrder ||--o{ PaymentOrchestration : triggers
+    Offer ||--o{ RfqRequest : triggers_rfq_flow
+    Offer ||--o{ MarketplaceOrder : triggers_ecommerce_flow
+    Offer ||--o{ OutboundRedirectEvent : triggers_outbound_flow
+    
+    MarketplaceOrder ||--|{ SellerOrder : decomposes_to
+    MarketplaceOrder ||--o{ PaymentOrchestration : initiates
+    
+    PaymentOrchestration ||--|{ PaymentAllocation : specifies
+    PaymentAllocation }o--|| SellerOrder : allocates_funds_to
+    
     SellerOrder ||--|{ SellerOrderItem : includes
     SellerOrder }o--|| SellerProfile : assigned_to
-    PaymentOrchestration ||--|{ PaymentAllocation : allocates_to
     SellerOrder ||--o{ Shipment : fulfilled_by
-    SellerOrder ||--o{ RefundCase : may_have
+    SellerOrder ||--o{ ReturnCase : may_have
     SellerOrder ||--o{ ComplaintCase : may_have
+    SellerOrder ||--o{ RefundCase : may_have
+    SellerOrder ||--o{ ChargebackDispute : may_have
     SellerProfile ||--o{ OfferSellerAssignment : provides
 ```
 
