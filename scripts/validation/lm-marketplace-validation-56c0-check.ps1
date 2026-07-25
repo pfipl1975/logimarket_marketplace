@@ -1,100 +1,138 @@
-$nodeScript = @'
+$ErrorActionPreference = 'Stop'
+
+Write-Host "======================================================================"
+Write-Host "LM-MARKETPLACE-VALIDATION-56C0-CHECK"
+Write-Host "======================================================================"
+
+$code = @'
 const fs = require('fs');
+
 const regPath = 'docs/domain/lm-marketplace-validation-56c0-gate-register.md';
 const tplPath = 'docs/domain/lm-marketplace-validation-56c0-decision-record-templates.md';
 const planPath = 'docs/domain/lm-marketplace-validation-56c0-dependency-and-unblock-plan.md';
 const evPath = 'docs/domain/lm-marketplace-validation-56c0-evidence-request-pack.md';
 const recPath = 'docs/domain/lm-marketplace-validation-56c0-review-and-validation-record.md';
 
-function parseRegister(text) {
-    const records = {};
-    const matches = [...text.matchAll(/### (LEG-MKT-\d{2}|OMQ-MKT-\d{2})\r?\n([\s\S]*?)(?=\r?\n### |$)/g)];
-    for (const m of matches) {
-        const id = m[1];
-        const b = m[2];
-        const safeDefault = (b.match(/- exact current safe documentation default: (.*)/) || [])[1]?.trim();
-        const owner = (b.match(/- primary evidence owner: (.*)/) || [])[1]?.trim();
-        const supporting = (b.match(/- supporting reviewer: (.*)/) || [])[1]?.trim();
-        const initialPhys = (b.match(/- initial-MVP physical-schema blocker: (.*)/) || [])[1]?.trim();
-        const initialApp = (b.match(/- initial-MVP application blocker: (.*)/) || [])[1]?.trim();
-        const futurePhys = (b.match(/- future-reseller physical-schema blocker: (.*)/) || [])[1]?.trim();
-        const futureApp = (b.match(/- future-reseller application blocker: (.*)/) || [])[1]?.trim();
-        records[id] = { safeDefault, owner, supporting, initialPhys, initialApp, futurePhys, futureApp };
-    }
-    return records;
-}
+function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
+    let errors = [];
+    let metrics = {
+        SAFE_DEFAULT_MISMATCHES: 0,
+        PRIMARY_OWNER_MISMATCHES: 0,
+        SUPPORTING_REVIEWER_MISMATCHES: 0,
+        TEMPLATE_STATUS_MISMATCHES: 0,
+        TEMPLATE_EVIDENCE_MISMATCHES: 0,
+        TEMPLATE_DECISION_MISMATCHES: 0,
+        TEMPLATE_APPROVAL_MISMATCHES: 0,
+        REGISTER_STATUS_MISMATCHES: 0,
+        REVIEW_RECORD_STATUS_MISMATCHES: 0,
+        REVIEW_RECORD_READINESS_MISMATCHES: 0,
+        REVIEW_RECORD_REVIEW_STATE_MISMATCHES: 0,
+        DUPLICATE_GATE_IDS_REGISTER: 0,
+        MISSING_GATE_IDS_REGISTER: 0,
+        DUPLICATE_GATE_IDS_TEMPLATES: 0,
+        MISSING_GATE_IDS_TEMPLATES: 0,
+        DUPLICATE_GATE_IDS_MATRIX: 0,
+        MISSING_GATE_IDS_MATRIX: 0,
+        DEPENDENCY_MATRIX_ROW_COUNT: 0,
+        DEPENDENCY_MATRIX_COLUMN_MISMATCHES: 0,
+        PRODUCING_WORKSTREAM_MISMATCHES: 0,
+        PRELIMINARY_PARALLEL_WORK_MISMATCHES: 0,
+        FINAL_CLOSURE_DEPENDENCY_MISMATCHES: 0,
+        MATRIX_REGISTER_BLOCKER_MISMATCHES: 0,
+        EVIDENCE_SECTION_MISSING_IDS: 0,
+        EVIDENCE_SECTION_EXTRA_IDS: 0,
+        EVIDENCE_PACK_FORMAT_ERRORS: 0
+    };
 
-function parseTemplates(text) {
-    const records = {};
-    const matches = [...text.matchAll(/### Stub for (LEG-MKT-\d{2}|OMQ-MKT-\d{2})\r?\n([\s\S]*?)(?=\r?\n### |$)/g)];
-    for (const m of matches) {
-        const id = m[1];
-        const b = m[2];
-        const safeDefault = (b.match(/- safe default mapping: (.*)/) || [])[1]?.trim();
-        const owner = (b.match(/- primary evidence owner: (.*)/) || [])[1]?.trim();
-        const supporting = (b.match(/- supporting reviewer: (.*)/) || [])[1]?.trim();
-        const status = (b.match(/- status: (.*)/) || [])[1]?.trim();
-        const decision = (b.match(/- decision: (.*)/) || [])[1]?.trim();
-        const evidence = (b.match(/- evidence reviewed: (.*)/) || [])[1]?.trim();
-        const approval = (b.match(/- approval signatures: (.*)/) || [])[1]?.trim();
-        const initialPhys = (b.match(/- initial-MVP physical-schema blocker: (.*)/) || [])[1]?.trim();
-        const initialApp = (b.match(/- initial-MVP application blocker: (.*)/) || [])[1]?.trim();
-        const futurePhys = (b.match(/- future-reseller physical-schema blocker: (.*)/) || [])[1]?.trim();
-        const futureApp = (b.match(/- future-reseller application blocker: (.*)/) || [])[1]?.trim();
-        records[id] = { safeDefault, owner, supporting, status, decision, evidence, approval, initialPhys, initialApp, futurePhys, futureApp };
-    }
-    return records;
-}
-
-function parseRecord(text) {
-    const errors = [];
-    if (!text.includes("DOCUMENT_STATUS=")) errors.push("Missing DOCUMENT_STATUS");
-    if (!text.includes("AUTHOR_VALIDATION_STATUS=")) errors.push("Missing AUTHOR_VALIDATION_STATUS");
-    if (!text.includes("INDEPENDENT_REVIEW_STATUS=")) errors.push("Missing INDEPENDENT_REVIEW_STATUS");
-    if (!text.includes("READY_FOR_PHYSICAL_SCHEMA=")) errors.push("Missing READY_FOR_PHYSICAL_SCHEMA");
-    if (!text.includes("READY_FOR_APPLICATION_IMPLEMENTATION=")) errors.push("Missing READY_FOR_APPLICATION_IMPLEMENTATION");
-    if (!text.includes("READY_FOR_PRODUCTION_IMPLEMENTATION=")) errors.push("Missing READY_FOR_PRODUCTION_IMPLEMENTATION");
-    if (!text.includes("SOURCE_CONTRADICTION_STATUS=")) errors.push("Missing SOURCE_CONTRADICTION_STATUS");
-    if (!text.includes("OUTPUT MANIFEST")) errors.push("Missing OUTPUT MANIFEST");
-    return errors;
-}
-
-function validate(regText, tplText, planText, evText, recText) {
     const expectedIds = [];
     for(let i=1; i<=10; i++) expectedIds.push("LEG-MKT-" + String(i).padStart(2, '0'));
     for(let i=1; i<=12; i++) expectedIds.push("OMQ-MKT-" + String(i).padStart(2, '0'));
 
-    const errors = [];
-    let dupReg = 0, dupTpl = 0, dupMatrix = 0;
-    
-    const regMatches = [...regText.matchAll(/### (LEG-MKT-\d{2}|OMQ-MKT-\d{2})/g)];
-    if (regMatches.length > 22) { dupReg += (regMatches.length - 22); errors.push("Duplicate ID in register"); }
-    const tplMatches = [...tplText.matchAll(/### Stub for (LEG-MKT-\d{2}|OMQ-MKT-\d{2})/g)];
-    if (tplMatches.length > 22) { dupTpl += (tplMatches.length - 22); errors.push("Duplicate ID in templates"); }
+    const regMatches = [...regTxt.matchAll(/### (LEG-MKT-\d{2}|OMQ-MKT-\d{2})(?=\r?\n)/g)].map(m => m[1]);
+    const tplMatches = [...tplTxt.matchAll(/### Stub for (LEG-MKT-\d{2}|OMQ-MKT-\d{2})(?=\r?\n)/g)].map(m => m[1]);
+    const matMatches = [...planTxt.matchAll(/^\| ((?:LEG|OMQ)-MKT-\d{2})\s*\|/gm)].map(m => m[1]);
 
-    const reg = parseRegister(regText);
-    const tpl = parseTemplates(tplText);
-    const recErrors = parseRecord(recText);
-    errors.push(...recErrors);
+    const countIds = (arr) => arr.reduce((acc, cur) => { acc[cur] = (acc[cur] || 0) + 1; return acc; }, {});
+    const regCounts = countIds(regMatches);
+    const tplCounts = countIds(tplMatches);
+    const matCounts = countIds(matMatches);
 
-    let matrixRows = 0;
-    let matrixColMismatch = 0;
-    let wsMismatch = 0;
-    let finalClosureMismatch = 0;
+    for (const id of expectedIds) {
+        if (!regCounts[id]) { metrics.MISSING_GATE_IDS_REGISTER++; errors.push(`Register missing ${id}`); }
+        else if (regCounts[id] > 1) { metrics.DUPLICATE_GATE_IDS_REGISTER += (regCounts[id]-1); errors.push(`Register duplicate ${id}`); }
 
-    const planMatches = [...planText.matchAll(/^\| ((?:LEG|OMQ)-MKT-\d{2})\s*\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|([^\|]*)\|(?:\r?\n)/gm)];
-    
-    const allTableRows = [...planText.matchAll(/^\| ((?:LEG|OMQ)-MKT-\d{2})\s*\|.*$/gm)];
-    for (const r of allTableRows) {
-        const cols = r[0].split("|").length - 2;
-        if (cols !== 8) {
-            errors.push(`Malformed matrix row for ${r[1]} - found ${cols} columns`);
-            matrixColMismatch++;
+        if (!tplCounts[id]) { metrics.MISSING_GATE_IDS_TEMPLATES++; errors.push(`Template missing ${id}`); }
+        else if (tplCounts[id] > 1) { metrics.DUPLICATE_GATE_IDS_TEMPLATES += (tplCounts[id]-1); errors.push(`Template duplicate ${id}`); }
+
+        if (!matCounts[id]) { metrics.MISSING_GATE_IDS_MATRIX++; errors.push(`Matrix missing ${id}`); }
+        else if (matCounts[id] > 1) { metrics.DUPLICATE_GATE_IDS_MATRIX += (matCounts[id]-1); errors.push(`Matrix duplicate ${id}`); }
+    }
+
+    for (const id in regCounts) if (!expectedIds.includes(id)) { metrics.DUPLICATE_GATE_IDS_REGISTER += regCounts[id]; errors.push(`Unknown id in reg: ${id}`); }
+    for (const id in tplCounts) if (!expectedIds.includes(id)) { metrics.DUPLICATE_GATE_IDS_TEMPLATES += tplCounts[id]; errors.push(`Unknown id in tpl: ${id}`); }
+    for (const id in matCounts) if (!expectedIds.includes(id)) { metrics.DUPLICATE_GATE_IDS_MATRIX += matCounts[id]; errors.push(`Unknown id in mat: ${id}`); }
+
+    const regDict = {};
+    const regBlocks = [...regTxt.matchAll(/### (LEG-MKT-\d{2}|OMQ-MKT-\d{2})\r?\n([\s\S]*?)(?=\r?\n### |$)/g)];
+    for (const m of regBlocks) {
+        const id = m[1];
+        const block = m[2];
+        const status = (block.match(/^STATUS=(.*)$/m) || [])[1]?.trim();
+        const safeDef = (block.match(/^- exact (?:current )?safe documentation default: (.*)$/m) || [])[1]?.trim();
+        const owner = (block.match(/^- (?:exact )?primary evidence owner: (.*)$/m) || [])[1]?.trim();
+        const reviewer = (block.match(/^- supporting reviewer: (.*)$/m) || [])[1]?.trim();
+        const mvpPhys = (block.match(/^- initial-MVP physical-schema blocker: (.*)$/m) || [])[1]?.trim();
+        const mvpApp = (block.match(/^- initial-MVP application blocker: (.*)$/m) || [])[1]?.trim();
+        const futPhys = (block.match(/^- future-reseller physical-schema blocker: (.*)$/m) || [])[1]?.trim();
+        const futApp = (block.match(/^- future-reseller application blocker: (.*)$/m) || [])[1]?.trim();
+        regDict[id] = { status, safeDef, owner, reviewer, mvpPhys, mvpApp, futPhys, futApp };
+        if (status !== 'OPEN') { metrics.REGISTER_STATUS_MISMATCHES++; errors.push(`Register ${id} status != OPEN`); }
+
+        if (id === 'OMQ-MKT-12' && reviewer === 'DPO') { errors.push("OMQ-MKT-12 assigned to DPO"); metrics.SUPPORTING_REVIEWER_MISMATCHES++; }
+    }
+
+    const tplDict = {};
+    const tplBlocks = [...tplTxt.matchAll(/### Stub for (LEG-MKT-\d{2}|OMQ-MKT-\d{2})\r?\n([\s\S]*?)(?=\r?\n### |$)/g)];
+    for (const m of tplBlocks) {
+        const id = m[1];
+        const block = m[2];
+        const safeDef = (block.match(/^- current safe default: (.*)$/m) || [])[1]?.trim();
+        const owner = (block.match(/^- decision owner: (.*)$/m) || [])[1]?.trim();
+        const reviewer = (block.match(/^- supporting reviewers: (.*)$/m) || [])[1]?.trim();
+        const status = (block.match(/^- status: (.*)$/m) || [])[1]?.trim();
+        const evidence = (block.match(/^- evidence reviewed: (.*)$/m) || [])[1]?.trim();
+        const decision = (block.match(/^- decision: (.*)$/m) || [])[1]?.trim();
+        const approval = (block.match(/^- approval signatures: (.*)$/m) || [])[1]?.trim();
+        tplDict[id] = { safeDef, owner, reviewer, status, evidence, decision, approval };
+
+        if (status !== 'OPEN') { metrics.TEMPLATE_STATUS_MISMATCHES++; errors.push(`Template ${id} status != OPEN`); }
+        if (evidence !== 'NOT_ATTACHED') { metrics.TEMPLATE_EVIDENCE_MISMATCHES++; errors.push(`Template ${id} evidence != NOT_ATTACHED`); }
+        if (decision !== 'NOT_RECORDED') { metrics.TEMPLATE_DECISION_MISMATCHES++; errors.push(`Template ${id} decision != NOT_RECORDED`); }
+        if (approval !== 'NOT_GRANTED') { metrics.TEMPLATE_APPROVAL_MISMATCHES++; errors.push(`Template ${id} approval != NOT_GRANTED`); }
+    }
+
+    for (const id of expectedIds) {
+        const r = regDict[id];
+        const t = tplDict[id];
+        if (r && t) {
+            if (r.safeDef !== t.safeDef) { metrics.SAFE_DEFAULT_MISMATCHES++; errors.push(`Safe default mismatch for ${id}`); }
+            if (r.owner !== t.owner) { metrics.PRIMARY_OWNER_MISMATCHES++; errors.push(`Owner mismatch for ${id}`); }
+            if (r.reviewer !== t.reviewer) { metrics.SUPPORTING_REVIEWER_MISMATCHES++; errors.push(`Reviewer mismatch for ${id}`); }
         }
     }
 
-    if (planMatches.length > 22) { dupMatrix += (planMatches.length - 22); errors.push("Duplicate ID in matrix"); }
-    
+    const matLines = [...planTxt.matchAll(/^\| ((?:LEG|OMQ)-MKT-\d{2})\s*\|([^\|]+)\|([^\|]+)\|([^\|]+)\|([^\|]+)\|([^\|]+)\|([^\|]+)\|([^\|]+)\|(?:\r?\n)/gm)];
+    metrics.DEPENDENCY_MATRIX_ROW_COUNT = matLines.length;
+
+    const matLoose = [...planTxt.matchAll(/^\| ((?:LEG|OMQ)-MKT-\d{2})\s*\|.*$/gm)];
+    for (const m of matLoose) {
+        const cols = m[0].split('|').length - 2;
+        if (cols !== 8) {
+            metrics.DEPENDENCY_MATRIX_COLUMN_MISMATCHES++;
+            errors.push(`Malformed matrix row cols=${cols} for ${m[1]}`);
+        }
+    }
+
     const wsMap = {
         "Workstream A": ["LEG-MKT-01", "LEG-MKT-02", "LEG-MKT-03", "LEG-MKT-04", "OMQ-MKT-01", "OMQ-MKT-02"],
         "Workstream B": ["LEG-MKT-05", "OMQ-MKT-03", "OMQ-MKT-04", "OMQ-MKT-05"],
@@ -104,98 +142,149 @@ function validate(regText, tplText, planText, evText, recText) {
         "Workstream F": ["LEG-MKT-10", "OMQ-MKT-12"]
     };
 
-    let blockerMismatch = 0;
+    const finalClosureMap = {
+        "Workstream A": "None",
+        "Workstream B": "Workstream A",
+        "Workstream C": "Workstream A, Workstream B",
+        "Workstream D": "Workstream A",
+        "Workstream E": "Workstream A",
+        "Workstream F": "None"
+    };
 
-    for (const id of expectedIds) {
-        const r = reg[id];
-        const t = tpl[id];
-        if (!r) errors.push("Missing in register: " + id);
-        if (!t) errors.push("Missing in templates: " + id);
+    const prelimMap = {
+        "Workstream A": "Workstream E",
+        "Workstream B": "Workstream C",
+        "Workstream C": "Workstream B",
+        "Workstream D": "Workstream B",
+        "Workstream E": "Workstream A, Workstream B",
+        "Workstream F": "None"
+    };
 
-        const expectedInitPhys = (id === "LEG-MKT-10" || id === "OMQ-MKT-12") ? "NO" : "YES";
-        const expectedInitApp = (id === "LEG-MKT-10" || id === "OMQ-MKT-12") ? "NO" : "YES";
-        
-        if (r) {
-            if (r.initialPhys !== expectedInitPhys) { blockerMismatch++; errors.push(`Register blocker mismatch initialPhys for ${id}`); }
-            if (r.initialApp !== expectedInitApp) { blockerMismatch++; errors.push(`Register blocker mismatch initialApp for ${id}`); }
-            if (r.futurePhys !== "YES") { blockerMismatch++; errors.push(`Register blocker mismatch futurePhys for ${id}`); }
-            if (r.futureApp !== "YES") { blockerMismatch++; errors.push(`Register blocker mismatch futureApp for ${id}`); }
-        }
-    }
-
-    for (const m of planMatches) {
-        matrixRows++;
-        const id = m[1];
+    for (const m of matLines) {
+        const id = m[1].trim();
         const ws = m[2].trim();
-        const deps = m[4].trim();
+        const prelim = m[3].trim();
+        const closure = m[4].trim();
+        const blkMvp = m[5].trim();
+        const blkFut = m[6].trim();
 
-        if (!['Workstream A', 'Workstream B', 'Workstream C', 'Workstream D', 'Workstream E', 'Workstream F'].includes(ws)) {
-            wsMismatch++;
-            errors.push(`Invalid Workstream in matrix: ${ws} for ${id}`);
-        } else {
-            if (!wsMap[ws].includes(id)) {
-                wsMismatch++;
-                errors.push(`Wrong producing workstream for ${id}: ${ws}`);
+        if (!wsMap[ws] || !wsMap[ws].includes(id)) {
+            metrics.PRODUCING_WORKSTREAM_MISMATCHES++;
+            errors.push(`Producing workstream mismatch for ${id}`);
+        }
+        if (finalClosureMap[ws] && closure !== finalClosureMap[ws]) {
+            metrics.FINAL_CLOSURE_DEPENDENCY_MISMATCHES++;
+            errors.push(`Final closure mismatch for ${id}`);
+        }
+        if (prelimMap[ws] && prelim !== prelimMap[ws]) {
+            metrics.PRELIMINARY_PARALLEL_WORK_MISMATCHES++;
+            errors.push(`Preliminary parallel work mismatch for ${id}`);
+        }
+
+        const r = regDict[id];
+        if (r) {
+            let expMvp = (id === 'LEG-MKT-10' || id === 'OMQ-MKT-12') ? 'NO' : 'YES';
+            let expFut = 'YES';
+            if (blkMvp !== expMvp || blkFut !== expFut || r.mvpPhys !== expMvp || r.futPhys !== expFut || r.mvpApp !== expMvp || r.futApp !== expFut) {
+                metrics.MATRIX_REGISTER_BLOCKER_MISMATCHES++;
+                errors.push(`Blocker mismatch for ${id}`);
             }
         }
+    }
 
-        if (ws === 'Workstream C' && deps !== 'Workstream A, Workstream B') {
-            finalClosureMismatch++;
-            errors.push(`Wrong final closure dependency for ${id} in Workstream C`);
+    const expStatus = {
+        "DOCUMENT_STATUS": "READY_FOR_INDEPENDENT_REVIEW",
+        "AUTHOR_VALIDATION_STATUS": "PASS_READY_FOR_RENEWED_INDEPENDENT_REVIEW",
+        "INDEPENDENT_REVIEW_STATUS": "CHANGES_REQUESTED"
+    };
+    for (const [k, v] of Object.entries(expStatus)) {
+        const m = recTxt.match(new RegExp(`^${k}=(.*)$`, 'm'));
+        if (!m || m[1].trim() !== v) {
+            metrics.REVIEW_RECORD_STATUS_MISMATCHES++;
+            errors.push(`Record status mismatch for ${k}`);
         }
     }
-    
-    if (matrixRows !== 22) errors.push(`Matrix rows: ${matrixRows} instead of 22`);
 
-    let evSectionMismatch = 0;
+    const mSource = recTxt.match(/^SOURCE_CONTRADICTION_STATUS=(.*)$/m);
+    if (!mSource || mSource[1].trim() !== 'RESOLVED') { metrics.REVIEW_RECORD_STATUS_MISMATCHES++; errors.push("Missing SOURCE_CONTRADICTION_STATUS"); }
+
+    const expReadiness = {
+        "READY_FOR_PHYSICAL_SCHEMA": "NO",
+        "READY_FOR_APPLICATION_IMPLEMENTATION": "NO",
+        "READY_FOR_PRODUCTION_IMPLEMENTATION": "NO"
+    };
+    for (const [k, v] of Object.entries(expReadiness)) {
+        const m = recTxt.match(new RegExp(`^${k}=(.*)$`, 'm'));
+        if (!m || m[1].trim() !== v) {
+            metrics.REVIEW_RECORD_READINESS_MISMATCHES++;
+            errors.push(`Record readiness mismatch for ${k}`);
+        }
+    }
+
+    const mRevPerf = recTxt.match(/^- independent review performed: (.*)$/m);
+    if (!mRevPerf || mRevPerf[1].trim() !== 'YES') { metrics.REVIEW_RECORD_REVIEW_STATE_MISMATCHES++; errors.push("Review performed mismatch"); }
+    const mRevVerd = recTxt.match(/^- independent review verdict: (.*)$/m);
+    if (!mRevVerd || mRevVerd[1].trim() !== 'CHANGES_REQUESTED') { metrics.REVIEW_RECORD_REVIEW_STATE_MISMATCHES++; errors.push("Review verdict mismatch"); }
+
     const expectedSecMap = {
         "1": ["LEG-MKT-01", "LEG-MKT-02", "LEG-MKT-03", "LEG-MKT-04", "LEG-MKT-05", "LEG-MKT-07", "LEG-MKT-08", "LEG-MKT-09", "LEG-MKT-10", "OMQ-MKT-01", "OMQ-MKT-02", "OMQ-MKT-03", "OMQ-MKT-04", "OMQ-MKT-05", "OMQ-MKT-06", "OMQ-MKT-08", "OMQ-MKT-09", "OMQ-MKT-11", "OMQ-MKT-12"],
         "2": ["LEG-MKT-06", "OMQ-MKT-07", "OMQ-MKT-10"],
         "3": ["LEG-MKT-05", "OMQ-MKT-03", "OMQ-MKT-04", "OMQ-MKT-05", "OMQ-MKT-08", "OMQ-MKT-09"],
-        "4": ["LEG-MKT-09", "OMQ-MKT-11"],
-        "5": expectedIds
+        "4": ["LEG-MKT-09", "OMQ-MKT-11"]
     };
 
-    const exactIDBlocks = [...evText.matchAll(/- exact LEG-MKT and OMQ-MKT IDs: (.*)/g)];
-    if (exactIDBlocks.length !== 5) {
-        errors.push(`Could not find 5 exact ID lines in Evidence Pack, found ${exactIDBlocks.length}`);
-        evSectionMismatch++;
-    } else {
-        for (let s=1; s<=5; s++) {
-            const secStr = String(s);
-            const reqIds = expectedSecMap[secStr];
-            const line = exactIDBlocks[s-1][1];
-            for (const reqId of reqIds) {
-                if (s === 5 && line.includes("All LEG-MKT and OMQ-MKT IDs")) {
-                    continue; 
+    const evSections = [...evTxt.matchAll(/## \d\. (.*?)\r?\n([\s\S]*?)(?=\r?\n## |\r?\n$)/g)];
+    if (evSections.length < 5) {
+        errors.push("Missing evidence sections");
+        metrics.EVIDENCE_PACK_FORMAT_ERRORS++;
+    }
+    for (let s=1; s<=5; s++) {
+        if (s-1 >= evSections.length) continue;
+        const block = evSections[s-1][2];
+
+        const reqKeys = [
+            "- external review instruction:",
+            "- approved business-model assumptions and intended operating constraints:",
+            "- unresolved questions:",
+            "- expected response format:"
+        ];
+        for (const key of reqKeys) {
+            if (!block.includes(key)) {
+                metrics.EVIDENCE_PACK_FORMAT_ERRORS++;
+                errors.push(`Missing key in ev section ${s}: ${key}`);
+            }
+        }
+        const nested = block.match(/- approved business-model assumptions.*\n([\s\S]*?)(?=\n- |$)/);
+        if (!nested || !nested[1].match(/^\s+-/m)) {
+            metrics.EVIDENCE_PACK_FORMAT_ERRORS++;
+            errors.push(`No nested assumption in ev section ${s}`);
+        }
+
+        const mExact = block.match(/- exact LEG-MKT and OMQ-MKT IDs:(.*)/);
+        if (!mExact) {
+            metrics.EVIDENCE_PACK_FORMAT_ERRORS++;
+            errors.push(`Missing exact IDs line in sec ${s}`);
+        } else {
+            const idLine = mExact[1];
+            if (s === 5) {
+                if (!idLine.includes('All LEG-MKT and OMQ-MKT IDs')) {
+                    metrics.EVIDENCE_SECTION_MISSING_IDS++;
+                    errors.push("Section 5 must contain All LEG-MKT and OMQ-MKT IDs");
                 }
-                if (!line.includes(reqId)) {
-                    evSectionMismatch++;
-                    errors.push(`ID ${reqId} missing from Evidence section ${secStr}`);
+            } else {
+                const reqIds = expectedSecMap[String(s)];
+                for (const id of reqIds) {
+                    if (!idLine.includes(id)) { metrics.EVIDENCE_SECTION_MISSING_IDS++; errors.push(`Sec ${s} missing ${id}`); }
+                }
+                const foundIds = [...idLine.matchAll(/(LEG|OMQ)-MKT-\d{2}/g)].map(x => x[0]);
+                for (const f of foundIds) {
+                    if (!reqIds.includes(f)) { metrics.EVIDENCE_SECTION_EXTRA_IDS++; errors.push(`Sec ${s} extra id ${f}`); }
                 }
             }
         }
     }
-    
-    let evFormatErrors = 0;
-    if (!evText.includes("- external review instruction:")) evFormatErrors++;
 
-    return {
-        errors,
-        metrics: {
-            DEPENDENCY_MATRIX_ROW_COUNT: matrixRows,
-            DEPENDENCY_MATRIX_COLUMN_MISMATCHES: matrixColMismatch,
-            PRODUCING_WORKSTREAM_MISMATCHES: wsMismatch,
-            FINAL_CLOSURE_DEPENDENCY_MISMATCHES: finalClosureMismatch,
-            EVIDENCE_SECTION_MAPPING_MISMATCHES: evSectionMismatch,
-            EVIDENCE_PACK_FORMAT_ERRORS: evFormatErrors,
-            REVIEW_RECORD_STATUS_MISMATCHES: recErrors.length,
-            BLOCKER_CLASSIFICATION_MISMATCHES: blockerMismatch,
-            DUPLICATE_GATE_IDS_REGISTER: dupReg,
-            DUPLICATE_GATE_IDS_TEMPLATES: dupTpl,
-            DUPLICATE_GATE_IDS_MATRIX: dupMatrix
-        }
-    };
+    return { errors, metrics };
 }
 
 function run() {
@@ -205,74 +294,94 @@ function run() {
     let evText = fs.readFileSync(evPath, 'utf8');
     let recText = fs.readFileSync(recPath, 'utf8');
 
-    const baseline = validate(regText, tplText, planText, evText, recText);
-
     let selfTestCount = 0;
     let selfTestFailures = 0;
 
-    function runTest(name, mutator, expectedErrorFragment) {
+    const baseReg = regText, baseTpl = tplText, basePlan = planText, baseEv = evText, baseRec = recText;
+    const base = validate(baseReg, baseTpl, basePlan, baseEv, baseRec);
+
+    function test(name, corruptFn, expFrag) {
         selfTestCount++;
-        if (baseline.errors.length > 0) {
-            console.log(`Self-Test FAILED ${name}: baseline has errors! ` + baseline.errors.join(", "));
+        if (base.errors.length > 0) {
+            console.log(`Self-Test FAILED ${name}: baseline has errors! ` + base.errors[0]);
             selfTestFailures++;
             return;
         }
-        const [r, t, p, e, rec] = mutator(regText, tplText, planText, evText, recText);
-        const mutatedBaseline = validate(r, t, p, e, rec);
-        const hasExpectedError = mutatedBaseline.errors.some(err => err.includes(expectedErrorFragment));
-        if (!hasExpectedError) {
-            console.log(`Self-Test FAILED ${name}: Expected error containing '${expectedErrorFragment}' not found.`);
+        const baselineInputs = [baseReg, baseTpl, basePlan, baseEv, baseRec];
+        const mut = corruptFn();
+
+        const mutationApplied = mut.some((val, idx) => val !== baselineInputs[idx]);
+        if (!mutationApplied) {
+            console.log(`Self-Test FAILED ${name}: mutation did not change input`);
+            selfTestFailures++;
+            return;
+        }
+
+        const res = validate(...mut);
+        const hasErr = res.errors.some(e => e.includes(expFrag));
+        if (!hasErr) {
+            console.log(`Self-Test FAILED ${name}: missing err '${expFrag}'`);
             selfTestFailures++;
         }
     }
 
-    runTest("malformed dependency-matrix row with extra column", (r, t, p, e, rec) => {
-        return [r, t, p.replace(/(\| LEG-MKT-01 \|[^\r\n]*)\|/, "$1 | EXTRA |"), e, rec];
-    }, "Malformed matrix row");
-
-    runTest("wrong producing workstream", (r, t, p, e, rec) => {
-        return [r, t, p.replace(/\| LEG-MKT-01\s*\| Workstream A/, "| LEG-MKT-01 | Workstream B"), e, rec];
-    }, "Wrong producing workstream");
-
-    runTest("wrong final closure dependency", (r, t, p, e, rec) => {
-        return [r, t, p.replace(/\| LEG-MKT-07\s*\| Workstream C\s*\| Workstream B\s*\| Workstream A, Workstream B/, "| LEG-MKT-07 | Workstream C         | Workstream B              | Workstream Z             "), e, rec];
-    }, "Wrong final closure dependency");
-
-    runTest("duplicate in register", (r, t, p, e, rec) => {
-        return [r + "\n### LEG-MKT-01\n", t, p, e, rec];
-    }, "Duplicate ID in register");
-
-    runTest("duplicate in templates", (r, t, p, e, rec) => {
-        return [r, t + "\n### Stub for LEG-MKT-01\n", p, e, rec];
-    }, "Duplicate ID in templates");
-
-    runTest("duplicate in matrix", (r, t, p, e, rec) => {
-        return [r, t, p + "\n| LEG-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |\n", e, rec];
-    }, "Duplicate ID in matrix");
+    test("1. safe default mismatch", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- current safe default: )([^\n]+)/, "$1CORRUPT"), basePlan, baseEv, baseRec], "Safe default mismatch");
+    test("2. primary owner mismatch", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- decision owner: )([^\n]+)/, "$1CORRUPT"), basePlan, baseEv, baseRec], "Owner mismatch");
+    test("3. supporting reviewer mismatch", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- supporting reviewers: )([^\n]+)/, "$1CORRUPT"), basePlan, baseEv, baseRec], "Reviewer mismatch");
+    test("4. OMQ-MKT-12 assigned to DPO", () => [baseReg.replace(/### OMQ-MKT-12\r?\n([\s\S]*?)- supporting reviewer: UNASSIGNED/, '### OMQ-MKT-12\n$1- supporting reviewer: DPO'), baseTpl, basePlan, baseEv, baseRec], "OMQ-MKT-12 assigned to DPO");
+    test("5. Register STATUS=CLOSED", () => [baseReg.replace(/STATUS=OPEN/, 'STATUS=CLOSED'), baseTpl, basePlan, baseEv, baseRec], "status != OPEN");
+    test("6. Template status CLOSED", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- status: )OPEN/, "$1CLOSED"), basePlan, baseEv, baseRec], "status != OPEN");
+    test("7. Template decision APPROVED", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- decision: )NOT_RECORDED/, "$1APPROVED"), basePlan, baseEv, baseRec], "decision != NOT_RECORDED");
+    test("8. Template evidence ATTACHED", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- evidence reviewed: )NOT_ATTACHED/, "$1ATTACHED"), basePlan, baseEv, baseRec], "evidence != NOT_ATTACHED");
+    test("9. Template approval GRANTED", () => [baseReg, baseTpl.replace(/(### Stub for LEG-MKT-01[\s\S]*?- approval signatures: )NOT_GRANTED/, "$1GRANTED"), basePlan, baseEv, baseRec], "approval != NOT_GRANTED");
+    test("10. Initial MVP physical blocker changed", () => [baseReg.replace(/- initial-MVP physical-schema blocker: YES/, '- initial-MVP physical-schema blocker: NO'), baseTpl, basePlan, baseEv, baseRec], "Blocker mismatch");
+    test("11. Initial MVP application blocker changed", () => [baseReg.replace(/- initial-MVP application blocker: YES/, '- initial-MVP application blocker: NO'), baseTpl, basePlan, baseEv, baseRec], "Blocker mismatch");
+    test("12. Future physical blocker changed", () => [baseReg.replace(/- future-reseller physical-schema blocker: YES/, '- future-reseller physical-schema blocker: NO'), baseTpl, basePlan, baseEv, baseRec], "Blocker mismatch");
+    test("13. Future application blocker changed", () => [baseReg.replace(/- future-reseller application blocker: YES/, '- future-reseller application blocker: NO'), baseTpl, basePlan, baseEv, baseRec], "Blocker mismatch");
+    test("14. malformed matrix extra column", () => [baseReg, baseTpl, basePlan.replace(/(\| LEG-MKT-01 \|[^\r\n]*)\|/, "$1 | EXTRA |"), baseEv, baseRec], "Malformed matrix row cols");
+    test("15. wrong producing workstream", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\| Workstream A/, "| LEG-MKT-01 | Workstream B"), baseEv, baseRec], "Producing workstream mismatch");
+    test("16. wrong final closure dependency", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-07\s*\| Workstream C\s*\| Workstream B\s*\| Workstream A, Workstream B/, "| LEG-MKT-07 | Workstream C         | Workstream B              | Workstream Z             "), baseEv, baseRec], "Final closure mismatch");
+    test("17. duplicate Register ID", () => [baseReg + "\n### LEG-MKT-01\nSTATUS=OPEN\n", baseTpl, basePlan, baseEv, baseRec], "Register duplicate");
+    test("18. missing Register ID", () => [baseReg.replace(/### LEG-MKT-01/, "### MISSING-01"), baseTpl, basePlan, baseEv, baseRec], "Register missing");
+    test("19. duplicate Template ID", () => [baseReg, baseTpl + "\n### Stub for LEG-MKT-01\n", basePlan, baseEv, baseRec], "Template duplicate");
+    test("20. missing Template ID", () => [baseReg, baseTpl.replace(/### Stub for LEG-MKT-01/, "### Stub for MISSING-01"), basePlan, baseEv, baseRec], "Template missing");
+    test("21. duplicate Matrix ID", () => [baseReg, baseTpl, basePlan + "\n| LEG-MKT-01 | Workstream A         | None                      | None                     | YES               | YES                  | YES             | NO               |\n", baseEv, baseRec], "Matrix duplicate");
+    test("22. missing Matrix ID", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01/, "| MISSING-01"), baseEv, baseRec], "Matrix missing");
+    test("23. duplicate-plus-missing Matrix with row count still 22", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01/, "| LEG-MKT-02"), baseEv, baseRec], "Matrix missing");
+    test("24. wrong Review Record readiness value", () => [baseReg, baseTpl, basePlan, baseEv, baseRec.replace(/READY_FOR_PHYSICAL_SCHEMA=NO/, "READY_FOR_PHYSICAL_SCHEMA=YES")], "readiness mismatch");
+    test("25. ID assigned to wrong Evidence Pack section", () => [baseReg, baseTpl, basePlan, baseEv.replace(/- exact LEG-MKT and OMQ-MKT IDs: (.*)LEG-MKT-01, (.*)/, "- exact LEG-MKT and OMQ-MKT IDs: $1$2"), baseRec], "Sec 1 missing LEG-MKT-01");
+    test("26. missing Evidence Pack instruction/assumptions block", () => [baseReg, baseTpl, basePlan, baseEv.replace(/- external review instruction:/, ""), baseRec], "Missing key");
+    test("27. wrong preliminary parallel work", () => [baseReg, baseTpl, basePlan.replace(/\| LEG-MKT-01\s*\| Workstream A\s*\| Workstream E/, "| LEG-MKT-01 | Workstream A         | Workstream F"), baseEv, baseRec], "Preliminary parallel work mismatch");
 
     console.log(`NEGATIVE_SELF_TEST_COUNT=${selfTestCount}`);
     console.log(`NEGATIVE_SELF_TEST_FAILURES=${selfTestFailures}`);
-    console.log(`BASELINE_VALIDATION_ERRORS=${baseline.errors.length}`);
+    console.log(`BASELINE_VALIDATION_ERRORS=${base.errors.length}`);
 
-    for (const [k, v] of Object.entries(baseline.metrics)) {
+    for (const [k, v] of Object.entries(base.metrics)) {
         console.log(`${k}=${v}`);
     }
 
-    if (baseline.errors.length > 0) {
+    if (base.errors.length > 0) {
         console.log("Validation Failed with errors:");
-        for (const e of baseline.errors) console.log(" - " + e);
+        for (const e of base.errors) console.log(" - " + e);
         process.exit(1);
     }
-    
+
     process.exit(0);
 }
 
 run();
 '@
 
-$tempJs = Join-Path $env:TEMP "validator_56c0.js"
-[IO.File]::WriteAllText($tempJs, $nodeScript)
-node $tempJs
+$tempFile = [System.IO.Path]::GetTempFileName()
+$code | Out-File $tempFile -Encoding UTF8
+node $tempFile
 $exitCode = $LASTEXITCODE
-Remove-Item $tempJs -Force -ErrorAction SilentlyContinue
-exit $exitCode
+Remove-Item $tempFile -ErrorAction SilentlyContinue
+
+if ($exitCode -ne 0) {
+    Write-Host "Validation script failed."
+    exit $exitCode
+}
+Write-Host "Validation script passed."
+exit 0
