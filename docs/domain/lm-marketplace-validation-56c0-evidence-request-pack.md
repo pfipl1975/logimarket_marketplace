@@ -7,7 +7,8 @@ This pack defines external review requests needed to unblock physical schema and
 - purpose: Validate contract formation, P2B terms, PSP legal structure, refund liability, and buyer legal context.
 - scope: Initial Intermediary-First MVP and Future LogiMarket Reseller Activation.
 - exact LEG-MKT and OMQ-MKT IDs: LEG-MKT-01, LEG-MKT-02, LEG-MKT-03, LEG-MKT-04, LEG-MKT-05, LEG-MKT-07, LEG-MKT-08, LEG-MKT-09, LEG-MKT-10, OMQ-MKT-01, OMQ-MKT-02, OMQ-MKT-03, OMQ-MKT-04, OMQ-MKT-05, OMQ-MKT-06, OMQ-MKT-08, OMQ-MKT-09, OMQ-MKT-11, OMQ-MKT-12.
-- approved R3 facts that must not be reopened without evidence: LogiMarket is an intermediary for the partner marketplace. Partners own commercial content and goods refund liability. PSP integration must not involve self-custody or LogiMarket escrow.
+- approved business-model assumptions and intended operating constraints:
+- External reviewers must identify whether applicable law, accounting rules, tax rules, privacy requirements, PSP terms, scheme rules or operational constraints invalidate, narrow or require modification of these assumptions. LogiMarket is an intermediary for the partner marketplace. Partners own commercial content and goods refund liability. PSP integration must not involve self-custody or LogiMarket escrow.
 - unresolved questions: Contract formation moment, KYB requirements, chargeback allocation, privacy controller roles.
 - requested written opinion or evidence: EXTERNAL_EVIDENCE_REQUIRED
 - required jurisdiction and market scope: JURISDICTION_TO_CONFIRM
@@ -35,7 +36,8 @@ This pack defines external review requests needed to unblock physical schema and
 - purpose: Validate VAT, invoicing responsibilities, and KSeF split.
 - scope: Initial Intermediary-First MVP.
 - exact LEG-MKT and OMQ-MKT IDs: LEG-MKT-06, OMQ-MKT-07, OMQ-MKT-10.
-- approved R3 facts that must not be reopened without evidence: LogiMarket issues platform-service invoices; Partners issue goods invoices.
+- approved business-model assumptions and intended operating constraints:
+- External reviewers must identify whether applicable law, accounting rules, tax rules, privacy requirements, PSP terms, scheme rules or operational constraints invalidate, narrow or require modification of these assumptions. LogiMarket issues platform-service invoices; Partners issue goods invoices.
 - unresolved questions: Commission tax recognition, seller goods invoice and KSeF exchange.
 - requested written opinion or evidence: EXTERNAL_EVIDENCE_REQUIRED
 - required jurisdiction and market scope: JURISDICTION_TO_CONFIRM
@@ -61,9 +63,10 @@ This pack defines external review requests needed to unblock physical schema and
 
 - purpose: Provide integration evidence for PSP marketplace architecture.
 - scope: Initial Intermediary-First MVP.
-- exact LEG-MKT and OMQ-MKT IDs: LEG-MKT-05, OMQ-MKT-03, OMQ-MKT-05, OMQ-MKT-08, OMQ-MKT-09.
-- approved R3 facts that must not be reopened without evidence: No LogiMarket self-custody or operated escrow.
-- unresolved questions: Technical executor for refunds, chargeback mechanisms, payment allocation architecture.
+- exact LEG-MKT and OMQ-MKT IDs: LEG-MKT-05, OMQ-MKT-03, OMQ-MKT-04, OMQ-MKT-05, OMQ-MKT-08, OMQ-MKT-09.
+- approved business-model assumptions and intended operating constraints:
+- External reviewers must identify whether applicable law, accounting rules, tax rules, privacy requirements, PSP terms, scheme rules or operational constraints invalidate, narrow or require modification of these assumptions. No LogiMarket self-custody or operated escrow.
+- unresolved questions: Technical executor for refunds, chargeback mechanisms, payment allocation architecture, marketplace account model, seller onboarding, PSP KYB/KYC capabilities, beneficial-owner verification, onboarding statuses, capability restrictions, remediation requirements, webhook/API evidence, responsibility split between PSP, LogiMarket, and Partner (OMQ-MKT-04).
 - requested written opinion or evidence: EXTERNAL_EVIDENCE_REQUIRED
 - required jurisdiction and market scope: JURISDICTION_TO_CONFIRM
 - required assumptions: Licensed PSP delegation.
@@ -77,7 +80,7 @@ This pack defines external review requests needed to unblock physical schema and
 
 ### Initial MVP Evidence Required
 - LEG-MKT-05
-- OMQ-MKT-03, OMQ-MKT-05, OMQ-MKT-08, OMQ-MKT-09
+- OMQ-MKT-03, OMQ-MKT-04, OMQ-MKT-05, OMQ-MKT-08, OMQ-MKT-09
 
 ### Future Reseller Activation Evidence Required
 - None
@@ -89,7 +92,8 @@ This pack defines external review requests needed to unblock physical schema and
 - purpose: Validate privacy roles, data flows, and retention limits.
 - scope: Initial Intermediary-First MVP.
 - exact LEG-MKT and OMQ-MKT IDs: LEG-MKT-09, OMQ-MKT-11.
-- approved R3 facts that must not be reopened without evidence: Configurable retention and abstract processing context.
+- approved business-model assumptions and intended operating constraints:
+- External reviewers must identify whether applicable law, accounting rules, tax rules, privacy requirements, PSP terms, scheme rules or operational constraints invalidate, narrow or require modification of these assumptions. Configurable retention and abstract processing context.
 - unresolved questions: Controller/processor allocation per flow.
 - requested written opinion or evidence: EXTERNAL_EVIDENCE_REQUIRED
 - required jurisdiction and market scope: JURISDICTION_TO_CONFIRM
@@ -116,7 +120,8 @@ This pack defines external review requests needed to unblock physical schema and
 - purpose: Ensure external validations translate to viable product and technical implementation.
 - scope: Initial Intermediary-First MVP and Future LogiMarket Reseller Activation.
 - exact LEG-MKT and OMQ-MKT IDs: All LEG-MKT and OMQ-MKT IDs.
-- approved R3 facts that must not be reopened without evidence: Approved Logical Model Data semantics.
+- approved business-model assumptions and intended operating constraints:
+- External reviewers must identify whether applicable law, accounting rules, tax rules, privacy requirements, PSP terms, scheme rules or operational constraints invalidate, narrow or require modification of these assumptions. Approved Logical Model Data semantics.
 - unresolved questions: Technical schema impact of all legal/PSP decisions.
 - requested written opinion or evidence: EXTERNAL_EVIDENCE_REQUIRED
 - required jurisdiction and market scope: JURISDICTION_TO_CONFIRM

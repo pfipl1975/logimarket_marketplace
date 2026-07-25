@@ -162,7 +162,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: NO_SELF_CUSTODY; NO_LOGIMARKET_ESCROW; ABSTRACT_PSP_ALLOCATION_AND_PAYOUT
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: PSP Specialist
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -278,7 +278,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: DPO
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -396,7 +396,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: ABSTRACT_PSP_ALLOCATION_AND_PAYOUT
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: PSP Specialist
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -425,7 +425,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: PENDING_PSP_AND_LEGAL_VALIDATION
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: PSP Specialist
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -454,7 +454,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: NO_SELF_CUSTODY_NO_ESCROW
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: PSP Specialist
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -541,7 +541,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: REFUND_TECHNICAL_EXECUTOR_UNRESOLVED
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: PSP Specialist
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -570,7 +570,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: CHARGEBACK_ALLOCATION_UNRESOLVED
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: PSP Specialist
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED
@@ -657,7 +657,7 @@ PREPOPULATED_DECISIONS=0
 - current safe default: LOGIMARKET_RESELLER_DISABLED
 - status: OPEN
 - decision owner: Legal Counsel
-- supporting reviewers: UNASSIGNED
+- supporting reviewers: DPO
 - date: [DATE]
 - jurisdiction: [JURISDICTION]
 - evidence reviewed: NOT_ATTACHED

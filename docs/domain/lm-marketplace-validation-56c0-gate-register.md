@@ -92,7 +92,7 @@ STATUS=OPEN
 - exact canonical meaning: PSP architecture, KYB/KYC, allocations and payouts
 - exact current safe documentation default: NO_SELF_CUSTODY; NO_LOGIMARKET_ESCROW; ABSTRACT_PSP_ALLOCATION_AND_PAYOUT
 - primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: PSP Specialist
 - affected aggregate boundaries: PAYMENT_AND_ALLOCATION, AUDIT_IDEMPOTENCY_AND_PRIVACY
 - affected model elements: PaymentOrchestration, PSPTransactionReference, PaymentAllocation, SellerSettlementReference, IdempotencyRecord, WebhookInboxMessage
 - affected lifecycles: LC-01, LC-07, LC-08, LC-15
@@ -172,7 +172,7 @@ STATUS=OPEN
 - exact canonical meaning: privacy roles and retention
 - exact current safe documentation default: NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION
 - primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: DPO
 - affected aggregate boundaries: AUDIT_IDEMPOTENCY_AND_PRIVACY
 - affected model elements: DomainAuditEvent, RetentionPolicySnapshot, PrivacyProcessingContext
 - affected lifecycles: no dedicated lifecycle; map audit/privacy elements explicitly
@@ -254,7 +254,7 @@ STATUS=OPEN
 - exact unresolved question: PSP marketplace architecture
 - exact safe documentation default: ABSTRACT_PSP_ALLOCATION_AND_PAYOUT
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: PSP Specialist
 - affected aggregates: PAYMENT_AND_ALLOCATION; AUDIT_IDEMPOTENCY_AND_PRIVACY
 - affected elements: PaymentOrchestration; PSPTransactionReference; PaymentAllocation; SellerSettlementReference; WebhookInboxMessage; IdempotencyRecord
 - logical representation strategy: abstract licensed-PSP references, allocation and settlement capabilities
@@ -274,7 +274,7 @@ STATUS=OPEN
 - exact unresolved question: seller KYB/KYC responsibilities
 - exact safe documentation default: PENDING_PSP_AND_LEGAL_VALIDATION
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: PSP Specialist
 - affected aggregates: SELLER_AND_OFFER_CLASSIFICATION; PAYMENT_AND_ALLOCATION
 - affected elements: SellerLegalIdentity; SellerEligibility; PaymentOrchestration
 - logical representation strategy: abstract seller legal identity, eligibility and KYB/KYC status reference
@@ -294,7 +294,7 @@ STATUS=OPEN
 - exact unresolved question: payment allocation and seller payout
 - exact safe documentation default: NO_SELF_CUSTODY_NO_ESCROW
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: PSP Specialist
 - affected aggregates: PAYMENT_AND_ALLOCATION
 - affected elements: PaymentOrchestration; PaymentAllocation; SellerSettlementReference
 - logical representation strategy: abstract allocation and settlement references with no selected payout architecture
@@ -354,7 +354,7 @@ STATUS=OPEN
 - exact unresolved question: refund technical execution
 - exact safe documentation default: REFUND_TECHNICAL_EXECUTOR_UNRESOLVED
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: PSP Specialist
 - affected aggregates: AFTER_SALES_AND_DISPUTES
 - affected elements: RefundCase
 - logical representation strategy: separate financial liability, business decision, platform orchestration and unresolved technical executor
@@ -374,7 +374,7 @@ STATUS=OPEN
 - exact unresolved question: chargeback responsibility and allocation
 - exact safe documentation default: CHARGEBACK_ALLOCATION_UNRESOLVED
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: PSP Specialist
 - affected aggregates: AFTER_SALES_AND_DISPUTES
 - affected elements: ChargebackDispute
 - logical representation strategy: abstract dispute record with unresolved responsibility and allocation
@@ -434,7 +434,7 @@ STATUS=OPEN
 - exact unresolved question: future reseller activation
 - exact safe documentation default: LOGIMARKET_RESELLER_DISABLED
 - exact primary evidence owner: Legal Counsel
-- supporting reviewer: UNASSIGNED
+- supporting reviewer: DPO
 - affected aggregates: FUTURE_LOGIMARKET_RESELLER_EXTENSION
 - affected elements: FutureResellerActivationPolicy; OfferContractClassification
 - logical representation strategy: isolated disabled future-extension policy

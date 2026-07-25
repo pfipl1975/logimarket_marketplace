@@ -15,7 +15,7 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 ### Workstream A — Marketplace legal qualification and contract formation
 - inputs: 56B0 Logical Data Model, R3 Intermediary-First Contract.
 - owner: Legal Counsel
-- supporting reviewers: Internal Product
+- supporting reviewers: Internal Product and Engineering
 - dependencies: None. Foundation for all other workstreams.
 - decisions produced: LEG-MKT-01, LEG-MKT-02, LEG-MKT-03, LEG-MKT-04, OMQ-MKT-01, OMQ-MKT-02
 - affected model areas: SELLER_AND_OFFER_CLASSIFICATION, MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER
@@ -28,7 +28,7 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 ### Workstream B — PSP, KYB/KYC, payment allocation and payouts
 - inputs: Workstream A decisions, PSD2 laws, PSP APIs.
 - owner: Legal Counsel
-- supporting reviewers: PSP Specialist, Internal Product
+- supporting reviewers: PSP Specialist, Internal Product and Engineering
 - dependencies: Depends on Workstream A (qualification).
 - decisions produced: LEG-MKT-05, OMQ-MKT-03, OMQ-MKT-04, OMQ-MKT-05
 - affected model areas: PAYMENT_AND_ALLOCATION, AUDIT_IDEMPOTENCY_AND_PRIVACY
@@ -41,8 +41,11 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 ### Workstream C — Refunds and chargebacks
 - inputs: Workstream A liability mapping, Workstream B PSP architecture.
 - owner: Legal Counsel
-- supporting reviewers: PSP Specialist, Internal Product
-- dependencies: Depends on Workstream A and Workstream B.
+- supporting reviewers: PSP Specialist, Internal Product and Engineering
+- dependencies:
+  - PARALLEL_PRELIMINARY_ANALYSIS=YES
+  - FINAL_CLOSURE_IN_PARALLEL=NO
+  - HARD_DEPENDENCY_FOR_CLOSURE=WORKSTREAM_B
 - decisions produced: LEG-MKT-07, OMQ-MKT-08, OMQ-MKT-09
 - affected model areas: AFTER_SALES_AND_DISPUTES, SELLER_ORDER
 - blocked implementation areas: Initial-MVP physical schema.
@@ -54,7 +57,7 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 ### Workstream D — Monetization, VAT, accounting and KSeF
 - inputs: Workstream A intermediary qualification.
 - owner: Tax Advisor
-- supporting reviewers: Legal Counsel
+- supporting reviewers: Legal Counsel, Internal Product and Engineering
 - dependencies: Depends on Workstream A.
 - decisions produced: LEG-MKT-06, OMQ-MKT-06, OMQ-MKT-07, OMQ-MKT-10
 - affected model areas: PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE, SELLER_ORDER
@@ -67,20 +70,22 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 ### Workstream E — Buyer legal context and privacy
 - inputs: Intermediary data flows.
 - owner: Legal Counsel
-- supporting reviewers: DPO
-- dependencies: None.
+- supporting reviewers: DPO, Internal Product and Engineering
+- dependencies:
+  - preliminary privacy mapping: none;
+  - final role-allocation closure: Workstream A.
 - decisions produced: LEG-MKT-08, LEG-MKT-09, OMQ-MKT-11
 - affected model areas: MARKETPLACE_ORDER_ORCHESTRATION, AUDIT_IDEMPOTENCY_AND_PRIVACY, AFTER_SALES_AND_DISPUTES
 - blocked implementation areas: Initial-MVP physical schema.
-- parallelizable activities: Can be run fully in parallel to A, B, C, and D.
-- sequencing constraints: None.
+- parallelizable activities: PARALLEL_PRELIMINARY_ANALYSIS=YES, FINAL_CLOSURE_IN_PARALLEL=NO
+- sequencing constraints: Final closure requires Workstream A.
 - completion criteria: Controller roles, buyer definitions, and retention periods verified.
 - reopening criteria: GDPR non-compliance detected in logical flows.
 
 ### Workstream F — Future reseller activation
 - inputs: None currently active.
 - owner: Legal Counsel
-- supporting reviewers: Internal Product
+- supporting reviewers: Internal Product and Engineering
 - dependencies: None for MVP.
 - decisions produced: LEG-MKT-10, OMQ-MKT-12
 - affected model areas: FUTURE_LOGIMARKET_RESELLER_EXTENSION
@@ -101,8 +106,8 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 | LEG-MKT-05  | Workstream C        | WS A       | YES               | YES                  | YES             | NO               |
 | LEG-MKT-06  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
 | LEG-MKT-07  | Workstream D        | WS A, B    | YES               | YES                  | YES             | NO               |
-| LEG-MKT-08  | Workstream A, B     | None       | YES               | YES                  | NO              | YES              |
-| LEG-MKT-09  | Workstream A, B     | None       | YES               | YES                  | NO              | YES              |
+| LEG-MKT-08  | Workstream A, B     | WS A       | YES               | YES                  | NO              | YES              |
+| LEG-MKT-09  | Workstream A, B     | WS A       | YES               | YES                  | NO              | YES              |
 | LEG-MKT-10  | None                | None       | NO                | YES                  | YES             | NO               |
 | OMQ-MKT-01  | Workstream E        | None       | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-02  | Workstream E        | None       | YES               | YES                  | NO              | YES              |
@@ -114,5 +119,5 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 | OMQ-MKT-08  | Workstream D        | WS A, B    | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-09  | Workstream D        | WS A, B    | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-10  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-11  | Workstream A, B     | None       | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-11  | Workstream A, B     | WS A       | YES               | YES                  | NO              | YES              |
 | OMQ-MKT-12  | None                | None       | NO                | YES                  | NO              | NO               |
