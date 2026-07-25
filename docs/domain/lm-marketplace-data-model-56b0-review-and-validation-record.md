@@ -4,11 +4,12 @@ DOCUMENT_ROLE=NORMATIVE_TRACEABILITY
 DOCUMENT_STATUS=READY_FOR_INDEPENDENT_LOGICAL_MODEL_REVIEW
 
 ## 1. SPRINT IDENTITY
-- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A5
+- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A6
 
 ## 2. START AND CURRENT HEAD SHAS
-- START_HEAD_SHA: 7b201cd71e0760b331328f378cfb77e2e0c06b82
-- CURRENT_HEAD_SHA: 7b201cd71e0760b331328f378cfb77e2e0c06b82
+- INPUT_HEAD_SHA=09e658f1ab7cc61495f1eaecf3f98d647b177306
+- BASE_MAIN_SHA=6a4560c8d2e55ab65863a6f44f30225e5e6272b8
+- DOCUMENT_COMMIT_SHA=RECORDED_BY_GIT_HISTORY_AND_FINAL_REPORT
 
 ## 3. SOURCE PRECEDENCE
 The design adheres to the precedence hierarchy: R3 business approval record > R3 intermediary-first contract > R3 decision overlay > R3 implementation roadmap > historical R2B > current repository facts. LogiMarket as global MVP default seller is rejected.
@@ -58,56 +59,56 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 - CURRENT_SCHEMA_MAPPING_COUNT_MATCHES_ROWS=YES
 
 ## 8. EXACT DEC-MKT TRACEABILITY
-| DECISION_ID | DECISION_TITLE | AFFECTED_LIFECYCLES |
-|-------------|----------------|---------------------|
-| DEC-MKT-01 | intermediary-first MVP | (None) |
-| DEC-MKT-02 | independent offerModel and contractModel | LC-02A, LC-02B |
-| DEC-MKT-03 | RFQ partner marketplace active | LC-03, LC-17 |
-| DEC-MKT-04 | ecommerce partner marketplace active | LC-04, LC-05, LC-06 |
-| DEC-MKT-05 | outbound external redirect active | no dedicated lifecycle |
-| DEC-MKT-06 | reseller future only | LC-16 |
-| DEC-MKT-07 | Partner contractual seller and Seller of Record | LC-02C, LC-05 |
-| DEC-MKT-08 | Partner owns offer description, price and availability | LC-02C, LC-05 |
-| DEC-MKT-09 | Partner owns fulfillment, delivery, goods complaints, returns and refund financial liability | LC-09, LC-10, LC-11A, LC-12 |
-| DEC-MKT-10 | LogiMarket owns platform orchestration, rule enforcement and platform-service complaints | LC-01, LC-11B, LC-14 |
-| DEC-MKT-11 | multi-seller checkout creates seller-specific relationships | LC-04, LC-05 |
-| DEC-MKT-12 | Partner issues buyer goods invoice | LC-05 |
-| DEC-MKT-13 | LogiMarket issues platform-service invoices | LC-14 |
-| DEC-MKT-14 | licensed PSP and validation required | LC-01, LC-07 |
-| DEC-MKT-15 | no self-custody or LogiMarket-operated escrow | LC-07, LC-08, LC-15 |
-| DEC-MKT-16 | seller disclosure before conversion or contract formation | LC-03, LC-04, LC-06 |
-| DEC-MKT-17 | reseller activation explicit and offer-specific | LC-16 |
-| DEC-MKT-18 | existing RFQ, cart, checkout and outbound behavior unchanged during domain reset | LC-03, LC-04. Also map current cart, checkout and /go/[id] behavior. |
+| DECISION_ID | NORMATIVE_MEANING | AFFECTED_AGGREGATES | AFFECTED_MODEL_ELEMENTS | AFFECTED_LIFECYCLES | LOGICAL_INVARIANTS | CURRENT_REPOSITORY_IMPACT | PHYSICAL_SCHEMA_BLOCKER |
+|-------------|-------------------|---------------------|-------------------------|---------------------|--------------------|---------------------------|-------------------------|
+| DEC-MKT-01 | intermediary-first MVP | AUDIT_IDEMPOTENCY_AND_PRIVACY | OutboundRedirectEvent, ExternalRedirectReference | (None) | Coverage absolute. | /go/[id] external redirect remains active | YES |
+| DEC-MKT-02 | independent offerModel and contractModel | SELLER_AND_OFFER_CLASSIFICATION | OfferConversionClassification, OfferContractClassification, ConversionTypeField | LC-02A, LC-02B | Explicit separation of conversion and contract classification. | offerModel is primary. conversionType requires audit. | NO |
+| DEC-MKT-03 | RFQ partner marketplace active | MARKETPLACE_ORDER_ORCHESTRATION | RfqRequest, RfqPartnerResponse, RfqRoutingEvent, RfqBuyerLegalContextSnapshot, BuyerIdentityReference | LC-03, LC-17 | RFQ does not create SellerOrder or Payment. | submitRfq preserved. | YES |
+| DEC-MKT-04 | ecommerce partner marketplace active | MARKETPLACE_ORDER_ORCHESTRATION | OfferConversionClassification, MarketplaceOrder | LC-04, LC-05, LC-06 | Cart/checkout explicitly map to ecommerce classification. | addToCart and checkout behaviors mapped for extension. | YES |
+| DEC-MKT-05 | outbound external redirect active | AUDIT_IDEMPOTENCY_AND_PRIVACY | OfferConversionClassification, OutboundRedirectEvent, ExternalRedirectReference | no dedicated lifecycle | Audit domain records redirect; no marketplace transaction created. | /go/[id] preserves redirect behavior. | NO |
+| DEC-MKT-06 | reseller future only | FUTURE_LOGIMARKET_RESELLER_EXTENSION | OfferContractClassification, FutureResellerActivationPolicy | LC-16 | Activation policy explicitly inactive in initial MVP. | No automatic Reseller inference. | NO |
+| DEC-MKT-07 | Partner contractual seller and Seller of Record | SELLER_AND_OFFER_CLASSIFICATION | OfferSellerAssignment, SellerProfile, OfferContractClassification | LC-02C, LC-05 | 1:1 active seller assignment per offer required. | offers.partnerId application join mapped for extension. | YES |
+| DEC-MKT-08 | Partner owns offer description, price and availability | SELLER_ORDER | SellerOrderItem | LC-02C, LC-05 | Seller Order Item immutable mapping. | Immutable seller assignment snapshot required on order creation. | YES |
+| DEC-MKT-09 | Partner owns fulfillment, delivery, goods complaints, returns and refund financial liability | AFTER_SALES_AND_DISPUTES, SELLER_ORDER | ReturnCase, GoodsComplaintCase, RefundCase, ChargebackDispute, SellerResponsibilitySnapshot, Shipment, ShipmentItemAllocation, DeliveryEvent | LC-09, LC-10, LC-11A, LC-12 | Partner owns goods complaint and return responsibilities. | After-sales responsibilities mapped. | YES |
+| DEC-MKT-10 | LogiMarket owns platform orchestration, rule enforcement and platform-service complaints | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE, AFTER_SALES_AND_DISPUTES, AUDIT_IDEMPOTENCY_AND_PRIVACY | PlatformRevenueRecord, PlatformServiceComplaintCase, DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, RetentionPolicySnapshot, PrivacyProcessingContext | LC-01, LC-11B, LC-14 | LogiMarket owns platform complaints and audit retention. | Explicit separation of platform complaints from goods complaints. | YES |
+| DEC-MKT-11 | multi-seller checkout creates seller-specific relationships | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder, SellerOrder, EcommerceBuyerLegalContextSnapshot, BuyerIdentityReference | LC-04, LC-05 | Orchestration (MarketplaceOrder) decomposes into legal contracts (SellerOrder). | Multi-seller cart decomposition required. | YES |
+| DEC-MKT-12 | Partner issues buyer goods invoice | SELLER_ORDER | GoodsInvoiceResponsibilitySnapshot | LC-05 | Goods invoice responsibility explicitly snapshot. | Explicit goods invoice issuer recorded. | YES |
+| DEC-MKT-13 | LogiMarket issues platform-service invoices | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | PlatformRevenueRecord, PlatformServiceInvoiceReference | LC-14 | Distinct platform revenue lifecycle (LC-14) established. | Platform service revenue recorded separately. | YES |
+| DEC-MKT-14 | licensed PSP and validation required | SELLER_AND_OFFER_CLASSIFICATION, PAYMENT_AND_ALLOCATION | SellerLegalIdentity, SellerEligibility, PaymentOrchestration, PSPTransactionReference | LC-01, LC-07 | Explicit KYB eligibility precondition. | Partners table KYB gaps mapped for extension. | YES |
+| DEC-MKT-15 | no self-custody or LogiMarket-operated escrow | PAYMENT_AND_ALLOCATION | PaymentOrchestration, PaymentAllocation, SellerSettlementReference | LC-07, LC-08, LC-15 | Payment orchestration delegates execution to abstract PSP. | No LogiMarket self-custody or escrow. | YES |
+| DEC-MKT-16 | seller disclosure before conversion or contract formation | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | RfqSellerDisclosureSnapshot, EcommerceSellerDisclosureSnapshot, SellerAcceptanceDecision | LC-03, LC-04, LC-06 | Disclosure explicitly captured in conversion snapshots. | Explicit disclosure before RFQ/checkout required. | YES |
+| DEC-MKT-17 | reseller activation explicit and offer-specific | FUTURE_LOGIMARKET_RESELLER_EXTENSION | FutureResellerActivationPolicy | LC-16 | Reseller model constrained to future extension boundary. | Global switch prohibited. | NO |
+| DEC-MKT-18 | existing RFQ, cart, checkout and outbound behavior unchanged during domain reset | MARKETPLACE_ORDER_ORCHESTRATION, AUDIT_IDEMPOTENCY_AND_PRIVACY | RfqRequest, MarketplaceOrder, OutboundRedirectEvent | LC-03, LC-04. Also map current cart, checkout and /go/[id] behavior. | Safe mapping of current repository state. | Baseline behaviors mapped without modification. | NO |
 
 ## 9. EXACT LEG-MKT TRACEABILITY AND SAFE DEFAULTS
-| GATE_ID | GATE_TITLE | AFFECTED_LIFECYCLES | SAFE_DEFAULT |
-|---------|------------|---------------------|--------------|
-| LEG-MKT-01 | intermediary legal qualification and terms | LC-01, LC-02A, LC-02B, LC-02C | MARKETPLACE_OPERATOR_TERMS_ONLY |
-| LEG-MKT-02 | contract formation for RFQ and e-commerce | LC-03, LC-04, LC-05, LC-06, LC-17 | DEFERRED_UNTIL_SELLER_ACCEPTANCE |
-| LEG-MKT-03 | seller identity and pre-contract disclosure | LC-03, LC-04 | DISCLOSURE_BEFORE_CONVERSION |
-| LEG-MKT-04 | P2B terms, rankings, suspension and complaints | LC-01, LC-11B | P2B_COMPLIANT_TC_REQUIRED |
-| LEG-MKT-05 | PSP architecture, KYB/KYC, allocations and payouts | LC-01, LC-07, LC-08, LC-15 | LICENSED_PSP_REQUIRED |
-| LEG-MKT-06 | VAT, accounting and KSeF split | LC-05, LC-14 | SEPARATE_INVOICING_ASSUMED |
-| LEG-MKT-07 | refund, chargeback and seller liability | LC-10, LC-11A, LC-12, LC-13 | PARTNER_LIABLE |
-| LEG-MKT-08 | B2B and entrepreneur-with-consumer-rights analysis | LC-03, LC-04, LC-10, LC-12 | B2B_DEFAULT_UNTIL_VERIFIED |
-| LEG-MKT-09 | privacy roles and retention | no dedicated lifecycle; map audit/privacy elements explicitly | INDEPENDENT_CONTROLLERS_UNTIL_VERIFIED |
-| LEG-MKT-10 | future reseller activation | LC-16 | INACTIVE_PENDING_APPROVAL |
+| LEGAL_GATE_ID | NORMATIVE_MEANING | AFFECTED_AGGREGATES | AFFECTED_ELEMENTS | AFFECTED_LIFECYCLES | SAFE_DOCUMENTATION_DEFAULT | PHYSICAL_SCHEMA_BLOCKER | EVIDENCE_OWNER |
+|---------------|-------------------|---------------------|-------------------|---------------------|----------------------------|-------------------------|----------------|
+| LEG-MKT-01 | intermediary legal qualification and terms | SELLER_AND_OFFER_CLASSIFICATION | OfferMarketplaceClassification, OfferSellerAssignment, OfferConversionClassification, OfferContractClassification | LC-01, LC-02A, LC-02B, LC-02C | LOGIMARKET_INTERMEDIARY_ONLY; NO_SELLER_ROLE_FOR_PARTNER_MARKETPLACE | YES | Legal Counsel |
+| LEG-MKT-02 | contract formation for RFQ and e-commerce | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | RfqRequest, RfqPartnerResponse, MarketplaceOrder, SellerOrder, SellerOrderItem, SellerAcceptanceDecision | LC-03, LC-04, LC-05, LC-06, LC-17 | CONTRACT_FORMATION_EVENT_UNRESOLVED; MODEL_ORDER_INTENT_AND_SELLER_ACCEPTANCE_SEPARATELY; MODEL_RFQ_REQUEST_AND_PARTNER_RESPONSE_SEPARATELY | YES | Legal Counsel |
+| LEG-MKT-03 | seller identity and pre-contract disclosure | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | RfqSellerDisclosureSnapshot, EcommerceSellerDisclosureSnapshot | LC-03, LC-04 | DISPLAY_SELLER_IDENTITY_AND_RESPONSIBILITY_BEFORE_CONVERSION | YES | Legal Counsel |
+| LEG-MKT-04 | P2B terms, rankings, suspension and complaints | SELLER_AND_OFFER_CLASSIFICATION, AFTER_SALES_AND_DISPUTES, SELLER_ORDER | SellerEligibility, PlatformServiceComplaintCase, SellerResponsibilitySnapshot | LC-01, LC-11B | NO_AUTOMATIC_RANKING_PENALTY_OR_SUSPENSION_EFFECT_WITHOUT_VALIDATED_RULES | YES | Legal Counsel |
+| LEG-MKT-05 | PSP architecture, KYB/KYC, allocations and payouts | PAYMENT_AND_ALLOCATION, AUDIT_IDEMPOTENCY_AND_PRIVACY | PaymentOrchestration, PSPTransactionReference, PaymentAllocation, SellerSettlementReference, IdempotencyRecord, WebhookInboxMessage | LC-01, LC-07, LC-08, LC-15 | NO_SELF_CUSTODY; NO_LOGIMARKET_ESCROW; ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | YES | Legal Counsel |
+| LEG-MKT-06 | VAT, accounting and KSeF split | SELLER_ORDER, PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | GoodsInvoiceResponsibilitySnapshot, PlatformRevenueRecord, PlatformServiceInvoiceReference | LC-05, LC-14 | PARTNER_GOODS_INVOICE; LOGIMARKET_PLATFORM_SERVICE_INVOICE; NO_DELEGATED_INVOICING | YES | Tax Advisor |
+| LEG-MKT-07 | refund, chargeback and seller liability | AFTER_SALES_AND_DISPUTES, SELLER_ORDER | ReturnCase, GoodsComplaintCase, RefundCase, ChargebackDispute, SellerResponsibilitySnapshot | LC-10, LC-11A, LC-12, LC-13 | PARTNER_REFUND_LIABILITY; TECHNICAL_EXECUTOR_UNRESOLVED; CHARGEBACK_RESPONSIBILITY_UNRESOLVED | YES | Legal Counsel |
+| LEG-MKT-08 | B2B and entrepreneur-with-consumer-rights analysis | SELLER_AND_OFFER_CLASSIFICATION, MARKETPLACE_ORDER_ORCHESTRATION, AFTER_SALES_AND_DISPUTES | SellerLegalIdentity, RfqBuyerLegalContextSnapshot, EcommerceBuyerLegalContextSnapshot, BuyerIdentityReference, ReturnCase | LC-03, LC-04, LC-10, LC-12 | DO_NOT_CLASSIFY_BUYER_STATUS_FROM_NIP_ONLY | YES | Legal Counsel |
+| LEG-MKT-09 | privacy roles and retention | AUDIT_IDEMPOTENCY_AND_PRIVACY | DomainAuditEvent, RetentionPolicySnapshot, PrivacyProcessingContext | no dedicated lifecycle; map audit/privacy elements explicitly | NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION | YES | Legal Counsel |
+| LEG-MKT-10 | future reseller activation | FUTURE_LOGIMARKET_RESELLER_EXTENSION | FutureResellerActivationPolicy | LC-16 | LOGIMARKET_RESELLER_DISABLED | YES | Legal Counsel |
 
 ## 10. EXACT OMQ-MKT TRACEABILITY
-| QUESTION_ID | QUESTION_TITLE | PRIMARY_EVIDENCE_OWNER | SAFE_DEFAULT | BLOCKERS |
-|-------------|----------------|------------------------|--------------|----------|
-| OMQ-MKT-01 | e-commerce contract-formation moment | Legal Counsel | CONCLUSION_DEFERRED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-02 | RFQ contract-formation moment | Legal Counsel | CONCLUSION_DEFERRED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-03 | PSP marketplace architecture | Legal Counsel | PSP_EXECUTES_ALL_FUNDS | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-04 | seller KYB/KYC responsibilities | Legal Counsel | FULL_KYB_REQUIRED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-05 | payment allocation and seller payout | Legal Counsel | SETTLEMENT_TO_PARTNER | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-06 | monetization and commission/platform-service-fee model | Legal Counsel | REVENUE_MODEL_UNRESOLVED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-07 | commission tax/accounting recognition | Tax Advisor | ACCOUNTING_UNRESOLVED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-08 | refund technical execution | Legal Counsel | EXECUTOR_UNRESOLVED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-09 | chargeback responsibility and allocation | Legal Counsel | ALLOCATION_UNRESOLVED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-10 | seller goods invoice and KSeF exchange | Tax Advisor | NO_DELEGATED_INVOICING | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-11 | privacy-role allocation and retention | Legal Counsel (SUPPORTING_REVIEWER: DPO) | NO_PREDETERMINED_ROLE | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
-| OMQ-MKT-12 | future reseller activation | Legal Counsel | LOGIMARKET_RESELLER_DISABLED | LOGICAL_MODEL_BLOCKED=NO, INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=NO, INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=NO, FUTURE_RESELLER_PHYSICAL_SCHEMA_BLOCKED=YES, FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES |
+| OPEN_MODEL_QUESTION_ID | UNRESOLVED_QUESTION | SAFE_DOCUMENTATION_DEFAULT | AFFECTED_AGGREGATES | AFFECTED_ELEMENTS | LOGICAL_REPRESENTATION_STRATEGY | LOGICAL_MODEL_BLOCKED | PHYSICAL_SCHEMA_BLOCKED | APPLICATION_IMPLEMENTATION_BLOCKED | PRIMARY_EVIDENCE_OWNER | SUPPORTING_REVIEWER |
+|------------------------|---------------------|----------------------------|---------------------|-------------------|---------------------------------|-----------------------|-------------------------|------------------------------------|------------------------|---------------------|
+| OMQ-MKT-01 | E-commerce contract formation moment | CONTRACT_FORMATION_EVENT_UNRESOLVED | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder, SellerOrder | Abstract lifecycle | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-02 | RFQ contract formation | RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED | MARKETPLACE_ORDER_ORCHESTRATION | RfqRequest, RfqPartnerResponse | Abstract lifecycle | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-03 | PSP marketplace architecture | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | PAYMENT_AND_ALLOCATION | PaymentOrchestration, PaymentAllocation | Abstract payment id | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-04 | Seller KYB/KYC responsibilities | PENDING_PSP_AND_LEGAL_VALIDATION | SELLER_AND_OFFER_CLASSIFICATION | SellerEligibility | KYC status flag | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-05 | Multi-seller payout architecture | NO_SELF_CUSTODY_NO_ESCROW | PAYMENT_AND_ALLOCATION | SellerSettlementReference | Allocation model | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-06 | LogiMarket monetization model | COMMISSION_OR_PLATFORM_SERVICE_FEE | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | PlatformRevenueRecord | Fee calculation | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-07 | Commission tax mechanics | PENDING_TAX_AND_ACCOUNTING_VALIDATION | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | PlatformServiceInvoiceReference | Abstract revenue | NO | YES | YES | Tax Advisor | (None) |
+| OMQ-MKT-08 | Refund technical executor | REFUND_TECHNICAL_EXECUTOR_UNRESOLVED | AFTER_SALES_AND_DISPUTES | RefundCase | Refund capability | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-09 | Chargeback dispute owner | CHARGEBACK_ALLOCATION_UNRESOLVED | AFTER_SALES_AND_DISPUTES | ChargebackDispute | Dispute tracking | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-10 | Dropshipping goods invoice owner | NO_DELEGATED_INVOICING | SELLER_ORDER | GoodsInvoiceResponsibilitySnapshot | Document storage | NO | YES | YES | Tax Advisor | (None) |
+| OMQ-MKT-11 | Data controller privacy mapping | NO_PREDETERMINED_CONTROLLER_ROLE | AUDIT_IDEMPOTENCY_AND_PRIVACY | PrivacyProcessingContext, RetentionPolicySnapshot | Config retention | NO | YES | YES | Legal Counsel | DPO |
+| OMQ-MKT-12 | Future reseller activation | LOGIMARKET_RESELLER_DISABLED | FUTURE_LOGIMARKET_RESELLER_EXTENSION | FutureResellerActivationPolicy | Offer decoupling | NO | INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=NO, FUTURE_RESELLER_PHYSICAL_SCHEMA_BLOCKED=YES | INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=NO, FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES, FUTURE_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED | Legal Counsel | (None) |
 
 ## 11. REJECTED ASSUMPTIONS
 - LOGIMARKET_AS_GLOBAL_SELLER (Rejected)
