@@ -13,7 +13,18 @@ const planPath = 'docs/domain/lm-marketplace-validation-56c0-dependency-and-unbl
 const evPath = 'docs/domain/lm-marketplace-validation-56c0-evidence-request-pack.md';
 const recPath = 'docs/domain/lm-marketplace-validation-56c0-review-and-validation-record.md';
 
+function normalizeEol(text) {
+    return text
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n');
+}
+
 function validate(regTxt, tplTxt, planTxt, evTxt, recTxt) {
+    regTxt = normalizeEol(regTxt);
+    tplTxt = normalizeEol(tplTxt);
+    planTxt = normalizeEol(planTxt);
+    evTxt = normalizeEol(evTxt);
+    recTxt = normalizeEol(recTxt);
     let errors = [];
     let metrics = {
         SAFE_DEFAULT_MISMATCHES: 0,
@@ -366,6 +377,27 @@ function run() {
     const baseReg = regText, baseTpl = tplText, basePlan = planText, baseEv = evText, baseRec = recText;
     const base = validate(baseReg, baseTpl, basePlan, baseEv, baseRec);
 
+    const toCrlf = text => normalizeEol(text).replace(/\n/g, '\r\n');
+    const crlfBaseline = validate(
+        toCrlf(baseReg),
+        toCrlf(baseTpl),
+        toCrlf(basePlan),
+        toCrlf(baseEv),
+        toCrlf(baseRec)
+    );
+
+    const toMixed = text => {
+        let lines = normalizeEol(text).split('\n');
+        return lines.map((l, i) => i % 2 === 0 ? l + '\r\n' : l + '\n').join('');
+    };
+    const mixedBaseline = validate(
+        toMixed(baseReg),
+        toMixed(baseTpl),
+        toMixed(basePlan),
+        toMixed(baseEv),
+        toMixed(baseRec)
+    );
+
     function test(name, corruptFn, expFrag) {
         selfTestCount++;
         if (base.errors.length > 0) {
@@ -427,14 +459,18 @@ function run() {
     console.log(`NEGATIVE_SELF_TEST_COUNT=${selfTestCount}`);
     console.log(`NEGATIVE_SELF_TEST_FAILURES=${selfTestFailures}`);
     console.log(`BASELINE_VALIDATION_ERRORS=${base.errors.length}`);
+    console.log(`CRLF_BASELINE_VALIDATION_ERRORS=${crlfBaseline.errors.length}`);
+    console.log(`MIXED_EOL_BASELINE_VALIDATION_ERRORS=${mixedBaseline.errors.length}`);
 
     for (const [k, v] of Object.entries(base.metrics)) {
         console.log(`${k}=${v}`);
     }
 
-    if (base.errors.length > 0) {
+    if (base.errors.length > 0 || crlfBaseline.errors.length > 0 || mixedBaseline.errors.length > 0 || selfTestFailures > 0) {
         console.log("Validation Failed with errors:");
         for (const e of base.errors) console.log(" - " + e);
+        for (const e of crlfBaseline.errors) console.log(" - CRLF: " + e);
+        for (const e of mixedBaseline.errors) console.log(" - MIXED: " + e);
         process.exit(1);
     }
 
