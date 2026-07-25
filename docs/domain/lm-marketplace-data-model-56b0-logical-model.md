@@ -310,6 +310,127 @@ erDiagram
     SellerOrder }o--|| SellerProfile : assigned_to
     SellerOrder ||--o{ Shipment : fulfilled_by
     SellerOrder ||--o{ ReturnCase : may_have
+DISCLOSURE_SNAPSHOT_INSTANCES_SHARED_ACROSS_AGGREGATES=NO
+
+OUTBOUND_CREATES_MARKETPLACE_ORDER=NO
+OUTBOUND_CREATES_SELLER_ORDER=NO
+OUTBOUND_CREATES_PAYMENT_ORCHESTRATION=NO
+
+## 7. LOGICAL CARDINALITIES & OWNERSHIP
+- MarketplaceOrder 1:N SellerOrder
+- PaymentOrchestration 1:N PaymentAllocation
+- PaymentAllocation N:1 SellerOrder
+- SellerOrder 1:N SellerOrderItem
+- SellerOrder 1:N Shipment
+
+PAYMENT_ALLOCATION_STATUS_AUTHORITATIVE_IN_SELLER_ORDER=NO
+PAYMENT_ALLOCATION_STATUS=DERIVED_PROJECTION_FROM_PAYMENT_AND_ALLOCATION
+
+## 8. SNAPSHOT POLICY
+SNAPSHOT_POLICY_REQUIRED=YES
+HISTORICAL_RECORDS_FOLLOW_CURRENT_OFFER_ASSIGNMENT=NO
+
+Required Immutable Snapshots at conversion or seller-order creation:
+- seller legal identity;
+- seller display identity;
+- contractModel;
+- Seller of Record responsibility;
+- invoice responsibility;
+- delivery responsibility;
+- complaint responsibility;
+- return responsibility;
+- refund financial liability;
+- offer identity;
+- offer title;
+- manufacturer and model where applicable;
+- technical-data source reference;
+- original partner-content language;
+- quantity;
+- unit price;
+- currency;
+- tax context where available;
+- buyer legal-context evidence;
+- customer PO number where supplied.
+
+## 9. TRANSACTION AND CONSISTENCY BOUNDARIES
+- rfq-request creation boundary;
+- marketplace-order creation boundary;
+- seller-order creation boundary;
+- seller acceptance boundary;
+- payment-reference boundary;
+- payment-allocation boundary;
+- shipment boundary;
+- refund boundary;
+- goods complaint boundary;
+- platform-service complaint boundary;
+- chargeback boundary;
+- audit/event boundary.
+
+Representation uses domain events, idempotency keys, webhook inbox, outbox, retry-safe external references. No one cross-seller database transaction for external PSP. No event bus or broker.
+
+## 10. PSP ABSTRACTION
+- seller KYB/KYC status reference;
+- buyer payment intent;
+- PSP transaction reference;
+- abstract seller-order allocation (model unresolved);
+- partial allocation;
+- partial refund (technical executor unresolved);
+- chargeback reference;
+- reconciliation identifier;
+- idempotency;
+- webhook ingestion;
+- settlement reference (model unresolved).
+
+NO_LOGIMARKET_SELF_CUSTODY=YES
+NO_LOGIMARKET_OPERATED_ESCROW=YES
+PAYMENT_ALLOCATION_MODEL=UNRESOLVED
+SELLER_PAYOUT_MODEL=UNRESOLVED
+DIRECT_TO_PARTNER_PAYOUT_SELECTED=NO
+SPLIT_PAYMENT_SELECTED=NO
+REFUND_TECHNICAL_EXECUTOR=UNRESOLVED
+PSP_PROVIDER_SELECTED=NO
+PSP_ARCHITECTURE_SELECTED=NO
+
+## 11. REFUND RESPONSIBILITIES
+FINANCIAL_LIABILITY_OWNER=PARTNER
+BUSINESS_DECISION_OWNER=PARTNER
+PLATFORM_ORCHESTRATION_ROLE=LOGIMARKET
+TECHNICAL_EXECUTOR=UNRESOLVED
+REFUND_RESPONSIBILITY_DIMENSIONS_PRESENT=YES
+REFUND_TECHNICAL_EXECUTOR_SELECTED=NO
+
+## 12. FUTURE RESELLER ISOLATION
+FUTURE_RESELLER_ACTIVE_IN_INITIAL_MVP=NO
+AUTOMATIC_RESELLER_ACTIVATION=NO
+GLOBAL_RESELLER_SWITCH=NO
+OUTBOUND_RESELLER_COMBINATION_ALLOWED=NO
+FUTURE_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED
+
+## 13. LOGICAL MERMAID DIAGRAM
+```mermaid
+erDiagram
+    Offer ||--o{ RfqRequest : triggers_rfq_flow
+    Offer ||--o{ MarketplaceOrder : triggers_ecommerce_flow
+    Offer ||--o{ OutboundRedirectEvent : triggers_outbound_flow
+    Offer ||--o{ OfferSellerAssignment : classified_by
+    Offer ||--o{ OfferConversionClassification : classified_by
+    Offer ||--o{ OfferContractClassification : classified_by
+
+    RfqRequest ||--o{ RfqSellerDisclosureSnapshot : requires_disclosure
+    RfqRequest ||--o{ RfqPartnerResponse : may_have_response
+    MarketplaceOrder ||--o{ EcommerceSellerDisclosureSnapshot : requires_disclosure
+
+    MarketplaceOrder ||--|{ SellerOrder : decomposes_to
+    MarketplaceOrder ||--o{ PaymentOrchestration : initiates
+
+    PaymentOrchestration ||--|{ PaymentAllocation : specifies
+    PaymentAllocation }o--|| SellerOrder : allocates_funds_to
+    PaymentOrchestration ||--o{ SellerSettlementReference : references_settlement
+
+    SellerOrder ||--|{ SellerOrderItem : includes
+    SellerOrder }o--|| SellerProfile : assigned_to
+    SellerOrder ||--o{ Shipment : fulfilled_by
+    SellerOrder ||--o{ ReturnCase : may_have
     SellerOrder ||--o{ GoodsComplaintCase : may_have_goods_complaint
     SellerProfile ||--o{ PlatformServiceComplaintCase : may_have_platform_complaint
     SellerOrder ||--o{ RefundCase : may_have
@@ -319,6 +440,28 @@ erDiagram
     OfferMarketplaceClassification ||--o{ OfferSellerAssignment : owns
     OfferMarketplaceClassification ||--o{ OfferConversionClassification : owns
     OfferMarketplaceClassification ||--o{ OfferContractClassification : owns
+
+    AuditJournal ||--o{ DomainAuditEvent : records
+    AuditJournal ||--o{ RetentionPolicySnapshot : owns
+    AuditJournal ||--o{ PrivacyProcessingContext : owns
+
+    IdempotencyRegistry ||--o{ IdempotencyRecord : owns
+
+    OutboxDispatch ||--o{ OutboxMessage : owns
+
+    OutboundRedirectAuditLog ||--o{ OutboundRedirectEvent : records
+    OutboundRedirectAuditLog ||--o{ ExternalRedirectReference : snapshots
+
+    PaymentOrchestration ||--o{ WebhookInboxMessage : correlates_external_events
+
+    RfqRequest ||--o{ RfqBuyerLegalContextSnapshot : captures_buyer_context
+    MarketplaceOrder ||--o{ EcommerceBuyerLegalContextSnapshot : captures_buyer_context
+
+    RfqRequest }o--o{ RetentionPolicySnapshot : audit_context
+    MarketplaceOrder }o--o{ RetentionPolicySnapshot : audit_context
+
+    RfqRequest }o--o{ PrivacyProcessingContext : privacy_context
+    MarketplaceOrder }o--o{ PrivacyProcessingContext : privacy_context
 ```
 
 ## 14. READINESS SUMMARY

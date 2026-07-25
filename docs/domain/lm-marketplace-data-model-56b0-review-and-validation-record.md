@@ -4,10 +4,10 @@ DOCUMENT_ROLE=NORMATIVE_TRACEABILITY
 DOCUMENT_STATUS=READY_FOR_INDEPENDENT_LOGICAL_MODEL_REVIEW
 
 ## 1. SPRINT IDENTITY
-- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A9
+- SPRINT: LM-MARKETPLACE-DATA-MODEL-56B0-R1A10
 
 ## 2. START AND CURRENT HEAD SHAS
-- INPUT_HEAD_SHA=a7919b1e3a8f4d9f57ada2442ab1d838af22f89a
+- INPUT_HEAD_SHA=a22151fa4f7ef0be0e052c10fa9345b965d80d5a
 - BASE_MAIN_SHA=6a4560c8d2e55ab65863a6f44f30225e5e6272b8
 - DOCUMENT_COMMIT_SHA=RECORDED_BY_GIT_HISTORY_AND_FINAL_REPORT
 
@@ -72,6 +72,19 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 - DEC_MKT_08_EXACT_CROSS_DOCUMENT_SET_MATCH=YES
 - DEC_MKT_10_CHARGEBACK_ELEMENT_OMISSIONS=0
 - DEC_MKT_10_CHARGEBACK_LIFECYCLE_OMISSIONS=0
+- AUDIT_PERSISTENCE_ROOTS_IN_DIAGRAM=5
+- AUDIT_DIAGRAM_ROOT_OMISSIONS=0
+- RFQ_PRIVACY_CONTEXT_REQUIRES_MARKETPLACE_ORDER=NO
+- CROSS_PROCESS_PRIVACY_SUBJECT_AMBIGUITIES=0
+- DEC_MKT_09_AGGREGATE_OMISSIONS=0
+- OMQ_MKT_03_AGGREGATE_OMISSIONS=0
+- OMQ_MKT_04_AGGREGATE_OMISSIONS=0
+- OMQ_ELEMENT_AGGREGATE_MEMBERSHIP_MISMATCHES=0
+- SELLER_IDENTITY_LEG_MKT_08_REFERENCES=0
+- LEG_MKT_08_BUYER_CONTEXT_ELEMENTS_MISSING=0
+- LEG_MKT_08_ELEMENT_AGGREGATE_MISMATCHES=0
+- CONTRACT_MODEL_PHYSICAL_FIELD_PRESELECTED=NO
+- PREMATURE_PHYSICAL_SCHEMA_DECISIONS=0
 
 ## 8. EXACT DEC-MKT TRACEABILITY
 | DECISION_ID | NORMATIVE_MEANING | AFFECTED_AGGREGATES | AFFECTED_MODEL_ELEMENTS | AFFECTED_LIFECYCLES | LOGICAL_INVARIANTS | CURRENT_REPOSITORY_IMPACT | PHYSICAL_SCHEMA_BLOCKER |
@@ -84,7 +97,7 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 | DEC-MKT-06 | reseller future only | FUTURE_LOGIMARKET_RESELLER_EXTENSION | OfferContractClassification, FutureResellerActivationPolicy | LC-16 | Activation policy explicitly inactive in initial MVP. | No automatic Reseller inference. | NO |
 | DEC-MKT-07 | Partner contractual seller and Seller of Record | SELLER_AND_OFFER_CLASSIFICATION | OfferSellerAssignment, SellerProfile, OfferContractClassification | LC-02C, LC-05 | 1:1 active seller assignment per offer required. | offers.partnerId application join mapped for extension. | YES |
 | DEC-MKT-08 | Partner owns offer description, price and availability | SELLER_AND_OFFER_CLASSIFICATION; SELLER_ORDER | Offer; OfferMarketplaceClassification; OfferSellerAssignment; SellerOrderItem | LC-02C; LC-05 | assigned seller owns commercial offer content prospectively; seller-order item stores immutable commercial snapshot | current offers are stored and centrally curated in the existing repository; the current schema does not encode commercial-content responsibility ownership; the logical R3 model assigns commercial responsibility to the assigned seller and preserves immutable seller-order item snapshots | YES |
-| DEC-MKT-09 | Partner owns fulfillment, delivery, goods complaints, returns and refund financial liability | AFTER_SALES_AND_DISPUTES, SELLER_ORDER | Shipment; ShipmentItemAllocation; DeliveryEvent; ReturnCase; GoodsComplaintCase; RefundCase; SellerResponsibilitySnapshot | LC-09; LC-10; LC-11A; LC-12 | Partner owns goods complaint and return responsibilities. CHARGEBACK_FINAL_RESPONSIBILITY_ASSIGNED_BY_DEC_MKT_09=NO | After-sales responsibilities mapped. | YES |
+| DEC-MKT-09 | Partner owns fulfillment, delivery, goods complaints, returns and refund financial liability | FULFILLMENT_AND_SHIPMENT; AFTER_SALES_AND_DISPUTES; SELLER_ORDER | Shipment; ShipmentItemAllocation; DeliveryEvent; ReturnCase; GoodsComplaintCase; RefundCase; SellerResponsibilitySnapshot | LC-09; LC-10; LC-11A; LC-12 | Partner owns goods complaint and return responsibilities. CHARGEBACK_FINAL_RESPONSIBILITY_ASSIGNED_BY_DEC_MKT_09=NO | After-sales responsibilities mapped. | YES |
 | DEC-MKT-10 | LogiMarket owns platform orchestration, rule enforcement and platform-service complaints | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE, AFTER_SALES_AND_DISPUTES, AUDIT_IDEMPOTENCY_AND_PRIVACY | PlatformRevenueRecord, PlatformServiceComplaintCase, DomainAuditEvent, IdempotencyRecord, WebhookInboxMessage, OutboxMessage, RetentionPolicySnapshot, PrivacyProcessingContext, ChargebackDispute | LC-01, LC-11B, LC-14, LC-13 | LogiMarket owns platform complaints and audit retention. DEC_MKT_10_CHARGEBACK_SCOPE=PLATFORM_ORCHESTRATION_ONLY; CHARGEBACK_RESPONSIBILITY_OWNER=UNRESOLVED; CHARGEBACK_FINANCIAL_ALLOCATION_OWNER=UNRESOLVED | Explicit separation of platform complaints from goods complaints. | YES |
 | DEC-MKT-11 | multi-seller checkout creates seller-specific relationships | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder, SellerOrder, EcommerceBuyerLegalContextSnapshot, BuyerIdentityReference | LC-04, LC-05 | Orchestration (MarketplaceOrder) decomposes into legal contracts (SellerOrder). | Multi-seller cart decomposition required. | YES |
 | DEC-MKT-12 | Partner issues buyer goods invoice | SELLER_ORDER | GoodsInvoiceResponsibilitySnapshot | LC-05 | Goods invoice responsibility explicitly snapshot. | Explicit goods invoice issuer recorded. | YES |
@@ -105,7 +118,7 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 | LEG-MKT-05 | PSP architecture, KYB/KYC, allocations and payouts | PAYMENT_AND_ALLOCATION, AUDIT_IDEMPOTENCY_AND_PRIVACY | PaymentOrchestration, PSPTransactionReference, PaymentAllocation, SellerSettlementReference, IdempotencyRecord, WebhookInboxMessage | LC-01, LC-07, LC-08, LC-15 | NO_SELF_CUSTODY; NO_LOGIMARKET_ESCROW; ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | YES | Legal Counsel |
 | LEG-MKT-06 | VAT, accounting and KSeF split | SELLER_ORDER, PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | GoodsInvoiceResponsibilitySnapshot, PlatformRevenueRecord, PlatformServiceInvoiceReference | LC-05, LC-14 | PARTNER_GOODS_INVOICE; LOGIMARKET_PLATFORM_SERVICE_INVOICE; NO_DELEGATED_INVOICING | YES | Tax Advisor |
 | LEG-MKT-07 | refund, chargeback and seller liability | AFTER_SALES_AND_DISPUTES, SELLER_ORDER | ReturnCase, GoodsComplaintCase, RefundCase, ChargebackDispute, SellerResponsibilitySnapshot | LC-10, LC-11A, LC-12, LC-13 | PARTNER_REFUND_LIABILITY; TECHNICAL_EXECUTOR_UNRESOLVED; CHARGEBACK_RESPONSIBILITY_UNRESOLVED | YES | Legal Counsel |
-| LEG-MKT-08 | B2B and entrepreneur-with-consumer-rights analysis | SELLER_AND_OFFER_CLASSIFICATION, MARKETPLACE_ORDER_ORCHESTRATION, AFTER_SALES_AND_DISPUTES | SellerLegalIdentity, RfqBuyerLegalContextSnapshot, EcommerceBuyerLegalContextSnapshot, BuyerIdentityReference, ReturnCase | LC-03, LC-04, LC-10, LC-12 | DO_NOT_CLASSIFY_BUYER_STATUS_FROM_NIP_ONLY | YES | Legal Counsel |
+| LEG-MKT-08 | B2B and entrepreneur-with-consumer-rights analysis | MARKETPLACE_ORDER_ORCHESTRATION; SELLER_ORDER; AFTER_SALES_AND_DISPUTES | BuyerIdentityReference; RfqBuyerLegalContextSnapshot; EcommerceBuyerLegalContextSnapshot; ReturnCase; RefundCase | LC-03; LC-04; LC-10; LC-12 | DO_NOT_CLASSIFY_BUYER_STATUS_FROM_NIP_ONLY | YES | Legal Counsel |
 | LEG-MKT-09 | privacy roles and retention | AUDIT_IDEMPOTENCY_AND_PRIVACY | DomainAuditEvent, RetentionPolicySnapshot, PrivacyProcessingContext | no dedicated lifecycle; map audit/privacy elements explicitly | NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION | YES | Legal Counsel |
 | LEG-MKT-10 | future reseller activation | FUTURE_LOGIMARKET_RESELLER_EXTENSION | FutureResellerActivationPolicy | LC-16 | LOGIMARKET_RESELLER_DISABLED | YES | Legal Counsel |
 
@@ -114,8 +127,8 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 |------------------------|---------------------|----------------------------|---------------------|-------------------|---------------------------------|-----------------------|-------------------------|------------------------------------|------------------------|---------------------|
 | OMQ-MKT-01 | e-commerce contract-formation moment | CONTRACT_FORMATION_EVENT_UNRESOLVED | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder; SellerOrder; SellerAcceptanceDecision | separate order intent and seller acceptance lifecycle | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-02 | RFQ contract-formation moment | RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED | MARKETPLACE_ORDER_ORCHESTRATION | RfqRequest; RfqPartnerResponse | separate RFQ request and Partner response lifecycle | NO | YES | YES | Legal Counsel | (None) |
-| OMQ-MKT-03 | PSP marketplace architecture | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | PAYMENT_AND_ALLOCATION | PaymentOrchestration; PSPTransactionReference; PaymentAllocation; SellerSettlementReference; WebhookInboxMessage; IdempotencyRecord | abstract licensed-PSP references, allocation and settlement capabilities | NO | YES | YES | Legal Counsel | (None) |
-| OMQ-MKT-04 | seller KYB/KYC responsibilities | PENDING_PSP_AND_LEGAL_VALIDATION | SELLER_AND_OFFER_CLASSIFICATION | SellerLegalIdentity; SellerEligibility; PaymentOrchestration | abstract seller legal identity, eligibility and KYB/KYC status reference | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-03 | PSP marketplace architecture | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | PAYMENT_AND_ALLOCATION; AUDIT_IDEMPOTENCY_AND_PRIVACY | PaymentOrchestration; PSPTransactionReference; PaymentAllocation; SellerSettlementReference; WebhookInboxMessage; IdempotencyRecord | abstract licensed-PSP references, allocation and settlement capabilities | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-04 | seller KYB/KYC responsibilities | PENDING_PSP_AND_LEGAL_VALIDATION | SELLER_AND_OFFER_CLASSIFICATION; PAYMENT_AND_ALLOCATION | SellerLegalIdentity; SellerEligibility; PaymentOrchestration | abstract seller legal identity, eligibility and KYB/KYC status reference | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-05 | payment allocation and seller payout | NO_SELF_CUSTODY_NO_ESCROW | PAYMENT_AND_ALLOCATION | PaymentOrchestration; PaymentAllocation; SellerSettlementReference | abstract allocation and settlement references with no selected payout architecture | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-06 | monetization and commission/platform-service-fee model | COMMISSION_OR_PLATFORM_SERVICE_FEE | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | PlatformRevenueRecord | configurable platform-revenue policy | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-07 | commission tax/accounting recognition | PENDING_TAX_AND_ACCOUNTING_VALIDATION | PLATFORM_REVENUE_AND_SELLER_SETTLEMENT_REFERENCE | PlatformRevenueRecord; PlatformServiceInvoiceReference | externally validated tax and accounting policy | NO | YES | YES | Tax Advisor | (None) |
