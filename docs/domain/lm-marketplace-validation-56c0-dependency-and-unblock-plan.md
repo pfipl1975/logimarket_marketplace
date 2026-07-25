@@ -97,27 +97,27 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 
 ## Dependency Matrix
 
-| Gate / Item | Parallelizable With | Depends On | Blocks MVP Schema | Blocks Future Schema | May Reopen 56B0 | Absorbed in 56B1 |
-|-------------|---------------------|------------|-------------------|----------------------|-----------------|------------------|
-| LEG-MKT-01  | Workstream E        | None       | YES               | YES                  | YES             | NO               |
-| LEG-MKT-02  | Workstream E        | None       | YES               | YES                  | YES             | NO               |
-| LEG-MKT-03  | Workstream E        | None       | YES               | YES                  | YES             | NO               |
-| LEG-MKT-04  | Workstream E        | None       | YES               | YES                  | YES             | NO               |
-| LEG-MKT-05  | Workstream C        | WS A       | YES               | YES                  | YES             | NO               |
-| LEG-MKT-06  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
-| LEG-MKT-07  | Workstream D        | WS A, B    | YES               | YES                  | YES             | NO               |
-| LEG-MKT-08  | Workstream A, B      | WS A                      | WS B                     | YES               | YES                  | NO              | YES              |
-| LEG-MKT-09  | Workstream A, B      | WS A                      | WS B                     | YES               | YES                  | NO              | YES              |
-| LEG-MKT-10  | None                | None       | NO                | YES                  | YES             | NO               |
-| OMQ-MKT-01  | Workstream E        | None       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-02  | Workstream E        | None       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-03  | Workstream C         | Workstream B (PSP)        | WS B                     | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-04  | Workstream C         | Workstream B (PSP)        | WS B                     | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-05  | Workstream C         | Workstream B (PSP)        | WS B                     | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-06  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-07  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-08  | Workstream D        | WS A, B    | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-09  | Workstream D        | WS A, B    | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-10  | Workstream B        | WS A       | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-11  | Workstream A, B      | WS A                      | WS B                     | YES               | YES                  | NO              | YES              |
-| OMQ-MKT-12  | None                | None       | NO                | YES                  | NO              | NO               |
+| Gate ID | Producing Workstream | Preliminary Parallel Work | Final Closure Depends On | Blocks MVP Schema | Blocks Future Schema | May Reopen 56B0 | Absorbed in 56B1 |
+|---------|----------------------|---------------------------|--------------------------|-------------------|----------------------|-----------------|------------------|
+| LEG-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
+| LEG-MKT-02 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
+| LEG-MKT-03 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
+| LEG-MKT-04 | Workstream A         | Workstream E              | None                     | YES               | YES                  | YES             | NO               |
+| LEG-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | YES             | NO               |
+| LEG-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
+| LEG-MKT-07 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | YES             | NO               |
+| LEG-MKT-08 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | NO              | YES              |
+| LEG-MKT-09 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | NO              | YES              |
+| LEG-MKT-10 | Workstream F         | None                      | None                     | NO                | YES                  | YES             | NO               |
+| OMQ-MKT-01 | Workstream A         | Workstream E              | None                     | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-02 | Workstream A         | Workstream E              | None                     | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-03 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-04 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-07 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-08 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-09 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-10 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-11 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | NO              | YES              |
+| OMQ-MKT-12 | Workstream F         | None                      | None                     | NO                | YES                  | NO              | NO               |
