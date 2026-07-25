@@ -96,7 +96,7 @@ GLOBAL_RESELLER_SWITCH=NO
    Roots: RfqRequest, MarketplaceOrder (mutually exclusive per offerModel value)
    Note: RfqRequest is the conversion aggregate for offerModel=rfq.
    MarketplaceOrder is the conversion aggregate for offerModel=ecommerce.
-   Contains: SellerDisclosureSnapshot (applies to both RfqRequest and MarketplaceOrder),
+   Contains: RfqSellerDisclosureSnapshot (applies to RfqRequest), EcommerceSellerDisclosureSnapshot (applies to MarketplaceOrder),
              RfqRoutingEvent, RfqPartnerResponse, RfqBuyerLegalContextSnapshot,
              EcommerceBuyerLegalContextSnapshot
    External Reference: BuyerIdentityReference (owned by EXTERNAL_BUYER_IDENTITY_DOMAIN)
@@ -189,6 +189,7 @@ RFQ_TO_SELLER_ORDER_CONVERSION=FUTURE_WORKFLOW
 
 RFQ_SELLER_DISCLOSURE_REQUIRED=YES
 ECOMMERCE_SELLER_DISCLOSURE_REQUIRED=YES
+DISCLOSURE_SNAPSHOT_INSTANCES_SHARED_ACROSS_AGGREGATES=NO
 
 OUTBOUND_CREATES_MARKETPLACE_ORDER=NO
 OUTBOUND_CREATES_SELLER_ORDER=NO
@@ -294,9 +295,9 @@ erDiagram
     Offer ||--o{ OfferConversionClassification : classified_by
     Offer ||--o{ OfferContractClassification : classified_by
 
-    RfqRequest ||--o{ SellerDisclosureSnapshot : requires_disclosure
+    RfqRequest ||--o{ RfqSellerDisclosureSnapshot : requires_disclosure
     RfqRequest ||--o{ RfqPartnerResponse : may_have_response
-    MarketplaceOrder ||--o{ SellerDisclosureSnapshot : requires_disclosure
+    MarketplaceOrder ||--o{ EcommerceSellerDisclosureSnapshot : requires_disclosure
 
     MarketplaceOrder ||--|{ SellerOrder : decomposes_to
     MarketplaceOrder ||--o{ PaymentOrchestration : initiates
