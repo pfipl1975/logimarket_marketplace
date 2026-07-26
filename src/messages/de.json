@@ -78,13 +78,13 @@
     "catalogMenuViewGroup": "Gesamte Gruppe ansehen",
     "catalogMenuEmptyGroups": "Keine Gruppen",
     "catalogMenuEmptyCategories": "Keine Kategorien",
-    "mobileCatalogTitle": "Catalog",
-    "mobileCatalogClose": "Close catalog",
-    "mobileCatalogBack": "Back",
-    "mobileCatalogBackToMenu": "Back to menu",
-    "mobileCatalogViewCatalog": "View entire catalog",
-    "mobileCatalogViewCurrent": "View all",
-    "mobileCatalogOpenLevel": "Open subcategory"
+    "mobileCatalogTitle": "Katalog",
+    "mobileCatalogClose": "Katalog schließen",
+    "mobileCatalogBack": "Zurück",
+    "mobileCatalogBackToMenu": "Zurück zum Menü",
+    "mobileCatalogViewCatalog": "Gesamten Katalog ansehen",
+    "mobileCatalogViewCurrent": "Alle anzeigen",
+    "mobileCatalogOpenLevel": "Unterkategorie öffnen"
   },
   "solutions": {
     "catalogHeading": "Lagerlösungen",

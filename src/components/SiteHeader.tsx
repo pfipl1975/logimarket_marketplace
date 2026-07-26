@@ -43,7 +43,6 @@ export function SiteHeader({
     { label: navLabels.blog, href: "https://logimarket.pl/blog", external: true },
     ...(glossaryHref ? [{ label: navLabels.glossary, href: glossaryHref }] : []),
     { label: navLabels.solutions, href: solutionsHref },
-    { label: navLabels.catalog, href: catalogHref },
   ];
 
   return (
@@ -69,6 +68,9 @@ export function SiteHeader({
             desktopItems={desktopNavItems}
             mobileItems={mobileNavItems}
             fallbackLabel={navLabels.catalog}
+            menuOpenLabel={navLabels.menu ?? "Menu"}
+            menuCloseLabel={navLabels.closeMenu ?? navLabels.menu ?? "Menu"}
+            mainNavigationLabel={navLabels.mainNavigation ?? navLabels.menu ?? "Menu"}
           />
 
           <div className="flex shrink-0 items-center gap-2">

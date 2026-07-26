@@ -78,13 +78,13 @@
     "catalogMenuViewGroup": "查看全部组",
     "catalogMenuEmptyGroups": "无群组",
     "catalogMenuEmptyCategories": "无类别",
-    "mobileCatalogTitle": "Catalog",
-    "mobileCatalogClose": "Close catalog",
-    "mobileCatalogBack": "Back",
-    "mobileCatalogBackToMenu": "Back to menu",
-    "mobileCatalogViewCatalog": "View entire catalog",
-    "mobileCatalogViewCurrent": "View all",
-    "mobileCatalogOpenLevel": "Open subcategory"
+    "mobileCatalogTitle": "目录",
+    "mobileCatalogClose": "关闭目录",
+    "mobileCatalogBack": "返回",
+    "mobileCatalogBackToMenu": "返回菜单",
+    "mobileCatalogViewCatalog": "查看完整目录",
+    "mobileCatalogViewCurrent": "查看全部",
+    "mobileCatalogOpenLevel": "打开子类别"
   },
   "solutions": {
     "catalogHeading": "仓库解决方案",

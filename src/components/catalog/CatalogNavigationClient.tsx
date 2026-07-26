@@ -53,12 +53,12 @@ export function CatalogNavigationClient({
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<MobileNavigationMode>("main");
   const [navigationStack, setNavigationStack] = useState<CatalogExplorerNode[]>([]);
-  
+
   const pathname = usePathname();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
-  
+
   // Close menu on ESC key press and return focus
   useEffect(() => {
     if (!isOpen) return;
@@ -73,24 +73,24 @@ export function CatalogNavigationClient({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen]);
-  
+
   // Prevent body scroll when drawer is open
   useEffect(() => {
     if (!isOpen) return;
     const root = document.documentElement;
     const wasLocked = root.classList.contains("overflow-hidden");
-    
+
     if (!wasLocked) {
       root.classList.add("overflow-hidden");
     }
-    
+
     return () => {
       if (!wasLocked) {
         root.classList.remove("overflow-hidden");
       }
     };
   }, [isOpen]);
-  
+
   // Close menu on pathname change
   useEffect(() => {
     setIsOpen(false);
@@ -98,26 +98,27 @@ export function CatalogNavigationClient({
     setNavigationStack([]);
   }, [pathname]);
 
-  // Focus close button immediately after open or mode change to keep screen readers updated
+  // Focus close button immediately after open to keep screen readers updated
   useEffect(() => {
     if (isOpen) {
-       const titleElem = drawerRef.current?.querySelector("#mobile-navigation-title") as HTMLElement;
-       if (titleElem) {
-         titleElem.focus();
-       }
+      closeButtonRef.current?.focus();
     }
-  }, [isOpen, mode, navigationStack.length]);
-  
-  const closeAndFocusTrigger = () => {
+  }, [isOpen]);
+
+  const resetNavigation = () => {
     setIsOpen(false);
     setMode("main");
     setNavigationStack([]);
+  };
+
+  const closeAndFocusTrigger = () => {
+    resetNavigation();
     triggerRef.current?.focus();
   };
-  
+
   const handleDrawerKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
     if (event.key !== "Tab" || !drawerRef.current) return;
-    
+
     const focusableElements = Array.from(
       drawerRef.current.querySelectorAll<HTMLElement>(
         'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
@@ -125,33 +126,42 @@ export function CatalogNavigationClient({
     ).filter(
       (element) => element.offsetParent !== null && element.getAttribute("aria-hidden") !== "true"
     );
-    
+
     if (focusableElements.length === 0) return;
-    
+
     const firstElement = focusableElements[0];
     const lastElement = focusableElements[focusableElements.length - 1];
-    
-    if (event.shiftKey && document.activeElement === firstElement) {
+
+    const activeElement = document.activeElement;
+    const activeIndex = focusableElements.indexOf(activeElement as HTMLElement);
+
+    if (activeIndex === -1) {
+      event.preventDefault();
+      (event.shiftKey ? lastElement : firstElement).focus();
+      return;
+    }
+
+    if (event.shiftKey && activeElement === firstElement) {
       event.preventDefault();
       lastElement.focus();
       return;
     }
-    
-    if (!event.shiftKey && document.activeElement === lastElement) {
+
+    if (!event.shiftKey && activeElement === lastElement) {
       event.preventDefault();
       firstElement.focus();
     }
   };
-  
+
   const handleCatalogTriggerClick = () => {
     setMode("catalog");
     setNavigationStack([]);
   };
-  
+
   const handleNodeClick = (node: CatalogExplorerNode) => {
     setNavigationStack((current) => [...current, node]);
   };
-  
+
   const handleBackClick = () => {
     if (navigationStack.length > 0) {
       setNavigationStack((current) => current.slice(0, -1));
@@ -159,14 +169,15 @@ export function CatalogNavigationClient({
       setMode("main");
     }
   };
-  
+
   const currentNode = navigationStack.at(-1);
   const visibleNodes = currentNode ? currentNode.children : tree;
-  
+
   // Path active check
   const activeNodes = isOpen ? getActivePathNodes(pathname, tree) : { pathSlugs: [] };
   const activeSlugs = new Set(activeNodes.pathSlugs || []);
-  
+  const currentSlug = activeNodes.pathSlugs?.at(-1);
+
   return (
     <>
       <HeaderDesktopNavigation items={desktopItems}>
@@ -181,7 +192,7 @@ export function CatalogNavigationClient({
           </Link>
         )}
       </HeaderDesktopNavigation>
-      
+
       <div className="relative lg:hidden">
         {/* Trigger Button */}
         <button
@@ -223,19 +234,21 @@ export function CatalogNavigationClient({
               aria-labelledby="mobile-navigation-title"
               onKeyDown={handleDrawerKeyDown}
               className={cn(
-                "fixed top-0 right-0 bottom-0 z-50 h-dvh bg-brand-navy shadow-2xl flex flex-col focus:outline-none pointer-events-auto transition-all",
+                "fixed top-0 right-0 bottom-0 z-50 h-dvh bg-brand-navy shadow-2xl flex flex-col focus:outline-none pointer-events-auto transition-[width] motion-reduce:transition-none",
                 mode === "main" ? "w-72 max-w-[80vw]" : "w-full max-w-none"
               )}
             >
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-white/10 p-4">
-                <span 
-                  id="mobile-navigation-title" 
-                  tabIndex={-1} 
+                <span
+                  id="mobile-navigation-title"
+                  tabIndex={-1}
+                  aria-live="polite"
+                  aria-atomic="true"
                   className="text-sm font-bold uppercase tracking-wider text-white focus:outline-none"
                 >
-                  {mode === "main" 
-                    ? mainNavigationLabel 
+                  {mode === "main"
+                    ? mainNavigationLabel
                     : (currentNode ? currentNode.label : mobileLabels.mobileCatalogTitle)}
                 </span>
                 <button
@@ -271,21 +284,42 @@ export function CatalogNavigationClient({
                       ) : (
                         <Link
                           href={catalogHref}
+                          onClick={resetNavigation}
                           className="flex min-h-[44px] items-center rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal text-white/90"
                         >
                           {desktopLabels.trigger}
                         </Link>
                       )}
-                      
+
                       {/* Normal Links */}
                       {mobileItems.map((item) => {
                         const isActive = !item.external && isNavItemActive(pathname, item.href);
+                        if (item.external) {
+                          return (
+                            <a
+                              key={item.href}
+                              href={item.href}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={resetNavigation}
+                              className={cn(
+                                "flex min-h-[44px] items-center rounded-md px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal",
+                                "text-white/90 hover:bg-white/5 hover:text-white"
+                              )}
+                            >
+                              {item.label}
+                              <svg className="ml-2 h-4 w-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                          );
+                        }
+
                         return (
                           <Link
                             key={item.href}
                             href={item.href}
-                            target={item.external ? "_blank" : undefined}
-                            rel={item.external ? "noopener noreferrer" : undefined}
+                            onClick={resetNavigation}
                             aria-current={isActive ? "page" : undefined}
                             className={cn(
                               "flex min-h-[44px] items-center rounded-md px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal",
@@ -295,11 +329,6 @@ export function CatalogNavigationClient({
                             )}
                           >
                             {item.label}
-                            {item.external && (
-                              <svg className="ml-2 h-4 w-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                              </svg>
-                            )}
                           </Link>
                         );
                       })}
@@ -317,9 +346,9 @@ export function CatalogNavigationClient({
                         </svg>
                         <span>{navigationStack.length === 0 ? mobileLabels.mobileCatalogBackToMenu : mobileLabels.mobileCatalogBack}</span>
                       </button>
-                      
                       <Link
                         href={currentNode ? currentNode.href : catalogHref}
+                        onClick={resetNavigation}
                         className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm font-semibold text-brand-teal transition-colors hover:bg-brand-teal/10 focus:outline-none focus:ring-2 focus:ring-brand-teal mb-4 border border-brand-teal/20"
                       >
                         {currentNode ? mobileLabels.mobileCatalogViewCurrent : mobileLabels.mobileCatalogViewCatalog}
@@ -329,15 +358,13 @@ export function CatalogNavigationClient({
                         {visibleNodes.map((node) => {
                           const hasChildren = node.children.length > 0;
                           const isActive = activeSlugs.has(node.slug);
-                          const isLeafActive = isActive && node.href === pathname;
-                          
+
                           if (hasChildren) {
                             return (
                               <button
                                 key={node.slug}
                                 type="button"
                                 onClick={() => handleNodeClick(node)}
-                                aria-expanded="false"
                                 aria-label={`${node.label}, ${mobileLabels.mobileCatalogOpenLevel}`}
                                 className={cn(
                                   "flex min-h-[44px] w-full items-center justify-between rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal text-left",
@@ -352,10 +379,13 @@ export function CatalogNavigationClient({
                             );
                           }
 
+                          const isLeafActive = currentSlug === node.slug;
+
                           return (
                             <Link
                               key={node.slug}
                               href={node.href}
+                              onClick={resetNavigation}
                               aria-current={isLeafActive ? "page" : undefined}
                               className={cn(
                                 "flex min-h-[44px] items-center rounded-md px-3 py-2.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal",

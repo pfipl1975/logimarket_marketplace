@@ -13,13 +13,19 @@ interface CatalogNavigationLoaderProps {
   desktopItems: HeaderDesktopNavigationItem[];
   mobileItems: MobileNavigationItem[];
   fallbackLabel: string;
+  menuOpenLabel: string;
+  menuCloseLabel: string;
+  mainNavigationLabel: string;
 }
 
 export async function CatalogNavigationLoader({ 
   locale, 
   desktopItems,
   mobileItems,
-  fallbackLabel 
+  fallbackLabel,
+  menuOpenLabel,
+  menuCloseLabel,
+  mainNavigationLabel
 }: CatalogNavigationLoaderProps) {
   try {
     const [categories, dict] = await Promise.all([
@@ -29,9 +35,7 @@ export async function CatalogNavigationLoader({
 
     const fallbackDict = locale === defaultLocale ? dict : await getDictionary(defaultLocale);
     
-    // We remove the static "Katalog ofert" item from mobile items as it's now handled natively 
-    // by CatalogNavigationClient's catalog drill-down launcher
-    const filteredMobileItems = mobileItems.filter(item => item.label !== dict.nav.catalog);
+
 
     const catalogHref = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog`;
 
@@ -40,7 +44,7 @@ export async function CatalogNavigationLoader({
         <CatalogNavigationClient 
           tree={[]} 
           desktopItems={desktopItems} 
-          mobileItems={filteredMobileItems}
+          mobileItems={mobileItems}
           desktopLabels={{
             trigger: dict.nav.catalog || fallbackLabel,
             catalogMenuOpen: "",
@@ -63,9 +67,9 @@ export async function CatalogNavigationLoader({
             mobileCatalogOpenLevel: "",
           }}
           catalogHref={catalogHref}
-          menuOpenLabel={dict.nav.menu ?? "Menu"}
-          menuCloseLabel={dict.nav.closeMenu ?? "Close menu"}
-          mainNavigationLabel={dict.nav.mainNavigation ?? "Main navigation"}
+          menuOpenLabel={menuOpenLabel}
+          menuCloseLabel={menuCloseLabel}
+          mainNavigationLabel={mainNavigationLabel}
         />
       );
     }
@@ -85,38 +89,38 @@ export async function CatalogNavigationLoader({
 
     const desktopLabels = {
       trigger: dict.nav.catalog || fallbackLabel,
-      catalogMenuOpen: dict.catalog.catalogMenuOpen || "Otwórz katalog",
-      catalogMenuClose: dict.catalog.catalogMenuClose || "Zamknij katalog",
-      catalogMenuSections: dict.catalog.catalogMenuSections || "Sekcje",
-      catalogMenuGroups: dict.catalog.catalogMenuGroups || "Grupy",
-      catalogMenuCategories: dict.catalog.catalogMenuCategories || "Kategorie",
-      catalogMenuViewSection: dict.catalog.catalogMenuViewSection || "Zobacz całą sekcję",
-      catalogMenuViewGroup: dict.catalog.catalogMenuViewGroup || "Zobacz całą grupę",
+      catalogMenuOpen: dict.catalog.catalogMenuOpen,
+      catalogMenuClose: dict.catalog.catalogMenuClose,
+      catalogMenuSections: dict.catalog.catalogMenuSections,
+      catalogMenuGroups: dict.catalog.catalogMenuGroups,
+      catalogMenuCategories: dict.catalog.catalogMenuCategories,
+      catalogMenuViewSection: dict.catalog.catalogMenuViewSection,
+      catalogMenuViewGroup: dict.catalog.catalogMenuViewGroup,
       catalogMenuEmptyGroups: dict.catalog.catalogMenuEmptyGroups || "",
       catalogMenuEmptyCategories: dict.catalog.catalogMenuEmptyCategories || "",
     };
 
     const mobileLabels = {
-      mobileCatalogTitle: dict.catalog.mobileCatalogTitle || "Katalog",
-      mobileCatalogClose: dict.catalog.mobileCatalogClose || "Zamknij katalog",
-      mobileCatalogBack: dict.catalog.mobileCatalogBack || "Wróć",
-      mobileCatalogBackToMenu: dict.catalog.mobileCatalogBackToMenu || "Wróć do menu",
-      mobileCatalogViewCatalog: dict.catalog.mobileCatalogViewCatalog || "Zobacz cały katalog",
-      mobileCatalogViewCurrent: dict.catalog.mobileCatalogViewCurrent || "Zobacz wszystkie",
-      mobileCatalogOpenLevel: dict.catalog.mobileCatalogOpenLevel || "Rozwiń podkategorię",
+      mobileCatalogTitle: dict.catalog.mobileCatalogTitle,
+      mobileCatalogClose: dict.catalog.mobileCatalogClose,
+      mobileCatalogBack: dict.catalog.mobileCatalogBack,
+      mobileCatalogBackToMenu: dict.catalog.mobileCatalogBackToMenu,
+      mobileCatalogViewCatalog: dict.catalog.mobileCatalogViewCatalog,
+      mobileCatalogViewCurrent: dict.catalog.mobileCatalogViewCurrent,
+      mobileCatalogOpenLevel: dict.catalog.mobileCatalogOpenLevel,
     };
 
     return (
       <CatalogNavigationClient 
         tree={explorerTree} 
         desktopItems={desktopItems} 
-        mobileItems={filteredMobileItems}
+        mobileItems={mobileItems}
         desktopLabels={desktopLabels}
         mobileLabels={mobileLabels}
         catalogHref={catalogHref}
-        menuOpenLabel={dict.nav.menu ?? "Menu"}
-        menuCloseLabel={dict.nav.closeMenu ?? "Close menu"}
-        mainNavigationLabel={dict.nav.mainNavigation ?? "Main navigation"}
+        menuOpenLabel={menuOpenLabel}
+        menuCloseLabel={menuCloseLabel}
+        mainNavigationLabel={mainNavigationLabel}
       />
     );
   } catch (error) {
@@ -150,9 +154,9 @@ export async function CatalogNavigationLoader({
           mobileCatalogOpenLevel: "",
         }}
         catalogHref={catalogHref}
-        menuOpenLabel={"Menu"}
-        menuCloseLabel={"Close menu"}
-        mainNavigationLabel={"Main navigation"}
+        menuOpenLabel={menuOpenLabel}
+        menuCloseLabel={menuCloseLabel}
+        mainNavigationLabel={mainNavigationLabel}
       />
     );
   }

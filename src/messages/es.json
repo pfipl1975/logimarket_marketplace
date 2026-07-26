@@ -78,13 +78,13 @@
     "catalogMenuViewGroup": "Ver todo el grupo",
     "catalogMenuEmptyGroups": "Sin grupos",
     "catalogMenuEmptyCategories": "Sin categorías",
-    "mobileCatalogTitle": "Catalog",
-    "mobileCatalogClose": "Close catalog",
-    "mobileCatalogBack": "Back",
-    "mobileCatalogBackToMenu": "Back to menu",
-    "mobileCatalogViewCatalog": "View entire catalog",
-    "mobileCatalogViewCurrent": "View all",
-    "mobileCatalogOpenLevel": "Open subcategory"
+    "mobileCatalogTitle": "Catálogo",
+    "mobileCatalogClose": "Cerrar catálogo",
+    "mobileCatalogBack": "Volver",
+    "mobileCatalogBackToMenu": "Volver al menú",
+    "mobileCatalogViewCatalog": "Ver todo el catálogo",
+    "mobileCatalogViewCurrent": "Ver todo",
+    "mobileCatalogOpenLevel": "Abrir subcategoría"
   },
   "solutions": {
     "catalogHeading": "Soluciones para almacenes",

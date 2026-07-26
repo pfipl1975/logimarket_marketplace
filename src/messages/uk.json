@@ -78,13 +78,13 @@
     "catalogMenuViewGroup": "Переглянути всю групу",
     "catalogMenuEmptyGroups": "Немає груп",
     "catalogMenuEmptyCategories": "Немає категорій",
-    "mobileCatalogTitle": "Catalog",
-    "mobileCatalogClose": "Close catalog",
-    "mobileCatalogBack": "Back",
-    "mobileCatalogBackToMenu": "Back to menu",
-    "mobileCatalogViewCatalog": "View entire catalog",
-    "mobileCatalogViewCurrent": "View all",
-    "mobileCatalogOpenLevel": "Open subcategory"
+    "mobileCatalogTitle": "Каталог",
+    "mobileCatalogClose": "Закрити каталог",
+    "mobileCatalogBack": "Назад",
+    "mobileCatalogBackToMenu": "Повернутися до меню",
+    "mobileCatalogViewCatalog": "Переглянути весь каталог",
+    "mobileCatalogViewCurrent": "Переглянути всі",
+    "mobileCatalogOpenLevel": "Відкрити підкатегорію"
   },
   "solutions": {
     "catalogHeading": "Рішення для складу",
