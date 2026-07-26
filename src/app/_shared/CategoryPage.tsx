@@ -272,7 +272,6 @@ export async function CategoryPage({
   // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
   const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters);
   const cleanPaginationSuffix = currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
-  const baseCategoryUrl = absoluteUrl(canonicalPath);
   const pageJsonLdUrl = absoluteUrl(`${canonicalPath}${cleanPaginationSuffix}`);
 
   const collectionJsonLd = {
@@ -389,13 +388,13 @@ export async function CategoryPage({
       <SiteHeader
         locale={locale}
         languageLinks={{
-          pl: `/katalog/c-${category.slug}`,
-          en: `/en/katalog/c-${category.slug}`,
-          de: `/de/katalog/c-${category.slug}`,
-          fr: `/fr/katalog/c-${category.slug}`,
-          es: `/es/katalog/c-${category.slug}`,
-          uk: `/uk/katalog/c-${category.slug}`,
-          zh: `/zh/katalog/c-${category.slug}`,
+          pl: `/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          en: `/en/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          de: `/de/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          fr: `/fr/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          es: `/es/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          uk: `/uk/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          zh: `/zh/katalog/c-${category.slug}${cleanPaginationSuffix}`,
         }}
         navLabels={dict.nav}
       />
