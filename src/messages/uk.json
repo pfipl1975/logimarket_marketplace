@@ -75,7 +75,9 @@
     "catalogMenuGroups": "Групи",
     "catalogMenuCategories": "Категорії",
     "catalogMenuViewSection": "Переглянути весь розділ",
-    "catalogMenuViewGroup": "Переглянути всю групу"
+    "catalogMenuViewGroup": "Переглянути всю групу",
+    "catalogMenuEmptyGroups": "Немає груп",
+    "catalogMenuEmptyCategories": "Немає категорій"
   },
   "solutions": {
     "catalogHeading": "Рішення для складу",

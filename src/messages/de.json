@@ -75,7 +75,9 @@
     "catalogMenuGroups": "Gruppen",
     "catalogMenuCategories": "Kategorien",
     "catalogMenuViewSection": "Gesamten Bereich ansehen",
-    "catalogMenuViewGroup": "Gesamte Gruppe ansehen"
+    "catalogMenuViewGroup": "Gesamte Gruppe ansehen",
+    "catalogMenuEmptyGroups": "Keine Gruppen",
+    "catalogMenuEmptyCategories": "Keine Kategorien"
   },
   "solutions": {
     "catalogHeading": "Lagerlösungen",

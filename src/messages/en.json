@@ -75,7 +75,9 @@
     "catalogMenuGroups": "Groups",
     "catalogMenuCategories": "Categories",
     "catalogMenuViewSection": "View entire section",
-    "catalogMenuViewGroup": "View entire group"
+    "catalogMenuViewGroup": "View entire group",
+    "catalogMenuEmptyGroups": "No groups",
+    "catalogMenuEmptyCategories": "No categories"
   },
   "solutions": {
     "catalogHeading": "Warehouse solutions",

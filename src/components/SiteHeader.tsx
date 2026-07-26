@@ -65,7 +65,7 @@ export function SiteHeader({
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-1.5 sm:px-4 md:px-6 relative">
           {/* Desktop Navigation Links */}
           <HeaderDesktopNavigation items={desktopNavItems}>
-            <CatalogDesktopMegaMenuLoader locale={locale} />
+            <CatalogDesktopMegaMenuLoader locale={locale} fallbackLabel={navLabels.catalog} />
           </HeaderDesktopNavigation>
 
           {/* Mobile Navigation Burger Button & Dropdown */}

@@ -15,6 +15,8 @@ export type CatalogDesktopMegaMenuLabels = {
   catalogMenuCategories: string;
   catalogMenuViewSection: string;
   catalogMenuViewGroup: string;
+  catalogMenuEmptyGroups: string;
+  catalogMenuEmptyCategories: string;
 };
 
 interface CatalogDesktopMegaMenuProps {
@@ -27,6 +29,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
   const [isOpen, setIsOpen] = useState(false);
   const [activeSectionSlug, setActiveSectionSlug] = useState<string>("");
   const [activeGroupSlug, setActiveGroupSlug] = useState<string>("");
+  const [activePathSlugs, setActivePathSlugs] = useState<string[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -36,17 +39,22 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
     if (!isOpen) return; // Only re-evaluate when opening
     
     const activePaths = getActivePathNodes(pathname, tree);
-    if (activePaths.sectionSlug) {
-      setActiveSectionSlug(activePaths.sectionSlug);
-    } else if (tree.length > 0) {
-      setActiveSectionSlug(tree[0].slug);
-    }
+    setActivePathSlugs(activePaths.pathSlugs);
     
+    // Set active section
+    let currentSectionSlug = "";
+    if (activePaths.sectionSlug) {
+      currentSectionSlug = activePaths.sectionSlug;
+    } else if (tree.length > 0) {
+      currentSectionSlug = tree[0].slug;
+    }
+    setActiveSectionSlug(currentSectionSlug);
+    
+    // Set active group
     if (activePaths.groupSlug) {
       setActiveGroupSlug(activePaths.groupSlug);
     } else {
-      // Find first group of the active section
-      const activeSection = tree.find(s => s.slug === (activePaths.sectionSlug || tree[0]?.slug));
+      const activeSection = tree.find(s => s.slug === currentSectionSlug);
       if (activeSection && activeSection.children.length > 0) {
         setActiveGroupSlug(activeSection.children[0].slug);
       } else {
@@ -108,7 +116,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
   const activeGroup = activeSection?.children.find((g) => g.slug === activeGroupSlug);
 
   return (
-    <div className="relative inline-block" ref={containerRef}>
+    <div className="static inline-block" ref={containerRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -130,7 +138,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
       {isOpen && (
         <div
           id="desktop-mega-menu"
-          className="absolute left-0 top-full z-50 mt-2 w-[800px] max-w-[calc(100vw-2rem)] rounded-md border border-border bg-white shadow-xl"
+          className="absolute left-0 right-0 top-full z-50 mt-2 rounded-md border border-border bg-white shadow-xl"
         >
           <div className="flex max-h-[70vh] flex-row overflow-hidden rounded-md">
             {/* Sections Column */}
@@ -142,17 +150,19 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
                 {tree.map((section) => (
                   <li key={section.id}>
                     <button
+                      type="button"
                       onMouseEnter={() => handleSectionHover(section.slug)}
                       onClick={() => handleSectionHover(section.slug)}
-                      className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:text-brand-teal ${
+                      aria-pressed={activeSectionSlug === section.slug}
+                      className={`flex w-full items-center justify-between border-l-2 px-4 py-2 text-left text-sm transition-colors hover:text-brand-teal ${
                         activeSectionSlug === section.slug
-                          ? "bg-white font-semibold text-brand-navy shadow-[inset_2px_0_0_0_#0F6A68]"
-                          : "text-brand-navy/80"
+                          ? "border-brand-teal bg-white font-semibold text-brand-navy"
+                          : "border-transparent text-brand-navy/80"
                       }`}
                     >
                       <span>{section.label}</span>
                       {activeSectionSlug === section.slug && (
-                        <ChevronRight className="h-4 w-4 text-brand-teal" aria-hidden="true" />
+                        <ChevronRight className="h-4 w-4 text-brand-teal" aria-hidden="true" focusable="false" />
                       )}
                     </button>
                   </li>
@@ -171,17 +181,19 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
                     {activeSection.children.map((group) => (
                       <li key={group.id}>
                         <button
+                          type="button"
                           onMouseEnter={() => handleGroupHover(group.slug)}
                           onClick={() => handleGroupHover(group.slug)}
-                          className={`flex w-full items-center justify-between px-4 py-2 text-left text-sm transition-colors hover:text-brand-teal ${
+                          aria-pressed={activeGroupSlug === group.slug}
+                          className={`flex w-full items-center justify-between border-l-2 px-4 py-2 text-left text-sm transition-colors hover:text-brand-teal ${
                             activeGroupSlug === group.slug
-                              ? "font-semibold text-brand-teal"
-                              : "text-brand-navy/80"
+                              ? "border-brand-teal bg-white font-semibold text-brand-teal"
+                              : "border-transparent text-brand-navy/80"
                           }`}
                         >
                           <span>{group.label}</span>
                           {activeGroupSlug === group.slug && (
-                            <ChevronRight className="h-4 w-4 text-brand-teal" aria-hidden="true" />
+                            <ChevronRight className="h-4 w-4 text-brand-teal" aria-hidden="true" focusable="false" />
                           )}
                         </button>
                       </li>
@@ -189,7 +201,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
                   </ul>
                 ) : (
                   <div className="px-4 py-2 text-sm text-muted-foreground">
-                    Brak grup
+                    {labels.catalogMenuEmptyGroups}
                   </div>
                 )}
                 <div className="mt-4 px-4 pt-4 border-t border-gray-50">
@@ -212,22 +224,15 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
                   {labels.catalogMenuCategories}
                 </div>
                 {activeGroup.children.length > 0 ? (
-                  <ul className="flex flex-col">
-                    {activeGroup.children.map((category) => (
-                      <li key={category.id}>
-                        <Link
-                          href={category.href}
-                          onClick={closeMenu}
-                          className="block px-4 py-1.5 text-sm text-brand-navy/80 transition-colors hover:text-brand-teal"
-                        >
-                          {category.label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
+                  <CatalogCategoryBranchLinks 
+                    nodes={activeGroup.children} 
+                    closeMenu={closeMenu} 
+                    activePathSlugs={activePathSlugs}
+                    depth={0}
+                  />
                 ) : (
                   <div className="px-4 py-2 text-sm text-muted-foreground">
-                    Brak kategorii
+                    {labels.catalogMenuEmptyCategories}
                   </div>
                 )}
                 <div className="mt-4 px-4 pt-4 border-t border-gray-50">
@@ -246,5 +251,50 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
         </div>
       )}
     </div>
+  );
+}
+
+function CatalogCategoryBranchLinks({ 
+  nodes, 
+  closeMenu, 
+  activePathSlugs, 
+  depth 
+}: { 
+  nodes: CatalogExplorerNode[]; 
+  closeMenu: () => void; 
+  activePathSlugs: string[];
+  depth: number;
+}) {
+  if (nodes.length === 0) return null;
+  return (
+    <ul className="flex flex-col">
+      {nodes.map((node) => {
+        const isActive = activePathSlugs.includes(node.slug);
+        // Is it the very exact current page? We assume if it's the last in the activePathSlugs.
+        // Or if it's the specific target category being requested
+        const isCurrentPage = activePathSlugs.length > 0 && activePathSlugs[activePathSlugs.length - 1] === node.slug;
+        
+        return (
+          <li key={node.id}>
+            <Link
+              href={node.href}
+              onClick={closeMenu}
+              aria-current={isCurrentPage ? "page" : undefined}
+              className={`block px-4 py-1.5 text-sm transition-colors hover:text-brand-teal ${
+                isActive ? "font-semibold text-brand-teal" : "text-brand-navy/80"
+              } ${depth === 0 ? "pl-4" : depth === 1 ? "pl-8" : depth === 2 ? "pl-12" : "pl-16"}`}
+            >
+              {node.label}
+            </Link>
+            <CatalogCategoryBranchLinks 
+              nodes={node.children} 
+              closeMenu={closeMenu} 
+              activePathSlugs={activePathSlugs} 
+              depth={depth + 1} 
+            />
+          </li>
+        );
+      })}
+    </ul>
   );
 }

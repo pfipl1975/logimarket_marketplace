@@ -75,7 +75,9 @@
     "catalogMenuGroups": "组",
     "catalogMenuCategories": "类别",
     "catalogMenuViewSection": "查看全部部分",
-    "catalogMenuViewGroup": "查看全部组"
+    "catalogMenuViewGroup": "查看全部组",
+    "catalogMenuEmptyGroups": "无群组",
+    "catalogMenuEmptyCategories": "无类别"
   },
   "solutions": {
     "catalogHeading": "仓库解决方案",

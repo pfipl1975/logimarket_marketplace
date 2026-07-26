@@ -10,9 +10,10 @@ import { defaultLocale } from "@/lib/i18n/config";
 
 interface CatalogDesktopMegaMenuLoaderProps {
   locale: Locale;
+  fallbackLabel: string;
 }
 
-export async function CatalogDesktopMegaMenuLoader({ locale }: CatalogDesktopMegaMenuLoaderProps) {
+export async function CatalogDesktopMegaMenuLoader({ locale, fallbackLabel }: CatalogDesktopMegaMenuLoaderProps) {
   try {
     const [categories, dict] = await Promise.all([
       getCachedCategories(),
@@ -54,6 +55,8 @@ export async function CatalogDesktopMegaMenuLoader({ locale }: CatalogDesktopMeg
       catalogMenuCategories: dict.catalog.catalogMenuCategories || "Kategorie",
       catalogMenuViewSection: dict.catalog.catalogMenuViewSection || "Zobacz całą sekcję",
       catalogMenuViewGroup: dict.catalog.catalogMenuViewGroup || "Zobacz całą grupę",
+      catalogMenuEmptyGroups: dict.catalog.catalogMenuEmptyGroups || "",
+      catalogMenuEmptyCategories: dict.catalog.catalogMenuEmptyCategories || "",
     };
 
     return <CatalogDesktopMegaMenu tree={explorerTree} labels={labels} />;
@@ -65,7 +68,7 @@ export async function CatalogDesktopMegaMenuLoader({ locale }: CatalogDesktopMeg
         href={`${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog`}
         className="rounded-md px-2.5 py-2 text-sm font-medium text-white hover:bg-white/5 transition-colors sm:px-3"
       >
-        Katalog ofert
+        {fallbackLabel}
       </Link>
     );
   }

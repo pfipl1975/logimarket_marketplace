@@ -75,7 +75,9 @@
     "catalogMenuGroups": "Grupos",
     "catalogMenuCategories": "Categorías",
     "catalogMenuViewSection": "Ver toda la sección",
-    "catalogMenuViewGroup": "Ver todo el grupo"
+    "catalogMenuViewGroup": "Ver todo el grupo",
+    "catalogMenuEmptyGroups": "Sin grupos",
+    "catalogMenuEmptyCategories": "Sin categorías"
   },
   "solutions": {
     "catalogHeading": "Soluciones para almacenes",

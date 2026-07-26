@@ -75,7 +75,9 @@
     "catalogMenuGroups": "Grupy",
     "catalogMenuCategories": "Kategorie",
     "catalogMenuViewSection": "Zobacz całą sekcję",
-    "catalogMenuViewGroup": "Zobacz całą grupę"
+    "catalogMenuViewGroup": "Zobacz całą grupę",
+    "catalogMenuEmptyGroups": "Brak grup",
+    "catalogMenuEmptyCategories": "Brak kategorii"
   },
   "solutions": {
     "catalogHeading": "Rozwiązania dla magazynu",
