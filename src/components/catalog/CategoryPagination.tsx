@@ -119,7 +119,7 @@ export function CategoryPagination({
               aria-label={labels.paginationPrevious}
               className="flex min-h-[44px] items-center justify-center rounded border border-border bg-white px-3 sm:px-4 py-2 text-sm font-medium text-brand-navy shadow-sm transition-colors hover:border-brand-teal hover:text-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
             >
-              <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" focusable="false" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
               <span className="hidden sm:inline">{labels.paginationPrevious}</span>
@@ -129,7 +129,7 @@ export function CategoryPagination({
               aria-hidden="true"
               className="flex min-h-[44px] items-center justify-center rounded border border-border bg-gray-50 px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground opacity-50 shadow-sm"
             >
-              <svg aria-hidden="true" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" focusable="false" className="mr-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
               <span className="hidden sm:inline">{labels.paginationPrevious}</span>
@@ -151,7 +151,7 @@ export function CategoryPagination({
               className="flex min-h-[44px] items-center justify-center rounded border border-border bg-white px-3 sm:px-4 py-2 text-sm font-medium text-brand-navy shadow-sm transition-colors hover:border-brand-teal hover:text-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
             >
               <span className="hidden sm:inline">{labels.paginationNext}</span>
-              <svg aria-hidden="true" className="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" focusable="false" className="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>
             </Link>
@@ -161,7 +161,7 @@ export function CategoryPagination({
               className="flex min-h-[44px] items-center justify-center rounded border border-border bg-gray-50 px-3 sm:px-4 py-2 text-sm font-medium text-muted-foreground opacity-50 shadow-sm"
             >
               <span className="hidden sm:inline">{labels.paginationNext}</span>
-              <svg aria-hidden="true" className="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg aria-hidden="true" focusable="false" className="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>
             </span>

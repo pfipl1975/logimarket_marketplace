@@ -66,8 +66,12 @@ export function buildCategoryPaginationHref(
     params.set("featured", "1");
   }
 
-  for (const [key, values] of Object.entries(state.filters.attributeParams ?? {})) {
-    for (const value of values) params.append(key, value);
+  const attributeKeys = Object.keys(state.filters.attributeParams ?? {}).sort();
+  for (const key of attributeKeys) {
+    const values = [...(state.filters.attributeParams?.[key] ?? [])].sort();
+    for (const value of values) {
+      params.append(key, value);
+    }
   }
 
   if (page > 1) {
