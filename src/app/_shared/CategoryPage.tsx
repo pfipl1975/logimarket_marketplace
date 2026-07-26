@@ -34,7 +34,7 @@ import { getCategoryContent } from "@/lib/catalog/content";
 import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
 import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
 import type { Locale } from "@/lib/i18n/types";
-import type { CatalogOffer } from "@/app/actions";
+
 import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
 import { resolveCategorySolutionLinks } from "@/lib/landing";
 import { RelatedSolutions } from "@/components/landing/RelatedSolutions";
