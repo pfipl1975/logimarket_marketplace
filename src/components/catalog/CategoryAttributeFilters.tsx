@@ -103,6 +103,7 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
   const clearHref = buildCategoryOfferQueryHref(basePath, { view, filters }, { clearAttributeFilters: true });
   const hiddenModel = filters.model ? <input type="hidden" name="model" value={filters.model} /> : null;
   const hiddenFeatured = filters.featured ? <input type="hidden" name="featured" value="1" /> : null;
+  const hasActiveAttributeFilters = Object.keys(filters.attributeParams ?? {}).length > 0;
 
   return (
     <aside className="mt-6 w-full border border-border bg-white p-4">
@@ -118,13 +119,18 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
             <div className="flex items-center gap-3 pb-0.5 xl:justify-start">
               <button
                 type="submit"
-                className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal whitespace-nowrap h-[38px]"
+                className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal whitespace-nowrap min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
               >
                 {labels.apply}
               </button>
-              <Link href={clearHref} className="text-sm font-semibold text-muted-foreground hover:text-brand-teal whitespace-nowrap">
-                {labels.clear}
-              </Link>
+              {hasActiveAttributeFilters && (
+                <Link
+                  href={clearHref}
+                  className="inline-flex min-h-[44px] items-center justify-center rounded border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-gray-50 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 whitespace-nowrap"
+                >
+                  {labels.clear}
+                </Link>
+              )}
             </div>
           </div>
         </form>
@@ -143,13 +149,18 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               type="submit"
-              className="w-full rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal sm:w-auto h-[38px]"
+              className="w-full sm:w-auto rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
             >
               {labels.apply}
             </button>
-            <Link href={clearHref} className="text-center text-sm font-semibold text-muted-foreground hover:text-brand-teal">
-              {labels.clear}
-            </Link>
+            {hasActiveAttributeFilters && (
+              <Link
+                href={clearHref}
+                className="inline-flex w-full sm:w-auto min-h-[44px] items-center justify-center rounded border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-gray-50 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
+              >
+                {labels.clear}
+              </Link>
+            )}
           </div>
         </form>
       </details>

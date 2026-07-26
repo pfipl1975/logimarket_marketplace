@@ -33,7 +33,7 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 
   return (
-    <article className="group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md border-[#d9dde2] hover:border-brand-teal/30">
+    <article className="group flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md border-[#d9dde2] hover:border-brand-teal/30">
       <Link href={offerDetailHref} className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
         {offer.imageUrl ? (
           <Image
@@ -84,24 +84,26 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
           </div>
         )}
 
-        <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
-          <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
-          <OfferAction
-            offer={{
-              id: offer.id,
-              title: offer.title,
-              offerModel: offer.offerModel,
-              conversionType: offer.conversionType,
-              partnerName: offer.partnerName,
-            }}
-            ctaLabels={ctaLabels}
-            rfqLabels={rfqLabels}
-            formLabels={formLabels}
-            systemLabels={systemLabels}
-            closeLabel={closeLabel}
-            externalOfferLabel={offerLabels.externalOffer}
-            variant="card"
-          />
+        <div className="mt-auto">
+          <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
+            <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
+            <OfferAction
+              offer={{
+                id: offer.id,
+                title: offer.title,
+                offerModel: offer.offerModel,
+                conversionType: offer.conversionType,
+                partnerName: offer.partnerName,
+              }}
+              ctaLabels={ctaLabels}
+              rfqLabels={rfqLabels}
+              formLabels={formLabels}
+              systemLabels={systemLabels}
+              closeLabel={closeLabel}
+              externalOfferLabel={offerLabels.externalOffer}
+              variant="card"
+            />
+          </div>
         </div>
       </div>
     </article>
