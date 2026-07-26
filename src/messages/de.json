@@ -77,7 +77,14 @@
     "catalogMenuViewSection": "Gesamten Bereich ansehen",
     "catalogMenuViewGroup": "Gesamte Gruppe ansehen",
     "catalogMenuEmptyGroups": "Keine Gruppen",
-    "catalogMenuEmptyCategories": "Keine Kategorien"
+    "catalogMenuEmptyCategories": "Keine Kategorien",
+    "mobileCatalogTitle": "Katalog",
+    "mobileCatalogClose": "Katalog schließen",
+    "mobileCatalogBack": "Zurück",
+    "mobileCatalogBackToMenu": "Zurück zum Menü",
+    "mobileCatalogViewCatalog": "Gesamten Katalog ansehen",
+    "mobileCatalogViewCurrent": "Alle anzeigen",
+    "mobileCatalogOpenLevel": "Unterkategorie öffnen"
   },
   "solutions": {
     "catalogHeading": "Lagerlösungen",

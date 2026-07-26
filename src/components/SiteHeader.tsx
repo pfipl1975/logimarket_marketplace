@@ -2,13 +2,14 @@ import Link from "next/link";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import { CartButton } from "@/components/CartButton";
-import { HeaderDesktopNavigation, type HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
-import { MobileNavigation, type MobileNavigationItem } from "@/components/MobileNavigation";
+import { CatalogNavigationLoader } from "@/components/catalog/CatalogNavigationLoader";
+import type { HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
+import type { MobileNavigationItem } from "@/components/catalog/CatalogNavigationClient";
 import type { Locale } from "@/lib/i18n/config";
 import { getHomePath, getGlossaryPath } from "@/lib/i18n/paths";
 import { getSolutionsIndexPath } from "@/lib/landing/links";
 import type { Dictionary } from "@/lib/i18n/types";
-import { CatalogDesktopMegaMenuLoader } from "@/components/catalog/CatalogDesktopMegaMenuLoader";
+
 
 interface SiteHeaderProps {
   locale: Locale;
@@ -42,7 +43,6 @@ export function SiteHeader({
     { label: navLabels.blog, href: "https://logimarket.pl/blog", external: true },
     ...(glossaryHref ? [{ label: navLabels.glossary, href: glossaryHref }] : []),
     { label: navLabels.solutions, href: solutionsHref },
-    { label: navLabels.catalog, href: catalogHref },
   ];
 
   return (
@@ -63,17 +63,14 @@ export function SiteHeader({
 
       <div className="border-t border-white/10 bg-brand-navy">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-1.5 sm:px-4 md:px-6 relative">
-          {/* Desktop Navigation Links */}
-          <HeaderDesktopNavigation items={desktopNavItems}>
-            <CatalogDesktopMegaMenuLoader locale={locale} fallbackLabel={navLabels.catalog} />
-          </HeaderDesktopNavigation>
-
-          {/* Mobile Navigation Burger Button & Dropdown */}
-          <MobileNavigation
-            items={mobileNavItems}
+          <CatalogNavigationLoader
+            locale={locale}
+            desktopItems={desktopNavItems}
+            mobileItems={mobileNavItems}
+            fallbackLabel={navLabels.catalog}
             menuOpenLabel={navLabels.menu ?? "Menu"}
-            menuCloseLabel={navLabels.closeMenu ?? "Close menu"}
-            mainNavigationLabel={navLabels.mainNavigation ?? "Main navigation"}
+            menuCloseLabel={navLabels.closeMenu ?? navLabels.menu ?? "Menu"}
+            mainNavigationLabel={navLabels.mainNavigation ?? navLabels.menu ?? "Menu"}
           />
 
           <div className="flex shrink-0 items-center gap-2">
