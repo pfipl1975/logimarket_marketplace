@@ -42,6 +42,7 @@
     "filtersSummary": "Angebotsfilter",
     "filtersAll": "Alle",
     "filtersClear": "Filter löschen",
+    "filtersClearAll": "Alle Filter löschen",
     "attributeFiltersHeading": "Technische Parameter",
     "attributeFiltersSummary": "Technische Parameter",
     "attributeFiltersFrom": "Von",

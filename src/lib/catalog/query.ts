@@ -104,3 +104,15 @@ export function buildCategoryOfferQueryHref(
 
   return `${basePath}?${params.toString()}`;
 }
+
+export function buildClearAllCategoryFiltersHref(
+  basePath: string,
+  state: CategoryOfferQueryState,
+): string {
+  const params = new URLSearchParams();
+  if (state.view && state.view !== "grid") {
+    params.set("view", state.view);
+  }
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
+}

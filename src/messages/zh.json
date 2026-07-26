@@ -42,6 +42,7 @@
     "filtersSummary": "报价筛选",
     "filtersAll": "全部",
     "filtersClear": "清除筛选",
+    "filtersClearAll": "清除所有筛选",
     "attributeFiltersHeading": "技术参数",
     "attributeFiltersSummary": "技术参数",
     "attributeFiltersFrom": "最小值",
