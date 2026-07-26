@@ -34,7 +34,7 @@ import { getCategoryContent } from "@/lib/catalog/content";
 import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
 import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
 import type { Locale } from "@/lib/i18n/types";
-import type { CatalogOffer } from "@/app/actions";
+
 import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
 import { resolveCategorySolutionLinks } from "@/lib/landing";
 import { RelatedSolutions } from "@/components/landing/RelatedSolutions";
@@ -112,35 +112,6 @@ function PackageIcon({ className = "" }: { className?: string }) {
   );
 }
 
-function offerMatchesModel(offer: CatalogOffer, model: OfferModelFilter): boolean {
-  if (model === "ecommerce") {
-    return offer.offerModel === "ecommerce";
-  }
-
-  if (model === "rfq") {
-    return offer.offerModel !== "ecommerce" && offer.conversionType === "rfq";
-  }
-
-  return offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
-}
-
-function applyCategoryOfferFilters(
-  offers: CatalogOffer[],
-  filters: CategoryOfferFiltersState,
-): CatalogOffer[] {
-  return offers.filter((offer) => {
-    if (filters.model && !offerMatchesModel(offer, filters.model)) {
-      return false;
-    }
-
-    if (filters.featured && !offer.isFeatured) {
-      return false;
-    }
-
-    return true;
-  });
-}
-
 export async function CategoryPage({
   locale,
   categorySlug,
@@ -168,6 +139,8 @@ export async function CategoryPage({
   };
   const filteredResult = await getFilteredCategoryOffers({
     categoryId: category.id,
+    offerModel: effectiveFilters.model,
+    featured: effectiveFilters.featured,
     controlled: attributeState.input.controlled,
     numbers: attributeState.input.numbers,
   });
@@ -363,16 +336,17 @@ export async function CategoryPage({
   const hasNestedSubcategories = subcategories.some((sub) => sub.children.length > 0);
   const queryState = { view, filters: effectiveFilters };
   const hasActiveFilters = hasActiveCategoryOfferFilters(effectiveFilters);
-  const filteredOffers = applyCategoryOfferFilters(offers, effectiveFilters);
-  const renderedOffers = hasActiveFilters ? filteredOffers : offers;
+  const renderedOffers = offers;
   const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "grid" });
   const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "list" });
   const clearFiltersHref = buildClearAllCategoryFiltersHref(viewBasePath, queryState);
-  const renderedOfferCountLabel = `${renderedOffers.length} ${
-    renderedOffers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther
+
+  const totalOffers = filteredResult.ok ? filteredResult.total : 0;
+  const renderedOfferCountLabel = `${totalOffers} ${
+    totalOffers === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther
   }`;
   const offerCountLabel = hasActiveFilters
-    ? `${dict.catalog.filtersResultsLabel}: ${renderedOfferCountLabel} / ${offers.length}`
+    ? `${dict.catalog.filtersResultsLabel}: ${renderedOfferCountLabel}`
     : renderedOfferCountLabel;
 
   return (
@@ -483,7 +457,7 @@ export async function CategoryPage({
             {activeCategoryLabel}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
+            {totalOffers} {totalOffers === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
           </p>
           {activeCategoryIntro && (
             <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">

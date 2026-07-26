@@ -1,5 +1,8 @@
+import type { OfferModelFilter } from "@/lib/filters/types";
+
+export type { OfferModelFilter } from "@/lib/filters/types";
+
 export type OfferListingView = "grid" | "list";
-export type OfferModelFilter = "rfq" | "ecommerce" | "outbound";
 
 export type AttributeQueryParams = Record<string, string[]>;
 
