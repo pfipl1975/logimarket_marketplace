@@ -27,8 +27,12 @@ interface OfferCardProps {
 export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels, technicalAttributeLabels }: OfferCardProps) {
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
+  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
+
+  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : isOutbound ? offerLabels.outboundModel : offerLabels.rfqModel;
+  const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
 
   return (
     <article className="group flex flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md border-[#d9dde2] hover:border-brand-teal/30">
@@ -50,8 +54,8 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
           {offer.isFeatured && (
             <Badge className="border-0 bg-brand-teal text-[10px] font-semibold uppercase tracking-wider text-white">{offerLabels.featured}</Badge>
           )}
-          <Badge variant="secondary" className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${isEcommerce ? "bg-green-600" : "bg-brand-navy"}`}>
-            {isEcommerce ? offerLabels.ecommerceModel : offerLabels.rfqModel}
+          <Badge variant="secondary" className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${badgeColor}`}>
+            {modelLabel}
           </Badge>
         </div>
       </Link>

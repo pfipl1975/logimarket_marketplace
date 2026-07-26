@@ -223,6 +223,7 @@
     "onRequest": "за запитом",
     "ecommerceModel": "E-Commerce",
     "rfqModel": "RFQ",
+    "outboundModel": "Пропозиція партнера",
     "description": "Опис",
     "technicalParameters": "Технічні параметри",
     "externalOffer": "Переглянути пропозицію у Партнера",

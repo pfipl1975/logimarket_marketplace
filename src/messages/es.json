@@ -223,6 +223,7 @@
     "onRequest": "bajo petición",
     "ecommerceModel": "E-Commerce",
     "rfqModel": "RFQ",
+    "outboundModel": "Oferta de socio",
     "description": "Descripción",
     "technicalParameters": "Parámetros técnicos",
     "externalOffer": "Ver oferta en la web del Socio",

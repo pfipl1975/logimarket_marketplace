@@ -32,6 +32,8 @@ export function OfferProcurementListRow({
   technicalAttributeLabels,
 }: OfferProcurementListRowProps) {
   const isEcommerce = offer.offerModel === "ecommerce";
+  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+
   const categoryLabel = getLocalizedCategoryLabel(
     categoryLabels,
     offer.categorySlug,
@@ -42,7 +44,8 @@ export function OfferProcurementListRow({
     offer.priceOnRequest,
     offerLabels.priceOnRequest,
   );
-  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : offerLabels.rfqModel;
+  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : isOutbound ? offerLabels.outboundModel : offerLabels.rfqModel;
+  const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
   const highlights = Object.entries(offer.technicalAttributes).slice(0, 3);
 
   return (
@@ -58,9 +61,7 @@ export function OfferProcurementListRow({
             </span>
           )}
           <span
-            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${
-              isEcommerce ? "bg-green-600" : "bg-brand-navy"
-            }`}
+            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${badgeColor}`}
           >
             {modelLabel}
           </span>
