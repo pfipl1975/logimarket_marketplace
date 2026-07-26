@@ -15,17 +15,18 @@ interface OfferListItemProps {
 export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, viewOfferLabel }: OfferListItemProps) {
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
   const isEcommerce = offer.offerModel === "ecommerce";
+  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
   const priceLabel = formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest);
-  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : offerLabels.rfqModel;
+
+  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : isOutbound ? offerLabels.outboundModel : offerLabels.rfqModel;
+  const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
 
   return (
     <article className="flex items-start gap-4 rounded-lg border border-border bg-white px-4 py-4 shadow-sm transition-shadow hover:shadow-md">
       {/* Model badge column */}
       <div className="hidden shrink-0 sm:flex sm:w-16 sm:flex-col sm:items-center sm:justify-center sm:pt-0.5">
         <span
-          className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${
-            isEcommerce ? "bg-green-600" : "bg-brand-navy"
-          }`}
+          className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${badgeColor}`}
         >
           {modelLabel}
         </span>
@@ -39,9 +40,7 @@ export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, 
           </span>
           {/* Mobile model badge */}
           <span
-            className={`inline-block rounded px-1.5 py-0 text-[10px] font-bold uppercase tracking-wider text-white sm:hidden ${
-              isEcommerce ? "bg-green-600" : "bg-brand-navy"
-            }`}
+            className={`inline-block rounded px-1.5 py-0 text-[10px] font-bold uppercase tracking-wider text-white sm:hidden ${badgeColor}`}
           >
             {modelLabel}
           </span>

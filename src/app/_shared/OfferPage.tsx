@@ -30,6 +30,10 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   const attributes = Object.entries(offer.technicalAttributes);
   const isEcommerce = offer.offerModel === "ecommerce";
+  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+
+  const modelLabel = isEcommerce ? dict.offers.ecommerceModel : isOutbound ? dict.offers.outboundModel : dict.offers.rfqModel;
+  const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
@@ -91,7 +95,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
             <div className="flex flex-wrap gap-2">
               <Badge className="border-0 bg-[#147487] text-[10px] font-semibold uppercase tracking-wider text-white">{categoryLabel}</Badge>
               {offer.isFeatured && <Badge className="border-0 bg-amber-500 text-[10px] font-semibold uppercase tracking-wider text-white">{dict.offers.featured}</Badge>}
-              <Badge className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${isEcommerce ? "bg-green-600" : "bg-brand-navy"}`}>{isEcommerce ? dict.offers.ecommerceModel : dict.offers.rfqModel}</Badge>
+              <Badge className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${badgeColor}`}>{modelLabel}</Badge>
             </div>
 
             <h1 className="mt-4 text-2xl font-bold leading-tight text-[#141c2c] md:text-3xl">{offer.title}</h1>
@@ -137,12 +141,14 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
               </div>
             )}
 
-            <div className="mt-6 flex items-center gap-2 rounded-lg border border-[#14748733] bg-[#1474870d] p-3">
-              <ShieldCheck className="h-5 w-5 shrink-0 text-[#147487]" />
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                {isEcommerce ? dict.offers.ecommerceNotice : dict.offers.rfqNotice}
-              </p>
-            </div>
+            {!isOutbound && (
+              <div className="mt-6 flex items-center gap-2 rounded-lg border border-[#14748733] bg-[#1474870d] p-3">
+                <ShieldCheck className="h-5 w-5 shrink-0 text-[#147487]" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {isEcommerce ? dict.offers.ecommerceNotice : dict.offers.rfqNotice}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
