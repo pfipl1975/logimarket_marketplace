@@ -25,7 +25,6 @@ export type CategoryOfferQueryPatch = {
   view?: OfferListingView;
   model?: OfferModelFilter | null;
   featured?: true | null;
-  clearFilters?: boolean;
   clearAttributeFilters?: boolean;
 };
 
@@ -71,9 +70,7 @@ export function buildCategoryOfferQueryHref(
   patch: CategoryOfferQueryPatch,
 ): string {
   const nextView = patch.view ?? state.view;
-  const nextFilters: CategoryOfferFilters = patch.clearFilters
-    ? {}
-    : { ...state.filters };
+  const nextFilters: CategoryOfferFilters = { ...state.filters };
 
   if (patch.clearAttributeFilters) {
     nextFilters.attributeParams = undefined;
