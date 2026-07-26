@@ -77,7 +77,14 @@
     "catalogMenuViewSection": "查看全部部分",
     "catalogMenuViewGroup": "查看全部组",
     "catalogMenuEmptyGroups": "无群组",
-    "catalogMenuEmptyCategories": "无类别"
+    "catalogMenuEmptyCategories": "无类别",
+    "mobileCatalogTitle": "Catalog",
+    "mobileCatalogClose": "Close catalog",
+    "mobileCatalogBack": "Back",
+    "mobileCatalogBackToMenu": "Back to menu",
+    "mobileCatalogViewCatalog": "View entire catalog",
+    "mobileCatalogViewCurrent": "View all",
+    "mobileCatalogOpenLevel": "Open subcategory"
   },
   "solutions": {
     "catalogHeading": "仓库解决方案",

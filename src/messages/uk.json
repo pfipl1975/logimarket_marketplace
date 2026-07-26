@@ -77,7 +77,14 @@
     "catalogMenuViewSection": "Переглянути весь розділ",
     "catalogMenuViewGroup": "Переглянути всю групу",
     "catalogMenuEmptyGroups": "Немає груп",
-    "catalogMenuEmptyCategories": "Немає категорій"
+    "catalogMenuEmptyCategories": "Немає категорій",
+    "mobileCatalogTitle": "Catalog",
+    "mobileCatalogClose": "Close catalog",
+    "mobileCatalogBack": "Back",
+    "mobileCatalogBackToMenu": "Back to menu",
+    "mobileCatalogViewCatalog": "View entire catalog",
+    "mobileCatalogViewCurrent": "View all",
+    "mobileCatalogOpenLevel": "Open subcategory"
   },
   "solutions": {
     "catalogHeading": "Рішення для складу",

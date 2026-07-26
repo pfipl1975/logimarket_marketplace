@@ -77,7 +77,14 @@
     "catalogMenuViewSection": "Voir toute la section",
     "catalogMenuViewGroup": "Voir tout le groupe",
     "catalogMenuEmptyGroups": "Aucun groupe",
-    "catalogMenuEmptyCategories": "Aucune catégorie"
+    "catalogMenuEmptyCategories": "Aucune catégorie",
+    "mobileCatalogTitle": "Catalog",
+    "mobileCatalogClose": "Close catalog",
+    "mobileCatalogBack": "Back",
+    "mobileCatalogBackToMenu": "Back to menu",
+    "mobileCatalogViewCatalog": "View entire catalog",
+    "mobileCatalogViewCurrent": "View all",
+    "mobileCatalogOpenLevel": "Open subcategory"
   },
   "solutions": {
     "catalogHeading": "Solutions pour l'entrepôt",

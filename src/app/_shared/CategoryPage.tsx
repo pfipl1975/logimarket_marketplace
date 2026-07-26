@@ -27,15 +27,13 @@ import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from 
 import { defaultLocale } from "@/lib/i18n/config";
 import { CategoryPagination } from "@/components/catalog/CategoryPagination";
 import { CATALOG_PAGE_SIZE, buildCategoryPaginationHref } from "@/lib/catalog/pagination";
-import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
 import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
 import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
 import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks";
 import { CategoryInquiryChecklist } from "@/components/catalog/CategoryInquiryChecklist";
 import { CategoryFaqBlock } from "@/components/catalog/CategoryFaqBlock";
-import { getCategoryContent } from "@/lib/catalog/content";
 import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
-import { CategoryTreeSidebar } from "@/components/catalog/CategoryTreeSidebar";
+import { getCategoryContent } from "@/lib/catalog/content";
 import type { Locale } from "@/lib/i18n/types";
 
 import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
@@ -215,29 +213,6 @@ export async function CategoryPage({
   const breadcrumbs = getCategoryBreadcrumbs(allCategories, category.id);
   const categoryFilterBasePath = getHomePath(locale);
 
-  // ── Explorer tree ─────────────────────────────────────────────────────────
-  const mapExplorerNode = (node: CatalogCategoryNode): CatalogExplorerNode => ({
-    id: node.id,
-    slug: node.slug,
-    label: resolveCategoryName({
-      slug: node.slug,
-      dbName: node.name,
-      localeBySlug,
-      fallbackBySlug,
-    }),
-    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${node.slug}`,
-    children: node.children.map(mapExplorerNode),
-  });
-
-  const explorerTree = categoryTree.map(mapExplorerNode);
-
-  const explorerLabels = {
-    trigger: dict.catalog.categoriesAria,
-    close: dict.common.close,
-    allCategories: dict.catalog.allCategories,
-  };
-
-  const initialActiveSectionSlug = breadcrumbs.length > 0 ? breadcrumbs[0].slug : undefined;
 
   // ── JSON-LD: BreadcrumbList ───────────────────────────────────────────────
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
@@ -438,33 +413,6 @@ export async function CategoryPage({
           })}
         </nav>
 
-        {/* ── Category explorer ────────────────────────────────────────── */}
-        <div className="z-30 lg:hidden mb-6">
-          <CatalogCategoryExplorer
-            key={initialActiveSectionSlug}
-            tree={explorerTree}
-            labels={explorerLabels}
-            initialActiveSectionSlug={initialActiveSectionSlug}
-          />
-        </div>
-
-        <details className="mb-6 rounded border border-border bg-white p-4 shadow-sm lg:hidden">
-          <summary className="cursor-pointer list-none text-sm font-bold uppercase tracking-wide text-brand-navy transition-colors hover:text-brand-teal">
-            {dict.catalog.mobileCategoryNavigationSummary}
-          </summary>
-          <div className="mt-4 border-t border-border pt-4">
-            <CategoryTreeSidebar
-              tree={categoryTree}
-              activeSlug={category.slug}
-              categoryFilterBasePath={categoryFilterBasePath}
-              navigationLabel={dict.catalog.treeNavigationAria}
-              headingLabel={dict.catalog.treeNavigationHeading}
-              className="rounded-none border-0 bg-transparent p-0 shadow-none"
-              localeBySlug={localeBySlug}
-              fallbackBySlug={fallbackBySlug}
-            />
-          </div>
-        </details>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <div className="min-w-0 flex-1 w-full">

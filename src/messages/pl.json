@@ -77,7 +77,14 @@
     "catalogMenuViewSection": "Zobacz całą sekcję",
     "catalogMenuViewGroup": "Zobacz całą grupę",
     "catalogMenuEmptyGroups": "Brak grup",
-    "catalogMenuEmptyCategories": "Brak kategorii"
+    "catalogMenuEmptyCategories": "Brak kategorii",
+    "mobileCatalogTitle": "Katalog",
+    "mobileCatalogClose": "Zamknij katalog",
+    "mobileCatalogBack": "Wróć",
+    "mobileCatalogBackToMenu": "Wróć do menu",
+    "mobileCatalogViewCatalog": "Zobacz cały katalog",
+    "mobileCatalogViewCurrent": "Zobacz wszystkie",
+    "mobileCatalogOpenLevel": "Rozwiń podkategorię"
   },
   "solutions": {
     "catalogHeading": "Rozwiązania dla magazynu",

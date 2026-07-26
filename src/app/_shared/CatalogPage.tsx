@@ -12,7 +12,6 @@ import { getHomePath } from "@/lib/i18n/paths";
 import { buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
 import { JsonLdScript } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
-import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
 import { getSolutionsIndexPath } from "@/lib/landing";
 import { getGroupIconPath, getSectionIconPath } from "@/lib/catalog/group-icons";
 import type { Locale } from "@/lib/i18n/types";
@@ -168,26 +167,6 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
     fallbackBySlug,
   });
 
-  const mapExplorerNode = (node: CatalogCategoryNode): CatalogExplorerNode => ({
-    id: node.id,
-    slug: node.slug,
-    label: resolveCategoryName({
-      slug: node.slug,
-      dbName: node.name,
-      localeBySlug,
-      fallbackBySlug,
-    }),
-    href: `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${node.slug}`,
-    children: node.children.map(mapExplorerNode),
-  });
-
-  const explorerTree = categoryTree.map(mapExplorerNode);
-
-  const explorerLabels = {
-    trigger: dict.catalog.categoriesAria,
-    close: dict.common.close,
-    allCategories: dict.catalog.allCategories,
-  };
 
   // Generate BreadcrumbList JSON-LD
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
@@ -257,10 +236,6 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
             </div>
           ) : (
             <div className="flex flex-col gap-8">
-              {/* Category Explorer Trigger and Mega-menu */}
-              <div className="z-30 lg:hidden">
-                <CatalogCategoryExplorer tree={explorerTree} labels={explorerLabels} />
-              </div>
 
               <section
                 aria-labelledby="catalog-directory-heading"

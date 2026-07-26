@@ -77,7 +77,14 @@
     "catalogMenuViewSection": "Ver toda la sección",
     "catalogMenuViewGroup": "Ver todo el grupo",
     "catalogMenuEmptyGroups": "Sin grupos",
-    "catalogMenuEmptyCategories": "Sin categorías"
+    "catalogMenuEmptyCategories": "Sin categorías",
+    "mobileCatalogTitle": "Catalog",
+    "mobileCatalogClose": "Close catalog",
+    "mobileCatalogBack": "Back",
+    "mobileCatalogBackToMenu": "Back to menu",
+    "mobileCatalogViewCatalog": "View entire catalog",
+    "mobileCatalogViewCurrent": "View all",
+    "mobileCatalogOpenLevel": "Open subcategory"
   },
   "solutions": {
     "catalogHeading": "Soluciones para almacenes",
