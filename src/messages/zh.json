@@ -223,6 +223,7 @@
     "onRequest": "询价",
     "ecommerceModel": "E-Commerce",
     "rfqModel": "RFQ",
+    "outboundModel": "合作伙伴报价",
     "description": "描述",
     "technicalParameters": "技术参数",
     "externalOffer": "查看合作伙伴处的报价",

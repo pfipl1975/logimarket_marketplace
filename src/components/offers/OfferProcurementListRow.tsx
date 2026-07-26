@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { OfferAction } from "@/components/OfferAction";
+import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { formatPrice } from "@/lib/utils";
@@ -31,7 +32,6 @@ export function OfferProcurementListRow({
   categoryLabels,
   technicalAttributeLabels,
 }: OfferProcurementListRowProps) {
-  const isEcommerce = offer.offerModel === "ecommerce";
   const categoryLabel = getLocalizedCategoryLabel(
     categoryLabels,
     offer.categorySlug,
@@ -42,7 +42,6 @@ export function OfferProcurementListRow({
     offer.priceOnRequest,
     offerLabels.priceOnRequest,
   );
-  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : offerLabels.rfqModel;
   const highlights = Object.entries(offer.technicalAttributes).slice(0, 3);
 
   return (
@@ -57,13 +56,11 @@ export function OfferProcurementListRow({
               {offerLabels.featured}
             </span>
           )}
-          <span
-            className={`rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${
-              isEcommerce ? "bg-green-600" : "bg-brand-navy"
-            }`}
-          >
-            {modelLabel}
-          </span>
+          <OfferModelBadge
+            offerModel={offer.offerModel}
+            labels={offerLabels}
+            className="rounded-md border-0 px-2.5 py-0.5 text-[10px]"
+          />
         </div>
 
         <h3 className="mt-2 text-base font-bold leading-snug text-brand-navy">

@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { formatPrice } from "@/lib/utils";
+import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "./OfferAction";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
@@ -27,6 +28,7 @@ interface OfferCardProps {
 export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels, technicalAttributeLabels }: OfferCardProps) {
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
+  const isOutbound = offer.offerModel === "outbound";
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 
@@ -50,9 +52,11 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
           {offer.isFeatured && (
             <Badge className="border-0 bg-brand-teal text-[10px] font-semibold uppercase tracking-wider text-white">{offerLabels.featured}</Badge>
           )}
-          <Badge variant="secondary" className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${isEcommerce ? "bg-green-600" : "bg-brand-navy"}`}>
-            {isEcommerce ? offerLabels.ecommerceModel : offerLabels.rfqModel}
-          </Badge>
+          <OfferModelBadge
+            offerModel={offer.offerModel}
+            labels={offerLabels}
+            className="rounded-md border-0 text-[10px] px-2.5 py-0.5"
+          />
         </div>
       </Link>
 
