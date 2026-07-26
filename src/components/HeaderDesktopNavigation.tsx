@@ -14,11 +14,12 @@ export type HeaderDesktopNavigationItem = {
 
 type HeaderDesktopNavigationProps = {
   items: HeaderDesktopNavigationItem[];
+  children?: React.ReactNode;
 };
 
 const linkBaseClass = "rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-white/5 hover:text-white sm:px-3";
 
-export function HeaderDesktopNavigation({ items }: HeaderDesktopNavigationProps) {
+export function HeaderDesktopNavigation({ items, children }: HeaderDesktopNavigationProps) {
   const pathname = usePathname();
 
   return (
@@ -58,6 +59,7 @@ export function HeaderDesktopNavigation({ items }: HeaderDesktopNavigationProps)
           </Link>
         );
       })}
+      {children}
     </nav>
   );
 }

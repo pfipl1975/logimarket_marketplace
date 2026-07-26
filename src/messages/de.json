@@ -68,7 +68,14 @@
     "paginationPrevious": "Zurück",
     "paginationNext": "Weiter",
     "paginationPage": "Seite {page}",
-    "paginationCurrentPage": "Aktuelle Seite, Seite {page}"
+    "paginationCurrentPage": "Aktuelle Seite, Seite {page}",
+    "catalogMenuOpen": "Katalog öffnen",
+    "catalogMenuClose": "Katalog schließen",
+    "catalogMenuSections": "Bereiche",
+    "catalogMenuGroups": "Gruppen",
+    "catalogMenuCategories": "Kategorien",
+    "catalogMenuViewSection": "Gesamten Bereich ansehen",
+    "catalogMenuViewGroup": "Gesamte Gruppe ansehen"
   },
   "solutions": {
     "catalogHeading": "Lagerlösungen",

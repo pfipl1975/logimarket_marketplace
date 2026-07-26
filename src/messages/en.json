@@ -68,7 +68,14 @@
     "paginationPrevious": "Previous",
     "paginationNext": "Next",
     "paginationPage": "Page {page}",
-    "paginationCurrentPage": "Current page, page {page}"
+    "paginationCurrentPage": "Current page, page {page}",
+    "catalogMenuOpen": "Open catalog",
+    "catalogMenuClose": "Close catalog",
+    "catalogMenuSections": "Sections",
+    "catalogMenuGroups": "Groups",
+    "catalogMenuCategories": "Categories",
+    "catalogMenuViewSection": "View entire section",
+    "catalogMenuViewGroup": "View entire group"
   },
   "solutions": {
     "catalogHeading": "Warehouse solutions",

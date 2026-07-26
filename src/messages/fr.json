@@ -68,7 +68,14 @@
     "paginationPrevious": "Précédent",
     "paginationNext": "Suivant",
     "paginationPage": "Page {page}",
-    "paginationCurrentPage": "Page actuelle, page {page}"
+    "paginationCurrentPage": "Page actuelle, page {page}",
+    "catalogMenuOpen": "Ouvrir le catalogue",
+    "catalogMenuClose": "Fermer le catalogue",
+    "catalogMenuSections": "Sections",
+    "catalogMenuGroups": "Groupes",
+    "catalogMenuCategories": "Catégories",
+    "catalogMenuViewSection": "Voir toute la section",
+    "catalogMenuViewGroup": "Voir tout le groupe"
   },
   "solutions": {
     "catalogHeading": "Solutions pour l'entrepôt",

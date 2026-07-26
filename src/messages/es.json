@@ -68,7 +68,14 @@
     "paginationPrevious": "Anterior",
     "paginationNext": "Siguiente",
     "paginationPage": "Página {page}",
-    "paginationCurrentPage": "Página actual, página {page}"
+    "paginationCurrentPage": "Página actual, página {page}",
+    "catalogMenuOpen": "Abrir catálogo",
+    "catalogMenuClose": "Cerrar catálogo",
+    "catalogMenuSections": "Secciones",
+    "catalogMenuGroups": "Grupos",
+    "catalogMenuCategories": "Categorías",
+    "catalogMenuViewSection": "Ver toda la sección",
+    "catalogMenuViewGroup": "Ver todo el grupo"
   },
   "solutions": {
     "catalogHeading": "Soluciones para almacenes",

@@ -68,7 +68,14 @@
     "paginationPrevious": "上一页",
     "paginationNext": "下一页",
     "paginationPage": "第 {page} 页",
-    "paginationCurrentPage": "当前页，第 {page} 页"
+    "paginationCurrentPage": "当前页，第 {page} 页",
+    "catalogMenuOpen": "打开目录",
+    "catalogMenuClose": "关闭目录",
+    "catalogMenuSections": "部分",
+    "catalogMenuGroups": "组",
+    "catalogMenuCategories": "类别",
+    "catalogMenuViewSection": "查看全部部分",
+    "catalogMenuViewGroup": "查看全部组"
   },
   "solutions": {
     "catalogHeading": "仓库解决方案",

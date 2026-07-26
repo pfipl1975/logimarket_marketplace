@@ -68,7 +68,14 @@
     "paginationPrevious": "Попередня",
     "paginationNext": "Наступна",
     "paginationPage": "Сторінка {page}",
-    "paginationCurrentPage": "Поточна сторінка, сторінка {page}"
+    "paginationCurrentPage": "Поточна сторінка, сторінка {page}",
+    "catalogMenuOpen": "Відкрити каталог",
+    "catalogMenuClose": "Закрити каталог",
+    "catalogMenuSections": "Розділи",
+    "catalogMenuGroups": "Групи",
+    "catalogMenuCategories": "Категорії",
+    "catalogMenuViewSection": "Переглянути весь розділ",
+    "catalogMenuViewGroup": "Переглянути всю групу"
   },
   "solutions": {
     "catalogHeading": "Рішення для складу",
