@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
+import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
@@ -14,22 +15,17 @@ interface OfferListItemProps {
 
 export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, viewOfferLabel }: OfferListItemProps) {
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
-  const isEcommerce = offer.offerModel === "ecommerce";
-  const isOutbound = offer.offerModel === "outbound";
   const priceLabel = formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest);
-
-  const modelLabel = isEcommerce ? offerLabels.ecommerceModel : isOutbound ? offerLabels.outboundModel : offerLabels.rfqModel;
-  const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
 
   return (
     <article className="flex items-start gap-4 rounded-lg border border-border bg-white px-4 py-4 shadow-sm transition-shadow hover:shadow-md">
       {/* Model badge column */}
       <div className="hidden shrink-0 sm:flex sm:w-16 sm:flex-col sm:items-center sm:justify-center sm:pt-0.5">
-        <span
-          className={`inline-block rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white ${badgeColor}`}
-        >
-          {modelLabel}
-        </span>
+        <OfferModelBadge
+          offerModel={offer.offerModel}
+          labels={offerLabels}
+          className="rounded px-2 py-0.5 text-[10px]"
+        />
       </div>
 
       {/* Main content */}
@@ -39,11 +35,11 @@ export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, 
             {categoryLabel}
           </span>
           {/* Mobile model badge */}
-          <span
-            className={`inline-block rounded px-1.5 py-0 text-[10px] font-bold uppercase tracking-wider text-white sm:hidden ${badgeColor}`}
-          >
-            {modelLabel}
-          </span>
+          <OfferModelBadge
+            offerModel={offer.offerModel}
+            labels={offerLabels}
+            className="sm:hidden rounded px-1.5 py-0 text-[10px]"
+          />
         </div>
 
         <h3 className="text-sm font-bold leading-snug text-brand-navy">

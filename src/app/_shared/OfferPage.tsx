@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
+import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "@/components/OfferAction";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
@@ -33,8 +34,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
   const isOutbound = offer.offerModel === "outbound";
   const isRfq = offer.offerModel === "rfq";
 
-  const modelLabel = isEcommerce ? dict.offers.ecommerceModel : isOutbound ? dict.offers.outboundModel : dict.offers.rfqModel;
-  const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
+
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
@@ -96,7 +96,15 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
             <div className="flex flex-wrap gap-2">
               <Badge className="border-0 bg-[#147487] text-[10px] font-semibold uppercase tracking-wider text-white">{categoryLabel}</Badge>
               {offer.isFeatured && <Badge className="border-0 bg-amber-500 text-[10px] font-semibold uppercase tracking-wider text-white">{dict.offers.featured}</Badge>}
-              <Badge className={`border-0 text-[10px] font-semibold uppercase tracking-wider text-white ${badgeColor}`}>{modelLabel}</Badge>
+              <OfferModelBadge
+                offerModel={offer.offerModel}
+                labels={{
+                  rfqModel: dict.offers.rfqModel,
+                  ecommerceModel: dict.offers.ecommerceModel,
+                  outboundModel: dict.offers.outboundModel
+                }}
+                className="border-0 text-[10px]"
+              />
             </div>
 
             <h1 className="mt-4 text-2xl font-bold leading-tight text-[#141c2c] md:text-3xl">{offer.title}</h1>
