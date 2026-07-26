@@ -14,6 +14,7 @@ import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
 import {
   buildCategoryOfferQueryHref,
+  buildClearAllCategoryFiltersHref,
   hasActiveCategoryOfferFilters,
   type CategoryOfferFilters as CategoryOfferFiltersState,
   type OfferModelFilter,
@@ -366,9 +367,7 @@ export async function CategoryPage({
   const renderedOffers = hasActiveFilters ? filteredOffers : offers;
   const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "grid" });
   const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "list" });
-  const clearFiltersHref = buildCategoryOfferQueryHref(viewBasePath, queryState, {
-    clearFilters: true,
-  });
+  const clearFiltersHref = buildClearAllCategoryFiltersHref(viewBasePath, queryState);
   const renderedOfferCountLabel = `${renderedOffers.length} ${
     renderedOffers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther
   }`;
@@ -617,6 +616,21 @@ export async function CategoryPage({
           description={inquiryChecklistDescription}
         />
 
+        {/* ── Global Clear All Filters ──────────────────────────────────── */}
+        {hasActiveFilters && (
+          <div className="mb-4 flex justify-end">
+            <Link
+              href={clearFiltersHref}
+              className="inline-flex min-h-11 items-center gap-2 rounded bg-white px-4 py-2 text-sm font-semibold text-brand-navy shadow-sm border border-border transition-colors hover:border-brand-teal hover:text-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
+            >
+              <svg aria-hidden="true" focusable="false" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              {dict.catalog.filtersClearAll}
+            </Link>
+          </div>
+        )}
+
         {/* ── Offer filters + listing ──────────────────────────────────── */}
         {offers.length > 0 && (
           <CategoryOfferFilters
@@ -627,7 +641,6 @@ export async function CategoryPage({
               filtersHeading: dict.catalog.filtersHeading,
               filtersSummary: dict.catalog.filtersSummary,
               filtersAll: dict.catalog.filtersAll,
-              filtersClear: dict.catalog.filtersClear,
               filtersModelHeading: dict.catalog.filtersModelHeading,
               filtersModelRfq: dict.catalog.filtersModelRfq,
               filtersModelEcommerce: dict.catalog.filtersModelEcommerce,

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import {
   buildCategoryOfferQueryHref,
-  hasActiveCategoryOfferFilters,
   type CategoryOfferFilters,
   type OfferListingView,
   type OfferModelFilter,
@@ -13,7 +12,6 @@ type CategoryOfferFilterLabels = Pick<
   | "filtersHeading"
   | "filtersSummary"
   | "filtersAll"
-  | "filtersClear"
   | "filtersModelHeading"
   | "filtersModelRfq"
   | "filtersModelEcommerce"
@@ -41,7 +39,6 @@ export function CategoryOfferFilters({
   labels,
 }: CategoryOfferFiltersProps) {
   const state = { view, filters };
-  const hasActiveFilters = hasActiveCategoryOfferFilters(filters);
 
   const modelOptions: Array<{
     key: "all" | OfferModelFilter;
@@ -112,17 +109,6 @@ export function CategoryOfferFilters({
           >
             {labels.filtersFeaturedOnly}
           </Link>
-
-          {hasActiveFilters && (
-            <Link
-              href={buildCategoryOfferQueryHref(basePath, state, {
-                clearFilters: true,
-              })}
-              className="inline-flex items-center px-3 py-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-brand-teal"
-            >
-              {labels.filtersClear}
-            </Link>
-          )}
         </div>
       </div>
     );
