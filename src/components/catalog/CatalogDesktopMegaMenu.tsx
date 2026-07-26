@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronRight, X } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
 import { type CatalogExplorerNode, getActivePathNodes } from "@/lib/catalog/navigation";
 
 export type CatalogDesktopMegaMenuLabels = {
@@ -132,6 +132,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
         <ChevronDown
           className={`h-4 w-4 transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`}
           aria-hidden="true"
+          focusable="false"
         />
       </button>
 
@@ -211,7 +212,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
                     className="group inline-flex items-center text-xs font-semibold text-brand-teal transition-colors hover:text-brand-navy"
                   >
                     {labels.catalogMenuViewSection}
-                    <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                    <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" focusable="false" />
                   </Link>
                 </div>
               </div>
@@ -242,7 +243,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
                     className="group inline-flex items-center text-xs font-semibold text-brand-teal transition-colors hover:text-brand-navy"
                   >
                     {labels.catalogMenuViewGroup}
-                    <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                    <ChevronRight className="ml-1 h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden="true" focusable="false" />
                   </Link>
                 </div>
               </div>
