@@ -15,7 +15,7 @@ interface OfferListItemProps {
 export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, viewOfferLabel }: OfferListItemProps) {
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
   const isEcommerce = offer.offerModel === "ecommerce";
-  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+  const isOutbound = offer.offerModel === "outbound";
   const priceLabel = formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest);
 
   const modelLabel = isEcommerce ? offerLabels.ecommerceModel : isOutbound ? offerLabels.outboundModel : offerLabels.rfqModel;

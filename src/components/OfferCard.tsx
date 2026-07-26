@@ -27,7 +27,7 @@ interface OfferCardProps {
 export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels, technicalAttributeLabels }: OfferCardProps) {
   const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
   const isEcommerce = offer.offerModel === "ecommerce";
-  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+  const isOutbound = offer.offerModel === "outbound";
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 

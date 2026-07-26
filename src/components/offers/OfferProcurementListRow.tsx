@@ -32,7 +32,7 @@ export function OfferProcurementListRow({
   technicalAttributeLabels,
 }: OfferProcurementListRowProps) {
   const isEcommerce = offer.offerModel === "ecommerce";
-  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+  const isOutbound = offer.offerModel === "outbound";
 
   const categoryLabel = getLocalizedCategoryLabel(
     categoryLabels,

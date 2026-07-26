@@ -30,7 +30,8 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   const attributes = Object.entries(offer.technicalAttributes);
   const isEcommerce = offer.offerModel === "ecommerce";
-  const isOutbound = offer.offerModel !== "ecommerce" && offer.conversionType === "outbound";
+  const isOutbound = offer.offerModel === "outbound";
+  const isRfq = offer.offerModel === "rfq";
 
   const modelLabel = isEcommerce ? dict.offers.ecommerceModel : isOutbound ? dict.offers.outboundModel : dict.offers.rfqModel;
   const badgeColor = isEcommerce ? "bg-green-600" : isOutbound ? "bg-slate-700" : "bg-brand-navy";
@@ -141,11 +142,12 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
               </div>
             )}
 
-            {!isOutbound && (
+            {(isEcommerce || isRfq) && (
               <div className="mt-6 flex items-center gap-2 rounded-lg border border-[#14748733] bg-[#1474870d] p-3">
                 <ShieldCheck className="h-5 w-5 shrink-0 text-[#147487]" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {isEcommerce ? dict.offers.ecommerceNotice : dict.offers.rfqNotice}
+                  {isEcommerce && dict.offers.ecommerceNotice}
+                  {isRfq && dict.offers.rfqNotice}
                 </p>
               </div>
             )}
