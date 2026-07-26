@@ -90,6 +90,12 @@ function buildPredicates(db: Db, input: NormalizedFilterQuery, categoryIds: numb
     eq(schema.offers.publicationStatus, "published"),
     inArray(schema.offers.categoryId, categoryIds),
   ];
+  if (input.offerModel) {
+    predicates.push(eq(schema.offers.offerModel, input.offerModel));
+  }
+  if (input.featured) {
+    predicates.push(eq(schema.offers.isFeatured, true));
+  }
   for (const filter of input.controlled) {
     const table = dataTypes.get(filter.attributeId) === "multi_enum" ? schema.offerAttributeOptionValues : schema.offerAttributeValues;
     predicates.push(exists(db.select({ value: sql`1` }).from(table).where(and(

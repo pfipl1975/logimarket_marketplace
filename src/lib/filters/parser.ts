@@ -1,4 +1,4 @@
-import type { FilterErrorCode, FilterQueryInput } from "./types";
+import type { FilterErrorCode, FilterQueryInput, OfferModelFilter } from "./types";
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -24,5 +24,22 @@ export function parseFilterQueryInput(raw: unknown): { ok: true; value: FilterQu
   const hasPageSize = raw.pageSize !== undefined;
   if (hasPage !== hasPageSize || (hasPage && (!positiveInteger(raw.page) || !positiveInteger(raw.pageSize) || (raw.pageSize as number) > 100))) return { ok: false, errors: ["INVALID_PAGINATION"] };
   if (hasPage) { parsed.page = raw.page as number; parsed.pageSize = raw.pageSize as number; }
+
+  if (raw.offerModel !== undefined) {
+    if (raw.offerModel === "rfq" || raw.offerModel === "ecommerce" || raw.offerModel === "outbound") {
+      parsed.offerModel = raw.offerModel as OfferModelFilter;
+    } else {
+      return { ok: false, errors: ["INVALID_OFFER_MODEL"] };
+    }
+  }
+
+  if (raw.featured !== undefined) {
+    if (raw.featured === true) {
+      parsed.featured = true;
+    } else {
+      return { ok: false, errors: ["INVALID_INPUT"] };
+    }
+  }
+
   return { ok: true, value: parsed };
 }

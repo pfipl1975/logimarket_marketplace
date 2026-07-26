@@ -20,6 +20,8 @@ export function normalizeFilterQuery(input: FilterQueryInput): { ok: true; value
   if (errors.length) return { ok: false, errors };
   return { ok: true, value: {
     categoryId: input.categoryId,
+    ...(input.offerModel ? { offerModel: input.offerModel } : {}),
+    ...(input.featured ? { featured: true } : {}),
     controlled: controlled.map((filter) => ({ attributeId: filter.attributeId, optionIds: [...new Set(filter.optionIds)].sort((a, b) => a - b) })).sort((a, b) => a.attributeId - b.attributeId),
     numbers: [...numbers].sort((a, b) => a.attributeId - b.attributeId),
     years: [...years].sort((a, b) => a.attributeId - b.attributeId),
