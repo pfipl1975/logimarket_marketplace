@@ -119,14 +119,14 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
             <div className="flex items-center gap-3 pb-0.5 xl:justify-start">
               <button
                 type="submit"
-                className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal whitespace-nowrap min-h-[44px]"
+                className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal whitespace-nowrap min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
               >
                 {labels.apply}
               </button>
               {hasActiveAttributeFilters && (
                 <Link
                   href={clearHref}
-                  className="inline-flex min-h-[44px] items-center justify-center rounded border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-gray-50 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal whitespace-nowrap"
+                  className="inline-flex min-h-[44px] items-center justify-center rounded border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-gray-50 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 whitespace-nowrap"
                 >
                   {labels.clear}
                 </Link>
@@ -149,14 +149,14 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button
               type="submit"
-              className="w-full sm:w-auto rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal min-h-[44px] flex items-center justify-center"
+              className="w-full sm:w-auto rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal min-h-[44px] flex items-center justify-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
             >
               {labels.apply}
             </button>
             {hasActiveAttributeFilters && (
               <Link
                 href={clearHref}
-                className="inline-flex w-full sm:w-auto min-h-[44px] items-center justify-center rounded border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-gray-50 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+                className="inline-flex w-full sm:w-auto min-h-[44px] items-center justify-center rounded border border-border px-4 text-sm font-semibold text-muted-foreground transition-colors hover:bg-gray-50 hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
               >
                 {labels.clear}
               </Link>

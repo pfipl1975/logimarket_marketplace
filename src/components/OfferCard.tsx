@@ -84,24 +84,26 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
           </div>
         )}
 
-        <div className="mt-auto flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
-          <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
-          <OfferAction
-            offer={{
-              id: offer.id,
-              title: offer.title,
-              offerModel: offer.offerModel,
-              conversionType: offer.conversionType,
-              partnerName: offer.partnerName,
-            }}
-            ctaLabels={ctaLabels}
-            rfqLabels={rfqLabels}
-            formLabels={formLabels}
-            systemLabels={systemLabels}
-            closeLabel={closeLabel}
-            externalOfferLabel={offerLabels.externalOffer}
-            variant="card"
-          />
+        <div className="mt-auto">
+          <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
+            <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
+            <OfferAction
+              offer={{
+                id: offer.id,
+                title: offer.title,
+                offerModel: offer.offerModel,
+                conversionType: offer.conversionType,
+                partnerName: offer.partnerName,
+              }}
+              ctaLabels={ctaLabels}
+              rfqLabels={rfqLabels}
+              formLabels={formLabels}
+              systemLabels={systemLabels}
+              closeLabel={closeLabel}
+              externalOfferLabel={offerLabels.externalOffer}
+              variant="card"
+            />
+          </div>
         </div>
       </div>
     </article>
