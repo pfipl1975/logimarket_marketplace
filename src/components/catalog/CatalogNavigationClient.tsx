@@ -58,6 +58,7 @@ export function CatalogNavigationClient({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const drawerRef = useRef<HTMLElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const levelTitleRef = useRef<HTMLSpanElement>(null);
 
   // Close menu on ESC key press and return focus
   useEffect(() => {
@@ -98,12 +99,22 @@ export function CatalogNavigationClient({
     setNavigationStack([]);
   }, [pathname]);
 
-  // Focus close button immediately after open to keep screen readers updated
+  // Focus management on open and view change
   useEffect(() => {
-    if (isOpen) {
-      closeButtonRef.current?.focus();
+    if (!isOpen) {
+      return;
     }
-  }, [isOpen]);
+
+    const frame = window.requestAnimationFrame(() => {
+      if (mode === "main") {
+        closeButtonRef.current?.focus();
+      } else {
+        levelTitleRef.current?.focus();
+      }
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [isOpen, mode, navigationStack.length]);
 
   const resetNavigation = () => {
     setIsOpen(false);
@@ -198,7 +209,13 @@ export function CatalogNavigationClient({
         <button
           ref={triggerRef}
           type="button"
-          onClick={() => setIsOpen(!isOpen)}
+          onClick={() => {
+            if (isOpen) {
+              closeAndFocusTrigger();
+              return;
+            }
+            setIsOpen(true);
+          }}
           aria-expanded={isOpen}
           aria-controls="mobile-menu"
           aria-label={isOpen ? menuCloseLabel : menuOpenLabel}
@@ -241,6 +258,7 @@ export function CatalogNavigationClient({
               {/* Drawer Header */}
               <div className="flex items-center justify-between border-b border-white/10 p-4">
                 <span
+                  ref={levelTitleRef}
                   id="mobile-navigation-title"
                   tabIndex={-1}
                   aria-live="polite"
@@ -256,7 +274,7 @@ export function CatalogNavigationClient({
                   type="button"
                   onClick={closeAndFocusTrigger}
                   aria-label={mode === "main" ? menuCloseLabel : mobileLabels.mobileCatalogClose}
-                  className="rounded-md p-1.5 text-white/80 hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
+                  className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal"
                 >
                   <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
