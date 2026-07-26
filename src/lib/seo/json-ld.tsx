@@ -304,9 +304,11 @@ export interface CategoryItemListItem {
 export function createCategoryItemListJsonLd({
   pageUrl,
   items,
+  startPosition = 1,
 }: {
   pageUrl: string;
   items: CategoryItemListItem[];
+  startPosition?: number;
 }): JsonLdValue | null {
   if (!items || items.length === 0) return null;
   return {
@@ -315,7 +317,7 @@ export function createCategoryItemListJsonLd({
     "@id": `${pageUrl}#itemlist`,
     "itemListElement": items.map((item, index) => ({
       "@type": "ListItem",
-      "position": index + 1,
+      "position": startPosition + index,
       "name": item.name,
       "url": item.url,
     })),

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { getCategories, getCategoryAttributeConfiguration, getCategoryBySlug, getFilteredCategoryOffers } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -24,6 +24,8 @@ import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } f
 import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
 import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
+import { CategoryPagination } from "@/components/catalog/CategoryPagination";
+import { CATALOG_PAGE_SIZE, buildCategoryPaginationHref } from "@/lib/catalog/pagination";
 import { CatalogCategoryExplorer, type CatalogExplorerNode } from "@/components/catalog/CatalogCategoryExplorer";
 import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
 import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
@@ -44,6 +46,7 @@ interface CategoryPageProps {
   categorySlug: string; // dbSlug (without 'c-' prefix)
   view?: "grid" | "list";
   filters?: CategoryOfferFiltersState;
+  currentPage?: number;
 }
 
 const blockHeadings = {
@@ -117,6 +120,7 @@ export async function CategoryPage({
   categorySlug,
   view = "grid",
   filters = {},
+  currentPage = 1,
 }: CategoryPageProps) {
   const [dict, category, allCategories] = await Promise.all([
     getDictionary(locale),
@@ -143,8 +147,22 @@ export async function CategoryPage({
     featured: effectiveFilters.featured,
     controlled: attributeState.input.controlled,
     numbers: attributeState.input.numbers,
+    page: currentPage,
+    pageSize: CATALOG_PAGE_SIZE,
   });
   const offers = filteredResult.ok ? filteredResult.items : [];
+  const totalOffers = filteredResult.ok ? filteredResult.total : 0;
+  const totalPages = Math.max(1, Math.ceil(totalOffers / CATALOG_PAGE_SIZE));
+
+  if (filteredResult.ok) {
+    const basePath = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog/c-${category.slug}`;
+    if (totalOffers === 0 && currentPage > 1) {
+      redirect(buildCategoryPaginationHref(basePath, { view, filters: effectiveFilters }, 1));
+    }
+    if (totalOffers > 0 && currentPage > totalPages) {
+      redirect(buildCategoryPaginationHref(basePath, { view, filters: effectiveFilters }, totalPages));
+    }
+  }
 
   const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
   const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
@@ -252,18 +270,23 @@ export async function CategoryPage({
   };
 
   // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
+  const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters);
+  const cleanPaginationSuffix = currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
+  const pageJsonLdUrl = absoluteUrl(`${canonicalPath}${cleanPaginationSuffix}`);
+
   const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    "@id": `${canonicalUrl}#collection`,
-    "url": canonicalUrl,
+    "@id": `${pageJsonLdUrl}#collection`,
+    "url": pageJsonLdUrl,
     "name": activeCategoryLabel,
     "description": activeCategoryIntro || `${activeCategoryLabel} - ${dict.meta.description}`,
   };
 
   // ── JSON-LD: ItemList (role-aware, no Product schema) ────────────────────
+  const isSubcategories = subcategories.length > 0;
   const itemListItems = (() => {
-    if (subcategories.length > 0) {
+    if (isSubcategories) {
       return subcategories.map((sub: CatalogCategoryNode) => ({
         name: resolveCategoryName({
           slug: sub.slug,
@@ -281,9 +304,14 @@ export async function CategoryPage({
     }));
   })();
 
+  const startPosition = !isSubcategories && currentPage > 1
+    ? (currentPage - 1) * CATALOG_PAGE_SIZE + 1
+    : 1;
+
   const itemListJsonLd = createCategoryItemListJsonLd({
-    pageUrl: canonicalUrl,
+    pageUrl: pageJsonLdUrl,
     items: itemListItems,
+    startPosition,
   });
 
   // ── Retrieve static content (Hybrid Model C: stateless TS seed) ───────────
@@ -341,7 +369,7 @@ export async function CategoryPage({
   const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "list" });
   const clearFiltersHref = buildClearAllCategoryFiltersHref(viewBasePath, queryState);
 
-  const totalOffers = filteredResult.ok ? filteredResult.total : 0;
+
   const renderedOfferCountLabel = `${totalOffers} ${
     totalOffers === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther
   }`;
@@ -360,13 +388,13 @@ export async function CategoryPage({
       <SiteHeader
         locale={locale}
         languageLinks={{
-          pl: `/katalog/c-${category.slug}`,
-          en: `/en/katalog/c-${category.slug}`,
-          de: `/de/katalog/c-${category.slug}`,
-          fr: `/fr/katalog/c-${category.slug}`,
-          es: `/es/katalog/c-${category.slug}`,
-          uk: `/uk/katalog/c-${category.slug}`,
-          zh: `/zh/katalog/c-${category.slug}`,
+          pl: `/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          en: `/en/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          de: `/de/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          fr: `/fr/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          es: `/es/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          uk: `/uk/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          zh: `/zh/katalog/c-${category.slug}${cleanPaginationSuffix}`,
         }}
         navLabels={dict.nav}
       />
@@ -732,6 +760,20 @@ export async function CategoryPage({
             ))}
           </div>
         )}
+
+        <CategoryPagination
+          basePath={viewBasePath}
+          state={queryState}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          labels={{
+            paginationLabel: dict.catalog.paginationLabel || "Paginacja katalogu",
+            paginationPrevious: dict.catalog.paginationPrevious || "Poprzednia",
+            paginationNext: dict.catalog.paginationNext || "Następna",
+            paginationPage: dict.catalog.paginationPage || "Strona {page}",
+            paginationCurrentPage: dict.catalog.paginationCurrentPage || "Bieżąca strona, strona {page}",
+          }}
+        />
 
         {/* ── Optional lower content slots (FAQ + related) ─────────────── */}
         <CategoryFaqBlock

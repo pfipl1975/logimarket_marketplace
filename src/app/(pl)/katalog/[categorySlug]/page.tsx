@@ -1,5 +1,6 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { defaultLocale } from "@/lib/i18n/config";
+import { resolveCategoryPage, buildCategoryPaginationHref } from "@/lib/catalog/pagination";
 import { CategoryPage } from "@/app/_shared/CategoryPage";
 import { getCategoryBySlug, getCategoryOffersCount } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -8,6 +9,7 @@ import { absoluteUrl } from "@/lib/seo/urls";
 import {
   resolveCategoryOfferFilters,
   resolveOfferListingView,
+  hasActiveCategoryOfferFilters,
   type CategorySearchParams,
 } from "@/lib/catalog/query";
 import type { Metadata } from "next";
@@ -27,8 +29,11 @@ function createSafeNoIndexMetadata(): Metadata {
   };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { categorySlug } = await params;
+export async function generateMetadata({ params, searchParams }: Props): Promise<Metadata> {
+  const [{ categorySlug }, resolvedSearchParams] = await Promise.all([
+    params,
+    searchParams ?? Promise.resolve({} as CategorySearchParams),
+  ]);
   if (!categorySlug.startsWith("c-")) {
     return createSafeNoIndexMetadata();
   }
@@ -63,24 +68,37 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const count = await getCategoryOffersCount(dbSlug);
 
+    const view = resolveOfferListingView(resolvedSearchParams.view);
+    const filters = resolveCategoryOfferFilters(resolvedSearchParams);
+    const hasActiveFilters = hasActiveCategoryOfferFilters(filters) || view !== "grid";
+
+    const resolvedPage = resolveCategoryPage(resolvedSearchParams.page);
+    const isCleanPaginated = !hasActiveFilters && resolvedPage.page > 1 && resolvedPage.isCanonical;
+
+    const pageSuffix = isCleanPaginated && dict.catalog?.paginationPage
+      ? ` - ${dict.catalog.paginationPage.replace("{page}", String(resolvedPage.page))}`
+      : "";
+
+    const languagePageSuffix = isCleanPaginated ? `?page=${resolvedPage.page}` : "";
+
     return {
-      title: `${categoryLabel} | LogiMarket.pl`,
+      title: `${categoryLabel}${pageSuffix} | LogiMarket.pl`,
       description: categoryIntro || `Oferty B2B w kategorii ${categoryLabel} na platformie LogiMarket.pl.`,
       robots: {
         index: count > 0,
         follow: true,
       },
       alternates: {
-        canonical: absoluteUrl(`/katalog/${categorySlug}`),
+        canonical: absoluteUrl(`/katalog/${categorySlug}${languagePageSuffix}`),
         languages: {
-          pl: absoluteUrl(`/katalog/${categorySlug}`),
-          en: absoluteUrl(`/en/katalog/${categorySlug}`),
-          de: absoluteUrl(`/de/katalog/${categorySlug}`),
-          fr: absoluteUrl(`/fr/katalog/${categorySlug}`),
-          uk: absoluteUrl(`/uk/katalog/${categorySlug}`),
-          es: absoluteUrl(`/es/katalog/${categorySlug}`),
-          zh: absoluteUrl(`/zh/katalog/${categorySlug}`),
-          "x-default": absoluteUrl(`/katalog/${categorySlug}`),
+          pl: absoluteUrl(`/katalog/${categorySlug}${languagePageSuffix}`),
+          en: absoluteUrl(`/en/katalog/${categorySlug}${languagePageSuffix}`),
+          de: absoluteUrl(`/de/katalog/${categorySlug}${languagePageSuffix}`),
+          fr: absoluteUrl(`/fr/katalog/${categorySlug}${languagePageSuffix}`),
+          uk: absoluteUrl(`/uk/katalog/${categorySlug}${languagePageSuffix}`),
+          es: absoluteUrl(`/es/katalog/${categorySlug}${languagePageSuffix}`),
+          zh: absoluteUrl(`/zh/katalog/${categorySlug}${languagePageSuffix}`),
+          "x-default": absoluteUrl(`/katalog/${categorySlug}${languagePageSuffix}`),
         },
       },
     };
@@ -99,12 +117,20 @@ export default async function Page({ params, searchParams }: Props) {
   const dbSlug = categorySlug.slice(2);
   const view = resolveOfferListingView(resolvedSearchParams.view);
   const filters = resolveCategoryOfferFilters(resolvedSearchParams);
+  
+  const resolvedPage = resolveCategoryPage(resolvedSearchParams.page);
+
+  if (!resolvedPage.isCanonical) {
+    redirect(buildCategoryPaginationHref(`/katalog/${categorySlug}`, { view, filters }, resolvedPage.page));
+  }
+
   return (
     <CategoryPage
       locale={defaultLocale}
       categorySlug={dbSlug}
       view={view}
       filters={filters}
+      currentPage={resolvedPage.page}
     />
   );
 }
