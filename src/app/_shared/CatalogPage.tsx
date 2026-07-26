@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Package } from "lucide-react";
 import { absoluteUrl } from "@/lib/seo/urls";
-import { getCategories } from "@/app/actions";
+import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -150,7 +150,7 @@ function buildDirectorySections({
 export async function CatalogPage({ locale }: CatalogPageProps) {
   const dict = await getDictionary(locale);
   const fallbackDict = locale === defaultLocale ? dict : await getDictionary(defaultLocale);
-  const allCategories = await getCategories();
+  const allCategories = await getCachedCategories();
 
   const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
   const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
@@ -258,7 +258,7 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
           ) : (
             <div className="flex flex-col gap-8">
               {/* Category Explorer Trigger and Mega-menu */}
-              <div className="z-30">
+              <div className="z-30 lg:hidden">
                 <CatalogCategoryExplorer tree={explorerTree} labels={explorerLabels} />
               </div>
 

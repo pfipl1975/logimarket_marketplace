@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCategories, getCategoryAttributeConfiguration, getCategoryBySlug, getFilteredCategoryOffers } from "@/app/actions";
+import { getCategoryAttributeConfiguration, getCategoryBySlug, getFilteredCategoryOffers } from "@/app/actions";
+import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -125,7 +126,7 @@ export async function CategoryPage({
   const [dict, category, allCategories] = await Promise.all([
     getDictionary(locale),
     getCategoryBySlug(categorySlug),
-    getCategories(),
+    getCachedCategories(),
   ]);
 
   const fallbackDict =
@@ -438,7 +439,7 @@ export async function CategoryPage({
         </nav>
 
         {/* ── Category explorer ────────────────────────────────────────── */}
-        <div className="z-30 mb-6">
+        <div className="z-30 lg:hidden mb-6">
           <CatalogCategoryExplorer
             key={initialActiveSectionSlug}
             tree={explorerTree}
@@ -466,18 +467,6 @@ export async function CategoryPage({
         </details>
 
         <div className="flex flex-col lg:flex-row gap-8 items-start">
-          <aside className="hidden lg:block w-72 shrink-0 lg:sticky lg:top-24">
-            <CategoryTreeSidebar
-              tree={categoryTree}
-              activeSlug={category.slug}
-              categoryFilterBasePath={categoryFilterBasePath}
-              navigationLabel={dict.catalog.treeNavigationAria}
-              headingLabel={dict.catalog.treeNavigationHeading}
-              localeBySlug={localeBySlug}
-              fallbackBySlug={fallbackBySlug}
-            />
-          </aside>
-
           <div className="min-w-0 flex-1 w-full">
             {/* ── Hero / header section ─────────────────────────────────────── */}
             <div className="flex flex-col gap-2">
