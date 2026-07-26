@@ -63,7 +63,12 @@
     "offerCountOther": "доступних пропозицій",
     "rfqLegend": "RFQ — Запитати ціну",
     "ecommerceLegend": "E-Commerce — Додати до кошика",
-    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction."
+    "platformNotice": "LogiMarket.pl is a hybrid B2B platform. For heavy equipment, we provide an RFQ model (request for quotation); for repeatable items, we provide an E-Commerce model with a cart. Sales and order fulfillment are handled directly by the partner. LogiMarket.pl is not a party to the transaction.",
+    "paginationLabel": "Пагінація каталогу",
+    "paginationPrevious": "Попередня",
+    "paginationNext": "Наступна",
+    "paginationPage": "Сторінка {page}",
+    "paginationCurrentPage": "Поточна сторінка, сторінка {page}"
   },
   "solutions": {
     "catalogHeading": "Рішення для складу",

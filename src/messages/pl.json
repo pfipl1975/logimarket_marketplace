@@ -63,7 +63,12 @@
     "offerCountOther": "dostępnych ofert",
     "rfqLegend": "RFQ — Zapytaj o wycenę",
     "ecommerceLegend": "E-Commerce — Dodaj do koszyka",
-    "platformNotice": "LogiMarket.pl to hybrydowa platforma B2B. Dla ciężkiego sprzętu oferujemy model RFQ (zapytanie ofertowe), dla artykułów powtarzalnych — model E-Commerce z koszykiem. Sprzedaż i realizacja zamówień odbywa się bezpośrednio u partnera. LogiMarket.pl nie jest stroną transakcji."
+    "platformNotice": "LogiMarket.pl to hybrydowa platforma B2B. Dla ciężkiego sprzętu oferujemy model RFQ (zapytanie ofertowe), dla artykułów powtarzalnych — model E-Commerce z koszykiem. Sprzedaż i realizacja zamówień odbywa się bezpośrednio u partnera. LogiMarket.pl nie jest stroną transakcji.",
+    "paginationLabel": "Paginacja katalogu",
+    "paginationPrevious": "Poprzednia",
+    "paginationNext": "Następna",
+    "paginationPage": "Strona {page}",
+    "paginationCurrentPage": "Bieżąca strona, strona {page}"
   },
   "solutions": {
     "catalogHeading": "Rozwiązania dla magazynu",

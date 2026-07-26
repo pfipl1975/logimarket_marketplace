@@ -16,6 +16,7 @@ export type CategorySearchParams = {
   view?: string | string[];
   model?: string | string[];
   featured?: string | string[];
+  page?: string | string[];
   [key: string]: string | string[] | undefined;
 };
 
