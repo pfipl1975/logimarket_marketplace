@@ -353,5 +353,23 @@
       "description": "浏览采购主题，并将运营需求与合适的设备类别和决策指南对应起来。",
       "viewAll": "查看全部解决方案"
     }
+  },
+  "search": {
+    "label": "搜索目录",
+    "placeholder": "搜索类别或产品...",
+    "categoriesHeading": "类别",
+    "offersHeading": "优惠",
+    "loading": "正在搜索...",
+    "noResults": "未找到结果",
+    "minimumCharacters": "请输入至少2个字符",
+    "queryTooLong": "查询太长",
+    "queryHasNoSearchTerms": "没有有效的搜索词",
+    "queryTooComplex": "查询太复杂",
+    "invalidRequest": "无效请求",
+    "systemError": "发生系统错误。请重试。",
+    "resultTypeCategory": "类别",
+    "resultTypeOffer": "优惠",
+    "clear": "清除搜索",
+    "closeSuggestions": "关闭建议"
   }
 }

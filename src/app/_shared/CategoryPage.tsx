@@ -373,6 +373,7 @@ export async function CategoryPage({
           zh: `/zh/katalog/c-${category.slug}${cleanPaginationSuffix}`,
         }}
         navLabels={dict.nav}
+        searchLabels={dict.search}
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">

@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 import { HeaderDesktopNavigation, type HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
 import { CatalogDesktopMegaMenu, type CatalogDesktopMegaMenuLabels } from "@/components/catalog/CatalogDesktopMegaMenu";
 import { type CatalogExplorerNode, getActivePathNodes } from "@/lib/catalog/navigation";
+import { CatalogSearchSuggestions } from "@/components/search/CatalogSearchSuggestions";
+import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/types";
 
 export type MobileNavigationItem = {
   label: string;
@@ -35,6 +38,8 @@ export type CatalogNavigationClientProps = {
   menuOpenLabel: string;
   menuCloseLabel: string;
   mainNavigationLabel: string;
+  searchLabels: Dictionary["search"];
+  locale: Locale;
 };
 
 type MobileNavigationMode = "main" | "catalog";
@@ -49,6 +54,8 @@ export function CatalogNavigationClient({
   menuOpenLabel,
   menuCloseLabel,
   mainNavigationLabel,
+  searchLabels,
+  locale,
 }: CatalogNavigationClientProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [mode, setMode] = useState<MobileNavigationMode>("main");
@@ -64,6 +71,7 @@ export function CatalogNavigationClient({
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.defaultPrevented) return;
       if (e.key === "Escape") {
         setIsOpen(false);
         setMode("main");
@@ -287,6 +295,13 @@ export function CatalogNavigationClient({
                 <nav aria-label={mode === "main" ? mainNavigationLabel : mobileLabels.mobileCatalogTitle} className="flex flex-col gap-2">
                   {mode === "main" ? (
                     <>
+                      <CatalogSearchSuggestions
+                        locale={locale}
+                        labels={searchLabels}
+                        variant="mobile"
+                        onNavigate={resetNavigation}
+                      />
+
                       {/* Catalog Trigger / Link */}
                       {tree.length > 0 ? (
                         <button

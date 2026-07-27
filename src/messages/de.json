@@ -353,5 +353,23 @@
       "description": "Entdecken Sie Beschaffungsbereiche und verknüpfen Sie betriebliche Anforderungen mit den passenden Ausrüstungskategorien.",
       "viewAll": "Alle Lösungen ansehen"
     }
+  },
+  "search": {
+    "label": "Katalog durchsuchen",
+    "placeholder": "Kategorien oder Angebote suchen...",
+    "categoriesHeading": "Kategorien",
+    "offersHeading": "Angebote",
+    "loading": "Suchen...",
+    "noResults": "Keine Ergebnisse gefunden",
+    "minimumCharacters": "Geben Sie mindestens 2 Zeichen ein",
+    "queryTooLong": "Suchanfrage zu lang",
+    "queryHasNoSearchTerms": "Keine gültigen Suchbegriffe",
+    "queryTooComplex": "Suchanfrage zu komplex",
+    "invalidRequest": "Ungültige Anfrage",
+    "systemError": "Systemfehler aufgetreten. Bitte versuchen Sie es erneut.",
+    "resultTypeCategory": "Kategorie",
+    "resultTypeOffer": "Angebot",
+    "clear": "Suche löschen",
+    "closeSuggestions": "Vorschläge schließen"
   }
 }

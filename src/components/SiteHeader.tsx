@@ -3,6 +3,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import Logo from "@/components/Logo";
 import { CartButton } from "@/components/CartButton";
 import { CatalogNavigationLoader } from "@/components/catalog/CatalogNavigationLoader";
+import { CatalogSearchSuggestions } from "@/components/search/CatalogSearchSuggestions";
 import type { HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
 import type { MobileNavigationItem } from "@/components/catalog/CatalogNavigationClient";
 import type { Locale } from "@/lib/i18n/config";
@@ -15,12 +16,14 @@ interface SiteHeaderProps {
   locale: Locale;
   languageLinks: Record<Locale, string>;
   navLabels: Dictionary["nav"];
+  searchLabels: Dictionary["search"];
 }
 
 export function SiteHeader({
   locale,
   languageLinks,
   navLabels,
+  searchLabels,
 }: SiteHeaderProps) {
   const homeHref = getHomePath(locale);
   const portalLinks = [
@@ -71,6 +74,13 @@ export function SiteHeader({
             menuOpenLabel={navLabels.menu ?? "Menu"}
             menuCloseLabel={navLabels.closeMenu ?? navLabels.menu ?? "Menu"}
             mainNavigationLabel={navLabels.mainNavigation ?? navLabels.menu ?? "Menu"}
+            searchLabels={searchLabels}
+          />
+
+          <CatalogSearchSuggestions
+            locale={locale}
+            labels={searchLabels}
+            variant="desktop"
           />
 
           <div className="flex shrink-0 items-center gap-2">

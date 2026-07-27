@@ -97,6 +97,7 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
         locale={locale}
         languageLinks={getHomeLocaleLinks()}
         navLabels={dict.nav}
+        searchLabels={dict.search}
       />
 
       <section className="relative overflow-hidden bg-brand-navy">

@@ -353,5 +353,23 @@
       "description": "Explore procurement areas and use our guides to connect operational requirements with the right equipment categories.",
       "viewAll": "View all solutions"
     }
+  },
+  "search": {
+    "label": "Search catalog",
+    "placeholder": "Search categories or offers...",
+    "categoriesHeading": "Categories",
+    "offersHeading": "Offers",
+    "loading": "Searching...",
+    "noResults": "No results found",
+    "minimumCharacters": "Enter at least 2 characters",
+    "queryTooLong": "Query too long",
+    "queryHasNoSearchTerms": "No valid search terms",
+    "queryTooComplex": "Query too complex",
+    "invalidRequest": "Invalid request",
+    "systemError": "System error occurred. Please try again.",
+    "resultTypeCategory": "Category",
+    "resultTypeOffer": "Offer",
+    "clear": "Clear search",
+    "closeSuggestions": "Close suggestions"
   }
 }
