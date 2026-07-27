@@ -353,5 +353,23 @@
       "description": "Porównaj obszary zakupowe i przejdź do przewodników, które łączą wymagania operacyjne z właściwymi kategoriami wyposażenia.",
       "viewAll": "Zobacz wszystkie rozwiązania"
     }
+  },
+  "search": {
+    "label": "Wyszukaj w katalogu",
+    "placeholder": "Szukaj kategorii lub ofert...",
+    "categoriesHeading": "Kategorie",
+    "offersHeading": "Oferty",
+    "loading": "Wyszukiwanie...",
+    "noResults": "Brak wyników",
+    "minimumCharacters": "Wpisz co najmniej 2 znaki",
+    "queryTooLong": "Zbyt długie zapytanie",
+    "queryHasNoSearchTerms": "Brak poprawnych słów kluczowych",
+    "queryTooComplex": "Zbyt skomplikowane zapytanie",
+    "invalidRequest": "Nieprawidłowe żądanie",
+    "systemError": "Wystąpił błąd systemu. Spróbuj ponownie.",
+    "resultTypeCategory": "Kategoria",
+    "resultTypeOffer": "Oferta",
+    "clear": "Wyczyść wyszukiwanie",
+    "closeSuggestions": "Zamknij podpowiedzi"
   }
 }

@@ -316,6 +316,7 @@ export async function SolutionsIndexPage({ locale }: SolutionsIndexPageProps) {
         locale={locale as Locale}
         languageLinks={headerLanguageLinks}
         navLabels={dict.nav}
+        searchLabels={dict.search}
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">

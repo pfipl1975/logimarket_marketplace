@@ -17,13 +17,14 @@ type HeaderDesktopNavigationProps = {
   children?: React.ReactNode;
 };
 
-const linkBaseClass = "rounded-md px-2.5 py-2 text-sm transition-colors hover:bg-white/5 hover:text-white sm:px-3";
+const linkBaseClass =
+  "shrink-0 whitespace-nowrap rounded-md px-2 py-2 text-sm transition-colors hover:bg-white/5 hover:text-white 2xl:px-2.5";
 
 export function HeaderDesktopNavigation({ items, children }: HeaderDesktopNavigationProps) {
   const pathname = usePathname();
 
   return (
-    <nav className="hidden lg:flex min-w-0 flex-1 items-center gap-1">
+    <nav className="hidden xl:flex min-w-0 flex-1 items-center gap-1">
       {items.map((item) => {
         const isActive = !item.external && isNavItemActive(pathname, item.href);
         const className = cn(

@@ -116,7 +116,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
   const activeGroup = activeSection?.children.find((g) => g.slug === activeGroupSlug);
 
   return (
-    <div className="static inline-block" ref={containerRef}>
+    <div className="static inline-block shrink-0" ref={containerRef}>
       <button
         ref={triggerRef}
         type="button"
@@ -124,7 +124,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
         aria-expanded={isOpen}
         aria-controls="desktop-mega-menu"
         aria-label={isOpen ? labels.catalogMenuClose : labels.catalogMenuOpen}
-        className={`flex items-center gap-1.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy sm:px-3 ${
+        className={`flex shrink-0 whitespace-nowrap items-center gap-1.5 rounded-md px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy sm:px-3 ${
           isOpen ? "bg-white/15 text-white" : "text-white hover:bg-white/5"
         }`}
       >

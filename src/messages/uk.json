@@ -353,5 +353,23 @@
       "description": "Перегляньте напрями закупівель і поєднайте операційні вимоги з відповідними категоріями обладнання.",
       "viewAll": "Переглянути всі рішення"
     }
+  },
+  "search": {
+    "label": "Пошук у каталозі",
+    "placeholder": "Пошук категорій або пропозицій...",
+    "categoriesHeading": "Категорії",
+    "offersHeading": "Пропозиції",
+    "loading": "Пошук...",
+    "noResults": "Немає результатів",
+    "minimumCharacters": "Введіть принаймні 2 символи",
+    "queryTooLong": "Занадто довгий запит",
+    "queryHasNoSearchTerms": "Немає дійсних пошукових слів",
+    "queryTooComplex": "Занадто складний запит",
+    "invalidRequest": "Недійсний запит",
+    "systemError": "Системна помилка. Спробуйте ще раз.",
+    "resultTypeCategory": "Категорія",
+    "resultTypeOffer": "Пропозиція",
+    "clear": "Очистити пошук",
+    "closeSuggestions": "Закрити підказки"
   }
 }

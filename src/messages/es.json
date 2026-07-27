@@ -353,5 +353,23 @@
       "description": "Explora áreas de compra y relaciona los requisitos operativos con las categorías de equipamiento adecuadas.",
       "viewAll": "Ver todas las soluciones"
     }
+  },
+  "search": {
+    "label": "Buscar en el catálogo",
+    "placeholder": "Buscar categorías u ofertas...",
+    "categoriesHeading": "Categorías",
+    "offersHeading": "Ofertas",
+    "loading": "Buscando...",
+    "noResults": "No se encontraron resultados",
+    "minimumCharacters": "Introduce al menos 2 caracteres",
+    "queryTooLong": "Consulta demasiado larga",
+    "queryHasNoSearchTerms": "No hay términos de búsqueda válidos",
+    "queryTooComplex": "Consulta demasiado compleja",
+    "invalidRequest": "Solicitud no válida",
+    "systemError": "Error del sistema. Inténtalo de nuevo.",
+    "resultTypeCategory": "Categoría",
+    "resultTypeOffer": "Oferta",
+    "clear": "Borrar búsqueda",
+    "closeSuggestions": "Cerrar sugerencias"
   }
 }

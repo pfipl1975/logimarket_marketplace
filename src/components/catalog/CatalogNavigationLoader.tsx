@@ -5,7 +5,8 @@ import { buildCategoryTree } from "@/lib/catalog/tree";
 import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { CatalogNavigationClient, type MobileNavigationItem } from "./CatalogNavigationClient";
 import type { HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
-import type { Locale } from "@/lib/i18n/types";
+import type { Locale } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/types";
 import { defaultLocale } from "@/lib/i18n/config";
 
 interface CatalogNavigationLoaderProps {
@@ -16,6 +17,7 @@ interface CatalogNavigationLoaderProps {
   menuOpenLabel: string;
   menuCloseLabel: string;
   mainNavigationLabel: string;
+  searchLabels: Dictionary["search"];
 }
 
 export async function CatalogNavigationLoader({ 
@@ -25,7 +27,8 @@ export async function CatalogNavigationLoader({
   fallbackLabel,
   menuOpenLabel,
   menuCloseLabel,
-  mainNavigationLabel
+  mainNavigationLabel,
+  searchLabels
 }: CatalogNavigationLoaderProps) {
   try {
     const [categories, dict] = await Promise.all([
@@ -70,6 +73,8 @@ export async function CatalogNavigationLoader({
           menuOpenLabel={menuOpenLabel}
           menuCloseLabel={menuCloseLabel}
           mainNavigationLabel={mainNavigationLabel}
+          searchLabels={searchLabels}
+          locale={locale}
         />
       );
     }
@@ -121,6 +126,8 @@ export async function CatalogNavigationLoader({
         menuOpenLabel={menuOpenLabel}
         menuCloseLabel={menuCloseLabel}
         mainNavigationLabel={mainNavigationLabel}
+        searchLabels={searchLabels}
+        locale={locale}
       />
     );
   } catch (error) {
@@ -157,6 +164,8 @@ export async function CatalogNavigationLoader({
         menuOpenLabel={menuOpenLabel}
         menuCloseLabel={menuCloseLabel}
         mainNavigationLabel={mainNavigationLabel}
+        searchLabels={searchLabels}
+        locale={locale}
       />
     );
   }

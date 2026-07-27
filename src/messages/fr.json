@@ -353,5 +353,23 @@
       "description": "Explorez les domaines d'achat et reliez vos besoins opérationnels aux catégories d'équipements appropriées.",
       "viewAll": "Voir toutes les solutions"
     }
+  },
+  "search": {
+    "label": "Rechercher dans le catalogue",
+    "placeholder": "Rechercher des catégories ou des offres...",
+    "categoriesHeading": "Catégories",
+    "offersHeading": "Offres",
+    "loading": "Recherche...",
+    "noResults": "Aucun résultat trouvé",
+    "minimumCharacters": "Entrez au moins 2 caractères",
+    "queryTooLong": "Requête trop longue",
+    "queryHasNoSearchTerms": "Aucun terme de recherche valide",
+    "queryTooComplex": "Requête trop complexe",
+    "invalidRequest": "Requête invalide",
+    "systemError": "Erreur système. Veuillez réessayer.",
+    "resultTypeCategory": "Catégorie",
+    "resultTypeOffer": "Offre",
+    "clear": "Effacer la recherche",
+    "closeSuggestions": "Fermer les suggestions"
   }
 }
