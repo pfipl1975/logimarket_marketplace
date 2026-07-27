@@ -21,6 +21,7 @@ export type NormalizedCatalogSearchQuery = {
   query: string;
   matchQuery: string;
   tokens: string[];
+  literalTerms: string[];
   locale: Locale;
   categoryLimit: number;
   offerLimit: number;

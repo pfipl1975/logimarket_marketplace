@@ -55,7 +55,7 @@ export function parseCatalogSearchInput(
     offerLimit = input.offerLimit;
   }
 
-  const { query, matchQuery, tokens } = normalizeCatalogSearchQuery(
+  const { query, matchQuery, tokens, literalTerms } = normalizeCatalogSearchQuery(
     input.query,
     input.locale,
   );
@@ -67,6 +67,7 @@ export function parseCatalogSearchInput(
       query,
       matchQuery,
       tokens,
+      literalTerms,
       locale: input.locale,
       categoryLimit,
       offerLimit,
@@ -100,6 +101,7 @@ export function parseCatalogSearchInput(
     query,
     matchQuery,
     tokens,
+    literalTerms,
     locale: input.locale,
     categoryLimit,
     offerLimit,

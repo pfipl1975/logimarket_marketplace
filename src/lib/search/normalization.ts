@@ -1,7 +1,20 @@
+export function extractLikeLiteralTerms(matchQuery: string): string[] {
+  const terms: string[] = [];
+
+  for (const rawPart of matchQuery.split(/\s+/u)) {
+    const part = rawPart.replace(/^[^\p{L}\p{N}%_\\]+|[^\p{L}\p{N}%_\\]+$/gu, "");
+    if (part.length > 0 && /[%_\\]/u.test(part) && !terms.includes(part)) {
+      terms.push(part);
+    }
+  }
+
+  return terms;
+}
+
 export function normalizeCatalogSearchQuery(
   rawQuery: string,
   locale: string,
-): { query: string; matchQuery: string; tokens: string[] } {
+): { query: string; matchQuery: string; tokens: string[]; literalTerms: string[] } {
   // 1. Unicode NFC
   const normalized = rawQuery.normalize("NFC");
 
@@ -29,9 +42,12 @@ export function normalizeCatalogSearchQuery(
   // We do not slice here; parser handles max tokens check.
   const tokens = uniqueTokens;
 
+  const literalTerms = extractLikeLiteralTerms(matchQuery);
+
   return {
     query,
     matchQuery,
     tokens,
+    literalTerms,
   };
 }

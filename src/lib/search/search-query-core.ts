@@ -1,14 +1,12 @@
 import { and, eq, sql, desc } from "drizzle-orm";
-import { categories, offers, partners } from "@/lib/schema";
-import type { NormalizedCatalogSearchQuery } from "./types";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
+import type { NormalizedCatalogSearchQuery } from "./types";
+import { CATALOG_SEARCH_LIMITS } from "./types";
 
 export function escapeLike(str: string): string {
   return str.replace(/([\\%_])/g, "\\$1");
 }
-
-import { CATALOG_SEARCH_LIMITS } from "./types";
 
 export function queryCatalogSearch(
   db: NodePgDatabase<typeof schema>,
@@ -17,7 +15,8 @@ export function queryCatalogSearch(
   if (
     query.isEmpty ||
     query.tokens.length === 0 ||
-    query.tokens.length > CATALOG_SEARCH_LIMITS.maxTokenCount
+    query.tokens.length > CATALOG_SEARCH_LIMITS.maxTokenCount ||
+    query.literalTerms.length > CATALOG_SEARCH_LIMITS.maxTokenCount
   ) {
     throw new Error("Invalid normalized catalog search query");
   }
@@ -26,15 +25,22 @@ export function queryCatalogSearch(
   const prefixParam = `${escapeLike(query.matchQuery)}%`;
   const phraseParam = `%${escapeLike(query.matchQuery)}%`;
 
-  const exactMatches = sql`(${offers.title} ILIKE ${exactParam} ESCAPE '\\')`;
-  const prefixMatches = sql`(${offers.title} ILIKE ${prefixParam} ESCAPE '\\')`;
-  const phraseMatches = sql`(${offers.title} ILIKE ${phraseParam} ESCAPE '\\')`;
+  const exactMatches = sql`(${schema.offers.title} ILIKE ${exactParam} ESCAPE '\\')`;
+  const prefixMatches = sql`(${schema.offers.title} ILIKE ${prefixParam} ESCAPE '\\')`;
+  const phraseMatches = sql`(${schema.offers.title} ILIKE ${phraseParam} ESCAPE '\\')`;
 
-  const allTokensSql = query.tokens.length > 0
-    ? sql`(${sql.join(
-        query.tokens.map((t) => sql`${offers.title} ILIKE ${`%${escapeLike(t)}%`} ESCAPE '\\'`),
-        sql` AND `
-      )})`
+  const tokenPredicates = query.tokens.map(
+    (token) => sql`${schema.offers.title} ILIKE ${`%${escapeLike(token)}%`} ESCAPE '\\'`
+  );
+
+  const literalPredicates = query.literalTerms.map(
+    (term) => sql`${schema.offers.title} ILIKE ${`%${escapeLike(term)}%`} ESCAPE '\\'`
+  );
+
+  const allTerms = [...tokenPredicates, ...literalPredicates];
+
+  const allTermsSql = allTerms.length > 0
+    ? sql`(${sql.join(allTerms, sql` AND `)})`
     : sql`TRUE`;
 
   const scoreExpression = sql<number>`
@@ -42,41 +48,42 @@ export function queryCatalogSearch(
       WHEN ${exactMatches} THEN 100
       WHEN ${prefixMatches} THEN 80
       WHEN ${phraseMatches} THEN 60
-      WHEN ${allTokensSql} THEN 40
+      WHEN ${allTermsSql} THEN 40
       ELSE 0
     END
   `;
   const scoreField = scoreExpression.as("score");
 
   const filterConditions = and(
-    eq(offers.isActive, true),
-    eq(offers.publicationStatus, "published"),
-    ...query.tokens.map((t) => sql`${offers.title} ILIKE ${`%${escapeLike(t)}%`} ESCAPE '\\'`)
+    eq(schema.offers.isActive, true),
+    eq(schema.offers.publicationStatus, "published"),
+    ...tokenPredicates,
+    ...literalPredicates
   );
 
   return db
     .select({
-      id: offers.id,
-      title: offers.title,
-      imageUrl: offers.imageUrl,
-      offerModel: offers.offerModel,
-      isFeatured: offers.isFeatured,
-      publishedAt: offers.publishedAt,
-      categoryId: offers.categoryId,
-      categorySlug: categories.slug,
-      categoryName: categories.name,
-      partnerName: partners.companyName,
+      id: schema.offers.id,
+      title: schema.offers.title,
+      imageUrl: schema.offers.imageUrl,
+      offerModel: schema.offers.offerModel,
+      isFeatured: schema.offers.isFeatured,
+      publishedAt: schema.offers.publishedAt,
+      categoryId: schema.offers.categoryId,
+      categorySlug: schema.categories.slug,
+      categoryName: schema.categories.name,
+      partnerName: schema.partners.companyName,
       score: scoreField,
     })
-    .from(offers)
-    .innerJoin(categories, eq(offers.categoryId, categories.id))
-    .innerJoin(partners, eq(offers.partnerId, partners.id))
+    .from(schema.offers)
+    .innerJoin(schema.categories, eq(schema.offers.categoryId, schema.categories.id))
+    .innerJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id))
     .where(filterConditions)
     .orderBy(
       desc(scoreExpression),
-      desc(offers.isFeatured),
-      sql`${offers.publishedAt} DESC NULLS LAST`,
-      desc(offers.id)
+      desc(schema.offers.isFeatured),
+      sql`${schema.offers.publishedAt} DESC NULLS LAST`,
+      desc(schema.offers.id)
     )
     .limit(query.offerLimit);
 }
