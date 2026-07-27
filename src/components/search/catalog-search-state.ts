@@ -58,8 +58,14 @@ export function getCatalogSearchErrorMessageKey(
     case "QUERY_TOO_LONG": return "queryTooLong";
     case "QUERY_HAS_NO_SEARCH_TERMS": return "queryHasNoSearchTerms";
     case "QUERY_TOO_COMPLEX": return "queryTooComplex";
-    case "SYSTEM_ERROR": return "systemError";
-    default: return "invalidRequest";
+    case "INVALID_INPUT":
+    case "INVALID_LOCALE":
+    case "INVALID_CATEGORY_LIMIT":
+    case "INVALID_OFFER_LIMIT":
+      return "invalidRequest";
+    case "SYSTEM_ERROR":
+    default:
+      return "systemError";
   }
 }
 
@@ -68,9 +74,11 @@ export function createSearchOptionId(baseId: string, index: number): string {
 }
 
 export function isSafeCatalogSearchHref(href: string): boolean {
-  return (
-    href.startsWith("/") &&
-    !href.startsWith("//") &&
-    !href.startsWith("/go/")
-  );
+  if (!href.startsWith("/") || href.startsWith("//")) {
+    return false;
+  }
+
+  const pathOnly = href.split(/[?#]/u, 1)[0];
+
+  return pathOnly !== "/go" && !pathOnly.startsWith("/go/");
 }

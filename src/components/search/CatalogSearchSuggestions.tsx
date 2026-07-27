@@ -60,6 +60,11 @@ export function CatalogSearchSuggestions({
   
   const [showMinimumCharactersGuard, setShowMinimumCharactersGuard] = useState(false);
 
+  const closeSuggestions = () => {
+    setIsOpen(false);
+    setActiveIndex(-1);
+  };
+
   const wrapperRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const requestIdRef = useRef(0);
@@ -83,7 +88,7 @@ export function CatalogSearchSuggestions({
     
     const handlePointerDown = (event: PointerEvent) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
+        closeSuggestions();
       }
     };
 
@@ -160,7 +165,7 @@ export function CatalogSearchSuggestions({
             errorCodeKey: getCatalogSearchErrorMessageKey(mainErrorCode),
           });
         }
-      } catch (error) {
+      } catch {
         if (!isMountedRef.current || requestIdRef.current !== currentRequestId) return;
         setSearchState({
           status: "error",
@@ -259,12 +264,11 @@ export function CatalogSearchSuggestions({
       case "Escape": {
         e.preventDefault();
         e.stopPropagation();
-        setIsOpen(false);
-        setActiveIndex(-1);
+        closeSuggestions();
         break;
       }
       case "Tab": {
-        setIsOpen(false);
+        closeSuggestions();
         break;
       }
     }
@@ -279,12 +283,15 @@ export function CatalogSearchSuggestions({
   };
 
   const handleClear = () => {
-    setQuery("");
-    setIsOpen(false);
-    setSearchState({ status: "idle", results: [] });
-    setActiveIndex(-1);
-    setShowMinimumCharactersGuard(false);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
     requestIdRef.current += 1;
+    setQuery("");
+    setSearchState({ status: "idle", results: [] });
+    closeSuggestions();
+    setShowMinimumCharactersGuard(false);
     // Input automatically gets focus if button clicked, but we can't reliably force it
     // without ref. Let's add ref to input.
     inputRef.current?.focus();
@@ -331,7 +338,7 @@ export function CatalogSearchSuggestions({
           aria-autocomplete="list"
           aria-expanded={isOpen}
           aria-controls={isOpen && searchState.results.length > 0 ? listboxId : undefined}
-          aria-describedby={statusId}
+          aria-describedby={isOpen ? statusId : undefined}
           aria-activedescendant={activeDescendant}
           autoComplete="off"
           spellCheck={false}

@@ -71,7 +71,7 @@ export function CatalogSearchResults({
           className="py-2 flex flex-col min-h-0"
           onMouseLeave={() => onOptionHover(-1)}
         >
-          <div className={`flex flex-col min-h-0 ${status === "loading" ? "opacity-50 pointer-events-none" : ""}`}>
+          <div role="presentation" className={`flex flex-col min-h-0 ${status === "loading" ? "opacity-50 pointer-events-none" : ""}`}>
             {/* We group them by type in rendering while keeping the flattened index array */}
             {results.some((r) => r.type === "category") && (
               <div role="group" aria-labelledby={categoriesHeadingId}>
