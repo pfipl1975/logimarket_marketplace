@@ -13,7 +13,8 @@ import type { CatalogCategoryRow } from "@/lib/catalog/tree";
 import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model";
 import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model";
 import { validateCategoryId } from "@/lib/catalog/category-attribute-read-model";
-import { isLocale, type Locale } from "@/lib/i18n/config";
+import { isLocale, type Locale, defaultLocale } from "@/lib/i18n/config";
+import { getHomePath } from "@/lib/i18n/paths";
 import { catalogOfferOrder } from "@/lib/catalog/catalog-offer-order";
 import { getFilteredCategoryOffersFromDb } from "@/lib/catalog/filter-query";
 import { parseFilterQueryInput } from "@/lib/filters/parser";
@@ -21,6 +22,14 @@ import { normalizeFilterQuery } from "@/lib/filters/validation";
 import type { FilterValidationError } from "@/lib/filters/types";
 import { getCatalogFilterConfigurationFromDb } from "@/lib/filters/configuration";
 import type { CatalogFilterConfiguration } from "@/lib/filters/configuration-types";
+import { parseCatalogSearchInput, CatalogSearchParserError } from "@/lib/search/parser";
+import { searchLocalizedCategories } from "@/lib/search/category-search";
+import { searchCatalogOffersFromDb } from "@/lib/search/search-query";
+import { projectCatalogOfferSearchResults } from "@/lib/search/projection";
+import type { CatalogSearchResult } from "@/lib/search/types";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
+import { buildCategoryTree } from "@/lib/catalog/tree";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -346,4 +355,82 @@ export async function getCategoryAttributeConfiguration(
     onlyVisible,
     onlyFilterable
   );
+}
+
+export async function searchCatalog(
+  rawInput: unknown
+): Promise<CatalogSearchResult> {
+  try {
+    const query = parseCatalogSearchInput(rawInput);
+
+    if (query.isEmpty) {
+      return {
+        ok: true,
+        normalizedQuery: query.query,
+        categories: [],
+        offers: [],
+      };
+    }
+
+    const fallbackDictionaryPromise =
+      query.locale === defaultLocale
+        ? Promise.resolve(null)
+        : getDictionary(defaultLocale);
+
+    const [
+      categoriesDb,
+      dictionary,
+      fallbackDictionary,
+      dbOffers,
+    ] = await Promise.all([
+      getCategories(),
+      getDictionary(query.locale),
+      fallbackDictionaryPromise,
+      searchCatalogOffersFromDb(query),
+    ]);
+
+    const fallbackBySlug =
+      fallbackDictionary?.categories.bySlug ??
+      dictionary.categories.bySlug;
+
+    const tree = buildCategoryTree(categoriesDb);
+    const explorerTree = buildLocalizedExplorerTree(
+      tree,
+      getHomePath(query.locale),
+      dictionary.categories?.bySlug,
+      fallbackBySlug
+    );
+
+    const categoriesResult = searchLocalizedCategories(explorerTree, query);
+
+    const offersResult = projectCatalogOfferSearchResults(
+      dbOffers,
+      query,
+      dictionary.categories?.bySlug,
+      fallbackBySlug
+    );
+
+    return {
+      ok: true,
+      normalizedQuery: query.query,
+      categories: categoriesResult,
+      offers: offersResult,
+    };
+  } catch (error: unknown) {
+    if (error instanceof CatalogSearchParserError) {
+      return {
+        ok: false,
+        errors: [{ code: error.code }],
+      };
+    }
+    console.error("Catalog search failed", {
+      errorName: error instanceof Error
+        ? error.name
+        : "UnknownError",
+    });
+    return {
+      ok: false,
+      errors: [{ code: "SYSTEM_ERROR" }],
+    };
+  }
 }
