@@ -35,6 +35,16 @@ export function searchLocalizedCategories(
     const slug = item.node.slug.toLocaleLowerCase(query.locale);
     const { matchQuery, tokens } = query;
 
+    const allLiteralTermsPresent =
+      query.literalTerms.length === 0 ||
+      query.literalTerms.every(
+        (term) => label.includes(term) || slug.includes(term)
+      );
+
+    if (!allLiteralTermsPresent) {
+      continue;
+    }
+
     let score = 0;
 
     if (label === matchQuery) {

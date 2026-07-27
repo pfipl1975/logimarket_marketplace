@@ -97,6 +97,13 @@ export function parseCatalogSearchInput(
     );
   }
 
+  if (literalTerms.length > CATALOG_SEARCH_LIMITS.maxTokenCount) {
+    throw new CatalogSearchParserError(
+      "QUERY_TOO_COMPLEX",
+      "Query contains too many literal terms",
+    );
+  }
+
   return {
     query,
     matchQuery,
