@@ -1,18 +1,25 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, desc } from "drizzle-orm";
 import { categories, offers, partners } from "@/lib/schema";
 import type { NormalizedCatalogSearchQuery } from "./types";
-import type { PgDatabase } from "drizzle-orm/pg-core";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "@/lib/schema";
 
 export function escapeLike(str: string): string {
   return str.replace(/([\\%_])/g, "\\$1");
 }
 
+import { CATALOG_SEARCH_LIMITS } from "./types";
+
 export function queryCatalogSearch(
-  db: PgDatabase<any, any, any>,
+  db: NodePgDatabase<typeof schema>,
   query: NormalizedCatalogSearchQuery
 ) {
-  if (query.isEmpty) {
-    throw new Error("Cannot execute queryCatalogSearch with empty query");
+  if (
+    query.isEmpty ||
+    query.tokens.length === 0 ||
+    query.tokens.length > CATALOG_SEARCH_LIMITS.maxTokenCount
+  ) {
+    throw new Error("Invalid normalized catalog search query");
   }
 
   const exactParam = escapeLike(query.matchQuery);
@@ -30,7 +37,7 @@ export function queryCatalogSearch(
       )})`
     : sql`TRUE`;
 
-  const scoreField = sql<number>`
+  const scoreExpression = sql<number>`
     CASE 
       WHEN ${exactMatches} THEN 100
       WHEN ${prefixMatches} THEN 80
@@ -38,7 +45,8 @@ export function queryCatalogSearch(
       WHEN ${allTokensSql} THEN 40
       ELSE 0
     END
-  `.as("score");
+  `;
+  const scoreField = scoreExpression.as("score");
 
   const filterConditions = and(
     eq(offers.isActive, true),
@@ -65,10 +73,10 @@ export function queryCatalogSearch(
     .innerJoin(partners, eq(offers.partnerId, partners.id))
     .where(filterConditions)
     .orderBy(
-      sql`${scoreField} DESC`,
-      sql`${offers.isFeatured} DESC`,
+      desc(scoreExpression),
+      desc(offers.isFeatured),
       sql`${offers.publishedAt} DESC NULLS LAST`,
-      sql`${offers.id} DESC`
+      desc(offers.id)
     )
     .limit(query.offerLimit);
 }

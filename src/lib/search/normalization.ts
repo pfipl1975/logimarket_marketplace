@@ -26,8 +26,8 @@ export function normalizeCatalogSearchQuery(
     }
   }
 
-  // 6. Max 8 tokens
-  const tokens = uniqueTokens.slice(0, 8);
+  // We do not slice here; parser handles max tokens check.
+  const tokens = uniqueTokens;
 
   return {
     query,

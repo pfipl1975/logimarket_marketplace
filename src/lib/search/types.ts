@@ -1,5 +1,15 @@
 import type { Locale } from "@/lib/i18n/types";
 
+export const CATALOG_SEARCH_LIMITS = {
+  minQueryCodePoints: 2,
+  maxQueryCodePoints: 100,
+  maxTokenCount: 8,
+  defaultCategoryLimit: 3,
+  maxCategoryLimit: 5,
+  defaultOfferLimit: 5,
+  maxOfferLimit: 10,
+} as const;
+
 export type CatalogSearchInput = {
   query: unknown;
   locale: unknown;
@@ -44,6 +54,8 @@ export type CatalogSearchErrorCode =
   | "INVALID_LOCALE"
   | "QUERY_TOO_SHORT"
   | "QUERY_TOO_LONG"
+  | "QUERY_HAS_NO_SEARCH_TERMS"
+  | "QUERY_TOO_COMPLEX"
   | "INVALID_CATEGORY_LIMIT"
   | "INVALID_OFFER_LIMIT"
   | "SYSTEM_ERROR";
