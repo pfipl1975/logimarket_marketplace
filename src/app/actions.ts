@@ -21,6 +21,14 @@ import { normalizeFilterQuery } from "@/lib/filters/validation";
 import type { FilterValidationError } from "@/lib/filters/types";
 import { getCatalogFilterConfigurationFromDb } from "@/lib/filters/configuration";
 import type { CatalogFilterConfiguration } from "@/lib/filters/configuration-types";
+import { parseCatalogSearchInput } from "@/lib/search/parser";
+import { searchLocalizedCategories } from "@/lib/search/category-search";
+import { searchCatalogOffersFromDb } from "@/lib/search/search-query";
+import { projectCatalogOfferSearchResults } from "@/lib/search/projection";
+import type { CatalogSearchResult } from "@/lib/search/types";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
+import { buildCategoryTree } from "@/lib/catalog/tree";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -346,4 +354,68 @@ export async function getCategoryAttributeConfiguration(
     onlyVisible,
     onlyFilterable
   );
+}
+
+export async function searchCatalog(
+  rawInput: unknown
+): Promise<CatalogSearchResult> {
+  try {
+    const query = parseCatalogSearchInput(rawInput);
+
+    if (query.isEmpty) {
+      return {
+        ok: true,
+        normalizedQuery: query.query,
+        categories: [],
+        offers: [],
+      };
+    }
+
+    const [categoriesDb, dictionary, dbOffers] = await Promise.all([
+      getCategories(),
+      getDictionary(query.locale),
+      searchCatalogOffersFromDb(query),
+    ]);
+
+    let fallbackDictionary = undefined;
+    if (query.locale !== "pl") {
+      fallbackDictionary = await getDictionary("pl");
+    }
+
+    const tree = buildCategoryTree(categoriesDb);
+    const explorerTree = buildLocalizedExplorerTree(
+      tree,
+      "",
+      dictionary.categories?.bySlug,
+      fallbackDictionary?.categories?.bySlug
+    );
+
+    const categoriesResult = searchLocalizedCategories(explorerTree, query);
+
+    const offersResult = projectCatalogOfferSearchResults(
+      dbOffers,
+      query,
+      dictionary.categories?.bySlug,
+      fallbackDictionary?.categories?.bySlug
+    );
+
+    return {
+      ok: true,
+      normalizedQuery: query.query,
+      categories: categoriesResult,
+      offers: offersResult,
+    };
+  } catch (error: any) {
+    if (error.name === "CatalogSearchParserError") {
+      return {
+        ok: false,
+        errors: [{ code: error.code }],
+      };
+    }
+    console.error("searchCatalog SYSTEM_ERROR:", error);
+    return {
+      ok: false,
+      errors: [{ code: "SYSTEM_ERROR" }],
+    };
+  }
 }
