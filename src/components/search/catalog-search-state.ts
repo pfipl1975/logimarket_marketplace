@@ -66,3 +66,11 @@ export function getCatalogSearchErrorMessageKey(
 export function createSearchOptionId(baseId: string, index: number): string {
   return `${baseId}-option-${index}`;
 }
+
+export function isSafeCatalogSearchHref(href: string): boolean {
+  return (
+    href.startsWith("/") &&
+    !href.startsWith("//") &&
+    !href.startsWith("/go/")
+  );
+}

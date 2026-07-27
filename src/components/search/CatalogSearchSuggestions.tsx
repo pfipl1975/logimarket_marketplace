@@ -14,9 +14,10 @@ import {
   getPreviousActiveIndex,
   getHomeActiveIndex,
   getEndActiveIndex,
-  getCatalogSearchErrorMessageKey,
   createSearchOptionId,
+  isSafeCatalogSearchHref,
   type FlattenedSearchResult,
+  getCatalogSearchErrorMessageKey,
 } from "./catalog-search-state";
 import { cn } from "@/lib/utils";
 
@@ -28,7 +29,7 @@ type CatalogSearchSuggestionsProps = {
 };
 
 type SearchState = {
-  status: "idle" | "loading" | "success" | "error";
+  status: "idle" | "debouncing" | "loading" | "success" | "error";
   results: FlattenedSearchResult[];
   errorCodeKey?: string;
 };
@@ -44,6 +45,7 @@ export function CatalogSearchSuggestions({
   
   const inputId = `${reactId}-input`;
   const listboxId = `${reactId}-listbox`;
+  const statusId = `${reactId}-status`;
   const categoriesHeadingId = `${reactId}-categories`;
   const offersHeadingId = `${reactId}-offers`;
   const optionIdFactory = (index: number) => createSearchOptionId(reactId, index);
@@ -64,9 +66,14 @@ export function CatalogSearchSuggestions({
   const isMountedRef = useRef(true);
 
   useEffect(() => {
+    isMountedRef.current = true;
     return () => {
       isMountedRef.current = false;
-      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      requestIdRef.current += 1;
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+        debounceTimerRef.current = null;
+      }
     };
   }, []);
 
@@ -118,11 +125,19 @@ export function CatalogSearchSuggestions({
     setShowMinimumCharactersGuard(false);
     const currentRequestId = ++requestIdRef.current;
 
+    setActiveIndex(-1);
+    setSearchState({
+      status: "debouncing",
+      results: [],
+    });
+    setIsOpen(true);
+
     debounceTimerRef.current = setTimeout(async () => {
       if (!isMountedRef.current) return;
       if (requestIdRef.current !== currentRequestId) return;
       
-      setSearchState((prev) => ({ ...prev, status: "loading" }));
+      setSearchState({ status: "loading", results: [] });
+      setIsOpen(true);
 
       try {
         const response = await searchCatalog({
@@ -161,9 +176,20 @@ export function CatalogSearchSuggestions({
       const result = searchState.results[index];
       const href = result.type === "category" ? result.item.href : result.item.href;
       
-      if (href && href.startsWith("/")) {
+      if (href && isSafeCatalogSearchHref(href)) {
+        if (debounceTimerRef.current) {
+          clearTimeout(debounceTimerRef.current);
+          debounceTimerRef.current = null;
+        }
+        requestIdRef.current += 1;
+
         setIsOpen(false);
         setActiveIndex(-1);
+        setSearchState({
+          status: "idle",
+          results: [],
+        });
+
         if (onNavigate) {
           onNavigate();
         }
@@ -173,9 +199,20 @@ export function CatalogSearchSuggestions({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen && searchState.results.length > 0 && (e.key === "ArrowDown" || e.key === "ArrowUp")) {
-      setIsOpen(true);
+    if (!isOpen && searchState.results.length > 0 && e.key === "ArrowDown") {
       e.preventDefault();
+      setIsOpen(true);
+      setActiveIndex(0);
+      scrollOptionIntoView(0);
+      return;
+    }
+
+    if (!isOpen && searchState.results.length > 0 && e.key === "ArrowUp") {
+      e.preventDefault();
+      const lastIndex = searchState.results.length - 1;
+      setIsOpen(true);
+      setActiveIndex(lastIndex);
+      scrollOptionIntoView(lastIndex);
       return;
     }
 
@@ -271,6 +308,8 @@ export function CatalogSearchSuggestions({
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
+          aria-hidden="true"
+          focusable="false"
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
@@ -283,13 +322,16 @@ export function CatalogSearchSuggestions({
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
           onClick={() => {
-            if (query.trim().length >= 2 || searchState.results.length > 0) setIsOpen(true);
+            const normalized = normalizeSearchInput(query);
+            const length = getSearchCodePointLength(normalized);
+            if (length >= 2 || searchState.results.length > 0) setIsOpen(true);
           }}
           placeholder={labels.placeholder}
           aria-label={labels.label}
           aria-autocomplete="list"
           aria-expanded={isOpen}
-          aria-controls={isOpen ? listboxId : undefined}
+          aria-controls={isOpen && searchState.results.length > 0 ? listboxId : undefined}
+          aria-describedby={statusId}
           aria-activedescendant={activeDescendant}
           autoComplete="off"
           spellCheck={false}
@@ -302,7 +344,7 @@ export function CatalogSearchSuggestions({
             onClick={handleClear}
             className="absolute right-0 top-0 flex h-full min-h-[44px] min-w-[44px] items-center justify-center text-brand-navy/60 hover:text-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-teal rounded-r-[2px]"
           >
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
@@ -319,22 +361,24 @@ export function CatalogSearchSuggestions({
           )}
         >
           {showMinimumCharactersGuard ? (
-            <div className={cn("px-4 py-3 text-sm", variant === "mobile" ? "text-white/60" : "text-brand-navy/60")}>
+            <div id={statusId} role="status" aria-live="polite" aria-atomic="true" className={cn("px-4 py-3 text-sm", variant === "mobile" ? "text-white/60" : "text-brand-navy/60")}>
               {labels.minimumCharacters}
             </div>
           ) : (
             <CatalogSearchResults
-              status={searchState.status}
               results={searchState.results}
-              activeIndex={activeIndex}
+              status={searchState.status === "debouncing" ? "loading" : searchState.status}
               labels={labels}
               errorCodeKey={searchState.errorCodeKey}
+              activeIndex={activeIndex}
               listboxId={listboxId}
+              statusId={statusId}
               categoriesHeadingId={categoriesHeadingId}
               offersHeadingId={offersHeadingId}
               onOptionHover={(index) => setActiveIndex(index)}
               onOptionSelect={(index) => executeNavigation(index)}
               getOptionId={optionIdFactory}
+              variant={variant}
             />
           )}
         </div>
