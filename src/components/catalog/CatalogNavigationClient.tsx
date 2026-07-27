@@ -212,7 +212,7 @@ export function CatalogNavigationClient({
         )}
       </HeaderDesktopNavigation>
 
-      <div className="relative lg:hidden">
+      <div className="relative xl:hidden">
         {/* Trigger Button */}
         <button
           ref={triggerRef}

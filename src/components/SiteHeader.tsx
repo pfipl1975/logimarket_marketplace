@@ -65,7 +65,7 @@ export function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-3 py-1.5 sm:px-4 md:px-6 relative">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
           <CatalogNavigationLoader
             locale={locale}
             desktopItems={desktopNavItems}

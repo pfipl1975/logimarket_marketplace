@@ -306,12 +306,12 @@ export function CatalogSearchSuggestions({
       ref={wrapperRef}
       className={cn(
         "relative",
-        variant === "desktop" ? "hidden lg:block shrink-0 min-w-0 lg:w-56 xl:w-80 2xl:w-[28rem]" : "w-full mb-3"
+        variant === "desktop" ? "hidden lg:block shrink-0 min-w-0 lg:w-48 xl:w-56 2xl:w-72 max-w-72" : "w-full mb-3"
       )}
     >
       <div className="relative">
         <svg
-          className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-brand-navy/50"
+          className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-brand-teal"
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -342,7 +342,7 @@ export function CatalogSearchSuggestions({
           aria-activedescendant={activeDescendant}
           autoComplete="off"
           spellCheck={false}
-          className="w-full min-h-[44px] rounded-[2px] border-none bg-white pl-10 pr-10 text-brand-navy placeholder:text-brand-navy/60 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy text-sm"
+          className="w-full min-h-[44px] rounded-[2px] border border-white/20 bg-white pl-10 pr-10 text-brand-navy placeholder:text-brand-navy/60 focus:outline-none focus:border-brand-teal focus:ring-2 focus:ring-brand-teal focus:ring-offset-1 focus:ring-offset-brand-navy text-sm"
         />
         {query && (
           <button
