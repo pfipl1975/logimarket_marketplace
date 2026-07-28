@@ -93,7 +93,7 @@
     "title": "Katalog sprzętu i wyposażenia magazynowego",
     "intro": "Kompletna taksonomia LogiMarket: od regałów i wózków widłowych po robotyzację magazynu. Znajdź właściwą kategorię w strukturze sekcja → grupa → kategoria i przejdź bezpośrednio do ofert.",
     "modelNote": "Model hybrydowy: zapytanie ofertowe (RFQ), zakup e-commerce lub oferta outbound partnera — zależnie od kategorii i dostawcy.",
-    "searchHint": "Szukasz konkretnego produktu lub producenta? Użyj wyszukiwarki w górnym pasku.",
+    "searchHint": "Szukasz konkretnej kategorii lub oferty? Użyj wyszukiwarki w górnym pasku.",
     "sectionIndexHeading": "Indeks sekcji",
     "sectionIndexIntro": "Przejdź bezpośrednio do wybranej sekcji katalogu.",
     "directoryHeading": "Katalog: sekcje, grupy i kategorie",
@@ -105,7 +105,7 @@
     "rfqHeading": "Zapytanie ofertowe (RFQ)",
     "rfqDescription": "Dla sprzętu konfigurowanego i zakupów projektowych: wyślij zapytanie z kategorii lub karty oferty, a partner przygotuje indywidualną ofertę.",
     "ecommerceHeading": "Zakup e-commerce",
-    "ecommerceDescription": "Produkty z ceną katalogową i dostępnością możesz dodać do koszyka i kupić bezpośrednio przez platformę.",
+    "ecommerceDescription": "Produkty objęte modelem e-commerce i posiadające wyświetloną cenę możesz dodać do koszyka i kupić bezpośrednio przez platformę.",
     "outboundHeading": "Oferty outbound",
     "outboundDescription": "Część ofert prowadzi do partnerów zewnętrznych — przejścia są rejestrowane przez platformę, a warunki ustalasz z dostawcą."
   },

@@ -93,7 +93,7 @@
     "title": "Warehouse equipment and intralogistics catalog",
     "intro": "The complete LogiMarket taxonomy: from racking and forklifts to warehouse robotics. Find the right category in the section → group → category structure and go straight to the offers.",
     "modelNote": "Hybrid model: request for quotation (RFQ), direct e-commerce purchase or partner outbound offer — depending on category and supplier.",
-    "searchHint": "Looking for a specific product or manufacturer? Use the search in the top bar.",
+    "searchHint": "Looking for a specific category or offer? Use the search in the top bar.",
     "sectionIndexHeading": "Section index",
     "sectionIndexIntro": "Jump directly to a catalog section.",
     "directoryHeading": "Catalog: sections, groups and categories",
@@ -105,7 +105,7 @@
     "rfqHeading": "Request for quotation (RFQ)",
     "rfqDescription": "For configurable equipment and project purchases: send an inquiry from a category or offer page and a partner will prepare an individual quote.",
     "ecommerceHeading": "E-commerce purchase",
-    "ecommerceDescription": "Products with listed price and availability can be added to the cart and purchased directly on the platform.",
+    "ecommerceDescription": "Products offered in the e-commerce model with a listed price can be added to the cart and purchased directly through the platform.",
     "outboundHeading": "Outbound offers",
     "outboundDescription": "Some offers lead to external partners — referrals are tracked by the platform and terms are agreed with the supplier."
   },

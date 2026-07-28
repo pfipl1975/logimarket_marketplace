@@ -55,7 +55,7 @@ export function CatalogSectionDirectory({
   labels,
 }: CatalogSectionDirectoryProps) {
   return (
-    <section aria-labelledby="catalog-directory-heading">
+    <div>
       <div className="max-w-3xl">
         <h2
           id="catalog-directory-heading"
@@ -146,6 +146,6 @@ export function CatalogSectionDirectory({
           </section>
         ))}
       </div>
-    </section>
+    </div>
   );
 }

@@ -93,7 +93,7 @@
     "title": "仓储设备与内部物流目录",
     "intro": "LogiMarket 完整分类体系：从货架、叉车到仓储机器人。通过 分区 → 分组 → 类别 结构找到正确的类别，直达报价。",
     "modelNote": "混合模式：询价（RFQ）、电商直购或合作伙伴外联报价，具体取决于类别和供应商。",
-    "searchHint": "在寻找特定产品或制造商？请使用顶部搜索栏。",
+    "searchHint": "在寻找特定类别或产品？请使用顶部搜索栏。",
     "sectionIndexHeading": "分区索引",
     "sectionIndexIntro": "直接跳转到目录的某个分区。",
     "directoryHeading": "目录：分区、分组和类别",
@@ -105,7 +105,7 @@
     "rfqHeading": "询价（RFQ）",
     "rfqDescription": "适用于可配置设备和项目采购：从类别或报价页面发送询价，合作伙伴将为您准备专属报价。",
     "ecommerceHeading": "电商直购",
-    "ecommerceDescription": "标明价格和库存的产品可加入购物车，直接在平台上购买。",
+    "ecommerceDescription": "采用电商模式并标明价格的产品可加入购物车，直接在平台上购买。",
     "outboundHeading": "外联报价",
     "outboundDescription": "部分报价跳转至外部合作伙伴——跳转由平台记录，交易条件由您与供应商协商。"
   },

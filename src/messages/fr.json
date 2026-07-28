@@ -93,7 +93,7 @@
     "title": "Catalogue d'équipement d'entrepôt et d'intralogistique",
     "intro": "La taxonomie complète LogiMarket : des rayonnages et chariots élévateurs à la robotique d'entrepôt. Trouvez la bonne catégorie dans la structure section → groupe → catégorie et accédez directement aux offres.",
     "modelNote": "Modèle hybride : demande de devis (RFQ), achat e-commerce direct ou offre outbound d'un partenaire — selon la catégorie et le fournisseur.",
-    "searchHint": "Vous cherchez un produit ou un fabricant précis ? Utilisez la recherche dans la barre supérieure.",
+    "searchHint": "Vous recherchez une catégorie ou une offre précise ? Utilisez la recherche dans la barre supérieure.",
     "sectionIndexHeading": "Index des sections",
     "sectionIndexIntro": "Accédez directement à une section du catalogue.",
     "directoryHeading": "Catalogue : sections, groupes et catégories",
@@ -105,7 +105,7 @@
     "rfqHeading": "Demande de devis (RFQ)",
     "rfqDescription": "Pour les équipements configurables et les achats de projet : envoyez une demande depuis une catégorie ou une fiche offre et un partenaire préparera un devis individuel.",
     "ecommerceHeading": "Achat e-commerce",
-    "ecommerceDescription": "Les produits avec prix et disponibilité affichés peuvent être ajoutés au panier et achetés directement sur la plateforme.",
+    "ecommerceDescription": "Les produits proposés en e-commerce avec un prix affiché peuvent être ajoutés au panier et achetés directement sur la plateforme.",
     "outboundHeading": "Offres outbound",
     "outboundDescription": "Certaines offres mènent à des partenaires externes — les redirections sont suivies par la plateforme et les conditions sont convenues avec le fournisseur."
   },

@@ -93,7 +93,7 @@
     "title": "Katalog für Lagertechnik und Intralogistik",
     "intro": "Die vollständige LogiMarket-Taxonomie: von Regalen und Gabelstaplern bis zur Lagerrobotik. Finden Sie die richtige Kategorie in der Struktur Sektion → Gruppe → Kategorie und gelangen Sie direkt zu den Angeboten.",
     "modelNote": "Hybrides Modell: Angebotsanfrage (RFQ), direkter E-Commerce-Kauf oder Outbound-Angebot eines Partners — je nach Kategorie und Lieferant.",
-    "searchHint": "Sie suchen ein bestimmtes Produkt oder einen Hersteller? Nutzen Sie die Suche in der Kopfzeile.",
+    "searchHint": "Suchen Sie eine bestimmte Kategorie oder ein Angebot? Nutzen Sie die Suche in der Kopfzeile.",
     "sectionIndexHeading": "Sektionsindex",
     "sectionIndexIntro": "Springen Sie direkt zu einer Katalogsektion.",
     "directoryHeading": "Katalog: Sektionen, Gruppen und Kategorien",
@@ -105,7 +105,7 @@
     "rfqHeading": "Angebotsanfrage (RFQ)",
     "rfqDescription": "Für konfigurierbare Geräte und Projektbeschaffung: Senden Sie eine Anfrage aus einer Kategorie oder Angebotsseite und ein Partner erstellt ein individuelles Angebot.",
     "ecommerceHeading": "E-Commerce-Kauf",
-    "ecommerceDescription": "Produkte mit ausgewiesenem Preis und Verfügbarkeit können Sie in den Warenkorb legen und direkt über die Plattform kaufen.",
+    "ecommerceDescription": "Produkte im E-Commerce-Modell mit ausgewiesenem Preis können in den Warenkorb gelegt und direkt über die Plattform gekauft werden.",
     "outboundHeading": "Outbound-Angebote",
     "outboundDescription": "Einige Angebote führen zu externen Partnern — die Verweise werden von der Plattform erfasst, die Konditionen vereinbaren Sie mit dem Lieferanten."
   },

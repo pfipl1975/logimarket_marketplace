@@ -93,7 +93,7 @@
     "title": "Catálogo de equipamiento de almacén e intralogística",
     "intro": "La taxonomía completa de LogiMarket: desde estanterías y carretillas elevadoras hasta la robotización del almacén. Encuentre la categoría adecuada en la estructura sección → grupo → categoría y vaya directamente a las ofertas.",
     "modelNote": "Modelo híbrido: solicitud de oferta (RFQ), compra directa de e-commerce u oferta outbound de un socio, según la categoría y el proveedor.",
-    "searchHint": "¿Busca un producto o fabricante concreto? Utilice el buscador de la barra superior.",
+    "searchHint": "¿Busca una categoría o una oferta concreta? Utilice el buscador de la barra superior.",
     "sectionIndexHeading": "Índice de secciones",
     "sectionIndexIntro": "Vaya directamente a una sección del catálogo.",
     "directoryHeading": "Catálogo: secciones, grupos y categorías",
@@ -105,7 +105,7 @@
     "rfqHeading": "Solicitud de oferta (RFQ)",
     "rfqDescription": "Para equipos configurables y compras de proyecto: envíe una solicitud desde una categoría o ficha de oferta y un socio preparará una oferta individual.",
     "ecommerceHeading": "Compra e-commerce",
-    "ecommerceDescription": "Los productos con precio y disponibilidad indicados se pueden añadir al carrito y comprar directamente en la plataforma.",
+    "ecommerceDescription": "Los productos ofrecidos en el modelo e-commerce con precio indicado pueden añadirse al carrito y comprarse directamente en la plataforma.",
     "outboundHeading": "Ofertas outbound",
     "outboundDescription": "Algunas ofertas llevan a socios externos: los enlaces son registrados por la plataforma y las condiciones se acuerdan con el proveedor."
   },
