@@ -1,8 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
-  <!-- Box -->
-  <polygon points="24,8 40,16 40,32 24,40 8,32 8,16" fill="#141c2c" />
-  <polygon points="24,8 32,12 24,16 16,12" fill="#147487" />
-  <polygon points="24,16 40,16 32,24 16,24" fill="#147487" opacity="0.8" />
-
-  <circle cx="24" cy="24" r="2.5" fill="#eab308" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M6 6H42V42H6V6ZM9 9V39H39V9H9Z" fill="#141c2c"/>
+  <rect x="11" y="11" width="16" height="10" fill="#141c2c"/>
+  <rect x="29" y="11" width="8" height="14" fill="#147487"/>
+  <rect x="11" y="23" width="10" height="14" fill="#141c2c"/>
 </svg>
