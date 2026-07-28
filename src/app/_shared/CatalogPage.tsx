@@ -1,149 +1,28 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Package } from "lucide-react";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
-import { resolveCategoryName } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
-import { buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
-import { JsonLdScript } from "@/lib/seo/json-ld";
+import { buildCategoryTree } from "@/lib/catalog/tree";
+import { JsonLdScript, createBreadcrumbListJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { getSolutionsIndexPath } from "@/lib/landing";
-import { getGroupIconPath, getSectionIconPath } from "@/lib/catalog/group-icons";
+import {
+  buildCatalogHomeBreadcrumbItems,
+  buildCatalogHomeCollectionPageJsonLd,
+  buildCatalogHomeSections,
+} from "@/lib/catalog/catalog-home";
+import { CatalogHomeHero } from "@/components/catalog/CatalogHomeHero";
+import { CatalogSectionIndex } from "@/components/catalog/CatalogSectionIndex";
+import { CatalogSectionDirectory } from "@/components/catalog/CatalogSectionDirectory";
 import type { Locale } from "@/lib/i18n/types";
 
 interface CatalogPageProps {
   locale: Locale;
-}
-
-type DirectoryLink = {
-  id: number;
-  label: string;
-  href: string;
-  depth: number;
-};
-
-type DirectoryGroup = {
-  id: number;
-  slug: string;
-  label: string;
-  href: string | null;
-  categoryLinks: DirectoryLink[];
-};
-
-type DirectorySection = {
-  id: number;
-  slug: string;
-  label: string;
-  href: string | null;
-  groups: DirectoryGroup[];
-  terminalLinks: DirectoryLink[];
-};
-
-function getCatalogCategoryHref(
-  categoryFilterBasePath: string,
-  slug: string,
-  routeableSlugSet: Set<string>,
-): string | null {
-  if (!routeableSlugSet.has(slug)) return null;
-  const basePath = categoryFilterBasePath === "/" ? "" : categoryFilterBasePath;
-  return `${basePath}/katalog/c-${slug}`;
-}
-
-function resolveDirectoryLabel(
-  node: CatalogCategoryNode,
-  localeBySlug: Record<string, string> | undefined,
-  fallbackBySlug: Record<string, string> | undefined,
-): string {
-  return resolveCategoryName({
-    slug: node.slug,
-    dbName: node.name,
-    localeBySlug,
-    fallbackBySlug,
-  });
-}
-
-function collectDirectoryCategoryLinks(
-  nodes: CatalogCategoryNode[],
-  categoryFilterBasePath: string,
-  routeableSlugSet: Set<string>,
-  localeBySlug: Record<string, string> | undefined,
-  fallbackBySlug: Record<string, string> | undefined,
-  depth = 0,
-): DirectoryLink[] {
-  const links: DirectoryLink[] = [];
-
-  for (const node of nodes) {
-    const href = getCatalogCategoryHref(categoryFilterBasePath, node.slug, routeableSlugSet);
-    if (href) {
-      links.push({
-        id: node.id,
-        label: resolveDirectoryLabel(node, localeBySlug, fallbackBySlug),
-        href,
-        depth,
-      });
-    }
-
-    if (node.children.length > 0) {
-      links.push(...collectDirectoryCategoryLinks(
-        node.children,
-        categoryFilterBasePath,
-        routeableSlugSet,
-        localeBySlug,
-        fallbackBySlug,
-        depth + 1,
-      ));
-    }
-  }
-
-  return links;
-}
-
-function buildDirectorySections({
-  categoryTree,
-  categoryFilterBasePath,
-  routeableSlugSet,
-  localeBySlug,
-  fallbackBySlug,
-}: {
-  categoryTree: CatalogCategoryNode[];
-  categoryFilterBasePath: string;
-  routeableSlugSet: Set<string>;
-  localeBySlug: Record<string, string> | undefined;
-  fallbackBySlug: Record<string, string> | undefined;
-}): DirectorySection[] {
-  return categoryTree.map((section) => ({
-    id: section.id,
-    slug: section.slug,
-    label: resolveDirectoryLabel(section, localeBySlug, fallbackBySlug),
-    href: getCatalogCategoryHref(categoryFilterBasePath, section.slug, routeableSlugSet),
-    groups: section.children.map((group) => ({
-      id: group.id,
-      slug: group.slug,
-      label: resolveDirectoryLabel(group, localeBySlug, fallbackBySlug),
-      href: getCatalogCategoryHref(categoryFilterBasePath, group.slug, routeableSlugSet),
-      categoryLinks: collectDirectoryCategoryLinks(
-        group.children,
-        categoryFilterBasePath,
-        routeableSlugSet,
-        localeBySlug,
-        fallbackBySlug,
-      ),
-    })),
-    terminalLinks: section.children.length === 0
-      ? collectDirectoryCategoryLinks(
-        [section],
-        categoryFilterBasePath,
-        routeableSlugSet,
-        localeBySlug,
-        fallbackBySlug,
-      )
-      : [],
-  }));
 }
 
 export async function CatalogPage({ locale }: CatalogPageProps) {
@@ -156,38 +35,40 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
 
   const categoryFilterBasePath = getHomePath(locale);
 
-  // Build category hierarchy
+  // Single existing category read → tree → routeable set → catalog home view model
   const categoryTree = buildCategoryTree(allCategories);
   const routeableSlugSet = new Set(allCategories.map((category) => category.slug));
-  const directorySections = buildDirectorySections({
+  const sections = buildCatalogHomeSections({
     categoryTree,
-    categoryFilterBasePath,
+    basePath: categoryFilterBasePath,
     routeableSlugSet,
     localeBySlug,
     fallbackBySlug,
   });
 
-
-  // Generate BreadcrumbList JSON-LD
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
-  const breadcrumbItems = [
-    {
-      "@type": "ListItem",
-      position: 1,
-      name: dict.nav.catalog,
-      item: absoluteUrl(catalogPath),
-    },
-  ];
 
-  const breadcrumbJsonLd = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    "itemListElement": breadcrumbItems,
-  };
+  const breadcrumbJsonLd = createBreadcrumbListJsonLd(
+    buildCatalogHomeBreadcrumbItems({
+      homeUrl: absoluteUrl(categoryFilterBasePath),
+      catalogUrl: absoluteUrl(catalogPath),
+      homeName: "LogiMarket.pl",
+      catalogName: dict.nav.catalog,
+    }),
+  );
+
+  const collectionPageJsonLd = buildCatalogHomeCollectionPageJsonLd({
+    sections,
+    pageUrl: absoluteUrl(catalogPath),
+    name: dict.catalogHome.metaTitle,
+    description: dict.catalogHome.metaDescription,
+    locale,
+  });
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
       <JsonLdScript data={breadcrumbJsonLd} />
+      <JsonLdScript data={collectionPageJsonLd} />
       <SiteHeader
         locale={locale}
         languageLinks={{
@@ -204,15 +85,8 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
-              {dict.nav.catalog}
-            </h1>
-            <p className="text-muted-foreground max-w-xl">
-              {dict.meta.description}
-            </p>
-          </div>
+        <div className="flex flex-col gap-8">
+          <CatalogHomeHero labels={dict.catalogHome} />
 
           <section className="border-l-2 border-brand-teal bg-white px-5 py-4" aria-labelledby="catalog-solutions-heading">
             <h2 id="catalog-solutions-heading" className="text-base font-bold text-brand-navy">
@@ -229,140 +103,61 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
             </Link>
           </section>
 
-          {categoryTree.length === 0 ? (
+          {sections.length === 0 ? (
             <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
               <Package className="h-12 w-12 text-muted-foreground/40" />
               <p className="text-lg font-semibold">{dict.catalog.emptyTitle}</p>
               <p className="text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
             </div>
           ) : (
-            <div className="flex flex-col gap-8">
-
-              <section
-                aria-labelledby="catalog-directory-heading"
-                className="border-t border-border pt-8"
-              >
-                <div className="max-w-3xl">
-                  <h2
-                    id="catalog-directory-heading"
-                    className="text-2xl font-bold tracking-tight text-brand-navy"
-                  >
-                    {dict.catalog.directoryHeading}
-                  </h2>
-                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                    {dict.catalog.directoryIntro}
-                  </p>
-                </div>
-
-                <div className="mt-6 grid gap-5">
-                  {directorySections.map((section) => (
-                    <section
-                      key={section.id}
-                      className="rounded border border-border bg-white p-5 shadow-sm"
-                    >
-                      <div className="border-b border-border pb-4 flex items-center gap-3">
-                        <div className="relative h-8 w-8 shrink-0">
-                          <Image
-                            src={getSectionIconPath(section.slug)}
-                            alt=""
-                            width={32}
-                            height={32}
-                            className="size-8 object-contain"
-                          />
-                        </div>
-                        <div className="flex-1">
-                          {section.href ? (
-                            <Link
-                              href={section.href}
-                              className="text-lg font-bold text-brand-navy transition-colors hover:text-brand-teal"
-                            >
-                              {section.label}
-                            </Link>
-                          ) : (
-                            <h3 className="text-lg font-bold text-brand-navy">
-                              {section.label}
-                            </h3>
-                          )}
-                          {section.groups.length > 0 && (
-                            <p className="mt-0.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                              {dict.catalog.directoryGroupsHeading}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      {section.groups.length > 0 && (
-                        <div className="mt-4 grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-                          {section.groups.map((group) => (
-                            <div key={group.id} className="min-w-0">
-                              <div className="flex items-center gap-2 mb-2">
-                                <Image
-                                  src={getGroupIconPath(group.slug)}
-                                  alt=""
-                                  width={24}
-                                  height={24}
-                                  className="size-6 shrink-0 object-contain"
-                                />
-                                {group.href ? (
-                                  <Link
-                                    href={group.href}
-                                    className="text-sm font-bold text-brand-navy transition-colors hover:text-brand-teal"
-                                  >
-                                    {group.label}
-                                  </Link>
-                                ) : (
-                                  <h4 className="text-sm font-bold text-brand-navy">
-                                    {group.label}
-                                  </h4>
-                                )}
-                              </div>
-
-                              {group.categoryLinks.length > 0 && (
-                                <ul className="mt-2 space-y-1.5 border-l border-border pl-3">
-                                  {group.categoryLinks.map((categoryLink) => (
-                                    <li
-                                      key={categoryLink.id}
-                                      className={categoryLink.depth > 0 ? "pl-3" : undefined}
-                                    >
-                                      <Link
-                                        href={categoryLink.href}
-                                        className={`text-xs leading-relaxed transition-colors hover:text-brand-teal ${
-                                          categoryLink.depth === 0
-                                            ? "font-semibold text-brand-navy/80"
-                                            : "text-muted-foreground"
-                                        }`}
-                                      >
-                                        {categoryLink.label}
-                                      </Link>
-                                    </li>
-                                  ))}
-                                </ul>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {section.terminalLinks.length > 0 && (
-                        <ul className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                          {section.terminalLinks.map((leaf) => (
-                            <li key={leaf.id}>
-                              <Link
-                                href={leaf.href}
-                                className="text-sm font-semibold text-brand-navy transition-colors hover:text-brand-teal"
-                              >
-                                {leaf.label}
-                              </Link>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </section>
-                  ))}
-                </div>
-              </section>
-            </div>
+            <>
+              <CatalogSectionIndex sections={sections} labels={dict.catalogHome} />
+              <CatalogSectionDirectory sections={sections} labels={dict.catalogHome} />
+            </>
           )}
+
+          <section
+            aria-labelledby="catalog-procurement-guide-heading"
+            className="border-t border-border pt-8"
+          >
+            <div className="max-w-3xl">
+              <h2
+                id="catalog-procurement-guide-heading"
+                className="text-2xl font-bold tracking-tight text-brand-navy"
+              >
+                {dict.catalogHome.procurementGuideHeading}
+              </h2>
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                {dict.catalogHome.procurementGuideIntro}
+              </p>
+            </div>
+            <div className="mt-5 grid gap-px overflow-hidden rounded-[2px] border border-border bg-border md:grid-cols-3">
+              <div className="bg-white p-5">
+                <h3 className="text-sm font-bold text-brand-navy">
+                  {dict.catalogHome.rfqHeading}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {dict.catalogHome.rfqDescription}
+                </p>
+              </div>
+              <div className="bg-white p-5">
+                <h3 className="text-sm font-bold text-brand-navy">
+                  {dict.catalogHome.ecommerceHeading}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {dict.catalogHome.ecommerceDescription}
+                </p>
+              </div>
+              <div className="bg-white p-5">
+                <h3 className="text-sm font-bold text-brand-navy">
+                  {dict.catalogHome.outboundHeading}
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {dict.catalogHome.outboundDescription}
+                </p>
+              </div>
+            </div>
+          </section>
         </div>
       </main>
 
