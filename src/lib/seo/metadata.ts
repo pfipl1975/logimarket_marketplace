@@ -29,8 +29,8 @@ export async function generateCatalogMetadata(locale: Locale): Promise<Metadata>
   const catalogPath = locale === defaultLocale ? "/katalog" : `/${locale}/katalog`;
 
   return {
-    title: `${dict.nav.catalog} | ${locale === defaultLocale ? "LogiMarket.pl" : "LogiMarket"}`,
-    description: dict.meta.description,
+    title: `${dict.catalogHome.metaTitle} | ${locale === defaultLocale ? "LogiMarket.pl" : "LogiMarket"}`,
+    description: dict.catalogHome.metaDescription,
     alternates: {
       canonical: absoluteUrl(catalogPath),
       languages: {
