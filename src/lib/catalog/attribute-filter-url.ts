@@ -23,7 +23,7 @@ function parseYear(raw: string | undefined): number | undefined {
   const value = raw.trim();
   if (!value || !/^[+-]?\d+$/.test(value)) return undefined;
   const parsed = Number(value);
-  return Number.isSafeInteger(parsed) && Math.abs(parsed) <= MAX_ABSOLUTE_NUMBER ? parsed : undefined;
+  return Number.isSafeInteger(parsed) ? parsed : undefined;
 }
 
 export function resolveAttributeFilterUrlState(
@@ -188,6 +188,34 @@ export function resolveAttributeFilterUrlState(
   for (const key of Object.keys(raw)) {
     if (key.startsWith("af_") && !validKeys.has(key)) {
       isCanonical = false;
+    }
+  }
+
+  const rawAttributePairs: [string, string][] = [];
+  for (const [key, values] of Object.entries(raw)) {
+    if (!key.startsWith("af_")) continue;
+    for (const value of values) {
+      rawAttributePairs.push([key, value]);
+    }
+  }
+
+  const canonicalAttributePairs: [string, string][] = [];
+  const canonicalKeys = Object.keys(params).sort();
+  for (const key of canonicalKeys) {
+    const values = [...params[key]].sort();
+    for (const value of values) {
+      canonicalAttributePairs.push([key, value]);
+    }
+  }
+
+  if (rawAttributePairs.length !== canonicalAttributePairs.length) {
+    isCanonical = false;
+  } else {
+    for (let i = 0; i < rawAttributePairs.length; i++) {
+      if (rawAttributePairs[i][0] !== canonicalAttributePairs[i][0] || rawAttributePairs[i][1] !== canonicalAttributePairs[i][1]) {
+        isCanonical = false;
+        break;
+      }
     }
   }
 
