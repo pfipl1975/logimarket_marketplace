@@ -108,7 +108,9 @@ export function buildCategoryOfferQueryHref(
   }
 
   const params = new URLSearchParams();
-  params.set("view", nextView);
+  if (nextView !== "grid") {
+    params.set("view", nextView);
+  }
 
   if (nextSort !== "default") {
     params.set("sort", nextSort);
@@ -130,7 +132,8 @@ export function buildCategoryOfferQueryHref(
     }
   }
 
-  return `${basePath}?${params.toString()}`;
+  const qs = params.toString();
+  return qs ? `${basePath}?${qs}` : basePath;
 }
 
 export function buildClearAllCategoryFiltersHref(

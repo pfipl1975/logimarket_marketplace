@@ -89,7 +89,11 @@
     "sortDefault": "Défaut",
     "sortPriceAsc": "Prix : croissant",
     "sortPriceDesc": "Prix : décroissant",
-    "sortNewest": "Les plus récents"
+    "sortNewest": "Les plus récents",
+    "filtersBooleanAny": "Tous",
+    "filtersBooleanYes": "Oui",
+    "filtersBooleanNo": "Non",
+    "filtersMultiEnumGuidance": "Vous pouvez sélectionner plusieurs options"
   },
   "catalogHome": {
     "metaTitle": "Catalogue d'équipement d'entrepôt et d'intralogistique",

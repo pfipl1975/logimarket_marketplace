@@ -19,11 +19,11 @@ const rejected = resolveAttributeFilterUrlState(definitions as never, {
   af_external_length_min: ["NaN"], af_capacity_min: ["50"], af_capacity_max: ["20"],
   af_material: ["sql-like-text"], af_stackable: ["true"], af_unknown_min: ["1"],
 });
-assert.deepEqual(rejected.input, { controlled: [], numbers: [] });
+assert.deepEqual(rejected.input, { controlled: [], numbers: [], years: [], booleans: [] });
 
 const parsed = resolveCategoryOfferFilters({ view: "list", af_material: ["pp"], af_capacity_max: "20" });
 const href = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", sort: "default", filters: parsed }, { view: "grid" });
-assert.equal(href, "/katalog/c-test?view=grid&af_capacity_max=20&af_material=pp");
+assert.equal(href, "/katalog/c-test?af_capacity_max=20&af_material=pp");
 const resetHref = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", sort: "default", filters: parsed }, { clearAttributeFilters: true });
 assert.equal(resetHref, "/katalog/c-test?view=list");
 

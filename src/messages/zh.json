@@ -89,7 +89,11 @@
     "sortDefault": "默认",
     "sortPriceAsc": "价格：从低到高",
     "sortPriceDesc": "价格：从高到低",
-    "sortNewest": "最新"
+    "sortNewest": "最新",
+    "filtersBooleanAny": "全部",
+    "filtersBooleanYes": "是",
+    "filtersBooleanNo": "否",
+    "filtersMultiEnumGuidance": "您可以选择多个选项"
   },
   "catalogHome": {
     "metaTitle": "仓储设备与内部物流目录",

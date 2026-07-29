@@ -89,7 +89,11 @@
     "sortDefault": "Default",
     "sortPriceAsc": "Price: low to high",
     "sortPriceDesc": "Price: high to low",
-    "sortNewest": "Newest"
+    "sortNewest": "Newest",
+    "filtersBooleanAny": "Any",
+    "filtersBooleanYes": "Yes",
+    "filtersBooleanNo": "No",
+    "filtersMultiEnumGuidance": "You can select multiple options"
   },
   "catalogHome": {
     "metaTitle": "Warehouse equipment and intralogistics catalog",

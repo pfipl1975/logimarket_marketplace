@@ -89,7 +89,11 @@
     "mobileCatalogBackToMenu": "Wróć do menu",
     "mobileCatalogViewCatalog": "Zobacz cały katalog",
     "mobileCatalogViewCurrent": "Zobacz wszystkie",
-    "mobileCatalogOpenLevel": "Rozwiń podkategorię"
+    "mobileCatalogOpenLevel": "Rozwiń podkategorię",
+    "filtersBooleanAny": "Dowolne",
+    "filtersBooleanYes": "Tak",
+    "filtersBooleanNo": "Nie",
+    "filtersMultiEnumGuidance": "Możesz wybrać wiele opcji"
   },
   "catalogHome": {
     "metaTitle": "Katalog sprzętu i wyposażenia magazynowego",
