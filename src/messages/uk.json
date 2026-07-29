@@ -89,7 +89,11 @@
     "sortDefault": "За замовчуванням",
     "sortPriceAsc": "Ціна: за зростанням",
     "sortPriceDesc": "Ціна: за спаданням",
-    "sortNewest": "Найновіші"
+    "sortNewest": "Найновіші",
+    "filtersBooleanAny": "Будь-який",
+    "filtersBooleanYes": "Так",
+    "filtersBooleanNo": "Ні",
+    "filtersMultiEnumGuidance": "Можна вибрати кілька варіантів"
   },
   "catalogHome": {
     "metaTitle": "Каталог складського обладнання та інтралогістики",

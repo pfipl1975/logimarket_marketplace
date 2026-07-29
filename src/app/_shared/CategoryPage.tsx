@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCategoryAttributeConfiguration, getCategoryBySlug, getFilteredCategoryOffers } from "@/app/actions";
+import type { CatalogOffer } from "@/app/actions";
 import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -144,22 +145,30 @@ export async function CategoryPage({
     ...filters,
     attributeParams: attributeState.params,
   };
+  
+  const basePath = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog/c-${category.slug}`;
+
+  if (!attributeState.isCanonical) {
+    redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, currentPage));
+  }
+
   const filteredResult = await getFilteredCategoryOffers({
     categoryId: category.id,
     offerModel: effectiveFilters.model,
     featured: effectiveFilters.featured,
     controlled: attributeState.input.controlled,
     numbers: attributeState.input.numbers,
+    years: attributeState.input.years,
+    booleans: attributeState.input.booleans,
     page: currentPage,
     pageSize: CATALOG_PAGE_SIZE,
     sort,
   });
-  const offers = filteredResult.ok ? filteredResult.items : [];
+  const offers: CatalogOffer[] = filteredResult.ok ? filteredResult.items : [];
   const totalOffers = filteredResult.ok ? filteredResult.total : 0;
   const totalPages = Math.max(1, Math.ceil(totalOffers / CATALOG_PAGE_SIZE));
 
   if (filteredResult.ok) {
-    const basePath = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog/c-${category.slug}`;
     if (totalOffers === 0 && currentPage > 1) {
       redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, 1));
     }
@@ -609,6 +618,10 @@ export async function CategoryPage({
             to: dict.catalog.attributeFiltersTo,
             apply: dict.catalog.attributeFiltersApply,
             clear: dict.catalog.attributeFiltersClear,
+            booleanAny: dict.catalog.filtersBooleanAny,
+            booleanYes: dict.catalog.filtersBooleanYes,
+            booleanNo: dict.catalog.filtersBooleanNo,
+            multiEnumGuidance: dict.catalog.filtersMultiEnumGuidance,
           }}
         />
 

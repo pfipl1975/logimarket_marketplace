@@ -13,6 +13,10 @@ type Labels = {
   to: string;
   apply: string;
   clear: string;
+  booleanAny: string;
+  booleanYes: string;
+  booleanNo: string;
+  multiEnumGuidance: string;
 };
 
 type Props = {
@@ -24,25 +28,24 @@ type Props = {
   labels: Labels;
 };
 
-function AttributeControls({ definitions, filters, labels }: Pick<Props, "definitions" | "filters" | "labels">) {
+function AttributeControls({ definitions, filters, labels, idPrefix }: Pick<Props, "definitions" | "filters" | "labels"> & { idPrefix: string }) {
   const values = filters.attributeParams ?? {};
   return (
     <>
       {definitions.map((definition) => {
         const key = definition.stableKey;
-        if (definition.dataType === "number") {
+        if (definition.dataType === "number" || definition.dataType === "year") {
           return (
             <fieldset key={definition.attributeId} className="min-w-0">
               <legend className="text-sm font-semibold text-brand-navy">{definition.name}</legend>
               <div className="mt-2 grid grid-cols-2 gap-2">
-                <label className="min-w-0 text-xs text-muted-foreground">
-                  {labels.from}
-                  <span className="sr-only"> {definition.name}</span>
+                <label className="min-w-0 flex flex-col text-xs text-muted-foreground">
+                  <span className="whitespace-normal break-words">{labels.from}<span className="sr-only"> {definition.name}</span></span>
                   <div className="relative mt-1">
                     <input
                       name={`af_${key}_min`}
                       defaultValue={values[`af_${key}_min`]?.[0] ?? ""}
-                      inputMode="decimal"
+                      inputMode={definition.dataType === "year" ? "numeric" : "decimal"}
                       className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal h-[38px]"
                     />
                     {definition.unitCode && (
@@ -52,14 +55,13 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
                     )}
                   </div>
                 </label>
-                <label className="min-w-0 text-xs text-muted-foreground">
-                  {labels.to}
-                  <span className="sr-only"> {definition.name}</span>
+                <label className="min-w-0 flex flex-col text-xs text-muted-foreground">
+                  <span className="whitespace-normal break-words">{labels.to}<span className="sr-only"> {definition.name}</span></span>
                   <div className="relative mt-1">
                     <input
                       name={`af_${key}_max`}
                       defaultValue={values[`af_${key}_max`]?.[0] ?? ""}
-                      inputMode="decimal"
+                      inputMode={definition.dataType === "year" ? "numeric" : "decimal"}
                       className="min-w-0 w-full rounded border border-border bg-white px-3 py-2 pr-9 text-sm text-brand-navy outline-none focus:border-brand-teal h-[38px]"
                     />
                     {definition.unitCode && (
@@ -74,9 +76,9 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
           );
         }
 
-        if (definition.dataType === "enum" || definition.dataType === "multi_enum") {
+        if (definition.dataType === "enum") {
           return (
-            <label key={definition.attributeId} className="block min-w-0 text-sm font-semibold text-brand-navy">
+            <label key={definition.attributeId} className="block min-w-0 text-sm font-semibold text-brand-navy whitespace-normal break-words">
               {definition.name}
               <select
                 name={`af_${key}`}
@@ -93,6 +95,62 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
             </label>
           );
         }
+
+        if (definition.dataType === "boolean") {
+          return (
+            <label key={definition.attributeId} className="block min-w-0 text-sm font-semibold text-brand-navy whitespace-normal break-words">
+              {definition.name}
+              <select
+                name={`af_${key}`}
+                defaultValue={values[`af_${key}`]?.[0] ?? ""}
+                className="mt-2 w-full rounded border border-border bg-white px-3 py-2 text-sm font-normal text-brand-navy outline-none focus:border-brand-teal h-[38px]"
+              >
+                <option value="">{labels.booleanAny}</option>
+                <option value="true">{labels.booleanYes}</option>
+                <option value="false">{labels.booleanNo}</option>
+              </select>
+            </label>
+          );
+        }
+
+        if (definition.dataType === "multi_enum") {
+          const activeValues = values[`af_${key}`] ?? [];
+          const descId = `${idPrefix}-desc-${definition.attributeId}`;
+          return (
+            <fieldset key={definition.attributeId} className="min-w-0">
+              <legend className="text-sm font-semibold text-brand-navy">{definition.name}</legend>
+              <p id={descId} className="mt-1 text-xs text-muted-foreground mb-2">
+                {labels.multiEnumGuidance}
+              </p>
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                {definition.options.map((option) => {
+                  const inputId = `${idPrefix}-opt-${option.optionId}`;
+                  return (
+                    <div key={option.optionId} className="flex items-start">
+                      <div className="flex items-center h-5">
+                        <input
+                          id={inputId}
+                          name={`af_${key}`}
+                          type="checkbox"
+                          value={option.stableKey}
+                          defaultChecked={activeValues.includes(option.stableKey)}
+                          aria-describedby={descId}
+                          className="h-4 w-4 rounded border-gray-300 text-brand-navy focus:ring-brand-teal"
+                        />
+                      </div>
+                      <div className="ml-3 text-sm min-w-0">
+                        <label htmlFor={inputId} className="font-medium text-brand-navy whitespace-normal break-words cursor-pointer select-none">
+                          {option.label}
+                        </label>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </fieldset>
+          );
+        }
+
         return null;
       })}
     </>
@@ -112,13 +170,13 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
       <div className="hidden md:block">
         <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">{labels.heading}</h2>
         <form action={basePath} className="mt-4">
-          <input type="hidden" name="view" value={view} />
+          {view === "list" && <input type="hidden" name="view" value="list" />}
           {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
-          <div className="grid gap-4 items-end md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-            <AttributeControls definitions={definitions} filters={filters} labels={labels} />
-            <div className="flex items-center gap-3 pb-0.5 xl:justify-start">
+          <div className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+            <AttributeControls definitions={definitions} filters={filters} labels={labels} idPrefix="desktop" />
+            <div className="flex items-center gap-3 pt-6 xl:justify-start self-start">
               <button
                 type="submit"
                 className="rounded bg-brand-navy px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-brand-teal whitespace-nowrap min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
@@ -142,12 +200,12 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
       <details className="md:hidden">
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">{labels.summary}</summary>
         <form action={basePath} className="mt-4 space-y-5 border-t border-border pt-4">
-          <input type="hidden" name="view" value={view} />
+          {view === "list" && <input type="hidden" name="view" value="list" />}
           {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
           <div className="grid gap-4 grid-cols-1">
-            <AttributeControls definitions={definitions} filters={filters} labels={labels} />
+            <AttributeControls definitions={definitions} filters={filters} labels={labels} idPrefix="mobile" />
           </div>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <button

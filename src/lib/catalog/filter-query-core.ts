@@ -84,7 +84,7 @@ async function validateConfiguration(db: Db, input: NormalizedFilterQuery): Prom
   return { errors, dataTypes: new Map([...attributes].map(([id, value]) => [id, value.dataType])) };
 }
 
-function buildPredicates(db: Db, input: NormalizedFilterQuery, categoryIds: number[], dataTypes: Map<number, string>): SQL[] {
+export function buildFilterPredicates(db: Db, input: NormalizedFilterQuery, categoryIds: number[], dataTypes: Map<number, string>): SQL[] {
   const predicates: SQL[] = [
     eq(schema.offers.isActive, true),
     eq(schema.offers.publicationStatus, "published"),
@@ -125,7 +125,7 @@ export async function queryFilteredCategoryOffers(db: Db, input: NormalizedFilte
   if (configuration.errors.length) return { ok: false, errors: configuration.errors };
   const categoryRows = categories.map((category) => ({ ...category, name: "", slug: "", createdAt: new Date(0) }));
   const scope = [input.categoryId, ...getCategoryDescendantIds(categoryRows, input.categoryId)];
-  const where = and(...buildPredicates(db, input, scope, configuration.dataTypes));
+  const where = and(...buildFilterPredicates(db, input, scope, configuration.dataTypes));
   const countRows = await db.select({ total: count() }).from(schema.offers).where(where);
   const itemBase = db.select({ offer: schema.offers, category: schema.categories, partner: schema.partners })
     .from(schema.offers).leftJoin(schema.categories, eq(schema.offers.categoryId, schema.categories.id))

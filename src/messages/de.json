@@ -89,7 +89,11 @@
     "sortDefault": "Standard",
     "sortPriceAsc": "Preis: aufsteigend",
     "sortPriceDesc": "Preis: absteigend",
-    "sortNewest": "Neueste"
+    "sortNewest": "Neueste",
+    "filtersBooleanAny": "Beliebig",
+    "filtersBooleanYes": "Ja",
+    "filtersBooleanNo": "Nein",
+    "filtersMultiEnumGuidance": "Sie können mehrere Optionen auswählen"
   },
   "catalogHome": {
     "metaTitle": "Katalog für Lagertechnik und Intralogistik",

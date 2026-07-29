@@ -89,7 +89,11 @@
     "sortDefault": "Por defecto",
     "sortPriceAsc": "Precio: de menor a mayor",
     "sortPriceDesc": "Precio: de mayor a menor",
-    "sortNewest": "Más recientes"
+    "sortNewest": "Más recientes",
+    "filtersBooleanAny": "Cualquiera",
+    "filtersBooleanYes": "Sí",
+    "filtersBooleanNo": "No",
+    "filtersMultiEnumGuidance": "Puedes seleccionar varias opciones"
   },
   "catalogHome": {
     "metaTitle": "Catálogo de equipamiento de almacén e intralogística",
