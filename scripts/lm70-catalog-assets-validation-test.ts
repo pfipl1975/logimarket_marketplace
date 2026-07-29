@@ -126,74 +126,95 @@ function extractMap(obj: ts.ObjectLiteralExpression) {
   return entries;
 }
 
+// -----------------------------------------------------------------------------
+// SHARED VALIDATION HELPERS
+// -----------------------------------------------------------------------------
+
+function assertAllowedSvgFilename(name: string): void {
+  assert.ok(name.endsWith('.svg'), `Filename must end with .svg: ${name}`);
+  assert.ok(name.match(/\.svg$/) && name === name.replace(/\.svg\..*$/, '.svg'), `Filename must exactly end with .svg without tricks: ${name}`);
+}
+
+function assertLocalCssUrlValue(value: string, context: string): void {
+  const trimmed = value.trim();
+  const validLocalFragment = /^#[A-Za-z_][A-Za-z0-9_.:-]*$/;
+  assert.ok(validLocalFragment.test(trimmed), `CSS url must be a valid local fragment in ${context}: ${value}`);
+}
+
+function assertLocalHrefValue(value: string, context: string): void {
+  const trimmed = value.trim();
+  const validLocalFragment = /^#[A-Za-z_][A-Za-z0-9_.:-]*$/;
+  assert.ok(validLocalFragment.test(trimmed), `href must be a valid local fragment in ${context}: ${value}`);
+}
+
+function assertNoXlinkHref(content: string, context: string): void {
+  assert.ok(!content.toLowerCase().includes('xlink:href'), `xlink:href is forbidden in ${context}`);
+}
+
+function assertNoEventHandlers(content: string, context: string): void {
+  assert.ok(!content.match(/\bon[a-z0-9:_-]*\s*=/i), `Inline event handler found in ${context}`);
+}
+
+function assertAllowedColorValue(
+  value: string,
+  allowedColors: ReadonlySet<string>,
+  context: string
+): void {
+  assert.ok(allowedColors.has(value.trim().toLowerCase()), `Color not allowed in ${context}: ${value}`);
+}
+
+// -----------------------------------------------------------------------------
+
+function expectReject(label: string, callback: () => void): void {
+  let thrown = false;
+  try {
+    callback();
+  } catch (e) {
+    thrown = true;
+  }
+  assert.ok(thrown, `Expected rejection but passed: ${label}`);
+}
+
 function runSelfTests() {
-  const testNames = ['asset.png', 'asset.svg.exe', 'notes.txt'];
-  testNames.forEach(name => {
-    let thrown = false;
-    try {
-      assert.ok(name.endsWith('.svg') && !name.endsWith('.svg.exe') /* simplified simulation for test */);
-      // Let's accurately simulate what we do in directory check: exactly ending with .svg
-      assert.ok(name.match(/\.svg$/) && name === name.replace(/\.svg\..*$/, '.svg'));
-      // A more robust check done in main code is just string.endsWith('.svg') ?
-      // Wait, .endsWith('.svg') on 'asset.svg.exe' returns FALSE! So it naturally fails!
-      assert.ok(name.endsWith('.svg'), `Should end with .svg`);
-    } catch(e) {
-      thrown = true;
-    }
-    assert.ok(thrown, `Failed to reject non-SVG filename: ${name}`);
-  });
+  expectReject('reject asset.png', () => assertAllowedSvgFilename('asset.png'));
+  expectReject('reject asset.svg.exe', () => assertAllowedSvgFilename('asset.svg.exe'));
+  expectReject('reject notes.txt', () => assertAllowedSvgFilename('notes.txt'));
+  assertAllowedSvgFilename('asset.svg');
 
-  const rejectUrl = "url(https://example.com/a.svg#x)";
-  let thrownUrl = false;
-  try {
-    const val = rejectUrl.match(/url\(['"]?(.*?)['"]?\)/)?.[1];
-    assert.ok(val && val.startsWith('#') && !val.includes('://'), 'Reject external url');
-  } catch(e) { thrownUrl = true; }
-  assert.ok(thrownUrl, 'Failed to reject external url');
+  expectReject('reject external CSS URL', () => assertLocalCssUrlValue('https://example.com/a.svg#x', 'test'));
+  expectReject('reject external CSS URL 2', () => assertLocalCssUrlValue('//example.com/a.svg#x', 'test'));
+  expectReject('reject external CSS URL 3', () => assertLocalCssUrlValue('data:image/svg+xml;base64,...', 'test'));
+  expectReject('reject external CSS URL 4', () => assertLocalCssUrlValue('#', 'test'));
+  expectReject('reject external CSS URL 5', () => assertLocalCssUrlValue('#bad value', 'test'));
+  assertLocalCssUrlValue('#x', 'test');
+  assertLocalCssUrlValue('#gradient-1', 'test');
 
-  const acceptUrl = "url(#x)";
-  const valAccept = acceptUrl.match(/url\(['"]?(.*?)['"]?\)/)?.[1];
-  assert.ok(valAccept && valAccept.startsWith('#'), 'Failed to accept local url');
+  expectReject('reject href=https://example.com', () => assertLocalHrefValue('https://example.com', 'test'));
+  expectReject('reject href = https://example.com', () => assertLocalHrefValue('https://example.com', 'test'));
+  assertLocalHrefValue('#x', 'test');
 
-  const rejectHref = 'href="https://example.com"';
-  let thrownHref = false;
-  try {
-    const val = rejectHref.match(/href=["'](.*?)["']/i)?.[1];
-    assert.ok(val && val.startsWith('#'), 'Reject external href');
-  } catch(e) { thrownHref = true; }
-  assert.ok(thrownHref, 'Failed to reject external href');
+  expectReject('reject every xlink:href', () => assertNoXlinkHref('<use xlink:href="#something" />', 'test'));
+  expectReject('reject onload=', () => assertNoEventHandlers('<svg onload="alert(1)">', 'test'));
+  expectReject('reject onload =', () => assertNoEventHandlers('<svg onload = "alert(1)">', 'test'));
 
-  const acceptHref = 'href="#x"';
-  const valHrefAccept = acceptHref.match(/href=["'](.*?)["']/i)?.[1];
-  assert.ok(valHrefAccept && valHrefAccept.startsWith('#'), 'Failed to accept local href');
-
-  const rejectXlink = '<use xlink:href="#something" />';
-  assert.ok(rejectXlink.toLowerCase().includes('xlink:href'), 'Failed to reject xlink:href');
-
-  const rejectEvent = '<svg onload = "alert(1)">';
-  assert.ok(rejectEvent.match(/\bon[a-z0-9:_-]*\s*=/i), 'Failed to reject onload =');
-
-  const rejectColor1 = 'red';
-  const rejectColor2 = 'rgb(255,0,0)';
-  const acceptColor = '#141c2c';
-  const allowedColors = ['#141c2c', '#147487', '#eab308', 'none'];
-
-  assert.ok(!allowedColors.includes(rejectColor1.toLowerCase()), 'Failed to reject named color');
-  assert.ok(!allowedColors.includes(rejectColor2.toLowerCase()), 'Failed to reject rgb color');
-  assert.ok(allowedColors.includes(acceptColor.toLowerCase()), 'Failed to accept valid hex');
+  const testColors = new Set(['#141c2c', '#147487', '#eab308', 'none']);
+  expectReject('reject fill=red', () => assertAllowedColorValue('red', testColors, 'test'));
+  expectReject('reject fill=rgb(...)', () => assertAllowedColorValue('rgb(255,0,0)', testColors, 'test'));
+  expectReject('reject fill=currentColor', () => assertAllowedColorValue('currentColor', testColors, 'test'));
+  assertAllowedColorValue('#141c2c', testColors, 'test');
+  assertAllowedColorValue('none', testColors, 'test');
 }
 
 function checkColorsInContent(p: string, content: string, isFallback: boolean) {
-  const allowedColors = ['#141c2c', '#147487', '#eab308', 'none'];
+  const allowed = new Set(['#141c2c', '#147487', '#eab308', 'none']);
   if (isFallback) {
-    allowedColors.splice(allowedColors.indexOf('#eab308'), 1);
+    allowed.delete('#eab308');
   }
 
   const colorAttrRegex = /(?:fill|stroke|color|stop-color|flood-color|lighting-color)\s*=\s*["']([^"']+)["']/gi;
   let match;
   while ((match = colorAttrRegex.exec(content)) !== null) {
-    const color = match[1].trim().toLowerCase();
-    assert.ok(allowedColors.includes(color), `File ${p} contains invalid color value: ${color}`);
+    assertAllowedColorValue(match[1], allowed, p);
   }
 
   const styleAttrRegex = /style\s*=\s*["']([^"']+)["']/gi;
@@ -207,8 +228,7 @@ function checkColorsInContent(p: string, content: string, isFallback: boolean) {
         const key = parts[0].trim().toLowerCase();
         const colorProps = ['fill', 'stroke', 'color', 'stop-color', 'flood-color', 'lighting-color'];
         if (colorProps.includes(key)) {
-          const color = parts[1].trim().toLowerCase();
-          assert.ok(allowedColors.includes(color), `File ${p} contains invalid color in style: ${color}`);
+          assertAllowedColorValue(parts[1], allowed, p);
         }
       }
     }
@@ -282,7 +302,7 @@ function runValidation() {
     return entries.map(entry => {
       assert.ok(entry.isFile() === true, `Entry ${entry.name} is not a regular file`);
       assert.ok(!entry.isSymbolicLink(), `Entry ${entry.name} is a symlink`);
-      assert.ok(entry.name.endsWith('.svg'), `File ${entry.name} does not end exactly with .svg`);
+      assertAllowedSvgFilename(entry.name);
       return entry.name;
     });
   }
@@ -365,22 +385,26 @@ function runValidation() {
       assert.ok(!lowerContent.includes(tag), `File ${p} contains forbidden element: ${tag}`);
     });
 
-    assert.ok(!lowerContent.match(/\bon[a-z0-9:_-]*\s*=/i), `File ${p} contains inline event handler`);
-    assert.ok(!lowerContent.includes('xlink:href'), `File ${p} contains xlink:href`);
+    assertNoEventHandlers(content, p);
+    assertNoXlinkHref(content, p);
 
     const urls = content.match(/url\(['"]?(.*?)['"]?\)/gi);
     if (urls) {
       urls.forEach(u => {
         const val = u.match(/url\(['"]?(.*?)['"]?\)/i)?.[1];
-        assert.ok(val && val.startsWith('#') && !val.includes('://'), `File ${p} contains external CSS url: ${u}`);
+        if (val !== undefined) {
+          assertLocalCssUrlValue(val, p);
+        }
       });
     }
 
-    const hrefs = content.match(/\bhref=["'](.*?)["']/gi);
+    const hrefs = content.match(/\bhref\s*=\s*["']([^"']*)["']/gi);
     if (hrefs) {
       hrefs.forEach(h => {
-        const val = h.match(/href=["'](.*?)["']/i)?.[1];
-        assert.ok(val && val.startsWith('#'), `File ${p} contains external href: ${h}`);
+        const val = h.match(/\bhref\s*=\s*["']([^"']*)["']/i)?.[1];
+        if (val !== undefined) {
+          assertLocalHrefValue(val, p);
+        }
       });
     }
 
