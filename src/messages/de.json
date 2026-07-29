@@ -84,7 +84,12 @@
     "mobileCatalogBackToMenu": "Zurück zum Menü",
     "mobileCatalogViewCatalog": "Gesamten Katalog ansehen",
     "mobileCatalogViewCurrent": "Alle anzeigen",
-    "mobileCatalogOpenLevel": "Unterkategorie öffnen"
+    "mobileCatalogOpenLevel": "Unterkategorie öffnen",
+    "sortLabel": "Sortieren nach",
+    "sortDefault": "Standard",
+    "sortPriceAsc": "Preis: aufsteigend",
+    "sortPriceDesc": "Preis: absteigend",
+    "sortNewest": "Neueste"
   },
   "catalogHome": {
     "metaTitle": "Katalog für Lagertechnik und Intralogistik",

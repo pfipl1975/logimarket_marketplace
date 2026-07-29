@@ -19,6 +19,7 @@ import {
   hasActiveCategoryOfferFilters,
   type CategoryOfferFilters as CategoryOfferFiltersState,
   type OfferModelFilter,
+  type CatalogOfferSort,
 } from "@/lib/catalog/query";
 import { resolveAttributeFilterUrlState } from "@/lib/catalog/attribute-filter-url";
 import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
@@ -26,6 +27,7 @@ import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
 import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { CategoryPagination } from "@/components/catalog/CategoryPagination";
+import { CategoryOfferSort } from "@/components/catalog/CategoryOfferSort";
 import { CATALOG_PAGE_SIZE, buildCategoryPaginationHref } from "@/lib/catalog/pagination";
 import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
 import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
@@ -44,6 +46,7 @@ interface CategoryPageProps {
   locale: Locale;
   categorySlug: string; // dbSlug (without 'c-' prefix)
   view?: "grid" | "list";
+  sort: CatalogOfferSort;
   filters?: CategoryOfferFiltersState;
   currentPage?: number;
 }
@@ -118,6 +121,7 @@ export async function CategoryPage({
   locale,
   categorySlug,
   view = "grid",
+  sort,
   filters = {},
   currentPage = 1,
 }: CategoryPageProps) {
@@ -148,6 +152,7 @@ export async function CategoryPage({
     numbers: attributeState.input.numbers,
     page: currentPage,
     pageSize: CATALOG_PAGE_SIZE,
+    sort,
   });
   const offers = filteredResult.ok ? filteredResult.items : [];
   const totalOffers = filteredResult.ok ? filteredResult.total : 0;
@@ -156,10 +161,10 @@ export async function CategoryPage({
   if (filteredResult.ok) {
     const basePath = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog/c-${category.slug}`;
     if (totalOffers === 0 && currentPage > 1) {
-      redirect(buildCategoryPaginationHref(basePath, { view, filters: effectiveFilters }, 1));
+      redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, 1));
     }
     if (totalOffers > 0 && currentPage > totalPages) {
-      redirect(buildCategoryPaginationHref(basePath, { view, filters: effectiveFilters }, totalPages));
+      redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, totalPages));
     }
   }
 
@@ -246,7 +251,7 @@ export async function CategoryPage({
   };
 
   // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
-  const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters);
+  const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters) || sort !== "default";
   const cleanPaginationSuffix = currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
   const pageJsonLdUrl = absoluteUrl(`${canonicalPath}${cleanPaginationSuffix}`);
 
@@ -338,7 +343,7 @@ export async function CategoryPage({
   const headings = blockHeadings[locale] || blockHeadings.pl;
   const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
   const hasNestedSubcategories = subcategories.some((sub) => sub.children.length > 0);
-  const queryState = { view, filters: effectiveFilters };
+  const queryState = { view, sort, filters: effectiveFilters };
   const hasActiveFilters = hasActiveCategoryOfferFilters(effectiveFilters);
   const renderedOffers = offers;
   const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "grid" });
@@ -576,6 +581,7 @@ export async function CategoryPage({
           <CategoryOfferFilters
             basePath={viewBasePath}
             view={view}
+            sort={sort}
             filters={effectiveFilters}
             labels={{
               filtersHeading: dict.catalog.filtersHeading,
@@ -593,6 +599,7 @@ export async function CategoryPage({
         <CategoryAttributeFilters
           basePath={viewBasePath}
           view={view}
+          sort={sort}
           filters={effectiveFilters}
           definitions={attributeDefinitions}
           labels={{
@@ -615,7 +622,23 @@ export async function CategoryPage({
             </p>
           </div>
 
-          <nav aria-label={dict.offers.viewSwitcherAria} className="flex w-fit overflow-hidden rounded border border-border">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <CategoryOfferSort
+              basePath={viewBasePath}
+              view={view}
+              currentSort={sort}
+              filters={effectiveFilters}
+              labels={{
+                sortLabel: dict.catalog.sortLabel || "Sortuj:",
+                sortDefault: dict.catalog.sortDefault || "Domyślnie",
+                sortPriceAsc: dict.catalog.sortPriceAsc || "Cena: od najniższej",
+                sortPriceDesc: dict.catalog.sortPriceDesc || "Cena: od najwyższej",
+                sortNewest: dict.catalog.sortNewest || "Najnowsze",
+                apply: dict.catalog.attributeFiltersApply || "Zastosuj",
+              }}
+            />
+
+            <nav aria-label={dict.offers.viewSwitcherAria} className="flex w-fit overflow-hidden rounded border border-border">
             <Link
               href={gridHref}
               aria-current={view === "grid" ? "page" : undefined}
@@ -639,6 +662,7 @@ export async function CategoryPage({
               {dict.offers.listView}
             </Link>
           </nav>
+          </div>
         </div>
 
         {renderedOffers.length === 0 ? (
@@ -654,8 +678,8 @@ export async function CategoryPage({
             </p>
             {hasActiveFilters && (
               <Link
-                href={clearFiltersHref}
-                className="mt-2 rounded border border-border bg-white px-4 py-2 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"
+                href={buildCategoryOfferQueryHref(viewBasePath, { view, sort, filters: effectiveFilters }, { clearAttributeFilters: true })}
+                className="mt-4 rounded bg-brand-navy px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-teal"
               >
                 {dict.catalog.filtersClear}
               </Link>

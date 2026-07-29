@@ -1,4 +1,4 @@
-import type { FilterErrorCode, FilterQueryInput, OfferModelFilter } from "./types";
+import type { FilterErrorCode, FilterQueryInput, OfferModelFilter, CatalogOfferSort } from "./types";
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -38,6 +38,14 @@ export function parseFilterQueryInput(raw: unknown): { ok: true; value: FilterQu
       parsed.featured = true;
     } else {
       return { ok: false, errors: ["INVALID_INPUT"] };
+    }
+  }
+
+  if (raw.sort !== undefined) {
+    if (raw.sort === "default" || raw.sort === "price-asc" || raw.sort === "price-desc" || raw.sort === "newest") {
+      parsed.sort = raw.sort as CatalogOfferSort;
+    } else {
+      return { ok: false, errors: ["INVALID_SORT"] };
     }
   }
 

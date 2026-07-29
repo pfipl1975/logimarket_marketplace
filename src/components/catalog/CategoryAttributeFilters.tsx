@@ -18,6 +18,7 @@ type Labels = {
 type Props = {
   basePath: string;
   view: OfferListingView;
+  sort: import("@/lib/filters/types").CatalogOfferSort;
   filters: CategoryOfferFilters;
   definitions: CategoryAttributeConfiguration[];
   labels: Labels;
@@ -98,9 +99,9 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
   );
 }
 
-export function CategoryAttributeFilters({ basePath, view, filters, definitions, labels }: Props) {
+export function CategoryAttributeFilters({ basePath, view, sort, filters, definitions, labels }: Props) {
   if (definitions.length === 0) return null;
-  const clearHref = buildCategoryOfferQueryHref(basePath, { view, filters }, { clearAttributeFilters: true });
+  const clearHref = buildCategoryOfferQueryHref(basePath, { view, sort, filters }, { clearAttributeFilters: true });
   const hiddenModel = filters.model ? <input type="hidden" name="model" value={filters.model} /> : null;
   const hiddenFeatured = filters.featured ? <input type="hidden" name="featured" value="1" /> : null;
   const hasActiveAttributeFilters = Object.keys(filters.attributeParams ?? {}).length > 0;
@@ -112,6 +113,7 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
         <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">{labels.heading}</h2>
         <form action={basePath} className="mt-4">
           <input type="hidden" name="view" value={view} />
+          {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
           <div className="grid gap-4 items-end md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -141,6 +143,7 @@ export function CategoryAttributeFilters({ basePath, view, filters, definitions,
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">{labels.summary}</summary>
         <form action={basePath} className="mt-4 space-y-5 border-t border-border pt-4">
           <input type="hidden" name="view" value={view} />
+          {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
           <div className="grid gap-4 grid-cols-1">

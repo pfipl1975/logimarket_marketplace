@@ -58,6 +58,10 @@ export function buildCategoryPaginationHref(
     params.set("view", state.view);
   }
 
+  if (state.sort && state.sort !== "default") {
+    params.set("sort", state.sort);
+  }
+
   if (state.filters.model) {
     params.set("model", state.filters.model);
   }

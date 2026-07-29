@@ -27,5 +27,6 @@ export function normalizeFilterQuery(input: FilterQueryInput): { ok: true; value
     years: [...years].sort((a, b) => a.attributeId - b.attributeId),
     booleans: [...booleans].sort((a, b) => a.attributeId - b.attributeId),
     ...(input.page === undefined ? {} : { page: input.page, pageSize: input.pageSize }),
+    sort: input.sort ?? "default",
   }};
 }

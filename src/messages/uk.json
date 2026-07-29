@@ -84,7 +84,12 @@
     "mobileCatalogBackToMenu": "Повернутися до меню",
     "mobileCatalogViewCatalog": "Переглянути весь каталог",
     "mobileCatalogViewCurrent": "Переглянути всі",
-    "mobileCatalogOpenLevel": "Відкрити підкатегорію"
+    "mobileCatalogOpenLevel": "Відкрити підкатегорію",
+    "sortLabel": "Сортувати за",
+    "sortDefault": "За замовчуванням",
+    "sortPriceAsc": "Ціна: за зростанням",
+    "sortPriceDesc": "Ціна: за спаданням",
+    "sortNewest": "Найновіші"
   },
   "catalogHome": {
     "metaTitle": "Каталог складського обладнання та інтралогістики",

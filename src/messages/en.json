@@ -84,7 +84,12 @@
     "mobileCatalogBackToMenu": "Back to menu",
     "mobileCatalogViewCatalog": "View entire catalog",
     "mobileCatalogViewCurrent": "View all",
-    "mobileCatalogOpenLevel": "Open subcategory"
+    "mobileCatalogOpenLevel": "Open subcategory",
+    "sortLabel": "Sort by",
+    "sortDefault": "Default",
+    "sortPriceAsc": "Price: low to high",
+    "sortPriceDesc": "Price: high to low",
+    "sortNewest": "Newest"
   },
   "catalogHome": {
     "metaTitle": "Warehouse equipment and intralogistics catalog",

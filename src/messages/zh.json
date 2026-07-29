@@ -84,7 +84,12 @@
     "mobileCatalogBackToMenu": "返回菜单",
     "mobileCatalogViewCatalog": "查看完整目录",
     "mobileCatalogViewCurrent": "查看全部",
-    "mobileCatalogOpenLevel": "打开子类别"
+    "mobileCatalogOpenLevel": "打开子类别",
+    "sortLabel": "排序方式",
+    "sortDefault": "默认",
+    "sortPriceAsc": "价格：从低到高",
+    "sortPriceDesc": "价格：从高到低",
+    "sortNewest": "最新"
   },
   "catalogHome": {
     "metaTitle": "仓储设备与内部物流目录",
