@@ -2,7 +2,6 @@ import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import * as schema from "../src/lib/schema";
 import { queryFilteredCategoryOffers } from "../src/lib/catalog/filter-query-core";
-import { sql } from "drizzle-orm";
 import assert from "node:assert/strict";
 
 async function runDbTests() {
@@ -12,21 +11,26 @@ async function runDbTests() {
     process.exit(2);
   }
 
-  let url;
+  let url: URL;
   try {
     url = new URL(connectionString);
-  } catch (e) {
-    console.error("Invalid database URL.");
+  } catch {
+    console.error("Invalid LM72_TEST_DATABASE_URL.");
     process.exit(1);
   }
 
-  const isLocal = url.hostname === "localhost" || url.hostname === "127.0.0.1" || url.hostname === "[::1]";
+  const isLocal =
+    url.hostname === "localhost" ||
+    url.hostname === "127.0.0.1" ||
+    url.hostname === "[::1]";
   const isAllowed = process.env.LM72_ALLOW_DISPOSABLE_DB === "1";
   const dbName = url.pathname.slice(1);
   const isTestDb = dbName.startsWith("lm72_test_");
 
   if (!isLocal || !isAllowed || !isTestDb) {
-    console.error("Database guard failed. Refusing to run tests on this database.");
+    console.error(
+      `DB guard failed: isLocal=${isLocal} isAllowed=${isAllowed} isTestDb=${isTestDb} dbName=${dbName}`
+    );
     process.exit(1);
   }
 
@@ -40,41 +44,42 @@ async function runDbTests() {
     await client.query("BEGIN");
     transactionStarted = true;
 
-    // Fixtures
+    // ─── Fixtures ─────────────────────────────────────────────────────────────
+
     const catParentId = 10001;
     const catChildId = 10002;
     const catUnrelatedId = 10003;
 
     await db.insert(schema.categories).values([
-      { id: catParentId, name: "Parent", slug: "parent", parentId: null },
-      { id: catChildId, name: "Child", slug: "child", parentId: catParentId },
-      { id: catUnrelatedId, name: "Unrelated", slug: "unrelated", parentId: null },
+      { id: catParentId, name: "Parent", slug: "lm72-parent", parentId: null },
+      { id: catChildId, name: "Child", slug: "lm72-child", parentId: catParentId },
+      { id: catUnrelatedId, name: "Unrelated", slug: "lm72-unrelated", parentId: null },
     ]);
 
     await db.insert(schema.attributeDefinitions).values([
-      { id: 101, stableKey: "num", dataType: "number", isActive: true },
-      { id: 102, stableKey: "year", dataType: "year", isActive: true },
-      { id: 103, stableKey: "en", dataType: "enum", isActive: true },
-      { id: 104, stableKey: "men", dataType: "multi_enum", isActive: true },
-      { id: 105, stableKey: "bool", dataType: "boolean", isActive: true },
+      { id: 101, stableKey: "lm72_num", dataType: "number", isActive: true },
+      { id: 102, stableKey: "lm72_year", dataType: "year", isActive: true },
+      { id: 103, stableKey: "lm72_en", dataType: "enum", isActive: true },
+      { id: 104, stableKey: "lm72_men", dataType: "multi_enum", isActive: true },
+      { id: 105, stableKey: "lm72_bool", dataType: "boolean", isActive: true },
     ]);
 
     await db.insert(schema.controlledOptionValues).values([
-      { id: 201, attributeId: 103, stableKey: "opt1", isActive: true },
-      { id: 202, attributeId: 104, stableKey: "opta", isActive: true },
-      { id: 203, attributeId: 104, stableKey: "optb", isActive: true },
+      { id: 201, attributeId: 103, stableKey: "lm72_opt1", isActive: true },
+      { id: 202, attributeId: 104, stableKey: "lm72_opta", isActive: true },
+      { id: 203, attributeId: 104, stableKey: "lm72_optb", isActive: true },
     ]);
 
     await db.insert(schema.categoryAttributeAssignments).values([
-      { categoryId: catParentId, attributeDefinitionId: 101, isFilterable: true, isComparable: true, isRequired: false, isVisible: true, sortOrder: 1 },
-      { categoryId: catParentId, attributeDefinitionId: 102, isFilterable: true, isComparable: true, isRequired: false, isVisible: true, sortOrder: 2 },
-      { categoryId: catParentId, attributeDefinitionId: 103, isFilterable: true, isComparable: true, isRequired: false, isVisible: true, sortOrder: 3 },
-      { categoryId: catParentId, attributeDefinitionId: 104, isFilterable: true, isComparable: true, isRequired: false, isVisible: true, sortOrder: 4 },
-      { categoryId: catParentId, attributeDefinitionId: 105, isFilterable: true, isComparable: true, isRequired: false, isVisible: true, sortOrder: 5 },
+      { categoryId: catParentId, attributeDefinitionId: 101, isFilterable: true, isComparable: false, isRequired: false, isVisible: true, sortOrder: 1 },
+      { categoryId: catParentId, attributeDefinitionId: 102, isFilterable: true, isComparable: false, isRequired: false, isVisible: true, sortOrder: 2 },
+      { categoryId: catParentId, attributeDefinitionId: 103, isFilterable: true, isComparable: false, isRequired: false, isVisible: true, sortOrder: 3 },
+      { categoryId: catParentId, attributeDefinitionId: 104, isFilterable: true, isComparable: false, isRequired: false, isVisible: true, sortOrder: 4 },
+      { categoryId: catParentId, attributeDefinitionId: 105, isFilterable: true, isComparable: false, isRequired: false, isVisible: true, sortOrder: 5 },
     ]);
 
     await db.insert(schema.partners).values([
-      { id: 301, companyName: "Partner", contactEmail: "test@example.com" }
+      { id: 301, companyName: "TestPartner", contactEmail: "test@lm72.test" },
     ]);
 
     const baseOffer = {
@@ -83,24 +88,29 @@ async function runDbTests() {
       publicationStatus: "published",
       isActive: true,
       isFeatured: false,
-      description: ""
+      description: "",
     };
 
-    const d1 = new Date("2020-01-01T00:00:00Z");
-    const d2 = new Date("2020-01-02T00:00:00Z");
+    // Timestamps for tie-breaker testing
+    const d1 = new Date("2020-01-01T00:00:00Z"); // older
+    const d2 = new Date("2020-01-02T00:00:00Z"); // newer
+    // d1_twin: same as d1 for final tie-breaker by id
+    const d1_twin = new Date("2020-01-01T00:00:00Z");
 
     await db.insert(schema.offers).values([
-      { id: 401, categoryId: catParentId, title: "O1", priceBrutto: "100", createdAt: d1, ...baseOffer },
-      { id: 402, categoryId: catChildId, title: "O2", priceBrutto: "200", createdAt: d1, ...baseOffer },
-      { id: 403, categoryId: catUnrelatedId, title: "O3", priceBrutto: "300", createdAt: d1, ...baseOffer },
-      { id: 404, categoryId: catParentId, title: "O4 (no attrs)", priceBrutto: "400", createdAt: d1, ...baseOffer },
-      { id: 405, categoryId: catParentId, title: "O5 (inactive)", priceBrutto: "500", createdAt: d1, ...baseOffer, isActive: false },
-      { id: 406, categoryId: catParentId, title: "O6 (draft)", priceBrutto: "600", createdAt: d1, ...baseOffer, publicationStatus: "draft" },
-      { id: 407, categoryId: catParentId, title: "O7", priceBrutto: "100", createdAt: d2, ...baseOffer }, // same price, different date
-      { id: 408, categoryId: catParentId, title: "O8", priceBrutto: "150", createdAt: d1, ...baseOffer },
+      { id: 401, categoryId: catParentId,    title: "O1 parent",    priceBrutto: "100", createdAt: d1, ...baseOffer },
+      { id: 402, categoryId: catChildId,     title: "O2 child",     priceBrutto: "200", createdAt: d1, ...baseOffer },
+      { id: 403, categoryId: catUnrelatedId, title: "O3 unrelated", priceBrutto: "100", createdAt: d1, ...baseOffer },
+      { id: 404, categoryId: catParentId,    title: "O4 no-attrs",  priceBrutto: "400", createdAt: d1, ...baseOffer },
+      { id: 405, categoryId: catParentId,    title: "O5 inactive",  priceBrutto: "100", createdAt: d1, ...baseOffer, isActive: false },
+      { id: 406, categoryId: catParentId,    title: "O6 draft",     priceBrutto: "100", createdAt: d1, ...baseOffer, publicationStatus: "draft" },
+      { id: 407, categoryId: catParentId,    title: "O7 newer",     priceBrutto: "100", createdAt: d2, ...baseOffer }, // same price, newer
+      { id: 408, categoryId: catParentId,    title: "O8 multi",     priceBrutto: "150", createdAt: d1, ...baseOffer },
+      // O409: same priceBrutto as 401/407, same createdAt as 401, different id (higher → lower priority in tie)
+      { id: 409, categoryId: catParentId,    title: "O9 tie",       priceBrutto: "100", createdAt: d1_twin, ...baseOffer },
     ] as any);
 
-    // O1
+    // O401 attributes (parent category)
     await db.insert(schema.offerAttributeValues).values([
       { offerId: 401, attributeId: 101, valueNumber: "15" },
       { offerId: 401, attributeId: 102, valueYear: 2022 },
@@ -108,10 +118,10 @@ async function runDbTests() {
       { offerId: 401, attributeId: 105, valueBoolean: true },
     ]);
     await db.insert(schema.offerAttributeOptionValues).values([
-      { offerId: 401, attributeId: 104, optionId: 202 }, // OptA
+      { offerId: 401, attributeId: 104, optionId: 202 }, // opta
     ]);
 
-    // O2
+    // O402 attributes (child category — descendant of parent)
     await db.insert(schema.offerAttributeValues).values([
       { offerId: 402, attributeId: 101, valueNumber: "25" },
       { offerId: 402, attributeId: 102, valueYear: 2024 },
@@ -119,148 +129,241 @@ async function runDbTests() {
       { offerId: 402, attributeId: 105, valueBoolean: false },
     ]);
     await db.insert(schema.offerAttributeOptionValues).values([
-      { offerId: 402, attributeId: 104, optionId: 203 }, // OptB
+      { offerId: 402, attributeId: 104, optionId: 203 }, // optb
     ]);
 
-    // O3 (Unrelated)
+    // O403 (unrelated category — should be excluded)
     await db.insert(schema.offerAttributeValues).values([
       { offerId: 403, attributeId: 101, valueNumber: "15" },
     ]);
 
-    // O5 (Inactive)
+    // O405 (inactive)
     await db.insert(schema.offerAttributeValues).values([
       { offerId: 405, attributeId: 101, valueNumber: "15" },
     ]);
 
-    // O6 (Draft)
+    // O406 (draft)
     await db.insert(schema.offerAttributeValues).values([
       { offerId: 406, attributeId: 101, valueNumber: "15" },
     ]);
 
-    // O7 (tie-breaker)
+    // O407 (newer, same price as 401 — for sort tie-breaker)
     await db.insert(schema.offerAttributeValues).values([
       { offerId: 407, attributeId: 101, valueNumber: "15" },
     ]);
-    
-    // O8 (multi-enum with both)
+
+    // O408 (multi-enum with both opta and optb)
     await db.insert(schema.offerAttributeOptionValues).values([
       { offerId: 408, attributeId: 104, optionId: 202 },
       { offerId: 408, attributeId: 104, optionId: 203 },
     ]);
 
-    const baseQuery = { categoryId: catParentId, sort: "default" as const, numbers: [], years: [], booleans: [], controlled: [] };
-    
-    // Assertions
-    async function query(input: any) {
+    // O409 (tie: same price as 401, same createdAt as 401, higher id)
+    await db.insert(schema.offerAttributeValues).values([
+      { offerId: 409, attributeId: 101, valueNumber: "15" },
+    ]);
+
+    // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    const baseQuery = {
+      categoryId: catParentId,
+      sort: "default" as const,
+      numbers: [],
+      years: [],
+      booleans: [],
+      controlled: [],
+    };
+
+    async function q(input: Parameters<typeof queryFilteredCategoryOffers>[1]) {
       const res = await queryFilteredCategoryOffers(db, input);
-      if (!res.ok) throw new Error("Query failed");
+      if (!res.ok) throw new Error("Query failed: " + JSON.stringify((res as any).errors));
       return res;
     }
 
-    // NUMBER_MIN
-    let res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 20 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [402]);
+    // ─── Tests ────────────────────────────────────────────────────────────────
+
+    // NUMBER_MIN: only offers with valueNumber >= 20
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 20 }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.deepEqual(ids, [402], "NUMBER_MIN");
+    }
     console.log("NUMBER_MIN=PASS");
 
-    // NUMBER_MAX
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, max: 20 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id).sort(), [401, 407]);
+    // NUMBER_MAX: only offers with valueNumber <= 20
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, max: 20 }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      // 401, 407, 409 all have valueNumber=15
+      assert.ok(ids.includes(401) && ids.includes(407) && ids.includes(409), "NUMBER_MAX ids");
+      assert.ok(!ids.includes(402), "NUMBER_MAX excludes 402");
+    }
     console.log("NUMBER_MAX=PASS");
 
-    // NUMBER_BOUNDARY
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 15, max: 15 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id).sort(), [401, 407]);
+    // NUMBER_BOUNDARY: inclusive boundary at exactly 15
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 15, max: 15 }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.ok(ids.includes(401) && ids.includes(407) && ids.includes(409), "NUMBER_BOUNDARY ids");
+      assert.ok(!ids.includes(402), "NUMBER_BOUNDARY excludes 402");
+    }
     console.log("NUMBER_BOUNDARY=PASS");
 
-    // YEAR_MIN
-    res = await query({ ...baseQuery, years: [{ attributeId: 102, min: 2023 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [402]);
+    // YEAR_MIN: only offers with valueYear >= 2023
+    {
+      const res = await q({ ...baseQuery, years: [{ attributeId: 102, min: 2023 }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.deepEqual(ids, [402], "YEAR_MIN");
+    }
     console.log("YEAR_MIN=PASS");
 
-    // YEAR_MAX
-    res = await query({ ...baseQuery, years: [{ attributeId: 102, max: 2023 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [401]);
+    // YEAR_MAX: only offers with valueYear <= 2023
+    {
+      const res = await q({ ...baseQuery, years: [{ attributeId: 102, max: 2023 }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.deepEqual(ids, [401], "YEAR_MAX");
+    }
     console.log("YEAR_MAX=PASS");
 
-    // YEAR_BOUNDARY
-    res = await query({ ...baseQuery, years: [{ attributeId: 102, min: 2022, max: 2022 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [401]);
+    // YEAR_BOUNDARY: exact year 2022
+    {
+      const res = await q({ ...baseQuery, years: [{ attributeId: 102, min: 2022, max: 2022 }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.deepEqual(ids, [401], "YEAR_BOUNDARY");
+    }
     console.log("YEAR_BOUNDARY=PASS");
 
-    // ENUM
-    res = await query({ ...baseQuery, controlled: [{ attributeId: 103, optionIds: [201] }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id).sort(), [401, 402]);
+    // ENUM: both offers with optionId 201 (401, 402)
+    {
+      const res = await q({ ...baseQuery, controlled: [{ attributeId: 103, optionIds: [201] }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.deepEqual(ids, [401, 402], "ENUM");
+    }
     console.log("ENUM=PASS");
 
-    // MULTI_ENUM_OR
-    res = await query({ ...baseQuery, controlled: [{ attributeId: 104, optionIds: [203] }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id).sort(), [402, 408]);
+    // MULTI_ENUM_OR: offers with optionId 203 (optb) — 402 and 408
+    {
+      const res = await q({ ...baseQuery, controlled: [{ attributeId: 104, optionIds: [203] }] });
+      const ids = res.rows.map((r) => r.offer.id).sort((a, b) => a - b);
+      assert.deepEqual(ids, [402, 408], "MULTI_ENUM_OR");
+    }
     console.log("MULTI_ENUM_OR=PASS");
 
-    // BOOLEAN_TRUE
-    res = await query({ ...baseQuery, booleans: [{ attributeId: 105, value: true }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [401]);
+    // BOOLEAN_TRUE: only offers with valueBoolean=true (401)
+    {
+      const res = await q({ ...baseQuery, booleans: [{ attributeId: 105, value: true }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.deepEqual(ids, [401], "BOOLEAN_TRUE");
+    }
     console.log("BOOLEAN_TRUE=PASS");
 
-    // BOOLEAN_FALSE
-    res = await query({ ...baseQuery, booleans: [{ attributeId: 105, value: false }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [402]);
+    // BOOLEAN_FALSE: only offers with valueBoolean=false (402)
+    {
+      const res = await q({ ...baseQuery, booleans: [{ attributeId: 105, value: false }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.deepEqual(ids, [402], "BOOLEAN_FALSE");
+    }
     console.log("BOOLEAN_FALSE=PASS");
 
-    // MISSING_VALUES_EXCLUDED
-    // offer 404 has no values, so requesting number=10 will exclude it
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
-    assert.ok(!res.rows.map(r => r.offer.id).includes(404));
+    // MISSING_VALUES_EXCLUDED: offer 404 has no attribute values, should not appear when filtering
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.ok(!ids.includes(404), "MISSING_VALUES_EXCLUDED: 404 absent");
+    }
     console.log("MISSING_VALUES_EXCLUDED=PASS");
 
-    // DESCENDANT_INCLUDED
-    // offer 402 is in child category, should be included when querying parent
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 25 }] });
-    assert.deepEqual(res.rows.map(r => r.offer.id), [402]);
+    // DESCENDANT_INCLUDED: offer 402 in child category, included when querying parent
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 25 }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.ok(ids.includes(402), "DESCENDANT_INCLUDED: 402 present");
+    }
     console.log("DESCENDANT_INCLUDED=PASS");
 
-    // UNRELATED_CATEGORY_EXCLUDED
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
-    assert.ok(!res.rows.map(r => r.offer.id).includes(403));
+    // UNRELATED_CATEGORY_EXCLUDED: offer 403 in unrelated category excluded
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.ok(!ids.includes(403), "UNRELATED_CATEGORY_EXCLUDED: 403 absent");
+    }
     console.log("UNRELATED_CATEGORY_EXCLUDED=PASS");
 
-    // INACTIVE_OFFER_EXCLUDED
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
-    assert.ok(!res.rows.map(r => r.offer.id).includes(405));
+    // INACTIVE_OFFER_EXCLUDED: offer 405 is inactive
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.ok(!ids.includes(405), "INACTIVE_OFFER_EXCLUDED: 405 absent");
+    }
     console.log("INACTIVE_OFFER_EXCLUDED=PASS");
 
-    // UNPUBLISHED_OFFER_EXCLUDED
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
-    assert.ok(!res.rows.map(r => r.offer.id).includes(406));
+    // UNPUBLISHED_OFFER_EXCLUDED: offer 406 is draft
+    {
+      const res = await q({ ...baseQuery, numbers: [{ attributeId: 101, min: 0 }] });
+      const ids = res.rows.map((r) => r.offer.id);
+      assert.ok(!ids.includes(406), "UNPUBLISHED_OFFER_EXCLUDED: 406 absent");
+    }
     console.log("UNPUBLISHED_OFFER_EXCLUDED=PASS");
 
-    // COUNT_BEFORE_PAGINATION
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 10, max: 20 }], page: 1, pageSize: 1 });
-    assert.equal(res.total, 2); // 401 and 407 match
+    // COUNT_BEFORE_PAGINATION: total > page length
+    {
+      // 401, 407, 409 all match num=15. With pageSize=2, total=3, rows=2
+      const res = await q({
+        ...baseQuery,
+        numbers: [{ attributeId: 101, min: 15, max: 15 }],
+        page: 1,
+        pageSize: 2,
+      });
+      assert.equal(res.total, 3, "COUNT_BEFORE_PAGINATION: total=3");
+      assert.equal(res.rows.length, 2, "COUNT_BEFORE_PAGINATION: rows.length=2");
+    }
     console.log("COUNT_BEFORE_PAGINATION=PASS");
 
-    // PAGINATION
-    assert.ok(res.total > res.rows.length); // total 2 > length 1
+    // PAGINATION: different pages give different rows
+    {
+      const res = await q({
+        ...baseQuery,
+        numbers: [{ attributeId: 101, min: 15, max: 15 }],
+        page: 1,
+        pageSize: 2,
+      });
+      assert.ok(res.total > res.rows.length, "PAGINATION: total > page rows");
+    }
     console.log("PAGINATION=PASS");
 
-    // SORT_AFTER_FILTERING & DETERMINISTIC_TIE_BREAKERS
-    res = await query({ ...baseQuery, numbers: [{ attributeId: 101, min: 10, max: 20 }], sort: "price-asc" });
-    // Both 401 and 407 have price 100.
-    // 407 is newer than 401. So tie-breaker (createdAt DESC) should put 407 first.
-    assert.deepEqual(res.rows.map(r => r.offer.id), [407, 401]);
+    // SORT_AFTER_FILTERING + DETERMINISTIC_TIE_BREAKERS
+    // Offers 401, 407, 409 all have priceBrutto=100:
+    //   407: createdAt=d2 (2020-01-02) → newest → first in price-asc (newest wins createdAt DESC)
+    //   401: createdAt=d1 (2020-01-01), id=401
+    //   409: createdAt=d1_twin (2020-01-01), id=409
+    // At equal createdAt: id DESC → 409 (higher id) before 401
+    // Expected order price-asc: [407, 409, 401]
+    {
+      const res = await q({
+        ...baseQuery,
+        numbers: [{ attributeId: 101, min: 15, max: 15 }],
+        sort: "price-asc",
+      });
+      const ids = res.rows.map((r) => r.offer.id);
+      // Assert final order
+      assert.deepEqual(ids, [407, 409, 401], "SORT+TIE_BREAKERS order");
+      // Assert last id is 401 (lowest priority in ties)
+      assert.equal(ids[ids.length - 1], 401, "DETERMINISTIC_TIE_BREAKERS: last=401");
+    }
     console.log("SORT_AFTER_FILTERING=PASS");
     console.log("DETERMINISTIC_TIE_BREAKERS=PASS");
 
+    console.log("LM72_CATALOG_FILTER_DB_TEST=PASS");
   } finally {
     if (transactionStarted) {
       await client.query("ROLLBACK");
     }
     client.release();
-    pool.end();
+    await pool.end();
   }
 }
 
-runDbTests().catch(e => {
+runDbTests().catch((e) => {
   console.error(e);
   process.exit(1);
 });
