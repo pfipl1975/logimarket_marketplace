@@ -4,8 +4,9 @@ import { catalogOfferOrder } from "../src/lib/catalog/catalog-offer-order";
 import { parseFilterQueryInput } from "../src/lib/filters/parser";
 import { buildCategoryPaginationHref } from "../src/lib/catalog/pagination";
 import { PgDialect } from "drizzle-orm/pg-core";
+import { normalizeFilterQuery } from "../src/lib/filters/validation-core";
 
-async function runTests() {
+function runTests() {
   console.log("Running LM-CATALOG-SORT-71 PURE tests...");
 
   // 1. Resolver undefined -> default, isCanonical: true
@@ -64,18 +65,32 @@ async function runTests() {
 
   const parsed2 = parseFilterQueryInput({ categoryId: 1, sort: "invalid" });
   assert.equal(parsed2.ok, false);
+  if (!parsed2.ok) assert.deepEqual(parsed2.errors, ["INVALID_SORT"]);
 
   const parsed3 = parseFilterQueryInput({ categoryId: 1, sort: ["newest"] });
-  assert.equal(parsed3.ok, false); // arrays not supported by zod schema
+  assert.equal(parsed3.ok, false);
+  if (!parsed3.ok) assert.deepEqual(parsed3.errors, ["INVALID_SORT"]);
 
   const parsed4 = parseFilterQueryInput({ categoryId: 1, sort: 123 });
-  assert.equal(parsed4.ok, false); // numbers not supported
+  assert.equal(parsed4.ok, false);
+  if (!parsed4.ok) assert.deepEqual(parsed4.errors, ["INVALID_SORT"]);
 
   const parsed5 = parseFilterQueryInput({ categoryId: 1, sort: { a: 1 } });
-  assert.equal(parsed5.ok, false); // objects not supported
+  assert.equal(parsed5.ok, false);
+  if (!parsed5.ok) assert.deepEqual(parsed5.errors, ["INVALID_SORT"]);
 
   const parsed6 = parseFilterQueryInput({ categoryId: 1, sort: null });
-  assert.equal(parsed6.ok, false); // null not supported
+  assert.equal(parsed6.ok, false);
+  if (!parsed6.ok) assert.deepEqual(parsed6.errors, ["INVALID_SORT"]);
+
+  // 8b. normalizeFilterQuery tests
+  const norm1 = normalizeFilterQuery({ categoryId: 1 });
+  assert.equal(norm1.ok, true);
+  if (norm1.ok) assert.equal(norm1.value.sort, "default");
+
+  const norm2 = normalizeFilterQuery({ categoryId: 1, sort: "price-desc" });
+  assert.equal(norm2.ok, true);
+  if (norm2.ok) assert.equal(norm2.value.sort, "price-desc");
 
   // Attribute sorting in buildCategoryOfferQueryHref
   const urlAttr = buildCategoryOfferQueryHref("/katalog", { view: "grid", sort: "newest", filters: {} }, { clearAttributeFilters: false, view: "grid" });
@@ -103,7 +118,6 @@ async function runTests() {
 
   // hasFacetedState helper takes sort into account
   assert.equal(hasActiveCategoryOfferFilters({ model: "rfq" }), true);
-  // sort isn't part of filters object itself, so hasActiveCategoryOfferFilters is oblivious, but we check if CategoryPage uses it. We can't easily test CategoryPage here, but we can verify the function output.
   assert.equal(hasActiveCategoryOfferFilters({}), false);
 
   // SQL Compilation
@@ -111,7 +125,7 @@ async function runTests() {
 
   const compile = (sortParam: import("../src/lib/filters/types").CatalogOfferSort) => {
     const order = catalogOfferOrder(sortParam);
-    return order.map(c => dialect.sqlToQuery(c as any).sql).join(" | ");
+    return order.map(c => dialect.sqlToQuery(c as any).sql).join(" | ").replace(/\s+/g, " ").trim();
   };
 
   const sqlDefault = compile("default");
@@ -123,15 +137,23 @@ async function runTests() {
   assert.equal(sqlNewest.includes(`"offers"."created_at" desc`), true);
   assert.equal(sqlNewest.includes(`"offers"."id" desc`), true);
 
+  const priceTieBreakersAndCase = `CASE WHEN "offers"."price_on_request" = false AND "offers"."price_brutto" IS NOT NULL THEN 0 ELSE 1 END ASC`;
+
   const sqlPriceAsc = compile("price-asc");
-  assert.equal(sqlPriceAsc.includes(`"offers"."price_on_request" = false`), true);
-  assert.equal(sqlPriceAsc.includes(`"offers"."price_brutto" IS NOT NULL`), true);
+  assert.equal(sqlPriceAsc.includes(priceTieBreakersAndCase), true);
   assert.equal(sqlPriceAsc.includes(`"offers"."price_brutto" asc`), true);
+  assert.equal(sqlPriceAsc.includes(`"offers"."created_at" desc`), true);
+  assert.equal(sqlPriceAsc.includes(`"offers"."id" desc`), true);
 
   const sqlPriceDesc = compile("price-desc");
+  assert.equal(sqlPriceDesc.includes(priceTieBreakersAndCase), true);
   assert.equal(sqlPriceDesc.includes(`"offers"."price_brutto" desc`), true);
+  assert.equal(sqlPriceDesc.includes(`"offers"."created_at" desc`), true);
+  assert.equal(sqlPriceDesc.includes(`"offers"."id" desc`), true);
 
   console.log("SQL_COMPILATION_TESTS=PASS");
+  console.log("PRICE_CASE_ASSERTED=YES");
+  console.log("PRICE_TIE_BREAKERS_ASSERTED=YES");
   console.log("All tests passed.");
 }
 
