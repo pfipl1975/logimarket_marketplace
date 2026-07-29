@@ -84,7 +84,12 @@
     "mobileCatalogBackToMenu": "Retour au menu",
     "mobileCatalogViewCatalog": "Voir tout le catalogue",
     "mobileCatalogViewCurrent": "Tout voir",
-    "mobileCatalogOpenLevel": "Ouvrir la sous-catégorie"
+    "mobileCatalogOpenLevel": "Ouvrir la sous-catégorie",
+    "sortLabel": "Trier par",
+    "sortDefault": "Défaut",
+    "sortPriceAsc": "Prix : croissant",
+    "sortPriceDesc": "Prix : décroissant",
+    "sortNewest": "Les plus récents"
   },
   "catalogHome": {
     "metaTitle": "Catalogue d'équipement d'entrepôt et d'intralogistique",

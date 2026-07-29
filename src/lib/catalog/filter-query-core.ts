@@ -129,7 +129,7 @@ export async function queryFilteredCategoryOffers(db: Db, input: NormalizedFilte
   const countRows = await db.select({ total: count() }).from(schema.offers).where(where);
   const itemBase = db.select({ offer: schema.offers, category: schema.categories, partner: schema.partners })
     .from(schema.offers).leftJoin(schema.categories, eq(schema.offers.categoryId, schema.categories.id))
-    .leftJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id)).where(where).orderBy(...catalogOfferOrder());
+    .leftJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id)).where(where).orderBy(...catalogOfferOrder(input.sort));
   const rows = input.page === undefined ? await itemBase : await itemBase.limit(input.pageSize!).offset((input.page - 1) * input.pageSize!);
   return { ok: true, total: Number(countRows[0]?.total ?? 0), rows };
 }

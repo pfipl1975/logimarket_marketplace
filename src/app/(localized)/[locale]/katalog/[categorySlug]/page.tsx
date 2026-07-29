@@ -9,6 +9,7 @@ import { absoluteUrl } from "@/lib/seo/urls";
 import {
   resolveCategoryOfferFilters,
   resolveOfferListingView,
+  resolveCategoryOfferSort,
   hasActiveCategoryOfferFilters,
   type CategorySearchParams,
 } from "@/lib/catalog/query";
@@ -79,7 +80,8 @@ export async function generateMetadata({ params, searchParams }: Props): Promise
 
     const view = resolveOfferListingView(resolvedSearchParams.view);
     const filters = resolveCategoryOfferFilters(resolvedSearchParams);
-    const hasActiveFilters = hasActiveCategoryOfferFilters(filters) || view !== "grid";
+    const resolvedSort = resolveCategoryOfferSort(resolvedSearchParams.sort);
+    const hasActiveFilters = hasActiveCategoryOfferFilters(filters) || view !== "grid" || resolvedSort.sort !== "default";
 
     const resolvedPage = resolveCategoryPage(resolvedSearchParams.page);
     const isCleanPaginated = !hasActiveFilters && resolvedPage.page > 1 && resolvedPage.isCanonical;
@@ -132,12 +134,13 @@ export default async function Page({ params, searchParams }: Props) {
   const dbSlug = categorySlug.slice(2);
   const view = resolveOfferListingView(resolvedSearchParams.view);
   const filters = resolveCategoryOfferFilters(resolvedSearchParams);
+  const resolvedSort = resolveCategoryOfferSort(resolvedSearchParams.sort);
   
   const resolvedPage = resolveCategoryPage(resolvedSearchParams.page);
 
-  if (!resolvedPage.isCanonical) {
+  if (!resolvedPage.isCanonical || !resolvedSort.isCanonical) {
     const basePath = `/${locale}/katalog/${categorySlug}`;
-    redirect(buildCategoryPaginationHref(basePath, { view, filters }, resolvedPage.page));
+    redirect(buildCategoryPaginationHref(basePath, { view, sort: resolvedSort.sort, filters }, resolvedPage.page));
   }
 
   return (
@@ -145,6 +148,7 @@ export default async function Page({ params, searchParams }: Props) {
       locale={locale as Locale}
       categorySlug={dbSlug}
       view={view}
+      sort={resolvedSort.sort}
       filters={filters}
       currentPage={resolvedPage.page}
     />

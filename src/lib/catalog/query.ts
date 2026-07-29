@@ -1,6 +1,6 @@
-import type { OfferModelFilter } from "@/lib/filters/types";
+import type { OfferModelFilter, CatalogOfferSort } from "@/lib/filters/types";
 
-export type { OfferModelFilter } from "@/lib/filters/types";
+export type { OfferModelFilter, CatalogOfferSort } from "@/lib/filters/types";
 
 export type OfferListingView = "grid" | "list";
 
@@ -17,11 +17,28 @@ export type CategorySearchParams = {
   model?: string | string[];
   featured?: string | string[];
   page?: string | string[];
+  sort?: string | string[];
   [key: string]: string | string[] | undefined;
 };
 
+export type ResolvedCategorySort = {
+  sort: CatalogOfferSort;
+  isCanonical: boolean;
+};
+
+export function resolveCategoryOfferSort(value: string | string[] | undefined): ResolvedCategorySort {
+  if (value === undefined) return { sort: "default", isCanonical: true };
+  if (Array.isArray(value)) return { sort: "default", isCanonical: false };
+  if (value === "default") return { sort: "default", isCanonical: false };
+  if (value === "price-asc" || value === "price-desc" || value === "newest") {
+    return { sort: value, isCanonical: true };
+  }
+  return { sort: "default", isCanonical: false };
+}
+
 export type CategoryOfferQueryState = {
   view: OfferListingView;
+  sort: CatalogOfferSort;
   filters: CategoryOfferFilters;
 };
 
@@ -29,6 +46,7 @@ export type CategoryOfferQueryPatch = {
   view?: OfferListingView;
   model?: OfferModelFilter | null;
   featured?: true | null;
+  sort?: CatalogOfferSort | null;
   clearAttributeFilters?: boolean;
 };
 
@@ -74,6 +92,7 @@ export function buildCategoryOfferQueryHref(
   patch: CategoryOfferQueryPatch,
 ): string {
   const nextView = patch.view ?? state.view;
+  const nextSort = patch.sort !== undefined ? (patch.sort ?? "default") : state.sort;
   const nextFilters: CategoryOfferFilters = { ...state.filters };
 
   if (patch.clearAttributeFilters) {
@@ -90,6 +109,10 @@ export function buildCategoryOfferQueryHref(
 
   const params = new URLSearchParams();
   params.set("view", nextView);
+
+  if (nextSort !== "default") {
+    params.set("sort", nextSort);
+  }
 
   if (nextFilters.model) {
     params.set("model", nextFilters.model);
@@ -113,6 +136,9 @@ export function buildClearAllCategoryFiltersHref(
   const params = new URLSearchParams();
   if (state.view && state.view !== "grid") {
     params.set("view", state.view);
+  }
+  if (state.sort !== "default") {
+    params.set("sort", state.sort);
   }
   const qs = params.toString();
   return qs ? `${basePath}?${qs}` : basePath;

@@ -18,6 +18,7 @@ type Labels = {
 type Props = {
   basePath: string;
   view: OfferListingView;
+  sort: import("@/lib/filters/types").CatalogOfferSort;
   filters: CategoryOfferFilters;
   definitions: CategoryAttributeConfiguration[];
   labels: Labels;
@@ -98,9 +99,9 @@ function AttributeControls({ definitions, filters, labels }: Pick<Props, "defini
   );
 }
 
-export function CategoryAttributeFilters({ basePath, view, filters, definitions, labels }: Props) {
+export function CategoryAttributeFilters({ basePath, view, sort, filters, definitions, labels }: Props) {
   if (definitions.length === 0) return null;
-  const clearHref = buildCategoryOfferQueryHref(basePath, { view, filters }, { clearAttributeFilters: true });
+  const clearHref = buildCategoryOfferQueryHref(basePath, { view, sort, filters }, { clearAttributeFilters: true });
   const hiddenModel = filters.model ? <input type="hidden" name="model" value={filters.model} /> : null;
   const hiddenFeatured = filters.featured ? <input type="hidden" name="featured" value="1" /> : null;
   const hasActiveAttributeFilters = Object.keys(filters.attributeParams ?? {}).length > 0;

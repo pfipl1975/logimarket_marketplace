@@ -4,6 +4,12 @@ export type ControlledFilter = { attributeId: number; optionIds: number[] };
 export type RangeFilter = { attributeId: number; min?: number; max?: number };
 export type BooleanFilter = { attributeId: number; value: boolean };
 
+export type CatalogOfferSort =
+  | "default"
+  | "price-asc"
+  | "price-desc"
+  | "newest";
+
 export type FilterQueryInput = {
   categoryId: number;
   offerModel?: OfferModelFilter;
@@ -14,6 +20,7 @@ export type FilterQueryInput = {
   booleans?: BooleanFilter[];
   page?: number;
   pageSize?: number;
+  sort?: CatalogOfferSort;
 };
 
 export type FilterErrorCode =
@@ -22,7 +29,7 @@ export type FilterErrorCode =
   | "INVALID_NUMERIC_BOUNDS" | "INVALID_YEAR_BOUNDS" | "UNKNOWN_CATEGORY" | "UNKNOWN_ATTRIBUTE"
   | "INACTIVE_ATTRIBUTE" | "ATTRIBUTE_NOT_ASSIGNED" | "INACTIVE_ASSIGNMENT"
   | "UNKNOWN_OPTION" | "OPTION_WRONG_ATTRIBUTE" | "INACTIVE_OPTION"
-  | "INCOMPATIBLE_FILTER_TYPE";
+  | "INCOMPATIBLE_FILTER_TYPE" | "INVALID_SORT";
 
 export type FilterValidationError = { code: FilterErrorCode; attributeId?: number; optionId?: number };
 
@@ -36,4 +43,5 @@ export type NormalizedFilterQuery = {
   booleans: BooleanFilter[];
   page?: number;
   pageSize?: number;
+  sort: CatalogOfferSort;
 };

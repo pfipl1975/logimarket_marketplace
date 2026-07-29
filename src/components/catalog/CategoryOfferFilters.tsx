@@ -21,7 +21,8 @@ type CategoryOfferFilterLabels = Pick<
 
 interface CategoryOfferFiltersProps {
   basePath: string;
-  view: OfferListingView;
+  view: "grid" | "list";
+  sort: import("@/lib/filters/types").CatalogOfferSort;
   filters: CategoryOfferFilters;
   labels: CategoryOfferFilterLabels;
 }
@@ -35,10 +36,11 @@ const inactiveChipClass =
 export function CategoryOfferFilters({
   basePath,
   view,
+  sort,
   filters,
   labels,
 }: CategoryOfferFiltersProps) {
-  const state = { view, filters };
+  const state = { view, sort, filters };
 
   const modelOptions: Array<{
     key: "all" | OfferModelFilter;

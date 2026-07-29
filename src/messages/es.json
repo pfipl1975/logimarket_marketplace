@@ -84,7 +84,12 @@
     "mobileCatalogBackToMenu": "Volver al menú",
     "mobileCatalogViewCatalog": "Ver todo el catálogo",
     "mobileCatalogViewCurrent": "Ver todo",
-    "mobileCatalogOpenLevel": "Abrir subcategoría"
+    "mobileCatalogOpenLevel": "Abrir subcategoría",
+    "sortLabel": "Ordenar por",
+    "sortDefault": "Por defecto",
+    "sortPriceAsc": "Precio: de menor a mayor",
+    "sortPriceDesc": "Precio: de mayor a menor",
+    "sortNewest": "Más recientes"
   },
   "catalogHome": {
     "metaTitle": "Catálogo de equipamiento de almacén e intralogística",

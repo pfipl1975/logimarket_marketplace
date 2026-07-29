@@ -22,9 +22,9 @@ const rejected = resolveAttributeFilterUrlState(definitions as never, {
 assert.deepEqual(rejected.input, { controlled: [], numbers: [] });
 
 const parsed = resolveCategoryOfferFilters({ view: "list", af_material: ["pp"], af_capacity_max: "20" });
-const href = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", filters: parsed }, { view: "grid" });
+const href = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", sort: "default", filters: parsed }, { view: "grid" });
 assert.equal(href, "/katalog/c-test?view=grid&af_material=pp&af_capacity_max=20");
-const resetHref = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", filters: parsed }, { clearAttributeFilters: true });
+const resetHref = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", sort: "default", filters: parsed }, { clearAttributeFilters: true });
 assert.equal(resetHref, "/katalog/c-test?view=list");
 
 console.log("LM52_ATTRIBUTE_FILTER_URL_TEST=PASS");
