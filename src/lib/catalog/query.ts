@@ -122,8 +122,12 @@ export function buildCategoryOfferQueryHref(
     params.set("featured", "1");
   }
 
-  for (const [key, values] of Object.entries(nextFilters.attributeParams ?? {})) {
-    for (const value of values) params.append(key, value);
+  const attributeKeys = Object.keys(nextFilters.attributeParams ?? {}).sort();
+  for (const key of attributeKeys) {
+    const values = [...(nextFilters.attributeParams?.[key] ?? [])].sort();
+    for (const value of values) {
+      params.append(key, value);
+    }
   }
 
   return `${basePath}?${params.toString()}`;

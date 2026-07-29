@@ -23,7 +23,7 @@ assert.deepEqual(rejected.input, { controlled: [], numbers: [] });
 
 const parsed = resolveCategoryOfferFilters({ view: "list", af_material: ["pp"], af_capacity_max: "20" });
 const href = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", sort: "default", filters: parsed }, { view: "grid" });
-assert.equal(href, "/katalog/c-test?view=grid&af_material=pp&af_capacity_max=20");
+assert.equal(href, "/katalog/c-test?view=grid&af_capacity_max=20&af_material=pp");
 const resetHref = buildCategoryOfferQueryHref("/katalog/c-test", { view: "list", sort: "default", filters: parsed }, { clearAttributeFilters: true });
 assert.equal(resetHref, "/katalog/c-test?view=list");
 

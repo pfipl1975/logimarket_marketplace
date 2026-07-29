@@ -113,6 +113,7 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
         <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">{labels.heading}</h2>
         <form action={basePath} className="mt-4">
           <input type="hidden" name="view" value={view} />
+          {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
           <div className="grid gap-4 items-end md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
@@ -142,6 +143,7 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
         <summary className="cursor-pointer text-sm font-bold text-brand-navy">{labels.summary}</summary>
         <form action={basePath} className="mt-4 space-y-5 border-t border-border pt-4">
           <input type="hidden" name="view" value={view} />
+          {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
           <div className="grid gap-4 grid-cols-1">

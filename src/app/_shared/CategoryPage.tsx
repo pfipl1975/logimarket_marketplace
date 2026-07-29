@@ -251,7 +251,7 @@ export async function CategoryPage({
   };
 
   // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
-  const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters);
+  const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters) || sort !== "default";
   const cleanPaginationSuffix = currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
   const pageJsonLdUrl = absoluteUrl(`${canonicalPath}${cleanPaginationSuffix}`);
 
