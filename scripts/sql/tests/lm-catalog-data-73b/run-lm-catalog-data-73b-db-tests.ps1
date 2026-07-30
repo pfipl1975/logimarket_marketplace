@@ -67,11 +67,20 @@ function Invoke-Psql {
         $startInfo.ArgumentList.Add($arg)
     }
 
-    $process = [System.Diagnostics.Process]::Start($startInfo)
+    $process = [System.Diagnostics.Process]::new()
+    $process.StartInfo = $startInfo
+
+    if (-not $process.Start()) {
+        throw "Failed to start PostgreSQL client operation"
+    }
+
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+
     $process.WaitForExit()
 
-    $stdout = $process.StandardOutput.ReadToEnd()
-    $stderr = $process.StandardError.ReadToEnd()
+    $stdout = $stdoutTask.GetAwaiter().GetResult()
+    $stderr = $stderrTask.GetAwaiter().GetResult()
     $exitCode = $process.ExitCode
 
     if ($OutPath -ne $null) {
@@ -201,33 +210,42 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
 
         $fullSql = $resetSql + "`n" + $setupSql
         $setupFile = [System.IO.Path]::GetTempFileName()
-        Set-Content -Path $setupFile -Value $fullSql -Encoding UTF8
+        try {
+            Set-Content -Path $setupFile -Value $fullSql -Encoding UTF8
 
-        $setupArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $setupFile)
-        $setupRes = Invoke-Psql -Arguments $setupArgs -OperationName "Scenario setup"
-        Remove-Item $setupFile
-        if ($setupRes.ExitCode -ne 0) { throw "Setup failed for scenario $name" }
+            $setupArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $setupFile)
+            $setupRes = Invoke-Psql -Arguments $setupArgs -OperationName "Scenario setup"
+            if ($setupRes.ExitCode -ne 0) { throw "Setup failed for scenario $name" }
+        } finally {
+            Remove-Item $setupFile -ErrorAction SilentlyContinue
+        }
 
         if ($null -ne $auxChecks) {
             foreach ($key in $auxChecks.Keys) {
                 $q = $auxChecks[$key]
                 $outFileAux = [System.IO.Path]::GetTempFileName()
-                $auxArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-c", "COPY ($q) TO STDOUT WITH CSV;")
-                $auxRes = Invoke-Psql -Arguments $auxArgs -OutPath $outFileAux -OperationName "Scenario auxiliary"
-                if ($auxRes.ExitCode -ne 0) { throw "Aux check query failed for scenario $name" }
-                $outVal = (Get-Content $outFileAux).Trim()
-                Remove-Item $outFileAux
+                try {
+                    $auxArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-c", "COPY ($q) TO STDOUT WITH CSV;")
+                    $auxRes = Invoke-Psql -Arguments $auxArgs -OutPath $outFileAux -OperationName "Scenario auxiliary"
+                    if ($auxRes.ExitCode -ne 0) { throw "Aux check query failed for scenario $name" }
+                    $outVal = (Get-Content $outFileAux).Trim()
+                } finally {
+                    Remove-Item $outFileAux -ErrorAction SilentlyContinue
+                }
                 if ($outVal -ne $key) { throw "Aux check failed in ${name}: expected $key, got $outVal" }
             }
         }
 
         $outFile = [System.IO.Path]::GetTempFileName()
-        $auditArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-P", "footer=off", "--csv", "-d", $testUrlStr, "-f", $scriptPath)
-        $auditRes = Invoke-Psql -Arguments $auditArgs -OutPath $outFile -OperationName "Scenario audit execute"
-        if ($auditRes.ExitCode -ne 0) { throw "Execution failed for scenario $name" }
+        try {
+            $auditArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-P", "footer=off", "--csv", "-d", $testUrlStr, "-f", $scriptPath)
+            $auditRes = Invoke-Psql -Arguments $auditArgs -OutPath $outFile -OperationName "Scenario audit execute"
+            if ($auditRes.ExitCode -ne 0) { throw "Execution failed for scenario $name" }
 
-        $csv = Import-Csv $outFile
-        Remove-Item $outFile
+            $csv = Import-Csv $outFile
+        } finally {
+            Remove-Item $outFile -ErrorAction SilentlyContinue
+        }
 
         if ($csv.Count -ne 25) { throw "Expected 25 rows, got $($csv.Count)" }
 

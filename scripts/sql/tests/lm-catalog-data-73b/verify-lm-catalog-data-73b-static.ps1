@@ -275,6 +275,41 @@ if ($onErrorStopCalls -lt 5) {
     exit 1
 }
 
+# --- R6 Additional Checks ---
+
+if (-not ($runnerContent -match "(?is)StandardOutput\.ReadToEndAsync\(\)")) {
+    Write-Host "Runner does not use ReadToEndAsync for StandardOutput"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)StandardError\.ReadToEndAsync\(\)")) {
+    Write-Host "Runner does not use ReadToEndAsync for StandardError"
+    exit 1
+}
+
+if ($runnerContent -match "(?is)WaitForExit\(\).*?ReadToEndAsync\(\)") {
+    Write-Host "Runner calls WaitForExit before ReadToEndAsync"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)GetAwaiter\(\)\.GetResult\(\)")) {
+    Write-Host "Runner does not use GetAwaiter().GetResult() to fetch stream data"
+    exit 1
+}
+
+# Let's write a better try/finally check for temp files
+if (-not ($runnerContent -match "(?is)GetTempFileName\(\).*?try\s*\{.*?\}(?:\s*catch\s*\{.*?\})?\s*finally\s*\{.*?Remove-Item")) {
+    Write-Host "Runner does not use try/finally for temp file cleanup"
+    exit 1
+}
+
+# A strict check to ensure there are 3 instances of try/finally wrapping GetTempFileName()
+$tempFileTryBlocks = ([regex]::Matches($runnerContent, "(?is)GetTempFileName\(\)\s*try\s*\{")).Count
+if ($tempFileTryBlocks -lt 3) {
+    Write-Host "Runner does not wrap all 3 temp file usages in try/finally"
+    exit 1
+}
+
 if (-not ($runnerContent -match "(?s)DB_DROPPED=YES.*LM73B_DB_TEST=PASS")) {
     Write-Host "PASS occurs before cleanup is verified"
     exit 1
