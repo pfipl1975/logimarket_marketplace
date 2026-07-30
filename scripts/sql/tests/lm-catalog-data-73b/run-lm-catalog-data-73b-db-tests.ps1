@@ -55,6 +55,32 @@ if (-not $psqlExe) {
     exit 2
 }
 
+function Invoke-Psql {
+    param([string[]]$Arguments, [string]$OutPath = $null, [string]$OperationName = "")
+    $startInfo = [System.Diagnostics.ProcessStartInfo]::new()
+    $startInfo.FileName = $psqlExe
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+
+    foreach ($arg in $Arguments) {
+        $startInfo.ArgumentList.Add($arg)
+    }
+
+    $process = [System.Diagnostics.Process]::Start($startInfo)
+    $process.WaitForExit()
+
+    $stdout = $process.StandardOutput.ReadToEnd()
+    $stderr = $process.StandardError.ReadToEnd()
+    $exitCode = $process.ExitCode
+
+    if ($OutPath -ne $null) {
+        Set-Content -Path $OutPath -Value $stdout -Encoding UTF8
+    }
+
+    return @{ ExitCode = $exitCode; StdOut = $stdout; StdErr = $stderr }
+}
+
 try {
     $uri = [System.Uri]$env:LM73B_TEST_ADMIN_URL
 } catch {
@@ -69,17 +95,32 @@ if ($uri.Host -ne "localhost" -and $uri.Host -ne "127.0.0.1" -and $uri.Host -ne 
     exit 2
 }
 
+if ([string]::IsNullOrWhiteSpace($uri.AbsolutePath) -or $uri.AbsolutePath -eq "/") {
+    Write-Host "LM73B_DB_TEST=BLOCKED"
+    Write-Host "LM73B_BLOCK_REASON=ADMIN_DATABASE_MISSING"
+    exit 2
+}
+
+$adminUrl = $env:LM73B_TEST_ADMIN_URL
+
+$preflightArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $adminUrl, "-c", "SELECT 1;")
+$preflightRes = Invoke-Psql -Arguments $preflightArgs -OperationName "Preflight connection"
+if ($preflightRes.ExitCode -ne 0) {
+    Write-Host "LM73B_DB_TEST=BLOCKED"
+    Write-Host "LM73B_BLOCK_REASON=ADMIN_CONNECTION_FAILED"
+    exit 2
+}
+
 $dbName = "lm73b_test_$([Guid]::NewGuid().ToString('N').Substring(0, 10))"
 $testUrl = [UriBuilder]::new($uri)
 $testUrl.Path = "/$dbName"
 $testUrlStr = $testUrl.Uri.ToString()
 
-$adminUrl = $env:LM73B_TEST_ADMIN_URL
 $createDbArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $adminUrl, "-c", "CREATE DATABASE $dbName;")
-$p = Start-Process $psqlExe -ArgumentList $createDbArgs -NoNewWindow -Wait -PassThru
-if ($p.ExitCode -ne 0) {
+$createRes = Invoke-Psql -Arguments $createDbArgs -OperationName "Create Database"
+if ($createRes.ExitCode -ne 0) {
     Write-Host "LM73B_DB_TEST=BLOCKED"
-    Write-Host "LM73B_BLOCK_REASON=ADMIN_CONNECTION_FAILED"
+    Write-Host "LM73B_BLOCK_REASON=CREATE_DATABASE_FAILED"
     exit 2
 }
 
@@ -90,8 +131,9 @@ $cleanupSuccess = $false
 try {
     Write-Host "Applying Fixture..."
     $fixturePath = ".\scripts\sql\tests\lm-catalog-data-73b\lm-catalog-data-73b-fixture.sql"
-    $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $fixturePath) -NoNewWindow -Wait -PassThru
-    if ($p.ExitCode -ne 0) { throw "Failed to apply fixture" }
+    $fixtureArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $fixturePath)
+    $fixtureRes = Invoke-Psql -Arguments $fixtureArgs -OperationName "Apply Fixture"
+    if ($fixtureRes.ExitCode -ne 0) { throw "Failed to apply fixture" }
 
     $scriptPath = ".\scripts\sql\production\lm-cat-filter-73b-verify-production-state.sql"
 
@@ -161,16 +203,18 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
         $setupFile = [System.IO.Path]::GetTempFileName()
         Set-Content -Path $setupFile -Value $fullSql -Encoding UTF8
 
-        $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $setupFile) -NoNewWindow -Wait -PassThru
+        $setupArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $setupFile)
+        $setupRes = Invoke-Psql -Arguments $setupArgs -OperationName "Scenario setup"
         Remove-Item $setupFile
-        if ($p.ExitCode -ne 0) { throw "Setup failed for scenario $name" }
+        if ($setupRes.ExitCode -ne 0) { throw "Setup failed for scenario $name" }
 
         if ($null -ne $auxChecks) {
             foreach ($key in $auxChecks.Keys) {
                 $q = $auxChecks[$key]
                 $outFileAux = [System.IO.Path]::GetTempFileName()
-                $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-c", "COPY ($q) TO STDOUT WITH CSV;") -NoNewWindow -Wait -RedirectStandardOutput $outFileAux
-                if ($p.ExitCode -ne 0) { throw "Aux check query failed for scenario $name" }
+                $auxArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-c", "COPY ($q) TO STDOUT WITH CSV;")
+                $auxRes = Invoke-Psql -Arguments $auxArgs -OutPath $outFileAux -OperationName "Scenario auxiliary"
+                if ($auxRes.ExitCode -ne 0) { throw "Aux check query failed for scenario $name" }
                 $outVal = (Get-Content $outFileAux).Trim()
                 Remove-Item $outFileAux
                 if ($outVal -ne $key) { throw "Aux check failed in ${name}: expected $key, got $outVal" }
@@ -178,8 +222,9 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
         }
 
         $outFile = [System.IO.Path]::GetTempFileName()
-        $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-P", "footer=off", "--csv", "-d", $testUrlStr, "-f", $scriptPath, "-o", $outFile) -NoNewWindow -Wait -PassThru
-        if ($p.ExitCode -ne 0) { throw "Execution failed for scenario $name" }
+        $auditArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-P", "footer=off", "--csv", "-d", $testUrlStr, "-f", $scriptPath)
+        $auditRes = Invoke-Psql -Arguments $auditArgs -OutPath $outFile -OperationName "Scenario audit execute"
+        if ($auditRes.ExitCode -ne 0) { throw "Execution failed for scenario $name" }
 
         $csv = Import-Csv $outFile
         Remove-Item $outFile
@@ -315,8 +360,8 @@ UPDATE public.offer_attribute_values SET value_number = 999 WHERE id = 1;
 } finally {
     Write-Host "Dropping DB: $dbName"
     $dropDbArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $adminUrl, "-c", "DROP DATABASE IF EXISTS $dbName;")
-    $p = Start-Process $psqlExe -ArgumentList $dropDbArgs -NoNewWindow -Wait -PassThru
-    if ($p.ExitCode -eq 0) {
+    $dropRes = Invoke-Psql -Arguments $dropDbArgs -OperationName "Drop database"
+    if ($dropRes.ExitCode -eq 0) {
         $cleanupSuccess = $true
         Write-Host "DB_DROPPED=YES"
     } else {

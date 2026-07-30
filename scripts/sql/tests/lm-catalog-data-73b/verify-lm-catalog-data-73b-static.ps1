@@ -208,10 +208,70 @@ if (-not ($runnerContent -match "uri\.Host")) {
     exit 1
 }
 
-$psqlCalls = ([regex]::Matches($runnerContent, '(?i)Start-Process\s+\$psqlExe')).Count
+$startProcessCalls = ([regex]::Matches($runnerContent, '(?i)Start-Process\s+\$psqlExe|Start-Process\s+psql')).Count
+if ($startProcessCalls -gt 0) {
+    Write-Host "Runner uses Start-Process for psql directly"
+    exit 1
+}
+
+if ($runnerContent -match "(?i)\-ArgumentList\s+@?\(") {
+    Write-Host "Runner uses -ArgumentList which is forbidden for psql"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)\[System\.Diagnostics\.ProcessStartInfo\]::new\(\)")) {
+    Write-Host "Runner does not use ProcessStartInfo"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)UseShellExecute\s*=\s*\`$false")) {
+    Write-Host "Runner does not set UseShellExecute = false"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)RedirectStandardOutput\s*=\s*\`$true")) {
+    Write-Host "Runner does not set RedirectStandardOutput = true"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)RedirectStandardError\s*=\s*\`$true")) {
+    Write-Host "Runner does not set RedirectStandardError = true"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)ArgumentList\.Add\(")) {
+    Write-Host "Runner does not use ArgumentList.Add"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)-c.*SELECT 1;")) {
+    Write-Host "Runner does not perform SELECT 1 preflight"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)ADMIN_CONNECTION_FAILED")) {
+    Write-Host "Runner does not handle ADMIN_CONNECTION_FAILED"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)ADMIN_DATABASE_MISSING")) {
+    Write-Host "Runner does not handle ADMIN_DATABASE_MISSING"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)CREATE_DATABASE_FAILED")) {
+    Write-Host "Runner does not handle CREATE_DATABASE_FAILED"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?i)DROP\s+DATABASE")) {
+    Write-Host "Runner does not DROP DATABASE"
+    exit 1
+}
+
 $onErrorStopCalls = ([regex]::Matches($runnerContent, "(?i)ON_ERROR_STOP=1")).Count
-if ($psqlCalls -gt 0 -and $onErrorStopCalls -lt $psqlCalls) {
-    Write-Host "Not all psql calls have ON_ERROR_STOP=1"
+if ($onErrorStopCalls -lt 5) {
+    Write-Host "Runner does not use ON_ERROR_STOP=1 in all operations"
     exit 1
 }
 
