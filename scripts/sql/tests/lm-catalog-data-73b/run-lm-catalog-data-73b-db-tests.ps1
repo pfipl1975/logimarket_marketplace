@@ -12,7 +12,44 @@ if ([string]::IsNullOrWhiteSpace($env:LM73B_TEST_ADMIN_URL)) {
     exit 2
 }
 
-if (-not (Get-Command psql -ErrorAction SilentlyContinue)) {
+$psqlExe = $null
+$psqlCmd = Get-Command psql.exe -ErrorAction SilentlyContinue
+if ($psqlCmd) {
+    $psqlExe = $psqlCmd.Source
+} else {
+    $paths = @()
+    if (Test-Path "$env:ProgramFiles\PostgreSQL") {
+        $paths += Get-ChildItem -Path "$env:ProgramFiles\PostgreSQL" -Directory | Select-Object -ExpandProperty FullName
+    }
+    if (Test-Path "${env:ProgramFiles(x86)}\PostgreSQL") {
+        $paths += Get-ChildItem -Path "${env:ProgramFiles(x86)}\PostgreSQL" -Directory | Select-Object -ExpandProperty FullName
+    }
+
+    $highestVersionPath = $null
+    $highestVersion = 0
+    foreach ($p in $paths) {
+        $binPath = Join-Path $p "bin\psql.exe"
+        if (Test-Path $binPath) {
+            $folderName = Split-Path $p -Leaf
+            $ver = 0
+            if ([int]::TryParse($folderName, [ref]$ver)) {
+                if ($ver -gt $highestVersion) {
+                    $highestVersion = $ver
+                    $highestVersionPath = $binPath
+                }
+            } else {
+                if ($null -eq $highestVersionPath) {
+                    $highestVersionPath = $binPath
+                }
+            }
+        }
+    }
+    if ($highestVersionPath) {
+        $psqlExe = $highestVersionPath
+    }
+}
+
+if (-not $psqlExe) {
     Write-Host "LM73B_DB_TEST=BLOCKED"
     Write-Host "LM73B_BLOCK_REASON=PSQL_NOT_FOUND"
     exit 2
@@ -39,7 +76,7 @@ $testUrlStr = $testUrl.Uri.ToString()
 
 $adminUrl = $env:LM73B_TEST_ADMIN_URL
 $createDbArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $adminUrl, "-c", "CREATE DATABASE $dbName;")
-$p = Start-Process psql -ArgumentList $createDbArgs -NoNewWindow -Wait -PassThru
+$p = Start-Process $psqlExe -ArgumentList $createDbArgs -NoNewWindow -Wait -PassThru
 if ($p.ExitCode -ne 0) {
     Write-Host "LM73B_DB_TEST=BLOCKED"
     Write-Host "LM73B_BLOCK_REASON=ADMIN_CONNECTION_FAILED"
@@ -53,7 +90,7 @@ $cleanupSuccess = $false
 try {
     Write-Host "Applying Fixture..."
     $fixturePath = ".\scripts\sql\tests\lm-catalog-data-73b\lm-catalog-data-73b-fixture.sql"
-    $p = Start-Process psql -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $fixturePath) -NoNewWindow -Wait -PassThru
+    $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $fixturePath) -NoNewWindow -Wait -PassThru
     if ($p.ExitCode -ne 0) { throw "Failed to apply fixture" }
 
     $scriptPath = ".\scripts\sql\production\lm-cat-filter-73b-verify-production-state.sql"
@@ -61,23 +98,23 @@ try {
     function Run-Scenario {
         param([string]$name, [string]$setupSql, [hashtable]$expectedChecks, [hashtable]$auxChecks)
         Write-Host "--- Running Scenario: $name ---"
-        
+
         $resetSql = @"
 TRUNCATE TABLE public.offer_attribute_option_values, public.offer_attribute_values,
 public.controlled_option_value_translations, public.controlled_option_values,
 public.attribute_definition_translations, public.category_attribute_assignments,
 public.attribute_definitions, public.offers, public.categories RESTART IDENTITY CASCADE;
 
-INSERT INTO public.categories (id, parent_id, slug) VALUES 
+INSERT INTO public.categories (id, parent_id, slug) VALUES
 (1, NULL, 'wyposazenie-magazynu'),
 (2, 1, 'pojemniki-i-kuwety'),
 (3, 2, 'pojemniki-plastikowe-euro');
 
-INSERT INTO public.offers (id, title, publication_status, is_active, offer_model, category_id, technical_attributes, conversion_type) VALUES 
+INSERT INTO public.offers (id, title, publication_status, is_active, offer_model, category_id, technical_attributes, conversion_type) VALUES
 (5, 'Pojemnik Euro plastikowy 600x400x220 mm', 'published', true, 'ecommerce', 3, '{"Wymiary zewnętrzne (mm)":"600x400x220","Pojemność (l)":45,"Materiał":"PP (Polipropylen)"}'::jsonb, 'basket'),
 (6, 'Pojemnik Euro plastikowy 400x300x120 mm', 'published', true, 'ecommerce', 3, '{"Pojemność (l)":10,"Wymiary zewnętrzne (mm)":"400x300x120","Materiał":"PP (Polipropylen)"}'::jsonb, 'basket');
 
-INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES 
+INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES
 (1, 'external_length', 'number', true),
 (2, 'external_width', 'number', true),
 (3, 'external_height', 'number', true),
@@ -90,7 +127,7 @@ INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) 
 INSERT INTO public.attribute_definition_translations (attribute_definition_id, locale)
 SELECT id, loc FROM public.attribute_definitions CROSS JOIN (VALUES ('pl'),('en'),('de'),('fr'),('uk'),('es'),('zh')) AS t(loc);
 
-INSERT INTO public.category_attribute_assignments (category_id, attribute_definition_id, sort_order, is_filterable, is_comparable, is_required, is_visible, unit_code) VALUES 
+INSERT INTO public.category_attribute_assignments (category_id, attribute_definition_id, sort_order, is_filterable, is_comparable, is_required, is_visible, unit_code) VALUES
 (3, 1, 10, true, true, true, true, 'mm'),
 (3, 2, 20, true, true, true, true, 'mm'),
 (3, 3, 30, true, true, true, true, 'mm'),
@@ -100,7 +137,7 @@ INSERT INTO public.category_attribute_assignments (category_id, attribute_defini
 (3, 7, 70, false, true, false, true, 'kg'),
 (3, 8, 80, false, true, false, true, NULL);
 
-INSERT INTO public.controlled_option_values (id, attribute_id, stable_key, is_active) VALUES 
+INSERT INTO public.controlled_option_values (id, attribute_id, stable_key, is_active) VALUES
 (1, 5, 'pp', true),
 (2, 5, 'hdpe', true);
 
@@ -123,8 +160,8 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
         $fullSql = $resetSql + "`n" + $setupSql
         $setupFile = [System.IO.Path]::GetTempFileName()
         Set-Content -Path $setupFile -Value $fullSql -Encoding UTF8
-        
-        $p = Start-Process psql -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $setupFile) -NoNewWindow -Wait -PassThru
+
+        $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-f", $setupFile) -NoNewWindow -Wait -PassThru
         Remove-Item $setupFile
         if ($p.ExitCode -ne 0) { throw "Setup failed for scenario $name" }
 
@@ -132,7 +169,7 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
             foreach ($key in $auxChecks.Keys) {
                 $q = $auxChecks[$key]
                 $outFileAux = [System.IO.Path]::GetTempFileName()
-                $p = Start-Process psql -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-c", "COPY ($q) TO STDOUT WITH CSV;") -NoNewWindow -Wait -RedirectStandardOutput $outFileAux
+                $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-d", $testUrlStr, "-c", "COPY ($q) TO STDOUT WITH CSV;") -NoNewWindow -Wait -RedirectStandardOutput $outFileAux
                 if ($p.ExitCode -ne 0) { throw "Aux check query failed for scenario $name" }
                 $outVal = (Get-Content $outFileAux).Trim()
                 Remove-Item $outFileAux
@@ -141,7 +178,7 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
         }
 
         $outFile = [System.IO.Path]::GetTempFileName()
-        $p = Start-Process psql -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-P", "footer=off", "--csv", "-d", $testUrlStr, "-f", $scriptPath, "-o", $outFile) -NoNewWindow -Wait -PassThru
+        $p = Start-Process $psqlExe -ArgumentList @("-X", "-v", "ON_ERROR_STOP=1", "-P", "footer=off", "--csv", "-d", $testUrlStr, "-f", $scriptPath, "-o", $outFile) -NoNewWindow -Wait -PassThru
         if ($p.ExitCode -ne 0) { throw "Execution failed for scenario $name" }
 
         $csv = Import-Csv $outFile
@@ -155,7 +192,7 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
 
         foreach ($key in $expectedChecks.Keys) {
             $expectedVal = $expectedChecks[$key]
-            
+
             $parts = $key.Split('.')
             if ($parts.Length -eq 1) {
                 $row = $csv | Where-Object { $_.check_id -eq $parts[0] }
@@ -176,9 +213,13 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
     }
 
     # A. EXACT_STATE
-    Run-Scenario -name "EXACT_STATE" -setupSql "" -expectedChecks @{
+    Run-Scenario -name "EXACT_STATE" -setupSql @"
+INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (99, 'unrelated_attribute', 'enum', true);
+INSERT INTO public.controlled_option_values (id, attribute_id, stable_key, is_active) VALUES (99, 99, 'pp', true);
+"@ -expectedChecks @{
         "OFFER_5_SNAPSHOT" = "PASS"
         "OFFER_6_SNAPSHOT" = "PASS"
+        "CONTROLLED_OPTION_OWNERSHIP" = "PASS"
         "PRODUCTION_FILTER_DATA_READY.actual" = "YES"
         "PRODUCTION_CONFIGURATION_STATE.actual" = "EXACT"
         "PRODUCTION_VALUE_STATE.actual" = "EXACT"
@@ -212,11 +253,12 @@ INSERT INTO public.category_attribute_assignments (category_id, attribute_defini
 
     # D. OAV_REPLACEMENT
     Run-Scenario -name "OAV_REPLACEMENT" -setupSql @"
-DELETE FROM public.offer_attribute_values WHERE id = 10;
-INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_number) VALUES (11, 5, 4, 999);
+DELETE FROM public.offer_attribute_values WHERE offer_id = 6 AND attribute_id = 5;
+INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, value_boolean) VALUES (11, 5, 6, true);
 "@ -expectedChecks @{
         "OAV_MISSING_ROWS" = "PARTIAL"
         "OAV_UNEXPECTED_ROWS" = "UNEXPECTED"
+        "OAV_DUPLICATES" = "PASS"
         "PRODUCTION_VALUE_STATE.actual" = "DRIFT"
         "PRODUCTION_FILTER_DATA_READY.actual" = "NO"
     } -auxChecks @{ "10" = "SELECT count(*) FROM public.offer_attribute_values WHERE offer_id IN (5,6)" }
@@ -275,7 +317,7 @@ UPDATE public.offer_attribute_values SET value_number = 999 WHERE id = 1;
 } finally {
     Write-Host "Dropping DB: $dbName"
     $dropDbArgs = @("-X", "-v", "ON_ERROR_STOP=1", "-d", $adminUrl, "-c", "DROP DATABASE IF EXISTS $dbName;")
-    $p = Start-Process psql -ArgumentList $dropDbArgs -NoNewWindow -Wait -PassThru
+    $p = Start-Process $psqlExe -ArgumentList $dropDbArgs -NoNewWindow -Wait -PassThru
     if ($p.ExitCode -eq 0) {
         $cleanupSuccess = $true
         Write-Host "DB_DROPPED=YES"

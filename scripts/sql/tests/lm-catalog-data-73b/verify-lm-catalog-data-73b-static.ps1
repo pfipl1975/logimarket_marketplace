@@ -113,13 +113,25 @@ if ($unionCount -ne 25) {
     exit 1
 }
 
+if ($sqlContent -match "(?i)max\(technical_attributes\)") {
+    Write-Host "max(technical_attributes) is forbidden"
+    exit 1
+}
+if ($sqlContent -match "(?i)min\(technical_attributes\)") {
+    Write-Host "min(technical_attributes) is forbidden"
+    exit 1
+}
 if ($sqlContent -match "technical_attributes::text") {
     Write-Host "technical_attributes::text is forbidden"
     exit 1
 }
 
-if (-not ($sqlContent -match "::jsonb")) {
-    Write-Host "Missing JSONB comparison for offers"
+if (-not ($sqlContent -match "bool_and\(title.*Pojemnik Euro")) {
+    Write-Host "Missing bool_and in snapshot"
+    exit 1
+}
+if (-not ($sqlContent -match "bool_and\(technical_attributes.*::jsonb\)")) {
+    Write-Host "Missing bool_and with ::jsonb direct comparison"
     exit 1
 }
 
@@ -196,7 +208,7 @@ if (-not ($runnerContent -match "uri\.Host")) {
     exit 1
 }
 
-$psqlCalls = ([regex]::Matches($runnerContent, "(?i)Start-Process psql")).Count
+$psqlCalls = ([regex]::Matches($runnerContent, '(?i)Start-Process\s+\$psqlExe')).Count
 $onErrorStopCalls = ([regex]::Matches($runnerContent, "(?i)ON_ERROR_STOP=1")).Count
 if ($psqlCalls -gt 0 -and $onErrorStopCalls -lt $psqlCalls) {
     Write-Host "Not all psql calls have ON_ERROR_STOP=1"
@@ -215,6 +227,31 @@ if (-not ($runnerContent -match "(?is)DELETE FROM public\.category_attribute_ass
 
 if (-not ($runnerContent -match "(?is)DELETE FROM public\.offer_attribute_values.*INSERT INTO public\.offer_attribute_values")) {
     Write-Host "OAV_REPLACEMENT does not contain DELETE + INSERT"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)'unrelated_attribute'.*'pp'")) {
+    Write-Host "Runner does not add unrelated option pp"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)EXACT_STATE.*CONTROLLED_OPTION_OWNERSHIP.*PASS")) {
+    Write-Host "EXACT_STATE does not expect CONTROLLED_OPTION_OWNERSHIP=PASS"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)OAV_REPLACEMENT.*value_boolean.*true")) {
+    Write-Host "OAV_REPLACEMENT does not add esd_protection/value_boolean"
+    exit 1
+}
+
+if ($runnerContent -match "(?is)OAV_REPLACEMENT.*capacity.*capacity") {
+    Write-Host "OAV_REPLACEMENT adds second capacity"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)OAV_REPLACEMENT.*OAV_DUPLICATES.*PASS")) {
+    Write-Host "OAV_REPLACEMENT does not expect OAV_DUPLICATES=PASS"
     exit 1
 }
 
