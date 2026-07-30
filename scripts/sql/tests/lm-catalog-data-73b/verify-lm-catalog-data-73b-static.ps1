@@ -9,7 +9,6 @@ if (-not (Test-Path $sqlPath)) {
 $sqlContent = Get-Content $sqlPath -Raw
 $sqlLines = Get-Content $sqlPath
 
-# 6. Zabronione tokeny
 $forbiddenTokens = @(
     "\bDO\b", "\bCALL\b", "\bINSERT\b", "\bUPDATE\b", "\bDELETE\b", "\bMERGE\b", "\bTRUNCATE\b",
     "\bCREATE\b", "\bALTER\b", "\bDROP\b", "\bGRANT\b", "\bREVOKE\b", "\bLOCK\b",
@@ -23,7 +22,6 @@ foreach ($token in $forbiddenTokens) {
     }
 }
 
-# 9. Brak odwołań
 $forbiddenRefs = @("partners", "rfq_leads", "cart_items", "orders", "order_items", "clicks")
 foreach ($ref in $forbiddenRefs) {
     if ($sqlContent -match "(?i)\b$ref\b") {
@@ -32,7 +30,6 @@ foreach ($ref in $forbiddenRefs) {
     }
 }
 
-# 2. 25 CHECK_ID
 $checkIds = @(
     "CATEGORY_PATH", "CATEGORY_PARENT_CHAIN", "ATTRIBUTE_DEFINITIONS", "EXACT_CATEGORY_ASSIGNMENTS",
     "ATTRIBUTE_UNITS", "ATTRIBUTE_FLAGS", "ATTRIBUTE_TRANSLATIONS", "CONTROLLED_OPTIONS",
@@ -48,9 +45,14 @@ foreach ($checkId in $checkIds) {
         Write-Host "Missing CHECK_ID: $checkId"
         exit 1
     }
+    # Check that each CHECK_ID appears exactly once as a literal result in a CTE (in format 'ID'::text AS check_id)
+    $matchCount = ([regex]::Matches($sqlContent, "['""]$checkId['""]::text AS check_id")).Count
+    if ($matchCount -ne 1) {
+        Write-Host "CHECK_ID $checkId must appear exactly once as a literal. Found $matchCount"
+        exit 1
+    }
 }
 
-# 8. to_regclass dla provenance
 $provenanceTables = @(
     "public.migration_batches", "public.migration_source_entries",
     "public.migration_oav_targets", "public.migration_oaov_targets",
@@ -64,7 +66,6 @@ foreach ($pt in $provenanceTables) {
     }
 }
 
-# 4. Zaczyna się od WITH
 $firstExecutableLineFound = $false
 foreach ($line in $sqlLines) {
     $trim = $line.Trim()
@@ -83,7 +84,6 @@ if (-not $firstExecutableLineFound) {
     exit 1
 }
 
-# 7. psql meta-commands
 foreach ($line in $sqlLines) {
     $trim = $line.Trim()
     if ($trim.StartsWith("\")) {
@@ -92,7 +92,6 @@ foreach ($line in $sqlLines) {
     }
 }
 
-# 5. Dokładnie jedno polecenie końcowe
 $sqlWithoutComments = $sqlContent -replace "(?m)--.*", ""
 $semicolonCount = ([regex]::Matches($sqlWithoutComments, ";")).Count
 if ($semicolonCount -ne 1) {
@@ -104,9 +103,63 @@ if (-not $sqlWithoutComments.Trim().EndsWith(";")) {
     exit 1
 }
 
-# 3. Sześć kolumn finalnego wyniku
 if (-not ($sqlContent -match "(?i)SELECT\s+check_id,\s*scope,\s*status,\s*expected,\s*actual,\s*details\s+FROM")) {
     Write-Host "Final SELECT does not exactly select the 6 required columns in order."
+    exit 1
+}
+
+# New checks for 73B R1
+$unionCount = ([regex]::Matches($sqlWithoutComments, "(?i)\bUNION ALL\b")).Count
+if ($unionCount -ne 25) { # 24 for final SELECT + 1 in target_offers
+    Write-Host "Expected exactly 25 UNION ALL. Found $unionCount UNION ALL"
+    exit 1
+}
+
+if ($sqlContent -match "technical_attributes::text") {
+    Write-Host "technical_attributes::text is forbidden"
+    exit 1
+}
+
+if (-not ($sqlContent -match "::jsonb")) {
+    Write-Host "Missing JSONB comparison for offers"
+    exit 1
+}
+
+if (-not ($sqlContent -match "(?i)locale_manifest")) {
+    Write-Host "locale_manifest is not used"
+    exit 1
+}
+
+$requiredCTEs = @(
+    "unexpected_target_category_assignments",
+    "unexpected_material_options",
+    "unexpected_oav",
+    "missing_oav"
+)
+foreach ($cte in $requiredCTEs) {
+    if (-not ($sqlContent -match "(?i)\b$cte\b\s+AS\s+\(")) {
+        Write-Host "Missing required CTE: $cte"
+        exit 1
+    }
+}
+
+if (-not ($sqlContent -match "(?i)num_nonnulls\(value_text,\s*value_number,\s*value_boolean,\s*value_date,\s*value_year,\s*option_id\)")) {
+    Write-Host "Missing typed-slot check"
+    exit 1
+}
+
+if (-not ($sqlContent -match "(?i)offer_attribute_values.*offer_attribute_option_values|offer_attribute_option_values.*offer_attribute_values")) {
+    Write-Host "Missing OAV and OAOV references for orphans"
+    exit 1
+}
+
+if ($sqlContent -match "(?i)count\(\*\)\s*>\s*10") {
+    Write-Host "count(*) > 10 is forbidden"
+    exit 1
+}
+
+if ($sqlContent -match "(?i)count\(\*\)\s*-\s*10") {
+    Write-Host "count(*) - 10 is forbidden"
     exit 1
 }
 
