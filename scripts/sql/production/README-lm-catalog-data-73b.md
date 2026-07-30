@@ -54,3 +54,6 @@ if ($LASTEXITCODE -ne 0) {
   exit $LASTEXITCODE
 }
 ```
+
+# Phase 73B-R1 Updates
+Local disposable DB tests were added in 73B-R1.
