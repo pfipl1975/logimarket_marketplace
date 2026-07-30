@@ -83,7 +83,10 @@ function Invoke-Psql {
     $stderr = $stderrTask.GetAwaiter().GetResult()
     $exitCode = $process.ExitCode
 
-    if ($OutPath -ne $null) {
+    if ($PSBoundParameters.ContainsKey("OutPath")) {
+        if ([string]::IsNullOrWhiteSpace($OutPath)) {
+            throw "OutPath cannot be empty"
+        }
         Set-Content -Path $OutPath -Value $stdout -Encoding UTF8
     }
 

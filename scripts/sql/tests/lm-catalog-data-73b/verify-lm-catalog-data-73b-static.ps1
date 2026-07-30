@@ -386,5 +386,46 @@ if ($runnerContent -match "(?is)function Run-Scenario\s*\{.*?\}(?=\s*# A\.)") {
     Write-Host "Could not find Run-Scenario function body"
     exit 1
 }
+# --- R7 Checks ---
+if (-not ($runnerContent -match '(?i)PSBoundParameters\.ContainsKey\("OutPath"\)')) {
+    Write-Host "Runner does not contain PSBoundParameters.ContainsKey(`"OutPath`")"
+    exit 1
+}
+if (-not ($runnerContent -match '(?i)IsNullOrWhiteSpace\(\$OutPath\)')) {
+    Write-Host "Runner does not contain IsNullOrWhiteSpace(`$OutPath)"
+    exit 1
+}
+if ($runnerContent -match '(?i)\$OutPath\s*-ne\s*\$null') {
+    Write-Host "Runner contains `$OutPath -ne `$null"
+    exit 1
+}
+
+$invokePsqlBody = [regex]::Match($runnerContent, '(?is)function Invoke-Psql\s*\{.*?return @\{.*?\}').Value
+if (-not ($invokePsqlBody -match '(?is)if\s*\(\$PSBoundParameters\.ContainsKey\("OutPath"\)\)\s*\{.*?Set-Content.*?\}')) {
+    Write-Host "Set-Content is not inside the protected OutPath block in Invoke-Psql"
+    exit 1
+}
+$setContentCount = ([regex]::Matches($invokePsqlBody, '(?i)Set-Content')).Count
+if ($setContentCount -ne 1) {
+    Write-Host "Set-Content must appear exactly once inside Invoke-Psql"
+    exit 1
+}
+
+if ($runnerContent -match '(?i)\$preflightRes\s*=\s*Invoke-Psql.*-OutPath') {
+    Write-Host "preflight uses -OutPath"
+    exit 1
+}
+if ($runnerContent -match '(?i)\$createRes\s*=\s*Invoke-Psql.*-OutPath') {
+    Write-Host "CREATE DATABASE uses -OutPath"
+    exit 1
+}
+if (-not ($runnerContent -match '(?i)\$auxRes\s*=\s*Invoke-Psql.*-OutPath')) {
+    Write-Host "auxiliary does not use -OutPath"
+    exit 1
+}
+if (-not ($runnerContent -match '(?i)\$auditRes\s*=\s*Invoke-Psql.*-OutPath')) {
+    Write-Host "audit does not use -OutPath"
+    exit 1
+}
 
 Write-Host "LM73B_STATIC_TEST=PASS"
