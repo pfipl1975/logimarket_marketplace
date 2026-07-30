@@ -45,7 +45,6 @@ foreach ($checkId in $checkIds) {
         Write-Host "Missing CHECK_ID: $checkId"
         exit 1
     }
-    # Check that each CHECK_ID appears exactly once as a literal result in a CTE (in format 'ID'::text AS check_id)
     $matchCount = ([regex]::Matches($sqlContent, "['""]$checkId['""]::text AS check_id")).Count
     if ($matchCount -ne 1) {
         Write-Host "CHECK_ID $checkId must appear exactly once as a literal. Found $matchCount"
@@ -108,9 +107,8 @@ if (-not ($sqlContent -match "(?i)SELECT\s+check_id,\s*scope,\s*status,\s*expect
     exit 1
 }
 
-# New checks for 73B R1
 $unionCount = ([regex]::Matches($sqlWithoutComments, "(?i)\bUNION ALL\b")).Count
-if ($unionCount -ne 25) { # 24 for final SELECT + 1 in target_offers
+if ($unionCount -ne 25) {
     Write-Host "Expected exactly 25 UNION ALL. Found $unionCount UNION ALL"
     exit 1
 }
@@ -134,7 +132,8 @@ $requiredCTEs = @(
     "unexpected_target_category_assignments",
     "unexpected_material_options",
     "unexpected_oav",
-    "missing_oav"
+    "missing_oav",
+    "oav_value_drift"
 )
 foreach ($cte in $requiredCTEs) {
     if (-not ($sqlContent -match "(?i)\b$cte\b\s+AS\s+\(")) {
@@ -160,6 +159,62 @@ if ($sqlContent -match "(?i)count\(\*\)\s*>\s*10") {
 
 if ($sqlContent -match "(?i)count\(\*\)\s*-\s*10") {
     Write-Host "count(*) - 10 is forbidden"
+    exit 1
+}
+
+if ($sqlContent -match "NOT IN.*status") {
+    Write-Host "summary MISSING uses NOT IN"
+    exit 1
+}
+
+# --- Check Runner Requirements ---
+$runnerPath = ".\scripts\sql\tests\lm-catalog-data-73b\run-lm-catalog-data-73b-db-tests.ps1"
+$runnerContent = Get-Content $runnerPath -Raw
+
+if ($runnerContent -match "(?i)\`$env:LM73B_ALLOW_DISPOSABLE_DB\s*=\s*") {
+    Write-Host "Runner sets LM73B_ALLOW_DISPOSABLE_DB"
+    exit 1
+}
+
+if ($runnerContent -match "(?i)\`$env:LM73B_TEST_ADMIN_URL\s*=\s*") {
+    Write-Host "Runner sets LM73B_TEST_ADMIN_URL"
+    exit 1
+}
+
+if ($runnerContent -match "(?i)postgresql://") {
+    Write-Host "Runner contains hardcoded postgresql://"
+    exit 1
+}
+
+if (-not ($runnerContent -match "\[System\.Uri\]")) {
+    Write-Host "Runner does not use [System.Uri]"
+    exit 1
+}
+
+if (-not ($runnerContent -match "uri\.Host")) {
+    Write-Host "Runner does not check uri.Host"
+    exit 1
+}
+
+$psqlCalls = ([regex]::Matches($runnerContent, "(?i)Start-Process psql")).Count
+$onErrorStopCalls = ([regex]::Matches($runnerContent, "(?i)ON_ERROR_STOP=1")).Count
+if ($psqlCalls -gt 0 -and $onErrorStopCalls -lt $psqlCalls) {
+    Write-Host "Not all psql calls have ON_ERROR_STOP=1"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?s)DB_DROPPED=YES.*LM73B_DB_TEST=PASS")) {
+    Write-Host "PASS occurs before cleanup is verified"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)DELETE FROM public\.category_attribute_assignments.*INSERT INTO public\.category_attribute_assignments")) {
+    Write-Host "ASSIGNMENT_REPLACEMENT does not contain DELETE + INSERT"
+    exit 1
+}
+
+if (-not ($runnerContent -match "(?is)DELETE FROM public\.offer_attribute_values.*INSERT INTO public\.offer_attribute_values")) {
+    Write-Host "OAV_REPLACEMENT does not contain DELETE + INSERT"
     exit 1
 }
 

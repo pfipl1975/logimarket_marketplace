@@ -71,7 +71,7 @@ actual_attributes AS (
 check_attribute_definitions AS (
     SELECT 'ATTRIBUTE_DEFINITIONS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN count(expected_key) = count(actual_key) AND sum(CASE WHEN expected_type = actual_type AND expected_active = actual_active THEN 1 ELSE 0 END) = 8 THEN 'PASS'
              WHEN count(actual_key) = 0 THEN 'MISSING'
              WHEN count(actual_key) > 0 AND count(actual_key) < 8 THEN 'PARTIAL'
@@ -106,7 +106,7 @@ unexpected_target_category_assignments AS (
 check_exact_category_assignments AS (
     SELECT 'EXACT_CATEGORY_ASSIGNMENTS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM actual_target_category_assignments) = 0 THEN 'MISSING'
              WHEN (SELECT count(*) FROM unexpected_target_category_assignments) > 0 THEN 'UNEXPECTED'
              WHEN (SELECT count(*) FROM missing_expected_assignments) > 0 THEN 'PARTIAL'
@@ -114,7 +114,7 @@ check_exact_category_assignments AS (
            END AS status,
            'Exactly 8 pilot assignments'::text AS expected,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM unexpected_target_category_assignments) > 0 THEN 'unexpected assignments found'
              WHEN (SELECT count(*) FROM actual_target_category_assignments) = 0 THEN '0 assignments'
              WHEN (SELECT count(*) FROM missing_expected_assignments) > 0 THEN 'partial assignments'
@@ -133,7 +133,7 @@ actual_assignments_full AS (
 check_attribute_units AS (
     SELECT 'ATTRIBUTE_UNITS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM config_manifest) = 8 AND sum(CASE WHEN m.unit_code IS NOT DISTINCT FROM a.unit_code THEN 1 ELSE 0 END) = 8 THEN 'PASS'
              WHEN count(a.attribute_definition_id) = 0 THEN 'MISSING'
              WHEN count(a.attribute_definition_id) < 8 THEN 'PARTIAL'
@@ -148,7 +148,7 @@ check_attribute_units AS (
 check_attribute_flags AS (
     SELECT 'ATTRIBUTE_FLAGS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN count(expected_key) = 8 AND sum(CASE WHEN 
                   m.sort_order = a.sort_order AND
                   m.is_filterable = a.is_filterable AND
@@ -169,7 +169,7 @@ check_attribute_flags AS (
 check_attribute_translations AS (
     SELECT 'ATTRIBUTE_TRANSLATIONS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM config_manifest m CROSS JOIN locale_manifest lm LEFT JOIN public.attribute_definitions ad ON m.stable_key = ad.stable_key LEFT JOIN public.attribute_definition_translations adt ON adt.attribute_definition_id = ad.id AND adt.locale = lm.locale WHERE adt.id IS NULL) > 0 THEN 
                 CASE WHEN (SELECT count(*) FROM config_manifest m CROSS JOIN locale_manifest lm LEFT JOIN public.attribute_definitions ad ON m.stable_key = ad.stable_key LEFT JOIN public.attribute_definition_translations adt ON adt.attribute_definition_id = ad.id AND adt.locale = lm.locale WHERE adt.id IS NOT NULL) = 0 THEN 'MISSING' ELSE 'PARTIAL' END
              WHEN (SELECT count(*) FROM config_manifest m JOIN public.attribute_definitions ad ON m.stable_key = ad.stable_key JOIN public.attribute_definition_translations adt ON adt.attribute_definition_id = ad.id LEFT JOIN locale_manifest lm ON lm.locale = adt.locale WHERE lm.locale IS NULL) > 0 THEN 'UNEXPECTED'
@@ -188,7 +188,7 @@ unexpected_material_options AS (
 check_controlled_options AS (
     SELECT 'CONTROLLED_OPTIONS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM unexpected_material_options) > 0 THEN 'UNEXPECTED'
              WHEN (SELECT count(*) FROM option_manifest m LEFT JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key LEFT JOIN public.controlled_option_values cov ON cov.attribute_id = ad.id AND cov.stable_key = m.stable_key WHERE cov.id IS NULL) > 0 THEN 
                 CASE WHEN (SELECT count(*) FROM option_manifest m LEFT JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key LEFT JOIN public.controlled_option_values cov ON cov.attribute_id = ad.id AND cov.stable_key = m.stable_key WHERE cov.id IS NOT NULL) = 0 THEN 'MISSING' ELSE 'PARTIAL' END
@@ -202,7 +202,7 @@ check_controlled_options AS (
 check_controlled_option_translations AS (
     SELECT 'CONTROLLED_OPTION_TRANSLATIONS'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM option_manifest m CROSS JOIN locale_manifest lm LEFT JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key LEFT JOIN public.controlled_option_values cov ON cov.attribute_id = ad.id AND cov.stable_key = m.stable_key LEFT JOIN public.controlled_option_value_translations covt ON covt.controlled_option_value_id = cov.id AND covt.locale = lm.locale WHERE covt.id IS NULL) > 0 THEN 
                 CASE WHEN (SELECT count(*) FROM option_manifest m CROSS JOIN locale_manifest lm LEFT JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key LEFT JOIN public.controlled_option_values cov ON cov.attribute_id = ad.id AND cov.stable_key = m.stable_key LEFT JOIN public.controlled_option_value_translations covt ON covt.controlled_option_value_id = cov.id AND covt.locale = lm.locale WHERE covt.id IS NOT NULL) = 0 THEN 'MISSING' ELSE 'PARTIAL' END
              WHEN (SELECT count(*) FROM option_manifest m JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key JOIN public.controlled_option_values cov ON cov.attribute_id = ad.id AND cov.stable_key = m.stable_key JOIN public.controlled_option_value_translations covt ON covt.controlled_option_value_id = cov.id LEFT JOIN locale_manifest lm ON lm.locale = covt.locale WHERE lm.locale IS NULL) > 0 THEN 'UNEXPECTED'
@@ -215,36 +215,36 @@ check_controlled_option_translations AS (
 check_controlled_option_ownership AS (
     SELECT 'CONTROLLED_OPTION_OWNERSHIP'::text AS check_id, 'configuration'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
-             WHEN (SELECT count(*) FROM public.controlled_option_values cov JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id JOIN option_manifest m ON m.stable_key = cov.stable_key WHERE ad.stable_key <> m.attr_key) > 0 THEN 'DRIFT'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM option_manifest m JOIN public.controlled_option_values cov ON cov.stable_key = m.stable_key JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id WHERE ad.stable_key <> m.attr_key) > 0 THEN 'DRIFT'
              ELSE 'PASS'
            END AS status,
            'No misaligned ownership'::text AS expected,
-           concat((SELECT count(*) FROM public.controlled_option_values cov JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id JOIN option_manifest m ON m.stable_key = cov.stable_key WHERE ad.stable_key <> m.attr_key), ' misaligned')::text AS actual,
+           concat((SELECT count(*) FROM option_manifest m JOIN public.controlled_option_values cov ON cov.stable_key = m.stable_key JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id WHERE ad.stable_key <> m.attr_key), ' misaligned')::text AS actual,
            'Options must belong to expected attribute'::text AS details
 ),
 check_offer_5_snapshot AS (
     SELECT 'OFFER_5_SNAPSHOT'::text AS check_id, 'offers'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN count(*) = 0 THEN 'MISSING'
              WHEN max(title) = 'Pojemnik Euro plastikowy 600x400x220 mm' AND
                   max(publication_status) = 'published' AND
                   bool_and(is_active) = true AND
                   max(offer_model) = 'ecommerce' AND
-                  max(category_id) = (SELECT category_id FROM target_category) AND
+                  max(category_id) IN (SELECT category_id FROM target_category) AND
                   max(technical_attributes) = '{"Materiał":"PP (Polipropylen)","Pojemność (l)":45,"Wymiary zewnętrzne (mm)":"600x400x220"}'::jsonb
              THEN 'PASS'
              ELSE 'DRIFT'
            END AS status,
            'Exact offer 5 snapshot'::text AS expected,
-           CASE WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED' WHEN count(*) = 0 THEN 'Offer missing' ELSE 'Snapshot evaluated' END::text AS actual,
+           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) = 0 THEN 'Offer missing' ELSE 'Snapshot evaluated' END::text AS actual,
            'Pre-verification of source offer 5'::text AS details
     FROM target_offers WHERE offer_id = 5
 ),
 check_offer_5_conversion_type AS (
     SELECT 'OFFER_5_CONVERSION_TYPE'::text AS check_id, 'offers'::text AS scope,
-           CASE WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED' WHEN count(*) > 0 THEN 'PASS' ELSE 'MISSING' END AS status,
+           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) > 0 THEN 'PASS' ELSE 'MISSING' END AS status,
            'Any value'::text AS expected,
            COALESCE(max(conversion_type), 'NULL')::text AS actual,
            'Observed conversion type'::text AS details
@@ -253,25 +253,25 @@ check_offer_5_conversion_type AS (
 check_offer_6_snapshot AS (
     SELECT 'OFFER_6_SNAPSHOT'::text AS check_id, 'offers'::text AS scope,
            CASE
-             WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN count(*) = 0 THEN 'MISSING'
              WHEN max(title) = 'Pojemnik Euro plastikowy 400x300x120 mm' AND
                   max(publication_status) = 'published' AND
                   bool_and(is_active) = true AND
                   max(offer_model) = 'ecommerce' AND
-                  max(category_id) = (SELECT category_id FROM target_category) AND
+                  max(category_id) IN (SELECT category_id FROM target_category) AND
                   max(technical_attributes) = '{"Materiał":"PP (Polipropylen)","Pojemność (l)":10,"Wymiary zewnętrzne (mm)":"400x300x120"}'::jsonb
              THEN 'PASS'
              ELSE 'DRIFT'
            END AS status,
            'Exact offer 6 snapshot'::text AS expected,
-           CASE WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED' WHEN count(*) = 0 THEN 'Offer missing' ELSE 'Snapshot evaluated' END::text AS actual,
+           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) = 0 THEN 'Offer missing' ELSE 'Snapshot evaluated' END::text AS actual,
            'Pre-verification of source offer 6'::text AS details
     FROM target_offers WHERE offer_id = 6
 ),
 check_offer_6_conversion_type AS (
     SELECT 'OFFER_6_CONVERSION_TYPE'::text AS check_id, 'offers'::text AS scope,
-           CASE WHEN (SELECT count(*) FROM target_category) = 0 THEN 'BLOCKED' WHEN count(*) > 0 THEN 'PASS' ELSE 'MISSING' END AS status,
+           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) > 0 THEN 'PASS' ELSE 'MISSING' END AS status,
            'Any value'::text AS expected,
            COALESCE(max(conversion_type), 'NULL')::text AS actual,
            'Observed conversion type'::text AS details
@@ -299,9 +299,23 @@ unexpected_oav AS (
     LEFT JOIN expected_oav e ON e.offer_id = a.offer_id AND e.attribute_key = a.attribute_key
     WHERE e.offer_id IS NULL
 ),
+oav_value_drift AS (
+    SELECT a.offer_id, a.attribute_id, ad.stable_key
+    FROM public.offer_attribute_values a
+    JOIN public.attribute_definitions ad ON ad.id = a.attribute_id
+    JOIN oav_manifest m ON m.offer_id = a.offer_id AND m.attribute_key = ad.stable_key
+    LEFT JOIN public.controlled_option_values cov ON cov.id = a.option_id
+    WHERE a.offer_id IN (5, 6)
+      AND (
+        m.value_number IS DISTINCT FROM a.value_number
+        OR m.option_key IS DISTINCT FROM cov.stable_key
+        OR num_nonnulls(a.value_text, a.value_number, a.value_boolean, a.value_date, a.value_year, a.option_id) <> 1
+      )
+),
 check_oav_missing_rows AS (
     SELECT 'OAV_MISSING_ROWS'::text AS check_id, 'backfill'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM missing_oav) = 10 THEN 'MISSING'
              WHEN (SELECT count(*) FROM missing_oav) > 0 THEN 'PARTIAL'
              ELSE 'PASS'
@@ -313,6 +327,7 @@ check_oav_missing_rows AS (
 check_oav_unexpected_rows AS (
     SELECT 'OAV_UNEXPECTED_ROWS'::text AS check_id, 'backfill'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM unexpected_oav) > 0 THEN 'UNEXPECTED'
              ELSE 'PASS'
            END AS status,
@@ -323,9 +338,11 @@ check_oav_unexpected_rows AS (
 check_oav_expected_rows AS (
     SELECT 'OAV_EXPECTED_ROWS'::text AS check_id, 'backfill'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
+             WHEN (SELECT count(*) FROM oav_value_drift) > 0 THEN 'DRIFT'
+             WHEN (SELECT count(*) FROM missing_oav) = 10 THEN 'MISSING'
+             WHEN (SELECT count(*) FROM missing_oav) > 0 THEN 'PARTIAL'
              WHEN (SELECT count(*) FROM expected_oav e JOIN public.attribute_definitions ad ON ad.stable_key = e.attribute_key JOIN public.offer_attribute_values oav ON oav.offer_id = e.offer_id AND oav.attribute_id = ad.id LEFT JOIN public.controlled_option_values cov ON cov.id = oav.option_id WHERE (e.value_number IS NOT DISTINCT FROM oav.value_number) AND (e.option_key IS NOT DISTINCT FROM cov.stable_key)) = 10 THEN 'PASS'
-             WHEN (SELECT count(*) FROM public.offer_attribute_values WHERE offer_id IN (5,6)) = 0 THEN 'MISSING'
-             WHEN (SELECT count(*) FROM expected_oav e JOIN public.attribute_definitions ad ON ad.stable_key = e.attribute_key JOIN public.offer_attribute_values oav ON oav.offer_id = e.offer_id AND oav.attribute_id = ad.id LEFT JOIN public.controlled_option_values cov ON cov.id = oav.option_id WHERE (e.value_number IS NOT DISTINCT FROM oav.value_number) AND (e.option_key IS NOT DISTINCT FROM cov.stable_key)) < 10 THEN 'PARTIAL'
              ELSE 'DRIFT'
            END AS status,
            '10 exact matches'::text AS expected,
@@ -335,6 +352,7 @@ check_oav_expected_rows AS (
 check_oav_duplicates AS (
     SELECT 'OAV_DUPLICATES'::text AS check_id, 'data_integrity'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM (SELECT offer_id, attribute_id FROM public.offer_attribute_values WHERE offer_id IN (5, 6) GROUP BY offer_id, attribute_id HAVING count(*) > 1) d) > 0 THEN 'DRIFT'
              ELSE 'PASS'
            END AS status,
@@ -345,6 +363,7 @@ check_oav_duplicates AS (
 check_oav_typed_slot_integrity AS (
     SELECT 'OAV_TYPED_SLOT_INTEGRITY'::text AS check_id, 'data_integrity'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM public.offer_attribute_values WHERE offer_id IN (5,6)) = 0 THEN 'PASS'
              WHEN (SELECT count(*) FROM public.offer_attribute_values WHERE offer_id IN (5, 6) AND num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) <> 1) > 0 THEN 'DRIFT'
              ELSE 'PASS'
@@ -356,6 +375,7 @@ check_oav_typed_slot_integrity AS (
 check_oaov_expected_zero AS (
     SELECT 'OAOV_EXPECTED_ZERO'::text AS check_id, 'data_integrity'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM public.offer_attribute_option_values WHERE offer_id IN (5, 6)) > 0 THEN 'UNEXPECTED'
              ELSE 'PASS'
            END AS status,
@@ -366,6 +386,7 @@ check_oaov_expected_zero AS (
 check_orphan_option_ids AS (
     SELECT 'ORPHAN_OPTION_IDS'::text AS check_id, 'data_integrity'::text AS scope,
            CASE
+             WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
              WHEN (SELECT count(*) FROM public.offer_attribute_values oav LEFT JOIN public.controlled_option_values cov ON cov.id = oav.option_id WHERE oav.offer_id IN (5, 6) AND oav.option_id IS NOT NULL AND (cov.id IS NULL OR cov.attribute_id <> oav.attribute_id)) > 0 THEN 'DRIFT'
              WHEN (SELECT count(*) FROM public.offer_attribute_option_values oaov LEFT JOIN public.controlled_option_values cov ON cov.id = oaov.option_id WHERE oaov.offer_id IN (5, 6) AND (cov.id IS NULL OR cov.attribute_id <> oaov.attribute_id)) > 0 THEN 'DRIFT'
              ELSE 'PASS'
@@ -395,7 +416,7 @@ check_production_configuration_state AS (
              WHEN c_path.status = 'MISSING' THEN 'MISSING'
              WHEN c_path.status <> 'PASS' THEN 'DRIFT'
              WHEN 'UNEXPECTED' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) OR 'DRIFT' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) THEN 'DRIFT'
-             WHEN 'MISSING' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) AND 'PASS' NOT IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) THEN 'MISSING'
+             WHEN c_ad.status = 'MISSING' AND c_assign.status = 'MISSING' AND c_opt.status = 'MISSING' THEN 'MISSING'
              WHEN 'PARTIAL' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) OR 'MISSING' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) THEN 'PARTIAL'
              ELSE 'PASS'
            END AS status,
@@ -404,7 +425,7 @@ check_production_configuration_state AS (
              WHEN c_path.status = 'MISSING' THEN 'MISSING'
              WHEN c_path.status <> 'PASS' THEN 'DRIFT'
              WHEN 'UNEXPECTED' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) OR 'DRIFT' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) THEN 'DRIFT'
-             WHEN 'MISSING' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) AND 'PASS' NOT IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) THEN 'MISSING'
+             WHEN c_ad.status = 'MISSING' AND c_assign.status = 'MISSING' AND c_opt.status = 'MISSING' THEN 'MISSING'
              WHEN 'PARTIAL' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) OR 'MISSING' IN (c_ad.status, c_assign.status, c_units.status, c_flags.status, c_trans.status, c_opt.status, c_optt.status, c_own.status) THEN 'PARTIAL'
              ELSE 'EXACT'
            END AS actual,
