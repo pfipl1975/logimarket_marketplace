@@ -197,15 +197,13 @@ INSERT INTO public.offer_attribute_values (id, offer_id, attribute_id, option_id
             if ($parts.Length -eq 1) {
                 $row = $csv | Where-Object { $_.check_id -eq $parts[0] }
                 if ($row.status -ne $expectedVal) {
-                    Write-Host "Mismatch in $name for $($parts[0]): expected $expectedVal, got $($row.status)"
-                    exit 1
+                    throw "Mismatch in $name for $($parts[0]): expected $expectedVal, got $($row.status)"
                 }
             } else {
                 $row = $csv | Where-Object { $_.check_id -eq $parts[0] }
                 $prop = $parts[1]
                 if ($row.$prop -ne $expectedVal) {
-                    Write-Host "Mismatch in $name for $($parts[0]).${prop}: expected $expectedVal, got $($row.$prop)"
-                    exit 1
+                    throw "Mismatch in $name for $($parts[0]).${prop}: expected $expectedVal, got $($row.$prop)"
                 }
             }
         }

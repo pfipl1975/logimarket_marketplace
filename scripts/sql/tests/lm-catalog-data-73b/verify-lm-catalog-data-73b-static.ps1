@@ -255,4 +255,41 @@ if (-not ($runnerContent -match "(?is)OAV_REPLACEMENT.*OAV_DUPLICATES.*PASS")) {
     exit 1
 }
 
+# --- R4 Additional Checks ---
+if ($sqlContent -match "'Evaluated'") {
+    Write-Host "SQL contains forbidden literal 'Evaluated'"
+    exit 1
+}
+
+if (-not ($sqlContent -match "(?is)OFFER_5_CONVERSION_TYPE.*max\(conversion_type\)") -or -not ($sqlContent -match "(?is)OFFER_6_CONVERSION_TYPE.*max\(conversion_type\)")) {
+    Write-Host "Conversion type checks do not contain max(conversion_type)"
+    exit 1
+}
+
+if ($sqlContent -match "(?is)ad\.stable_key\s*=\s*m\.attr_key.*ad\.stable_key\s*<>\s*m\.attr_key") {
+    Write-Host "CONTROLLED_OPTION_OWNERSHIP contains impossible contract"
+    exit 1
+}
+
+if (-not ($sqlContent -match "(?is)expected_option_ownership.*'material'.*'pp'.*'material'.*'hdpe'")) {
+    Write-Host "Ownership does not check exact pairs material.pp and material.hdpe"
+    exit 1
+}
+
+# Extract Run-Scenario body to verify exit/throw
+if ($runnerContent -match "(?is)function Run-Scenario\s*\{.*?\}(?=\s*# A\.)") {
+    $runScenarioBody = $Matches[0]
+    if ($runScenarioBody -match "(?i)\bexit\s+1\b") {
+        Write-Host "Runner uses exit 1 inside Run-Scenario"
+        exit 1
+    }
+    if (-not ($runScenarioBody -match "(?i)\bthrow\b")) {
+        Write-Host "Runner does not use throw for scenario errors"
+        exit 1
+    }
+} else {
+    Write-Host "Could not find Run-Scenario function body"
+    exit 1
+}
+
 Write-Host "LM73B_STATIC_TEST=PASS"

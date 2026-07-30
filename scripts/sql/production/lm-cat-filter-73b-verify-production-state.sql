@@ -212,16 +212,40 @@ check_controlled_option_translations AS (
            concat((SELECT count(*) FROM option_manifest m JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key JOIN public.controlled_option_values cov ON cov.attribute_id = ad.id AND cov.stable_key = m.stable_key JOIN public.controlled_option_value_translations covt ON covt.controlled_option_value_id = cov.id), ' translations')::text AS actual,
            '7 locales per 2 options'::text AS details
 ),
+expected_option_ownership (attr_key, option_key) AS (
+    VALUES
+        ('material'::text, 'pp'::text),
+        ('material'::text, 'hdpe'::text)
+),
+ownership_checks AS (
+    SELECT e.attr_key, e.option_key,
+           CASE
+             WHEN EXISTS (
+                 SELECT 1 FROM public.controlled_option_values cov
+                 JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id
+                 WHERE ad.stable_key = e.attr_key AND cov.stable_key = e.option_key
+             ) THEN 'CORRECT_OWNER_EXISTS'
+             WHEN EXISTS (
+                 SELECT 1 FROM public.controlled_option_values cov
+                 JOIN public.attribute_definitions ad ON ad.id = cov.attribute_id
+                 WHERE cov.stable_key = e.option_key AND ad.stable_key <> e.attr_key
+             ) THEN 'WRONG_OWNER_ONLY'
+             ELSE 'MISSING_EVERYWHERE'
+           END AS row_status
+    FROM expected_option_ownership e
+),
 check_controlled_option_ownership AS (
     SELECT 'CONTROLLED_OPTION_OWNERSHIP'::text AS check_id, 'configuration'::text AS scope,
            CASE
              WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED'
-             WHEN (SELECT count(*) FROM option_manifest m JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key JOIN public.controlled_option_values cov ON cov.stable_key = m.stable_key AND cov.attribute_id = ad.id WHERE ad.stable_key <> m.attr_key) > 0 THEN 'DRIFT'
-             ELSE 'PASS'
+             WHEN (SELECT count(*) FROM ownership_checks WHERE row_status = 'WRONG_OWNER_ONLY') > 0 THEN 'DRIFT'
+             WHEN (SELECT count(*) FROM ownership_checks WHERE row_status = 'MISSING_EVERYWHERE') = 2 THEN 'MISSING'
+             WHEN (SELECT count(*) FROM ownership_checks WHERE row_status = 'CORRECT_OWNER_EXISTS') = 2 THEN 'PASS'
+             ELSE 'PARTIAL'
            END AS status,
-           'No misaligned ownership'::text AS expected,
-           concat((SELECT count(*) FROM option_manifest m JOIN public.attribute_definitions ad ON ad.stable_key = m.attr_key JOIN public.controlled_option_values cov ON cov.stable_key = m.stable_key AND cov.attribute_id = ad.id WHERE ad.stable_key <> m.attr_key), ' misaligned')::text AS actual,
-           'Options must belong to expected attribute'::text AS details
+           '2 CORRECT_OWNER_EXISTS'::text AS expected,
+           concat((SELECT count(*) FROM ownership_checks WHERE row_status = 'CORRECT_OWNER_EXISTS'), ' correct, ', (SELECT count(*) FROM ownership_checks WHERE row_status = 'WRONG_OWNER_ONLY'), ' wrong owner, ', (SELECT count(*) FROM ownership_checks WHERE row_status = 'MISSING_EVERYWHERE'), ' missing')::text AS actual,
+           'Explicit ownership validation per pair'::text AS details
 ),
 check_offer_5_snapshot AS (
     SELECT 'OFFER_5_SNAPSHOT'::text AS check_id, 'offers'::text AS scope,
@@ -245,9 +269,9 @@ check_offer_5_snapshot AS (
 ),
 check_offer_5_conversion_type AS (
     SELECT 'OFFER_5_CONVERSION_TYPE'::text AS check_id, 'offers'::text AS scope,
-           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) = 1 THEN 'PASS' ELSE 'MISSING' END AS status,
+           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) = 1 THEN 'PASS' WHEN count(*) = 0 THEN 'MISSING' ELSE 'DRIFT' END AS status,
            'Any value'::text AS expected,
-           CASE WHEN count(*) = 1 THEN 'Evaluated' ELSE 'NULL' END::text AS actual,
+           COALESCE(max(conversion_type), 'NULL')::text AS actual,
            'Observed conversion type'::text AS details
     FROM target_offers WHERE offer_id = 5
 ),
@@ -273,9 +297,9 @@ check_offer_6_snapshot AS (
 ),
 check_offer_6_conversion_type AS (
     SELECT 'OFFER_6_CONVERSION_TYPE'::text AS check_id, 'offers'::text AS scope,
-           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) = 1 THEN 'PASS' ELSE 'MISSING' END AS status,
+           CASE WHEN (SELECT count(*) FROM target_category) <> 1 THEN 'BLOCKED' WHEN count(*) = 1 THEN 'PASS' WHEN count(*) = 0 THEN 'MISSING' ELSE 'DRIFT' END AS status,
            'Any value'::text AS expected,
-           CASE WHEN count(*) = 1 THEN 'Evaluated' ELSE 'NULL' END::text AS actual,
+           COALESCE(max(conversion_type), 'NULL')::text AS actual,
            'Observed conversion type'::text AS details
     FROM target_offers WHERE offer_id = 6
 ),
