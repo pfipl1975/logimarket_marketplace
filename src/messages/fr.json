@@ -403,5 +403,13 @@
     "resultTypeOffer": "Offre",
     "clear": "Effacer la recherche",
     "closeSuggestions": "Fermer les suggestions"
+  },
+  "auth": {
+    "loginTitle": "Se connecter",
+    "emailLabel": "Adresse e-mail",
+    "passwordLabel": "Mot de passe",
+    "submitButton": "Se connecter",
+    "pendingButton": "Connexion...",
+    "loginError": "Identifiants invalides ou erreur système."
   }
 }

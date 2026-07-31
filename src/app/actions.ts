@@ -434,3 +434,58 @@ export async function searchCatalog(
     };
   }
 }
+
+export type LoginActionResult = {
+  success: boolean;
+  error: string | null;
+};
+
+export async function loginUser(prevState: any, formData: FormData): Promise<LoginActionResult> {
+  const email = formData.get("email")?.toString();
+  const password = formData.get("password")?.toString();
+  const nextPath = formData.get("next")?.toString() || "/";
+  const locale = formData.get("locale")?.toString() || "pl";
+
+  if (!email || !password) {
+    return { success: false, error: "INVALID_CREDENTIALS" };
+  }
+
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return { success: false, error: "SYSTEM_ERROR" };
+  }
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    // Neutral error
+    return { success: false, error: "INVALID_CREDENTIALS" };
+  }
+
+  const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
+  const redirectUrl = getSafeRedirectUrl(nextPath, locale);
+  
+  const { redirect } = await import("next/navigation");
+  redirect(redirectUrl);
+  return { success: true, error: null };
+}
+
+export async function logoutUser(formData?: FormData) {
+  const locale = formData?.get("locale")?.toString() || "pl";
+  
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+
+  if (supabase) {
+    await supabase.auth.signOut();
+  }
+
+  const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
+  const { redirect } = await import("next/navigation");
+  redirect(getSafeRedirectUrl("/", locale));
+}

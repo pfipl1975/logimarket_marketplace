@@ -403,5 +403,13 @@
     "resultTypeOffer": "Oferta",
     "clear": "Wyczyść wyszukiwanie",
     "closeSuggestions": "Zamknij podpowiedzi"
+  },
+  "auth": {
+    "loginTitle": "Logowanie",
+    "emailLabel": "Adres email",
+    "passwordLabel": "Hasło",
+    "submitButton": "Zaloguj się",
+    "pendingButton": "Logowanie...",
+    "loginError": "Nieprawidłowe dane logowania lub błąd systemu."
   }
 }

@@ -403,5 +403,13 @@
     "resultTypeOffer": "产品",
     "clear": "清除搜索",
     "closeSuggestions": "关闭建议"
+  },
+  "auth": {
+    "loginTitle": "登录",
+    "emailLabel": "电子邮件",
+    "passwordLabel": "密码",
+    "submitButton": "登录",
+    "pendingButton": "登录中...",
+    "loginError": "凭据无效或系统错误。"
   }
 }

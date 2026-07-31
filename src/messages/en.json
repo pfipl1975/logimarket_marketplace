@@ -403,5 +403,13 @@
     "resultTypeOffer": "Offer",
     "clear": "Clear search",
     "closeSuggestions": "Close suggestions"
+  },
+  "auth": {
+    "loginTitle": "Sign in",
+    "emailLabel": "Email address",
+    "passwordLabel": "Password",
+    "submitButton": "Sign in",
+    "pendingButton": "Signing in...",
+    "loginError": "Invalid credentials or system error."
   }
 }

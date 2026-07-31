@@ -403,5 +403,13 @@
     "resultTypeOffer": "Пропозиція",
     "clear": "Очистити пошук",
     "closeSuggestions": "Закрити підказки"
+  },
+  "auth": {
+    "loginTitle": "Увійти",
+    "emailLabel": "Електронна адреса",
+    "passwordLabel": "Пароль",
+    "submitButton": "Увійти",
+    "pendingButton": "Вхід...",
+    "loginError": "Недійсні облікові дані або системна помилка."
   }
 }

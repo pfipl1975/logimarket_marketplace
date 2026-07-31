@@ -403,5 +403,13 @@
     "resultTypeOffer": "Angebot",
     "clear": "Suche löschen",
     "closeSuggestions": "Vorschläge schließen"
+  },
+  "auth": {
+    "loginTitle": "Anmelden",
+    "emailLabel": "E-Mail-Adresse",
+    "passwordLabel": "Passwort",
+    "submitButton": "Anmelden",
+    "pendingButton": "Anmeldung...",
+    "loginError": "Ungültige Anmeldedaten oder Systemfehler."
   }
 }
