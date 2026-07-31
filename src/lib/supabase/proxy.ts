@@ -1,8 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicConfig } from "./env";
-import { isProtectedRoute, getLocaleFromPath } from "@/lib/auth/route-classification";
-import { getSafeRedirectUrl } from "@/lib/auth/safe-redirect";
+import { isProtectedRoute } from "@/lib/auth/route-classification";
+import { buildLoginRedirectUrl } from "@/lib/auth/login-redirect";
 
 export async function updateSession(request: NextRequest) {
   const config = getSupabasePublicConfig();
@@ -45,11 +45,7 @@ export async function updateSession(request: NextRequest) {
 
   const isProtected = isProtectedRoute(request.nextUrl.pathname);
   if (isProtected && !claims) {
-    const locale = getLocaleFromPath(request.nextUrl.pathname);
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = locale === "pl" ? "/login" : `/${locale}/login`;
-    const safeNext = getSafeRedirectUrl(request.nextUrl.pathname, locale);
-    loginUrl.searchParams.set("next", safeNext);
+    const loginUrl = buildLoginRedirectUrl(request.nextUrl);
     return createAuthRedirect(loginUrl, supabaseResponse);
   }
 
@@ -61,7 +57,7 @@ export function createAuthRedirect(url: URL, baseResponse: NextResponse) {
   
   // Copy cookies
   baseResponse.cookies.getAll().forEach((cookie) => {
-    redirect.cookies.set(cookie.name, cookie.value, cookie as any);
+    redirect.cookies.set(cookie);
   });
   
   // Copy specific cache headers
@@ -77,11 +73,7 @@ export function createAuthRedirect(url: URL, baseResponse: NextResponse) {
 function handleUnconfiguredSupabase(request: NextRequest) {
   const isProtected = isProtectedRoute(request.nextUrl.pathname);
   if (isProtected) {
-    const locale = getLocaleFromPath(request.nextUrl.pathname);
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = locale === "pl" ? "/login" : `/${locale}/login`;
-    const safeNext = getSafeRedirectUrl(request.nextUrl.pathname, locale);
-    loginUrl.searchParams.set("next", safeNext);
+    const loginUrl = buildLoginRedirectUrl(request.nextUrl);
     
     // Minimal redirect logic for unconfigured
     const redirect = NextResponse.redirect(loginUrl);

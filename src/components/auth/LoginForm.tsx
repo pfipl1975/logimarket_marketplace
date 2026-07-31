@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import { loginUser, type LoginActionResult } from "@/app/actions";
-
+import type { Locale } from "@/lib/i18n/config";
 
 export function LoginForm({ 
   nextUrl,
@@ -15,10 +15,10 @@ export function LoginForm({
     passwordLabel: string;
     submitButton: string;
     pendingButton: string;
-    invalidCredentials?: string;
-    unavailableError?: string;
+    invalidCredentials: string;
+    unavailableError: string;
   };
-  locale: string;
+  locale: Locale;
 }) {
   const [state, formAction, isPending] = useActionState(loginUser, {
     code: "IDLE",
@@ -35,7 +35,7 @@ export function LoginForm({
   return (
     <form action={formAction} className="flex flex-col gap-4">
       {errorMessage && (
-        <div className="p-3 text-sm text-red-500 bg-red-50 border border-red-200 rounded-industrial">
+        <div role="alert" aria-live="polite" className="p-3 text-sm text-destructive bg-destructive/10 border border-destructive/30 rounded-industrial">
           {errorMessage}
         </div>
       )}
@@ -51,7 +51,7 @@ export function LoginForm({
             type="email"
             autoComplete="email"
             required
-            className="appearance-none block w-full px-3 py-2 border border-industrial rounded-industrial placeholder-secondary focus:outline-none focus:ring-brand-teal focus:border-brand-teal sm:text-sm"
+            className="appearance-none block w-full px-3 py-2 border border-border-industrial rounded-industrial placeholder-text-secondary focus:outline-none focus:ring-brand-teal focus:border-brand-teal sm:text-sm"
           />
         </div>
       </div>
@@ -67,7 +67,7 @@ export function LoginForm({
             type="password"
             autoComplete="current-password"
             required
-            className="appearance-none block w-full px-3 py-2 border border-industrial rounded-industrial placeholder-secondary focus:outline-none focus:ring-brand-teal focus:border-brand-teal sm:text-sm"
+            className="appearance-none block w-full px-3 py-2 border border-border-industrial rounded-industrial placeholder-text-secondary focus:outline-none focus:ring-brand-teal focus:border-brand-teal sm:text-sm"
           />
         </div>
       </div>

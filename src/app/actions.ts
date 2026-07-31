@@ -478,7 +478,8 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
   });
 
   if (error) {
-    return { success: false, code: "INVALID_CREDENTIALS" };
+    const { classifyLoginError } = await import("@/lib/auth/login-error");
+    return { success: false, code: classifyLoginError(error) };
   }
 
   const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");

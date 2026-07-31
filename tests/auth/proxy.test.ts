@@ -6,7 +6,14 @@ import { createAuthRedirect } from "../../src/lib/supabase/proxy";
 test("proxy auth redirect", async (t) => {
   await t.test("copies cookies and specified headers", () => {
     const baseResponse = new NextResponse();
-    baseResponse.cookies.set("sb-auth-token", "xyz");
+    baseResponse.cookies.set({
+      name: "sb-test-auth-token",
+      value: "token-value",
+      path: "/",
+      secure: true,
+      sameSite: "lax",
+      maxAge: 3600
+    });
     baseResponse.headers.set("Cache-Control", "no-store");
     baseResponse.headers.set("Expires", "0");
     baseResponse.headers.set("Pragma", "no-cache");
@@ -18,7 +25,12 @@ test("proxy auth redirect", async (t) => {
     assert.equal(redirect.status, 307);
     assert.equal(redirect.headers.get("Location"), "http://localhost/login");
 
-    assert.equal(redirect.cookies.get("sb-auth-token")?.value, "xyz");
+    const cookie = redirect.cookies.get("sb-test-auth-token");
+    assert.equal(cookie?.value, "token-value");
+    assert.equal(cookie?.path, "/");
+    assert.equal(cookie?.secure, true);
+    assert.equal(cookie?.sameSite, "lax");
+    assert.equal(cookie?.maxAge, 3600);
     
     assert.equal(redirect.headers.get("Cache-Control"), "no-store");
     assert.equal(redirect.headers.get("Expires"), "0");

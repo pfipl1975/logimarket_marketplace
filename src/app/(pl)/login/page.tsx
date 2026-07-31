@@ -12,13 +12,13 @@ export default async function LoginPage({
   return (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+        <h1 className="mt-6 text-center text-3xl font-extrabold text-primary">
           {dictionary.auth?.loginTitle || "Logowanie"}
         </h1>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+        <div className="bg-card py-8 px-4 border border-border-industrial rounded-industrial sm:px-10">
           <LoginForm
             locale="pl"
             nextUrl={typeof sp?.next === 'string' ? sp.next : null}

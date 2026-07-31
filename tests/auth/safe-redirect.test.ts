@@ -5,7 +5,7 @@ import { getSafeRedirectUrl } from "../../src/lib/auth/safe-redirect";
 test("safe redirect module", async (t) => {
   await t.test("returns valid relative path", () => {
     assert.equal(getSafeRedirectUrl("/admin/dashboard"), "/admin/dashboard");
-    assert.equal(getSafeRedirectUrl("/pl/admin"), "/pl/admin");
+    assert.equal(getSafeRedirectUrl("/de/admin"), "/de/admin");
   });
 
   await t.test("falls back to default locale root on empty", () => {
