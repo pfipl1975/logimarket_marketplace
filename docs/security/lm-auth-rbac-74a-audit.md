@@ -25,9 +25,14 @@ Architektura musi zostać zaimplementowana od zera, zaczynając od bezpiecznego 
 | ------ | ------ | ----- | ------ | ------- |
 | Supabase SSR | ABSENT | Brak w `package.json` i kodzie | BRAK | Wymaga wdrożenia w 74B |
 | RLS Policies | ABSENT | Brak `CREATE POLICY` w kodzie | HIGH (dla przyszłych mutacji) | Wymaga wdrożenia w 74C |
-| Auth Proxy | ABSENT | Brak `src/proxy.ts` | HIGH (dla przyszłych tras) | Wymaga wdrożenia w 74D |
+| Auth Proxy | ABSENT | Brak `src/proxy.ts` | HIGH (dla przyszłych tras) | Wymaga wdrożenia w 74B |
 | Role DB | ABSENT | Brak w `src/lib/schema.ts` | MEDIUM | Wymaga wdrożenia w 74C |
 | Server Actions Auth | ABSENT | `src/app/actions.ts` - brak walidacji sesji uwierzytelniającej | HIGH | Wymaga zabezpieczenia w 74D |
+
+AUTH_PROXY_FOUNDATION_PHASE=74B
+PROXY_SESSION_REFRESH_DEPENDS_ON_OFFICIAL_SUPABASE_SSR_PATTERN=YES
+PROXY_OPTIMISTIC_ROUTE_CHECKS=74B
+FINAL_ROLE_ENFORCEMENT=74C_OR_74D
 
 ## 17.3 Odpowiedzi na 18 obowiązkowych pytań
 
@@ -91,8 +96,22 @@ GUEST_CHECKOUT_BEHAVIOR_MUST_NOT_CHANGE_WITHOUT_APPROVAL=YES
 | `/` | YES | NO | NO | N/A | Implicit allow | N/A |
 | `/katalog/...` | YES | NO | NO | N/A | Implicit allow | N/A |
 | `/oferta/...` | YES | NO | NO | N/A | Implicit allow | N/A |
-| `/admin/...` (przyszłe) | NO | YES | YES (`ADMIN`) | N/A | Brak | RLS + Proxy + Server actions |
-| `/partner/...` (przyszłe) | NO | YES | YES (`PARTNER_MEMBER` / `PARTNER_MANAGER`) | YES | Brak | RLS + Proxy + Server actions |
+| `/admin/...` (przyszłe) | NO | YES | YES (`ADMIN`) | N/A | Brak | Zob. niżej |
+| `/partner/...` (przyszłe) | NO | YES | YES (`PARTNER_MEMBER` / `PARTNER_MANAGER`) | YES | Brak | Zob. niżej |
+
+ROUTE_PREFILTER:
+- Proxy optimistic redirect
+
+PAGE_AND_DATA_ACCESS:
+- protected Server Component
+- DAL/session helper
+- server-side user verification
+
+MUTATIONS:
+- authorization inside each protected Server Action
+
+DATABASE:
+- RLS defense in depth where applicable
 
 W Next.js 16 nazwa "middleware" jest zdeprecjonowana, a `src/proxy.ts` będzie realizować jedynie wstępne przekierowanie lub odświeżenie cookies.
 PROXY_IS_FIRST_LAYER_ONLY=YES
