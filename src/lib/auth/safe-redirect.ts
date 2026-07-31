@@ -19,8 +19,13 @@ export function getSafeRedirectUrl(url: string | null | undefined, locale?: stri
     return fallback;
   }
 
-  // Allow only paths that start with a single slash (not double)
-  if (!url.startsWith("/") || url.startsWith("//")) {
+  // Block newline characters
+  if (url.toLowerCase().includes("%0d") || url.toLowerCase().includes("%0a") || url.includes("\r") || url.includes("\n")) {
+    return fallback;
+  }
+
+  // Allow only paths that start with a single slash (not double, not triple)
+  if (!url.startsWith("/") || url.startsWith("//") || url.startsWith("///")) {
     return fallback;
   }
 

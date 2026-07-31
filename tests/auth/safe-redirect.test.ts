@@ -29,17 +29,23 @@ test("safe redirect module", async (t) => {
   await t.test("rejects protocol-relative URLs", () => {
     assert.equal(getSafeRedirectUrl("//attacker.example"), "/");
     assert.equal(getSafeRedirectUrl("/%2f%2fattacker.example"), "/");
+    assert.equal(getSafeRedirectUrl("///attacker.example"), "/");
   });
 
   await t.test("rejects backslash URLs", () => {
     assert.equal(getSafeRedirectUrl("\\attacker.example"), "/");
     assert.equal(getSafeRedirectUrl("\\\\attacker.example"), "/");
+    assert.equal(getSafeRedirectUrl("/%5c%5cattacker.example"), "/");
   });
 
   await t.test("rejects javascript and data schemes", () => {
     assert.equal(getSafeRedirectUrl("javascript:alert(1)"), "/");
     assert.equal(getSafeRedirectUrl("data:text/html,test"), "/");
     assert.equal(getSafeRedirectUrl("file:///etc/passwd"), "/");
+  });
+
+  await t.test("rejects header injection", () => {
+    assert.equal(getSafeRedirectUrl("/%0d%0aLocation%3a%20https%3a%2f%2fattacker.example"), "/");
   });
 
   await t.test("rejects urls without leading slash", () => {

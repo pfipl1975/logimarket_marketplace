@@ -410,6 +410,7 @@
     "passwordLabel": "Contraseña",
     "submitButton": "Iniciar sesión",
     "pendingButton": "Iniciando sesión...",
-    "loginError": "Credenciales no válidas o error del sistema."
+    "invalidCredentials": "Correo electrónico o contraseña no válidos.",
+    "unavailableError": "La autenticación no está disponible actualmente."
   }
 }

@@ -406,10 +406,11 @@
   },
   "auth": {
     "loginTitle": "Увійти",
-    "emailLabel": "Електронна адреса",
+    "emailLabel": "Електронна пошта",
     "passwordLabel": "Пароль",
     "submitButton": "Увійти",
     "pendingButton": "Вхід...",
-    "loginError": "Недійсні облікові дані або системна помилка."
+    "invalidCredentials": "Невірна електронна пошта або пароль.",
+    "unavailableError": "Автентифікація наразі недоступна."
   }
 }

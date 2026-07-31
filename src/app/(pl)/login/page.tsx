@@ -10,24 +10,28 @@ export default async function LoginPage({
   const sp = await searchParams;
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-sm space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {dictionary.auth?.loginTitle || "Logowanie"}
-          </h2>
+    <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <h1 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          {dictionary.auth?.loginTitle || "Logowanie"}
+        </h1>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+          <LoginForm
+            locale="pl"
+            nextUrl={typeof sp?.next === 'string' ? sp.next : null}
+            translations={{
+              emailLabel: dictionary.auth?.emailLabel || "Email",
+              passwordLabel: dictionary.auth?.passwordLabel || "Hasło",
+              submitButton: dictionary.auth?.submitButton || "Zaloguj się",
+              pendingButton: dictionary.auth?.pendingButton || "Logowanie...",
+              invalidCredentials: dictionary.auth?.invalidCredentials || "Nieprawidłowy e-mail lub hasło.",
+              unavailableError: dictionary.auth?.unavailableError || "Logowanie jest w tej chwili niedostępne.",
+            }}
+          />
         </div>
-        <LoginForm
-          locale="pl"
-          nextUrl={typeof sp?.next === 'string' ? sp.next : null}
-          translations={{
-            emailLabel: dictionary.auth?.emailLabel || "Email",
-            passwordLabel: dictionary.auth?.passwordLabel || "Hasło",
-            submitButton: dictionary.auth?.submitButton || "Zaloguj się",
-            pendingButton: dictionary.auth?.pendingButton || "Logowanie...",
-            loginError: dictionary.auth?.loginError || "Nieprawidłowe dane logowania.",
-          }}
-        />
       </div>
     </div>
   );

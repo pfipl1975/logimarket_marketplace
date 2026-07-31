@@ -410,6 +410,7 @@
     "passwordLabel": "密码",
     "submitButton": "登录",
     "pendingButton": "登录中...",
-    "loginError": "凭据无效或系统错误。"
+    "invalidCredentials": "电子邮件或密码无效。",
+    "unavailableError": "目前无法进行身份验证。"
   }
 }

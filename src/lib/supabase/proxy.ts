@@ -48,11 +48,30 @@ export async function updateSession(request: NextRequest) {
     const locale = getLocaleFromPath(request.nextUrl.pathname);
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = locale === "pl" ? "/login" : `/${locale}/login`;
-    loginUrl.searchParams.set("next", encodeURIComponent(getSafeRedirectUrl(request.nextUrl.pathname, locale)));
-    return NextResponse.redirect(loginUrl);
+    const safeNext = getSafeRedirectUrl(request.nextUrl.pathname, locale);
+    loginUrl.searchParams.set("next", safeNext);
+    return createAuthRedirect(loginUrl, supabaseResponse);
   }
 
   return supabaseResponse;
+}
+
+export function createAuthRedirect(url: URL, baseResponse: NextResponse) {
+  const redirect = NextResponse.redirect(url);
+  
+  // Copy cookies
+  baseResponse.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie.name, cookie.value, cookie as any);
+  });
+  
+  // Copy specific cache headers
+  const headersToCopy = ["Cache-Control", "Expires", "Pragma"];
+  headersToCopy.forEach((h) => {
+    const val = baseResponse.headers.get(h);
+    if (val) redirect.headers.set(h, val);
+  });
+  
+  return redirect;
 }
 
 function handleUnconfiguredSupabase(request: NextRequest) {
@@ -61,8 +80,13 @@ function handleUnconfiguredSupabase(request: NextRequest) {
     const locale = getLocaleFromPath(request.nextUrl.pathname);
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = locale === "pl" ? "/login" : `/${locale}/login`;
-    loginUrl.searchParams.set("next", encodeURIComponent(getSafeRedirectUrl(request.nextUrl.pathname, locale)));
-    return NextResponse.redirect(loginUrl);
+    const safeNext = getSafeRedirectUrl(request.nextUrl.pathname, locale);
+    loginUrl.searchParams.set("next", safeNext);
+    
+    // Minimal redirect logic for unconfigured
+    const redirect = NextResponse.redirect(loginUrl);
+    redirect.headers.set("Cache-Control", "no-store, max-age=0");
+    return redirect;
   }
   return NextResponse.next({ request });
 }

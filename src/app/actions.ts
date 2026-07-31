@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { and, eq, desc, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -435,8 +437,6 @@ export async function searchCatalog(
   }
 }
 
-import { z } from "zod";
-
 export type LoginActionCode = "IDLE" | "INVALID_CREDENTIALS" | "AUTH_UNAVAILABLE";
 
 export type LoginActionResult = {
@@ -451,7 +451,7 @@ const loginSchema = z.object({
   locale: z.string().max(10).optional(),
 });
 
-export async function loginUser(prevState: LoginActionResult, formData: FormData): Promise<LoginActionResult> {
+export async function loginUser(_prevState: LoginActionResult, formData: FormData): Promise<LoginActionResult> {
   const parsed = loginSchema.safeParse({
     email: formData.get("email"),
     password: formData.get("password"),
@@ -484,9 +484,8 @@ export async function loginUser(prevState: LoginActionResult, formData: FormData
   const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
   const redirectUrl = getSafeRedirectUrl(nextPath, locale);
   
-  const { redirect } = await import("next/navigation");
+  revalidatePath("/", "layout");
   redirect(redirectUrl);
-  return { success: true, code: "IDLE" };
 }
 
 export async function logoutUser(formData?: FormData) {
@@ -502,6 +501,7 @@ export async function logoutUser(formData?: FormData) {
   }
 
   const { getHomePath } = await import("@/lib/i18n/paths");
-  const { redirect } = await import("next/navigation");
-  redirect(getHomePath(safeLocale as any));
+  
+  revalidatePath("/", "layout");
+  redirect(getHomePath(safeLocale as import("@/lib/i18n/config").Locale));
 }

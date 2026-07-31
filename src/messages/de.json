@@ -406,10 +406,11 @@
   },
   "auth": {
     "loginTitle": "Anmelden",
-    "emailLabel": "E-Mail-Adresse",
+    "emailLabel": "E-Mail",
     "passwordLabel": "Passwort",
     "submitButton": "Anmelden",
-    "pendingButton": "Anmeldung...",
-    "loginError": "Ungültige Anmeldedaten oder Systemfehler."
+    "pendingButton": "Anmeldung läuft...",
+    "invalidCredentials": "E-Mail oder Passwort ungültig.",
+    "unavailableError": "Anmeldung ist derzeit nicht verfügbar."
   }
 }

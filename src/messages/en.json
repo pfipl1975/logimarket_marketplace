@@ -405,11 +405,12 @@
     "closeSuggestions": "Close suggestions"
   },
   "auth": {
-    "loginTitle": "Sign in",
-    "emailLabel": "Email address",
+    "loginTitle": "Log in",
+    "emailLabel": "Email",
     "passwordLabel": "Password",
     "submitButton": "Sign in",
     "pendingButton": "Signing in...",
-    "loginError": "Invalid credentials or system error."
+    "invalidCredentials": "Invalid email or password.",
+    "unavailableError": "Authentication is currently unavailable."
   }
 }

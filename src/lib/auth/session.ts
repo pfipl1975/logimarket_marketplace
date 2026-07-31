@@ -11,6 +11,22 @@ export type CurrentUserResult =
   | { status: "unauthenticated"; user: null }
   | { status: "unavailable"; user: null };
 
+export function classifySessionError(error: any): "unauthenticated" | "unavailable" {
+  if (!error) return "unauthenticated";
+  
+  if (error.name === "AuthSessionMissingError") {
+    return "unauthenticated";
+  }
+  
+  // Other known Supabase auth errors that mean no valid session (like expired, invalid token)
+  if (error.status === 400 || error.status === 401 || error.status === 403) {
+    return "unauthenticated";
+  }
+
+  // Network errors, server errors (500), etc.
+  return "unavailable";
+}
+
 export async function getCurrentUser(): Promise<CurrentUserResult> {
   const supabase = await createClient();
   
@@ -20,7 +36,11 @@ export async function getCurrentUser(): Promise<CurrentUserResult> {
 
   const { data: { user }, error } = await supabase.auth.getUser();
 
-  if (error || !user) {
+  if (error) {
+    return { status: classifySessionError(error), user: null };
+  }
+  
+  if (!user) {
     return { status: "unauthenticated", user: null };
   }
 
