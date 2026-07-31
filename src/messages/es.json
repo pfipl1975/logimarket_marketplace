@@ -403,5 +403,14 @@
     "resultTypeOffer": "Oferta",
     "clear": "Borrar búsqueda",
     "closeSuggestions": "Cerrar sugerencias"
+  },
+  "auth": {
+    "loginTitle": "Iniciar sesión",
+    "emailLabel": "Correo electrónico",
+    "passwordLabel": "Contraseña",
+    "submitButton": "Iniciar sesión",
+    "pendingButton": "Iniciando sesión...",
+    "invalidCredentials": "Correo electrónico o contraseña no válidos.",
+    "unavailableError": "La autenticación no está disponible actualmente."
   }
 }

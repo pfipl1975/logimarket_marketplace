@@ -403,5 +403,14 @@
     "resultTypeOffer": "产品",
     "clear": "清除搜索",
     "closeSuggestions": "关闭建议"
+  },
+  "auth": {
+    "loginTitle": "登录",
+    "emailLabel": "电子邮件",
+    "passwordLabel": "密码",
+    "submitButton": "登录",
+    "pendingButton": "登录中...",
+    "invalidCredentials": "电子邮件或密码无效。",
+    "unavailableError": "目前无法进行身份验证。"
   }
 }

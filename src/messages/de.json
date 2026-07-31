@@ -403,5 +403,14 @@
     "resultTypeOffer": "Angebot",
     "clear": "Suche löschen",
     "closeSuggestions": "Vorschläge schließen"
+  },
+  "auth": {
+    "loginTitle": "Anmelden",
+    "emailLabel": "E-Mail",
+    "passwordLabel": "Passwort",
+    "submitButton": "Anmelden",
+    "pendingButton": "Anmeldung läuft...",
+    "invalidCredentials": "E-Mail oder Passwort ungültig.",
+    "unavailableError": "Anmeldung ist derzeit nicht verfügbar."
   }
 }

@@ -1,7 +1,9 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { z } from "zod";
 import { and, eq, desc, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
@@ -434,3 +436,94 @@ export async function searchCatalog(
     };
   }
 }
+
+export type LoginActionCode = "IDLE" | "INVALID_CREDENTIALS" | "AUTH_UNAVAILABLE";
+
+export type LoginActionResult = {
+  success: boolean;
+  code: LoginActionCode;
+};
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1).max(255),
+  next: z.string().max(2048).optional(),
+  locale: z.string().max(10).optional(),
+});
+
+export async function loginUser(_prevState: LoginActionResult, formData: FormData): Promise<LoginActionResult> {
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    next: formData.get("next"),
+    locale: formData.get("locale"),
+  });
+
+  if (!parsed.success) {
+    return { success: false, code: "INVALID_CREDENTIALS" };
+  }
+
+  const { email, password, next: nextPath, locale } = parsed.data;
+
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
+  }
+
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      const { classifyLoginError } = await import("@/lib/auth/login-error");
+      return { success: false, code: classifyLoginError(error) };
+    }
+  } catch (err) {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
+  }
+
+  const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
+  const redirectUrl = getSafeRedirectUrl(nextPath, locale);
+  
+  revalidatePath("/", "layout");
+  redirect(redirectUrl);
+}
+
+export type LogoutActionResult =
+  | { success: false; code: "AUTH_UNAVAILABLE" }
+  | never;
+
+export async function logoutUser(formData?: FormData): Promise<LogoutActionResult> {
+  const parsedLocale = formData?.get("locale")?.toString() || "";
+  const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
+  const safeLocale = isLocale(parsedLocale) ? parsedLocale : defaultLocale;
+  
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    if (!supabase) {
+      return { success: false, code: "AUTH_UNAVAILABLE" };
+    }
+
+    const { error } = await supabase.auth.signOut({
+      scope: "local",
+    });
+
+    if (error) {
+      return { success: false, code: "AUTH_UNAVAILABLE" };
+    }
+  } catch (err) {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
+  }
+
+  const { getHomePath } = await import("@/lib/i18n/paths");
+  
+  revalidatePath("/", "layout");
+  redirect(getHomePath(safeLocale));
+}
+

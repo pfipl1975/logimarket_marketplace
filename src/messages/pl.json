@@ -403,5 +403,14 @@
     "resultTypeOffer": "Oferta",
     "clear": "Wyczyść wyszukiwanie",
     "closeSuggestions": "Zamknij podpowiedzi"
+  },
+  "auth": {
+    "loginTitle": "Logowanie",
+    "emailLabel": "Email",
+    "passwordLabel": "Hasło",
+    "submitButton": "Zaloguj się",
+    "pendingButton": "Logowanie...",
+    "invalidCredentials": "Nieprawidłowy e-mail lub hasło.",
+    "unavailableError": "Logowanie jest w tej chwili niedostępne."
   }
 }

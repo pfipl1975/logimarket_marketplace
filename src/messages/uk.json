@@ -403,5 +403,14 @@
     "resultTypeOffer": "Пропозиція",
     "clear": "Очистити пошук",
     "closeSuggestions": "Закрити підказки"
+  },
+  "auth": {
+    "loginTitle": "Увійти",
+    "emailLabel": "Електронна пошта",
+    "passwordLabel": "Пароль",
+    "submitButton": "Увійти",
+    "pendingButton": "Вхід...",
+    "invalidCredentials": "Невірна електронна пошта або пароль.",
+    "unavailableError": "Автентифікація наразі недоступна."
   }
 }

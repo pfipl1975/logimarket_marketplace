@@ -403,5 +403,14 @@
     "resultTypeOffer": "Offer",
     "clear": "Clear search",
     "closeSuggestions": "Close suggestions"
+  },
+  "auth": {
+    "loginTitle": "Log in",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "submitButton": "Sign in",
+    "pendingButton": "Signing in...",
+    "invalidCredentials": "Invalid email or password.",
+    "unavailableError": "Authentication is currently unavailable."
   }
 }

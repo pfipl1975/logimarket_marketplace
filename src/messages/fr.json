@@ -403,5 +403,14 @@
     "resultTypeOffer": "Offre",
     "clear": "Effacer la recherche",
     "closeSuggestions": "Fermer les suggestions"
+  },
+  "auth": {
+    "loginTitle": "Connexion",
+    "emailLabel": "E-mail",
+    "passwordLabel": "Mot de passe",
+    "submitButton": "Se connecter",
+    "pendingButton": "Connexion en cours...",
+    "invalidCredentials": "E-mail ou mot de passe invalide.",
+    "unavailableError": "L'authentification est actuellement indisponible."
   }
 }
