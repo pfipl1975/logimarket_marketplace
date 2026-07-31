@@ -4,7 +4,7 @@ export function isProtectedRoute(pathname: string): boolean {
   const parts = pathname.split('/').filter(Boolean);
   if (parts.length === 0) return false;
   
-  if (isLocale(parts[0])) {
+  if (isLocale(parts[0]) && parts[0] !== "pl") {
     if (parts.length > 1 && (parts[1] === "admin" || parts[1] === "partner")) {
       return true;
     }
@@ -19,7 +19,7 @@ export function isProtectedRoute(pathname: string): boolean {
 
 export function getLocaleFromPath(pathname: string): string {
   const parts = pathname.split('/').filter(Boolean);
-  if (parts.length > 0 && isLocale(parts[0])) {
+  if (parts.length > 0 && isLocale(parts[0]) && parts[0] !== "pl") {
     return parts[0];
   }
   return "pl"; // default locale

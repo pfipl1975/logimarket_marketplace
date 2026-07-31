@@ -435,26 +435,41 @@ export async function searchCatalog(
   }
 }
 
+import { z } from "zod";
+
+export type LoginActionCode = "IDLE" | "INVALID_CREDENTIALS" | "AUTH_UNAVAILABLE";
+
 export type LoginActionResult = {
   success: boolean;
-  error: string | null;
+  code: LoginActionCode;
 };
 
-export async function loginUser(prevState: any, formData: FormData): Promise<LoginActionResult> {
-  const email = formData.get("email")?.toString();
-  const password = formData.get("password")?.toString();
-  const nextPath = formData.get("next")?.toString() || "/";
-  const locale = formData.get("locale")?.toString() || "pl";
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1).max(255),
+  next: z.string().max(2048).optional(),
+  locale: z.string().max(10).optional(),
+});
 
-  if (!email || !password) {
-    return { success: false, error: "INVALID_CREDENTIALS" };
+export async function loginUser(prevState: LoginActionResult, formData: FormData): Promise<LoginActionResult> {
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    next: formData.get("next"),
+    locale: formData.get("locale"),
+  });
+
+  if (!parsed.success) {
+    return { success: false, code: "INVALID_CREDENTIALS" };
   }
+
+  const { email, password, next: nextPath, locale } = parsed.data;
 
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
 
   if (!supabase) {
-    return { success: false, error: "SYSTEM_ERROR" };
+    return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
   const { error } = await supabase.auth.signInWithPassword({
@@ -463,8 +478,7 @@ export async function loginUser(prevState: any, formData: FormData): Promise<Log
   });
 
   if (error) {
-    // Neutral error
-    return { success: false, error: "INVALID_CREDENTIALS" };
+    return { success: false, code: "INVALID_CREDENTIALS" };
   }
 
   const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
@@ -472,11 +486,13 @@ export async function loginUser(prevState: any, formData: FormData): Promise<Log
   
   const { redirect } = await import("next/navigation");
   redirect(redirectUrl);
-  return { success: true, error: null };
+  return { success: true, code: "IDLE" };
 }
 
 export async function logoutUser(formData?: FormData) {
-  const locale = formData?.get("locale")?.toString() || "pl";
+  const parsedLocale = formData?.get("locale")?.toString();
+  const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
+  const safeLocale = isLocale(parsedLocale || "") ? parsedLocale : defaultLocale;
   
   const { createClient } = await import("@/lib/supabase/server");
   const supabase = await createClient();
@@ -485,7 +501,7 @@ export async function logoutUser(formData?: FormData) {
     await supabase.auth.signOut();
   }
 
-  const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
+  const { getHomePath } = await import("@/lib/i18n/paths");
   const { redirect } = await import("next/navigation");
-  redirect(getSafeRedirectUrl("/", locale));
+  redirect(getHomePath(safeLocale as any));
 }

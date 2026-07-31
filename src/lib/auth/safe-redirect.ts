@@ -1,7 +1,9 @@
-import { isLocale } from "@/lib/i18n/config";
+import { isLocale, defaultLocale, type Locale } from "@/lib/i18n/config";
+import { getHomePath } from "@/lib/i18n/paths";
 
-export function getSafeRedirectUrl(url: string | null | undefined, locale: string = "pl"): string {
-  const fallback = locale === "pl" ? "/" : `/${locale}`;
+export function getSafeRedirectUrl(url: string | null | undefined, locale?: string): string {
+  const safeLocale = isLocale(locale || "") ? (locale as Locale) : defaultLocale;
+  const fallback = getHomePath(safeLocale);
 
   if (!url || typeof url !== "string") {
     return fallback;
@@ -12,13 +14,13 @@ export function getSafeRedirectUrl(url: string | null | undefined, locale: strin
     return fallback;
   }
 
-  // Allow only paths that start with a single slash (not double)
-  if (!url.startsWith("/") || url.startsWith("//")) {
+  // Block encoded protocol-relative URLs
+  if (url.toLowerCase().includes("%2f%2f") || url.toLowerCase().includes("%2f/")) {
     return fallback;
   }
 
-  // Block encoded protocol-relative URLs
-  if (url.toLowerCase().includes("%2f%2f") || url.toLowerCase().includes("%2f/")) {
+  // Allow only paths that start with a single slash (not double)
+  if (!url.startsWith("/") || url.startsWith("//")) {
     return fallback;
   }
 

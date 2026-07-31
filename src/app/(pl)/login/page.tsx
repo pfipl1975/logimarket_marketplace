@@ -19,7 +19,7 @@ export default async function LoginPage({
         </div>
         <LoginForm
           locale="pl"
-          nextUrl={sp?.next}
+          nextUrl={typeof sp?.next === 'string' ? sp.next : null}
           translations={{
             emailLabel: dictionary.auth?.emailLabel || "Email",
             passwordLabel: dictionary.auth?.passwordLabel || "Hasło",

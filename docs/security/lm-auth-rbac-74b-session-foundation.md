@@ -1,34 +1,36 @@
 # LM-AUTH-RBAC-74B Session Foundation
 
 ## Overview
-This document outlines the server-side session foundation established during sprint LM-AUTH-RBAC-74B for LogiMarket.
+This document outlines the server-side session foundation established during sprint LM-AUTH-RBAC-74B and hardened in 74B-R1 for LogiMarket.
 
 ## Environment Contract
 - `NEXT_PUBLIC_SUPABASE_URL`: (Required for auth functionality)
-- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: (Required for auth functionality, falls back to `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
-- `SUPABASE_PROJECT_IDENTIFIED=NO`: The build proceeds safely even if Supabase envs are missing (`BUILD_WITHOUT_SUPABASE_ENV=PASS`).
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: (Required for auth functionality)
+
+## Build & Configurations
+- `SUPABASE_PROJECT_IDENTIFIED=NO`: The project has not been configured in Supabase yet.
+- `LIVE_AUTH_TESTS=BLOCKED`: Skipped because the environment configuration was not provided or confirmed.
+- `@supabase/ssr`: version `0.12.4`
+- `@supabase/supabase-js`: version `2.111.0`
 
 ## Design Decisions
-- `LIVE_AUTH_TESTS=BLOCKED`: Skipped because the environment configuration was not provided or confirmed.
 - **Server-Side Exclusivity**: 
   - No Browser Supabase client was created. 
   - No callback route handler.
   - No `service-role` or `secret` key is stored or utilized in the runtime.
-  - Passwords and user sessions are processed only via `src/app/actions.ts`.
+  - Fail-closed behavior for protected namespaces (`/admin`, `/partner`).
+  - Separation of Supabase auth cookies and `session_hash`.
+  - No DB, schema, migrations, and RLS changes were made in this phase.
 - **Cookie Lifecycle**: `@supabase/ssr` `createServerClient` and proxy refreshing handle setting, updating, and expiring secure cookies.
-- **`getClaims()` vs `getUser()`**: 
-  - The middleware Proxy optimistically checks claims using `supabase.auth.getUser()` (acting as `getClaims()`).
-  - `getCurrentUser()` verifies the actual record via `supabase.auth.getUser()`.
-  - We do not authorize based on `user_metadata`.
-- **Proxy Matcher**: `src/proxy.ts` applies strict matching exclusively for routes that need authentication (e.g. `/admin/**`, `/partner/**`, and localized variants).
 
-## Server Actions Classification
-The existing Server Actions are classified as follows:
-- `getFilteredCategoryOffers`, `searchCatalog`: PUBLIC_STATELESS
-- `addToCart`, `removeFromCart`, `updateCartQuantity`, `clearCart`: PUBLIC_ANONYMOUS_SESSION_SCOPED (based on `session_hash`)
-- `submitCheckout`, `submitRfq`: PUBLIC_WITH_ABUSE_CONTROLS
-- `loginUser`, `logoutUser`: PUBLIC_AUTH_GATEWAYS
+## Status Flags
+- `PROXY_IDENTITY_CHECK=getClaims`
+- `CURRENT_USER_LOOKUP=getUser`
+- `CACHE_HEADERS_EXPLICITLY_PROPAGATED=YES`
+- `PROXY_FINAL_AUTHORIZATION=NO`
+- `SUPABASE_PROJECT_IDENTIFIED=NO`
+- `LIVE_AUTH_TESTS=BLOCKED`
 
-## Cache Headers and safe redirect
-`src/lib/auth/safe-redirect.ts` enforces that open-redirects are rejected (e.g., protocol-relative paths or absolute URLs). Cache headers are naturally propagated by `NextResponse.next({ request })` inside the proxy.
-The anonymous cart and `session_hash` functionality remain decoupled and structurally unaffected.
+## Procedural Notes
+- There was a procedural violation in the first execution of 74B by using `git add .`.
+- Selective staging is exclusively used in R1.

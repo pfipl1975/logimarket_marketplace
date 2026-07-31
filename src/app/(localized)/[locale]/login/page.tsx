@@ -23,7 +23,7 @@ export default async function LocalizedLoginPage({
         </div>
         <LoginForm
           locale={p.locale}
-          nextUrl={sp?.next}
+          nextUrl={typeof sp?.next === 'string' ? sp.next : null}
           translations={{
             emailLabel: dictionary.auth?.emailLabel || "Email",
             passwordLabel: dictionary.auth?.passwordLabel || "Password",

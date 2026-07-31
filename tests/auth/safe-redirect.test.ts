@@ -45,4 +45,13 @@ test("safe redirect module", async (t) => {
   await t.test("rejects urls without leading slash", () => {
     assert.equal(getSafeRedirectUrl("admin/dashboard"), "/");
   });
+
+  await t.test("invalid locales fallback safely", () => {
+    assert.equal(getSafeRedirectUrl(null, "//attacker.example"), "/");
+    assert.equal(getSafeRedirectUrl(null, "///attacker.example"), "/");
+    assert.equal(getSafeRedirectUrl(null, "https://attacker.example"), "/");
+    assert.equal(getSafeRedirectUrl(null, "javascript:alert(1)"), "/");
+    assert.equal(getSafeRedirectUrl(null, "unknown"), "/");
+    assert.equal(getSafeRedirectUrl("", "//attacker.example"), "/");
+  });
 });

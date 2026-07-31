@@ -1,9 +1,8 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getSupabasePublicConfig } from "./env";
-import { getHomePath } from "@/lib/i18n/paths";
-import { type Locale } from "@/lib/i18n/config";
 import { isProtectedRoute, getLocaleFromPath } from "@/lib/auth/route-classification";
+import { getSafeRedirectUrl } from "@/lib/auth/safe-redirect";
 
 export async function updateSession(request: NextRequest) {
   const config = getSupabasePublicConfig();
@@ -16,33 +15,40 @@ export async function updateSession(request: NextRequest) {
     request,
   });
 
-  const supabase = createServerClient(config.url, config.anonKey, {
+  const supabase = createServerClient(config.url, config.publishableKey, {
     cookies: {
       getAll() {
         return request.cookies.getAll();
       },
-      setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value, options }) => request.cookies.set(name, value));
-        supabaseResponse = NextResponse.next({
-          request,
+      setAll(cookiesToSet, headers) {
+        cookiesToSet.forEach(({ name, value }) => {
+          request.cookies.set(name, value);
         });
-        cookiesToSet.forEach(({ name, value, options }) =>
-          supabaseResponse.cookies.set(name, value, options)
-        );
+
+        supabaseResponse = NextResponse.next({ request });
+
+        cookiesToSet.forEach(({ name, value, options }) => {
+          supabaseResponse.cookies.set(name, value, options);
+        });
+
+        if (headers) {
+          Object.entries(headers).forEach(([key, value]) => {
+            supabaseResponse.headers.set(key, value as string);
+          });
+        }
       },
     },
   });
 
-  // Proxy używa: supabase.auth.getUser() do odświeżenia ciasteczek
-  // Zgodnie z oficjalną dokumentacją Next.js / Supabase to jedyny sposób na bezpieczne odświeżenie.
-  // Zastępuje koncepcyjne `getClaims()`.
-  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase.auth.getClaims();
+  const claims = error ? null : data?.claims;
 
   const isProtected = isProtectedRoute(request.nextUrl.pathname);
-  if (isProtected && !user) {
+  if (isProtected && !claims) {
     const locale = getLocaleFromPath(request.nextUrl.pathname);
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = locale === "pl" ? "/login" : `/${locale}/login`;
+    loginUrl.searchParams.set("next", encodeURIComponent(getSafeRedirectUrl(request.nextUrl.pathname, locale)));
     return NextResponse.redirect(loginUrl);
   }
 
@@ -53,9 +59,10 @@ function handleUnconfiguredSupabase(request: NextRequest) {
   const isProtected = isProtectedRoute(request.nextUrl.pathname);
   if (isProtected) {
     const locale = getLocaleFromPath(request.nextUrl.pathname);
-    const homeUrl = request.nextUrl.clone();
-    homeUrl.pathname = getHomePath(locale as Locale);
-    return NextResponse.redirect(homeUrl);
+    const loginUrl = request.nextUrl.clone();
+    loginUrl.pathname = locale === "pl" ? "/login" : `/${locale}/login`;
+    loginUrl.searchParams.set("next", encodeURIComponent(getSafeRedirectUrl(request.nextUrl.pathname, locale)));
+    return NextResponse.redirect(loginUrl);
   }
   return NextResponse.next({ request });
 }
