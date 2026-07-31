@@ -472,14 +472,18 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
-  const { error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
 
-  if (error) {
-    const { classifyLoginError } = await import("@/lib/auth/login-error");
-    return { success: false, code: classifyLoginError(error) };
+    if (error) {
+      const { classifyLoginError } = await import("@/lib/auth/login-error");
+      return { success: false, code: classifyLoginError(error) };
+    }
+  } catch (err) {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
   const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
@@ -489,20 +493,37 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
   redirect(redirectUrl);
 }
 
-export async function logoutUser(formData?: FormData) {
-  const parsedLocale = formData?.get("locale")?.toString();
-  const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
-  const safeLocale = isLocale(parsedLocale || "") ? parsedLocale : defaultLocale;
-  
-  const { createClient } = await import("@/lib/supabase/server");
-  const supabase = await createClient();
+export type LogoutActionResult =
+  | { success: false; code: "AUTH_UNAVAILABLE" }
+  | never;
 
-  if (supabase) {
-    await supabase.auth.signOut();
+export async function logoutUser(formData?: FormData): Promise<LogoutActionResult> {
+  const parsedLocale = formData?.get("locale")?.toString() || "";
+  const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
+  const safeLocale = isLocale(parsedLocale) ? parsedLocale : defaultLocale;
+  
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    if (!supabase) {
+      return { success: false, code: "AUTH_UNAVAILABLE" };
+    }
+
+    const { error } = await supabase.auth.signOut({
+      scope: "local",
+    });
+
+    if (error) {
+      return { success: false, code: "AUTH_UNAVAILABLE" };
+    }
+  } catch (err) {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
   const { getHomePath } = await import("@/lib/i18n/paths");
   
   revalidatePath("/", "layout");
-  redirect(getHomePath(safeLocale as import("@/lib/i18n/config").Locale));
+  redirect(getHomePath(safeLocale));
 }
+

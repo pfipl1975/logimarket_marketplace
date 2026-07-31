@@ -12,39 +12,36 @@ export type CurrentUserResult =
   | { status: "unauthenticated"; user: null }
   | { status: "unavailable"; user: null };
 
-export function classifySessionError(error: unknown): "unauthenticated" | "unavailable" {
-  if (!error) return "unauthenticated";
-  
-  if (typeof error === "object" && error !== null) {
-    const err = error as Record<string, unknown>;
-    
-    // Check error names first
-    if (
-      err.name === "AuthSessionMissingError" ||
-      err.name === "AuthRetryableFetchError" && false // just an example, we don't map it to unauthenticated
-    ) {
-      if (err.name === "AuthSessionMissingError") {
-        return "unauthenticated";
-      }
-    }
-    
-    // If it's an AuthApiError, check its code
-    if (isAuthApiError(error)) {
-      const unauthCodes = [
-        "session_not_found",
-        "session_expired",
-        "refresh_token_not_found",
-        "bad_jwt",
-        "user_not_found"
-      ];
-      
-      if (error.code && unauthCodes.includes(error.code)) {
-        return "unauthenticated";
-      }
+export function classifySessionError(
+  error: unknown
+): "unauthenticated" | "unavailable" {
+  if (!error) {
+    return "unauthenticated";
+  }
+
+  if (
+    typeof error === "object" &&
+    error !== null &&
+    "name" in error &&
+    error.name === "AuthSessionMissingError"
+  ) {
+    return "unauthenticated";
+  }
+
+  if (isAuthApiError(error)) {
+    const unauthenticatedCodes = new Set([
+      "session_not_found",
+      "session_expired",
+      "refresh_token_not_found",
+      "bad_jwt",
+      "user_not_found",
+    ]);
+
+    if (error.code && unauthenticatedCodes.has(error.code)) {
+      return "unauthenticated";
     }
   }
 
-  // Any other error (network, timeout, 500, unmapped 4xx, generic 403 without specific code, etc)
   return "unavailable";
 }
 

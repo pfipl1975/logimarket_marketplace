@@ -23,4 +23,11 @@ test("buildLoginRedirectUrl", async (t) => {
     assert.equal(result.pathname, "/zh/login");
     assert.equal(result.searchParams.get("next"), "/zh/admin");
   });
+
+  await t.test("REQUEST=/de/partner/offers?status=draft&page=2", () => {
+    const url = new URL("https://logimarket.eu/de/partner/offers?status=draft&page=2");
+    const result = buildLoginRedirectUrl(url);
+    assert.equal(result.pathname, "/de/login");
+    assert.equal(result.searchParams.get("next"), "/de/partner/offers?status=draft&page=2");
+  });
 });

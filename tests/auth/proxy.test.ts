@@ -5,37 +5,47 @@ import { createAuthRedirect } from "../../src/lib/supabase/proxy";
 
 test("proxy auth redirect", async (t) => {
   await t.test("copies cookies and specified headers", () => {
-    const baseResponse = new NextResponse();
-    baseResponse.cookies.set({
-      name: "sb-test-auth-token",
-      value: "token-value",
-      path: "/",
-      secure: true,
-      sameSite: "lax",
-      maxAge: 3600
-    });
-    baseResponse.headers.set("Cache-Control", "no-store");
-    baseResponse.headers.set("Expires", "0");
-    baseResponse.headers.set("Pragma", "no-cache");
-    baseResponse.headers.set("x-middleware-next", "1"); // Should not be copied
+    const expires = new Date("2030-01-01T00:00:00.000Z");
+    const originalDateNow = Date.now;
+    Date.now = () => expires.getTime() - 3600 * 1000;
 
-    const url = new URL("http://localhost/login");
-    const redirect = createAuthRedirect(url, baseResponse);
+    try {
+      const baseResponse = new NextResponse();
+      baseResponse.cookies.set({
+        name: "sb-test-auth-token",
+        value: "token-value",
+        path: "/",
+        secure: true,
+        sameSite: "lax",
+        maxAge: 3600,
+        expires
+      });
+      baseResponse.headers.set("Cache-Control", "no-store");
+      baseResponse.headers.set("Expires", "0");
+      baseResponse.headers.set("Pragma", "no-cache");
+      baseResponse.headers.set("x-middleware-next", "1"); // Should not be copied
 
-    assert.equal(redirect.status, 307);
-    assert.equal(redirect.headers.get("Location"), "http://localhost/login");
+      const url = new URL("http://localhost/login");
+      const redirect = createAuthRedirect(url, baseResponse);
 
-    const cookie = redirect.cookies.get("sb-test-auth-token");
-    assert.equal(cookie?.value, "token-value");
-    assert.equal(cookie?.path, "/");
-    assert.equal(cookie?.secure, true);
-    assert.equal(cookie?.sameSite, "lax");
-    assert.equal(cookie?.maxAge, 3600);
-    
-    assert.equal(redirect.headers.get("Cache-Control"), "no-store");
-    assert.equal(redirect.headers.get("Expires"), "0");
-    assert.equal(redirect.headers.get("Pragma"), "no-cache");
-    
-    assert.equal(redirect.headers.get("x-middleware-next"), null);
+      assert.equal(redirect.status, 307);
+      assert.equal(redirect.headers.get("Location"), "http://localhost/login");
+
+      const cookie = redirect.cookies.get("sb-test-auth-token");
+      assert.equal(cookie?.value, "token-value");
+      assert.equal(cookie?.path, "/");
+      assert.equal(cookie?.secure, true);
+      assert.equal(cookie?.sameSite, "lax");
+      assert.equal(cookie?.maxAge, 3600);
+      assert.equal(cookie?.expires?.toISOString(), expires.toISOString());
+      
+      assert.equal(redirect.headers.get("Cache-Control"), "no-store");
+      assert.equal(redirect.headers.get("Expires"), "0");
+      assert.equal(redirect.headers.get("Pragma"), "no-cache");
+      
+      assert.equal(redirect.headers.get("x-middleware-next"), null);
+    } finally {
+      Date.now = originalDateNow;
+    }
   });
 });

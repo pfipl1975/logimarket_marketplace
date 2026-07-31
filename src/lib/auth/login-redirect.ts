@@ -1,7 +1,7 @@
 import { getLocaleFromPath } from "./route-classification";
 
-export function buildLoginRedirectUrl(currentUrl: URL | string): URL {
-  const url = typeof currentUrl === "string" ? new URL(currentUrl) : currentUrl;
+export function buildLoginRedirectUrl(currentUrl: URL): URL {
+  const url = currentUrl;
   const locale = getLocaleFromPath(url.pathname);
   
   const loginUrl = new URL(url.toString());

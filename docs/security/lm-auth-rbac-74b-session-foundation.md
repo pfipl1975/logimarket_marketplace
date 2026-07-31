@@ -1,7 +1,7 @@
 # LM-AUTH-RBAC-74B Session Foundation
 
 ## Overview
-This document outlines the server-side session foundation established during sprint LM-AUTH-RBAC-74B, hardened in R1/R2, and finalized in R3 for LogiMarket.
+This document outlines the server-side session foundation established during sprint LM-AUTH-RBAC-74B, hardened in R1/R2, and hardened through R4 for LogiMarket.
 The scope covers the initialization of server-side Supabase Auth, proxy redirection, safe redirect handling, login error classification, and secure routing.
 
 ## Environment Contract
@@ -22,7 +22,7 @@ The scope covers the initialization of server-side Supabase Auth, proxy redirect
   - No `service-role` or `secret` key is stored or utilized in the runtime.
   - Caching is managed explicitly through `revalidatePath` and Supabase responses.
 - **Routing Contract**:
-  - `NEXTJS_FILE=src/proxy.ts` (Middleware proxy)
+  - `NEXTJS_FILE=src/proxy.ts` (Next.js 16 Proxy)
   - `PL_PROTECTED_PREFIXES=/admin,/partner` (NO_PL_PREFIX=YES)
   - `LOCALIZED_PREFIXES=/en,/de,/fr,/uk,/es,/zh`
   - `PROXY_FINAL_AUTHORIZATION=NO`
@@ -43,6 +43,10 @@ The scope covers the initialization of server-side Supabase Auth, proxy redirect
 ## Login & Logout Flow
 - **Login**: Server Action `loginUser` handles login. Uses Zod for validation.
 - **Logout**: Server Action `logoutUser` signs out via Supabase.
+  - LOGOUT_SCOPE=local
+  - GLOBAL_LOGOUT=NOT_USED
+  - LOGOUT_ERROR_REDIRECT=NO
+  - SESSION_HASH_PRESERVED=YES
 - **Session Result States (`classifySessionError`)**:
   - `unauthenticated`: maps to `AuthSessionMissingError`, `session_not_found`, `session_expired`, `refresh_token_not_found`, `bad_jwt`, `user_not_found`.
   - `unavailable`: maps to network error, request timeout, unexpected failure, generic 403, unknown error.
@@ -87,6 +91,20 @@ ADMIN_ONLY:
 
 ## Rollback & Next Steps
 - Elements deferred to 74C: Roles, Membership, RLS, and final server-side authorization enforcement.
+
+## Tests and Limitations
+- UNIT_TESTS=IMPLEMENTED
+- LIVE_LOGIN_TEST=BLOCKED
+- LIVE_LOGOUT_TEST=BLOCKED
+- SUPABASE_PROJECT_IDENTIFIED=NO
+
+## Rollback
+- po merge rollback polega na rewercie merge commita PR 74B;
+- nie ma rollbacku DB;
+- nie ma rollbacku migracji;
+- nie ma rollbacku RLS;
+- należy usunąć konfigurację env tylko wtedy, gdy była dodana w środowisku wdrożeniowym;
+- session_hash i dane anonimowego koszyka nie podlegają rollbackowi.
 
 ## Procedural History
 - The first execution of 74B violated constraints by using `git add .`.
