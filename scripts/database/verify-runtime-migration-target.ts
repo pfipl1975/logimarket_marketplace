@@ -15,8 +15,8 @@ export function verifyTarget(env: NodeJS.ProcessEnv): void {
   const ref = normalizeProjectRef(url);
   if (!ref) throw new Error("Could not parse project ref from DATABASE_URL");
   
-  if (ref !== expectedRef) throw new Error("URL does not point to expected ref");
   if (ref === forbiddenRef) throw new Error("URL points to forbidden ref");
+  if (ref !== expectedRef) throw new Error("URL does not point to expected ref");
   
   if (env.RUNTIME_MIGRATION_TARGET !== "development") throw new Error("Target is not development");
   if (env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION !== "AUTHORIZED_DEV_BASELINE_WRITE") {

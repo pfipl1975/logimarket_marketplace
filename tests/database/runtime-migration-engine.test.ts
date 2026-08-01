@@ -954,7 +954,7 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
     .map((s) => s.match(/DROP TABLE IF EXISTS public\.(\w+)/)?.[1])
     .filter(Boolean);
   assert.strictEqual(droppedTables.length, 15);
-  assert.strictEqual(droppedTables[0], "order_items");
+  assert.strictEqual(droppedTables[0], "clicks");
   assert.strictEqual(droppedTables[14], "partners");
 });
 

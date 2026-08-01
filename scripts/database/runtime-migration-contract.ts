@@ -43,10 +43,24 @@ export const RUNTIME_ENV_VARS = [
 
 export function normalizeProjectRef(url: string | undefined): string | null {
   if (!url) return null;
-  const dbMatch = url.match(/db\.([a-z0-9]+)\.supabase\.co/);
-  if (dbMatch) return dbMatch[1];
-  const poolerMatch = url.match(/postgres\.([a-z0-9]+)@/);
-  if (poolerMatch) return poolerMatch[1];
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.endsWith('.supabase.co')) {
+      const parts = parsed.hostname.split('.');
+      if (parts.length >= 4 && parts[0] === 'db') {
+        return parts[1];
+      }
+    }
+    if (parsed.username) {
+      const username = decodeURIComponent(parsed.username);
+      const parts = username.split('.');
+      if (parts.length === 2 && parts[0] === 'postgres') {
+        return parts[1];
+      }
+    }
+  } catch (e) {
+    return null;
+  }
   return null;
 }
 

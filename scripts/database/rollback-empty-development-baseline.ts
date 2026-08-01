@@ -35,6 +35,7 @@ import {
 // ---------------------------------------------------------------------------
 
 const REVERSE_DROP_ORDER: readonly string[] = [
+  "clicks",
   "order_items",
   "cart_items",
   "rfq_leads",
@@ -42,7 +43,6 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "offer_attribute_values",
   "category_attribute_assignments",
   "offers",
-  "clicks",
   "orders",
   "controlled_option_value_translations",
   "controlled_option_values",
