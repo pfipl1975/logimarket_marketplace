@@ -10,18 +10,27 @@
  * Does not execute GRANT or REVOKE.
  */
 
-import { EXPECTED_BASELINE_TABLES } from "./runtime-migration-contract";
+import {
+  EXPECTED_BASELINE_TABLES,
+  PRODUCTION_FINGERPRINT,
+} from "./runtime-migration-contract";
 import { Queryable } from "./verify-runtime-schema-fingerprint";
 
 // ---------------------------------------------------------------------------
-// Approved runtime objects — derived from the fixed contract only, never
-// from user input. All 15 runtime sequences follow the <table>_id_seq pattern
-// (see EXPECTED_SEQUENCES in rollback-empty-development-baseline.ts).
+// Approved runtime objects — from the fixed contract only, never from user
+// input and never from a table-name pattern. The exact 15 sequence names are
+// taken from the confirmed `sequenceName` ownership data inside
+// PRODUCTION_FINGERPRINT (each entry cross-checked against
+// drizzle-runtime/0000_production_runtime_baseline.sql by
+// tests/database/runtime-sequence-allowlist.test.ts).
 // ---------------------------------------------------------------------------
 
-const EXPECTED_RUNTIME_SEQUENCES: readonly string[] = EXPECTED_BASELINE_TABLES.map(
-  (t) => `${t}_id_seq`
-);
+export const EXPECTED_RUNTIME_SEQUENCES: readonly string[] =
+  EXPECTED_BASELINE_TABLES.flatMap((table) =>
+    PRODUCTION_FINGERPRINT[table].columns
+      .map((c) => c.sequenceName)
+      .filter((name): name is string => name !== null)
+  );
 
 // ---------------------------------------------------------------------------
 // Grant result shape

@@ -105,10 +105,12 @@ aclexplode(COALESCE(relacl, acldefault(...)))
 ```
 
 for both tables (`relkind='r'`) and sequences (`relkind='S'`). Both queries
-are restricted via `ANY($1)` to the 15 approved runtime tables and the 15
-approved runtime sequences (`<table>_id_seq`, derived from the fixed
-contract — never from user input). It resolves grantee OIDs to role names
-via `pg_roles`.
+are restricted via `ANY($1)` to the 15 approved runtime tables and the exact
+15 approved runtime sequences — the sequence allowlist is taken verbatim from
+the confirmed `sequenceName` ownership data in the production contract
+(cross-checked against the baseline SQL by contract tests), never generated
+from a table-name pattern and never from user input. It resolves grantee OIDs
+to role names via `pg_roles`.
 
 Reported counts:
 

@@ -24,7 +24,7 @@ import {
   fetchLiveSchemaMetadata,
   type Queryable,
 } from "../../scripts/database/verify-runtime-schema-fingerprint";
-import { queryRuntimeGrants } from "../../scripts/database/verify-runtime-data-api-grants";
+import { queryRuntimeGrants, EXPECTED_RUNTIME_SEQUENCES } from "../../scripts/database/verify-runtime-data-api-grants";
 import {
   verifyRollbackPreconditions,
   executeRollback,
@@ -707,11 +707,8 @@ test("GRANT_SCOPE_TEST: queries are restricted to the 15 approved tables and seq
   assert.ok(tableQuery.text.includes("any($1)"), "table grants must be scoped via ANY($1)");
   assert.ok(seqQuery.text.includes("any($1)"), "sequence grants must be scoped via ANY($1)");
   assert.deepStrictEqual(tableQuery.values?.[0], EXPECTED_BASELINE_TABLES);
-  const seqScope = seqQuery.values?.[0] as string[];
-  assert.strictEqual(seqScope.length, 15);
-  for (const t of EXPECTED_BASELINE_TABLES) {
-    assert.ok(seqScope.includes(`${t}_id_seq`), `scope must include ${t}_id_seq`);
-  }
+  assert.deepStrictEqual(seqQuery.values?.[0], EXPECTED_RUNTIME_SEQUENCES);
+  assert.strictEqual((seqQuery.values?.[0] as string[]).length, 15);
 });
 
 test("GRANT: verifier never issues write SQL", async () => {
