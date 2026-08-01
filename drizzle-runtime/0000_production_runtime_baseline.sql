@@ -64,7 +64,7 @@ BEGIN
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone,
     CONSTRAINT categories_slug_key UNIQUE (slug),
-    CONSTRAINT fk_categories_parent FOREIGN KEY (parent_id) REFERENCES categories(id)
+    CONSTRAINT categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES categories(id)
   );
   
   CREATE TABLE partners (
@@ -157,8 +157,8 @@ BEGIN
     technical_attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone,
-    CONSTRAINT fk_offers_category FOREIGN KEY (category_id) REFERENCES categories(id),
-    CONSTRAINT fk_offers_partner FOREIGN KEY (partner_id) REFERENCES partners(id),
+    CONSTRAINT offers_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(id),
+    CONSTRAINT offers_partner_id_fkey FOREIGN KEY (partner_id) REFERENCES partners(id),
     CONSTRAINT offers_conversion_type_check CHECK (((conversion_type)::text = ANY ((ARRAY['inbound'::character varying, 'outbound'::character varying])::text[]))),
     CONSTRAINT offers_offer_model_check CHECK (((offer_model)::text = ANY ((ARRAY['rfq'::character varying, 'marketplace'::character varying])::text[]))),
     CONSTRAINT offers_publication_status_check CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying])::text[])))
@@ -239,9 +239,7 @@ BEGIN
     quantity integer NOT NULL,
     unit_price character varying,
     total_price character varying,
-    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id),
-    CONSTRAINT fk_order_items_offer FOREIGN KEY (offer_id) REFERENCES offers(id),
-    CONSTRAINT chk_order_items_quantity CHECK (quantity > 0)
+    currency_code character varying(3) DEFAULT 'PLN'::character varying NOT NULL
   );
 
   CREATE TABLE rfq_leads (

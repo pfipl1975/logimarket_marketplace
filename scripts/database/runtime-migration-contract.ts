@@ -118,7 +118,7 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     constraints: [
       { name: "categories_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
       { name: "categories_slug_key", type: "UNIQUE", definition: "UNIQUE (slug)" },
-      { name: "fk_categories_parent", type: "FOREIGN KEY", definition: "FOREIGN KEY (parent_id) REFERENCES categories(id)" }
+      { name: "categories_parent_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (parent_id) REFERENCES categories(id)" }
     ],
     explicitIndexes: [
       { name: "idx_categories_parent", method: "btree", expressions: "parent_id" }
@@ -259,8 +259,8 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     ],
     constraints: [
       { name: "offers_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
-      { name: "fk_offers_category", type: "FOREIGN KEY", definition: "FOREIGN KEY (category_id) REFERENCES categories(id)" },
-      { name: "fk_offers_partner", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" },
+      { name: "offers_category_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (category_id) REFERENCES categories(id)" },
+      { name: "offers_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" },
       { name: "offers_conversion_type_check", type: "CHECK", definition: "CHECK (((conversion_type)::text = ANY ((ARRAY['inbound'::character varying, 'outbound'::character varying])::text[])))" },
       { name: "offers_offer_model_check", type: "CHECK", definition: "CHECK (((offer_model)::text = ANY ((ARRAY['rfq'::character varying, 'marketplace'::character varying])::text[])))" },
       { name: "offers_publication_status_check", type: "CHECK", definition: "CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying])::text[])))" }
