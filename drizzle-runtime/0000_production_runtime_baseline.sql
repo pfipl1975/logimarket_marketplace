@@ -85,7 +85,6 @@ BEGIN
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT uq_cov_attr_option UNIQUE (attribute_id, stable_key),
-    CONSTRAINT uq_cov_attribute_id_pair UNIQUE (attribute_id, id),
     CONSTRAINT fk_cov_attribute FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id)
   );
 
@@ -158,7 +157,8 @@ BEGIN
     updated_at timestamp with time zone,
     CONSTRAINT uq_offers_source_offer_id UNIQUE (source_offer_id),
     CONSTRAINT fk_offers_category FOREIGN KEY (category_id) REFERENCES categories(id),
-    CONSTRAINT fk_offers_partner FOREIGN KEY (partner_id) REFERENCES partners(id)
+    CONSTRAINT fk_offers_partner FOREIGN KEY (partner_id) REFERENCES partners(id),
+    CONSTRAINT chk_offers_price CHECK (price >= 0)
   );
 
   CREATE TABLE cart_items (
@@ -166,7 +166,8 @@ BEGIN
     offer_id bigint NOT NULL,
     quantity integer NOT NULL DEFAULT 1,
     session_hash character varying(64) NOT NULL,
-    created_at timestamp without time zone NOT NULL DEFAULT now()
+    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    CONSTRAINT chk_cart_items_quantity CHECK (quantity > 0)
   );
 
   CREATE TABLE clicks (
@@ -232,7 +233,10 @@ BEGIN
     title character varying(255) NOT NULL,
     quantity integer NOT NULL,
     unit_price character varying,
-    total_price character varying
+    total_price character varying,
+    CONSTRAINT fk_order_items_order FOREIGN KEY (order_id) REFERENCES orders(id),
+    CONSTRAINT fk_order_items_offer FOREIGN KEY (offer_id) REFERENCES offers(id),
+    CONSTRAINT chk_order_items_quantity CHECK (quantity > 0)
   );
 
   CREATE TABLE rfq_leads (

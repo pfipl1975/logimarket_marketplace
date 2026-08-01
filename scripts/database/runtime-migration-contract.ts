@@ -43,15 +43,10 @@ export const RUNTIME_ENV_VARS = [
 
 export function normalizeProjectRef(url: string | undefined): string | null {
   if (!url) return null;
-  
-  // 1. db.<ref>.supabase.co
   const dbMatch = url.match(/db\.([a-z0-9]+)\.supabase\.co/);
   if (dbMatch) return dbMatch[1];
-  
-  // 2. postgres.<ref>@<host> (Supavisor)
   const poolerMatch = url.match(/postgres\.([a-z0-9]+)@/);
   if (poolerMatch) return poolerMatch[1];
-  
   return null;
 }
 
@@ -59,36 +54,361 @@ export type ColumnContract = {
   name: string;
   type: string;
   nullable: boolean;
-  hasDefault: boolean;
+  defaultVal: string | null;
+  sequenceName: string | null;
+};
+
+export type SequenceContract = {
+  name: string;
+  ownedByTable: string;
+  ownedByColumn: string;
+  dataType: string;
+};
+
+export type ConstraintContract = {
+  name: string;
+  type: 'PRIMARY KEY' | 'FOREIGN KEY' | 'UNIQUE' | 'CHECK';
+  definition: string;
+};
+
+export type IndexContract = {
+  name: string;
+  method: string;
+  expressions: string;
 };
 
 export type TableContract = {
   name: string;
   columns: ColumnContract[];
-  primaryKeyCount: number;
-  foreignKeyCount: number;
-  uniqueConstraintCount: number;
-  checkConstraintCount: number;
-  explicitIndexCount: number;
-  hasRls: boolean;
+  constraints: ConstraintContract[];
+  explicitIndexes: IndexContract[];
+  rlsEnabled: boolean;
 };
 
-// Exact production fingerprint (omitting full columns for brevity in this mock, but structural tests will use counts)
-// In a real scenario, this would list all 122 columns exactly.
 export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
-  "attribute_definition_translations": { name: "attribute_definition_translations", columns: [], primaryKeyCount: 1, foreignKeyCount: 1, uniqueConstraintCount: 1, checkConstraintCount: 1, explicitIndexCount: 0, hasRls: true },
-  "attribute_definitions": { name: "attribute_definitions", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 1, checkConstraintCount: 1, explicitIndexCount: 0, hasRls: true },
-  "cart_items": { name: "cart_items", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 0, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true },
-  "categories": { name: "categories", columns: [], primaryKeyCount: 1, foreignKeyCount: 1, uniqueConstraintCount: 1, checkConstraintCount: 0, explicitIndexCount: 1, hasRls: true },
-  "category_attribute_assignments": { name: "category_attribute_assignments", columns: [], primaryKeyCount: 1, foreignKeyCount: 2, uniqueConstraintCount: 1, checkConstraintCount: 1, explicitIndexCount: 3, hasRls: true },
-  "clicks": { name: "clicks", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 0, checkConstraintCount: 0, explicitIndexCount: 1, hasRls: true },
-  "controlled_option_value_translations": { name: "controlled_option_value_translations", columns: [], primaryKeyCount: 1, foreignKeyCount: 1, uniqueConstraintCount: 1, checkConstraintCount: 1, explicitIndexCount: 0, hasRls: true },
-  "controlled_option_values": { name: "controlled_option_values", columns: [], primaryKeyCount: 1, foreignKeyCount: 1, uniqueConstraintCount: 2, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true },
-  "offer_attribute_option_values": { name: "offer_attribute_option_values", columns: [], primaryKeyCount: 1, foreignKeyCount: 4, uniqueConstraintCount: 1, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true },
-  "offer_attribute_values": { name: "offer_attribute_values", columns: [], primaryKeyCount: 1, foreignKeyCount: 4, uniqueConstraintCount: 1, checkConstraintCount: 1, explicitIndexCount: 0, hasRls: true },
-  "offers": { name: "offers", columns: [], primaryKeyCount: 1, foreignKeyCount: 2, uniqueConstraintCount: 1, checkConstraintCount: 0, explicitIndexCount: 3, hasRls: true },
-  "order_items": { name: "order_items", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 0, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true },
-  "orders": { name: "orders", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 0, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true },
-  "partners": { name: "partners", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 1, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true },
-  "rfq_leads": { name: "rfq_leads", columns: [], primaryKeyCount: 1, foreignKeyCount: 0, uniqueConstraintCount: 0, checkConstraintCount: 0, explicitIndexCount: 0, hasRls: true }
+  "attribute_definitions": {
+    name: "attribute_definitions",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('attribute_definitions_id_seq'::regclass)", sequenceName: "attribute_definitions_id_seq" },
+      { name: "stable_key", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "data_type", type: "character varying(30)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "attribute_definitions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_ad_stable_key", type: "UNIQUE", definition: "UNIQUE (stable_key)" },
+      { name: "chk_ad_data_type", type: "CHECK", definition: "CHECK (((data_type)::text = ANY ((ARRAY['text'::character varying, 'number'::character varying, 'boolean'::character varying, 'date'::character varying, 'year'::character varying, 'enum'::character varying, 'multi_enum'::character varying])::text[])))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "categories": {
+    name: "categories",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('categories_id_seq'::regclass)", sequenceName: "categories_id_seq" },
+      { name: "parent_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "slug", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "categories_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_categories_slug", type: "UNIQUE", definition: "UNIQUE (slug)" },
+      { name: "fk_categories_parent", type: "FOREIGN KEY", definition: "FOREIGN KEY (parent_id) REFERENCES categories(id)" }
+    ],
+    explicitIndexes: [
+      { name: "idx_categories_parent", method: "btree", expressions: "parent_id" }
+    ],
+    rlsEnabled: true
+  },
+  "partners": {
+    name: "partners",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('partners_id_seq'::regclass)", sequenceName: "partners_id_seq" },
+      { name: "slug", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "partners_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_partners_slug", type: "UNIQUE", definition: "UNIQUE (slug)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "controlled_option_values": {
+    name: "controlled_option_values",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('controlled_option_values_id_seq'::regclass)", sequenceName: "controlled_option_values_id_seq" },
+      { name: "attribute_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "stable_key", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "controlled_option_values_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_cov_attr_option", type: "UNIQUE", definition: "UNIQUE (attribute_id, stable_key)" },
+      { name: "fk_cov_attribute", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "attribute_definition_translations": {
+    name: "attribute_definition_translations",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('attribute_definition_translations_id_seq'::regclass)", sequenceName: "attribute_definition_translations_id_seq" },
+      { name: "attribute_definition_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "locale", type: "character varying(10)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "name", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "short_label", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "attribute_definition_translations_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_adt_attribute_locale", type: "UNIQUE", definition: "UNIQUE (attribute_definition_id, locale)" },
+      { name: "fk_adt_attribute_definition", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_definition_id) REFERENCES attribute_definitions(id)" },
+      { name: "chk_adt_locale", type: "CHECK", definition: "CHECK (((locale)::text = ANY ((ARRAY['pl'::character varying, 'en'::character varying, 'de'::character varying, 'fr'::character varying, 'uk'::character varying, 'es'::character varying, 'zh'::character varying])::text[])))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "category_attribute_assignments": {
+    name: "category_attribute_assignments",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('category_attribute_assignments_id_seq'::regclass)", sequenceName: "category_attribute_assignments_id_seq" },
+      { name: "category_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "attribute_definition_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "sort_order", type: "integer", nullable: false, defaultVal: "0", sequenceName: null },
+      { name: "is_filterable", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+      { name: "is_comparable", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+      { name: "is_required", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+      { name: "is_visible", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "unit_code", type: "character varying(20)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "category_attribute_assignments_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_caa_category_attribute", type: "UNIQUE", definition: "UNIQUE (category_id, attribute_definition_id)" },
+      { name: "fk_caa_attribute_definition", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_definition_id) REFERENCES attribute_definitions(id)" },
+      { name: "fk_caa_category", type: "FOREIGN KEY", definition: "FOREIGN KEY (category_id) REFERENCES categories(id)" },
+      { name: "chk_caa_sort_order", type: "CHECK", definition: "CHECK ((sort_order >= 0))" }
+    ],
+    explicitIndexes: [
+      { name: "idx_caa_attribute", method: "btree", expressions: "attribute_definition_id" },
+      { name: "idx_caa_cat_filterable_sort", method: "btree", expressions: "category_id, is_filterable, sort_order" },
+      { name: "idx_caa_cat_visible_sort", method: "btree", expressions: "category_id, is_visible, sort_order" }
+    ],
+    rlsEnabled: true
+  },
+  "controlled_option_value_translations": {
+    name: "controlled_option_value_translations",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('controlled_option_value_translations_id_seq'::regclass)", sequenceName: "controlled_option_value_translations_id_seq" },
+      { name: "controlled_option_value_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "locale", type: "character varying(10)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "label", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "controlled_option_value_translations_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_covt_option_locale", type: "UNIQUE", definition: "UNIQUE (controlled_option_value_id, locale)" },
+      { name: "fk_covt_controlled_option_value", type: "FOREIGN KEY", definition: "FOREIGN KEY (controlled_option_value_id) REFERENCES controlled_option_values(id)" },
+      { name: "chk_covt_locale", type: "CHECK", definition: "CHECK (((locale)::text = ANY ((ARRAY['pl'::character varying, 'en'::character varying, 'de'::character varying, 'fr'::character varying, 'uk'::character varying, 'es'::character varying, 'zh'::character varying])::text[])))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "offers": {
+    name: "offers",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('offers_id_seq'::regclass)", sequenceName: "offers_id_seq" },
+      { name: "category_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "partner_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "source_offer_id", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "title", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "sku", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "ean", type: "character varying(20)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "price", type: "numeric", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "currency", type: "character varying(3)", nullable: false, defaultVal: "'PLN'::character varying", sequenceName: null },
+      { name: "image_url", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "outbound_url", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "is_featured", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "publication_status", type: "character varying(20)", nullable: false, defaultVal: "'draft'::character varying", sequenceName: null },
+      { name: "published_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "archived_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "deleted_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "technical_attributes", type: "jsonb", nullable: false, defaultVal: "'{}'::jsonb", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "offers_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_offers_source_offer_id", type: "UNIQUE", definition: "UNIQUE (source_offer_id)" },
+      { name: "fk_offers_category", type: "FOREIGN KEY", definition: "FOREIGN KEY (category_id) REFERENCES categories(id)" },
+      { name: "fk_offers_partner", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" },
+      { name: "chk_offers_price", type: "CHECK", definition: "CHECK ((price >= (0)::numeric))" }
+    ],
+    explicitIndexes: [
+      { name: "idx_offers_category", method: "btree", expressions: "category_id" },
+      { name: "idx_offers_partner", method: "btree", expressions: "partner_id" },
+      { name: "idx_offers_tech_attributes", method: "gin", expressions: "technical_attributes" }
+    ],
+    rlsEnabled: true
+  },
+  "cart_items": {
+    name: "cart_items",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('cart_items_id_seq'::regclass)", sequenceName: "cart_items_id_seq" },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "quantity", type: "integer", nullable: false, defaultVal: "1", sequenceName: null },
+      { name: "session_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "cart_items_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "chk_cart_items_quantity", type: "CHECK", definition: "CHECK ((quantity > 0))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "clicks": {
+    name: "clicks",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('clicks_id_seq'::regclass)", sequenceName: "clicks_id_seq" },
+      { name: "offer_id", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "partner_id", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "clicked_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "session_hash", type: "character varying(64)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "ip_hash", type: "character varying(64)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "is_unique_24h", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null }
+    ],
+    constraints: [
+      { name: "clicks_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" }
+    ],
+    explicitIndexes: [
+      { name: "idx_clicks_tracking", method: "btree", expressions: "offer_id, partner_id, clicked_at" }
+    ],
+    rlsEnabled: true
+  },
+  "offer_attribute_values": {
+    name: "offer_attribute_values",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('offer_attribute_values_id_seq'::regclass)", sequenceName: "offer_attribute_values_id_seq" },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "attribute_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "value_text", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "value_number", type: "numeric", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "value_boolean", type: "boolean", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "value_date", type: "date", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "value_year", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "option_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "offer_attribute_values_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_oav_offer_attribute", type: "UNIQUE", definition: "UNIQUE (offer_id, attribute_id)" },
+      { name: "fk_oav_attribute", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id)" },
+      { name: "fk_oav_attribute_option_pair", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_id, option_id) REFERENCES controlled_option_values(attribute_id, id)" },
+      { name: "fk_oav_offer", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)" },
+      { name: "fk_oav_option", type: "FOREIGN KEY", definition: "FOREIGN KEY (option_id) REFERENCES controlled_option_values(id)" },
+      { name: "chk_oav_value_exclusivity", type: "CHECK", definition: "CHECK ((num_nonnulls(value_text, (value_number)::text, (value_boolean)::text, (value_date)::text, (value_year)::text, (option_id)::text) = 1))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "offer_attribute_option_values": {
+    name: "offer_attribute_option_values",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('offer_attribute_option_values_id_seq'::regclass)", sequenceName: "offer_attribute_option_values_id_seq" },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "attribute_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "option_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "offer_attribute_option_values_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_oaov_offer_attribute_option", type: "UNIQUE", definition: "UNIQUE (offer_id, attribute_id, option_id)" },
+      { name: "fk_oaov_attribute", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id)" },
+      { name: "fk_oaov_attribute_option_pair", type: "FOREIGN KEY", definition: "FOREIGN KEY (attribute_id, option_id) REFERENCES controlled_option_values(attribute_id, id)" },
+      { name: "fk_oaov_offer", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)" },
+      { name: "fk_oaov_option", type: "FOREIGN KEY", definition: "FOREIGN KEY (option_id) REFERENCES controlled_option_values(id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "orders": {
+    name: "orders",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('orders_id_seq'::regclass)", sequenceName: "orders_id_seq" },
+      { name: "company_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "contact_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "phone", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "message", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "session_hash", type: "character varying(64)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "total_amount", type: "character varying", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "status", type: "character varying(20)", nullable: false, defaultVal: "'new'::character varying", sequenceName: null },
+      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "orders_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "order_items": {
+    name: "order_items",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('order_items_id_seq'::regclass)", sequenceName: "order_items_id_seq" },
+      { name: "order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "title", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "quantity", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "unit_price", type: "character varying", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "total_price", type: "character varying", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "order_items_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "fk_order_items_order", type: "FOREIGN KEY", definition: "FOREIGN KEY (order_id) REFERENCES orders(id)" },
+      { name: "fk_order_items_offer", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)" },
+      { name: "chk_order_items_quantity", type: "CHECK", definition: "CHECK ((quantity > 0))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "rfq_leads": {
+    name: "rfq_leads",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('rfq_leads_id_seq'::regclass)", sequenceName: "rfq_leads_id_seq" },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "company_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "contact_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "phone", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "message", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "status", type: "character varying", nullable: false, defaultVal: "'new'::character varying", sequenceName: null }
+    ],
+    constraints: [
+      { name: "rfq_leads_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  }
 };

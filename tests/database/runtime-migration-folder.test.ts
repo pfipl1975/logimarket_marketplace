@@ -11,6 +11,7 @@ test("journal exists and is valid", () => {
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
   assert.strictEqual(journal.entries.length, 1);
   assert.strictEqual(journal.entries[0].tag, "0000_production_runtime_baseline");
+  assert.strictEqual(journal.entries[0].when, 1785589560000);
 });
 
 test("exactly one sql file is loaded by migrator", () => {
