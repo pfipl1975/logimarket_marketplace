@@ -2,7 +2,7 @@ import { test, describe, beforeEach } from "node:test";
 import assert from "node:assert";
 
 import {
-  checkPreconditions,
+  validateEnvironment,
   compareKnownDrift,
   verifyEmptyTables,
   verifyJournal,
@@ -235,31 +235,31 @@ describe("known-drift-empty-dev-recovery", () => {
   });
 
   test("23. właściwy DEV ref przechodzi", async () => {
-    const res = await checkPreconditions(null as any, env);
+    const res = validateEnvironment(env);
     assert.strictEqual(res.allowed, true);
   });
 
   test("24. production ref blokuje", async () => {
     env.DATABASE_URL = "postgresql://postgres.tpjsiutclowwaxlopemn:pass@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
-    const res = await checkPreconditions(null as any, env);
+    const res = validateEnvironment(env);
     assert.strictEqual(res.allowed, false);
   });
 
   test("25. unknown ref blokuje", async () => {
     env.DATABASE_URL = "postgresql://postgres.unknown:pass@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
-    const res = await checkPreconditions(null as any, env);
+    const res = validateEnvironment(env);
     assert.strictEqual(res.allowed, false);
   });
 
   test("26. brak autoryzacji blokuje", async () => {
     delete env.RUNTIME_KNOWN_DRIFT_RECOVERY_AUTHORIZATION;
-    const res = await checkPreconditions(null as any, env);
+    const res = validateEnvironment(env);
     assert.strictEqual(res.allowed, false);
   });
 
   test("27. błędna autoryzacja blokuje", async () => {
     env.RUNTIME_KNOWN_DRIFT_RECOVERY_AUTHORIZATION = "wrong";
-    const res = await checkPreconditions(null as any, env);
+    const res = validateEnvironment(env);
     assert.strictEqual(res.allowed, false);
   });
 
@@ -311,5 +311,66 @@ describe("known-drift-empty-dev-recovery", () => {
     }
     assert.strictEqual(rejected, true);
     assert.strictEqual(queries[queries.length - 1], "ROLLBACK");
+  });
+
+  async function testBlocker(envMod: (e: NodeJS.ProcessEnv) => void) {
+    const testEnv = { ...env };
+    envMod(testEnv);
+    const originalEnv = process.env;
+    process.env = testEnv;
+    
+    let poolFactoryCalls = 0;
+    const fakePoolFactory = () => { poolFactoryCalls++; return {}; };
+    
+    try {
+      await main(fakePoolFactory);
+    } catch (e) {
+      // expected error from env validation
+    } finally {
+      process.env = originalEnv;
+    }
+    assert.strictEqual(poolFactoryCalls, 0);
+  }
+
+  test("E1. brak DATABASE_URL blokuje przed Pool", async () => await testBlocker(e => { delete e.DATABASE_URL; }));
+  test("E2. brak RUNTIME_MIGRATION_TARGET blokuje przed Pool", async () => await testBlocker(e => { delete e.RUNTIME_MIGRATION_TARGET; }));
+  test("E3. target inny niz development blokuje przed Pool", async () => await testBlocker(e => { e.RUNTIME_MIGRATION_TARGET = "production"; }));
+  test("E4. brak expected project ref blokuje przed Pool", async () => await testBlocker(e => { delete e.RUNTIME_MIGRATION_EXPECTED_PROJECT_REF; }));
+  test("E5. expected project ref inny niz DEV blokuje przed Pool", async () => await testBlocker(e => { e.RUNTIME_MIGRATION_EXPECTED_PROJECT_REF = "other"; }));
+  test("E6. brak forbidden project ref blokuje przed Pool", async () => await testBlocker(e => { delete e.RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF; }));
+  test("E7. forbidden project ref inny niz production blokuje przed Pool", async () => await testBlocker(e => { e.RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF = "other"; }));
+  test("E8. brak autoryzacji blokuje przed Pool", async () => await testBlocker(e => { delete e.RUNTIME_KNOWN_DRIFT_RECOVERY_AUTHORIZATION; }));
+  test("E9. bledna autoryzacja blokuje przed Pool", async () => await testBlocker(e => { e.RUNTIME_KNOWN_DRIFT_RECOVERY_AUTHORIZATION = "wrong"; }));
+  test("E10. nieparsowalny URL blokuje przed Pool", async () => await testBlocker(e => { e.DATABASE_URL = "not-a-url"; }));
+  test("E11. URL wskazujacy production blokuje przed Pool", async () => await testBlocker(e => { e.DATABASE_URL = "postgresql://postgres.tpjsiutclowwaxlopemn:pass@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"; }));
+  test("E12. URL wskazujacy inny projekt blokuje przed Pool", async () => await testBlocker(e => { e.DATABASE_URL = "postgresql://postgres.other:pass@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"; }));
+  test("E13. URL zawierajacy forbidden production ref blokuje przed Pool", async () => await testBlocker(e => { 
+       e.RUNTIME_MIGRATION_EXPECTED_PROJECT_REF = "tpjsiutclowwaxlopemn";
+       e.DATABASE_URL = "postgresql://postgres.tpjsiutclowwaxlopemn:pass@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"; 
+  }));
+  
+  test("E14. positive - pool is created only once on valid environment", async () => {
+    const testEnv = { ...env };
+    const originalEnv = process.env;
+    process.env = testEnv;
+    
+    let poolFactoryCalls = 0;
+    const fakePoolFactory = () => { 
+      poolFactoryCalls++; 
+      return {
+        async connect() { return { async query() {}, release() {} }; },
+        async query() { return { rows: [{ count: 0 }] }; },
+        async end() {}
+      }; 
+    };
+    
+    try {
+      await main(fakePoolFactory);
+    } catch (e) {
+      // expected to fail at fetchLiveSchemaMetadata due to fake pool
+    } finally {
+      process.env = originalEnv;
+    }
+    assert.strictEqual(poolFactoryCalls, 1);
   });
 });

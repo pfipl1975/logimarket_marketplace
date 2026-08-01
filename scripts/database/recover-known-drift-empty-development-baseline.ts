@@ -19,7 +19,7 @@ import {
   LiveTableFingerprint
 } from "./verify-runtime-schema-fingerprint";
 
-export async function checkPreconditions(q: Queryable, env: NodeJS.ProcessEnv): Promise<{ allowed: boolean; reason?: string }> {
+export function validateEnvironment(env: Record<string, string | undefined>): { allowed: boolean; reason?: string } {
   if (env.RUNTIME_KNOWN_DRIFT_RECOVERY_AUTHORIZATION !== "AUTHORIZED_KNOWN_DRIFT_EMPTY_DEV_RECOVERY_08B") {
     return { allowed: false, reason: "Missing or invalid RUNTIME_KNOWN_DRIFT_RECOVERY_AUTHORIZATION" };
   }
@@ -32,14 +32,14 @@ export async function checkPreconditions(q: Queryable, env: NodeJS.ProcessEnv): 
   const url = env.DATABASE_URL;
 
   if (!expectedRef) return { allowed: false, reason: "Missing RUNTIME_MIGRATION_EXPECTED_PROJECT_REF" };
+  if (expectedRef !== "wwyxoasupqyctxdoclwm") return { allowed: false, reason: "Invalid RUNTIME_MIGRATION_EXPECTED_PROJECT_REF" };
   if (!forbiddenRef) return { allowed: false, reason: "Missing RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF" };
+  if (forbiddenRef !== "tpjsiutclowwaxlopemn") return { allowed: false, reason: "Invalid RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF" };
   if (!url) return { allowed: false, reason: "Missing DATABASE_URL" };
-  if (expectedRef === forbiddenRef) return { allowed: false, reason: "Expected ref equals forbidden ref" };
 
   const ref = normalizeProjectRef(url);
   if (!ref) return { allowed: false, reason: "Cannot parse project ref from DATABASE_URL" };
   if (ref !== expectedRef) return { allowed: false, reason: "DATABASE_URL does not point to expected DEV project ref" };
-  if (ref === forbiddenRef) return { allowed: false, reason: "DATABASE_URL points to forbidden (production) ref" };
 
   return { allowed: true };
 }
@@ -234,8 +234,10 @@ export async function executeRecovery(client: Queryable): Promise<void> {
 export type PoolFactory = (connectionString: string) => any;
 
 export async function main(poolFactory?: PoolFactory) {
-  const url = process.env.DATABASE_URL;
-  if (!url) throw new Error("Missing DATABASE_URL");
+  const envCheck = validateEnvironment(process.env);
+  if (!envCheck.allowed) throw new Error(`Precheck failed: ${envCheck.reason}`);
+
+  const url = process.env.DATABASE_URL!;
 
   const expectedHash = "f903ae27add547abb3c8a3280f1916a6d9969627254812a5449569cb61a4fb51";
   const expectedCreatedAt = 1785589560000;
@@ -246,8 +248,6 @@ export async function main(poolFactory?: PoolFactory) {
 
   let client;
   try {
-    const preCheck = await checkPreconditions(pool, process.env);
-    if (!preCheck.allowed) throw new Error(`Precheck failed: ${preCheck.reason}`);
     
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const driftCheck = compareKnownDrift(fingerprint, publicTables);
