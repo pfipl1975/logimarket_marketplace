@@ -63,7 +63,7 @@ BEGIN
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone,
-    CONSTRAINT uq_categories_slug UNIQUE (slug),
+    CONSTRAINT categories_slug_key UNIQUE (slug),
     CONSTRAINT fk_categories_parent FOREIGN KEY (parent_id) REFERENCES categories(id)
   );
   
@@ -74,8 +74,7 @@ BEGIN
     description text,
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamp without time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone,
-    CONSTRAINT uq_partners_slug UNIQUE (slug)
+    updated_at timestamp with time zone
   );
 
   CREATE TABLE controlled_option_values (
@@ -85,6 +84,7 @@ BEGIN
     is_active boolean NOT NULL DEFAULT true,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     CONSTRAINT uq_cov_attr_option UNIQUE (attribute_id, stable_key),
+    CONSTRAINT uq_cov_attribute_id_pair UNIQUE (attribute_id, id),
     CONSTRAINT fk_cov_attribute FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id)
   );
 
@@ -149,16 +149,19 @@ BEGIN
     is_featured boolean NOT NULL DEFAULT false,
     is_active boolean NOT NULL DEFAULT true,
     publication_status character varying(20) NOT NULL DEFAULT 'draft'::character varying,
+    conversion_type character varying(20) NOT NULL DEFAULT 'outbound'::character varying,
+    offer_model character varying(20) NOT NULL DEFAULT 'rfq'::character varying,
     published_at timestamp with time zone,
     archived_at timestamp with time zone,
     deleted_at timestamp with time zone,
     technical_attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone,
-    CONSTRAINT uq_offers_source_offer_id UNIQUE (source_offer_id),
     CONSTRAINT fk_offers_category FOREIGN KEY (category_id) REFERENCES categories(id),
     CONSTRAINT fk_offers_partner FOREIGN KEY (partner_id) REFERENCES partners(id),
-    CONSTRAINT chk_offers_price CHECK (price >= 0)
+    CONSTRAINT offers_conversion_type_check CHECK (((conversion_type)::text = ANY ((ARRAY['inbound'::character varying, 'outbound'::character varying])::text[]))),
+    CONSTRAINT offers_offer_model_check CHECK (((offer_model)::text = ANY ((ARRAY['rfq'::character varying, 'marketplace'::character varying])::text[]))),
+    CONSTRAINT offers_publication_status_check CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying])::text[])))
   );
 
   CREATE TABLE cart_items (
@@ -166,18 +169,20 @@ BEGIN
     offer_id bigint NOT NULL,
     quantity integer NOT NULL DEFAULT 1,
     session_hash character varying(64) NOT NULL,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
-    CONSTRAINT chk_cart_items_quantity CHECK (quantity > 0)
+    created_at timestamp with time zone DEFAULT now(),
+    CONSTRAINT cart_items_session_hash_offer_id_key UNIQUE (session_hash, offer_id)
   );
 
   CREATE TABLE clicks (
     id bigint PRIMARY KEY DEFAULT nextval('clicks_id_seq'),
     offer_id integer,
     partner_id integer,
-    clicked_at timestamp without time zone NOT NULL DEFAULT now(),
-    session_hash character varying(64),
-    ip_hash character varying(64),
-    is_unique_24h boolean NOT NULL DEFAULT true
+    clicked_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+    session_hash character varying NOT NULL,
+    ip_hash character varying NOT NULL,
+    is_unique_24h boolean NOT NULL DEFAULT true,
+    CONSTRAINT clicks_offer_id_fkey FOREIGN KEY (offer_id) REFERENCES offers(id),
+    CONSTRAINT clicks_partner_id_fkey FOREIGN KEY (partner_id) REFERENCES partners(id)
   );
 
   CREATE TABLE offer_attribute_values (
@@ -220,10 +225,10 @@ BEGIN
     email character varying(255) NOT NULL,
     phone character varying(50),
     message text,
-    session_hash character varying(64),
+    session_hash character varying NOT NULL,
     total_amount character varying,
     status character varying(20) NOT NULL DEFAULT 'new'::character varying,
-    created_at timestamp without time zone NOT NULL DEFAULT now()
+    created_at timestamp with time zone DEFAULT now()
   );
 
   CREATE TABLE order_items (
@@ -248,7 +253,7 @@ BEGIN
     email character varying(255) NOT NULL,
     phone character varying(50),
     message text,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now(),
     status character varying NOT NULL DEFAULT 'new'::character varying
   );
 
