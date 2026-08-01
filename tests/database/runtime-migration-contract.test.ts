@@ -112,7 +112,14 @@ test("CONTRACT_SYNC: 14. 15 RLS enabled", () => {
 });
 
 test("CONTRACT_SYNC: 15. Zero policies and triggers", () => {
-  // Fingerprint doesn't store policy/trigger definitions per the mandate.
-  // RLS_POLICY_COUNT=0 and TRIGGER_COUNT=0 is satisfied by omission in fingerprint.
-  assert.ok(true);
+  // The production fingerprint must not define any policy or trigger counts —
+  // the runtime contract requires RLS_POLICY_COUNT=0 and TRIGGER_COUNT=0.
+  for (const t of EXPECTED_BASELINE_TABLES) {
+    const fp = PRODUCTION_FINGERPRINT[t] as unknown as {
+      policyCount?: number;
+      triggerCount?: number;
+    };
+    assert.strictEqual(fp.policyCount ?? 0, 0, `${t} must have 0 policies`);
+    assert.strictEqual(fp.triggerCount ?? 0, 0, `${t} must have 0 triggers`);
+  }
 });
