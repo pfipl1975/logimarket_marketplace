@@ -198,3 +198,64 @@ test("case differences are ignored", () => {
   const b = "CHECK (sort_order >= 0)";
   assert.ok(equivalent(a, b), "Case differences should be ignored");
 });
+
+// ---------------------------------------------------------------------------
+// 4. String literal case safety — the core safety invariant
+//
+//    PostgreSQL string comparisons are case-sensitive.
+//    'new' ≠ 'NEW', 'pl' ≠ 'PL'.
+//    The normalizer MUST NOT lowercase literal content.
+// ---------------------------------------------------------------------------
+
+test("LITERAL SAFETY: 'new' vs 'NEW' must be different (status literal)", () => {
+  const lower = "CHECK (status = 'new')";
+  const upper = "CHECK (status = 'NEW')";
+  assert.ok(
+    !equivalent(lower, upper),
+    "String literal case must be preserved: 'new' ≠ 'NEW'"
+  );
+});
+
+test("LITERAL SAFETY: 'pl' vs 'PL' must be different (locale literal in ARRAY)", () => {
+  // Simulates drift where locale literals are stored in uppercase instead of lowercase
+  const contractLike =
+    "CHECK (((locale)::text = ANY ((ARRAY['pl'::character varying, 'en'::character varying])::text[])))";
+  const driftedUppercase =
+    "CHECK (locale::text = ANY (ARRAY['PL'::character varying::text, 'EN'::character varying::text]))";
+  assert.ok(
+    !equivalent(contractLike, driftedUppercase),
+    "Uppercase locale literals 'PL' must differ from lowercase 'pl'"
+  );
+});
+
+test("LITERAL SAFETY: 'new' vs 'NEW' in outer-paren form must still differ", () => {
+  // Also verifies that paren normalization doesn't inadvertently mask literal case
+  const a = "CHECK (status = 'new')";
+  const b = "check ((status = 'NEW'))";
+  assert.ok(!equivalent(a, b), "Paren normalization must not mask literal case difference");
+});
+
+test("LITERAL EQUIVALENCE: 'new' with extra parens == 'new' without (same literal)", () => {
+  const a = "CHECK (status = 'new')";
+  const b = "check ((status = 'new'))";
+  assert.ok(equivalent(a, b), "Different paren styles with identical literal must be equivalent");
+});
+
+test("LITERAL SAFETY: escaped single quote in literal is preserved verbatim", () => {
+  // 'operator''s value' is a SQL literal containing an apostrophe via ''
+  // The normalizer must not alter the literal content
+  const withEscapedQuote = "CHECK (note = 'operator''s value')";
+  const differentLiteral = "CHECK (note = 'operators value')";
+  assert.ok(
+    !equivalent(withEscapedQuote, differentLiteral),
+    "Escaped quote 'operator''s value' must differ from 'operators value'"
+  );
+});
+
+test("LITERAL SAFETY: splitSqlLiterals helper preserves escaped quote inside literal", () => {
+  // Directly verify the tokenizer does not split 'it''s' into two literals
+  // by checking that 'it''s me' and 'its me' normalize differently
+  const a = "CHECK (col = 'it''s me')";
+  const b = "CHECK (col = 'its me')";
+  assert.ok(!equivalent(a, b), "Escaped-quote literal 'it''s me' must differ from 'its me'");
+});

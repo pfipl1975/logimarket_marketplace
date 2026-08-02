@@ -97,6 +97,66 @@ export function normalizeDefaultExpression(d: string | null): string | null {
 }
 
 /**
+ * Splits a SQL string into literal and non-literal segments.
+ *
+ * Single-quoted literals ('...') are captured as-is, including escaped
+ * single quotes ('') within them. Non-literal segments are everything else
+ * (SQL keywords, identifiers, operators, punctuation).
+ *
+ * This is the foundation for case-preserving normalization: SQL syntax can
+ * be lowercased safely, but literal content MUST NOT be altered because
+ * PostgreSQL string comparisons are case-sensitive.
+ */
+function splitSqlLiterals(s: string): Array<{ text: string; isLiteral: boolean }> {
+  const parts: Array<{ text: string; isLiteral: boolean }> = [];
+  let i = 0;
+  let start = 0;
+
+  while (i < s.length) {
+    if (s[i] === "'") {
+      // Flush preceding non-literal segment
+      if (i > start) {
+        parts.push({ text: s.slice(start, i), isLiteral: false });
+      }
+      // Scan to end of single-quoted literal, handling escaped quotes ('')
+      let j = i + 1;
+      while (j < s.length) {
+        if (s[j] === "'" && j + 1 < s.length && s[j + 1] === "'") {
+          j += 2; // escaped single quote — skip both characters
+        } else if (s[j] === "'") {
+          j++; // closing quote
+          break;
+        } else {
+          j++;
+        }
+      }
+      parts.push({ text: s.slice(i, j), isLiteral: true });
+      start = j;
+      i = j;
+    } else {
+      i++;
+    }
+  }
+
+  // Flush any remaining non-literal segment
+  if (start < s.length) {
+    parts.push({ text: s.slice(start), isLiteral: false });
+  }
+
+  return parts;
+}
+
+/**
+ * Applies a transformation function only to non-literal segments of a SQL
+ * string, leaving single-quoted literal content completely unchanged.
+ */
+function transformNonLiterals(s: string, fn: (part: string) => string): string {
+  return splitSqlLiterals(s)
+    .map((p) => (p.isLiteral ? p.text : fn(p.text)))
+    .join("");
+}
+
+/**
  * normalizeCheckConstraintDefinition
  *
  * Canonicalises a PostgreSQL CHECK constraint definition so that purely
@@ -113,55 +173,64 @@ export function normalizeDefaultExpression(d: string | null): string | null {
  *
  *  3. ARRAY-then-cast  vs  per-element cast
  *     (ARRAY['a'::character varying, 'b'::character varying])::text[]
- *       →  array['a', 'b']   (values extracted, ::character varying stripped)
+ *       →  array['a','b']
  *     ARRAY['a'::character varying::text, 'b'::character varying::text]
- *       →  array['a', 'b']   (same)
+ *       →  array['a','b']   (same)
  *
- *  4. Normalised whitespace and case.
+ *  4. Whitespace and SQL keyword case (NOT literal case).
  *
- * Real semantic differences are preserved:
- *   - different literal values
- *   - missing/extra literals
- *   - different column references
- *   - different operators (>= vs >, = 1 vs = 2, …)
- *   - different functions (num_nonnulls argument list)
+ * IMPORTANT — literal content is NEVER altered:
+ *   'new'  ≠  'NEW'      (case-sensitive string values)
+ *   'pl'   ≠  'PL'
+ *   'operator''s value'  preserved verbatim
+ *
+ * Real semantic differences that still cause FAIL:
+ *   - different literal values ('import' vs 'inbound')
+ *   - missing or extra ARRAY element
+ *   - different column name
+ *   - different operator (>= vs >)
+ *   - different count (= 1 vs = 2)
  */
 export function normalizeCheckConstraintDefinition(def: string | null | undefined): string {
   if (!def) return "";
 
-  let s = def.trim().toLowerCase();
+  let s = def.trim();
 
-  // 1. Collapse whitespace
-  s = s.replace(/\s+/g, " ");
+  // Step 1: Lowercase SQL syntax only — literals are left unchanged.
+  s = transformNonLiterals(s, (part) => part.toLowerCase());
 
-  // Trim spaces immediately inside parentheses: "( x )" → "(x)"
-  s = s.replace(/\(\s+/g, "(").replace(/\s+\)/g, ")");
+  // Step 2: Collapse runs of whitespace in non-literal parts.
+  s = transformNonLiterals(s, (part) => part.replace(/\s+/g, " "));
 
-  // 2. Strip redundant outer parens produced by some pg_get_constraintdef calls:
-  //    check (( ... ))  →  check ( ... )
+  // Step 3: Trim spaces immediately inside parentheses (non-literal parts only).
+  //   "( x )" → "(x)"
+  s = transformNonLiterals(s, (part) =>
+    part.replace(/\(\s+/g, "(").replace(/\s+\)/g, ")")
+  );
+
+  // Step 4: Strip redundant outer double-parens produced by pg_get_constraintdef:
+  //   check (( ... )) → check ( ... )
   s = s.replace(/^check \(\((.+)\)\)$/, "check ($1)");
 
-  // 3. Normalise ARRAY-of-varchar with trailing ::text[] cast and without it.
+  // Step 5: Normalise ARRAY cast forms so contract-style and pg-style agree.
   //
-  //    Form A (contract-style):
-  //      (array['x'::character varying, 'y'::character varying])::text[]
-  //    Form B (pg_get_constraintdef-style):
-  //      array['x'::character varying::text, 'y'::character varying::text]
-  //
-  //    Both become: array['x','y']
+  //   Form A (contract):  (array['x'::character varying, ...])::text[]
+  //   Form B (pg):        array['x'::character varying::text, ...]
+  //   Both →              array['x',...]    (literal values preserved as-is)
 
-  // Form A: (ARRAY[...])::text[]
-  s = s.replace(/\(array\[([^\]]+)\]\)::(?:text\[\]|character varying\[\])/g, (_, inner) => {
-    return "array[" + normalizeArrayElements(inner) + "]";
-  });
+  // Form A: (array[...])::text[] or (array[...])::character varying[]
+  s = s.replace(
+    /\(array\[([^\]]+)\]\)::(?:text\[\]|character varying\[\])/g,
+    (_, inner) => "array[" + normalizeArrayElements(inner) + "]"
+  );
 
-  // Form B: ARRAY[...'x'::character varying::text...] — element-level double cast
-  s = s.replace(/array\[([^\]]+)\]/g, (_, inner) => {
-    return "array[" + normalizeArrayElements(inner) + "]";
-  });
+  // Form B: array[...] with element-level casts (already handled by normalizeArrayElements)
+  s = s.replace(
+    /array\[([^\]]+)\]/g,
+    (_, inner) => "array[" + normalizeArrayElements(inner) + "]"
+  );
 
-  // 4. Parenthesised cast: (col)::type  →  col::type
-  //    Repeat to handle nested: ((col))::type
+  // Step 6: Parenthesised cast: (col)::type → col::type (repeated for nesting)
   for (let i = 0; i < 3; i++) {
     s = s.replace(/\((\w+)\)::(\w+)/g, "$1::$2");
   }
@@ -169,13 +238,19 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
   return s.trim();
 }
 
-/** Strip ::character varying and ::text casts from array element literals. */
+/**
+ * Strip trailing PostgreSQL type casts from individual ARRAY elements.
+ * Splits on comma, removes ::character varying, ::text, etc. from the end
+ * of each element. Literal content ('value') is at the start — not affected.
+ *
+ * Example: "'pl'::character varying::text" → "'pl'"
+ */
 function normalizeArrayElements(inner: string): string {
   return inner
     .split(",")
     .map((el) => {
       let e = el.trim();
-      // Remove any trailing ::type casts (may be chained, e.g. ::character varying::text)
+      // Strip any chained trailing casts (::character varying, ::text, etc.)
       e = e.replace(/(::character varying|::text|::int|::bigint|::bool)+$/g, "");
       return e.trim();
     })
