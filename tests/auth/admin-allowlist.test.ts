@@ -88,4 +88,37 @@ test("isAdminUserId", async (t) => {
     const ids = parseAdminUserIds(UUID_A);
     assert.equal(isAdminUserId("admin@example.com", ids), false);
   });
+
+  await t.test("UPPERCASE_CONFIG_MATCHES_LOWERCASE_USER_ID", () => {
+    const ids = parseAdminUserIds(UUID_A.toUpperCase());
+    assert.equal(isAdminUserId(UUID_A.toLowerCase(), ids), true);
+  });
+
+  await t.test("LOWERCASE_CONFIG_MATCHES_UPPERCASE_USER_ID", () => {
+    const ids = parseAdminUserIds(UUID_A.toLowerCase());
+    assert.equal(isAdminUserId(UUID_A.toUpperCase(), ids), true);
+  });
+
+  await t.test("CASE_VARIANTS_OF_SAME_UUID_ARE_DEDUPLICATED", () => {
+    const ids = parseAdminUserIds(
+      `${UUID_A.toLowerCase()},${UUID_A.toUpperCase()}`
+    );
+    assert.equal(ids.size, 1);
+    assert.equal(ids.has(UUID_A.toLowerCase()), true);
+  });
+
+  await t.test("SIMILAR_UUID_STILL_REJECTED_AFTER_CANONICALIZATION", () => {
+    const ids = parseAdminUserIds(UUID_A.toUpperCase());
+    assert.equal(
+      isAdminUserId("11111111-1111-4111-8111-111111111112", ids),
+      false
+    );
+  });
+
+  await t.test("INVALID_UUID_STILL_THROWS_AFTER_CANONICALIZATION", () => {
+    assert.throws(
+      () => parseAdminUserIds("NOT-A-UUID"),
+      AuthConfigurationError
+    );
+  });
 });

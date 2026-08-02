@@ -8,6 +8,8 @@ const UUID_PATTERN =
  *
  * Fail closed: a missing or empty value yields zero administrators, while any
  * non-empty element that is not a valid UUID throws AuthConfigurationError.
+ * Valid UUIDs are canonicalized to lowercase so case variants in the env
+ * value still match the lowercase `user.id` returned by Supabase.
  * Never falls back to e-mails and never logs the raw env value.
  */
 export function parseAdminUserIds(raw: string | undefined): ReadonlySet<string> {
@@ -24,7 +26,7 @@ export function parseAdminUserIds(raw: string | undefined): ReadonlySet<string> 
     if (!UUID_PATTERN.test(trimmed)) {
       throw new AuthConfigurationError();
     }
-    ids.add(trimmed);
+    ids.add(trimmed.toLowerCase());
   }
   return ids;
 }
@@ -33,5 +35,5 @@ export function isAdminUserId(
   userId: string,
   adminUserIds: ReadonlySet<string>
 ): boolean {
-  return adminUserIds.has(userId);
+  return adminUserIds.has(userId.toLowerCase());
 }
