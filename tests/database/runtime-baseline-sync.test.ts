@@ -4,73 +4,33 @@ import fs from "node:fs";
 import path from "node:path";
 import { RUNTIME_MIGRATIONS_FOLDER, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, EXPECTED_COUNTS } from "../../scripts/database/runtime-migration-contract";
 
+import { PostgresSqlParser } from "./helpers/runtime-baseline-sql-parser";
+
 function parseSqlBaseline() {
   const sqlPath = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "0000_production_runtime_baseline.sql");
   const sql = fs.readFileSync(sqlPath, "utf-8");
 
-  const tables = {};
+  let unwrappedSql = sql;
+  const doMatch = sql.match(/DO\s+\$\$[\s\S]*?BEGIN\s+([\s\S]*?)\s+END\s+\$\$;/i);
+  if (doMatch && doMatch[1]) {
+    unwrappedSql = doMatch[1];
+  }
   
-  for (const tableName of EXPECTED_BASELINE_TABLES) {
-    const startRegex = new RegExp(`CREATE\\s+TABLE\\s+${tableName}\\s+\\(\\s*\\n`, "i");
-    const match = sql.match(startRegex);
-    if (!match) continue;
-    
-    let endIdx = match.index + match[0].length;
-    let parenDepth = 1;
-    let startIdx = endIdx;
-    while (endIdx < sql.length && parenDepth > 0) {
-      if (sql[endIdx] === '(') parenDepth++;
-      if (sql[endIdx] === ')') parenDepth--;
-      endIdx++;
-    }
-    const innerSql = sql.substring(startIdx, endIdx - 1);
-    
-    let items = [];
-    let currentItem = '';
-    let depth = 0;
-    for (let i = 0; i < innerSql.length; i++) {
-      if (innerSql[i] === '(') depth++;
-      if (innerSql[i] === ')') depth--;
-      if (innerSql[i] === ',' && depth === 0) {
-        items.push(currentItem.trim());
-        currentItem = '';
-      } else {
-        currentItem += innerSql[i];
-      }
-    }
-    if (currentItem.trim().length > 0) items.push(currentItem.trim());
-    
-    const columns = [];
-    items.forEach(item => {
-      if (!/^(CONSTRAINT|PRIMARY\s+KEY|FOREIGN\s+KEY|UNIQUE|CHECK|EXCLUDE|LIKE)\b/i.test(item)) {
-        const parts = item.split(/\s+/);
-        const name = parts[0];
-        const isNotNull = /NOT\s+NULL/i.test(item);
-        const isPrimaryKey = /PRIMARY\s+KEY/i.test(item);
-        
-        let typeStr = parts[1];
-        if (parts[2] && parts[2].startsWith('(') && parts[1] === 'character' && parts[2] === 'varying') {
-           typeStr = 'character varying';
-        }
-        
-        let defaultVal = null;
-        const defaultMatch = item.match(/DEFAULT\s+([^,]+?)(?=\s+NOT\s+NULL|\s+PRIMARY\s+KEY|$)/i);
-        if (defaultMatch) {
-          defaultVal = defaultMatch[1].trim();
-        }
+  const parser = new PostgresSqlParser(unwrappedSql);
+  const parsedTables = parser.parse();
 
-        columns.push({
-          name,
-          rawType: typeStr,
-          nullable: !(isNotNull || isPrimaryKey),
-          hasDefault: defaultVal !== null,
-          defaultVal,
-          isPrimaryKey
-        });
-      }
-    });
-    
-    tables[tableName] = columns;
+  const tables: any = {};
+  
+  for (const parsedTable of parsedTables) {
+    if (EXPECTED_BASELINE_TABLES.includes(parsedTable.tableName)) {
+      tables[parsedTable.tableName] = parsedTable.columns.map(c => ({
+        name: c.columnName,
+        rawType: c.type,
+        nullable: c.nullable,
+        hasDefault: c.defaultExpression !== null,
+        defaultVal: c.defaultExpression
+      }));
+    }
   }
   
   return tables;
