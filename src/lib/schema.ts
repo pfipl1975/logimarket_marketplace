@@ -21,9 +21,9 @@ export const partners = pgTable("partners", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   companyName: varchar("company_name", { length: 255 }).notNull(),
   logoUrl: varchar("logo_url", { length: 512 }),
-  websiteUrl: varchar("website_url", { length: 512 }),
   contactEmail: varchar("contact_email", { length: 100 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: false }).notNull().defaultNow(),
+  websiteUrl: varchar("website_url"),
 });
 
 export const categories = pgTable("categories", {
@@ -31,7 +31,7 @@ export const categories = pgTable("categories", {
   name: varchar("name", { length: 100 }).notNull(),
   slug: varchar("slug", { length: 100 }).notNull().unique(),
   parentId: bigint("parent_id", { mode: "number" }),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: false }).notNull().defaultNow(),
 });
 
 export type OfferPublicationStatus = "draft" | "published" | "hidden" | "archived" | "deleted";
@@ -41,65 +41,66 @@ export const offers = pgTable("offers", {
   partnerId: bigint("partner_id", { mode: "number" }).notNull(),
   categoryId: bigint("category_id", { mode: "number" }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
+  priceBrutto: numeric("price_brutto"),
+  outboundUrl: varchar("outbound_url", { length: 512 }),
+  technicalAttributes: jsonb("technical_attributes").notNull().default({}),
+  offerModel: varchar("offer_model", { length: 20 }).notNull().default("rfq"),
   description: text("description"),
   imageUrl: varchar("image_url", { length: 512 }),
-  priceBrutto: numeric("price_brutto"),
   priceOnRequest: boolean("price_on_request").notNull().default(true),
   conversionType: varchar("conversion_type", { length: 20 }).notNull().default("outbound"),
-  offerModel: varchar("offer_model", { length: 20 }).notNull().default("rfq"),
-  outboundUrl: varchar("outbound_url", { length: 512 }),
   isFeatured: boolean("is_featured").notNull().default(false),
   isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   publicationStatus: varchar("publication_status", { length: 20 }).$type<OfferPublicationStatus>().notNull().default("draft"),
   publishedAt: timestamp("published_at", { withTimezone: true }),
   archivedAt: timestamp("archived_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
-  technicalAttributes: jsonb("technical_attributes").notNull().default({}),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
 });
 
 export const clicks = pgTable("clicks", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
-  offerId: bigint("offer_id", { mode: "number" }).notNull(),
-  partnerId: bigint("partner_id", { mode: "number" }).notNull(),
-  clickedAt: timestamp("clicked_at", { withTimezone: true }).notNull().defaultNow(),
-  sessionHash: varchar("session_hash", { length: 64 }),
-  ipHash: varchar("ip_hash", { length: 64 }),
-  isUnique24h: boolean("is_unique_24h").notNull().default(true),
+  offerId: integer("offer_id"),
+  partnerId: integer("partner_id"),
+  clickedAt: timestamp("clicked_at", { withTimezone: false }).defaultNow(),
+  sessionHash: varchar("session_hash", { length: 64 }).notNull(),
+  ipHash: varchar("ip_hash", { length: 64 }).notNull(),
+  isUnique24h: boolean("is_unique_24h").default(true),
 });
 
 export const rfqLeads = pgTable("rfq_leads", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   offerId: bigint("offer_id", { mode: "number" }).notNull(),
   partnerId: bigint("partner_id", { mode: "number" }).notNull(),
-  companyName: varchar("company_name", { length: 255 }).notNull(),
+  companyName: varchar("company_name", { length: 255 }),
   contactName: varchar("contact_name", { length: 255 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 50 }),
+  phone: varchar("phone", { length: 100 }),
   message: text("message"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  status: varchar("status", { length: 20 }).notNull().default("new"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const cartItems = pgTable("cart_items", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
+  sessionHash: varchar("session_hash", { length: 64 }).notNull(),
   offerId: bigint("offer_id", { mode: "number" }).notNull(),
   quantity: integer("quantity").notNull().default(1),
-  sessionHash: varchar("session_hash", { length: 64 }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const orders = pgTable("orders", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
-  companyName: varchar("company_name", { length: 255 }).notNull(),
-  contactName: varchar("contact_name", { length: 255 }).notNull(),
-  email: varchar("email", { length: 255 }).notNull(),
-  phone: varchar("phone", { length: 50 }),
-  message: text("message"),
-  sessionHash: varchar("session_hash", { length: 64 }),
-  totalAmount: numeric("total_amount"),
+  sessionHash: varchar("session_hash", { length: 64 }).notNull(),
   status: varchar("status", { length: 20 }).notNull().default("new"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  companyName: varchar("company_name", { length: 255 }),
+  contactName: varchar("contact_name", { length: 255 }),
+  email: varchar("email", { length: 255 }),
+  phone: varchar("phone", { length: 100 }),
+  message: text("message"),
+  totalAmount: varchar("total_amount", { length: 50 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 
 export const orderItems = pgTable("order_items", {
@@ -108,8 +109,8 @@ export const orderItems = pgTable("order_items", {
   offerId: bigint("offer_id", { mode: "number" }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   quantity: integer("quantity").notNull(),
-  unitPrice: numeric("unit_price"),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  unitPrice: varchar("unit_price", { length: 50 }),
+  totalPrice: varchar("total_price", { length: 50 }),
 });
 
 // Faceted Filter & Relational Attribute Model
@@ -486,7 +487,7 @@ export const categoryAttributeAssignments = pgTable(
     isVisible: boolean("is_visible").notNull().default(true),
     unitCode: varchar("unit_code", { length: 20 }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (t) => [
     unique("uq_caa_category_attribute").on(t.categoryId, t.attributeDefinitionId),
@@ -517,7 +518,7 @@ export const attributeDefinitionTranslations = pgTable(
     shortLabel: varchar("short_label", { length: 100 }),
     description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (t) => [
     unique("uq_adt_attribute_locale").on(t.attributeDefinitionId, t.locale),
@@ -539,7 +540,7 @@ export const controlledOptionValueTranslations = pgTable(
     label: text("label").notNull(),
     description: text("description"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).$onUpdate(() => new Date()),
+    updatedAt: timestamp("updated_at", { withTimezone: true }),
   },
   (t) => [
     unique("uq_covt_option_locale").on(t.controlledOptionValueId, t.locale),
