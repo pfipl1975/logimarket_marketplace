@@ -45,57 +45,53 @@ BEGIN
   -- TABLES (in dependency order)
   
   CREATE TABLE attribute_definitions (
-    id bigint PRIMARY KEY DEFAULT nextval('attribute_definitions_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('attribute_definitions_id_seq'::regclass),
     stable_key text NOT NULL,
     data_type character varying(30) NOT NULL,
-    is_active boolean NOT NULL DEFAULT true,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT uq_ad_stable_key UNIQUE (stable_key),
     CONSTRAINT chk_ad_data_type CHECK ((data_type)::text = ANY ((ARRAY['text'::character varying, 'number'::character varying, 'boolean'::character varying, 'date'::character varying, 'year'::character varying, 'enum'::character varying, 'multi_enum'::character varying])::text[]))
   );
 
   CREATE TABLE categories (
-    id bigint PRIMARY KEY DEFAULT nextval('categories_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('categories_id_seq'::regclass),
+    name character varying(100) NOT NULL,
+    slug character varying(100) NOT NULL,
     parent_id bigint,
-    slug character varying(255) NOT NULL,
-    name character varying(255) NOT NULL,
-    description text,
-    is_active boolean NOT NULL DEFAULT true,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
     CONSTRAINT categories_slug_key UNIQUE (slug),
     CONSTRAINT categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES categories(id)
   );
   
   CREATE TABLE partners (
-    id bigint PRIMARY KEY DEFAULT nextval('partners_id_seq'),
-    slug character varying(255) NOT NULL,
-    name character varying(255) NOT NULL,
-    description text,
-    is_active boolean NOT NULL DEFAULT true,
-    created_at timestamp without time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone
+    id bigint PRIMARY KEY DEFAULT nextval('partners_id_seq'::regclass),
+    company_name character varying(255) NOT NULL,
+    logo_url character varying(512),
+    contact_email character varying(100) NOT NULL,
+    created_at timestamp without time zone DEFAULT now() NOT NULL,
+    website_url character varying
   );
 
   CREATE TABLE controlled_option_values (
-    id bigint PRIMARY KEY DEFAULT nextval('controlled_option_values_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('controlled_option_values_id_seq'::regclass),
     attribute_id bigint NOT NULL,
     stable_key text NOT NULL,
-    is_active boolean NOT NULL DEFAULT true,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT uq_cov_attr_option UNIQUE (attribute_id, stable_key),
     CONSTRAINT uq_cov_attribute_id_pair UNIQUE (attribute_id, id),
     CONSTRAINT fk_cov_attribute FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id)
   );
 
   CREATE TABLE attribute_definition_translations (
-    id bigint PRIMARY KEY DEFAULT nextval('attribute_definition_translations_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('attribute_definition_translations_id_seq'::regclass),
     attribute_definition_id bigint NOT NULL,
     locale character varying(10) NOT NULL,
     name text NOT NULL,
     short_label character varying(100),
     description text,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone,
     CONSTRAINT uq_adt_attribute_locale UNIQUE (attribute_definition_id, locale),
     CONSTRAINT fk_adt_attribute_definition FOREIGN KEY (attribute_definition_id) REFERENCES attribute_definitions(id),
@@ -103,16 +99,16 @@ BEGIN
   );
 
   CREATE TABLE category_attribute_assignments (
-    id bigint PRIMARY KEY DEFAULT nextval('category_attribute_assignments_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('category_attribute_assignments_id_seq'::regclass),
     category_id bigint NOT NULL,
     attribute_definition_id bigint NOT NULL,
-    sort_order integer NOT NULL DEFAULT 0,
-    is_filterable boolean NOT NULL DEFAULT false,
-    is_comparable boolean NOT NULL DEFAULT false,
-    is_required boolean NOT NULL DEFAULT false,
-    is_visible boolean NOT NULL DEFAULT true,
+    sort_order integer DEFAULT 0 NOT NULL,
+    is_filterable boolean DEFAULT false NOT NULL,
+    is_comparable boolean DEFAULT false NOT NULL,
+    is_required boolean DEFAULT false NOT NULL,
+    is_visible boolean DEFAULT true NOT NULL,
     unit_code character varying(20),
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone,
     CONSTRAINT uq_caa_category_attribute UNIQUE (category_id, attribute_definition_id),
     CONSTRAINT fk_caa_attribute_definition FOREIGN KEY (attribute_definition_id) REFERENCES attribute_definitions(id),
@@ -121,12 +117,12 @@ BEGIN
   );
 
   CREATE TABLE controlled_option_value_translations (
-    id bigint PRIMARY KEY DEFAULT nextval('controlled_option_value_translations_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('controlled_option_value_translations_id_seq'::regclass),
     controlled_option_value_id bigint NOT NULL,
     locale character varying(10) NOT NULL,
     label text NOT NULL,
     description text,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     updated_at timestamp with time zone,
     CONSTRAINT uq_covt_option_locale UNIQUE (controlled_option_value_id, locale),
     CONSTRAINT fk_covt_controlled_option_value FOREIGN KEY (controlled_option_value_id) REFERENCES controlled_option_values(id),
@@ -134,28 +130,25 @@ BEGIN
   );
 
   CREATE TABLE offers (
-    id bigint PRIMARY KEY DEFAULT nextval('offers_id_seq'),
-    category_id bigint,
-    partner_id bigint,
-    source_offer_id character varying(255) NOT NULL,
+    id bigint PRIMARY KEY DEFAULT nextval('offers_id_seq'::regclass),
+    partner_id bigint NOT NULL,
+    category_id bigint NOT NULL,
     title character varying(255) NOT NULL,
+    price_brutto numeric,
+    outbound_url character varying(512),
+    technical_attributes jsonb DEFAULT '{}'::jsonb NOT NULL,
+    offer_model character varying(20) DEFAULT 'rfq'::character varying NOT NULL,
     description text,
-    sku character varying(100),
-    ean character varying(20),
-    price numeric,
-    currency character varying(3) NOT NULL DEFAULT 'PLN'::character varying,
-    image_url text,
-    outbound_url text NOT NULL,
-    is_featured boolean NOT NULL DEFAULT false,
-    is_active boolean NOT NULL DEFAULT true,
-    publication_status character varying(20) NOT NULL DEFAULT 'draft'::character varying,
-    conversion_type character varying(20) NOT NULL DEFAULT 'outbound'::character varying,
-    offer_model character varying(20) NOT NULL DEFAULT 'rfq'::character varying,
+    image_url character varying(512),
+    price_on_request boolean DEFAULT true NOT NULL,
+    conversion_type character varying(20) DEFAULT 'outbound'::character varying NOT NULL,
+    is_featured boolean DEFAULT false NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    publication_status character varying(20) DEFAULT 'draft'::character varying NOT NULL,
     published_at timestamp with time zone,
     archived_at timestamp with time zone,
     deleted_at timestamp with time zone,
-    technical_attributes jsonb NOT NULL DEFAULT '{}'::jsonb,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone,
     CONSTRAINT offers_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(id),
     CONSTRAINT offers_partner_id_fkey FOREIGN KEY (partner_id) REFERENCES partners(id),
@@ -165,38 +158,38 @@ BEGIN
   );
 
   CREATE TABLE cart_items (
-    id bigint PRIMARY KEY DEFAULT nextval('cart_items_id_seq'),
-    offer_id bigint NOT NULL,
-    quantity integer NOT NULL DEFAULT 1,
+    id bigint PRIMARY KEY DEFAULT nextval('cart_items_id_seq'::regclass),
     session_hash character varying(64) NOT NULL,
+    offer_id bigint NOT NULL,
+    quantity integer DEFAULT 1 NOT NULL,
     created_at timestamp with time zone DEFAULT now(),
     CONSTRAINT cart_items_session_hash_offer_id_key UNIQUE (session_hash, offer_id)
   );
 
   CREATE TABLE clicks (
-    id bigint PRIMARY KEY DEFAULT nextval('clicks_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('clicks_id_seq'::regclass),
     offer_id integer,
     partner_id integer,
     clicked_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-    session_hash character varying NOT NULL,
-    ip_hash character varying NOT NULL,
-    is_unique_24h boolean NOT NULL DEFAULT true,
+    session_hash character varying(64) NOT NULL,
+    ip_hash character varying(64) NOT NULL,
+    is_unique_24h boolean DEFAULT true,
     CONSTRAINT clicks_offer_id_fkey FOREIGN KEY (offer_id) REFERENCES offers(id),
     CONSTRAINT clicks_partner_id_fkey FOREIGN KEY (partner_id) REFERENCES partners(id)
   );
 
   CREATE TABLE offer_attribute_values (
-    id bigint PRIMARY KEY DEFAULT nextval('offer_attribute_values_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('offer_attribute_values_id_seq'::regclass),
     offer_id bigint NOT NULL,
     attribute_id bigint NOT NULL,
     value_text text,
     value_number numeric,
     value_boolean boolean,
-    value_date date,
+    value_date timestamp with time zone,
     value_year integer,
     option_id bigint,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    updated_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT uq_oav_offer_attribute UNIQUE (offer_id, attribute_id),
     CONSTRAINT fk_oav_attribute FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id),
     CONSTRAINT fk_oav_attribute_option_pair FOREIGN KEY (attribute_id, option_id) REFERENCES controlled_option_values(attribute_id, id),
@@ -206,11 +199,11 @@ BEGIN
   );
 
   CREATE TABLE offer_attribute_option_values (
-    id bigint PRIMARY KEY DEFAULT nextval('offer_attribute_option_values_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('offer_attribute_option_values_id_seq'::regclass),
     offer_id bigint NOT NULL,
     attribute_id bigint NOT NULL,
     option_id bigint NOT NULL,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
     CONSTRAINT uq_oaov_offer_attribute_option UNIQUE (offer_id, attribute_id, option_id),
     CONSTRAINT fk_oaov_attribute FOREIGN KEY (attribute_id) REFERENCES attribute_definitions(id),
     CONSTRAINT fk_oaov_attribute_option_pair FOREIGN KEY (attribute_id, option_id) REFERENCES controlled_option_values(attribute_id, id),
@@ -219,40 +212,39 @@ BEGIN
   );
 
   CREATE TABLE orders (
-    id bigint PRIMARY KEY DEFAULT nextval('orders_id_seq'),
-    company_name character varying(255) NOT NULL,
-    contact_name character varying(255) NOT NULL,
-    email character varying(255) NOT NULL,
-    phone character varying(50),
+    id bigint PRIMARY KEY DEFAULT nextval('orders_id_seq'::regclass),
+    session_hash character varying(64) NOT NULL,
+    status character varying(20) DEFAULT 'new'::character varying NOT NULL,
+    company_name character varying(255),
+    contact_name character varying(255),
+    email character varying(255),
+    phone character varying(100),
     message text,
-    session_hash character varying NOT NULL,
-    total_amount character varying,
-    status character varying(20) NOT NULL DEFAULT 'new'::character varying,
+    total_amount character varying(50),
     created_at timestamp with time zone DEFAULT now()
   );
 
   CREATE TABLE order_items (
-    id bigint PRIMARY KEY DEFAULT nextval('order_items_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('order_items_id_seq'::regclass),
     order_id bigint NOT NULL,
     offer_id bigint NOT NULL,
     title character varying(255) NOT NULL,
     quantity integer NOT NULL,
-    unit_price character varying,
-    total_price character varying,
-    currency_code character varying(3) DEFAULT 'PLN'::character varying NOT NULL
+    unit_price character varying(50),
+    total_price character varying(50)
   );
 
   CREATE TABLE rfq_leads (
-    id bigint PRIMARY KEY DEFAULT nextval('rfq_leads_id_seq'),
+    id bigint PRIMARY KEY DEFAULT nextval('rfq_leads_id_seq'::regclass),
     offer_id bigint NOT NULL,
     partner_id bigint NOT NULL,
-    company_name character varying(255) NOT NULL,
+    company_name character varying(255),
     contact_name character varying(255) NOT NULL,
     email character varying(255) NOT NULL,
-    phone character varying(50),
+    phone character varying(100),
     message text,
-    created_at timestamp with time zone DEFAULT now(),
-    status character varying NOT NULL DEFAULT 'new'::character varying
+    status character varying(20) DEFAULT 'new'::character varying NOT NULL,
+    created_at timestamp with time zone DEFAULT now()
   );
 
   -- OWNERSHIP

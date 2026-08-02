@@ -22,7 +22,7 @@ export const EXPECTED_BASELINE_TABLES = [
 
 export const EXPECTED_COUNTS = {
   TABLES: 15,
-  COLUMNS: 122,
+  get COLUMNS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.columns.length, 0); },
   SEQUENCES: 15,
   PRIMARY_KEYS: 15,
   FOREIGN_KEYS: 18,
@@ -121,13 +121,10 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     name: "categories",
     columns: [
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('categories_id_seq'::regclass)", sequenceName: "categories_id_seq" },
+      { name: "name", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "slug", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "parent_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "slug", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
-      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null },
-      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+      { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null }
     ],
     constraints: [
       { name: "categories_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
@@ -143,12 +140,11 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     name: "partners",
     columns: [
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('partners_id_seq'::regclass)", sequenceName: "partners_id_seq" },
-      { name: "slug", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "company_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "logo_url", type: "character varying(512)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "contact_email", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "created_at", type: "timestamp without time zone", nullable: false, defaultVal: "now()", sequenceName: null },
-      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+      { name: "website_url", type: "character varying", nullable: true, defaultVal: null, sequenceName: null }
     ],
     constraints: [
       { name: "partners_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" }
@@ -248,27 +244,24 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     name: "offers",
     columns: [
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('offers_id_seq'::regclass)", sequenceName: "offers_id_seq" },
-      { name: "category_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "partner_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "source_offer_id", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "category_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "title", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "price_brutto", type: "numeric", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "outbound_url", type: "character varying(512)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "technical_attributes", type: "jsonb", nullable: false, defaultVal: "'{}'::jsonb", sequenceName: null },
+      { name: "offer_model", type: "character varying(20)", nullable: false, defaultVal: "'rfq'::character varying", sequenceName: null },
       { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "sku", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "ean", type: "character varying(20)", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "price", type: "numeric", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "currency", type: "character varying(3)", nullable: false, defaultVal: "'PLN'::character varying", sequenceName: null },
-      { name: "image_url", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "outbound_url", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "image_url", type: "character varying(512)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "price_on_request", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "conversion_type", type: "character varying(20)", nullable: false, defaultVal: "'outbound'::character varying", sequenceName: null },
       { name: "is_featured", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
       { name: "is_active", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
       { name: "publication_status", type: "character varying(20)", nullable: false, defaultVal: "'draft'::character varying", sequenceName: null },
-      { name: "conversion_type", type: "character varying(20)", nullable: false, defaultVal: "'outbound'::character varying", sequenceName: null },
-      { name: "offer_model", type: "character varying(20)", nullable: false, defaultVal: "'rfq'::character varying", sequenceName: null },
       { name: "published_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
       { name: "archived_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
       { name: "deleted_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "technical_attributes", type: "jsonb", nullable: false, defaultVal: "'{}'::jsonb", sequenceName: null },
-      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
       { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
     ],
     constraints: [
@@ -290,9 +283,9 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     name: "cart_items",
     columns: [
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('cart_items_id_seq'::regclass)", sequenceName: "cart_items_id_seq" },
+      { name: "session_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "quantity", type: "integer", nullable: false, defaultVal: "1", sequenceName: null },
-      { name: "session_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "created_at", type: "timestamp with time zone", nullable: true, defaultVal: "now()", sequenceName: null }
     ],
     constraints: [
@@ -309,8 +302,8 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
       { name: "offer_id", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
       { name: "partner_id", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
       { name: "clicked_at", type: "timestamp without time zone", nullable: true, defaultVal: "CURRENT_TIMESTAMP", sequenceName: null },
-      { name: "session_hash", type: "character varying", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "ip_hash", type: "character varying", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "session_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "ip_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "is_unique_24h", type: "boolean", nullable: true, defaultVal: "true", sequenceName: null }
     ],
     constraints: [
@@ -332,7 +325,7 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
       { name: "value_text", type: "text", nullable: true, defaultVal: null, sequenceName: null },
       { name: "value_number", type: "numeric", nullable: true, defaultVal: null, sequenceName: null },
       { name: "value_boolean", type: "boolean", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "value_date", type: "date", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "value_date", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
       { name: "value_year", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
       { name: "option_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
       { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
@@ -374,14 +367,14 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     name: "orders",
     columns: [
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('orders_id_seq'::regclass)", sequenceName: "orders_id_seq" },
-      { name: "company_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "contact_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "phone", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "message", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "session_hash", type: "character varying", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "total_amount", type: "character varying", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "session_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "status", type: "character varying(20)", nullable: false, defaultVal: "'new'::character varying", sequenceName: null },
+      { name: "company_name", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "contact_name", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "email", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "phone", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "message", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "total_amount", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
       { name: "created_at", type: "timestamp with time zone", nullable: true, defaultVal: "now()", sequenceName: null }
     ],
     constraints: [
@@ -398,8 +391,8 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
       { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "title", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "quantity", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "unit_price", type: "character varying", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "total_price", type: "character varying", nullable: true, defaultVal: null, sequenceName: null }
+      { name: "unit_price", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "total_price", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null }
     ],
     constraints: [
       { name: "order_items_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" }
@@ -413,13 +406,13 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('rfq_leads_id_seq'::regclass)", sequenceName: "rfq_leads_id_seq" },
       { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "company_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "company_name", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
       { name: "contact_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "phone", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "phone", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
       { name: "message", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "created_at", type: "timestamp with time zone", nullable: true, defaultVal: "now()", sequenceName: null },
-      { name: "status", type: "character varying", nullable: false, defaultVal: "'new'::character varying", sequenceName: null }
+      { name: "status", type: "character varying(20)", nullable: false, defaultVal: "'new'::character varying", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: true, defaultVal: "now()", sequenceName: null }
     ],
     constraints: [
       { name: "rfq_leads_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" }
