@@ -15,12 +15,12 @@ function parseSqlBaseline() {
   if (doMatch && doMatch[1]) {
     unwrappedSql = doMatch[1];
   }
-  
+
   const parser = new PostgresSqlParser(unwrappedSql);
   const parsedTables = parser.parse();
 
   const tables: any = {};
-  
+
   for (const parsedTable of parsedTables) {
     if (EXPECTED_BASELINE_TABLES.includes(parsedTable.tableName)) {
       tables[parsedTable.tableName] = parsedTable.columns.map(c => ({
@@ -32,7 +32,7 @@ function parseSqlBaseline() {
       }));
     }
   }
-  
+
   return tables;
 }
 
@@ -49,7 +49,7 @@ test("SYNC 2, 4, 14: Contract and Baseline column counts match", () => {
   }
   assert.strictEqual(contractCount, 122);
   assert.strictEqual(EXPECTED_COUNTS.COLUMNS, 122);
-  
+
   const sqlTables = parseSqlBaseline();
   let sqlCount = 0;
   for (const t of Object.values(sqlTables)) {
@@ -60,13 +60,13 @@ test("SYNC 2, 4, 14: Contract and Baseline column counts match", () => {
 
 test("SYNC 5, 6, 12: Column set, order and per-table counts are identical", () => {
   const sqlTables = parseSqlBaseline();
-  
+
   for (const tableName of EXPECTED_BASELINE_TABLES) {
     const contractCols = PRODUCTION_FINGERPRINT[tableName].columns;
     const sqlCols = sqlTables[tableName];
-    
+
     assert.strictEqual(contractCols.length, sqlCols.length, `Table ${tableName} col count mismatch`);
-    
+
     for (let i = 0; i < contractCols.length; i++) {
       assert.strictEqual(contractCols[i].name, sqlCols[i].name, `Table ${tableName} col order mismatch at ${i}`);
     }
@@ -75,17 +75,17 @@ test("SYNC 5, 6, 12: Column set, order and per-table counts are identical", () =
 
 test("SYNC 7, 8, 9: Column types, nullability, defaults are compliant", () => {
   const sqlTables = parseSqlBaseline();
-  
+
   for (const tableName of EXPECTED_BASELINE_TABLES) {
     const contractCols = PRODUCTION_FINGERPRINT[tableName].columns;
     const sqlCols = sqlTables[tableName];
-    
+
     for (let i = 0; i < contractCols.length; i++) {
       const c = contractCols[i];
       const s = sqlCols[i];
-      
+
       assert.strictEqual(c.nullable, s.nullable, `Table ${tableName} col ${c.name} nullability mismatch`);
-      
+
       const cHasDefault = c.defaultVal !== null;
       assert.strictEqual(cHasDefault, s.hasDefault, `Table ${tableName} col ${c.name} default presence mismatch`);
     }
@@ -95,7 +95,7 @@ test("SYNC 7, 8, 9: Column types, nullability, defaults are compliant", () => {
 test("SYNC 10: order_items.currency_code does not exist", () => {
   const orderItemsContract = PRODUCTION_FINGERPRINT["order_items"].columns;
   assert.strictEqual(orderItemsContract.find(c => c.name === "currency_code"), undefined);
-  
+
   const sqlTables = parseSqlBaseline();
   const orderItemsSql = sqlTables["order_items"];
   assert.strictEqual(orderItemsSql.find(c => c.name === "currency_code"), undefined);
@@ -107,7 +107,7 @@ test("SYNC 11: clicks.is_unique_24h is nullable and has default true", () => {
   assert.ok(col);
   assert.strictEqual(col.nullable, true);
   assert.strictEqual(col.defaultVal, "true");
-  
+
   const sqlTables = parseSqlBaseline();
   const sqlCol = sqlTables["clicks"].find(c => c.name === "is_unique_24h");
   assert.ok(sqlCol);

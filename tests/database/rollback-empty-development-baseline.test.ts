@@ -16,9 +16,9 @@ test("executeRollback drop order and statements", async () => {
   // 1. Transaction wrapper
   assert.strictEqual(queries[0], "BEGIN");
   assert.strictEqual(queries[queries.length - 1], "COMMIT");
-  
+
   const dropTables = queries.filter(q => q.startsWith("DROP TABLE IF EXISTS public."));
-  
+
   // No CASCADE
   for (const q of queries) {
     assert.ok(!q.includes("CASCADE"), `Query contains CASCADE: ${q}`);
@@ -42,7 +42,7 @@ test("executeRollback drop order and statements", async () => {
   // translations przed definitions/options
   assert.ok(indexOf("attribute_definition_translations") < indexOf("attribute_definitions"));
   assert.ok(indexOf("controlled_option_value_translations") < indexOf("controlled_option_values"));
-  
+
   // Wszystkie FK child tables są przed parent tables
   assert.ok(indexOf("order_items") < indexOf("orders"));
   assert.ok(indexOf("order_items") < indexOf("offers"));
@@ -51,14 +51,14 @@ test("executeRollback drop order and statements", async () => {
   assert.ok(indexOf("rfq_leads") < indexOf("partners"));
   assert.ok(indexOf("category_attribute_assignments") < indexOf("categories"));
   assert.ok(indexOf("category_attribute_assignments") < indexOf("attribute_definitions"));
-  
+
   // journal usuwany przed schema
   const journalTableIdx = queries.findIndex(q => q === `DROP TABLE IF EXISTS drizzle_runtime."__drizzle_migrations"`);
   const journalSchemaIdx = queries.findIndex(q => q === `DROP SCHEMA IF EXISTS drizzle_runtime`);
   assert.ok(journalTableIdx !== -1);
   assert.ok(journalSchemaIdx !== -1);
   assert.ok(journalTableIdx < journalSchemaIdx);
-  
+
   // journal usuwany po tabelach
   const lastTableDropIdx = queries.indexOf(dropTables[dropTables.length - 1]);
   assert.ok(lastTableDropIdx < journalTableIdx);

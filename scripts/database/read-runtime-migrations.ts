@@ -7,15 +7,15 @@ async function run() {
   console.log("Reading runtime migrations...");
   try {
     const migrations = readMigrationFiles({ migrationsFolder: RUNTIME_MIGRATIONS_FOLDER });
-    
+
     if (migrations.length !== 1) {
       console.error(`MIGRATION_COUNT=${migrations.length} (Expected 1)`);
       process.exit(1);
     }
-    
+
     const m = migrations[0];
     const tagMatch = m.folderMillis === 0 && m.hash && m.sql ? "YES" : "NO";
-    
+
     console.log(`MIGRATION_COUNT=${migrations.length}`);
     console.log("MIGRATION_TAG_MATCH=YES");
     console.log("SQL_FILE_LOADED=YES");

@@ -43,7 +43,7 @@ export class PostgresSqlParser {
 
   public parse(): TableDefinition[] {
     const tables: TableDefinition[] = [];
-    
+
     this.pos = 0;
     this.line = 1;
     this.state = LexerState.NORMAL;
@@ -70,7 +70,7 @@ export class PostgresSqlParser {
 
   private consumeUntilNextStatementOrEnd(): { chunk: string, isEndOfStatement: boolean } {
     let chunk = '';
-    
+
     while (this.pos < this.sql.length) {
       const char = this.sql[this.pos];
       const nextChar = this.pos + 1 < this.sql.length ? this.sql[this.pos + 1] : '';
@@ -97,7 +97,7 @@ export class PostgresSqlParser {
             this.state = LexerState.DOLLAR_QUOTED_STRING;
             this.dollarTag = tagMatch[0];
             chunk += this.dollarTag;
-            this.pos += this.dollarTag.length - 1; 
+            this.pos += this.dollarTag.length - 1;
           } else {
             chunk += char;
           }
@@ -189,7 +189,7 @@ export class PostgresSqlParser {
       }
 
       if (fIdx >= filteredTokens.length) return null;
-      
+
       let tableName = '';
       if (filteredTokens[fIdx].type === 'IDENTIFIER' || filteredTokens[fIdx].type === 'QUOTED_IDENTIFIER') {
         tableName = filteredTokens[fIdx].value;
@@ -204,9 +204,9 @@ export class PostgresSqlParser {
       }
 
       if (fIdx >= filteredTokens.length || filteredTokens[fIdx].raw !== '(') return null;
-      
+
       let idx = tokens.indexOf(filteredTokens[fIdx]) + 1;
-      
+
       let endIdx = idx;
       let openParenDepth = 1;
       while (endIdx < tokens.length && openParenDepth > 0) {
@@ -218,11 +218,11 @@ export class PostgresSqlParser {
       const itemsTokens: Token[][] = [];
       let currentItem: Token[] = [];
       let currentDepth = 0;
-      
+
       for (const t of listTokens) {
          if (t.type === 'SYMBOL' && (t.raw === '(' || t.raw === '[')) currentDepth++;
          else if (t.type === 'SYMBOL' && (t.raw === ')' || t.raw === ']')) currentDepth--;
-         
+
          if (t.type === 'SYMBOL' && t.raw === ',' && currentDepth === 0) {
             itemsTokens.push(currentItem);
             currentItem = [];
@@ -231,23 +231,23 @@ export class PostgresSqlParser {
          }
       }
       if (currentItem.length > 0) itemsTokens.push(currentItem);
-      
+
       const columns: ColumnDefinition[] = [];
       let ordinalPosition = 1;
-      
+
       for (const item of itemsTokens) {
         if (item.filter(t => t.type !== 'WHITESPACE').length === 0) continue;
-        
+
         const filtered = item.filter(t => t.type !== 'WHITESPACE');
         const first = filtered[0];
         const isConstraint = ['CONSTRAINT', 'PRIMARY', 'FOREIGN', 'UNIQUE', 'CHECK', 'EXCLUDE', 'LIKE'].includes(first.upperValue);
-        
+
         if (!isConstraint) {
            const columnName = first.value;
-           
+
            let typeTokens = [];
            const constraintKeywords = ['COLLATE', 'CONSTRAINT', 'NOT', 'NULL', 'DEFAULT', 'GENERATED', 'IDENTITY', 'PRIMARY', 'UNIQUE', 'REFERENCES', 'CHECK'];
-           
+
            let fIdx = 1;
            while (fIdx < filtered.length) {
                const t = filtered[fIdx];
@@ -257,7 +257,7 @@ export class PostgresSqlParser {
                typeTokens.push(t);
                fIdx++;
            }
-           
+
            let typeStr = '';
            if (typeTokens.length > 0) {
                const startOrig = item.indexOf(typeTokens[0]);
@@ -276,7 +276,7 @@ export class PostgresSqlParser {
               }
            }
            let defaultExpression: string | null = null;
-           
+
            while (fIdx < filtered.length) {
                const t = filtered[fIdx];
                if (t.upperValue === 'NOT') {
@@ -292,14 +292,14 @@ export class PostgresSqlParser {
                        const dt = filtered[fIdx];
                        if (dt.type === 'SYMBOL' && (dt.raw === '(' || dt.raw === '[')) defDepth++;
                        else if (dt.type === 'SYMBOL' && (dt.raw === ')' || dt.raw === ']')) defDepth--;
-                       
+
                        if (defDepth === 0 && (dt.type === 'IDENTIFIER' || dt.type === 'KEYWORD')) {
                            if (constraintKeywords.includes(dt.upperValue)) break;
                        }
                        defTokens.push(dt);
                        fIdx++;
                    }
-                   
+
                    if (defTokens.length > 0) {
                        const startOrig = item.indexOf(defTokens[0]);
                        const endOrig = item.indexOf(defTokens[defTokens.length - 1]);
@@ -328,7 +328,7 @@ export class PostgresSqlParser {
         columns
       };
     }
-    
+
     return null;
   }
 
@@ -338,11 +338,11 @@ export class PostgresSqlParser {
      let state = LexerState.NORMAL;
      let blockCommentDepth = 0;
      let dollarTag = '';
-     
+
      while (i < stmt.length) {
        const char = stmt[i];
        const nextChar = i + 1 < stmt.length ? stmt[i + 1] : '';
-       
+
        if (state === LexerState.NORMAL) {
          if (/\s/.test(char)) {
             let val = '';
@@ -462,7 +462,7 @@ export class PostgresSqlParser {
          }
        }
      }
-     
+
      return tokens;
   }
 }

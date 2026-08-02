@@ -1,17 +1,17 @@
-DO $$ 
+DO $$
 DECLARE
   v_count integer;
   v_fingerprint_match boolean := true;
 BEGIN
   -- 1. State check
   SELECT count(*) INTO v_count
-  FROM information_schema.tables 
-  WHERE table_schema = 'public' 
+  FROM information_schema.tables
+  WHERE table_schema = 'public'
   AND table_name IN (
-    'attribute_definition_translations', 'attribute_definitions', 'cart_items', 
-    'categories', 'category_attribute_assignments', 'clicks', 
-    'controlled_option_value_translations', 'controlled_option_values', 
-    'offer_attribute_option_values', 'offer_attribute_values', 'offers', 
+    'attribute_definition_translations', 'attribute_definitions', 'cart_items',
+    'categories', 'category_attribute_assignments', 'clicks',
+    'controlled_option_value_translations', 'controlled_option_values',
+    'offer_attribute_option_values', 'offer_attribute_values', 'offers',
     'order_items', 'orders', 'partners', 'rfq_leads'
   );
 
@@ -24,7 +24,7 @@ BEGIN
   END IF;
 
   -- 2. DDL Execution for EMPTY DEV
-  
+
   -- SEQUENCES
   CREATE SEQUENCE attribute_definition_translations_id_seq AS integer;
   CREATE SEQUENCE attribute_definitions_id_seq AS integer;
@@ -43,7 +43,7 @@ BEGIN
   CREATE SEQUENCE rfq_leads_id_seq AS integer;
 
   -- TABLES (in dependency order)
-  
+
   CREATE TABLE attribute_definitions (
     id bigint PRIMARY KEY DEFAULT nextval('attribute_definitions_id_seq'::regclass),
     stable_key text NOT NULL,
@@ -63,7 +63,7 @@ BEGIN
     CONSTRAINT categories_slug_key UNIQUE (slug),
     CONSTRAINT categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES categories(id)
   );
-  
+
   CREATE TABLE partners (
     id bigint PRIMARY KEY DEFAULT nextval('partners_id_seq'::regclass),
     company_name character varying(255) NOT NULL,
