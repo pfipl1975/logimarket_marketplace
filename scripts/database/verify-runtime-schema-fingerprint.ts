@@ -96,6 +96,93 @@ export function normalizeDefaultExpression(d: string | null): string | null {
   return d.trim().replace(/\s+/g, " ").toLowerCase();
 }
 
+/**
+ * normalizeCheckConstraintDefinition
+ *
+ * Canonicalises a PostgreSQL CHECK constraint definition so that purely
+ * syntactic differences produced by pg_get_constraintdef do NOT register
+ * as semantic drift.
+ *
+ * Equivalences handled:
+ *
+ *  1. Redundant outer parentheses
+ *     CHECK ((sort_order >= 0))  →  check (sort_order >= 0)
+ *
+ *  2. Parenthesised cast  vs  plain cast
+ *     (col)::text  →  col::text
+ *
+ *  3. ARRAY-then-cast  vs  per-element cast
+ *     (ARRAY['a'::character varying, 'b'::character varying])::text[]
+ *       →  array['a', 'b']   (values extracted, ::character varying stripped)
+ *     ARRAY['a'::character varying::text, 'b'::character varying::text]
+ *       →  array['a', 'b']   (same)
+ *
+ *  4. Normalised whitespace and case.
+ *
+ * Real semantic differences are preserved:
+ *   - different literal values
+ *   - missing/extra literals
+ *   - different column references
+ *   - different operators (>= vs >, = 1 vs = 2, …)
+ *   - different functions (num_nonnulls argument list)
+ */
+export function normalizeCheckConstraintDefinition(def: string | null | undefined): string {
+  if (!def) return "";
+
+  let s = def.trim().toLowerCase();
+
+  // 1. Collapse whitespace
+  s = s.replace(/\s+/g, " ");
+
+  // Trim spaces immediately inside parentheses: "( x )" → "(x)"
+  s = s.replace(/\(\s+/g, "(").replace(/\s+\)/g, ")");
+
+  // 2. Strip redundant outer parens produced by some pg_get_constraintdef calls:
+  //    check (( ... ))  →  check ( ... )
+  s = s.replace(/^check \(\((.+)\)\)$/, "check ($1)");
+
+  // 3. Normalise ARRAY-of-varchar with trailing ::text[] cast and without it.
+  //
+  //    Form A (contract-style):
+  //      (array['x'::character varying, 'y'::character varying])::text[]
+  //    Form B (pg_get_constraintdef-style):
+  //      array['x'::character varying::text, 'y'::character varying::text]
+  //
+  //    Both become: array['x','y']
+
+  // Form A: (ARRAY[...])::text[]
+  s = s.replace(/\(array\[([^\]]+)\]\)::(?:text\[\]|character varying\[\])/g, (_, inner) => {
+    return "array[" + normalizeArrayElements(inner) + "]";
+  });
+
+  // Form B: ARRAY[...'x'::character varying::text...] — element-level double cast
+  s = s.replace(/array\[([^\]]+)\]/g, (_, inner) => {
+    return "array[" + normalizeArrayElements(inner) + "]";
+  });
+
+  // 4. Parenthesised cast: (col)::type  →  col::type
+  //    Repeat to handle nested: ((col))::type
+  for (let i = 0; i < 3; i++) {
+    s = s.replace(/\((\w+)\)::(\w+)/g, "$1::$2");
+  }
+
+  return s.trim();
+}
+
+/** Strip ::character varying and ::text casts from array element literals. */
+function normalizeArrayElements(inner: string): string {
+  return inner
+    .split(",")
+    .map((el) => {
+      let e = el.trim();
+      // Remove any trailing ::type casts (may be chained, e.g. ::character varying::text)
+      e = e.replace(/(::character varying|::text|::int|::bigint|::bool)+$/g, "");
+      return e.trim();
+    })
+    .join(",");
+}
+
+/** Kept for backwards compatibility — used by non-CHECK constraints (PK, FK, UNIQUE, index). */
 export function normalizeConstraintDefinition(def: string | null | undefined): string {
   if (!def) return "";
   return def.trim().replace(/\s+/g, " ").toLowerCase();
@@ -199,10 +286,12 @@ function compareTableContract(
           `Table ${tableName} constraint ${ec.name} type: expected ${ec.type}, got ${gc.type}`
         );
       }
-      if (
-        normalizeConstraintDefinition(ec.definition) !==
-        normalizeConstraintDefinition(gc.definition)
-      ) {
+      // CHECK constraints: use semantic canonicalization that tolerates pg_get_constraintdef
+      // formatting differences (redundant parens, array cast form, element-level casts).
+      // Non-CHECK constraints: use simple whitespace+case normalization.
+      const normFn =
+        ec.type === "CHECK" ? normalizeCheckConstraintDefinition : normalizeConstraintDefinition;
+      if (normFn(ec.definition) !== normFn(gc.definition)) {
         reasons.push(
           `Table ${tableName} constraint ${ec.name} definition mismatch`
         );
