@@ -412,5 +412,14 @@
     "pendingButton": "登录中...",
     "invalidCredentials": "电子邮件或密码无效。",
     "unavailableError": "目前无法进行身份验证。"
+  },
+  "admin": {
+    "metaTitle": "管理面板 | LogiMarket",
+    "metaDescription": "LogiMarket平台受保护的管理区域。",
+    "eyebrow": "受保护区域",
+    "title": "管理面板",
+    "description": "管理员访问权限已验证。",
+    "scopeDescription": "当前阶段提供了一个安全的入口点。报价和内容管理功能将在后续阶段逐步推出。",
+    "backToMarketplace": "返回LogiMarket"
   }
 }

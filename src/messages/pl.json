@@ -412,5 +412,14 @@
     "pendingButton": "Logowanie...",
     "invalidCredentials": "Nieprawidłowy e-mail lub hasło.",
     "unavailableError": "Logowanie jest w tej chwili niedostępne."
+  },
+  "admin": {
+    "metaTitle": "Panel administracyjny | LogiMarket",
+    "metaDescription": "Chroniona strefa administracyjna platformy LogiMarket.",
+    "eyebrow": "Chroniona strefa",
+    "title": "Panel administracyjny",
+    "description": "Dostęp administratora został zweryfikowany.",
+    "scopeDescription": "Bieżący etap udostępnia bezpieczny punkt wejścia. Funkcje zarządzania ofertami i treścią będą wdrażane w oddzielnych etapach.",
+    "backToMarketplace": "Wróć do LogiMarket"
   }
 }
