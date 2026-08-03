@@ -1,30 +1,39 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
-import {
-  getAdminPath,
-  getAdminLoginRedirectPath,
-  requireAdminPageAccessCore,
-} from "../../src/lib/auth/admin-page-access";
+import { readFileSync } from "node:fs";
+import type { Locale } from "../../src/lib/i18n/config";
+
+import Module from "node:module";
+const originalRequire = (Module as any).prototype.require;
+(Module as any).prototype.require = function(id: string) {
+  if (id === "next/navigation") {
+    return { redirect: () => {}, notFound: () => {} };
+  }
+  return originalRequire.apply(this, arguments);
+};
+
 import {
   UnauthorizedError,
   ForbiddenError,
   AuthInfrastructureError,
   AuthConfigurationError,
 } from "../../src/lib/auth/authorization-errors";
-import type { Locale } from "../../src/lib/i18n/config";
 
 const TEST_ADMIN_ID = "11111111-1111-4111-8111-111111111111";
 
 describe("getAdminPath", () => {
-  test("getAdminPath returns /admin for pl", () => {
+  test("getAdminPath returns /admin for pl", async () => {
+    const { getAdminPath } = await import("../../src/lib/auth/admin-page-access");
     assert.equal(getAdminPath("pl"), "/admin");
   });
 
-  test("getAdminPath returns /en/admin for en", () => {
+  test("getAdminPath returns /en/admin for en", async () => {
+    const { getAdminPath } = await import("../../src/lib/auth/admin-page-access");
     assert.equal(getAdminPath("en"), "/en/admin");
   });
 
-  test("getAdminPath returns correct path for all locales", () => {
+  test("getAdminPath returns correct path for all locales", async () => {
+    const { getAdminPath } = await import("../../src/lib/auth/admin-page-access");
     const locales: Locale[] = ["pl", "en", "de", "fr", "uk", "es", "zh"];
     for (const locale of locales) {
       if (locale === "pl") {
@@ -37,15 +46,18 @@ describe("getAdminPath", () => {
 });
 
 describe("getAdminLoginRedirectPath", () => {
-  test("login redirect pl is correct", () => {
+  test("login redirect pl is correct", async () => {
+    const { getAdminLoginRedirectPath } = await import("../../src/lib/auth/admin-page-access");
     assert.equal(getAdminLoginRedirectPath("pl"), "/login?next=%2Fadmin");
   });
 
-  test("login redirect en is correct", () => {
+  test("login redirect en is correct", async () => {
+    const { getAdminLoginRedirectPath } = await import("../../src/lib/auth/admin-page-access");
     assert.equal(getAdminLoginRedirectPath("en"), "/en/login?next=%2Fen%2Fadmin");
   });
 
-  test("login redirect is correct for all locales", () => {
+  test("login redirect is correct for all locales", async () => {
+    const { getAdminLoginRedirectPath } = await import("../../src/lib/auth/admin-page-access");
     const locales: Locale[] = ["pl", "en", "de", "fr", "uk", "es", "zh"];
     for (const locale of locales) {
       const loginPath = locale === "pl" ? "/login" : `/${locale}/login`;
@@ -55,7 +67,8 @@ describe("getAdminLoginRedirectPath", () => {
     }
   });
 
-  test("query next decodes exactly to admin path", () => {
+  test("query next decodes exactly to admin path", async () => {
+    const { getAdminLoginRedirectPath, getAdminPath } = await import("../../src/lib/auth/admin-page-access");
     const locales: Locale[] = ["pl", "en", "de", "fr", "uk", "es", "zh"];
     for (const locale of locales) {
       const redirectPath = getAdminLoginRedirectPath(locale);
@@ -65,7 +78,8 @@ describe("getAdminLoginRedirectPath", () => {
     }
   });
 
-  test("no redirect path is an absolute URL", () => {
+  test("no redirect path is an absolute URL", async () => {
+    const { getAdminLoginRedirectPath } = await import("../../src/lib/auth/admin-page-access");
     const locales: Locale[] = ["pl", "en", "de", "fr", "uk", "es", "zh"];
     for (const locale of locales) {
       const path = getAdminLoginRedirectPath(locale);
@@ -74,7 +88,8 @@ describe("getAdminLoginRedirectPath", () => {
     }
   });
 
-  test("no redirect path contains backslash", () => {
+  test("no redirect path contains backslash", async () => {
+    const { getAdminLoginRedirectPath } = await import("../../src/lib/auth/admin-page-access");
     const locales: Locale[] = ["pl", "en", "de", "fr", "uk", "es", "zh"];
     for (const locale of locales) {
       const path = getAdminLoginRedirectPath(locale);
@@ -82,7 +97,8 @@ describe("getAdminLoginRedirectPath", () => {
     }
   });
 
-  test("no redirect path contains host or protocol", () => {
+  test("no redirect path contains host or protocol", async () => {
+    const { getAdminLoginRedirectPath } = await import("../../src/lib/auth/admin-page-access");
     const locales: Locale[] = ["pl", "en", "de", "fr", "uk", "es", "zh"];
     for (const locale of locales) {
       const path = getAdminLoginRedirectPath(locale);
@@ -96,6 +112,7 @@ describe("getAdminLoginRedirectPath", () => {
 
 describe("requireAdminPageAccessCore", () => {
   test("core returns administrator identity on success", async () => {
+    const { requireAdminPageAccessCore } = await import("../../src/lib/auth/admin-page-access");
     const mockRequireAdmin = async () => ({
       id: TEST_ADMIN_ID,
       email: "admin@logimarket.local",
@@ -107,6 +124,7 @@ describe("requireAdminPageAccessCore", () => {
   });
 
   test("core propagates UnauthorizedError", async () => {
+    const { requireAdminPageAccessCore } = await import("../../src/lib/auth/admin-page-access");
     const mockRequireAdmin = async () => {
       throw new UnauthorizedError();
     };
@@ -118,6 +136,7 @@ describe("requireAdminPageAccessCore", () => {
   });
 
   test("core propagates ForbiddenError", async () => {
+    const { requireAdminPageAccessCore } = await import("../../src/lib/auth/admin-page-access");
     const mockRequireAdmin = async () => {
       throw new ForbiddenError();
     };
@@ -129,6 +148,7 @@ describe("requireAdminPageAccessCore", () => {
   });
 
   test("core propagates AuthInfrastructureError", async () => {
+    const { requireAdminPageAccessCore } = await import("../../src/lib/auth/admin-page-access");
     const mockRequireAdmin = async () => {
       throw new AuthInfrastructureError();
     };
@@ -140,6 +160,7 @@ describe("requireAdminPageAccessCore", () => {
   });
 
   test("core propagates AuthConfigurationError", async () => {
+    const { requireAdminPageAccessCore } = await import("../../src/lib/auth/admin-page-access");
     const mockRequireAdmin = async () => {
       throw new AuthConfigurationError();
     };
@@ -151,6 +172,7 @@ describe("requireAdminPageAccessCore", () => {
   });
 
   test("core propagates unknown Error", async () => {
+    const { requireAdminPageAccessCore } = await import("../../src/lib/auth/admin-page-access");
     const mockRequireAdmin = async () => {
       throw new Error("Unknown database crash");
     };
@@ -159,5 +181,23 @@ describe("requireAdminPageAccessCore", () => {
       async () => await requireAdminPageAccessCore(mockRequireAdmin),
       (err: unknown) => (err as Error).message === "Unknown database crash"
     );
+  });
+});
+
+describe("requireAdminPageAccess static validation", () => {
+  test("production guard uses correct signature and dependencies", () => {
+    const fileContent = readFileSync(
+      new URL("../../src/lib/auth/admin-page-access.ts", import.meta.url),
+      "utf8"
+    );
+
+    assert.match(fileContent, /export async function requireAdminPageAccess\(\s*locale: Locale\s*\): Promise<AuthenticatedIdentity>/);
+    assert.match(fileContent, /requireAdminPageAccessCore\(requireAdmin\)/);
+    assert.doesNotMatch(fileContent, /requireAdminFn\s*=/);
+    assert.doesNotMatch(fileContent, /import\(['"]\.\/guards['"]\)/);
+    assert.doesNotMatch(fileContent, /import\(['"]next\/navigation['"]\)/);
+    
+    assert.match(fileContent, /import \{ redirect, notFound \} from "next\/navigation";/);
+    assert.match(fileContent, /import \{ requireAdmin \} from "\.\/guards";/);
   });
 });
