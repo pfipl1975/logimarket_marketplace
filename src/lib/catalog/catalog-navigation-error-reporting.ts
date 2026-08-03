@@ -1,5 +1,13 @@
 import "server-only";
 
+function safelyReadProperty(value: object, property: PropertyKey): unknown {
+  try {
+    return Reflect.get(value, property);
+  } catch {
+    return undefined;
+  }
+}
+
 export function isIntentionalOfflineCatalogError(
   error: unknown,
   offlineBuildEnabled = process.env.LOGIMARKET_OFFLINE_BUILD === "1"
@@ -9,25 +17,24 @@ export function isIntentionalOfflineCatalogError(
   let currentError = error;
   let depth = 0;
   const maxDepth = 8;
-  const seen = new Set();
+  const seen = new Set<unknown>();
 
   while (currentError && depth < maxDepth) {
     if (seen.has(currentError)) break;
     seen.add(currentError);
 
     if (typeof currentError === "object" && currentError !== null) {
-      const errObj = currentError as Record<string, unknown>;
-      
-      const code = errObj.code;
-      const address = errObj.address;
-      const port = errObj.port;
+      const code = safelyReadProperty(currentError, "code");
+      const address = safelyReadProperty(currentError, "address");
+      const port = safelyReadProperty(currentError, "port");
 
       if (code === "ECONNREFUSED" && address === "127.0.0.1" && port === 1) {
         return true;
       }
 
-      if ("cause" in errObj) {
-        currentError = errObj.cause;
+      const cause = safelyReadProperty(currentError, "cause");
+      if (cause !== undefined) {
+        currentError = cause;
         depth++;
       } else {
         break;
