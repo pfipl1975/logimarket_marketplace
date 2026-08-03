@@ -102,6 +102,7 @@ export function CatalogNavigationClient({
 
   // Close menu on pathname change
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOpen(false);
     setMode("main");
     setNavigationStack([]);

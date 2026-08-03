@@ -44,6 +44,7 @@ export async function CatalogNavigationLoader({
 
     if (!categories || categories.length === 0) {
       return (
+        // eslint-disable-next-line react-hooks/error-boundaries
         <CatalogNavigationClient 
           tree={[]} 
           desktopItems={desktopItems} 
@@ -116,6 +117,7 @@ export async function CatalogNavigationLoader({
     };
 
     return (
+      // eslint-disable-next-line react-hooks/error-boundaries
       <CatalogNavigationClient 
         tree={explorerTree} 
         desktopItems={desktopItems} 

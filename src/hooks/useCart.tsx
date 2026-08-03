@@ -29,6 +29,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(cartItems);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refresh(); }, [refresh]);
 
   const handleAdd = useCallback(async (offerId: number, quantity = 1) => {

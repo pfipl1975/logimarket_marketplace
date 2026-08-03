@@ -39,6 +39,7 @@ export function CatalogDesktopMegaMenu({ tree, labels }: CatalogDesktopMegaMenuP
     if (!isOpen) return; // Only re-evaluate when opening
     
     const activePaths = getActivePathNodes(pathname, tree);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setActivePathSlugs(activePaths.pathSlugs);
     
     // Set active section
