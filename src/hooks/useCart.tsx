@@ -29,6 +29,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setItems(cartItems);
   }, []);
 
+  // cart state is intentionally hydrated from server actions after mount
   // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { refresh(); }, [refresh]);
 

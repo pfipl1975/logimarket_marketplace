@@ -102,6 +102,7 @@ export function CatalogNavigationClient({
 
   // Close menu on pathname change
   useEffect(() => {
+    // menu state is intentionally reset after pathname navigation
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsOpen(false);
     setMode("main");
