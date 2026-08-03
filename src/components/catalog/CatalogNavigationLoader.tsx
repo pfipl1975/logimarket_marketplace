@@ -2,7 +2,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
 import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { buildCategoryTree } from "@/lib/catalog/tree";
-import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
+import { buildLocalizedExplorerTree, type CatalogExplorerNode } from "@/lib/catalog/navigation";
 import { CatalogNavigationClient, type MobileNavigationItem } from "./CatalogNavigationClient";
 import type { HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
 import type { Locale } from "@/lib/i18n/config";
@@ -30,6 +30,31 @@ export async function CatalogNavigationLoader({
   mainNavigationLabel,
   searchLabels
 }: CatalogNavigationLoaderProps) {
+  let tree: CatalogExplorerNode[] = [];
+  let desktopLabels = {
+    trigger: fallbackLabel,
+    catalogMenuOpen: "",
+    catalogMenuClose: "",
+    catalogMenuSections: "",
+    catalogMenuGroups: "",
+    catalogMenuCategories: "",
+    catalogMenuViewSection: "",
+    catalogMenuViewGroup: "",
+    catalogMenuEmptyGroups: "",
+    catalogMenuEmptyCategories: "",
+  };
+  let mobileLabels = {
+    mobileCatalogTitle: "",
+    mobileCatalogClose: "",
+    mobileCatalogBack: "",
+    mobileCatalogBackToMenu: "",
+    mobileCatalogViewCatalog: "",
+    mobileCatalogViewCurrent: "",
+    mobileCatalogOpenLevel: "",
+  };
+
+  const catalogHref = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog`;
+
   try {
     const [categories, dict] = await Promise.all([
       getCachedCategories(),
@@ -38,135 +63,66 @@ export async function CatalogNavigationLoader({
 
     const fallbackDict = locale === defaultLocale ? dict : await getDictionary(defaultLocale);
     
-
-
-    const catalogHref = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog`;
-
-    if (!categories || categories.length === 0) {
-      return (
-        <CatalogNavigationClient 
-          tree={[]} 
-          desktopItems={desktopItems} 
-          mobileItems={mobileItems}
-          desktopLabels={{
-            trigger: dict.nav.catalog || fallbackLabel,
-            catalogMenuOpen: "",
-            catalogMenuClose: "",
-            catalogMenuSections: "",
-            catalogMenuGroups: "",
-            catalogMenuCategories: "",
-            catalogMenuViewSection: "",
-            catalogMenuViewGroup: "",
-            catalogMenuEmptyGroups: "",
-            catalogMenuEmptyCategories: "",
-          }}
-          mobileLabels={{
-            mobileCatalogTitle: "",
-            mobileCatalogClose: "",
-            mobileCatalogBack: "",
-            mobileCatalogBackToMenu: "",
-            mobileCatalogViewCatalog: "",
-            mobileCatalogViewCurrent: "",
-            mobileCatalogOpenLevel: "",
-          }}
-          catalogHref={catalogHref}
-          menuOpenLabel={menuOpenLabel}
-          menuCloseLabel={menuCloseLabel}
-          mainNavigationLabel={mainNavigationLabel}
-          searchLabels={searchLabels}
-          locale={locale}
-        />
-      );
+    // Update trigger even if categories are empty, if dictionary is available
+    if (dict?.nav?.catalog) {
+      desktopLabels.trigger = dict.nav.catalog;
     }
 
-    const categoryTree = buildCategoryTree(categories);
-    const categoryFilterBasePath = getHomePath(locale);
-    
-    const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
-    const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
+    if (categories && categories.length > 0) {
+      const categoryTree = buildCategoryTree(categories);
+      const categoryFilterBasePath = getHomePath(locale);
 
-    const explorerTree = buildLocalizedExplorerTree(
-      categoryTree,
-      categoryFilterBasePath,
-      localeBySlug,
-      fallbackBySlug
-    );
+      const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
+      const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
 
-    const desktopLabels = {
-      trigger: dict.nav.catalog || fallbackLabel,
-      catalogMenuOpen: dict.catalog.catalogMenuOpen,
-      catalogMenuClose: dict.catalog.catalogMenuClose,
-      catalogMenuSections: dict.catalog.catalogMenuSections,
-      catalogMenuGroups: dict.catalog.catalogMenuGroups,
-      catalogMenuCategories: dict.catalog.catalogMenuCategories,
-      catalogMenuViewSection: dict.catalog.catalogMenuViewSection,
-      catalogMenuViewGroup: dict.catalog.catalogMenuViewGroup,
-      catalogMenuEmptyGroups: dict.catalog.catalogMenuEmptyGroups || "",
-      catalogMenuEmptyCategories: dict.catalog.catalogMenuEmptyCategories || "",
-    };
+      tree = buildLocalizedExplorerTree(
+        categoryTree,
+        categoryFilterBasePath,
+        localeBySlug,
+        fallbackBySlug
+      );
 
-    const mobileLabels = {
-      mobileCatalogTitle: dict.catalog.mobileCatalogTitle,
-      mobileCatalogClose: dict.catalog.mobileCatalogClose,
-      mobileCatalogBack: dict.catalog.mobileCatalogBack,
-      mobileCatalogBackToMenu: dict.catalog.mobileCatalogBackToMenu,
-      mobileCatalogViewCatalog: dict.catalog.mobileCatalogViewCatalog,
-      mobileCatalogViewCurrent: dict.catalog.mobileCatalogViewCurrent,
-      mobileCatalogOpenLevel: dict.catalog.mobileCatalogOpenLevel,
-    };
+      desktopLabels = {
+        trigger: dict.nav.catalog || fallbackLabel,
+        catalogMenuOpen: dict.catalog.catalogMenuOpen,
+        catalogMenuClose: dict.catalog.catalogMenuClose,
+        catalogMenuSections: dict.catalog.catalogMenuSections,
+        catalogMenuGroups: dict.catalog.catalogMenuGroups,
+        catalogMenuCategories: dict.catalog.catalogMenuCategories,
+        catalogMenuViewSection: dict.catalog.catalogMenuViewSection,
+        catalogMenuViewGroup: dict.catalog.catalogMenuViewGroup,
+        catalogMenuEmptyGroups: dict.catalog.catalogMenuEmptyGroups || "",
+        catalogMenuEmptyCategories: dict.catalog.catalogMenuEmptyCategories || "",
+      };
 
-    return (
-      <CatalogNavigationClient 
-        tree={explorerTree} 
-        desktopItems={desktopItems} 
-        mobileItems={mobileItems}
-        desktopLabels={desktopLabels}
-        mobileLabels={mobileLabels}
-        catalogHref={catalogHref}
-        menuOpenLabel={menuOpenLabel}
-        menuCloseLabel={menuCloseLabel}
-        mainNavigationLabel={mainNavigationLabel}
-        searchLabels={searchLabels}
-        locale={locale}
-      />
-    );
+      mobileLabels = {
+        mobileCatalogTitle: dict.catalog.mobileCatalogTitle,
+        mobileCatalogClose: dict.catalog.mobileCatalogClose,
+        mobileCatalogBack: dict.catalog.mobileCatalogBack,
+        mobileCatalogBackToMenu: dict.catalog.mobileCatalogBackToMenu,
+        mobileCatalogViewCatalog: dict.catalog.mobileCatalogViewCatalog,
+        mobileCatalogViewCurrent: dict.catalog.mobileCatalogViewCurrent,
+        mobileCatalogOpenLevel: dict.catalog.mobileCatalogOpenLevel,
+      };
+    }
   } catch (error) {
     console.error("Failed to load CatalogNavigationLoader", error);
-    // Silent fallback
-    const catalogHref = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog`;
-    return (
-      <CatalogNavigationClient 
-        tree={[]} 
-        desktopItems={desktopItems} 
-        mobileItems={mobileItems}
-        desktopLabels={{
-          trigger: fallbackLabel,
-          catalogMenuOpen: "",
-          catalogMenuClose: "",
-          catalogMenuSections: "",
-          catalogMenuGroups: "",
-          catalogMenuCategories: "",
-          catalogMenuViewSection: "",
-          catalogMenuViewGroup: "",
-          catalogMenuEmptyGroups: "",
-          catalogMenuEmptyCategories: "",
-        }}
-        mobileLabels={{
-          mobileCatalogTitle: "",
-          mobileCatalogClose: "",
-          mobileCatalogBack: "",
-          mobileCatalogBackToMenu: "",
-          mobileCatalogViewCatalog: "",
-          mobileCatalogViewCurrent: "",
-          mobileCatalogOpenLevel: "",
-        }}
-        catalogHref={catalogHref}
-        menuOpenLabel={menuOpenLabel}
-        menuCloseLabel={menuCloseLabel}
-        mainNavigationLabel={mainNavigationLabel}
-        searchLabels={searchLabels}
-        locale={locale}
-      />
-    );
+    // Silent fallback will be used because variables retain initial values
   }
+
+  return (
+    <CatalogNavigationClient
+      tree={tree}
+      desktopItems={desktopItems}
+      mobileItems={mobileItems}
+      desktopLabels={desktopLabels}
+      mobileLabels={mobileLabels}
+      catalogHref={catalogHref}
+      menuOpenLabel={menuOpenLabel}
+      menuCloseLabel={menuCloseLabel}
+      mainNavigationLabel={mainNavigationLabel}
+      searchLabels={searchLabels}
+      locale={locale}
+    />
+  );
 }
