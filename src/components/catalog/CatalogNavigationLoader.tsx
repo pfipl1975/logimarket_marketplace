@@ -2,7 +2,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath } from "@/lib/i18n/paths";
 import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { buildCategoryTree } from "@/lib/catalog/tree";
-import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
+import { buildLocalizedExplorerTree, type CatalogExplorerNode } from "@/lib/catalog/navigation";
 import { CatalogNavigationClient, type MobileNavigationItem } from "./CatalogNavigationClient";
 import type { HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
 import type { Locale } from "@/lib/i18n/config";
@@ -30,7 +30,7 @@ export async function CatalogNavigationLoader({
   mainNavigationLabel,
   searchLabels
 }: CatalogNavigationLoaderProps) {
-  let tree: any[] = [];
+  let tree: CatalogExplorerNode[] = [];
   let desktopLabels = {
     trigger: fallbackLabel,
     catalogMenuOpen: "",

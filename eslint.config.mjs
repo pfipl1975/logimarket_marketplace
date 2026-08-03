@@ -4,7 +4,12 @@ import nextTs from "eslint-config-next/typescript";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
-  ...nextTs.map(c => ({ ...c, rules: {} })),
+  ...nextTs,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": "error",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
