@@ -4,12 +4,15 @@ import { readFileSync } from "node:fs";
 import type { Locale } from "../../src/lib/i18n/config";
 
 import Module from "node:module";
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const originalRequire = (Module as any).prototype.require;
-(Module as any).prototype.require = function(id: string) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(Module as any).prototype.require = function(id: string, ...args: unknown[]) {
   if (id === "next/navigation") {
     return { redirect: () => {}, notFound: () => {} };
   }
-  return originalRequire.apply(this, arguments);
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-explicit-any
+  return originalRequire.apply(this as any, [id, ...args]);
 };
 
 import {
