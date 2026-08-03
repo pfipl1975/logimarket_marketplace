@@ -412,5 +412,14 @@
     "pendingButton": "Anmeldung läuft...",
     "invalidCredentials": "E-Mail oder Passwort ungültig.",
     "unavailableError": "Anmeldung ist derzeit nicht verfügbar."
+  },
+  "admin": {
+    "metaTitle": "Admin-Panel | LogiMarket",
+    "metaDescription": "Geschützter administrativer Bereich der LogiMarket-Plattform.",
+    "eyebrow": "Geschützter Bereich",
+    "title": "Admin-Panel",
+    "description": "Administratorzugang wurde verifiziert.",
+    "scopeDescription": "Die aktuelle Phase bietet einen sicheren Einstiegspunkt. Funktionen zur Angebots- und Inhaltsverwaltung werden in separaten Phasen eingeführt.",
+    "backToMarketplace": "Zurück zu LogiMarket"
   }
 }

@@ -412,5 +412,14 @@
     "pendingButton": "Connexion en cours...",
     "invalidCredentials": "E-mail ou mot de passe invalide.",
     "unavailableError": "L'authentification est actuellement indisponible."
+  },
+  "admin": {
+    "metaTitle": "Panneau d'administration | LogiMarket",
+    "metaDescription": "Zone administrative protégée de la plateforme LogiMarket.",
+    "eyebrow": "Zone protégée",
+    "title": "Panneau d'administration",
+    "description": "L'accès administrateur a été vérifié.",
+    "scopeDescription": "La phase actuelle fournit un point d'entrée sécurisé. Les fonctionnalités de gestion des offres et du contenu seront déployées dans des phases séparées.",
+    "backToMarketplace": "Retour à LogiMarket"
   }
 }

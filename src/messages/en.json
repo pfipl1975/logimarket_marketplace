@@ -412,5 +412,14 @@
     "pendingButton": "Signing in...",
     "invalidCredentials": "Invalid email or password.",
     "unavailableError": "Authentication is currently unavailable."
+  },
+  "admin": {
+    "metaTitle": "Admin Panel | LogiMarket",
+    "metaDescription": "Protected administrative area of the LogiMarket platform.",
+    "eyebrow": "Protected area",
+    "title": "Admin Panel",
+    "description": "Administrator access has been verified.",
+    "scopeDescription": "The current stage provides a secure entry point. Offer and content management features will be rolled out in separate stages.",
+    "backToMarketplace": "Return to LogiMarket"
   }
 }
