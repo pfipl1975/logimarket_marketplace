@@ -4,6 +4,7 @@ import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { buildLocalizedExplorerTree, type CatalogExplorerNode } from "@/lib/catalog/navigation";
 import { CatalogNavigationClient, type MobileNavigationItem } from "./CatalogNavigationClient";
+import { reportCatalogNavigationLoadError } from "@/lib/catalog/catalog-navigation-error-reporting";
 import type { HeaderDesktopNavigationItem } from "@/components/HeaderDesktopNavigation";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
@@ -106,7 +107,7 @@ export async function CatalogNavigationLoader({
       };
     }
   } catch (error) {
-    console.error("Failed to load CatalogNavigationLoader", error);
+    reportCatalogNavigationLoadError(error);
     // Silent fallback will be used because variables retain initial values
   }
 
