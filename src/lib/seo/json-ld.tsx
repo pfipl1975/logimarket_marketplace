@@ -2,6 +2,7 @@ import React from "react";
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
 import type { OfferPublicationStatus } from "@/lib/schema";
+import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
 import { getHomeCanonical, getOfferCanonical, absoluteUrl } from "./urls";
 import { localeLanguageTags } from "./site";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
@@ -147,7 +148,7 @@ export interface OfferJsonLdSource {
   categorySlug: string;
   categoryName: string;
   partnerName: string;
-  offerModel: string;
+  offerModel: CanonicalOfferModelResolution;
   conversionType: string;
   publicationStatus: OfferPublicationStatus;
 }
@@ -189,8 +190,7 @@ export function createOfferJsonLd(
     offer.publicationStatus === "published" &&
     parsedPrice !== null &&
     !offer.priceOnRequest &&
-    offer.offerModel !== "rfq" &&
-    offer.conversionType !== "rfq";
+    (offer.offerModel === "ecommerce" || offer.offerModel === "outbound");
 
   const productJsonLd: Record<string, JsonLdValue> = {
     "@type": "Product",

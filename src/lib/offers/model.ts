@@ -28,20 +28,25 @@ export type CanonicalOfferModelResolution = CanonicalOfferModel | "unknown";
  * Maps raw legacy (offer_model, conversion_type) pairs to the canonical
  * business offer model.
  *
- * Matrix:
+ * Matrix (both legacy values must be known before classification):
  *   rfq         + inbound  → rfq
  *   rfq         + outbound → outbound
  *   marketplace + inbound  → ecommerce
  *   marketplace + outbound → outbound
  *
- * Outbound takes precedence because external redirection is a separate
- * business model and must stay tracked through /go/[id]. Any unknown or
- * missing value resolves to the controlled "unknown" state.
+ * Outbound takes precedence only between valid, known legacy offer
+ * models ("rfq", "marketplace"); it never bypasses offer model
+ * validation. Any unknown or missing value resolves to the controlled
+ * "unknown" state.
  */
 export function resolveCanonicalOfferModel(
   offerModel: string | null | undefined,
   conversionType: string | null | undefined
 ): CanonicalOfferModelResolution {
+  if (offerModel !== "rfq" && offerModel !== "marketplace") {
+    return "unknown";
+  }
+
   if (conversionType === "outbound") {
     return "outbound";
   }
@@ -50,13 +55,5 @@ export function resolveCanonicalOfferModel(
     return "unknown";
   }
 
-  if (offerModel === "marketplace") {
-    return "ecommerce";
-  }
-
-  if (offerModel === "rfq") {
-    return "rfq";
-  }
-
-  return "unknown";
+  return offerModel === "marketplace" ? "ecommerce" : "rfq";
 }

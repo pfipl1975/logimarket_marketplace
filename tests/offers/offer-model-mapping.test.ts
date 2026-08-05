@@ -31,6 +31,18 @@ describe("resolveCanonicalOfferModel controlled unknown state", () => {
     assert.equal(resolveCanonicalOfferModel("auction", "inbound"), "unknown");
   });
 
+  test("unknown or missing offer model fails closed even with outbound", () => {
+    assert.equal(resolveCanonicalOfferModel(null, "outbound"), "unknown");
+    assert.equal(resolveCanonicalOfferModel(undefined, "outbound"), "unknown");
+    assert.equal(resolveCanonicalOfferModel("", "outbound"), "unknown");
+    assert.equal(resolveCanonicalOfferModel("auction", "outbound"), "unknown");
+  });
+
+  test("known offer models still resolve outbound", () => {
+    assert.equal(resolveCanonicalOfferModel("rfq", "outbound"), "outbound");
+    assert.equal(resolveCanonicalOfferModel("marketplace", "outbound"), "outbound");
+  });
+
   test("unknown conversion type resolves to unknown", () => {
     assert.equal(resolveCanonicalOfferModel("rfq", "import"), "unknown");
     assert.equal(resolveCanonicalOfferModel("marketplace", "rfq"), "unknown");
@@ -39,8 +51,10 @@ describe("resolveCanonicalOfferModel controlled unknown state", () => {
   test("missing values resolve to unknown", () => {
     assert.equal(resolveCanonicalOfferModel(null, "inbound"), "unknown");
     assert.equal(resolveCanonicalOfferModel(undefined, "inbound"), "unknown");
+    assert.equal(resolveCanonicalOfferModel(null, "outbound"), "unknown");
+    assert.equal(resolveCanonicalOfferModel(undefined, "outbound"), "unknown");
     assert.equal(resolveCanonicalOfferModel("rfq", null), "unknown");
-    assert.equal(resolveCanonicalOfferModel("rfq", undefined), "unknown");
+    assert.equal(resolveCanonicalOfferModel("marketplace", undefined), "unknown");
     assert.equal(resolveCanonicalOfferModel(null, null), "unknown");
     assert.equal(resolveCanonicalOfferModel("", ""), "unknown");
   });
