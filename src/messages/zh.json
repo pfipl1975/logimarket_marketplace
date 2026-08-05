@@ -420,6 +420,9 @@
     "title": "管理面板",
     "description": "管理员访问权限已验证。",
     "scopeDescription": "当前阶段提供了一个安全的入口点。报价和内容管理功能将在后续阶段逐步推出。",
-    "backToMarketplace": "返回LogiMarket"
+    "backToMarketplace": "返回LogiMarket",
+    "logoutButton": "退出登录",
+    "logoutPending": "正在退出...",
+    "logoutUnavailable": "目前无法退出登录，请重试。"
   }
 }

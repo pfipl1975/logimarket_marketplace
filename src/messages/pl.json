@@ -420,6 +420,9 @@
     "title": "Panel administracyjny",
     "description": "Dostęp administratora został zweryfikowany.",
     "scopeDescription": "Bieżący etap udostępnia bezpieczny punkt wejścia. Funkcje zarządzania ofertami i treścią będą wdrażane w oddzielnych etapach.",
-    "backToMarketplace": "Wróć do LogiMarket"
+    "backToMarketplace": "Wróć do LogiMarket",
+    "logoutButton": "Wyloguj się",
+    "logoutPending": "Wylogowywanie...",
+    "logoutUnavailable": "Wylogowanie jest w tej chwili niedostępne. Spróbuj ponownie."
   }
 }
