@@ -32,11 +32,13 @@ import type { CatalogSearchResult } from "@/lib/search/types";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { buildCategoryTree } from "@/lib/catalog/tree";
+import { resolveCanonicalOfferModel } from "@/lib/offers/model";
+import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
   priceBrutto: string | null; priceOnRequest: boolean; conversionType: string;
-  offerModel: string; outboundUrl: string | null; isFeatured: boolean; isActive: boolean;
+  offerModel: CanonicalOfferModelResolution; outboundUrl: string | null; isFeatured: boolean; isActive: boolean;
   technicalAttributes: TechnicalAttributes; categoryName: string; categorySlug: string;
   partnerId: number; partnerName: string; partnerLogo: string | null;
   partnerWebsite: string | null; partnerEmail: string;
@@ -56,7 +58,8 @@ function rowToOffer(row: {
     id: row.offer.id, title: row.offer.title, description: row.offer.description,
     imageUrl: row.offer.imageUrl, priceBrutto: row.offer.priceBrutto,
     priceOnRequest: row.offer.priceOnRequest, conversionType: row.offer.conversionType,
-    offerModel: row.offer.offerModel, outboundUrl: row.offer.outboundUrl,
+    offerModel: resolveCanonicalOfferModel(row.offer.offerModel, row.offer.conversionType),
+    outboundUrl: row.offer.outboundUrl,
     isFeatured: row.offer.isFeatured, isActive: row.offer.isActive,
     technicalAttributes: (row.offer.technicalAttributes as TechnicalAttributes) ?? {},
     categoryName: row.category?.name ?? "Bez kategorii", categorySlug: row.category?.slug ?? "",

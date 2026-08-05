@@ -1,7 +1,8 @@
 import { cn } from "@/lib/utils";
+import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
 
 type OfferModelBadgeProps = {
-  offerModel: string;
+  offerModel: CanonicalOfferModelResolution;
   labels: {
     rfqModel: string;
     ecommerceModel: string;

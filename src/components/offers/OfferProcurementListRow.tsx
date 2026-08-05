@@ -102,7 +102,6 @@ export function OfferProcurementListRow({
             id: offer.id,
             title: offer.title,
             offerModel: offer.offerModel,
-            conversionType: offer.conversionType,
             partnerName: offer.partnerName,
           }}
           ctaLabels={ctaLabels}

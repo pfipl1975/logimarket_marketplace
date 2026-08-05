@@ -5,14 +5,14 @@ import { Button } from "@/components/ui/button";
 import { AddToCartButton } from "@/components/AddToCartButton";
 import { RfqDialog } from "@/components/RfqDialog";
 import { useCart } from "@/hooks/useCart";
+import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface OfferActionProps {
   offer: {
     id: number;
     title: string;
-    offerModel: string;
-    conversionType: string;
+    offerModel: CanonicalOfferModelResolution;
     partnerName: string;
   };
   ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
@@ -35,10 +35,9 @@ export function OfferAction({
   variant = "card",
 }: OfferActionProps) {
   const { addToCart } = useCart();
-  const isEcommerce = offer.offerModel === "ecommerce";
 
   // 1. E-Commerce
-  if (isEcommerce) {
+  if (offer.offerModel === "ecommerce") {
     if (variant === "detail") {
       return <AddToCartButton offerId={offer.id} label={ctaLabels.addToCart} />;
     }
@@ -55,7 +54,7 @@ export function OfferAction({
   }
 
   // 2. RFQ
-  if (offer.offerModel !== "ecommerce" && offer.conversionType === "rfq") {
+  if (offer.offerModel === "rfq") {
     return (
       <RfqDialog
         offerId={offer.id}
@@ -71,8 +70,8 @@ export function OfferAction({
     );
   }
 
-  // 3. Outbound
-  if (offer.offerModel !== "ecommerce" && offer.conversionType === "outbound") {
+  // 3. Outbound — external redirection only through the tracked /go/[id] route
+  if (offer.offerModel === "outbound") {
     if (variant === "detail") {
       return (
         <a

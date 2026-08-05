@@ -92,7 +92,6 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
                 id: offer.id,
                 title: offer.title,
                 offerModel: offer.offerModel,
-                conversionType: offer.conversionType,
                 partnerName: offer.partnerName,
               }}
               ctaLabels={ctaLabels}
