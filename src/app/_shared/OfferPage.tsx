@@ -130,7 +130,6 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                     id: offer.id,
                     title: offer.title,
                     offerModel: offer.offerModel,
-                    conversionType: offer.conversionType,
                     partnerName: offer.partnerName,
                   }}
                   ctaLabels={dict.cta}

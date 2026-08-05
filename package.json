@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --conditions react-server --test tests/auth/*.test.ts",
+    "test": "tsx --conditions react-server --test tests/auth/*.test.ts tests/offers/*.test.ts",
     "db:runtime:read": "tsx scripts/database/read-runtime-migrations.ts",
     "db:runtime:verify-target": "tsx scripts/database/verify-runtime-migration-target.ts",
     "db:runtime:verify-schema": "tsx scripts/database/verify-runtime-schema-fingerprint.ts",
