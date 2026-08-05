@@ -19,5 +19,5 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function AdminPage() {
   const dictionary = await getDictionary("pl");
 
-  return <AdminEntryPage locale="pl" dictionary={dictionary.admin} />;
+  return <AdminEntryPage dictionary={dictionary.admin} />;
 }

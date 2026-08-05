@@ -1,11 +1,8 @@
-import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
 
 export function AdminEntryPage({
-  locale,
   dictionary,
 }: {
-  locale: Locale;
   dictionary: Dictionary["admin"];
 }) {
   return (
