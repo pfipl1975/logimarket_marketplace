@@ -423,6 +423,19 @@
     "backToMarketplace": "Volver a LogiMarket",
     "logoutButton": "Cerrar sesión",
     "logoutPending": "Cerrando sesión...",
-    "logoutUnavailable": "El cierre de sesión no está disponible en este momento. Inténtalo de nuevo."
+    "logoutUnavailable": "El cierre de sesión no está disponible en este momento. Inténtalo de nuevo.",
+    "secureAreaLabel": "Área segura",
+    "readOnlyLabel": "Solo lectura",
+    "navigationLabel": "Navegación",
+    "dashboardNav": "Panel de control",
+    "offersNav": "Ofertas",
+    "partnersNav": "Socios",
+    "rfqNav": "RFQ",
+    "ordersNav": "Pedidos",
+    "taxonomyNav": "Categorías y atributos",
+    "plannedLabel": "Planeado",
+    "moduleReadOnlyStatus": "El panel funciona en modo de solo lectura",
+    "nextModuleLabel": "siguiente módulo",
+    "moduleAvailabilityHeading": "Disponibilidad de módulos"
   }
 }

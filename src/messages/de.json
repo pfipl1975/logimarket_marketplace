@@ -423,6 +423,19 @@
     "backToMarketplace": "Zurück zu LogiMarket",
     "logoutButton": "Abmelden",
     "logoutPending": "Abmeldung läuft...",
-    "logoutUnavailable": "Abmeldung ist derzeit nicht verfügbar. Bitte versuchen Sie es erneut."
+    "logoutUnavailable": "Abmeldung ist derzeit nicht verfügbar. Bitte versuchen Sie es erneut.",
+    "secureAreaLabel": "Sicherer Bereich",
+    "readOnlyLabel": "Schreibgeschützt",
+    "navigationLabel": "Navigation",
+    "dashboardNav": "Dashboard",
+    "offersNav": "Angebote",
+    "partnersNav": "Partner",
+    "rfqNav": "RFQ",
+    "ordersNav": "Bestellungen",
+    "taxonomyNav": "Kategorien und Attribute",
+    "plannedLabel": "Geplant",
+    "moduleReadOnlyStatus": "Panel arbeitet im schreibgeschützten Modus",
+    "nextModuleLabel": "nächstes Modul",
+    "moduleAvailabilityHeading": "Modulverfügbarkeit"
   }
 }

@@ -423,6 +423,19 @@
     "backToMarketplace": "Retour à LogiMarket",
     "logoutButton": "Se déconnecter",
     "logoutPending": "Déconnexion...",
-    "logoutUnavailable": "La déconnexion est actuellement indisponible. Veuillez réessayer."
+    "logoutUnavailable": "La déconnexion est actuellement indisponible. Veuillez réessayer.",
+    "secureAreaLabel": "Zone sécurisée",
+    "readOnlyLabel": "Lecture seule",
+    "navigationLabel": "Navigation",
+    "dashboardNav": "Tableau de bord",
+    "offersNav": "Offres",
+    "partnersNav": "Partenaires",
+    "rfqNav": "RFQ",
+    "ordersNav": "Commandes",
+    "taxonomyNav": "Catégories et attributs",
+    "plannedLabel": "Prévu",
+    "moduleReadOnlyStatus": "Le panneau fonctionne en mode lecture seule",
+    "nextModuleLabel": "prochain module",
+    "moduleAvailabilityHeading": "Disponibilité des modules"
   }
 }

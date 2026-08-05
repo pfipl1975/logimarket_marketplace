@@ -42,5 +42,5 @@ export default async function LocalizedAdminPage({
   const locale = resolvedParams.locale as Locale;
   const dictionary = await getDictionary(locale);
 
-  return <AdminEntryPage locale={locale} dictionary={dictionary.admin} />;
+  return <AdminEntryPage dictionary={dictionary.admin} />;
 }

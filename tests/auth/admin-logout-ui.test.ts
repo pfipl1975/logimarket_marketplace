@@ -43,11 +43,19 @@ test("AdminLogoutForm UI static checks", async (t) => {
     assert.match(logoutUserContent, /redirect\(getAdminLoginRedirectPath\(safeLocale\)\)/);
   });
 
+  await t.test("AdminShell.tsx contract", async () => {
+    const filePath = path.join(__dirname, "../../src/components/admin/AdminShell.tsx");
+    const content = await fs.readFile(filePath, "utf-8");
+
+    assert.match(content, /<AdminLogoutForm/);
+    assert.doesNotMatch(content, /redirectTo=/);
+  });
+
   await t.test("AdminEntryPage.tsx contract", async () => {
     const filePath = path.join(__dirname, "../../src/app/_shared/AdminEntryPage.tsx");
     const content = await fs.readFile(filePath, "utf-8");
 
-    assert.match(content, /<AdminLogoutForm/);
+    assert.doesNotMatch(content, /<AdminLogoutForm/);
     assert.doesNotMatch(content, /redirectTo=/);
   });
 });
