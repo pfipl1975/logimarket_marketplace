@@ -1,58 +1,57 @@
-import { readFileSync, readdirSync } from "fs";
-import { join } from "path";
-import { describe, it, expect } from "vitest";
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFileSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 
-describe("Admin Shell Architecture Contract", () => {
+test("Admin Shell Architecture Contract", async (t) => {
   const plLayoutPath = join(process.cwd(), "src/app/(pl)/admin/layout.tsx");
   const locLayoutPath = join(process.cwd(), "src/app/(localized)/[locale]/admin/layout.tsx");
   const shellPath = join(process.cwd(), "src/components/admin/AdminShell.tsx");
   const entryPath = join(process.cwd(), "src/app/_shared/AdminEntryPage.tsx");
   const messagesDir = join(process.cwd(), "src/messages");
 
-  it("polski layout wywołuje requireAdminPageAccess i używa AdminShell", () => {
+  await t.test("polski layout wywołuje requireAdminPageAccess i używa AdminShell", () => {
     const content = readFileSync(plLayoutPath, "utf-8");
-    expect(content).toMatch(/requireAdminPageAccess\("pl"\)/);
-    expect(content).toMatch(/<AdminShell/);
+    assert.match(content, /requireAdminPageAccess\("pl"\)/);
+    assert.match(content, /<AdminShell/);
   });
 
-  it("lokalizowany layout waliduje locale, odrzuca pl, wywołuje requireAdminPageAccess i używa AdminShell", () => {
+  await t.test("lokalizowany layout waliduje locale, odrzuca pl, wywołuje requireAdminPageAccess i używa AdminShell", () => {
     const content = readFileSync(locLayoutPath, "utf-8");
-    expect(content).toMatch(/isLocale\(/);
-    expect(content).toMatch(/=== "pl"/);
-    expect(content).toMatch(/notFound\(\)/);
-    expect(content).toMatch(/requireAdminPageAccess\(/);
-    expect(content).toMatch(/<AdminShell/);
+    assert.match(content, /isLocale\(/);
+    assert.match(content, /=== "pl"/);
+    assert.match(content, /notFound\(\)/);
+    assert.match(content, /requireAdminPageAccess\(/);
+    assert.match(content, /<AdminShell/);
   });
 
-  it("AdminShell spełnia założenia bezpieczeństwa i architektury", () => {
+  await t.test("AdminShell spełnia założenia bezpieczeństwa i architektury", () => {
     const content = readFileSync(shellPath, "utf-8");
-    expect(content).not.toMatch(/"use client"/);
-    expect(content).not.toMatch(/'use client'/);
-    expect(content).toMatch(/<AdminLogoutForm/);
-    expect(content).not.toMatch(/email/i);
-    expect(content).not.toMatch(/uuid/i);
-    expect(content).not.toMatch(/session/i);
-    expect(content).toMatch(/locale === "pl" \? "\/admin" : `\/\$\{locale\}\/admin`/);
+    assert.doesNotMatch(content, /"use client"/);
+    assert.doesNotMatch(content, /'use client'/);
+    assert.match(content, /<AdminLogoutForm/);
+    assert.doesNotMatch(content, /email/i);
+    assert.doesNotMatch(content, /uuid/i);
+    assert.doesNotMatch(content, /session/i);
+    assert.match(content, /locale === "pl" \? "\/admin" : `\/\$\{locale\}\/admin`/);
   });
 
-  it("przyszłe moduły nie są linkami do nieistniejących tras w AdminShell", () => {
+  await t.test("przyszłe moduły nie są linkami do nieistniejących tras w AdminShell", () => {
     const content = readFileSync(shellPath, "utf-8");
-    expect(content).toMatch(/<span[^>]*aria-disabled="true"/);
-    expect(content).not.toMatch(/href="\#"/);
+    assert.match(content, /<span[^>]*aria-disabled="true"/);
+    assert.doesNotMatch(content, /href="\#"/);
   });
 
-  it("AdminEntryPage nie zawiera wylogowania ani pełnego ekranu", () => {
+  await t.test("AdminEntryPage nie zawiera wylogowania ani pełnego ekranu", () => {
     const content = readFileSync(entryPath, "utf-8");
-    expect(content).not.toMatch(/<AdminLogoutForm/);
-    expect(content).not.toMatch(/min-h-screen/);
-    // Nie zawiera metryk/liczników (brak hardkodowanych danych z DB w treści poza klasami)
-    // Brak specyficznych słów sugerujących fikcyjne statystyki
-    expect(content).not.toMatch(/revenue|trend|chart|statystyki|liczba ofert:|liczba partnerów:/i);
+    assert.doesNotMatch(content, /<AdminLogoutForm/);
+    assert.doesNotMatch(content, /min-h-screen/);
+    assert.doesNotMatch(content, /revenue|trend|chart|statystyki|liczba ofert:|liczba partnerów:/i);
   });
 
-  it("wszystkie locale zawierają klucze sekcji admin", () => {
+  await t.test("wszystkie locale zawierają klucze sekcji admin", () => {
     const files = readdirSync(messagesDir).filter(f => f.endsWith(".json"));
-    expect(files.length).toBe(7);
+    assert.equal(files.length, 7);
 
     const requiredKeys = [
       "secureAreaLabel",
@@ -72,9 +71,9 @@ describe("Admin Shell Architecture Contract", () => {
 
     files.forEach(file => {
       const content = JSON.parse(readFileSync(join(messagesDir, file), "utf-8"));
-      expect(content).toHaveProperty("admin");
+      assert.ok(Object.prototype.hasOwnProperty.call(content, "admin"), `File ${file} is missing 'admin' property`);
       requiredKeys.forEach(key => {
-        expect(content.admin).toHaveProperty(key);
+        assert.ok(Object.prototype.hasOwnProperty.call(content.admin, key), `File ${file} is missing admin.${key}`);
       });
     });
   });
