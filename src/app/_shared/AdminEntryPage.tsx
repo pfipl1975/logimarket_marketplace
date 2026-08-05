@@ -2,7 +2,6 @@ import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
 import Link from "next/link";
 import { AdminLogoutForm } from "@/components/auth/AdminLogoutForm";
-import { getAdminLoginRedirectPath } from "@/lib/auth/admin-page-access-core";
 
 export function AdminEntryPage({
   locale,
@@ -46,7 +45,6 @@ export function AdminEntryPage({
           </Link>
           <AdminLogoutForm
             locale={locale}
-            redirectTo={getAdminLoginRedirectPath(locale)}
             labels={{
               logoutButton: dictionary.logoutButton,
               logoutPending: dictionary.logoutPending,

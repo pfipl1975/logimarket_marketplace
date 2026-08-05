@@ -6,7 +6,6 @@ import type { Locale } from "@/lib/i18n/config";
 
 type AdminLogoutFormProps = {
   locale: Locale;
-  redirectTo: string;
   labels: {
     logoutButton: string;
     logoutPending: string;
@@ -16,7 +15,6 @@ type AdminLogoutFormProps = {
 
 export function AdminLogoutForm({
   locale,
-  redirectTo,
   labels,
 }: AdminLogoutFormProps) {
   const [state, formAction, isPending] = useActionState(logoutUser, null);
@@ -24,7 +22,6 @@ export function AdminLogoutForm({
   return (
     <form action={formAction} className="inline-block">
       <input type="hidden" name="locale" value={locale} />
-      <input type="hidden" name="redirectTo" value={redirectTo} />
       <button
         type="submit"
         disabled={isPending}
