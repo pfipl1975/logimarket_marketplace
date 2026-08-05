@@ -1,6 +1,7 @@
 import { requireAdminPageAccess } from "@/lib/auth/admin-page-access";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 export default async function LocalizedAdminLayout({
   children,
@@ -17,5 +18,5 @@ export default async function LocalizedAdminLayout({
 
   await requireAdminPageAccess(resolvedParams.locale as Locale);
 
-  return <>{children}</>;
+  return <AdminShell locale={resolvedParams.locale as Locale}>{children}</AdminShell>;
 }

@@ -423,6 +423,19 @@
     "backToMarketplace": "Wróć do LogiMarket",
     "logoutButton": "Wyloguj się",
     "logoutPending": "Wylogowywanie...",
-    "logoutUnavailable": "Wylogowanie jest w tej chwili niedostępne. Spróbuj ponownie."
+    "logoutUnavailable": "Wylogowanie jest w tej chwili niedostępne. Spróbuj ponownie.",
+    "secureAreaLabel": "Strefa chroniona",
+    "readOnlyLabel": "Tylko do odczytu",
+    "navigationLabel": "Nawigacja",
+    "dashboardNav": "Dashboard",
+    "offersNav": "Oferty",
+    "partnersNav": "Partnerzy",
+    "rfqNav": "RFQ",
+    "ordersNav": "Zamówienia",
+    "taxonomyNav": "Kategorie i atrybuty",
+    "plannedLabel": "Planowane",
+    "moduleReadOnlyStatus": "Panel działa w trybie read-only",
+    "nextModuleLabel": "następny moduł",
+    "moduleAvailabilityHeading": "Dostępność modułów"
   }
 }

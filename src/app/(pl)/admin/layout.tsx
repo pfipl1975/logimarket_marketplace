@@ -1,4 +1,5 @@
 import { requireAdminPageAccess } from "@/lib/auth/admin-page-access";
+import { AdminShell } from "@/components/admin/AdminShell";
 
 export default async function AdminLayout({
   children,
@@ -7,5 +8,5 @@ export default async function AdminLayout({
 }) {
   await requireAdminPageAccess("pl");
 
-  return <>{children}</>;
+  return <AdminShell locale="pl">{children}</AdminShell>;
 }

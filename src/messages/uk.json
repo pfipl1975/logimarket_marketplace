@@ -423,6 +423,19 @@
     "backToMarketplace": "Повернутися до LogiMarket",
     "logoutButton": "Вийти",
     "logoutPending": "Вихід...",
-    "logoutUnavailable": "Вихід наразі недоступний. Спробуйте ще раз."
+    "logoutUnavailable": "Вихід наразі недоступний. Спробуйте ще раз.",
+    "secureAreaLabel": "Безпечна зона",
+    "readOnlyLabel": "Тільки для читання",
+    "navigationLabel": "Навігація",
+    "dashboardNav": "Панель приладів",
+    "offersNav": "Пропозиції",
+    "partnersNav": "Партнери",
+    "rfqNav": "RFQ",
+    "ordersNav": "Замовлення",
+    "taxonomyNav": "Категорії та атрибути",
+    "plannedLabel": "Заплановано",
+    "moduleReadOnlyStatus": "Панель працює в режимі лише для читання",
+    "nextModuleLabel": "наступний модуль",
+    "moduleAvailabilityHeading": "Доступність модулів"
   }
 }
