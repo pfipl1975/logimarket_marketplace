@@ -420,6 +420,9 @@
     "title": "Admin-Panel",
     "description": "Administratorzugang wurde verifiziert.",
     "scopeDescription": "Die aktuelle Phase bietet einen sicheren Einstiegspunkt. Funktionen zur Angebots- und Inhaltsverwaltung werden in separaten Phasen eingeführt.",
-    "backToMarketplace": "Zurück zu LogiMarket"
+    "backToMarketplace": "Zurück zu LogiMarket",
+    "logoutButton": "Abmelden",
+    "logoutPending": "Abmeldung läuft...",
+    "logoutUnavailable": "Abmeldung ist derzeit nicht verfügbar. Bitte versuchen Sie es erneut."
   }
 }

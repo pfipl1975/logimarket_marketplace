@@ -420,6 +420,9 @@
     "title": "Admin Panel",
     "description": "Administrator access has been verified.",
     "scopeDescription": "The current stage provides a secure entry point. Offer and content management features will be rolled out in separate stages.",
-    "backToMarketplace": "Return to LogiMarket"
+    "backToMarketplace": "Return to LogiMarket",
+    "logoutButton": "Log out",
+    "logoutPending": "Logging out...",
+    "logoutUnavailable": "Logout is currently unavailable. Please try again."
   }
 }

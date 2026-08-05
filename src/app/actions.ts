@@ -497,7 +497,7 @@ export type LogoutActionResult =
   | { success: false; code: "AUTH_UNAVAILABLE" }
   | never;
 
-export async function logoutUser(formData?: FormData): Promise<LogoutActionResult> {
+export async function logoutUser(_prevState: LogoutActionResult | null, formData?: FormData): Promise<LogoutActionResult> {
   const parsedLocale = formData?.get("locale")?.toString() || "";
   const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
   const safeLocale = isLocale(parsedLocale) ? parsedLocale : defaultLocale;
@@ -521,9 +521,9 @@ export async function logoutUser(formData?: FormData): Promise<LogoutActionResul
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
-  const { getHomePath } = await import("@/lib/i18n/paths");
+  const { getAdminLoginRedirectPath } = await import("@/lib/auth/admin-page-access-core");
   
   revalidatePath("/", "layout");
-  redirect(getHomePath(safeLocale));
+  redirect(getAdminLoginRedirectPath(safeLocale));
 }
 

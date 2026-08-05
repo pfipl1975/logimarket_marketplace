@@ -1,6 +1,7 @@
 import type { Locale } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/types";
 import Link from "next/link";
+import { AdminLogoutForm } from "@/components/auth/AdminLogoutForm";
 
 export function AdminEntryPage({
   locale,
@@ -35,13 +36,21 @@ export function AdminEntryPage({
           </div>
         </div>
 
-        <footer className="mt-12 pt-6 border-t border-border-industrial">
+        <footer className="mt-12 pt-6 border-t border-border-industrial flex flex-col sm:flex-row gap-4">
           <Link 
             href={homePath}
             className="inline-flex items-center justify-center px-6 py-3 bg-primary hover:bg-accent text-primary-foreground rounded-button text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
           >
             {dictionary.backToMarketplace}
           </Link>
+          <AdminLogoutForm
+            locale={locale}
+            labels={{
+              logoutButton: dictionary.logoutButton,
+              logoutPending: dictionary.logoutPending,
+              logoutUnavailable: dictionary.logoutUnavailable
+            }}
+          />
         </footer>
       </div>
     </main>

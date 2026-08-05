@@ -420,6 +420,9 @@
     "title": "Panneau d'administration",
     "description": "L'accès administrateur a été vérifié.",
     "scopeDescription": "La phase actuelle fournit un point d'entrée sécurisé. Les fonctionnalités de gestion des offres et du contenu seront déployées dans des phases séparées.",
-    "backToMarketplace": "Retour à LogiMarket"
+    "backToMarketplace": "Retour à LogiMarket",
+    "logoutButton": "Se déconnecter",
+    "logoutPending": "Déconnexion...",
+    "logoutUnavailable": "La déconnexion est actuellement indisponible. Veuillez réessayer."
   }
 }

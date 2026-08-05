@@ -420,6 +420,9 @@
     "title": "Panel de Administración",
     "description": "El acceso de administrador ha sido verificado.",
     "scopeDescription": "La etapa actual proporciona un punto de entrada seguro. Las funciones de gestión de ofertas y contenido se implementarán en etapas separadas.",
-    "backToMarketplace": "Volver a LogiMarket"
+    "backToMarketplace": "Volver a LogiMarket",
+    "logoutButton": "Cerrar sesión",
+    "logoutPending": "Cerrando sesión...",
+    "logoutUnavailable": "El cierre de sesión no está disponible en este momento. Inténtalo de nuevo."
   }
 }
