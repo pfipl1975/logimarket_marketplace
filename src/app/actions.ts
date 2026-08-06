@@ -530,3 +530,25 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
   redirect(getAdminLoginRedirectPath(safeLocale));
 }
 
+export type AdminOffersPageResult =
+  | { ok: true; data: import("@/lib/admin/offers-read-model-core").AdminOffersReadResult }
+  | { ok: false; code: "ADMIN_OFFERS_UNAVAILABLE" };
+
+export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffersPageResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOffersQuery } = await import("@/lib/admin/offers-query");
+  const query = parseAdminOffersQuery(rawInput);
+
+  try {
+    const { getAdminOffersReadModel } = await import("@/lib/admin/offers-read-model-core");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminOffersReadModel(db, query);
+    return { ok: true, data };
+  } catch (error) {
+    console.error("Admin offers DB error:", error);
+    return { ok: false, code: "ADMIN_OFFERS_UNAVAILABLE" };
+  }
+}
+
