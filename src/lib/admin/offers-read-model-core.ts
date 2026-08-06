@@ -4,7 +4,7 @@ import * as schema from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
 import { isPublicOfferDetailStatus } from "@/lib/offers/status";
-import { ADMIN_OFFERS_PAGE_SIZE } from "./offers-query";
+import { ADMIN_OFFERS_PAGE_SIZE, isCanonicalPositiveInteger } from "./offers-query";
 import type { AdminOffersQuery, AdminOfferStatusFilter } from "./offers-query";
 
 export interface AdminOfferDto {
@@ -86,9 +86,8 @@ function buildFilters(query: AdminOffersQuery) {
       ilike(schema.categories.name, `%${query.q}%`)
     ];
 
-    const qNum = Number(query.q);
-    if (Number.isSafeInteger(qNum) && qNum > 0) {
-      searchConditions.push(eq(schema.offers.id, qNum));
+    if (isCanonicalPositiveInteger(query.q)) {
+      searchConditions.push(eq(schema.offers.id, Number(query.q)));
     }
 
     conditions.push(or(...searchConditions));
@@ -141,9 +140,9 @@ export async function getAdminOffersReadModel(
       id: Number(row.offer.id),
       title: row.offer.title,
       partnerId: Number(row.offer.partnerId),
-      partnerName: row.partner?.companyName ?? "Nieznany partner",
+      partnerName: row.partner?.companyName ?? "—",
       categoryId: Number(row.offer.categoryId),
-      categoryName: row.category?.name ?? "Bez kategorii",
+      categoryName: row.category?.name ?? "—",
       canonicalModel: resolveCanonicalOfferModel(row.offer.offerModel, row.offer.conversionType),
       publicationStatus: isExpectedStatus ? (rawStatus as AdminOfferStatusFilter) : "unknown",
       isActive: row.offer.isActive,

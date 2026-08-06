@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { and, eq, desc, asc, inArray } from "drizzle-orm";
+import { and, eq, asc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
@@ -485,7 +485,7 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
       const { classifyLoginError } = await import("@/lib/auth/login-error");
       return { success: false, code: classifyLoginError(error) };
     }
-  } catch (err) {
+  } catch {
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
@@ -520,7 +520,7 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
     if (error) {
       return { success: false, code: "AUTH_UNAVAILABLE" };
     }
-  } catch (err) {
+  } catch {
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
@@ -531,7 +531,7 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
 }
 
 export type AdminOffersPageResult =
-  | { ok: true; data: import("@/lib/admin/offers-read-model-core").AdminOffersReadResult }
+  | { ok: true; data: import("@/lib/admin/offers-read-model-core").AdminOffersReadResult & { query: import("@/lib/admin/offers-query").AdminOffersQuery } }
   | { ok: false; code: "ADMIN_OFFERS_UNAVAILABLE" };
 
 export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffersPageResult> {
@@ -545,9 +545,9 @@ export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffers
     const { getAdminOffersReadModel } = await import("@/lib/admin/offers-read-model-core");
     const { db } = await import("@/lib/db");
     const data = await getAdminOffersReadModel(db, query);
-    return { ok: true, data };
-  } catch (error) {
-    console.error("Admin offers DB error:", error);
+    return { ok: true, data: { ...data, query: { ...query, page: data.currentPage } } };
+  } catch {
+    console.error("Admin offers read query failed.");
     return { ok: false, code: "ADMIN_OFFERS_UNAVAILABLE" };
   }
 }

@@ -91,7 +91,7 @@ export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps)
                 {item.categoryName}
               </td>
               <td className="px-4 py-3">
-                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${item.canonicalModel === 'unknown' ? 'bg-destructive/10 text-destructive' : 'bg-secondary text-secondary-foreground'}`}>
+                <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${item.canonicalModel === 'unknown' ? 'border border-border-industrial bg-muted' : 'bg-secondary text-secondary-foreground'}`}>
                   {getModelLabel(item.canonicalModel)}
                 </span>
               </td>
@@ -102,11 +102,9 @@ export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps)
                 {formatPrice(item)}
               </td>
               <td className="px-4 py-3 text-center">
-                {item.isActive ? (
-                  <span className="text-brand-teal" title={dict.activeYes}>✓</span>
-                ) : (
-                  <span className="text-muted-foreground" title={dict.activeNo}>-</span>
-                )}
+                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-secondary text-secondary-foreground">
+                  {item.isActive ? dict.activeYes : dict.activeNo}
+                </span>
               </td>
               <td className="px-4 py-3 whitespace-nowrap text-muted-foreground">
                 {formatDate(item.createdAt)}

@@ -2,7 +2,6 @@ import Link from "next/link";
 import { AdminOffersTable } from "@/components/admin/AdminOffersTable";
 import { getAdminOffersPage } from "@/app/actions";
 import { buildAdminOffersUrl } from "@/lib/admin/offers-query";
-import type { AdminOffersQuery } from "@/lib/admin/offers-query";
 import type { Locale } from "@/lib/i18n/config";
 
 interface AdminOffersPageProps {
@@ -24,18 +23,7 @@ export async function AdminOffersPage({ locale, searchParams, dict, basePath }: 
     );
   }
 
-  const { items, total, pageCount, currentPage, filterOptions } = result.data;
-  // We need to parse search params again just for building links/form values,
-  // or we can just extract what we need. Let's do a simple extraction.
-  const query = searchParams as Record<string, string>;
-  const currentQuery: AdminOffersQuery = {
-    q: query.q || "",
-    status: (query.status as AdminOffersQuery["status"]) || null,
-    model: (query.model as AdminOffersQuery["model"]) || null,
-    partner: query.partner ? Number(query.partner) : null,
-    category: query.category ? Number(query.category) : null,
-    page: currentPage,
-  };
+  const { items, total, pageCount, currentPage, filterOptions, query: currentQuery } = result.data;
 
   const hasFilters = Boolean(currentQuery.q || currentQuery.status || currentQuery.model || currentQuery.partner || currentQuery.category);
   const isEmpty = items.length === 0;

@@ -25,10 +25,23 @@ test("Admin Offers Query Parser and Builder", async (t) => {
     assert.equal(q2.q, "a".repeat(100));
   });
 
-  await t.test("ignores arrays and takes first or null safely", () => {
-    // Current implementation uses getSingleString which takes first element
-    const q = parseAdminOffersQuery({ status: ["draft", "published"] });
-    assert.equal(q.status, "draft");
+  await t.test("rejects arrays for all fields", () => {
+    const q = parseAdminOffersQuery({
+      q: ["hello", "world"],
+      status: ["draft", "published"],
+      model: ["rfq", "unknown"],
+      partner: ["123", "456"],
+      category: ["1", "2"],
+      page: ["2", "3"]
+    });
+    assert.deepEqual(q, {
+      q: "",
+      status: null,
+      model: null,
+      partner: null,
+      category: null,
+      page: 1,
+    });
   });
 
   await t.test("parses correct models", () => {
@@ -65,6 +78,26 @@ test("Admin Offers Query Parser and Builder", async (t) => {
     const q2 = parseAdminOffersQuery({ partner: "-1", category: "abc" });
     assert.equal(q2.partner, null);
     assert.equal(q2.category, null);
+  });
+
+  await t.test("rejects invalid formats for numbers", () => {
+    const q = parseAdminOffersQuery({
+      partner: "1.0",
+      category: "1e3",
+      page: "+1"
+    });
+    assert.equal(q.partner, null);
+    assert.equal(q.category, null);
+    assert.equal(q.page, 1);
+
+    const q2 = parseAdminOffersQuery({
+      partner: "01",
+      category: " 1 ",
+      page: "9007199254740992" // > Number.MAX_SAFE_INTEGER
+    });
+    assert.equal(q2.partner, null);
+    assert.equal(q2.category, null);
+    assert.equal(q2.page, 1);
   });
 
   await t.test("page must be positive safe integer or fallback to 1", () => {

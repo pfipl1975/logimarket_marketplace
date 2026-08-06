@@ -13,17 +13,20 @@ export interface AdminOffersQuery {
 }
 
 function getSingleString(val: unknown): string | null {
-  if (typeof val === "string") return val;
-  if (Array.isArray(val) && typeof val[0] === "string") return val[0];
-  return null;
+  return typeof val === "string" ? val : null;
+}
+
+export function isCanonicalPositiveInteger(str: string): boolean {
+  if (!/^[1-9]\d*$/.test(str)) return false;
+  const num = Number(str);
+  return Number.isSafeInteger(num);
 }
 
 function parsePositiveSafeInteger(val: unknown): number | null {
   const str = getSingleString(val);
   if (!str) return null;
-  const num = Number(str);
-  if (Number.isSafeInteger(num) && num > 0) return num;
-  return null;
+  if (!isCanonicalPositiveInteger(str)) return null;
+  return Number(str);
 }
 
 function parseStatus(val: unknown): AdminOfferStatusFilter | null {

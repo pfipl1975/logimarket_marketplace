@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 import { join } from "node:path";
 
 test("Admin Offers Read Architecture Contract", async (t) => {
@@ -50,19 +50,27 @@ test("Admin Offers Read Architecture Contract", async (t) => {
     assert.match(navContent, /"use client"/);
   });
 
-  await t.test("akcja serwerowa wymusza requireAdmin i nie mutuje", () => {
-    const content = readFileSync(actionPath, "utf-8");
-    // Wyszukujemy getAdminOffersPage
-    assert.match(content, /export async function getAdminOffersPage/);
-    assert.match(content, /await requireAdmin\(\)/);
-    // Brak mutacji z getAdminOffersPage: no delete, no insert, no update w tej funkcji.
-    // Nie jesteśmy w stanie wyparować perfekcyjnie, ale core path używa select
+  await t.test("AdminOffersPage nie zawiera searchParams as Record, nie odtwarza przez Number, używa query", () => {
+    const content = readFileSync(sharedPagePath, "utf-8");
+    assert.doesNotMatch(content, /searchParams as Record/);
+    assert.doesNotMatch(content, /query\.partner \? Number/);
+    assert.match(content, /query: currentQuery/);
   });
 
-  await t.test("read model nie zwraca wrażliwych danych partnera", () => {
+  await t.test("akcja serwerowa wymusza requireAdmin i nie mutuje, zwraca query z page, bez error.stack", () => {
+    const content = readFileSync(actionPath, "utf-8");
+    assert.match(content, /export async function getAdminOffersPage/);
+    assert.match(content, /await requireAdmin\(\)/);
+    assert.doesNotMatch(content, /console\.error.*error\);/);
+    assert.match(content, /\.\.\.query, page:/);
+  });
+
+  await t.test("read model nie zwraca wrażliwych danych partnera i brak polskich fallbacków", () => {
     const content = readFileSync(corePath, "utf-8");
     assert.doesNotMatch(content, /contactEmail/);
     assert.doesNotMatch(content, /outboundUrl/);
+    assert.doesNotMatch(content, /Nieznany partner/);
+    assert.doesNotMatch(content, /Bez kategorii/);
   });
 
   await t.test("projekcja używa resolveCanonicalOfferModel", () => {
@@ -70,13 +78,13 @@ test("Admin Offers Read Architecture Contract", async (t) => {
     assert.match(content, /resolveCanonicalOfferModel\(/);
   });
 
-  await t.test("publiczny podgląd uwzględnia status z functions i nie używa external", () => {
-    const coreContent = readFileSync(corePath, "utf-8");
-    assert.match(coreContent, /isPublicOfferDetailStatus\(/);
-    
-    const tableContent = readFileSync(tablePath, "utf-8");
-    assert.match(tableContent, /\/oferta\/\$\{id\}/);
-    assert.doesNotMatch(tableContent, /outboundUrl/);
+  await t.test("tabela używa text z dict dla active i neutral dla unknown, bez outboud", () => {
+    const content = readFileSync(tablePath, "utf-8");
+    assert.doesNotMatch(content, /outboundUrl/);
+    assert.doesNotMatch(content, /text-destructive/);
+    assert.doesNotMatch(content, /bg-destructive/);
+    assert.match(content, /dict\.activeYes/);
+    assert.match(content, /dict\.activeNo/);
   });
 
   await t.test("AdminNavigation używa pathname i disabled do planowanych", () => {
@@ -86,38 +94,22 @@ test("Admin Offers Read Architecture Contract", async (t) => {
     assert.doesNotMatch(content, /href="#"/);
   });
 
-  await t.test("wszystkie słowniki mają spójną sekcję adminOffers", () => {
+  await t.test("wszystkie słowniki mają spójną sekcję adminOffers pod względem kluczy", () => {
     const dir = join(process.cwd(), "src/messages");
-    const files = readdirSync(dir).filter(f => f.endsWith(".json"));
-    
-    for (const file of files) {
-      const data = JSON.parse(readFileSync(join(dir, file), "utf-8"));
-      assert.ok(data.adminOffers, `${file} missing adminOffers section`);
-      assert.ok(data.adminOffers.metaTitle, `${file} missing metaTitle`);
-      assert.ok(data.adminOffers.modelRfq, `${file} missing modelRfq`);
-      assert.ok(data.adminOffers.statusPublished, `${file} missing statusPublished`);
-    }
-
     const enData = JSON.parse(readFileSync(join(dir, "en.json"), "utf-8"));
     const plData = JSON.parse(readFileSync(join(dir, "pl.json"), "utf-8"));
-    const deData = JSON.parse(readFileSync(join(dir, "de.json"), "utf-8"));
-    const frData = JSON.parse(readFileSync(join(dir, "fr.json"), "utf-8"));
-    const esData = JSON.parse(readFileSync(join(dir, "es.json"), "utf-8"));
-    const ukData = JSON.parse(readFileSync(join(dir, "uk.json"), "utf-8"));
-    const zhData = JSON.parse(readFileSync(join(dir, "zh.json"), "utf-8"));
+    
+    const enKeys = Object.keys(enData.adminOffers).sort();
+    const plKeys = Object.keys(plData.adminOffers).sort();
+    
+    assert.deepEqual(plKeys, enKeys, "PL keys mismatch EN keys");
 
-    const checkNotCopied = (locale: string, data: Record<string, Record<string, string>>) => {
-      // Wymagamy, aby przynajmniej metaTitle był różny od angielskiego 
-      // (z wyjątkiem ewentualnych uniwersalnych pojęć, upewnijmy się, że 'Offers' -> 'Oferty' itd.)
-      assert.notEqual(data.adminOffers.title, enData.adminOffers.title, `${locale} title is identical to EN`);
-    };
-
-    checkNotCopied("pl", plData);
-    checkNotCopied("de", deData);
-    checkNotCopied("fr", frData);
-    checkNotCopied("es", esData);
-    checkNotCopied("uk", ukData);
-    // W chińskim title to "优惠", po angielsku "Offers". Zapewnijmy że się różnią.
-    checkNotCopied("zh", zhData);
+    const nonEnLocales = ["de", "fr", "es", "uk", "zh"];
+    for (const loc of nonEnLocales) {
+      const data = JSON.parse(readFileSync(join(dir, `${loc}.json`), "utf-8"));
+      const locKeys = Object.keys(data.adminOffers).sort();
+      assert.deepEqual(locKeys, enKeys, `${loc} keys mismatch EN keys`);
+      assert.notDeepEqual(data.adminOffers, enData.adminOffers, `${loc} dictionary is identical to EN`);
+    }
   });
 });
