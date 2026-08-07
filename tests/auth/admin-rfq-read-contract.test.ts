@@ -8,8 +8,25 @@ test("Admin RFQ Read Contract", async (t) => {
     const plRoute = await fs.readFile(path.join(process.cwd(), "src/app/(pl)/admin/zapytania/page.tsx"), "utf-8");
     const locRoute = await fs.readFile(path.join(process.cwd(), "src/app/(localized)/[locale]/admin/rfq/page.tsx"), "utf-8");
 
-    assert.match(plRoute, /<AdminRfqPage/);
-    assert.match(locRoute, /<AdminRfqPage/);
+    // Both
+    assert.match(plRoute, /export const dynamic = "force-dynamic"/);
+    assert.match(locRoute, /export const dynamic = "force-dynamic"/);
+
+    assert.match(plRoute, /searchParams:\s*Promise<unknown>/);
+    assert.match(locRoute, /searchParams:\s*Promise<unknown>/);
+
+    assert.match(plRoute, /await searchParams/);
+    assert.match(locRoute, /await searchParams/);
+
+    assert.match(plRoute, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false,\s*nocache:\s*true\s*,?\s*\}/);
+    assert.match(locRoute, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false,\s*nocache:\s*true\s*,?\s*\}/);
+
+    // Localized specific
+    assert.match(locRoute, /params:\s*Promise<\{\s*locale:\s*string\s*}>/);
+    assert.match(locRoute, /await params/);
+    assert.match(locRoute, /isLocale/);
+    assert.match(locRoute, /notFound/);
+    assert.match(locRoute, /locale === "pl"/);
   });
 
   await t.test("Server Components have no client directives", async () => {
@@ -52,7 +69,7 @@ test("Admin RFQ Read Contract", async (t) => {
     // Must have allowed fields
     assert.match(core, /email:/);
     assert.match(core, /contactName:/);
-    
+
     // Must NOT have forbidden fields
     assert.doesNotMatch(core, /phone:/);
     assert.doesNotMatch(core, /message:/);
@@ -60,13 +77,26 @@ test("Admin RFQ Read Contract", async (t) => {
     assert.doesNotMatch(core, /schema\.rfqLeads\.message/);
   });
 
-  await t.test("Search privacy", async () => {
+  await t.test("Search and structural contract", async () => {
     const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/rfq-read-model-core.ts"), "utf-8");
 
     assert.doesNotMatch(core, /ilike\(schema\.rfqLeads\.email/);
     assert.doesNotMatch(core, /ilike\(schema\.rfqLeads\.contactName/);
     assert.doesNotMatch(core, /ilike\(schema\.rfqLeads\.phone/);
     assert.doesNotMatch(core, /ilike\(schema\.rfqLeads\.message/);
+
+    assert.match(core, /eq\(schema\.rfqLeads\.id,\s*num\)/);
+    assert.match(core, /eq\(schema\.rfqLeads\.offerId,\s*num\)/);
+    assert.match(core, /eq\(schema\.rfqLeads\.partnerId,\s*num\)/);
+
+    assert.match(core, /ilike\(schema\.rfqLeads\.companyName/);
+    assert.match(core, /ilike\(schema\.offers\.title/);
+    assert.match(core, /ilike\(schema\.partners\.companyName/);
+  });
+
+  await t.test("Pagination contract", async () => {
+    const query = await fs.readFile(path.join(process.cwd(), "src/lib/admin/rfq-query.ts"), "utf-8");
+    assert.match(query, /ADMIN_RFQ_PAGE_SIZE = 25/);
   });
 
   await t.test("Join Contract (Orphan preservation & right partner ID)", async () => {
@@ -74,7 +104,7 @@ test("Admin RFQ Read Contract", async (t) => {
 
     assert.match(core, /leftJoin\(schema\.offers, eq\(schema\.offers\.id, schema\.rfqLeads\.offerId\)\)/);
     assert.match(core, /leftJoin\(schema\.partners, eq\(schema\.partners\.id, schema\.rfqLeads\.partnerId\)\)/);
-    
+
     // Must NOT join on offers.partnerId
     assert.doesNotMatch(core, /eq\(schema\.partners\.id, schema\.offers\.partnerId\)/);
   });
@@ -96,7 +126,7 @@ test("Admin RFQ Read Contract", async (t) => {
 
     assert.doesNotMatch(table, /mailto:/);
     assert.doesNotMatch(table, /tel:/);
-    
+
     assert.match(page, /rounded-industrial/);
   });
 
