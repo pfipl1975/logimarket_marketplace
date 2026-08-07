@@ -491,5 +491,30 @@
     "paginationNext": "Weiter",
     "paginationPage": "Seite",
     "paginationSummary": "Seite {current} von {total}"
+  },
+  "adminPartners": {
+    "metaTitle": "Partner",
+    "metaDescription": "Partnerverwaltung (nur Lesezugriff)",
+    "eyebrow": "Datenbank",
+    "title": "Partner",
+    "description": "Datenbank der registrierten Partnerunternehmen",
+    "searchLabel": "Suchen",
+    "searchPlaceholder": "Suche nach Firmennamen oder ID...",
+    "applyFilters": "Suchen",
+    "clearFilters": "Suche löschen",
+    "resultsCount": "{count} Ergebnisse",
+    "tableCaption": "Partnerliste",
+    "partnerColumn": "Partner",
+    "contactEmailColumn": "Kontakt-E-Mail",
+    "createdColumn": "Erstellt",
+    "emptyTitle": "Keine Partner",
+    "emptyDescription": "Es sind noch keine Partner registriert.",
+    "filteredEmptyTitle": "Keine Ergebnisse",
+    "filteredEmptyDescription": "Es wurden keine Partner gefunden, die Ihrer Suchanfrage entsprechen.",
+    "errorTitle": "Ladefehler",
+    "errorDescription": "Fehler beim Laden der Partnerliste.",
+    "paginationPrevious": "Vorherige",
+    "paginationNext": "Nächste",
+    "paginationSummary": "Seite {current} von {total}"
   }
 }

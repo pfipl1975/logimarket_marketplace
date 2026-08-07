@@ -491,5 +491,30 @@
     "paginationNext": "Następna",
     "paginationPage": "Strona",
     "paginationSummary": "Strona {current} z {total}"
+  },
+  "adminPartners": {
+    "metaTitle": "Partnerzy",
+    "metaDescription": "Zarządzanie partnerami (tylko do odczytu)",
+    "eyebrow": "Baza",
+    "title": "Partnerzy",
+    "description": "Baza zarejestrowanych firm partnerskich",
+    "searchLabel": "Szukaj",
+    "searchPlaceholder": "Szukaj po nazwie firmy lub ID...",
+    "applyFilters": "Szukaj",
+    "clearFilters": "Wyczyść wyszukiwanie",
+    "resultsCount": "Wyników: {count}",
+    "tableCaption": "Lista partnerów",
+    "partnerColumn": "Partner",
+    "contactEmailColumn": "E-mail kontaktowy",
+    "createdColumn": "Utworzono",
+    "emptyTitle": "Brak partnerów",
+    "emptyDescription": "W systemie nie zarejestrowano jeszcze żadnych partnerów.",
+    "filteredEmptyTitle": "Brak wyników",
+    "filteredEmptyDescription": "Nie znaleziono partnerów pasujących do Twojego zapytania.",
+    "errorTitle": "Błąd wczytywania",
+    "errorDescription": "Nie udało się wczytać listy partnerów.",
+    "paginationPrevious": "Poprzednia",
+    "paginationNext": "Następna",
+    "paginationSummary": "Strona {current} z {total}"
   }
 }

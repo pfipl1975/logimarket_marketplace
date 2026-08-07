@@ -7,6 +7,7 @@ export interface AdminNavigationProps {
   variant: "mobile" | "desktop";
   dashboardPath: string;
   offersPath: string;
+  partnersPath: string;
   labels: {
     navigationLabel: string;
     dashboardNav: string;
@@ -23,12 +24,14 @@ export function AdminNavigation({
   variant,
   dashboardPath,
   offersPath,
+  partnersPath,
   labels,
 }: AdminNavigationProps) {
   const pathname = usePathname();
 
   const isDashboardActive = pathname === dashboardPath;
   const isOffersActive = pathname === offersPath || pathname.startsWith(`${offersPath}/`);
+  const isPartnersActive = pathname === partnersPath || pathname.startsWith(`${partnersPath}/`);
 
   const linkClassBase = "px-4 rounded-industrial transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex justify-between items-center";
   const linkClassSize = variant === "mobile" ? "py-2" : "py-3";
@@ -55,9 +58,13 @@ export function AdminNavigation({
         {labels.offersNav}
       </Link>
 
-      <span aria-disabled="true" className={disabledClass}>
-        {labels.partnersNav} <span className="text-xs uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded">{labels.plannedLabel}</span>
-      </span>
+      <Link
+        href={partnersPath}
+        className={`${linkClassBase} ${linkClassSize} ${isPartnersActive ? activeClass : inactiveClass}`}
+        aria-current={isPartnersActive ? "page" : undefined}
+      >
+        {labels.partnersNav}
+      </Link>
       <span aria-disabled="true" className={disabledClass}>
         {labels.rfqNav} <span className="text-xs uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded">{labels.plannedLabel}</span>
       </span>

@@ -18,6 +18,7 @@ export async function AdminShell({
   const homePath = locale === "pl" ? "/" : `/${locale}`;
   const dashboardPath = locale === "pl" ? "/admin" : `/${locale}/admin`;
   const offersPath = locale === "pl" ? "/admin/oferty" : `/${locale}/admin/offers`;
+  const partnersPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
 
   const navLabels = {
     navigationLabel: adminDict.navigationLabel,
@@ -50,6 +51,7 @@ export async function AdminShell({
               variant="mobile"
               dashboardPath={dashboardPath}
               offersPath={offersPath}
+              partnersPath={partnersPath}
               labels={navLabels}
             />
           </div>
@@ -84,6 +86,7 @@ export async function AdminShell({
             variant="desktop"
             dashboardPath={dashboardPath}
             offersPath={offersPath}
+            partnersPath={partnersPath}
             labels={navLabels}
           />
         </div>

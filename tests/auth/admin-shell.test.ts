@@ -38,6 +38,8 @@ test("Admin Shell Architecture Contract", async (t) => {
 
   await t.test("nieaktywne moduły są poprawnie wyłączone", () => {
     const content = readFileSync(join(process.cwd(), "src/components/admin/AdminNavigation.tsx"), "utf-8");
+    assert.match(content, /partnersPath: string/);
+    assert.match(content, /<Link[^>]*href=\{partnersPath\}/);
     assert.match(content, /<span[^>]*aria-disabled="true"/);
   });
 
