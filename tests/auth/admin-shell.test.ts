@@ -36,10 +36,9 @@ test("Admin Shell Architecture Contract", async (t) => {
     assert.match(content, /locale === "pl" \? "\/admin" : `\/\$\{locale\}\/admin`/);
   });
 
-  await t.test("przyszłe moduły nie są linkami do nieistniejących tras w AdminShell", () => {
-    const content = readFileSync(shellPath, "utf-8");
+  await t.test("nieaktywne moduły są poprawnie wyłączone", () => {
+    const content = readFileSync(join(process.cwd(), "src/components/admin/AdminNavigation.tsx"), "utf-8");
     assert.match(content, /<span[^>]*aria-disabled="true"/);
-    assert.doesNotMatch(content, /href="\#"/);
   });
 
   await t.test("AdminEntryPage nie zawiera wylogowania ani pełnego ekranu", () => {

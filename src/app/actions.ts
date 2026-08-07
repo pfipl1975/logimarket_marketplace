@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { and, eq, desc, asc, inArray } from "drizzle-orm";
+import { and, eq, asc, desc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
@@ -528,5 +528,27 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
   
   revalidatePath("/", "layout");
   redirect(getAdminLoginRedirectPath(safeLocale));
+}
+
+export type AdminOffersPageResult =
+  | { ok: true; data: import("@/lib/admin/offers-read-model-core").AdminOffersReadResult & { query: import("@/lib/admin/offers-query").AdminOffersQuery } }
+  | { ok: false; code: "ADMIN_OFFERS_UNAVAILABLE" };
+
+export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffersPageResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOffersQuery } = await import("@/lib/admin/offers-query");
+  const query = parseAdminOffersQuery(rawInput);
+
+  try {
+    const { getAdminOffersReadModel } = await import("@/lib/admin/offers-read-model-core");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminOffersReadModel(db, query);
+    return { ok: true, data: { ...data, query: { ...query, page: data.currentPage } } };
+  } catch {
+    console.error("Admin offers read query failed.");
+    return { ok: false, code: "ADMIN_OFFERS_UNAVAILABLE" };
+  }
 }
 
