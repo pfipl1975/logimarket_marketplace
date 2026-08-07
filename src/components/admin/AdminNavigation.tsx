@@ -8,6 +8,7 @@ export interface AdminNavigationProps {
   dashboardPath: string;
   offersPath: string;
   partnersPath: string;
+  rfqPath: string;
   labels: {
     navigationLabel: string;
     dashboardNav: string;
@@ -25,6 +26,7 @@ export function AdminNavigation({
   dashboardPath,
   offersPath,
   partnersPath,
+  rfqPath,
   labels,
 }: AdminNavigationProps) {
   const pathname = usePathname();
@@ -32,6 +34,7 @@ export function AdminNavigation({
   const isDashboardActive = pathname === dashboardPath;
   const isOffersActive = pathname === offersPath || pathname.startsWith(`${offersPath}/`);
   const isPartnersActive = pathname === partnersPath || pathname.startsWith(`${partnersPath}/`);
+  const isRfqActive = pathname === rfqPath || pathname.startsWith(`${rfqPath}/`);
 
   const linkClassBase = "px-4 rounded-industrial transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex justify-between items-center";
   const linkClassSize = variant === "mobile" ? "py-2" : "py-3";
@@ -49,7 +52,7 @@ export function AdminNavigation({
       >
         {labels.dashboardNav}
       </Link>
-      
+
       <Link
         href={offersPath}
         className={`${linkClassBase} ${linkClassSize} ${isOffersActive ? activeClass : inactiveClass}`}
@@ -65,9 +68,14 @@ export function AdminNavigation({
       >
         {labels.partnersNav}
       </Link>
-      <span aria-disabled="true" className={disabledClass}>
-        {labels.rfqNav} <span className="text-xs uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded">{labels.plannedLabel}</span>
-      </span>
+
+      <Link
+        href={rfqPath}
+        className={`${linkClassBase} ${linkClassSize} ${isRfqActive ? activeClass : inactiveClass}`}
+        aria-current={isRfqActive ? "page" : undefined}
+      >
+        {labels.rfqNav}
+      </Link>
       <span aria-disabled="true" className={disabledClass}>
         {labels.ordersNav} <span className="text-xs uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded">{labels.plannedLabel}</span>
       </span>
