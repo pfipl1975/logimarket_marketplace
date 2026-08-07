@@ -491,5 +491,30 @@
     "paginationNext": "Наступна",
     "paginationPage": "Сторінка",
     "paginationSummary": "Сторінка {current} з {total}"
+  },
+  "adminPartners": {
+    "metaTitle": "Партнери",
+    "metaDescription": "Управління партнерами (тільки для читання)",
+    "eyebrow": "База даних",
+    "title": "Партнери",
+    "description": "База зареєстрованих компаній-партнерів",
+    "searchLabel": "Пошук",
+    "searchPlaceholder": "Пошук за назвою компанії або ID...",
+    "applyFilters": "Пошук",
+    "clearFilters": "Очистити пошук",
+    "resultsCount": "{count, plural, =0 {Немає результатів} one {1 партнер} few {# партнери} many {# партнерів} other {# партнерів}}",
+    "tableCaption": "Список партнерів",
+    "partnerColumn": "Партнер",
+    "contactEmailColumn": "Контактний e-mail",
+    "createdColumn": "Створено",
+    "emptyTitle": "Немає партнерів",
+    "emptyDescription": "Ще немає зареєстрованих партнерів.",
+    "filteredEmptyTitle": "Немає результатів",
+    "filteredEmptyDescription": "Не знайдено партнерів за вашим запитом.",
+    "errorTitle": "Помилка завантаження",
+    "errorDescription": "Не вдалося завантажити список партнерів.",
+    "paginationPrevious": "Попередня",
+    "paginationNext": "Наступна",
+    "paginationSummary": "Сторінка {current} з {total}"
   }
 }

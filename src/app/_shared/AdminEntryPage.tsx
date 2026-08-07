@@ -41,14 +41,14 @@ export function AdminEntryPage({
               <span className="text-sm text-muted-foreground ml-auto">— {dictionary.moduleReadOnlyStatus}</span>
             </li>
             <li className="flex items-center gap-3">
-              <span className="w-2 h-2 bg-brand-teal rounded-full"></span>
+              <span className="w-2 h-2 bg-accent rounded-full"></span>
               <span className="font-medium text-foreground">{dictionary.partnersNav}</span>
-              <span className="text-sm text-muted-foreground ml-auto">— {dictionary.nextModuleLabel}</span>
+              <span className="text-sm text-muted-foreground ml-auto">— {dictionary.moduleReadOnlyStatus}</span>
             </li>
-            <li className="flex items-center gap-3 opacity-60">
-              <span className="w-2 h-2 bg-border-industrial rounded-full"></span>
+            <li className="flex items-center gap-3">
+              <span className="w-2 h-2 bg-brand-teal rounded-full"></span>
               <span className="font-medium text-foreground">{dictionary.rfqNav}</span>
-              <span className="text-sm text-muted-foreground ml-auto">— {dictionary.plannedLabel}</span>
+              <span className="text-sm text-muted-foreground ml-auto">— {dictionary.nextModuleLabel}</span>
             </li>
             <li className="flex items-center gap-3 opacity-60">
               <span className="w-2 h-2 bg-border-industrial rounded-full"></span>

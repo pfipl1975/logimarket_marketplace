@@ -491,5 +491,30 @@
     "paginationNext": "Next",
     "paginationPage": "Page",
     "paginationSummary": "Page {current} of {total}"
+  },
+  "adminPartners": {
+    "metaTitle": "Partners",
+    "metaDescription": "Partner management (read-only)",
+    "eyebrow": "Database",
+    "title": "Partners",
+    "description": "Database of registered partner companies",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Search by company name or ID...",
+    "applyFilters": "Search",
+    "clearFilters": "Clear search",
+    "resultsCount": "{count, plural, =0 {No results} one {1 partner} other {# partners}}",
+    "tableCaption": "Partners list",
+    "partnerColumn": "Partner",
+    "contactEmailColumn": "Contact e-mail",
+    "createdColumn": "Created",
+    "emptyTitle": "No partners",
+    "emptyDescription": "No partners have been registered yet.",
+    "filteredEmptyTitle": "No results",
+    "filteredEmptyDescription": "No partners found matching your query.",
+    "errorTitle": "Loading error",
+    "errorDescription": "Failed to load partners list.",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next",
+    "paginationSummary": "Page {current} of {total}"
   }
 }

@@ -491,5 +491,30 @@
     "paginationNext": "Siguiente",
     "paginationPage": "Página",
     "paginationSummary": "Página {current} de {total}"
+  },
+  "adminPartners": {
+    "metaTitle": "Socios",
+    "metaDescription": "Gestión de socios (solo lectura)",
+    "eyebrow": "Base de datos",
+    "title": "Socios",
+    "description": "Base de datos de empresas asociadas registradas",
+    "searchLabel": "Buscar",
+    "searchPlaceholder": "Buscar por nombre de la empresa o ID...",
+    "applyFilters": "Buscar",
+    "clearFilters": "Borrar búsqueda",
+    "resultsCount": "{count, plural, =0 {Sin resultados} one {1 socio} other {# socios}}",
+    "tableCaption": "Lista de socios",
+    "partnerColumn": "Socio",
+    "contactEmailColumn": "Correo de contacto",
+    "createdColumn": "Creado",
+    "emptyTitle": "Sin socios",
+    "emptyDescription": "Aún no hay socios registrados.",
+    "filteredEmptyTitle": "Sin resultados",
+    "filteredEmptyDescription": "No se encontraron socios que coincidan con su búsqueda.",
+    "errorTitle": "Error de carga",
+    "errorDescription": "Error al cargar la lista de socios.",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Siguiente",
+    "paginationSummary": "Página {current} de {total}"
   }
 }

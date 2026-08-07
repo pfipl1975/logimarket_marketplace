@@ -552,3 +552,34 @@ export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffers
   }
 }
 
+
+
+export async function getAdminPartnersPage(rawInput: URLSearchParams) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  
+  const { parseAdminPartnersQuery } = await import("@/lib/admin/partners-query");
+  const query = parseAdminPartnersQuery(rawInput);
+
+  try {
+    const { getAdminPartnersReadModel } = await import("@/lib/admin/partners-read-model-core");
+    const { db } = await import("@/lib/db");
+    const readModel = await getAdminPartnersReadModel(db, query);
+    return {
+      ok: true as const,
+      data: {
+        ...readModel,
+        query: {
+          ...query,
+          page: readModel.currentPage
+        }
+      }
+    };
+  } catch {
+    console.error("Admin partners read query failed.");
+    return {
+      ok: false as const,
+      code: "ADMIN_PARTNERS_UNAVAILABLE"
+    };
+  }
+}

@@ -491,5 +491,30 @@
     "paginationNext": "Suivant",
     "paginationPage": "Page",
     "paginationSummary": "Page {current} sur {total}"
+  },
+  "adminPartners": {
+    "metaTitle": "Partenaires",
+    "metaDescription": "Gestion des partenaires (lecture seule)",
+    "eyebrow": "Base de données",
+    "title": "Partenaires",
+    "description": "Base de données des entreprises partenaires enregistrées",
+    "searchLabel": "Rechercher",
+    "searchPlaceholder": "Rechercher par nom d'entreprise ou ID...",
+    "applyFilters": "Rechercher",
+    "clearFilters": "Effacer la recherche",
+    "resultsCount": "{count, plural, =0 {Aucun résultat} one {1 partenaire} other {# partenaires}}",
+    "tableCaption": "Liste des partenaires",
+    "partnerColumn": "Partenaire",
+    "contactEmailColumn": "E-mail de contact",
+    "createdColumn": "Créé",
+    "emptyTitle": "Aucun partenaire",
+    "emptyDescription": "Aucun partenaire n'est encore enregistré.",
+    "filteredEmptyTitle": "Aucun résultat",
+    "filteredEmptyDescription": "Aucun partenaire trouvé correspondant à votre requête.",
+    "errorTitle": "Erreur de chargement",
+    "errorDescription": "Échec du chargement de la liste des partenaires.",
+    "paginationPrevious": "Précédent",
+    "paginationNext": "Suivant",
+    "paginationSummary": "Page {current} sur {total}"
   }
 }

@@ -491,5 +491,30 @@
     "paginationNext": "下一页",
     "paginationPage": "页",
     "paginationSummary": "第 {current} 页，共 {total} 页"
+  },
+  "adminPartners": {
+    "metaTitle": "合作伙伴",
+    "metaDescription": "合作伙伴管理（只读）",
+    "eyebrow": "数据库",
+    "title": "合作伙伴",
+    "description": "注册合作企业数据库",
+    "searchLabel": "搜索",
+    "searchPlaceholder": "按公司名称或 ID 搜索...",
+    "applyFilters": "搜索",
+    "clearFilters": "清除搜索",
+    "resultsCount": "{count, plural, =0 {无结果} other {# 个合作伙伴}}",
+    "tableCaption": "合作伙伴列表",
+    "partnerColumn": "合作伙伴",
+    "contactEmailColumn": "联系电子邮件",
+    "createdColumn": "已创建",
+    "emptyTitle": "没有合作伙伴",
+    "emptyDescription": "目前没有注册的合作伙伴。",
+    "filteredEmptyTitle": "无结果",
+    "filteredEmptyDescription": "未找到符合您搜索条件的合作伙伴。",
+    "errorTitle": "加载错误",
+    "errorDescription": "加载合作伙伴列表失败。",
+    "paginationPrevious": "上一页",
+    "paginationNext": "下一页",
+    "paginationSummary": "第 {current} 页，共 {total} 页"
   }
 }
