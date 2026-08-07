@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { and, eq, asc, inArray } from "drizzle-orm";
+import { and, eq, asc, desc, inArray } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
@@ -485,7 +485,7 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
       const { classifyLoginError } = await import("@/lib/auth/login-error");
       return { success: false, code: classifyLoginError(error) };
     }
-  } catch {
+  } catch (err) {
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
@@ -520,7 +520,7 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
     if (error) {
       return { success: false, code: "AUTH_UNAVAILABLE" };
     }
-  } catch {
+  } catch (err) {
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
