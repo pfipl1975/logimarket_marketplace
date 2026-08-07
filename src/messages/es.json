@@ -502,7 +502,7 @@
     "searchPlaceholder": "Buscar por nombre de la empresa o ID...",
     "applyFilters": "Buscar",
     "clearFilters": "Borrar búsqueda",
-    "resultsCount": "{count, plural, =0 {Sin resultados} one {1 socio} other {# socios}}",
+    "resultsCount": "{count} resultados",
     "tableCaption": "Lista de socios",
     "partnerColumn": "Socio",
     "contactEmailColumn": "Correo de contacto",

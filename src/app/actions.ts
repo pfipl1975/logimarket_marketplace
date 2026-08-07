@@ -554,7 +554,7 @@ export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffers
 
 
 
-export async function getAdminPartnersPage(rawInput: URLSearchParams) {
+export async function getAdminPartnersPage(rawInput: unknown) {
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
   

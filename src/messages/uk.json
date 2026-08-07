@@ -502,7 +502,7 @@
     "searchPlaceholder": "Пошук за назвою компанії або ID...",
     "applyFilters": "Пошук",
     "clearFilters": "Очистити пошук",
-    "resultsCount": "{count, plural, =0 {Немає результатів} one {1 партнер} few {# партнери} many {# партнерів} other {# партнерів}}",
+    "resultsCount": "{count} результатів",
     "tableCaption": "Список партнерів",
     "partnerColumn": "Партнер",
     "contactEmailColumn": "Контактний e-mail",

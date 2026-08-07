@@ -45,7 +45,6 @@ export default async function LocalizedAdminPartnersRoute({
   }
 
   const resolvedSearchParams = await searchParams;
-  const rawParams = new URLSearchParams(resolvedSearchParams as Record<string, string>);
   
-  return <AdminPartnersPage locale={locale as Locale} searchParams={rawParams} />;
+  return <AdminPartnersPage locale={locale as Locale} searchParams={resolvedSearchParams} />;
 }

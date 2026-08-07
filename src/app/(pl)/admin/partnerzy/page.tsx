@@ -23,7 +23,6 @@ export default async function PlAdminPartnersRoute({
   searchParams: Promise<unknown>;
 }) {
   const resolvedSearchParams = await searchParams;
-  const rawParams = new URLSearchParams(resolvedSearchParams as Record<string, string>);
   
-  return <AdminPartnersPage locale="pl" searchParams={rawParams} />;
+  return <AdminPartnersPage locale="pl" searchParams={resolvedSearchParams} />;
 }

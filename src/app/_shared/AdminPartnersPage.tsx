@@ -11,7 +11,7 @@ export async function AdminPartnersPage({
   searchParams,
 }: {
   locale: Locale;
-  searchParams: URLSearchParams;
+  searchParams: unknown;
 }) {
   const dictionary = await getDictionary(locale);
   const dict = dictionary.adminPartners;
@@ -53,7 +53,7 @@ export async function AdminPartnersPage({
                 name="q"
                 defaultValue={query.q}
                 placeholder={dict.searchPlaceholder}
-                className="w-full pl-9 pr-4 py-2 bg-brand-light-gray border border-border-industrial rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal transition-all"
+                className="w-full pl-9 pr-4 py-2 bg-brand-light-gray border border-border-industrial rounded-industrial text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal transition-all"
               />
             </div>
           </div>
@@ -61,14 +61,14 @@ export async function AdminPartnersPage({
           <div className="flex gap-2 w-full md:w-auto">
             <button
               type="submit"
-              className="px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-md text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
+              className="px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
             >
               {dict.applyFilters}
             </button>
             {hasFilters && (
               <Link
                 href={basePath}
-                className="px-6 py-2 bg-white border border-border-industrial text-brand-navy hover:bg-brand-light-gray rounded-md text-sm font-medium transition-colors whitespace-nowrap text-center focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
+                className="px-6 py-2 bg-white border border-border-industrial text-brand-navy hover:bg-brand-light-gray rounded-industrial text-sm font-medium transition-colors whitespace-nowrap text-center focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
               >
                 {dict.clearFilters}
               </Link>
@@ -80,8 +80,8 @@ export async function AdminPartnersPage({
       <div className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden flex flex-col min-h-[500px]">
         <div className="px-6 py-4 border-b border-border-industrial flex justify-between items-center bg-brand-light-gray/30">
           <h2 className="font-medium text-brand-navy">{dict.tableCaption}</h2>
-          <span className="text-sm text-muted-foreground font-medium bg-white px-3 py-1 rounded-full border border-border-industrial/50">
-            {dict.resultsCount.replace("#", total.toString())}
+          <span className="text-sm text-muted-foreground font-medium bg-white px-3 py-1 border border-border-industrial/50">
+            {dict.resultsCount.replace("{count}", total.toString())}
           </span>
         </div>
 
@@ -96,7 +96,7 @@ export async function AdminPartnersPage({
             {hasFilters && (
               <Link
                 href={basePath}
-                className="mt-6 px-4 py-2 bg-brand-light-gray hover:bg-border-industrial/30 text-brand-navy rounded-md text-sm font-medium transition-colors"
+                className="mt-6 px-4 py-2 bg-brand-light-gray hover:bg-border-industrial/30 text-brand-navy rounded-industrial text-sm font-medium transition-colors"
               >
                 {dict.clearFilters}
               </Link>
@@ -118,26 +118,26 @@ export async function AdminPartnersPage({
                 <div className="flex gap-2">
                   {query.page > 1 ? (
                     <Link
-                      href={buildAdminPartnersUrl(basePath, { ...query, page: query.page - 1 })}
-                      className="px-4 py-2 border border-border-industrial bg-white rounded-md text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
+                      href={buildAdminPartnersUrl(basePath, { page: query.page - 1 }, query)}
+                      className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
                     >
                       {dict.paginationPrevious}
                     </Link>
                   ) : (
-                    <span className="px-4 py-2 border border-border-industrial/50 bg-brand-light-gray/50 rounded-md text-sm font-medium text-muted-foreground/50 cursor-not-allowed">
+                    <span className="px-4 py-2 border border-border-industrial/50 bg-brand-light-gray/50 rounded-industrial text-sm font-medium text-muted-foreground/50 cursor-not-allowed">
                       {dict.paginationPrevious}
                     </span>
                   )}
                   
                   {query.page < pageCount ? (
                     <Link
-                      href={buildAdminPartnersUrl(basePath, { ...query, page: query.page + 1 })}
-                      className="px-4 py-2 border border-border-industrial bg-white rounded-md text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
+                      href={buildAdminPartnersUrl(basePath, { page: query.page + 1 }, query)}
+                      className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
                     >
                       {dict.paginationNext}
                     </Link>
                   ) : (
-                    <span className="px-4 py-2 border border-border-industrial/50 bg-brand-light-gray/50 rounded-md text-sm font-medium text-muted-foreground/50 cursor-not-allowed">
+                    <span className="px-4 py-2 border border-border-industrial/50 bg-brand-light-gray/50 rounded-industrial text-sm font-medium text-muted-foreground/50 cursor-not-allowed">
                       {dict.paginationNext}
                     </span>
                   )}

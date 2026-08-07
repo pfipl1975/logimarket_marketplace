@@ -502,7 +502,7 @@
     "searchPlaceholder": "Szukaj po nazwie firmy lub ID...",
     "applyFilters": "Szukaj",
     "clearFilters": "Wyczyść wyszukiwanie",
-    "resultsCount": "{count, plural, =0 {Brak wyników} one {1 partner} few {# partnerów} many {# partnerów} other {# partnerów}}",
+    "resultsCount": "Wyników: {count}",
     "tableCaption": "Lista partnerów",
     "partnerColumn": "Partner",
     "contactEmailColumn": "E-mail kontaktowy",

@@ -502,7 +502,7 @@
     "searchPlaceholder": "按公司名称或 ID 搜索...",
     "applyFilters": "搜索",
     "clearFilters": "清除搜索",
-    "resultsCount": "{count, plural, =0 {无结果} other {# 个合作伙伴}}",
+    "resultsCount": "找到 {count} 个结果",
     "tableCaption": "合作伙伴列表",
     "partnerColumn": "合作伙伴",
     "contactEmailColumn": "联系电子邮件",
