@@ -547,5 +547,33 @@
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
     "unknownPartner": "Unknown partner"
+  },
+  "adminOrders": {
+    "metaTitle": "Orders | LogiMarket Admin",
+    "metaDescription": "Orders administration panel (read-only)",
+    "eyebrow": "Sales",
+    "title": "Orders",
+    "description": "Browse B2B orders submitted by customers.",
+    "searchLabel": "Search",
+    "searchPlaceholder": "Order ID or company name...",
+    "applyFilters": "Search",
+    "clearFilters": "Clear search",
+    "tableCaption": "Order list",
+    "resultsCount": "Results: {count}",
+    "emptyTitle": "No orders",
+    "emptyDescription": "There are no orders in the system yet.",
+    "filteredEmptyTitle": "No results",
+    "filteredEmptyDescription": "No orders matching your search were found.",
+    "errorTitle": "Loading error",
+    "errorDescription": "Failed to load the orders list.",
+    "idColumn": "Order",
+    "createdColumn": "Created",
+    "statusColumn": "Status",
+    "companyColumn": "Company / Contact",
+    "emailColumn": "Email",
+    "itemsColumn": "Items",
+    "paginationSummary": "Page {current} of {total}",
+    "paginationPrevious": "Previous",
+    "paginationNext": "Next"
   }
 }

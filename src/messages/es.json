@@ -547,5 +547,33 @@
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
     "unknownPartner": "Unknown partner"
+  },
+  "adminOrders": {
+    "metaTitle": "Pedidos | LogiMarket Admin",
+    "metaDescription": "Panel de pedidos (solo lectura)",
+    "eyebrow": "Ventas",
+    "title": "Pedidos",
+    "description": "Explorar pedidos B2B enviados por clientes.",
+    "searchLabel": "Buscar",
+    "searchPlaceholder": "ID de pedido o nombre de empresa...",
+    "applyFilters": "Buscar",
+    "clearFilters": "Limpiar búsqueda",
+    "tableCaption": "Lista de pedidos",
+    "resultsCount": "Resultados: {count}",
+    "emptyTitle": "Sin pedidos",
+    "emptyDescription": "Todavía no hay pedidos en el sistema.",
+    "filteredEmptyTitle": "Sin resultados",
+    "filteredEmptyDescription": "No se encontraron pedidos que coincidan con su búsqueda.",
+    "errorTitle": "Error de carga",
+    "errorDescription": "No se pudo cargar la lista de pedidos.",
+    "idColumn": "Pedido",
+    "createdColumn": "Creado",
+    "statusColumn": "Estado",
+    "companyColumn": "Empresa / Contacto",
+    "emailColumn": "Correo",
+    "itemsColumn": "Art.",
+    "paginationSummary": "Página {current} de {total}",
+    "paginationPrevious": "Anterior",
+    "paginationNext": "Siguiente"
   }
 }

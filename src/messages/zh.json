@@ -547,5 +547,33 @@
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
     "unknownPartner": "Unknown partner"
+  },
+  "adminOrders": {
+    "metaTitle": "订单 | LogiMarket 管理",
+    "metaDescription": "订单管理面板（只读）",
+    "eyebrow": "销售",
+    "title": "订单",
+    "description": "浏览客户提交的 B2B 订单。",
+    "searchLabel": "搜索",
+    "searchPlaceholder": "订单编号或公司名称...",
+    "applyFilters": "搜索",
+    "clearFilters": "清除搜索",
+    "tableCaption": "订单列表",
+    "resultsCount": "结果：{count}",
+    "emptyTitle": "暂无订单",
+    "emptyDescription": "系统中尚无订单。",
+    "filteredEmptyTitle": "无结果",
+    "filteredEmptyDescription": "未找到符合搜索条件的订单。",
+    "errorTitle": "加载错误",
+    "errorDescription": "无法加载订单列表。",
+    "idColumn": "订单",
+    "createdColumn": "创建时间",
+    "statusColumn": "状态",
+    "companyColumn": "公司 / 联系人",
+    "emailColumn": "电子邮件",
+    "itemsColumn": "项目",
+    "paginationSummary": "第 {current} 页，共 {total} 页",
+    "paginationPrevious": "上一页",
+    "paginationNext": "下一页"
   }
 }

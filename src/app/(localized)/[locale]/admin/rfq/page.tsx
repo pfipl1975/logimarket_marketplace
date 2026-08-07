@@ -1,7 +1,7 @@
 import { AdminRfqPage } from "@/app/_shared/AdminRfqPage";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { type Metadata } from "next";
-import { type Locale, isLocale } from "@/lib/i18n/config";
+import { isLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";

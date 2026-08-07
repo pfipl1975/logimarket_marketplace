@@ -547,5 +547,33 @@
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
     "unknownPartner": "Unknown partner"
+  },
+  "adminOrders": {
+    "metaTitle": "Commandes | LogiMarket Admin",
+    "metaDescription": "Gestion des commandes (lecture seule)",
+    "eyebrow": "Ventes",
+    "title": "Commandes",
+    "description": "Parcourir les commandes B2B soumises par les clients.",
+    "searchLabel": "Rechercher",
+    "searchPlaceholder": "ID commande ou nom d'entreprise...",
+    "applyFilters": "Rechercher",
+    "clearFilters": "Effacer la recherche",
+    "tableCaption": "Liste des commandes",
+    "resultsCount": "Résultats : {count}",
+    "emptyTitle": "Aucune commande",
+    "emptyDescription": "Il n'y a pas encore de commandes dans le système.",
+    "filteredEmptyTitle": "Aucun résultat",
+    "filteredEmptyDescription": "Aucune commande correspondant à votre recherche.",
+    "errorTitle": "Erreur de chargement",
+    "errorDescription": "Impossible de charger la liste des commandes.",
+    "idColumn": "Commande",
+    "createdColumn": "Créé le",
+    "statusColumn": "Statut",
+    "companyColumn": "Société / Contact",
+    "emailColumn": "E-mail",
+    "itemsColumn": "Articles",
+    "paginationSummary": "Page {current} sur {total}",
+    "paginationPrevious": "Précédent",
+    "paginationNext": "Suivant"
   }
 }

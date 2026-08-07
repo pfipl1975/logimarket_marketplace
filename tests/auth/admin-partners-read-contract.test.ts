@@ -144,8 +144,10 @@ test("Admin Partners Read Contract", async (t) => {
     // Partners is Link
     assert.match(nav, /<Link[^>]*href=\{partnersPath\}/);
 
-    // Others disabled
-    assert.match(nav, /\{labels\.ordersNav\} <span[^>]*>\{labels\.plannedLabel\}<\/span>/);
+    // Orders is now a real Link too
+    assert.match(nav, /<Link[^>]*href=\{ordersPath\}/);
+
+    // Taxonomy remains disabled/planned
     assert.match(nav, /\{labels\.taxonomyNav\} <span[^>]*>\{labels\.plannedLabel\}<\/span>/);
   });
 

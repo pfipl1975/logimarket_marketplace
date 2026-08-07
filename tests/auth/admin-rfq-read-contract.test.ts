@@ -140,7 +140,7 @@ test("Admin RFQ Read Contract", async (t) => {
       ).adminRfq;
     }
 
-    const en = sections["en"] as any;
+    const en = sections["en"] as Record<string, unknown>;
     assert.ok(en.idColumn === "RFQ");
   });
 });
