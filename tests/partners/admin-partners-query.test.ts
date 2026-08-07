@@ -21,6 +21,12 @@ test("Admin Partners Query Parser", async (t) => {
     assert.equal(query.page, 1);
   });
 
+  await t.test("invalid string root input", () => {
+    const query = parseAdminPartnersQuery("invalid");
+    assert.equal(query.q, "");
+    assert.equal(query.page, 1);
+  });
+
   await t.test("q trim", () => {
     const query = parseAdminPartnersQuery({ q: "  test  " });
     assert.equal(query.q, "test");
