@@ -616,3 +616,35 @@ export async function getAdminRfqPage(rawInput: unknown) {
   }
 }
 
+export async function getAdminOrdersPage(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOrdersQuery } = await import("@/lib/admin/orders-query");
+  const query = parseAdminOrdersQuery(rawInput);
+
+  try {
+    const { getAdminOrdersReadModel } = await import("@/lib/admin/orders-read-model-core");
+    const { db } = await import("@/lib/db");
+
+    const readModel = await getAdminOrdersReadModel(db, query);
+
+    return {
+      ok: true as const,
+      data: {
+        ...readModel,
+        query: {
+          ...query,
+          page: readModel.currentPage
+        }
+      }
+    };
+  } catch {
+    console.error("Admin orders read query failed.");
+    return {
+      ok: false as const,
+      code: "ADMIN_ORDERS_UNAVAILABLE"
+    };
+  }
+}
+

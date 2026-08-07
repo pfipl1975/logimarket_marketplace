@@ -547,5 +547,33 @@
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
     "unknownPartner": "Unknown partner"
+  },
+  "adminOrders": {
+    "metaTitle": "Замовлення | LogiMarket Admin",
+    "metaDescription": "Панель замовлень (лише читання)",
+    "eyebrow": "Продажі",
+    "title": "Замовлення",
+    "description": "Перегляд замовлень B2B від клієнтів.",
+    "searchLabel": "Пошук",
+    "searchPlaceholder": "ID замовлення або назва компанії...",
+    "applyFilters": "Шукати",
+    "clearFilters": "Очистити пошук",
+    "tableCaption": "Список замовлень",
+    "resultsCount": "Результатів: {count}",
+    "emptyTitle": "Замовлення відсутні",
+    "emptyDescription": "В системі ще немає жодних замовлень.",
+    "filteredEmptyTitle": "Немає результатів",
+    "filteredEmptyDescription": "Не знайдено замовлень за вашим запитом.",
+    "errorTitle": "Помилка завантаження",
+    "errorDescription": "Не вдалося завантажити список замовлень.",
+    "idColumn": "Замовлення",
+    "createdColumn": "Створено",
+    "statusColumn": "Статус",
+    "companyColumn": "Компанія / Контакт",
+    "emailColumn": "E-mail",
+    "itemsColumn": "Поз.",
+    "paginationSummary": "Сторінка {current} з {total}",
+    "paginationPrevious": "Назад",
+    "paginationNext": "Далі"
   }
 }

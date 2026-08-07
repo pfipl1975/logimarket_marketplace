@@ -547,5 +547,33 @@
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
     "unknownPartner": "Unknown partner"
+  },
+  "adminOrders": {
+    "metaTitle": "Bestellungen | LogiMarket Admin",
+    "metaDescription": "Bestellungsverwaltung (nur Lesen)",
+    "eyebrow": "Vertrieb",
+    "title": "Bestellungen",
+    "description": "B2B-Bestellungen von Kunden durchsuchen.",
+    "searchLabel": "Suchen",
+    "searchPlaceholder": "Bestell-ID oder Firmenname...",
+    "applyFilters": "Suchen",
+    "clearFilters": "Suche leeren",
+    "tableCaption": "Bestellungsliste",
+    "resultsCount": "Ergebnisse: {count}",
+    "emptyTitle": "Keine Bestellungen",
+    "emptyDescription": "Es sind noch keine Bestellungen im System vorhanden.",
+    "filteredEmptyTitle": "Keine Ergebnisse",
+    "filteredEmptyDescription": "Keine Bestellungen gefunden, die Ihrer Suche entsprechen.",
+    "errorTitle": "Ladefehler",
+    "errorDescription": "Die Bestellungsliste konnte nicht geladen werden.",
+    "idColumn": "Bestellung",
+    "createdColumn": "Erstellt",
+    "statusColumn": "Status",
+    "companyColumn": "Firma / Kontakt",
+    "emailColumn": "E-Mail",
+    "itemsColumn": "Pos.",
+    "paginationSummary": "Seite {current} von {total}",
+    "paginationPrevious": "Zurück",
+    "paginationNext": "Weiter"
   }
 }
