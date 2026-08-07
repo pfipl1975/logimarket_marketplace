@@ -491,7 +491,7 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
 
   const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
   const redirectUrl = getSafeRedirectUrl(nextPath, locale);
-  
+
   revalidatePath("/", "layout");
   redirect(redirectUrl);
 }
@@ -504,7 +504,7 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
   const parsedLocale = formData?.get("locale")?.toString() || "";
   const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
   const safeLocale = isLocale(parsedLocale) ? parsedLocale : defaultLocale;
-  
+
   try {
     const { createClient } = await import("@/lib/supabase/server");
     const supabase = await createClient();
@@ -525,7 +525,7 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
   }
 
   const { getAdminLoginRedirectPath } = await import("@/lib/auth/admin-page-access-core");
-  
+
   revalidatePath("/", "layout");
   redirect(getAdminLoginRedirectPath(safeLocale));
 }
@@ -557,7 +557,7 @@ export async function getAdminOffersPage(rawInput: unknown): Promise<AdminOffers
 export async function getAdminPartnersPage(rawInput: unknown) {
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
-  
+
   const { parseAdminPartnersQuery } = await import("@/lib/admin/partners-query");
   const query = parseAdminPartnersQuery(rawInput);
 
@@ -583,3 +583,36 @@ export async function getAdminPartnersPage(rawInput: unknown) {
     };
   }
 }
+
+export async function getAdminRfqPage(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminRfqQuery } = await import("@/lib/admin/rfq-query");
+  const query = parseAdminRfqQuery(rawInput);
+
+  try {
+    const { getAdminRfqReadModel } = await import("@/lib/admin/rfq-read-model-core");
+    const { db } = await import("@/lib/db");
+
+    const readModel = await getAdminRfqReadModel(db, query);
+
+    return {
+      ok: true as const,
+      data: {
+        ...readModel,
+        query: {
+          ...query,
+          page: readModel.currentPage
+        }
+      }
+    };
+  } catch {
+    console.error("Admin RFQ read query failed.");
+    return {
+      ok: false as const,
+      code: "ADMIN_RFQ_UNAVAILABLE"
+    };
+  }
+}
+
