@@ -21,6 +21,17 @@ test("Admin Orders Read Contract", async (t) => {
     assert.match(plRoute, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false,\s*nocache:\s*true\s*,?\s*\}/);
     assert.match(locRoute, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false,\s*nocache:\s*true\s*,?\s*\}/);
 
+    // Metadata uses adminOrders dictionary (RFQ pattern)
+    assert.match(plRoute, /export async function generateMetadata/);
+    assert.match(plRoute, /getDictionary\("pl"\)/);
+    assert.match(plRoute, /adminOrders\.metaTitle/);
+    assert.match(plRoute, /adminOrders\.metaDescription/);
+
+    assert.match(locRoute, /export async function generateMetadata/);
+    assert.match(locRoute, /getDictionary\(resolvedParams\.locale\)/);
+    assert.match(locRoute, /adminOrders\.metaTitle/);
+    assert.match(locRoute, /adminOrders\.metaDescription/);
+
     // Localized specific
     assert.match(locRoute, /params:\s*Promise<\{\s*locale:\s*string\s*}>/);
     assert.match(locRoute, /await params/);

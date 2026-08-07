@@ -5,39 +5,57 @@ export interface AdminOrdersQuery {
   page: number;
 }
 
+export function isCanonicalPositiveInteger(value: string): boolean {
+  if (!value) return false;
+  if (!/^[1-9][0-9]*$/.test(value)) return false;
+  const num = Number(value);
+  return Number.isSafeInteger(num) && num > 0;
+}
+
+function getSingleString(value: unknown): string | null {
+  return typeof value === "string" ? value : null;
+}
+
 export function parseAdminOrdersQuery(rawInput: unknown): AdminOrdersQuery {
-  let q = "";
+  if (!rawInput || typeof rawInput !== "object") {
+    return { q: "", page: 1 };
+  }
+
+  const params = rawInput as Record<string, unknown>;
+
+  const rawQ = getSingleString(params.q);
+  const q = rawQ ? rawQ.trim().slice(0, 100) : "";
+
   let page = 1;
-
-  if (rawInput && typeof rawInput === "object") {
-    const input = rawInput as Record<string, unknown>;
-
-    if (typeof input.q === "string") {
-      q = input.q.trim().substring(0, 100);
-    }
-
-    if (typeof input.page === "string") {
-      const trimmed = input.page.trim();
-      if (/^[1-9]\d*$/.test(trimmed)) {
-        const num = Number(trimmed);
-        if (Number.isSafeInteger(num) && num > 0) {
-          page = num;
-        }
-      }
-    }
+  const rawPage = getSingleString(params.page);
+  if (rawPage && isCanonicalPositiveInteger(rawPage)) {
+    page = Number(rawPage);
   }
 
   return { q, page };
 }
 
-export function buildAdminOrdersUrl(basePath: string, query: AdminOrdersQuery): string {
+export function buildAdminOrdersUrl(
+  basePath: string,
+  updates: Partial<AdminOrdersQuery>,
+  currentQuery: AdminOrdersQuery
+): string {
+  const merged = { ...currentQuery, ...updates };
+
+  if ("q" in updates && updates.q !== currentQuery.q) {
+    merged.page = 1;
+  }
+
   const params = new URLSearchParams();
-  if (query.q) {
-    params.set("q", query.q);
+
+  if (merged.q) {
+    params.set("q", merged.q);
   }
-  if (query.page > 1) {
-    params.set("page", query.page.toString());
+
+  if (merged.page > 1) {
+    params.set("page", merged.page.toString());
   }
+
   const qs = params.toString();
   return qs ? `${basePath}?${qs}` : basePath;
 }

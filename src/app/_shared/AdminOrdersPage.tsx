@@ -118,7 +118,7 @@ export async function AdminOrdersPage({
                 <div className="flex gap-2">
                   {query.page > 1 ? (
                     <Link
-                      href={buildAdminOrdersUrl(basePath, { ...query, page: query.page - 1 })}
+                      href={buildAdminOrdersUrl(basePath, { page: query.page - 1 }, query)}
                       className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
                     >
                       {dict.paginationPrevious}
@@ -131,7 +131,7 @@ export async function AdminOrdersPage({
                   
                   {query.page < totalPages ? (
                     <Link
-                      href={buildAdminOrdersUrl(basePath, { ...query, page: query.page + 1 })}
+                      href={buildAdminOrdersUrl(basePath, { page: query.page + 1 }, query)}
                       className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
                     >
                       {dict.paginationNext}

@@ -96,6 +96,16 @@ test("Admin Orders Query Parser", async (t) => {
     assert.equal(q.page, 1);
   });
 
+  await t.test("page: whitespace-padded ' 2 ' rejected → default 1 (regression)", () => {
+    const q = parseAdminOrdersQuery({ page: " 2 " });
+    assert.equal(q.page, 1);
+  });
+
+  await t.test("page: unsafe integer rejected → default 1", () => {
+    const q = parseAdminOrdersQuery({ page: "9007199254740992" });
+    assert.equal(q.page, 1);
+  });
+
   await t.test("page: array ignored → default 1", () => {
     const q = parseAdminOrdersQuery({ page: ["1", "2"] });
     assert.equal(q.page, 1);
@@ -107,36 +117,38 @@ test("Admin Orders Query Parser", async (t) => {
   });
 
   await t.test("buildAdminOrdersUrl: omits page=1", () => {
-    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "", page: 1 });
+    const url = buildAdminOrdersUrl("/admin/zamowienia", {}, { q: "", page: 1 });
     assert.equal(url, "/admin/zamowienia");
   });
 
   await t.test("buildAdminOrdersUrl: omits empty q", () => {
-    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "", page: 2 });
+    const url = buildAdminOrdersUrl("/admin/zamowienia", { page: 2 }, { q: "", page: 1 });
     assert.equal(url, "/admin/zamowienia?page=2");
   });
 
   await t.test("buildAdminOrdersUrl: includes q and page>1", () => {
-    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "acme", page: 3 });
+    const url = buildAdminOrdersUrl("/admin/zamowienia", { page: 3 }, { q: "acme", page: 1 });
     assert.equal(url, "/admin/zamowienia?q=acme&page=3");
   });
 
   await t.test("buildAdminOrdersUrl: q present, page=1 omitted", () => {
-    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "acme", page: 1 });
+    const url = buildAdminOrdersUrl("/admin/zamowienia", {}, { q: "acme", page: 1 });
     assert.equal(url, "/admin/zamowienia?q=acme");
   });
 
   await t.test("buildAdminOrdersUrl: pagination preserves q", () => {
-    const base = "/admin/zamowienia";
-    const query = parseAdminOrdersQuery({ q: "acme", page: "2" });
-    const next = buildAdminOrdersUrl(base, { ...query, page: 3 });
-    assert.match(next, /q=acme/);
-    assert.match(next, /page=3/);
+    const url = buildAdminOrdersUrl("/admin/zamowienia", { page: 3 }, { q: "acme", page: 2 });
+    assert.equal(url, "/admin/zamowienia?q=acme&page=3");
   });
 
-  await t.test("buildAdminOrdersUrl: changing q resets page to 1 (caller responsibility)", () => {
-    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "newquery", page: 1 });
-    assert.doesNotMatch(url, /page=/);
+  await t.test("buildAdminOrdersUrl: q change resets page to 1", () => {
+    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "newquery" }, { q: "old", page: 5 });
+    assert.equal(url, "/admin/zamowienia?q=newquery");
+  });
+
+  await t.test("buildAdminOrdersUrl: same q preserves current page", () => {
+    const url = buildAdminOrdersUrl("/admin/zamowienia", { q: "same" }, { q: "same", page: 5 });
+    assert.equal(url, "/admin/zamowienia?q=same&page=5");
   });
 
   await t.test("ADMIN_ORDERS_PAGE_SIZE is 25", () => {
