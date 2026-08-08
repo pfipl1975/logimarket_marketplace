@@ -23,6 +23,28 @@ test("classifyRuntimeTarget - EXACT_EXISTING (New Fingerprint)", () => {
   assert.strictEqual(result.state, "EXACT_EXISTING");
 });
 
+test("classifyRuntimeTarget - EXACT_EXISTING (PostgreSQL Canonical Strings)", () => {
+  const actual: Record<string, TableFingerprintSide> = {};
+  for (const table of EXPECTED_BASELINE_TABLES) {
+    actual[table] = {
+      ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[table])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+
+  // Explicitly simulate canonical representation returned by PostgreSQL pg_get_constraintdef
+  const offerFkIndex = actual["rfq_leads"].constraints.findIndex(c => c.name === "rfq_leads_offer_id_fkey");
+  const partnerFkIndex = actual["rfq_leads"].constraints.findIndex(c => c.name === "rfq_leads_partner_id_fkey");
+
+  actual["rfq_leads"].constraints[offerFkIndex].definition = "FOREIGN KEY (offer_id) REFERENCES offers(id)";
+  actual["rfq_leads"].constraints[partnerFkIndex].definition = "FOREIGN KEY (partner_id) REFERENCES partners(id)";
+
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "EXACT_EXISTING");
+});
+
 test("classifyRuntimeTarget - MIGRATABLE_PREVIOUS (Old Fingerprint)", () => {
   const actual: Record<string, TableFingerprintSide> = {};
   for (const table of EXPECTED_BASELINE_TABLES) {

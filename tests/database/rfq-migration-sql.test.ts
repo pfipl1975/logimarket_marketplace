@@ -35,3 +35,10 @@ test("RFQ_MIGRATION: does not use CONCURRENTLY for indexes", () => {
   assert.ok(sql.includes("create index if not exists"), "Must create index if not exists");
   assert.ok(!sql.includes("concurrently"), "Must NOT use CONCURRENTLY in transactional migrations");
 });
+
+test("RFQ_MIGRATION: contains explicit ON UPDATE NO ACTION ON DELETE NO ACTION semantics", () => {
+  const sqlPath = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "0001_rfq_workflow_hardening.sql");
+  const sql = fs.readFileSync(sqlPath, "utf-8").toLowerCase();
+
+  assert.ok(sql.includes("on update no action on delete no action"), "Must define explicit default actions in SQL");
+});

@@ -434,12 +434,12 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
       {
         name: "rfq_leads_offer_id_fkey",
         type: "FOREIGN KEY",
-        definition: "FOREIGN KEY (offer_id) REFERENCES offers(id) ON UPDATE NO ACTION ON DELETE NO ACTION"
+        definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)"
       },
       {
         name: "rfq_leads_partner_id_fkey",
         type: "FOREIGN KEY",
-        definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON UPDATE NO ACTION ON DELETE NO ACTION"
+        definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)"
       },
       {
         name: "rfq_leads_status_check",
