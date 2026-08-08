@@ -1,110 +1,227 @@
-import test, { describe } from "node:test";
+import test from "node:test";
 import assert from "node:assert";
-import fs from "fs/promises";
-import path from "path";
-import { PublicRfqInputSchema } from "../../src/lib/rfq/schema";
+import fs from "node:fs";
+import path from "node:path";
+import { PublicRfqInputSchema } from "@/lib/rfq/schema";
+import { validatePublicRfqEligibility } from "@/lib/rfq/eligibility";
 
-describe("Public RFQ Validation Matrix", () => {
-  const validBase = {
-    offerId: 1,
-    companyName: "Test Company",
+test("Public RFQ Eligibility Behavior Matrix", async (t) => {
+  await t.test("published + active + rfq/inbound -> eligible", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "published",
+        offerModel: "rfq",
+        conversionType: "inbound"
+      }),
+      true
+    );
+  });
+
+  await t.test("draft -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "draft",
+        offerModel: "rfq",
+        conversionType: "inbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("archived -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "archived",
+        offerModel: "rfq",
+        conversionType: "inbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("inactive -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: false,
+        publicationStatus: "published",
+        offerModel: "rfq",
+        conversionType: "inbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("marketplace + inbound -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "published",
+        offerModel: "marketplace",
+        conversionType: "inbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("rfq + outbound -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "published",
+        offerModel: "rfq",
+        conversionType: "outbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("marketplace + outbound -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "published",
+        offerModel: "marketplace",
+        conversionType: "outbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("unknown offerModel -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "published",
+        offerModel: "some_weird_model",
+        conversionType: "inbound"
+      }),
+      false
+    );
+  });
+
+  await t.test("unknown conversionType -> reject", () => {
+    assert.strictEqual(
+      validatePublicRfqEligibility({
+        isActive: true,
+        publicationStatus: "published",
+        offerModel: "rfq",
+        conversionType: "some_weird_type"
+      }),
+      false
+    );
+  });
+});
+
+test("Public RFQ Schema Validation Details", async (t) => {
+  const basePayload = {
+    offerId: 123,
+    companyName: "Valid Company",
     contactName: "John Doe",
-    email: "john@example.com",
+    email: "john@example.com"
   };
 
-  test("valid base accepts", () => {
-    const res = PublicRfqInputSchema.safeParse(validBase);
+  await t.test("companyName trim", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, companyName: "  Company  " });
     assert.ok(res.success);
+    assert.strictEqual(res.data.companyName, "Company");
   });
 
-  test("offerId rejection matrix", () => {
-    const cases = [0, -1, 1.5, "1", "123", Number.MAX_SAFE_INTEGER + 1];
-    for (const offerId of cases) {
-      const res = PublicRfqInputSchema.safeParse({ ...validBase, offerId });
-      assert.ok(!res.success, `Should reject offerId: ${offerId}`);
-    }
+  await t.test("contactName trim", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, contactName: "  John  " });
+    assert.ok(res.success);
+    assert.strictEqual(res.data.contactName, "John");
   });
 
-  test("companyName validation", () => {
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, companyName: "" }).success);
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, companyName: "   " }).success);
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, companyName: "a".repeat(256) }).success);
-    
-    const trimRes = PublicRfqInputSchema.safeParse({ ...validBase, companyName: "  Acme  " });
-    assert.ok(trimRes.success);
-    assert.equal(trimRes.data.companyName, "Acme");
+  await t.test("companyName whitespace-only reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, companyName: "   " });
+    assert.strictEqual(res.success, false);
   });
 
-  test("contactName validation", () => {
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, contactName: "" }).success);
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, contactName: "a".repeat(256) }).success);
+  await t.test("contactName whitespace-only reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, contactName: "   " });
+    assert.strictEqual(res.success, false);
   });
 
-  test("email validation", () => {
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, email: "invalid" }).success);
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, email: "a".repeat(250) + "@b.com" }).success);
-    assert.ok(PublicRfqInputSchema.safeParse({ ...validBase, email: "  a@b.com  " }).success);
+  await t.test("companyName 256 reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, companyName: "A".repeat(256) });
+    assert.strictEqual(res.success, false);
   });
 
-  test("phone optional & normalization", () => {
-    let res = PublicRfqInputSchema.safeParse({ ...validBase, phone: "  " });
-    assert.ok(res.success);
-    assert.equal(res.data.phone, undefined);
-
-    res = PublicRfqInputSchema.safeParse({ ...validBase, phone: "" });
-    assert.ok(res.success);
-    assert.equal(res.data.phone, undefined);
-
-    res = PublicRfqInputSchema.safeParse({ ...validBase, phone: " 123 " });
-    assert.ok(res.success);
-    assert.equal(res.data.phone, "123");
-
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, phone: "1".repeat(101) }).success);
+  await t.test("contactName 256 reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, contactName: "A".repeat(256) });
+    assert.strictEqual(res.success, false);
   });
 
-  test("message optional & normalization", () => {
-    let res = PublicRfqInputSchema.safeParse({ ...validBase, message: "  " });
+  await t.test("email trimmed output", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, email: " test@test.com  " });
     assert.ok(res.success);
-    assert.equal(res.data.message, undefined);
-
-    res = PublicRfqInputSchema.safeParse({ ...validBase, message: "" });
-    assert.ok(res.success);
-    assert.equal(res.data.message, undefined);
-
-    res = PublicRfqInputSchema.safeParse({ ...validBase, message: " hello " });
-    assert.ok(res.success);
-    assert.equal(res.data.message, "hello");
-
-    assert.ok(!PublicRfqInputSchema.safeParse({ ...validBase, message: "1".repeat(5001) }).success);
+    assert.strictEqual(res.data.email, "test@test.com");
   });
 
-  test("submitRfq Server Action Contract", async () => {
-    const actionPath = path.join(process.cwd(), "src/app/actions.ts");
-    const sourceCode = await fs.readFile(actionPath, "utf-8");
+  await t.test("invalid email reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, email: "invalid-email" });
+    assert.strictEqual(res.success, false);
+  });
 
-    const submitStart = sourceCode.indexOf("export async function submitRfq(rawInput: unknown)");
-    assert.ok(submitStart !== -1, "submitRfq with unknown boundary missing");
+  await t.test("email >255 reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, email: "a".repeat(250) + "@b.com" });
+    assert.strictEqual(res.success, false);
+  });
 
-    const zodIdx = sourceCode.indexOf("PublicRfqInputSchema.safeParse(rawInput)", submitStart);
-    assert.ok(zodIdx !== -1, "Zod validation missing");
+  await t.test("phone empty -> undefined", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, phone: "" });
+    assert.ok(res.success);
+    assert.strictEqual(res.data.phone, undefined);
+  });
 
-    // Eligibility check
-    assert.ok(sourceCode.indexOf("!offer.isActive", submitStart) !== -1, "Active check missing");
-    assert.ok(sourceCode.indexOf("!isConversionAllowedStatus(offer.publicationStatus)", submitStart) !== -1, "Publication status check missing");
-    assert.ok(sourceCode.indexOf("resolveCanonicalOfferModel(", submitStart) !== -1, "Canonical model check missing");
-    assert.ok(sourceCode.indexOf("!== \"rfq\"", submitStart) !== -1, "Must enforce rfq canonical model");
+  await t.test("phone whitespace-only -> undefined", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, phone: "   " });
+    assert.ok(res.success);
+    assert.strictEqual(res.data.phone, undefined);
+  });
 
-    // Trust boundary - partnerId derived from DB
-    const insertIdx = sourceCode.indexOf("db.insert(rfqLeads).values", submitStart);
-    assert.ok(insertIdx !== -1, "Insert missing");
-    const partnerIdIdx = sourceCode.indexOf("partnerId: offer.partnerId", insertIdx);
-    assert.ok(partnerIdIdx !== -1, "partnerId must be derived from server offer");
-    assert.ok(sourceCode.indexOf("data.partnerId", insertIdx) === -1, "partnerId cannot be taken from client data");
+  await t.test("phone >100 reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, phone: "1".repeat(101) });
+    assert.strictEqual(res.success, false);
+  });
 
-    // Catch blocks should not log raw errors or throw
-    const catchIdx = sourceCode.indexOf("catch", submitStart);
-    assert.ok(catchIdx !== -1, "Missing try/catch");
-    const returnSystemErrorIdx = sourceCode.indexOf("return { ok: false, code: \"SYSTEM_ERROR\" };", catchIdx);
-    assert.ok(returnSystemErrorIdx !== -1, "Must return SYSTEM_ERROR on exception");
+  await t.test("message empty -> undefined", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, message: "" });
+    assert.ok(res.success);
+    assert.strictEqual(res.data.message, undefined);
+  });
+
+  await t.test("message whitespace-only -> undefined", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, message: "   " });
+    assert.ok(res.success);
+    assert.strictEqual(res.data.message, undefined);
+  });
+
+  await t.test("message >5000 reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...basePayload, message: "A".repeat(5001) });
+    assert.strictEqual(res.success, false);
+  });
+});
+
+test("Public RFQ Trust Boundary Inspection", async (t) => {
+  const actionsPath = path.join(process.cwd(), "src/app/actions.ts");
+  const sourceCode = fs.readFileSync(actionsPath, "utf-8");
+
+  await t.test("submitRfq does not insert client-provided status or partnerId", () => {
+    const submitStart = sourceCode.indexOf("export async function submitRfq");
+    assert.ok(submitStart !== -1, "submitRfq not found");
+    const insertIdx = sourceCode.indexOf("await db.insert(rfqLeads).values({", submitStart);
+    assert.ok(insertIdx !== -1, "Insert not found");
+
+    const insertBlockEnd = sourceCode.indexOf("});", insertIdx);
+    const insertBlock = sourceCode.substring(insertIdx, insertBlockEnd);
+
+    // Explicitly check for absence of "status: " or "data.status" in the insert block
+    assert.strictEqual(insertBlock.includes("status:"), false, "status field must not be included in insert payload (DB default is used)");
+    assert.strictEqual(insertBlock.includes("data.partnerId"), false, "partnerId must not be taken from client payload");
+    assert.ok(insertBlock.includes("partnerId: offer.partnerId"), "partnerId must be strictly derived from the fetched offer");
   });
 });

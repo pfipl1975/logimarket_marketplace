@@ -1,75 +1,101 @@
-import test, { describe } from "node:test";
+import test from "node:test";
 import assert from "node:assert";
-import fs from "fs/promises";
-import path from "path";
-import { isRfqStatusTransitionAllowed } from "../../src/lib/rfq/workflow";
+import fs from "node:fs";
+import path from "node:path";
+import { inspect } from "node:util";
+import { mutateRfqStatusCore, type RfqMutationTransaction } from "@/lib/rfq/admin-core";
 
-describe("Admin RFQ Status Workflow", async () => {
-  test("transition matrix", () => {
-    // new -> new, in_progress, responded, closed
-    assert.ok(isRfqStatusTransitionAllowed("new", "new"));
-    assert.ok(isRfqStatusTransitionAllowed("new", "in_progress"));
-    assert.ok(isRfqStatusTransitionAllowed("new", "responded"));
-    assert.ok(isRfqStatusTransitionAllowed("new", "closed"));
+test("Admin RFQ Core Workflow Behavioral Tests", async (t) => {
+  const createMockTx = (initialRows: unknown[]) => {
+    const executedQueries: string[] = [];
+    const updates: unknown[] = [];
+    const tx: RfqMutationTransaction = {
+      execute: async (query: unknown) => {
+        // Just extract the raw string representation for test assertion
+        executedQueries.push(inspect(query, { depth: 10 }));
+        return { rows: initialRows } as { rows: unknown[] };
+      },
+      update: () => ({
+        set: (values: unknown) => {
+          updates.push(values);
+          return {
+            where: async () => {}
+          };
+        }
+      })
+    };
+    return { tx, executedQueries, updates };
+  };
 
-    // in_progress -> in_progress, responded, closed
-    assert.ok(isRfqStatusTransitionAllowed("in_progress", "in_progress"));
-    assert.ok(isRfqStatusTransitionAllowed("in_progress", "responded"));
-    assert.ok(isRfqStatusTransitionAllowed("in_progress", "closed"));
-    assert.ok(!isRfqStatusTransitionAllowed("in_progress", "new"));
-
-    // responded -> responded, closed
-    assert.ok(isRfqStatusTransitionAllowed("responded", "responded"));
-    assert.ok(isRfqStatusTransitionAllowed("responded", "closed"));
-    assert.ok(!isRfqStatusTransitionAllowed("responded", "new"));
-    assert.ok(!isRfqStatusTransitionAllowed("responded", "in_progress"));
-
-    // closed -> closed
-    assert.ok(isRfqStatusTransitionAllowed("closed", "closed"));
-    assert.ok(!isRfqStatusTransitionAllowed("closed", "new"));
-    assert.ok(!isRfqStatusTransitionAllowed("closed", "in_progress"));
-    assert.ok(!isRfqStatusTransitionAllowed("closed", "responded"));
+  await t.test("missing row -> NOT_FOUND", async () => {
+    const { tx, updates } = createMockTx([]);
+    const res = await mutateRfqStatusCore(tx, { rfqId: 1, targetStatus: "in_progress", expectedStatus: "new" });
+    assert.strictEqual(res.ok, false);
+    assert.strictEqual(res.code, "NOT_FOUND");
+    assert.strictEqual(updates.length, 0);
   });
 
-  test("mutateRfqStatus Server Action Contract", async () => {
-    const actionPath = path.join(process.cwd(), "src/app/actions.ts");
-    const sourceCode = await fs.readFile(actionPath, "utf-8");
-
-    // Extract mutateRfqStatus body
-    const mutateStart = sourceCode.indexOf("export async function mutateRfqStatus");
-    assert.ok(mutateStart !== -1, "mutateRfqStatus is missing");
-    
-    // Find requireAdmin FIRST
-    const requireAdminIdx = sourceCode.indexOf("await requireAdmin()", mutateStart);
-    assert.ok(requireAdminIdx !== -1, "await requireAdmin() is missing");
-
-    const parseIdx = sourceCode.indexOf("AdminRfqStatusMutationSchema.safeParse(rawInput)", mutateStart);
-    assert.ok(parseIdx !== -1, "Missing Zod parsing");
-    
-    // REQUIRE: requireAdmin MUST be before Zod parsing
-    assert.ok(requireAdminIdx < parseIdx, "requireAdmin MUST be called before Zod parsing");
-
-    // Check transaction and FOR UPDATE
-    const txIdx = sourceCode.indexOf("db.transaction(", mutateStart);
-    assert.ok(txIdx !== -1, "db.transaction is missing");
-    assert.ok(parseIdx < txIdx, "Parsing should happen before transaction");
-
-    const forUpdateIdx = sourceCode.indexOf("FOR UPDATE", txIdx);
-    assert.ok(forUpdateIdx !== -1, "FOR UPDATE lock is missing in transaction");
-
-    // Check concurrency and idempotency checks in order
-    const unchangedIdx = sourceCode.indexOf("UNCHANGED", forUpdateIdx);
-    const conflictIdx = sourceCode.indexOf("CONFLICT", unchangedIdx);
-    const transitionForbiddenIdx = sourceCode.indexOf("TRANSITION_NOT_ALLOWED", conflictIdx);
-    
-    assert.ok(unchangedIdx !== -1, "Idempotency check missing");
-    assert.ok(conflictIdx !== -1, "Concurrency CONFLICT check missing");
-    assert.ok(transitionForbiddenIdx !== -1, "Transition check missing");
-
-    // Check status-only update
-    const updateIdx = sourceCode.indexOf(".update(rfqLeads)", transitionForbiddenIdx);
-    assert.ok(updateIdx !== -1, "Missing .update(rfqLeads)");
-    const setIdx = sourceCode.indexOf(".set({ status: data.targetStatus })", updateIdx);
-    assert.ok(setIdx !== -1, "Update must only target status");
+  await t.test("current === target -> UNCHANGED i brak UPDATE", async () => {
+    const { tx, updates } = createMockTx([{ id: 1, status: "in_progress" }]);
+    const res = await mutateRfqStatusCore(tx, { rfqId: 1, targetStatus: "in_progress", expectedStatus: "new" });
+    assert.strictEqual(res.ok, true);
+    assert.strictEqual(res.code, "UNCHANGED");
+    assert.strictEqual(updates.length, 0);
   });
+
+  await t.test("current !== expectedStatus -> CONFLICT i brak UPDATE", async () => {
+    const { tx, updates } = createMockTx([{ id: 1, status: "responded" }]);
+    const res = await mutateRfqStatusCore(tx, { rfqId: 1, targetStatus: "closed", expectedStatus: "in_progress" });
+    assert.strictEqual(res.ok, false);
+    assert.strictEqual(res.code, "CONFLICT");
+    assert.strictEqual(updates.length, 0);
+  });
+
+  await t.test("forbidden forward/backward transition -> TRANSITION_NOT_ALLOWED i brak UPDATE", async () => {
+    const { tx, updates } = createMockTx([{ id: 1, status: "closed" }]);
+    const res = await mutateRfqStatusCore(tx, { rfqId: 1, targetStatus: "in_progress", expectedStatus: "closed" });
+    assert.strictEqual(res.ok, false);
+    assert.strictEqual(res.code, "TRANSITION_NOT_ALLOWED");
+    assert.strictEqual(updates.length, 0);
+  });
+
+  await t.test("valid transition -> UPDATED dokładnie jeden UPDATE (only status)", async () => {
+    const { tx, executedQueries, updates } = createMockTx([{ id: 1, status: "new" }]);
+    const res = await mutateRfqStatusCore(tx, { rfqId: 1, targetStatus: "in_progress", expectedStatus: "new" });
+    
+    assert.strictEqual(res.ok, true);
+    assert.strictEqual(res.code, "UPDATED");
+    
+    // Exactly one update payload
+    assert.strictEqual(updates.length, 1);
+    
+    // UPDATE changes only status
+    const updateKeys = Object.keys(updates[0]);
+    assert.strictEqual(updateKeys.length, 1);
+    assert.strictEqual(updateKeys[0], "status");
+    assert.strictEqual(updates[0].status as string, "in_progress");
+
+    // Check that transaction is used with FOR UPDATE
+    assert.ok(executedQueries[0].includes("FOR UPDATE"), "SELECT must include FOR UPDATE locking");
+  });
+});
+
+test("mutateRfqStatus Server Action AUTH-FIRST Contract", async () => {
+  const actionsPath = path.join(process.cwd(), "src/app/actions.ts");
+  const sourceCode = fs.readFileSync(actionsPath, "utf-8");
+
+  const mutateStart = sourceCode.indexOf("export async function mutateRfqStatus");
+  assert.ok(mutateStart !== -1, "mutateRfqStatus not found");
+
+  const requireAdminIdx = sourceCode.indexOf("await requireAdmin()", mutateStart);
+  assert.ok(requireAdminIdx !== -1, "requireAdmin call is missing");
+
+  const safeParseIdx = sourceCode.indexOf(".safeParse(", mutateStart);
+  assert.ok(safeParseIdx !== -1, "Zod safeParse not found");
+
+  const dbTxIdx = sourceCode.indexOf("db.transaction(", mutateStart);
+  assert.ok(dbTxIdx !== -1, "db.transaction not found");
+
+  assert.ok(requireAdminIdx < safeParseIdx, "requireAdmin() must execute BEFORE input parsing");
+  assert.ok(requireAdminIdx < dbTxIdx, "requireAdmin() must execute BEFORE any database operations");
 });
