@@ -70,7 +70,7 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Partially applied RFQ migratio
       triggerCount: 0,
     };
   }
-  
+
   // Add only ONE constraint to simulate partial migration
   actual["rfq_leads"]!.constraints = [
     ...PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"].constraints,
@@ -95,7 +95,7 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Wrong CHECK values)", () => {
       triggerCount: 0,
     };
   }
-  
+
   actual["rfq_leads"]!.constraints = actual["rfq_leads"]!.constraints.map(c => {
     if (c.name === "rfq_leads_status_check") {
       return {
@@ -120,7 +120,7 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Missing index)", () => {
       triggerCount: 0,
     };
   }
-  
+
   actual["rfq_leads"]!.explicitIndexes = actual["rfq_leads"]!.explicitIndexes.filter(i => i.name !== "idx_rfq_leads_offer");
 
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
