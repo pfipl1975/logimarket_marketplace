@@ -310,7 +310,8 @@
     "emptyTitle": "购物车是空的",
     "emptyDescription": "请从目录中添加商品以提交 B2B 订单。",
     "total": "总计",
-    "unitShort": "件"
+    "unitShort": "件",
+    "cartChanged": "购物车已更改或包含不可用的商品。请检查购物车并重试。"
   },
   "checkout": {
     "title": "B2B 订单",

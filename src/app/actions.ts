@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { and, eq, asc, desc, inArray } from "drizzle-orm";
+import { and, eq, asc, desc, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
@@ -34,6 +34,10 @@ import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
+import { CheckoutContactSchema } from "@/lib/checkout/contact-schema";
+import { executeCheckout } from "@/lib/checkout/checkout-core";
+import { isValidCheckoutQuantity, parseDecimalToMinorUnits } from "@/lib/checkout/money";
+import type { CheckoutActionResult } from "@/lib/checkout/checkout-types";
 
 export type CatalogOffer = {
   id: number; title: string; description: string | null; imageUrl: string | null;
@@ -216,10 +220,7 @@ export type RfqActionResult =
   | { ok: true; code: "RFQ_SENT" }
   | { ok: false; code: "RFQ_OFFER_NOT_FOUND" | "RFQ_VALIDATION_ERROR" | "SYSTEM_ERROR" };
 
-export type CheckoutActionResult =
-  | { ok: null; code: "IDLE" }
-  | { ok: true; code: "CHECKOUT_ORDER_CREATED"; orderId: number }
-  | { ok: false; code: "CHECKOUT_VALIDATION_ERROR" | "CHECKOUT_CART_EMPTY" | "SYSTEM_ERROR" };
+
 
 export async function getCartItems(): Promise<CartItemWithOffer[]> {
   const sessionHash = await getSessionHash();
@@ -246,9 +247,16 @@ export async function getCartCount(): Promise<number> {
 
 export async function addToCart(offerId: number, quantity = 1) {
   "use server";
+  if (!isValidCheckoutQuantity(quantity)) {
+    throw new Error("Nieprawidłowa ilość");
+  }
   const offer = await db
     .select({
       id: offers.id,
+      offerModel: offers.offerModel,
+      conversionType: offers.conversionType,
+      priceOnRequest: offers.priceOnRequest,
+      normalizedPrice: sql<string | null>`ROUND(${offers.priceBrutto}, 2)::text`,
     })
     .from(offers)
     .where(
@@ -263,10 +271,30 @@ export async function addToCart(offerId: number, quantity = 1) {
   if (offer.length === 0) {
     throw new Error("Oferta nie jest już dostępna.");
   }
+
+  const o = offer[0];
+  const canonicalModel = resolveCanonicalOfferModel(o.offerModel, o.conversionType);
+  if (canonicalModel !== "ecommerce") {
+    throw new Error("Oferta nie jest przeznaczona do zakupu.");
+  }
+  if (o.priceOnRequest || !o.normalizedPrice) {
+    throw new Error("Oferta nie ma prawidłowej ceny.");
+  }
+
+  try {
+    parseDecimalToMinorUnits(o.normalizedPrice);
+  } catch {
+    throw new Error("Oferta nie ma prawidłowej ceny.");
+  }
+
   const sessionHash = await getSessionHash();
   const existing = await db.select().from(cartItems).where(and(eq(cartItems.offerId, offerId), eq(cartItems.sessionHash, sessionHash))).limit(1);
   if (existing.length > 0) {
-    await db.update(cartItems).set({ quantity: existing[0].quantity + quantity }).where(eq(cartItems.id, existing[0].id));
+    const nextQuantity = existing[0].quantity + quantity;
+    if (!isValidCheckoutQuantity(nextQuantity)) {
+      throw new Error("Przekroczono maksymalną ilość.");
+    }
+    await db.update(cartItems).set({ quantity: nextQuantity }).where(eq(cartItems.id, existing[0].id));
   } else {
     await db.insert(cartItems).values({ offerId, quantity, sessionHash });
   }
@@ -282,6 +310,9 @@ export async function removeFromCart(cartItemId: number) {
 
 export async function updateCartQuantity(cartItemId: number, quantity: number) {
   "use server";
+  if (!isValidCheckoutQuantity(quantity)) {
+    throw new Error("Nieprawidłowa ilość");
+  }
   const sessionHash = await getSessionHash();
   await db.update(cartItems).set({ quantity }).where(and(eq(cartItems.id, cartItemId), eq(cartItems.sessionHash, sessionHash)));
   revalidatePath("/");
@@ -294,25 +325,21 @@ export async function clearCart() {
   revalidatePath("/");
 }
 
-export async function submitCheckout(data: {
-  companyName: string; contactName: string; email: string; phone?: string; message?: string;
-  items: { offerId: number; title: string; quantity: number; unitPrice: string | null }[];
-  totalAmount?: number;
-}): Promise<CheckoutActionResult> {
+export async function submitCheckout(rawInput: unknown): Promise<CheckoutActionResult> {
   "use server";
-  const sessionHash = await getSessionHash();
-  const [order] = await db.insert(orders).values({
-    companyName: data.companyName, contactName: data.contactName, email: data.email,
-    phone: data.phone ?? null, message: data.message ?? null, sessionHash,
-    totalAmount: data.totalAmount?.toString() ?? null, status: "new",
-  }).returning();
-  const orderId = Number(order.id);
-  for (const item of data.items) {
-    await db.insert(orderItems).values({ orderId, offerId: item.offerId, title: item.title, quantity: item.quantity, unitPrice: item.unitPrice });
+
+  const parsed = CheckoutContactSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "CHECKOUT_VALIDATION_ERROR" };
   }
-  await db.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
-  revalidatePath("/");
-  return { ok: true, code: "CHECKOUT_ORDER_CREATED", orderId: Number(order.id) };
+
+  const sessionHash = await getSessionHash();
+  const result = await executeCheckout(db, sessionHash, parsed.data);
+
+  if (result.ok) {
+    revalidatePath("/");
+  }
+  return result;
 }
 
 export async function submitRfq(data: {
@@ -485,7 +512,7 @@ export async function loginUser(_prevState: LoginActionResult, formData: FormDat
       const { classifyLoginError } = await import("@/lib/auth/login-error");
       return { success: false, code: classifyLoginError(error) };
     }
-  } catch (err) {
+  } catch {
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
@@ -520,7 +547,7 @@ export async function logoutUser(_prevState: LogoutActionResult | null, formData
     if (error) {
       return { success: false, code: "AUTH_UNAVAILABLE" };
     }
-  } catch (err) {
+  } catch {
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 

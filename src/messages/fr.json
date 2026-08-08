@@ -310,7 +310,8 @@
     "emptyTitle": "Votre panier est vide",
     "emptyDescription": "Ajoutez des produits du catalogue pour passer une commande B2B.",
     "total": "Total",
-    "unitShort": "pièce"
+    "unitShort": "pièce",
+    "cartChanged": "Le panier a changé ou contient un article indisponible. Vérifiez le panier et réessayez."
   },
   "checkout": {
     "title": "Commande B2B",

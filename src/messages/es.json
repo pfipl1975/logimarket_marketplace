@@ -310,7 +310,8 @@
     "emptyTitle": "El carrito está vacío",
     "emptyDescription": "Añada productos del catálogo para poder realizar un pedido B2B.",
     "total": "Total",
-    "unitShort": "ud."
+    "unitShort": "ud.",
+    "cartChanged": "El carrito ha cambiado o contiene un artículo no disponible. Revise el carrito e inténtelo de nuevo."
   },
   "checkout": {
     "title": "Pedido B2B",
