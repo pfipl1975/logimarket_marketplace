@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { and, eq, asc, desc, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -34,6 +33,7 @@ import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
+import { getSessionHash } from "@/lib/session/session-hash";
 import { CheckoutContactSchema } from "@/lib/checkout/contact-schema";
 import { executeCheckout } from "@/lib/checkout/checkout-core";
 import { isValidCheckoutQuantity, parseDecimalToMinorUnits } from "@/lib/checkout/money";
@@ -72,16 +72,6 @@ function rowToOffer(row: {
     partnerEmail: row.partner?.contactEmail ?? "",
     publicationStatus: row.offer.publicationStatus,
   };
-}
-
-async function getSessionHash(): Promise<string> {
-  const cookieStore = await cookies();
-  const existing = cookieStore.get("session_hash")?.value;
-  if (existing) return existing;
-  const { randomBytes } = require("crypto");
-  const hash = randomBytes(32).toString("hex");
-  cookieStore.set("session_hash", hash, { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
-  return hash;
 }
 
 export async function getCategories(): Promise<CatalogCategoryRow[]> {
