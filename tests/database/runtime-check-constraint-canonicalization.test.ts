@@ -259,3 +259,62 @@ test("LITERAL SAFETY: splitSqlLiterals helper preserves escaped quote inside lit
   const b = "CHECK (col = 'its me')";
   assert.ok(!equivalent(a, b), "Escaped-quote literal 'it''s me' must differ from 'its me'");
 });
+
+// ---------------------------------------------------------------------------
+// 5. Array element parenthesis normalization (Regression for LM-RFQ-WORKFLOW-DB-01B)
+// ---------------------------------------------------------------------------
+
+test("REGRESSION A: PostgreSQL parenthesized ARRAY element", () => {
+  const contract =
+    "CHECK (((conversion_type)::text = ANY ((ARRAY['inbound'::character varying, 'outbound'::character varying])::text[])))";
+  const pgForm =
+    "CHECK (conversion_type::text = ANY (ARRAY[('inbound'::character varying)::text, ('outbound'::character varying)::text]))";
+
+  assert.ok(
+    equivalent(contract, pgForm),
+    "Should normalize parenthesized ARRAY elements correctly"
+  );
+});
+
+test("REGRESSION B: Multiple nested redundant parens in ARRAY element", () => {
+  const contract =
+    "CHECK (((conversion_type)::text = ANY ((ARRAY['inbound'::character varying, 'outbound'::character varying])::text[])))";
+  const pgFormNested =
+    "CHECK (conversion_type::text = ANY (ARRAY[((('inbound'::character varying)))::text, (('outbound'::character varying))::text]))";
+
+  assert.ok(
+    equivalent(contract, pgFormNested),
+    "Should normalize deeply nested parenthesized ARRAY elements correctly"
+  );
+});
+
+test("REGRESSION C: Literal case preserved", () => {
+  const lower = "CHECK (conversion_type = ANY(ARRAY['inbound']))";
+  const upper = "CHECK (conversion_type = ANY(ARRAY['INBOUND']))";
+  assert.ok(
+    !equivalent(lower, upper),
+    "'inbound' must NOT equal 'INBOUND'"
+  );
+});
+
+test("REGRESSION D: Literal value drift detected", () => {
+  const inbound = "CHECK (conversion_type = ANY(ARRAY['inbound']))";
+  const outbound = "CHECK (conversion_type = ANY(ARRAY['outbound']))";
+  assert.ok(
+    !equivalent(inbound, outbound),
+    "'inbound' must NOT equal 'outbound'"
+  );
+});
+
+test("REGRESSION E: Existing RFQ CHECK pg representation", () => {
+  const contract =
+    "CHECK (((status)::text = ANY ((ARRAY['new'::character varying, 'in_progress'::character varying, 'responded'::character varying, 'closed'::character varying])::text[])))";
+
+  const pgForm =
+    "CHECK (((status)::text = ANY (ARRAY[('new'::character varying)::text, ('in_progress'::character varying)::text, ('responded'::character varying)::text, ('closed'::character varying)::text])))";
+
+  assert.ok(
+    equivalent(contract, pgForm),
+    "RFQ CHECK constraints must canonicalize correctly against PG output"
+  );
+});
