@@ -26,6 +26,7 @@ function makeOffer(overrides: Partial<OfferJsonLdSource> = {}): OfferJsonLdSourc
     offerModel: "ecommerce",
     conversionType: "inbound",
     publicationStatus: "published",
+    isActive: true,
     ...overrides,
   };
 }
@@ -64,6 +65,15 @@ describe("createOfferJsonLd price offer eligibility", () => {
     const result = createOfferJsonLd(
       "pl",
       makeOffer({ offerModel: "ecommerce", publicationStatus: "archived" }),
+      dictStub
+    );
+    assert.ok(!hasSchemaOffer(result));
+  });
+
+  test("inactive ecommerce emits no offers", () => {
+    const result = createOfferJsonLd(
+      "pl",
+      makeOffer({ offerModel: "ecommerce", publicationStatus: "published", isActive: false }),
       dictStub
     );
     assert.ok(!hasSchemaOffer(result));

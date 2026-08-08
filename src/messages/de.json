@@ -285,7 +285,13 @@
     "listView": "Liste",
     "viewSwitcherAria": "Angebotsansicht wechseln",
     "ecommerceNotice": "Dieses Produkt ist im E-Commerce-Modell verfügbar. In den Warenkorb legen und B2B-Bestellung absenden.",
-    "rfqNotice": "Dieses Angebot erfordert ein individuelles Angebot. Senden Sie eine RFQ-Anfrage, und der Partner bereitet ein Angebot vor."
+    "rfqNotice": "Dieses Angebot erfordert ein individuelles Angebot. Senden Sie eine RFQ-Anfrage, und der Partner bereitet ein Angebot vor.",
+    "archivedTitle": "Archiviertes Angebot",
+    "archivedDescription": "Dieses Angebot ist nicht mehr verfügbar und wurde archiviert.",
+    "unavailableTitle": "Angebot vorübergehend nicht verfügbar",
+    "unavailableDescription": "Dieses Angebot ist derzeit nicht verfügbar.",
+    "archivedCtaDisabled": "Archiviertes Angebot",
+    "unavailableCtaDisabled": "Vorübergehend nicht verfügbar"
   },
   "cta": {
     "addToCart": "In den Warenkorb",
@@ -491,7 +497,19 @@
     "paginationPrevious": "Zurück",
     "paginationNext": "Weiter",
     "paginationPage": "Seite",
-    "paginationSummary": "Seite {current} von {total}"
+    "paginationSummary": "Seite {current} von {total}",
+    "publish": "Veröffentlichen",
+    "publishing": "Wird veröffentlicht...",
+    "archive": "Archivieren",
+    "archiving": "Wird archiviert...",
+    "archiveConfirm": "Möchten Sie dieses Angebot wirklich archivieren? Diese Aktion kann nicht rückgängig gemacht werden.",
+    "publishedSuccess": "Angebot erfolgreich veröffentlicht.",
+    "archivedSuccess": "Angebot erfolgreich archiviert.",
+    "publishRejected": "Veröffentlichung abgelehnt.",
+    "offerInactive": "Angebot ist inaktiv.",
+    "invalidTransition": "Ungültiger Statusübergang.",
+    "transitionConflict": "Statuskonflikt. Bitte aktualisieren.",
+    "systemError": "Systemfehler aufgetreten."
   },
   "adminPartners": {
     "metaTitle": "Partner",

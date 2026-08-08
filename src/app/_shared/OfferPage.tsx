@@ -40,6 +40,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
   const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
 
   const isArchived = offer.publicationStatus === "archived";
+  const isOperationallyUnavailable = offer.publicationStatus === "published" && !offer.isActive;
 
   const offerImageUrl =
     typeof offer.imageUrl === "string" && offer.imageUrl.trim().length > 0
@@ -65,11 +66,16 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
         {isArchived && (
           <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
-            <p className="font-semibold text-base">Oferta archiwalna</p>
-            <p className="mt-1 text-sm">Ta oferta jest już nieaktualna i została sprzedana lub wycofana. Możesz przejrzeć inne ogłoszenia w kategorii{" "}
-              <Link href={getCategoryFilterPath(locale, offer.categorySlug)} className="font-semibold underline hover:text-amber-950">
-                {categoryLabel}
-              </Link>.
+            <p className="font-semibold text-base">{dict.offers.archivedTitle}</p>
+            <p className="mt-1 text-sm">{dict.offers.archivedDescription}
+            </p>
+          </div>
+        )}
+
+        {isOperationallyUnavailable && (
+          <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800">
+            <p className="font-semibold text-base">{dict.offers.unavailableTitle}</p>
+            <p className="mt-1 text-sm">{dict.offers.unavailableDescription}
             </p>
           </div>
         )}
@@ -122,7 +128,11 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
             <div className="mt-4">
               {isArchived ? (
                 <div className="flex h-12 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-base font-semibold text-gray-500 cursor-not-allowed">
-                  Oferta nieaktualna
+                  {dict.offers.archivedCtaDisabled}
+                </div>
+              ) : isOperationallyUnavailable ? (
+                <div className="flex h-12 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-base font-semibold text-gray-500 cursor-not-allowed">
+                  {dict.offers.unavailableCtaDisabled}
                 </div>
               ) : (
                 <OfferAction

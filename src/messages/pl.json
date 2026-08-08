@@ -285,7 +285,13 @@
     "listView": "Lista",
     "viewSwitcherAria": "Zmień widok ofert",
     "ecommerceNotice": "Ten produkt jest dostępny w modelu E-Commerce. Dodaj do koszyka i złóż zamówienie B2B.",
-    "rfqNotice": "Ta oferta wymaga indywidualnej wyceny. Wyślij zapytanie RFQ, a partner przygotuje ofertę."
+    "rfqNotice": "Ta oferta wymaga indywidualnej wyceny. Wyślij zapytanie RFQ, a partner przygotuje ofertę.",
+    "archivedTitle": "Oferta archiwalna",
+    "archivedDescription": "Ta oferta jest już nieaktualna i została zarchiwizowana.",
+    "unavailableTitle": "Oferta tymczasowo niedostępna",
+    "unavailableDescription": "Ta oferta jest w tej chwili niedostępna.",
+    "archivedCtaDisabled": "Oferta archiwalna",
+    "unavailableCtaDisabled": "Chwilowo niedostępne"
   },
   "cta": {
     "addToCart": "Dodaj do koszyka",
@@ -491,7 +497,19 @@
     "paginationPrevious": "Poprzednia",
     "paginationNext": "Następna",
     "paginationPage": "Strona",
-    "paginationSummary": "Strona {current} z {total}"
+    "paginationSummary": "Strona {current} z {total}",
+    "publish": "Publikuj",
+    "publishing": "Publikowanie...",
+    "archive": "Archiwizuj",
+    "archiving": "Archiwizowanie...",
+    "archiveConfirm": "Czy na pewno chcesz zarchiwizować tę ofertę? Operacja jest nieodwracalna.",
+    "publishedSuccess": "Oferta została pomyślnie opublikowana.",
+    "archivedSuccess": "Oferta została zarchiwizowana.",
+    "publishRejected": "Publikacja odrzucona.",
+    "offerInactive": "Oferta jest nieaktywna.",
+    "invalidTransition": "Niedozwolona zmiana statusu.",
+    "transitionConflict": "Konflikt statusu. Odśwież stronę.",
+    "systemError": "Wystąpił błąd systemu."
   },
   "adminPartners": {
     "metaTitle": "Partnerzy",
