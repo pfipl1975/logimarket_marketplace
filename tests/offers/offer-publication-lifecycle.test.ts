@@ -280,6 +280,7 @@ describe("Offer Publish Eligibility", () => {
 describe("DB Architecture Contract", () => {
   test("REAL_DB_ROW_LOCK_INTEGRATION_TEST: NOT AVAILABLE IN CURRENT SAFE HARNESS", () => {
     const sourceCode = fs.readFileSync("src/lib/admin/offer-publication-core.ts", "utf8");
+    assert.equal(sourceCode.includes("db.transaction"), true, "Missing transactional execution");
     assert.equal(sourceCode.includes(".for(\"update\")"), true, "Missing row lock");
     assert.equal(sourceCode.includes("CURRENT_TIMESTAMP"), true, "Missing current timestamp usage");
     assert.equal(sourceCode.includes("publishedAt:"), true, "Missing publishedAt mutation");

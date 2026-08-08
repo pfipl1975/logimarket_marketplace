@@ -66,16 +66,16 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
         {isArchived && (
           <div className="mt-6 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
-            <p className="font-semibold text-base">{dict.offers.archivedTitle || "Oferta archiwalna"}</p>
-            <p className="mt-1 text-sm">{dict.offers.archivedDescription || "Ta oferta jest już nieaktualna i została zarchiwizowana."}
+            <p className="font-semibold text-base">{dict.offers.archivedTitle}</p>
+            <p className="mt-1 text-sm">{dict.offers.archivedDescription}
             </p>
           </div>
         )}
 
         {isOperationallyUnavailable && (
           <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800">
-            <p className="font-semibold text-base">{dict.offers.unavailableTitle || "Oferta tymczasowo niedostępna"}</p>
-            <p className="mt-1 text-sm">{dict.offers.unavailableDescription || "Ta oferta jest w tej chwili niedostępna."}
+            <p className="font-semibold text-base">{dict.offers.unavailableTitle}</p>
+            <p className="mt-1 text-sm">{dict.offers.unavailableDescription}
             </p>
           </div>
         )}
