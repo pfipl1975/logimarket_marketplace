@@ -1,5 +1,7 @@
 import { createHmac } from "crypto";
 import { sql } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "@/lib/schema";
 
 export function isPgInt4(value: number): boolean {
   return Number.isSafeInteger(value) && value >= 1 && value <= 2147483647;
@@ -66,7 +68,7 @@ export function hashClientIp(ip: string | null, secret: string): string {
 }
 
 export async function recordOutboundClick(
-  db: any,
+  db: NodePgDatabase<typeof schema>,
   offerId: number,
   partnerId: number,
   sessionHash: string,
