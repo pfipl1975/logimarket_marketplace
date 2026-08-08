@@ -5,6 +5,8 @@ import path from "node:path";
 import { inspect } from "node:util";
 import { mutateRfqStatusCore, type RfqMutationTransaction } from "@/lib/rfq/admin-core";
 import { AdminRfqStatusMutationSchema } from "@/lib/rfq/schema";
+import { isRfqStatusTransitionAllowed } from "@/lib/rfq/workflow";
+import type { RfqStatus } from "@/lib/schema";
 
 // ---------------------------------------------------------------------------
 // Core Workflow Behavioral Tests
@@ -179,4 +181,53 @@ test("mutateRfqStatus safeParse failure -> VALIDATION_ERROR contract", async () 
     afterFailureGuard.includes("VALIDATION_ERROR"),
     "safeParse failure must return VALIDATION_ERROR"
   );
+});
+
+// ---------------------------------------------------------------------------
+// Full Admin RFQ Status Transition Matrix
+// Data-driven: 16 cases covering every from→to pair for all 4 statuses
+// ---------------------------------------------------------------------------
+test("Admin RFQ Full Status Transition Matrix", async (t) => {
+  type TransitionCase = {
+    from: RfqStatus;
+    to: RfqStatus;
+    allowed: boolean;
+  };
+
+  const MATRIX: TransitionCase[] = [
+    // from: new
+    { from: "new",        to: "new",         allowed: true  },
+    { from: "new",        to: "in_progress",  allowed: true  },
+    { from: "new",        to: "responded",    allowed: true  },
+    { from: "new",        to: "closed",       allowed: true  },
+
+    // from: in_progress
+    { from: "in_progress", to: "new",         allowed: false },
+    { from: "in_progress", to: "in_progress",  allowed: true  },
+    { from: "in_progress", to: "responded",    allowed: true  },
+    { from: "in_progress", to: "closed",       allowed: true  },
+
+    // from: responded
+    { from: "responded",   to: "new",         allowed: false },
+    { from: "responded",   to: "in_progress",  allowed: false },
+    { from: "responded",   to: "responded",    allowed: true  },
+    { from: "responded",   to: "closed",       allowed: true  },
+
+    // from: closed
+    { from: "closed",      to: "new",         allowed: false },
+    { from: "closed",      to: "in_progress",  allowed: false },
+    { from: "closed",      to: "responded",    allowed: false },
+    { from: "closed",      to: "closed",       allowed: true  },
+  ];
+
+  for (const { from, to, allowed } of MATRIX) {
+    const label = allowed ? "PASS" : "REJECT";
+    await t.test(`${from} -> ${to}  [${label}]`, () => {
+      assert.strictEqual(
+        isRfqStatusTransitionAllowed(from, to),
+        allowed,
+        `Expected isRfqStatusTransitionAllowed("${from}", "${to}") === ${allowed}`
+      );
+    });
+  }
 });
