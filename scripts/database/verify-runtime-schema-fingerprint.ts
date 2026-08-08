@@ -252,8 +252,17 @@ function normalizeArrayElements(inner: string): string {
     .split(",")
     .map((el) => {
       let e = el.trim();
-      // Strip any chained trailing casts (::character varying, ::text, etc.)
-      e = e.replace(/(::character varying|::text|::int|::bigint|::bool)+$/g, "");
+      // Repeatedly strip outer parens and trailing casts
+      let changed = true;
+      while (changed) {
+        changed = false;
+        const before = e;
+        e = e.replace(/(::character varying|::text|::int|::bigint|::bool)+$/g, "");
+        if (e.startsWith("(") && e.endsWith(")")) {
+          e = e.substring(1, e.length - 1).trim();
+        }
+        if (before !== e) changed = true;
+      }
       return e.trim();
     })
     .join(",");
