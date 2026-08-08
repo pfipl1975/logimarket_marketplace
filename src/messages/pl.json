@@ -310,7 +310,8 @@
     "emptyTitle": "Koszyk jest pusty",
     "emptyDescription": "Dodaj produkty z katalogu, aby złożyć zamówienie B2B.",
     "total": "Razem",
-    "unitShort": "szt."
+    "unitShort": "szt.",
+    "cartChanged": "Koszyk uległ zmianie. Przejrzyj i spróbuj ponownie."
   },
   "checkout": {
     "title": "Zamówienie B2B",

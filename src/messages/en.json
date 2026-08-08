@@ -310,7 +310,8 @@
     "emptyTitle": "Your cart is empty",
     "emptyDescription": "Add products from the catalog to submit a B2B order.",
     "total": "Total",
-    "unitShort": "pcs."
+    "unitShort": "pcs.",
+    "cartChanged": "The cart has changed or contains an unavailable item. Review the cart and try again."
   },
   "checkout": {
     "title": "B2B order",

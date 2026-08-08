@@ -11,7 +11,7 @@ import { submitCheckout } from "@/app/actions";
 import { useCart } from "@/hooks/useCart";
 import { CheckCircle2, Loader2, Building2, User, Mail, Phone, MessageSquare, Package } from "lucide-react";
 import type { CartItemWithOffer } from "@/app/actions";
-import type { CheckoutActionResult } from "@/app/actions";
+import type { CheckoutActionResult } from "@/lib/checkout/checkout-types";
 import type { Dictionary } from "@/lib/i18n/types";
 
 const idleCheckoutResult: CheckoutActionResult = { ok: null, code: "IDLE" };
@@ -19,13 +19,15 @@ const emptyCheckoutForm = { companyName: "", contactName: "", email: "", phone: 
 
 function getCheckoutErrorMessage(
   result: CheckoutActionResult,
-  cartLabels: Pick<Dictionary["cart"], "emptyTitle" | "emptyDescription">,
+  cartLabels: Pick<Dictionary["cart"], "emptyTitle" | "emptyDescription" | "cartChanged">,
   formLabels: Dictionary["form"],
   systemLabels: Dictionary["system"],
 ): string | null {
   switch (result.code) {
     case "CHECKOUT_CART_EMPTY":
       return `${cartLabels.emptyTitle} ${cartLabels.emptyDescription}`;
+    case "CHECKOUT_CART_CHANGED":
+      return cartLabels.cartChanged;
     case "CHECKOUT_VALIDATION_ERROR":
       return formLabels.validationError;
     case "SYSTEM_ERROR":
@@ -45,13 +47,13 @@ interface CheckoutModalProps {
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
   ctaLabels: Pick<Dictionary["cta"], "placeOrder">;
-  cartLabels: Pick<Dictionary["cart"], "total" | "emptyTitle" | "emptyDescription">;
+  cartLabels: Pick<Dictionary["cart"], "total" | "emptyTitle" | "emptyDescription" | "cartChanged">;
   offerLabels: Pick<Dictionary["offers"], "onRequest">;
   closeLabel: Dictionary["common"]["close"];
 }
 
 export function CheckoutModal({ open, onClose, items, total, checkoutLabels, formLabels, systemLabels, ctaLabels, cartLabels, offerLabels, closeLabel }: CheckoutModalProps) {
-  const { clearCart } = useCart();
+  const { refresh } = useCart();
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
   const [actionResult, setActionResult] = useState<CheckoutActionResult>(idleCheckoutResult);
@@ -66,14 +68,14 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
       const result = await submitCheckout({
         companyName: formData.companyName, contactName: formData.contactName, email: formData.email,
         phone: formData.phone || undefined, message: formData.message || undefined,
-        items: items.map((item) => ({ offerId: item.offerId, title: item.title, quantity: item.quantity, unitPrice: item.priceBrutto })),
-        totalAmount: total,
       });
       setActionResult(result);
       if (result.ok === true) {
         setSuccess(true);
-        clearCart();
+        refresh();
         setTimeout(() => { onClose(); setSuccess(false); setFormData(emptyCheckoutForm); }, 3000);
+      } else if (result.code === "CHECKOUT_CART_CHANGED") {
+        refresh();
       }
     } catch {
       setActionResult({ ok: false, code: "SYSTEM_ERROR" });

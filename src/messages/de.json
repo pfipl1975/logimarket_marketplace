@@ -310,7 +310,8 @@
     "emptyTitle": "Der Warenkorb ist leer",
     "emptyDescription": "Fügen Sie Produkte aus dem Katalog hinzu, um eine B2B-Bestellung aufgeben zu können.",
     "total": "Gesamtsumme",
-    "unitShort": "Stk."
+    "unitShort": "Stk.",
+    "cartChanged": "Der Warenkorb hat sich geändert oder enthält einen nicht verfügbaren Artikel. Bitte überprüfen Sie den Warenkorb und versuchen Sie es erneut."
   },
   "checkout": {
     "title": "B2B-Bestellung",
