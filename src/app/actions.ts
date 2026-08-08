@@ -2,7 +2,6 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { and, eq, asc, desc, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
@@ -34,6 +33,7 @@ import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
+import { getSessionHash } from "@/lib/session/session-hash";
 import { CheckoutContactSchema } from "@/lib/checkout/contact-schema";
 import { executeCheckout } from "@/lib/checkout/checkout-core";
 import { isValidCheckoutQuantity, parseDecimalToMinorUnits } from "@/lib/checkout/money";
@@ -73,8 +73,6 @@ function rowToOffer(row: {
     publicationStatus: row.offer.publicationStatus,
   };
 }
-
-import { getSessionHash } from "@/lib/session/session-hash";
 
 export async function getCategories(): Promise<CatalogCategoryRow[]> {
   const rows = await db.select().from(categories).orderBy(asc(categories.name));

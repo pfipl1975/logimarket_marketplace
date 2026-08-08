@@ -5,7 +5,8 @@ import {
   parseOutboundDestination,
   extractClientIp,
   hashClientIp,
-  isPgInt4
+  isPgInt4,
+  isValidOutboundTrackingSecret
 } from "@/lib/outbound/outbound-core";
 
 describe("Outbound Core Logic", () => {
@@ -104,8 +105,37 @@ describe("Outbound Core Logic", () => {
     });
   });
 
+  describe("isValidOutboundTrackingSecret", () => {
+    test("rejects undefined", () => {
+      assert.strictEqual(isValidOutboundTrackingSecret(undefined), false);
+    });
+
+    test("rejects empty and short strings", () => {
+      assert.strictEqual(isValidOutboundTrackingSecret(""), false);
+      assert.strictEqual(isValidOutboundTrackingSecret("a"), false);
+      assert.strictEqual(isValidOutboundTrackingSecret("supersecret31characterlongstring"), false); // 31 chars
+    });
+
+    test("accepts strings >= 32 chars", () => {
+      assert.strictEqual(isValidOutboundTrackingSecret("supersecret32characterlongstringx"), true); // 33 chars
+      assert.strictEqual(isValidOutboundTrackingSecret("supersecret32characterlongstring"), true); // 32 chars
+      assert.strictEqual(isValidOutboundTrackingSecret("supersecret64characterlongstringsupersecret64characterlongstring"), true); // 64 chars
+    });
+  });
+
   describe("hashClientIp", () => {
-    const secret = "supersecret32characterlongstringhere";
+    const secret = "supersecret32characterlongstring";
+    const anotherSecret = "anothersecret32characterlongstri";
+
+    test("throws INVALID_TRACKING_SECRET if secret is too short", () => {
+      assert.throws(() => {
+        hashClientIp("1.1.1.1", "shortsecret");
+      }, /INVALID_TRACKING_SECRET/);
+      
+      assert.throws(() => {
+        hashClientIp("1.1.1.1", "supersecret31characterlongstrin"); // 31 chars
+      }, /INVALID_TRACKING_SECRET/);
+    });
 
     test("returns same 64-char hash for same IP and secret", () => {
       const h1 = hashClientIp("1.1.1.1", secret);
@@ -123,7 +153,7 @@ describe("Outbound Core Logic", () => {
 
     test("returns different hash for different secret", () => {
       const h1 = hashClientIp("1.1.1.1", secret);
-      const h2 = hashClientIp("1.1.1.1", "anothersecret");
+      const h2 = hashClientIp("1.1.1.1", anotherSecret);
       assert.notStrictEqual(h1, h2);
     });
 
@@ -142,12 +172,15 @@ describe("Outbound Core Logic", () => {
   });
 
   describe("isPgInt4", () => {
-    test("validates signed 32-bit integer limits", () => {
+    test("validates signed 32-bit integer limits and non-integers", () => {
       assert.strictEqual(isPgInt4(1), true);
       assert.strictEqual(isPgInt4(2147483647), true);
       assert.strictEqual(isPgInt4(0), false);
       assert.strictEqual(isPgInt4(-1), false);
       assert.strictEqual(isPgInt4(2147483648), false);
+      assert.strictEqual(isPgInt4(1.5), false);
+      assert.strictEqual(isPgInt4(NaN), false);
+      assert.strictEqual(isPgInt4(Infinity), false);
     });
   });
 });

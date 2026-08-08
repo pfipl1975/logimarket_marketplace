@@ -10,7 +10,8 @@ import {
   parseOutboundDestination,
   extractClientIp,
   hashClientIp,
-  recordOutboundClick
+  recordOutboundClick,
+  isValidOutboundTrackingSecret
 } from "@/lib/outbound/outbound-core";
 import { getSessionHash } from "@/lib/session/session-hash";
 
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   
   try {
     const secret = process.env.OUTBOUND_TRACKING_HMAC_SECRET;
-    if (!secret) {
+    if (!isValidOutboundTrackingSecret(secret)) {
       console.log("[outbound] stage=tracking_config result=skipped");
     } else {
       sessionHash = await getSessionHash();

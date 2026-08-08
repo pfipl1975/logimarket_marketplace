@@ -2,7 +2,7 @@ import { createHmac } from "crypto";
 import { sql } from "drizzle-orm";
 
 export function isPgInt4(value: number): boolean {
-  return value >= 1 && value <= 2147483647;
+  return Number.isSafeInteger(value) && value >= 1 && value <= 2147483647;
 }
 
 export function parseOutboundOfferId(raw: string): number | null {
@@ -46,7 +46,17 @@ export function extractClientIp(headers: Headers): string | null {
   return null;
 }
 
+export function isValidOutboundTrackingSecret(
+  secret: string | undefined
+): secret is string {
+  if (typeof secret !== "string") return false;
+  return secret.length >= 32;
+}
+
 export function hashClientIp(ip: string | null, secret: string): string {
+  if (!isValidOutboundTrackingSecret(secret)) {
+    throw new Error("INVALID_TRACKING_SECRET");
+  }
   const normalized = ip || "unknown";
   const message = `logimarket-outbound-ip:v1:${normalized}`;
   return createHmac("sha256", secret).update(message).digest("hex");
