@@ -72,7 +72,7 @@ export async function runMigrations(
       );
     }
 
-    // 4. Run migration via Drizzle (EMPTY → create; EXACT_EXISTING → adopt baseline)
+    // 4. Run migration via Drizzle (EMPTY → create; EXACT_EXISTING → adopt baseline; MIGRATABLE_PREVIOUS → additive migration)
     const actualMigrate = migrateFn ?? migrate;
     const db = drizzle(pool as any);
     await actualMigrate(db, {

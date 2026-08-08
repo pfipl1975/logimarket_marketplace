@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
+import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 test("normalizeProjectRef extracts refs correctly", () => {
   assert.strictEqual(normalizeProjectRef("postgres://postgres.abc@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"), "abc");
@@ -13,9 +13,9 @@ test("EXPECTED_BASELINE_TABLES has 15 items", () => {
   assert.strictEqual(EXPECTED_BASELINE_TABLES.length, 15);
 });
 
-test("CONTRACT_SYNC: 1. Exactly 18 FK", () => {
+test("CONTRACT_SYNC: 1. Exactly 20 FK", () => {
   const allFks = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "FOREIGN KEY"));
-  assert.strictEqual(allFks.length, 18);
+  assert.strictEqual(allFks.length, 20);
 });
 
 test("CONTRACT_SYNC: 2. No forbidden FKs", () => {
@@ -24,13 +24,13 @@ test("CONTRACT_SYNC: 2. No forbidden FKs", () => {
   assert.ok(!names.includes("fk_cart_items_offer"));
   assert.ok(!names.includes("fk_order_items_order"));
   assert.ok(!names.includes("fk_order_items_offer"));
-  assert.ok(!names.includes("fk_rfq_leads_offer"));
-  assert.ok(!names.includes("fk_rfq_leads_partner"));
+  assert.ok(!names.includes("fk_rfq_leads_offer")); // Old name
+  assert.ok(!names.includes("fk_rfq_leads_partner")); // Old name
 });
 
-test("CONTRACT_SYNC: 3. Exactly 8 CHECK", () => {
+test("CONTRACT_SYNC: 3. Exactly 9 CHECK", () => {
   const allChecks = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "CHECK"));
-  assert.strictEqual(allChecks.length, 8);
+  assert.strictEqual(allChecks.length, 9);
   const names = allChecks.map(c => c.name);
   assert.ok(!names.includes("chk_cart_items_quantity"));
   assert.ok(!names.includes("chk_order_items_quantity"));
@@ -101,9 +101,9 @@ test("CONTRACT_SYNC: 12. Exactly 15 sequence ownerships", () => {
   assert.strictEqual(allSeqCols.length, 15);
 });
 
-test("CONTRACT_SYNC: 13. Exactly 8 explicit indexes", () => {
+test("CONTRACT_SYNC: 13. Exactly 10 explicit indexes", () => {
   const allIdxs = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].explicitIndexes);
-  assert.strictEqual(allIdxs.length, 8);
+  assert.strictEqual(allIdxs.length, 10);
 });
 
 test("CONTRACT_SYNC: 14. 15 RLS enabled", () => {
@@ -122,4 +122,23 @@ test("CONTRACT_SYNC: 15. Zero policies and triggers", () => {
     assert.strictEqual(fp.policyCount ?? 0, 0, `${t} must have 0 policies`);
     assert.strictEqual(fp.triggerCount ?? 0, 0, `${t} must have 0 triggers`);
   }
+});
+
+test("CONTRACT_SYNC: 16. RFQ schema evolution (PREVIOUS vs NEW)", () => {
+  const oldRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
+  const newRfq = PRODUCTION_FINGERPRINT["rfq_leads"];
+
+  // Prove PREVIOUS fingerprint has NO RFQ CHECK, NO RFQ FKs, NO RFQ indexes
+  assert.ok(!oldRfq.constraints.some(c => c.name === "rfq_leads_status_check"));
+  assert.ok(!oldRfq.constraints.some(c => c.name === "rfq_leads_offer_id_fkey"));
+  assert.ok(!oldRfq.constraints.some(c => c.name === "rfq_leads_partner_id_fkey"));
+  assert.ok(!oldRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_offer"));
+  assert.ok(!oldRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_partner"));
+
+  // Prove NEW fingerprint HAS all five objects
+  assert.ok(newRfq.constraints.some(c => c.name === "rfq_leads_status_check"));
+  assert.ok(newRfq.constraints.some(c => c.name === "rfq_leads_offer_id_fkey"));
+  assert.ok(newRfq.constraints.some(c => c.name === "rfq_leads_partner_id_fkey"));
+  assert.ok(newRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_offer"));
+  assert.ok(newRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_partner"));
 });

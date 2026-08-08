@@ -11,9 +11,11 @@
 import {
   EXPECTED_BASELINE_TABLES,
   PRODUCTION_FINGERPRINT,
+  PREVIOUS_PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
   IndexContract,
+  TableContract,
 } from "./runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -55,7 +57,7 @@ export type Queryable = {
 // Target classification
 // ---------------------------------------------------------------------------
 
-export type RuntimeTargetState = "EMPTY" | "EXACT_EXISTING" | "PARTIAL_OR_DRIFTED";
+export type RuntimeTargetState = "EMPTY" | "EXACT_EXISTING" | "MIGRATABLE_PREVIOUS" | "PARTIAL_OR_DRIFTED";
 
 export type RuntimeTargetResult = {
   state: RuntimeTargetState;
@@ -405,7 +407,8 @@ function compareTableContract(
 
 export function compareRuntimeFingerprint(
   actual: Record<string, TableFingerprintSide>,
-  allPublicTables: string[]
+  allPublicTables: string[],
+  expectedFingerprint: Record<string, TableContract>
 ): FingerprintMatchResult {
   const result: FingerprintMatchResult = {
     isExactMatch: true,
@@ -437,7 +440,7 @@ export function compareRuntimeFingerprint(
 
   // Deep per-table comparison
   for (const tableName of EXPECTED_BASELINE_TABLES) {
-    const exp = PRODUCTION_FINGERPRINT[tableName];
+    const exp = expectedFingerprint[tableName];
     const got = actual[tableName];
 
     if (!got) {
@@ -471,16 +474,22 @@ export function classifyRuntimeTarget(
     return { state: "EMPTY", publicTableCount, differences: [] };
   }
 
-  const match = compareRuntimeFingerprint(actual, allPublicTables);
+  const matchNew = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
-  if (match.isExactMatch) {
+  if (matchNew.isExactMatch) {
     return { state: "EXACT_EXISTING", publicTableCount, differences: [] };
+  }
+
+  const matchPrevious = compareRuntimeFingerprint(actual, allPublicTables, PREVIOUS_PRODUCTION_FINGERPRINT);
+
+  if (matchPrevious.isExactMatch) {
+    return { state: "MIGRATABLE_PREVIOUS", publicTableCount, differences: [] };
   }
 
   return {
     state: "PARTIAL_OR_DRIFTED",
     publicTableCount,
-    differences: match.driftReasons,
+    differences: matchNew.driftReasons, // Report drift from the target NEW schema
   };
 }
 
