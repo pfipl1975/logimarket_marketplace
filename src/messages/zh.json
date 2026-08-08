@@ -565,7 +565,15 @@
     "paginationNext": "Next",
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
-    "unknownPartner": "Unknown partner"
+    "unknownPartner": "Unknown partner",
+    "status_new": "新",
+    "status_in_progress": "进行中",
+    "status_responded": "已回复",
+    "status_closed": "已关闭",
+    "statusUpdating": "更新中...",
+    "statusUpdated": "状态已更新",
+    "statusConflictError": "冲突。状态已在其他地方更改。",
+    "statusGenericError": "更新失败。"
   },
   "adminOrders": {
     "metaTitle": "订单 | LogiMarket 管理",

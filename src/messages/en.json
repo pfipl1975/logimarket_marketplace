@@ -565,7 +565,15 @@
     "paginationNext": "Next",
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
-    "unknownPartner": "Unknown partner"
+    "unknownPartner": "Unknown partner",
+    "status_new": "New",
+    "status_in_progress": "In Progress",
+    "status_responded": "Responded",
+    "status_closed": "Closed",
+    "statusUpdating": "Updating...",
+    "statusUpdated": "Status updated",
+    "statusConflictError": "Conflict. Status changed elsewhere.",
+    "statusGenericError": "Failed to update status."
   },
   "adminOrders": {
     "metaTitle": "Orders | LogiMarket Admin",

@@ -565,7 +565,15 @@
     "paginationNext": "Next",
     "paginationSummary": "Page {current} of {total}",
     "unknownOffer": "Unknown offer",
-    "unknownPartner": "Unknown partner"
+    "unknownPartner": "Unknown partner",
+    "status_new": "Nuevo",
+    "status_in_progress": "En progreso",
+    "status_responded": "Respondido",
+    "status_closed": "Cerrado",
+    "statusUpdating": "Actualizando...",
+    "statusUpdated": "Estado actualizado",
+    "statusConflictError": "Conflicto. Estado cambiado en otra parte.",
+    "statusGenericError": "Error al actualizar."
   },
   "adminOrders": {
     "metaTitle": "Pedidos | LogiMarket Admin",

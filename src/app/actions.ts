@@ -210,7 +210,7 @@ export type RfqActionResult =
   | { ok: true; code: "RFQ_SENT" }
   | { ok: false; code: "RFQ_OFFER_NOT_FOUND" | "RFQ_VALIDATION_ERROR" | "SYSTEM_ERROR" };
 
-
+import type { AdminRfqMutationResult } from "@/lib/rfq/admin-core";
 
 export async function getCartItems(): Promise<CartItemWithOffer[]> {
   const sessionHash = await getSessionHash();
@@ -332,32 +332,78 @@ export async function submitCheckout(rawInput: unknown): Promise<CheckoutActionR
   return result;
 }
 
-export async function submitRfq(data: {
-  offerId: number; companyName: string; contactName: string; email: string; phone?: string; message?: string;
-}): Promise<RfqActionResult> {
-  "use server";
-  const offerRows = await db
-    .select({
-      id: offers.id,
-      partnerId: offers.partnerId,
-    })
-    .from(offers)
-    .where(
-      and(
-        eq(offers.id, data.offerId),
-        eq(offers.isActive, true),
-        eq(offers.publicationStatus, "published")
-      )
-    )
-    .limit(1);
+import { PublicRfqInputSchema, AdminRfqStatusMutationSchema } from "@/lib/rfq/schema";
+import { validatePublicRfqEligibility } from "@/lib/rfq/eligibility";
 
-  if (offerRows.length === 0) return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
-  await db.insert(rfqLeads).values({
-    offerId: data.offerId, partnerId: offerRows[0].partnerId,
-    companyName: data.companyName, contactName: data.contactName,
-    email: data.email, phone: data.phone ?? null, message: data.message ?? null,
-  });
-  return { ok: true, code: "RFQ_SENT" };
+export async function submitRfq(rawInput: unknown): Promise<RfqActionResult> {
+  "use server";
+  try {
+    const parsed = PublicRfqInputSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { ok: false, code: "RFQ_VALIDATION_ERROR" };
+    }
+    const data = parsed.data;
+
+    const offerRows = await db
+      .select({
+        id: offers.id,
+        partnerId: offers.partnerId,
+        isActive: offers.isActive,
+        publicationStatus: offers.publicationStatus,
+        offerModel: offers.offerModel,
+        conversionType: offers.conversionType,
+      })
+      .from(offers)
+      .where(eq(offers.id, data.offerId))
+      .limit(1);
+
+    if (offerRows.length === 0) return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
+    const offer = offerRows[0];
+
+    if (!validatePublicRfqEligibility(offer)) {
+      return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
+    }
+
+    await db.insert(rfqLeads).values({
+      offerId: data.offerId,
+      partnerId: offer.partnerId,
+      companyName: data.companyName,
+      contactName: data.contactName,
+      email: data.email,
+      phone: data.phone ?? null,
+      message: data.message ?? null,
+    });
+    
+    return { ok: true, code: "RFQ_SENT" };
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function mutateRfqStatus(rawInput: unknown): Promise<AdminRfqMutationResult> {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const parsed = AdminRfqStatusMutationSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { ok: false, code: "VALIDATION_ERROR" };
+    }
+    const data = parsed.data;
+
+    const { mutateRfqStatusCore } = await import("@/lib/rfq/admin-core");
+    const result = await db.transaction(async (tx) => mutateRfqStatusCore(tx, data));
+
+    if (result.ok && result.code === "UPDATED") {
+      revalidatePath("/admin/zapytania", "page");
+      revalidatePath("/[locale]/admin", "layout");
+    }
+
+    return result;
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
 }
 
 export async function getCategoryAttributeConfiguration(

@@ -1,4 +1,5 @@
 import type { AdminRfqDto } from "@/lib/admin/rfq-read-model-core";
+import { AdminRfqStatusControl } from "./AdminRfqStatusControl";
 
 export function AdminRfqTable({
   items,
@@ -39,9 +40,7 @@ export function AdminRfqTable({
                 {item.createdAt ? dateFormatter.format(new Date(item.createdAt)) : "—"}
               </td>
               <td className="px-4 py-3 text-brand-navy">
-                <span className="bg-brand-light-gray px-2 py-1 rounded text-xs font-medium uppercase tracking-wider">
-                  {item.status}
-                </span>
+                <AdminRfqStatusControl rfqId={item.id} currentStatus={item.status as import("@/lib/schema").RfqStatus} dict={dict} />
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-col gap-0.5">
