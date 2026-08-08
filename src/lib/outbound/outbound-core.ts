@@ -49,8 +49,11 @@ export function extractClientIp(headers: Headers): string | null {
 export function isValidOutboundTrackingSecret(
   secret: string | undefined
 ): secret is string {
-  if (typeof secret !== "string") return false;
-  return secret.length >= 32;
+  return (
+    typeof secret === "string" &&
+    secret.length >= 32 &&
+    secret.trim().length > 0
+  );
 }
 
 export function hashClientIp(ip: string | null, secret: string): string {

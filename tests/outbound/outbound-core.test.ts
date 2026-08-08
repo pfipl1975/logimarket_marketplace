@@ -106,6 +106,16 @@ describe("Outbound Core Logic", () => {
   });
 
   describe("isValidOutboundTrackingSecret", () => {
+    const secret31 = "a".repeat(31);
+    const secret32 = "a".repeat(32);
+    const secret64 = "a".repeat(64);
+
+    test("generated fixture length proof", () => {
+      assert.strictEqual(secret31.length, 31);
+      assert.strictEqual(secret32.length, 32);
+      assert.strictEqual(secret64.length, 64);
+    });
+
     test("rejects undefined", () => {
       assert.strictEqual(isValidOutboundTrackingSecret(undefined), false);
     });
@@ -113,60 +123,73 @@ describe("Outbound Core Logic", () => {
     test("rejects empty and short strings", () => {
       assert.strictEqual(isValidOutboundTrackingSecret(""), false);
       assert.strictEqual(isValidOutboundTrackingSecret("a"), false);
-      assert.strictEqual(isValidOutboundTrackingSecret("supersecret31characterlongstring"), false); // 31 chars
+      assert.strictEqual(isValidOutboundTrackingSecret(secret31), false);
     });
 
     test("accepts strings >= 32 chars", () => {
-      assert.strictEqual(isValidOutboundTrackingSecret("supersecret32characterlongstringx"), true); // 33 chars
-      assert.strictEqual(isValidOutboundTrackingSecret("supersecret32characterlongstring"), true); // 32 chars
-      assert.strictEqual(isValidOutboundTrackingSecret("supersecret64characterlongstringsupersecret64characterlongstring"), true); // 64 chars
+      assert.strictEqual(isValidOutboundTrackingSecret(secret32), true);
+      assert.strictEqual(isValidOutboundTrackingSecret(secret64), true);
+    });
+
+    test("rejects whitespace-only strings", () => {
+      assert.strictEqual(isValidOutboundTrackingSecret(" ".repeat(32)), false);
+      assert.strictEqual(isValidOutboundTrackingSecret("\t".repeat(64)), false);
+      assert.strictEqual(isValidOutboundTrackingSecret(" \n \t ".repeat(10)), false);
+    });
+
+    test("accepts strings with intentional whitespace and enough actual entropy", () => {
+      assert.strictEqual(isValidOutboundTrackingSecret("  " + "a".repeat(30) + "  "), true);
     });
   });
 
   describe("hashClientIp", () => {
-    const secret = "supersecret32characterlongstring";
-    const anotherSecret = "anothersecret32characterlongstri";
+    const secretA = "a".repeat(32);
+    const secretB = "b".repeat(32);
 
-    test("throws INVALID_TRACKING_SECRET if secret is too short", () => {
+    test("throws INVALID_TRACKING_SECRET if secret is invalid", () => {
       assert.throws(() => {
         hashClientIp("1.1.1.1", "shortsecret");
       }, /INVALID_TRACKING_SECRET/);
       
       assert.throws(() => {
-        hashClientIp("1.1.1.1", "supersecret31characterlongstrin"); // 31 chars
+        hashClientIp("1.1.1.1", "a".repeat(31));
+      }, /INVALID_TRACKING_SECRET/);
+
+      assert.throws(() => {
+        hashClientIp("1.1.1.1", " ".repeat(32));
       }, /INVALID_TRACKING_SECRET/);
     });
 
     test("returns same 64-char hash for same IP and secret", () => {
-      const h1 = hashClientIp("1.1.1.1", secret);
-      const h2 = hashClientIp("1.1.1.1", secret);
+      const h1 = hashClientIp("1.1.1.1", secretA);
+      const h2 = hashClientIp("1.1.1.1", secretA);
       assert.strictEqual(h1, h2);
       assert.strictEqual(h1.length, 64);
       assert.match(h1, /^[0-9a-f]{64}$/);
     });
 
     test("returns different hash for different IPs", () => {
-      const h1 = hashClientIp("1.1.1.1", secret);
-      const h2 = hashClientIp("2.2.2.2", secret);
+      const h1 = hashClientIp("1.1.1.1", secretA);
+      const h2 = hashClientIp("2.2.2.2", secretA);
       assert.notStrictEqual(h1, h2);
     });
 
     test("returns different hash for different secret", () => {
-      const h1 = hashClientIp("1.1.1.1", secret);
-      const h2 = hashClientIp("1.1.1.1", anotherSecret);
+      const h1 = hashClientIp("1.1.1.1", secretA);
+      const h2 = hashClientIp("1.1.1.1", secretB);
       assert.notStrictEqual(h1, h2);
     });
 
     test("uses 'unknown' sentinel if IP is null", () => {
-      const h1 = hashClientIp(null, secret);
-      const h2 = hashClientIp("unknown", secret);
+      const h1 = hashClientIp(null, secretA);
+      const h2 = hashClientIp("unknown", secretA);
       assert.strictEqual(h1, h2);
       assert.strictEqual(h1.length, 64);
     });
     
     test("does not expose raw IP in output", () => {
       const ip = "192.168.1.1";
-      const h1 = hashClientIp(ip, secret);
+      const h1 = hashClientIp(ip, secretA);
       assert.doesNotMatch(h1, new RegExp(ip.replace(/\./g, "\\.")));
     });
   });
