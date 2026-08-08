@@ -69,6 +69,8 @@ export const clicks = pgTable("clicks", {
   isUnique24h: boolean("is_unique_24h").default(true),
 });
 
+export type RfqStatus = "new" | "in_progress" | "responded" | "closed";
+
 export const rfqLeads = pgTable("rfq_leads", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   offerId: bigint("offer_id", { mode: "number" }).notNull(),
@@ -78,9 +80,23 @@ export const rfqLeads = pgTable("rfq_leads", {
   email: varchar("email", { length: 255 }).notNull(),
   phone: varchar("phone", { length: 100 }),
   message: text("message"),
-  status: varchar("status", { length: 20 }).notNull().default("new"),
+  status: varchar("status", { length: 20 }).notNull().default("new").$type<RfqStatus>(),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
-});
+}, (t) => [
+  check("rfq_leads_status_check", sql`((status)::text = ANY ((ARRAY['new'::character varying, 'in_progress'::character varying, 'responded'::character varying, 'closed'::character varying])::text[]))`),
+  foreignKey({
+    name: "rfq_leads_offer_id_fkey",
+    columns: [t.offerId],
+    foreignColumns: [offers.id]
+  }).onDelete("no action").onUpdate("no action"),
+  foreignKey({
+    name: "rfq_leads_partner_id_fkey",
+    columns: [t.partnerId],
+    foreignColumns: [partners.id]
+  }).onDelete("no action").onUpdate("no action"),
+  index("idx_rfq_leads_offer").on(t.offerId),
+  index("idx_rfq_leads_partner").on(t.partnerId)
+]);
 
 export const cartItems = pgTable("cart_items", {
   id: bigserial("id", { mode: "number" }).primaryKey(),

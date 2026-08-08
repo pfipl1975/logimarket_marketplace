@@ -34,6 +34,7 @@ import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import {
   EXPECTED_BASELINE_TABLES,
   PRODUCTION_FINGERPRINT,
+  PREVIOUS_PRODUCTION_FINGERPRINT,
 } from "../../scripts/database/runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -93,6 +94,7 @@ type MetadataOptions = {
   journalRows?: { hash: string; created_at: string | number }[];
   tableCounts?: Record<string, number>;
   countsAsNumbers?: boolean;
+  fingerprint?: Record<string, TableContract>;
 };
 
 /** Routes the 6 metadata queries of fetchLiveSchemaMetadata plus journal and
@@ -105,6 +107,7 @@ function metadataRouter(options?: MetadataOptions): Router {
   ];
   const tableCounts = options?.tableCounts ?? {};
   const asNum = options?.countsAsNumbers ?? false;
+  const fp = options?.fingerprint ?? PRODUCTION_FINGERPRINT;
 
   return (t) => {
     // Tables list (checked first — other queries also join pg_class)
@@ -134,7 +137,7 @@ function metadataRouter(options?: MetadataOptions): Router {
     if (t.includes("pg_index")) {
       const rows: unknown[] = [];
       for (const tableName of tables) {
-        for (const idx of PRODUCTION_FINGERPRINT[tableName].explicitIndexes) {
+        for (const idx of fp[tableName].explicitIndexes) {
           rows.push({
             table_name: tableName,
             index_name: idx.name,
@@ -149,7 +152,7 @@ function metadataRouter(options?: MetadataOptions): Router {
     if (t.includes("pg_attribute")) {
       const rows: unknown[] = [];
       for (const tableName of tables) {
-        for (const col of PRODUCTION_FINGERPRINT[tableName].columns) {
+        for (const col of fp[tableName].columns) {
           rows.push({
             table_name: tableName,
             column_name: col.name,
@@ -166,7 +169,7 @@ function metadataRouter(options?: MetadataOptions): Router {
     if (t.includes("pg_constraint")) {
       const rows: unknown[] = [];
       for (const tableName of tables) {
-        for (const con of PRODUCTION_FINGERPRINT[tableName].constraints) {
+        for (const con of fp[tableName].constraints) {
           rows.push({
             table_name: tableName,
             constraint_name: con.name,
@@ -191,13 +194,15 @@ function metadataRouter(options?: MetadataOptions): Router {
 }
 
 /** metadataRouter extended with the grant-verifier queries (pg_roles + ACL). */
-function runnerRouter(state: "EMPTY" | "EXACT" | "PARTIAL"): Router {
+function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "PARTIAL", fp?: Record<string, TableContract>): Router {
   const base =
     state === "EXACT"
-      ? metadataRouter()
-      : state === "PARTIAL"
-        ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
-        : emptyRouter();
+      ? metadataRouter({ fingerprint: fp })
+      : state === "PREVIOUS"
+        ? metadataRouter({ fingerprint: fp })
+        : state === "PARTIAL"
+          ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
+          : emptyRouter();
   return (t) => {
     if (t.includes("pg_roles")) {
       return {
@@ -474,13 +479,13 @@ test("TARGET: PARTIAL_OR_DRIFTED when trigger count > 0", () => {
 // ---------------------------------------------------------------------------
 
 test("COMPARE: matches exact copy", () => {
-  const result = compareRuntimeFingerprint(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
+  const result = compareRuntimeFingerprint(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT);
   assert.strictEqual(result.isExactMatch, true);
 });
 
 test("COMPARE: detects unexpected table", () => {
   const allTables = [...EXPECTED_BASELINE_TABLES, "unexpected_table"];
-  const result = compareRuntimeFingerprint(PRODUCTION_FINGERPRINT, allTables);
+  const result = compareRuntimeFingerprint(PRODUCTION_FINGERPRINT, allTables, PRODUCTION_FINGERPRINT);
   assert.strictEqual(result.isExactMatch, false);
   assert.ok(result.driftReasons[0].includes("Unexpected: 1"));
 });
@@ -495,7 +500,7 @@ test("COMPARE: detects missing table", () => {
 test("COMPARE: detects altered RLS", () => {
   const mutated = JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT));
   mutated["offers"].rlsEnabled = false;
-  const result = compareRuntimeFingerprint(mutated, EXPECTED_BASELINE_TABLES);
+  const result = compareRuntimeFingerprint(mutated, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT);
   assert.strictEqual(result.isExactMatch, false);
   assert.ok(result.driftReasons.some((r: string) => r.includes("RLS mismatch")));
 });
@@ -505,7 +510,7 @@ test("COMPARE: detects missing column, constraint and index", () => {
   mutated["offers"].columns.pop();
   mutated["offers"].constraints.pop();
   mutated["offers"].explicitIndexes.pop();
-  const result = compareRuntimeFingerprint(mutated, EXPECTED_BASELINE_TABLES);
+  const result = compareRuntimeFingerprint(mutated, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT);
   assert.strictEqual(result.isExactMatch, false);
   assert.ok(result.driftReasons.some((r: string) => r.includes("column count mismatch")));
   assert.ok(result.driftReasons.some((r: string) => r.includes("constraints count mismatch")));
@@ -515,7 +520,7 @@ test("COMPARE: detects missing column, constraint and index", () => {
 test("COMPARE: handles undefined table in actual", () => {
   const mutated = JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT));
   delete mutated["offers"];
-  const result = compareRuntimeFingerprint(mutated, EXPECTED_BASELINE_TABLES);
+  const result = compareRuntimeFingerprint(mutated, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT);
   assert.strictEqual(result.isExactMatch, false);
   assert.ok(result.driftReasons.some((r: string) => r.includes("missing in actual schema metadata")));
 });
@@ -557,6 +562,50 @@ test("RUNNER_EXACT_TEST: runner completes full flow on EXACT_EXISTING schema", a
     q.queries.some((sql) => sql.toLowerCase().includes("aclexplode")),
     "grant post-check must run after migration"
   );
+});
+
+test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS schema", async () => {
+  let migrateCallCount = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const q: { router?: Router; queries: string[]; unmatched: string[]; query: (text: string) => Promise<unknown> } = {} as any;
+  const fakeMigrate = async () => {
+    migrateCallCount++;
+    // Simulate migration side-effect by switching the router to EXACT
+    q.router = runnerRouter("EXACT");
+  };
+
+  // Custom router switching
+  let currentRouter = runnerRouter("PREVIOUS", PREVIOUS_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => currentRouter(t);
+
+  const state = { ended: false };
+  const qObj = {
+    queries: [],
+    unmatched: [],
+    set router(newRouter: Router) { currentRouter = newRouter; },
+    async query(text: string) {
+      const normalized = text.trim().replace(/\s+/g, " ");
+      this.queries.push(normalized);
+      const result = routerProxy(normalized.toLowerCase());
+      if (result === null) throw new Error("UNMATCHED_FAKE_QUERY");
+      return result;
+    }
+  };
+  Object.assign(q, qObj);
+  Object.defineProperty(q, "router", {
+    set(newRouter: Router) {
+      currentRouter = newRouter;
+    }
+  });
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => { state.ended = true; },
+  });
+
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never);
+
+  assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
+  assert.ok(state.ended, "pool must be closed");
 });
 
 test("RUNNER_DRIFT_TEST: runner throws and never calls migrate on PARTIAL_OR_DRIFTED", async () => {

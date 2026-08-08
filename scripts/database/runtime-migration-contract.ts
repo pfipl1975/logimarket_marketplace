@@ -25,10 +25,10 @@ export const EXPECTED_COUNTS = {
   get COLUMNS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.columns.length, 0); },
   SEQUENCES: 15,
   PRIMARY_KEYS: 15,
-  FOREIGN_KEYS: 18,
+  FOREIGN_KEYS: 20,
   UNIQUE_CONSTRAINTS: 10,
-  CHECK_CONSTRAINTS: 8,
-  INDEXES: 33, // 15 PK + 10 UC + 8 explicit
+  CHECK_CONSTRAINTS: 9,
+  INDEXES: 35, // 15 PK + 10 UC + 10 explicit
   RLS_ENABLED: 15,
   POLICIES: 0
 };
@@ -99,7 +99,7 @@ export type TableContract = {
   rlsEnabled: boolean;
 };
 
-export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+export const PREVIOUS_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   "attribute_definitions": {
     name: "attribute_definitions",
     columns: [
@@ -419,5 +419,46 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     ],
     explicitIndexes: [],
     rlsEnabled: true
+  }
+};
+
+const previousRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
+
+export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...PREVIOUS_PRODUCTION_FINGERPRINT,
+  "rfq_leads": {
+    ...previousRfq,
+    columns: [...previousRfq.columns],
+    constraints: [
+      ...previousRfq.constraints,
+      {
+        name: "rfq_leads_offer_id_fkey",
+        type: "FOREIGN KEY",
+        definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)"
+      },
+      {
+        name: "rfq_leads_partner_id_fkey",
+        type: "FOREIGN KEY",
+        definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)"
+      },
+      {
+        name: "rfq_leads_status_check",
+        type: "CHECK",
+        definition: "CHECK (((status)::text = ANY ((ARRAY['new'::character varying, 'in_progress'::character varying, 'responded'::character varying, 'closed'::character varying])::text[])))"
+      }
+    ],
+    explicitIndexes: [
+      ...previousRfq.explicitIndexes,
+      {
+        name: "idx_rfq_leads_offer",
+        method: "btree",
+        expressions: "offer_id"
+      },
+      {
+        name: "idx_rfq_leads_partner",
+        method: "btree",
+        expressions: "partner_id"
+      }
+    ]
   }
 };
