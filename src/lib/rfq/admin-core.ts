@@ -3,10 +3,13 @@ import { rfqLeads } from "@/lib/schema";
 import type { AdminRfqStatusMutation } from "./schema";
 import { isRfqStatusTransitionAllowed } from "./workflow";
 
-// Abstract transaction interface to allow easy testing without full DB
+// Abstract transaction interface — structurally compatible with Drizzle PgTransaction
+// and with lightweight test mocks. `update` uses `unknown` return so that both
+// the real Drizzle builder chain and the test mock (which returns a POJO) satisfy it.
 export interface RfqMutationTransaction {
-  execute<T = any>(query: ReturnType<typeof sql>): Promise<any>;
-  update(table: any): any;
+  execute(query: ReturnType<typeof sql>): Promise<{ rows: Record<string, unknown>[] }>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  update(table: typeof rfqLeads): any;
 }
 
 export type AdminRfqMutationResult =
@@ -17,7 +20,7 @@ export async function mutateRfqStatusCore(
   tx: RfqMutationTransaction,
   data: AdminRfqStatusMutation
 ): Promise<AdminRfqMutationResult> {
-  const lockedRows = await tx.execute<{ id: string | number; status: string }>(
+  const lockedRows = await tx.execute(
     sql`
       SELECT id, status
       FROM ${rfqLeads}

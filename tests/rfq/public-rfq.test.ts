@@ -5,6 +5,9 @@ import path from "node:path";
 import { PublicRfqInputSchema } from "@/lib/rfq/schema";
 import { validatePublicRfqEligibility } from "@/lib/rfq/eligibility";
 
+// ---------------------------------------------------------------------------
+// Eligibility Matrix
+// ---------------------------------------------------------------------------
 test("Public RFQ Eligibility Behavior Matrix", async (t) => {
   await t.test("published + active + rfq/inbound -> eligible", () => {
     assert.strictEqual(
@@ -115,6 +118,107 @@ test("Public RFQ Eligibility Behavior Matrix", async (t) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// offerId Zod validation — no coercion
+// ---------------------------------------------------------------------------
+test("Public RFQ offerId Zod Validation (no coercion)", async (t) => {
+  const base = {
+    companyName: "Company",
+    contactName: "Name",
+    email: "a@b.com",
+  };
+
+  await t.test("offerId = 0 -> reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: 0 });
+    assert.strictEqual(res.success, false);
+  });
+
+  await t.test("offerId = -1 -> reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: -1 });
+    assert.strictEqual(res.success, false);
+  });
+
+  await t.test("offerId = 1.5 -> reject", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: 1.5 });
+    assert.strictEqual(res.success, false);
+  });
+
+  await t.test("offerId = '1' (string) -> reject (no coercion)", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: "1" });
+    assert.strictEqual(res.success, false);
+  });
+
+  await t.test("offerId = '123' (string) -> reject (no coercion)", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: "123" });
+    assert.strictEqual(res.success, false);
+  });
+
+  await t.test("offerId = MAX_SAFE_INTEGER + 1 -> reject (unsafe integer)", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: Number.MAX_SAFE_INTEGER + 1 });
+    assert.strictEqual(res.success, false);
+  });
+
+  await t.test("offerId = 1 -> accept", () => {
+    const res = PublicRfqInputSchema.safeParse({ ...base, offerId: 1 });
+    assert.ok(res.success);
+    if (res.success) assert.strictEqual(res.data.offerId, 1);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Missing offer neutral result contract
+// ---------------------------------------------------------------------------
+test("Public RFQ Missing-Offer Neutral Result Contract", async (t) => {
+  const actionsPath = path.join(process.cwd(), "src/app/actions.ts");
+  const sourceCode = fs.readFileSync(actionsPath, "utf-8");
+
+  await t.test("offerRows.length === 0 returns RFQ_OFFER_NOT_FOUND (not a disclosure code)", () => {
+    // Prove the source code never returns a different disclosure code for the
+    // empty-result branch.  The only code visible after 'offerRows.length === 0'
+    // must be RFQ_OFFER_NOT_FOUND.
+    const submitStart = sourceCode.indexOf("export async function submitRfq");
+    assert.ok(submitStart !== -1, "submitRfq not found");
+
+    const emptyCheckIdx = sourceCode.indexOf("offerRows.length === 0", submitStart);
+    assert.ok(emptyCheckIdx !== -1, "empty check not found");
+
+    // The line that handles the empty case must return RFQ_OFFER_NOT_FOUND
+    const afterEmptyCheck = sourceCode.substring(emptyCheckIdx, emptyCheckIdx + 200);
+    assert.ok(
+      afterEmptyCheck.includes("RFQ_OFFER_NOT_FOUND"),
+      "missing offer must return RFQ_OFFER_NOT_FOUND"
+    );
+
+    // It must NOT return any discriminating internal status code
+    const disclosingCodes = ["RFQ_OFFER_DRAFT", "RFQ_OFFER_ARCHIVED", "RFQ_OFFER_INACTIVE", "RFQ_OFFER_WRONG_MODEL"];
+    for (const code of disclosingCodes) {
+      assert.ok(
+        !sourceCode.slice(submitStart).includes(code),
+        `submitRfq must not expose discriminating code '${code}'`
+      );
+    }
+  });
+
+  await t.test("ineligible offer also returns RFQ_OFFER_NOT_FOUND (same neutral code)", () => {
+    const submitStart = sourceCode.indexOf("export async function submitRfq");
+    // Both the missing-row path and the eligibility-failure path must use the
+    // same neutral code, never leaking whether the offer exists but is wrong.
+    const submitBlock = sourceCode.substring(
+      submitStart,
+      sourceCode.indexOf("export async function", submitStart + 1)
+    );
+    const rfqOfferNotFoundCount = (submitBlock.match(/RFQ_OFFER_NOT_FOUND/g) ?? []).length;
+    // Both branches (offerRows empty + ineligible) must use this code
+    assert.ok(
+      rfqOfferNotFoundCount >= 2,
+      "both missing-row and ineligible paths must return RFQ_OFFER_NOT_FOUND"
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Schema Validation Details
+// ---------------------------------------------------------------------------
 test("Public RFQ Schema Validation Details", async (t) => {
   const basePayload = {
     offerId: 123,
@@ -206,6 +310,9 @@ test("Public RFQ Schema Validation Details", async (t) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Trust Boundary
+// ---------------------------------------------------------------------------
 test("Public RFQ Trust Boundary Inspection", async (t) => {
   const actionsPath = path.join(process.cwd(), "src/app/actions.ts");
   const sourceCode = fs.readFileSync(actionsPath, "utf-8");

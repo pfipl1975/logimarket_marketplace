@@ -1,15 +1,18 @@
+import type { OfferPublicationStatus } from "@/lib/schema";
 import { isConversionAllowedStatus } from "@/lib/offers/status";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 
-export function validatePublicRfqEligibility(offer: {
+export interface PublicRfqEligibilityOffer {
   isActive: boolean;
-  publicationStatus: string;
+  publicationStatus: OfferPublicationStatus;
   offerModel: string | null;
   conversionType: string | null;
-}): boolean {
+}
+
+export function validatePublicRfqEligibility(offer: PublicRfqEligibilityOffer): boolean {
   if (!offer.isActive) return false;
-  if (!isConversionAllowedStatus(offer.publicationStatus as any)) return false;
-  
+  if (!isConversionAllowedStatus(offer.publicationStatus)) return false;
+
   const canonicalModel = resolveCanonicalOfferModel(offer.offerModel, offer.conversionType);
   if (canonicalModel !== "rfq") return false;
 
