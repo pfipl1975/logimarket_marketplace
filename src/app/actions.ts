@@ -74,15 +74,7 @@ function rowToOffer(row: {
   };
 }
 
-async function getSessionHash(): Promise<string> {
-  const cookieStore = await cookies();
-  const existing = cookieStore.get("session_hash")?.value;
-  if (existing) return existing;
-  const { randomBytes } = require("crypto");
-  const hash = randomBytes(32).toString("hex");
-  cookieStore.set("session_hash", hash, { path: "/", httpOnly: true, sameSite: "lax", maxAge: 60 * 60 * 24 * 30 });
-  return hash;
-}
+import { getSessionHash } from "@/lib/session/session-hash";
 
 export async function getCategories(): Promise<CatalogCategoryRow[]> {
   const rows = await db.select().from(categories).orderBy(asc(categories.name));
