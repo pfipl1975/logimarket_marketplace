@@ -665,3 +665,24 @@ export async function getAdminOrdersPage(rawInput: unknown) {
   }
 }
 
+export async function changeAdminOfferPublicationState(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOfferPublicationInput, executeOfferPublicationStateChange } = await import("@/lib/admin/offer-publication-core");
+  const input = parseAdminOfferPublicationInput(rawInput);
+
+  if (!input) {
+    return { ok: false as const, code: "OFFER_INVALID_INPUT" as const };
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await executeOfferPublicationStateChange(db, input);
+
+  if (result.ok && result.changed) {
+    revalidatePath("/", "layout");
+  }
+
+  return result;
+}
+

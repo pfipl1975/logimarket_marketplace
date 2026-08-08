@@ -151,6 +151,7 @@ export interface OfferJsonLdSource {
   offerModel: CanonicalOfferModelResolution;
   conversionType: string;
   publicationStatus: OfferPublicationStatus;
+  isActive: boolean;
 }
 
 function parsePrice(priceStr: string | null): number | null {
@@ -188,6 +189,7 @@ export function createOfferJsonLd(
 
   const hasValidPrice =
     offer.publicationStatus === "published" &&
+    offer.isActive &&
     parsedPrice !== null &&
     !offer.priceOnRequest &&
     (offer.offerModel === "ecommerce" || offer.offerModel === "outbound");

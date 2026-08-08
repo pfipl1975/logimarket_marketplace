@@ -285,7 +285,13 @@
     "listView": "Liste",
     "viewSwitcherAria": "Changer l'affichage des offres",
     "ecommerceNotice": "Ce produit est disponible dans le modèle E-Commerce. Ajoutez-le au panier et envoyez la commande B2B.",
-    "rfqNotice": "Cette offre nécessite un devis individuel. Envoyez une demande RFQ et le partenaire préparera une offre."
+    "rfqNotice": "Cette offre nécessite un devis individuel. Envoyez une demande RFQ et le partenaire préparera une offre.",
+    "archivedTitle": "Offre archivée",
+    "archivedDescription": "Cette offre n'est plus disponible et a été archivée.",
+    "unavailableTitle": "Offre temporairement indisponible",
+    "unavailableDescription": "Cette offre est actuellement indisponible.",
+    "archivedCtaDisabled": "Offre archivée",
+    "unavailableCtaDisabled": "Temporairement indisponible"
   },
   "cta": {
     "addToCart": "Ajouter au panier",
@@ -491,7 +497,19 @@
     "paginationPrevious": "Précédent",
     "paginationNext": "Suivant",
     "paginationPage": "Page",
-    "paginationSummary": "Page {current} sur {total}"
+    "paginationSummary": "Page {current} sur {total}",
+    "publish": "Publier",
+    "publishing": "Publication...",
+    "archive": "Archiver",
+    "archiving": "Archivage...",
+    "archiveConfirm": "Êtes-vous sûr de vouloir archiver cette offre ? Cette action est irréversible.",
+    "publishedSuccess": "Offre publiée avec succès.",
+    "archivedSuccess": "Offre archivée avec succès.",
+    "publishRejected": "Publication rejetée.",
+    "offerInactive": "L'offre est inactive.",
+    "invalidTransition": "Transition de statut invalide.",
+    "transitionConflict": "Conflit de statut. Veuillez rafraîchir.",
+    "systemError": "Une erreur système est survenue."
   },
   "adminPartners": {
     "metaTitle": "Partenaires",

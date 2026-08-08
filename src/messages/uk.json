@@ -285,7 +285,13 @@
     "listView": "Список",
     "viewSwitcherAria": "Змінити вигляд пропозицій",
     "ecommerceNotice": "Цей товар доступний у моделі E-Commerce. Додайте його до кошика та надішліть B2B-замовлення.",
-    "rfqNotice": "Ця пропозиція вимагає індивідуального розрахунку ціни. Надішліть запит RFQ, і партнер підготує пропозицію."
+    "rfqNotice": "Ця пропозиція вимагає індивідуального розрахунку ціни. Надішліть запит RFQ, і партнер підготує пропозицію.",
+    "archivedTitle": "Архівована пропозиція",
+    "archivedDescription": "Ця пропозиція більше не актуальна і була архівована.",
+    "unavailableTitle": "Пропозиція тимчасово недоступна",
+    "unavailableDescription": "Ця пропозиція наразі недоступна.",
+    "archivedCtaDisabled": "Архівована пропозиція",
+    "unavailableCtaDisabled": "Тимчасово недоступна"
   },
   "cta": {
     "addToCart": "Додати до кошика",
@@ -491,7 +497,19 @@
     "paginationPrevious": "Попередня",
     "paginationNext": "Наступна",
     "paginationPage": "Сторінка",
-    "paginationSummary": "Сторінка {current} з {total}"
+    "paginationSummary": "Сторінка {current} з {total}",
+    "publish": "Опублікувати",
+    "publishing": "Публікація...",
+    "archive": "Архівувати",
+    "archiving": "Архівування...",
+    "archiveConfirm": "Ви впевнені, що хочете архівувати цю пропозицію? Цю дію неможливо скасувати.",
+    "publishedSuccess": "Пропозиція успішно опублікована.",
+    "archivedSuccess": "Пропозиція успішно архівована.",
+    "publishRejected": "Публікацію відхилено.",
+    "offerInactive": "Пропозиція неактивна.",
+    "invalidTransition": "Неприпустима зміна статусу.",
+    "transitionConflict": "Конфлікт статусу. Оновіть сторінку.",
+    "systemError": "Сталася системна помилка."
   },
   "adminPartners": {
     "metaTitle": "Партнери",

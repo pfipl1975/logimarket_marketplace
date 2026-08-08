@@ -285,7 +285,13 @@
     "listView": "List",
     "viewSwitcherAria": "Change offer view",
     "ecommerceNotice": "This product is available in the E-Commerce model. Add it to the cart and submit a B2B order.",
-    "rfqNotice": "This offer requires an individual quote. Send an RFQ inquiry and the partner will prepare an offer."
+    "rfqNotice": "This offer requires an individual quote. Send an RFQ inquiry and the partner will prepare an offer.",
+    "archivedTitle": "Archived Offer",
+    "archivedDescription": "This offer is no longer available and has been archived.",
+    "unavailableTitle": "Offer Temporarily Unavailable",
+    "unavailableDescription": "This offer is currently unavailable.",
+    "archivedCtaDisabled": "Archived Offer",
+    "unavailableCtaDisabled": "Temporarily Unavailable"
   },
   "cta": {
     "addToCart": "Add to cart",
@@ -491,7 +497,19 @@
     "paginationPrevious": "Previous",
     "paginationNext": "Next",
     "paginationPage": "Page",
-    "paginationSummary": "Page {current} of {total}"
+    "paginationSummary": "Page {current} of {total}",
+    "publish": "Publish",
+    "publishing": "Publishing...",
+    "archive": "Archive",
+    "archiving": "Archiving...",
+    "archiveConfirm": "Are you sure you want to archive this offer? This action cannot be undone.",
+    "publishedSuccess": "Offer published successfully.",
+    "archivedSuccess": "Offer archived successfully.",
+    "publishRejected": "Publication rejected.",
+    "offerInactive": "Offer is inactive.",
+    "invalidTransition": "Invalid status transition.",
+    "transitionConflict": "Status conflict. Please refresh.",
+    "systemError": "System error occurred."
   },
   "adminPartners": {
     "metaTitle": "Partners",

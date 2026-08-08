@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { AdminOfferDto } from "@/lib/admin/offers-read-model-core";
 import type { Locale } from "@/lib/i18n/config";
+import { AdminOfferLifecycleAction, type AdminOfferLifecycleActionProps } from "./AdminOfferLifecycleAction";
 
 interface AdminOffersTableProps {
   items: AdminOfferDto[];
@@ -121,6 +122,15 @@ export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps)
                 ) : (
                   <span className="text-muted-foreground/60">{dict.previewUnavailable}</span>
                 )}
+                <div className="mt-2">
+                  {(item.publicationStatus === "draft" || item.publicationStatus === "published" || item.publicationStatus === "archived") && (
+                    <AdminOfferLifecycleAction
+                      offerId={item.id}
+                      currentStatus={item.publicationStatus}
+                      dict={dict as unknown as AdminOfferLifecycleActionProps["dict"]}
+                    />
+                  )}
+                </div>
               </td>
             </tr>
           ))}

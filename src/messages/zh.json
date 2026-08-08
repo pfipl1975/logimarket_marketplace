@@ -285,7 +285,13 @@
     "listView": "列表",
     "viewSwitcherAria": "切换报价视图",
     "ecommerceNotice": "该产品支持 E-Commerce 模式。请加入购物车并提交 B2B 订单。",
-    "rfqNotice": "此报价需要单独评估。请发送 RFQ 询盘，合作伙伴将为您提供报价。"
+    "rfqNotice": "此报价需要单独评估。请发送 RFQ 询盘，合作伙伴将为您提供报价。",
+    "archivedTitle": "已归档的报价",
+    "archivedDescription": "此报价不再可用，并已归档。",
+    "unavailableTitle": "报价暂时不可用",
+    "unavailableDescription": "此报价当前不可用。",
+    "archivedCtaDisabled": "已归档的报价",
+    "unavailableCtaDisabled": "暂时不可用"
   },
   "cta": {
     "addToCart": "加入购物车",
@@ -491,7 +497,19 @@
     "paginationPrevious": "上一页",
     "paginationNext": "下一页",
     "paginationPage": "页",
-    "paginationSummary": "第 {current} 页，共 {total} 页"
+    "paginationSummary": "第 {current} 页，共 {total} 页",
+    "publish": "发布",
+    "publishing": "发布中...",
+    "archive": "归档",
+    "archiving": "归档中...",
+    "archiveConfirm": "您确定要归档此报价吗？此操作无法撤销。",
+    "publishedSuccess": "报价发布成功。",
+    "archivedSuccess": "报价已成功归档。",
+    "publishRejected": "发布被拒绝。",
+    "offerInactive": "报价未激活。",
+    "invalidTransition": "无效的状态转换。",
+    "transitionConflict": "状态冲突。请刷新。",
+    "systemError": "系统发生错误。"
   },
   "adminPartners": {
     "metaTitle": "合作伙伴",
