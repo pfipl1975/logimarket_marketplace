@@ -97,17 +97,17 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
             </DialogHeader>
             <form onSubmit={handleSubmit} className="grid gap-4 mt-2">
               <div className="grid gap-1.5"><Label htmlFor="rfq-company">{formLabels.companyName}</Label>
-                <Input id="rfq-company" value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} required /></div>
+                <Input id="rfq-company" maxLength={255} value={formData.companyName} onChange={(e) => setFormData({ ...formData, companyName: e.target.value })} required /></div>
               <div className="grid gap-1.5"><Label htmlFor="rfq-contact">{formLabels.contactName}</Label>
-                <Input id="rfq-contact" value={formData.contactName} onChange={(e) => setFormData({ ...formData, contactName: e.target.value })} required /></div>
+                <Input id="rfq-contact" maxLength={255} value={formData.contactName} onChange={(e) => setFormData({ ...formData, contactName: e.target.value })} required /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="grid gap-1.5"><Label htmlFor="rfq-email">{formLabels.email}</Label>
-                  <Input id="rfq-email" type="email" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required /></div>
+                  <Input id="rfq-email" type="email" maxLength={255} value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} required /></div>
                 <div className="grid gap-1.5"><Label htmlFor="rfq-phone">{formLabels.phone}</Label>
-                  <Input id="rfq-phone" type="tel" value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
+                  <Input id="rfq-phone" type="tel" maxLength={100} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
               </div>
               <div className="grid gap-1.5"><Label htmlFor="rfq-msg">{formLabels.message}</Label>
-                <Textarea id="rfq-msg" rows={3} placeholder={rfqLabels.messagePlaceholder}
+                <Textarea id="rfq-msg" rows={3} maxLength={5000} placeholder={rfqLabels.messagePlaceholder}
                   value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} /></div>
               {errorMessage ? (
                 <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
