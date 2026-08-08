@@ -579,7 +579,7 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
   const routerProxy = (t: string) => currentRouter(t);
 
   const state = { ended: false };
-  Object.assign(q, {
+  const qObj = {
     queries: [],
     unmatched: [],
     set router(newRouter: Router) { currentRouter = newRouter; },
@@ -589,6 +589,12 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
       const result = routerProxy(normalized.toLowerCase());
       if (result === null) throw new Error("UNMATCHED_FAKE_QUERY");
       return result;
+    }
+  };
+  Object.assign(q, qObj);
+  Object.defineProperty(q, "router", {
+    set(newRouter: Router) {
+      currentRouter = newRouter;
     }
   });
   const factory = () => ({
