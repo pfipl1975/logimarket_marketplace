@@ -30,12 +30,22 @@ export interface CheckoutCartRow {
   quantity: number;
 }
 
+export type CheckoutLineFailureReason =
+  | "OFFER_MISSING"
+  | "OFFER_INACTIVE"
+  | "OFFER_NOT_CONVERSION_ALLOWED"
+  | "OFFER_NOT_ECOMMERCE"
+  | "PRICE_ON_REQUEST"
+  | "PRICE_MISSING"
+  | "PRICE_INVALID"
+  | "QUANTITY_INVALID";
+
 /**
  * Result of eligibility validation for a single cart line.
  */
 export type LineEligibilityResult =
   | { ok: true; offerId: number; title: string; quantity: number; unitPriceMinor: bigint }
-  | { ok: false; reason: string };
+  | { ok: false; reason: CheckoutLineFailureReason };
 
 /**
  * Validates a single checkout cart line against the fetched offer.
@@ -58,39 +68,39 @@ export function validateCheckoutLine(
   const offer = offerMap.get(cartRow.offerId);
 
   if (!offer) {
-    return { ok: false, reason: `offer_missing:offerId=${cartRow.offerId}` };
+    return { ok: false, reason: "OFFER_MISSING" };
   }
 
   if (!offer.isActive) {
-    return { ok: false, reason: `offer_inactive:offerId=${cartRow.offerId}` };
+    return { ok: false, reason: "OFFER_INACTIVE" };
   }
 
   if (!isConversionAllowedStatus(offer.publicationStatus)) {
-    return { ok: false, reason: `offer_not_published:offerId=${cartRow.offerId}:status=${offer.publicationStatus}` };
+    return { ok: false, reason: "OFFER_NOT_CONVERSION_ALLOWED" };
   }
 
   const canonicalModel = resolveCanonicalOfferModel(offer.offerModel, offer.conversionType);
   if (canonicalModel !== "ecommerce") {
-    return { ok: false, reason: `offer_not_ecommerce:offerId=${cartRow.offerId}:canonical=${canonicalModel}` };
+    return { ok: false, reason: "OFFER_NOT_ECOMMERCE" };
   }
 
   if (offer.priceOnRequest) {
-    return { ok: false, reason: `offer_price_on_request:offerId=${cartRow.offerId}` };
+    return { ok: false, reason: "PRICE_ON_REQUEST" };
   }
 
   if (!offer.normalizedPrice) {
-    return { ok: false, reason: `offer_null_price:offerId=${cartRow.offerId}` };
+    return { ok: false, reason: "PRICE_MISSING" };
   }
 
   let unitPriceMinor: bigint;
   try {
     unitPriceMinor = parseDecimalToMinorUnits(offer.normalizedPrice);
   } catch {
-    return { ok: false, reason: `offer_invalid_price:offerId=${cartRow.offerId}:raw=${offer.normalizedPrice}` };
+    return { ok: false, reason: "PRICE_INVALID" };
   }
 
   if (!isValidCheckoutQuantity(cartRow.quantity)) {
-    return { ok: false, reason: `invalid_quantity:cartId=${cartRow.id}:qty=${cartRow.quantity}` };
+    return { ok: false, reason: "QUANTITY_INVALID" };
   }
 
   return {

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { z } from "zod";
-import { and, eq, asc, desc, inArray } from "drizzle-orm";
+import { and, eq, asc, desc, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers, categories, partners, cartItems, orders, orderItems, rfqLeads,
@@ -256,7 +256,7 @@ export async function addToCart(offerId: number, quantity = 1) {
       offerModel: offers.offerModel,
       conversionType: offers.conversionType,
       priceOnRequest: offers.priceOnRequest,
-      priceBrutto: offers.priceBrutto,
+      normalizedPrice: sql<string | null>`ROUND(${offers.priceBrutto}, 2)::text`,
     })
     .from(offers)
     .where(
@@ -277,12 +277,12 @@ export async function addToCart(offerId: number, quantity = 1) {
   if (canonicalModel !== "ecommerce") {
     throw new Error("Oferta nie jest przeznaczona do zakupu.");
   }
-  if (o.priceOnRequest || !o.priceBrutto) {
+  if (o.priceOnRequest || !o.normalizedPrice) {
     throw new Error("Oferta nie ma prawidłowej ceny.");
   }
 
   try {
-    parseDecimalToMinorUnits(o.priceBrutto);
+    parseDecimalToMinorUnits(o.normalizedPrice);
   } catch {
     throw new Error("Oferta nie ma prawidłowej ceny.");
   }

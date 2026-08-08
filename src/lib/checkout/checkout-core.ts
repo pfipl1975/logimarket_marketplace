@@ -106,7 +106,7 @@ export async function executeCheckout(
       for (const cartRow of cartRows) {
         const lineResult = validateCheckoutLine(cartRow, offerMap);
         if (!lineResult.ok) {
-          console.error(`[checkout] validation failed for cart item ${cartRow.id}: ${lineResult.reason}`);
+          console.error(`[checkout] stage=eligibility result=cart_changed reason=${lineResult.reason}`);
           return { ok: false, code: "CHECKOUT_CART_CHANGED" };
         }
 
@@ -115,7 +115,7 @@ export async function executeCheckout(
         const totalPriceStr = minorUnitsToDecimalString(totalPriceMinor);
 
         if (!isPriceSnapshotLengthValid(unitPriceStr) || !isPriceSnapshotLengthValid(totalPriceStr)) {
-          console.error(`[checkout] price snapshot exceeds length limit: cart item ${cartRow.id}`);
+          console.error(`[checkout] stage=money errorName=SnapshotLengthExceeded`);
           return { ok: false, code: "SYSTEM_ERROR" };
         }
 
@@ -136,7 +136,7 @@ export async function executeCheckout(
       const orderTotalStr = minorUnitsToDecimalString(orderTotalMinor);
 
       if (!isPriceSnapshotLengthValid(orderTotalStr)) {
-        console.error(`[checkout] order total snapshot exceeds length limit`);
+        console.error(`[checkout] stage=money errorName=SnapshotLengthExceeded`);
         return { ok: false, code: "SYSTEM_ERROR" };
       }
 

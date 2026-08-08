@@ -77,6 +77,7 @@ test("Quantity Validation Contract", async (t) => {
     assert.equal(isValidCheckoutQuantity(NaN), false);
     assert.equal(isValidCheckoutQuantity(Infinity), false);
     assert.equal(isValidCheckoutQuantity(-Infinity), false);
+    assert.equal(isValidCheckoutQuantity(Number.MAX_SAFE_INTEGER + 1), false);
     assert.equal(isValidCheckoutQuantity(null), false);
     assert.equal(isValidCheckoutQuantity(undefined), false);
     assert.equal(isValidCheckoutQuantity("1"), false);

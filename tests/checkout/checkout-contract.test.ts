@@ -58,4 +58,24 @@ test("Checkout Core Transaction Contract", async (t) => {
   await t.test("Deletes cart items inside transaction", () => {
     assert.match(checkoutCoreSource, /DELETE\s+FROM.*\$\{cartItems\}/s);
   });
+
+  await t.test("Logging Hygiene: no commercial values in failure logs", () => {
+    // Assert we do not log cartRow.id, offerId, quantity, etc. on failure.
+    assert.doesNotMatch(checkoutCoreSource, /validation failed.*cartRow\.id/);
+    assert.doesNotMatch(checkoutCoreSource, /console\.error\(.*offerId.*\)/);
+    assert.doesNotMatch(checkoutCoreSource, /console\.error\(.*price.*\)/);
+  });
+});
+
+test("AddToCart Action Contract", async (t) => {
+  await t.test("addToCart uses canonical database rounding for price normalization", () => {
+    assert.match(actionsSource, /ROUND\(\$\{offers\.priceBrutto\},\s*2\)::text/);
+  });
+
+  await t.test("addToCart validates rounded string with exact minor unit parser", () => {
+    assert.match(actionsSource, /parseDecimalToMinorUnits\(\s*o\.normalizedPrice\s*\)/);
+    assert.doesNotMatch(actionsSource, /Number\(o\.priceBrutto\)/);
+    assert.doesNotMatch(actionsSource, /parseFloat\(/);
+    assert.doesNotMatch(actionsSource, /Math\.round\(/);
+  });
 });

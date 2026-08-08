@@ -42,7 +42,7 @@ test("Checkout Line Eligibility Validation", async (t) => {
     const offerMap = new Map<number, CheckoutOfferRow>(); // empty map
     const result = validateCheckoutLine(createValidCartRow(), offerMap);
     assert.equal(result.ok, false);
-    if (!result.ok) assert.match(result.reason, /offer_missing/);
+    if (!result.ok) assert.equal(result.reason, "OFFER_MISSING");
   });
 
   await t.test("Inactive offer fails", () => {
@@ -50,7 +50,7 @@ test("Checkout Line Eligibility Validation", async (t) => {
     offerMap.set(1, { ...createValidOffer(), isActive: false });
     const result = validateCheckoutLine(createValidCartRow(), offerMap);
     assert.equal(result.ok, false);
-    if (!result.ok) assert.match(result.reason, /offer_inactive/);
+    if (!result.ok) assert.equal(result.reason, "OFFER_INACTIVE");
   });
 
   await t.test("Unpublished offer fails", () => {
@@ -58,6 +58,7 @@ test("Checkout Line Eligibility Validation", async (t) => {
     
     offerMap.set(1, { ...createValidOffer(), publicationStatus: "draft" });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
+    assert.equal((validateCheckoutLine(createValidCartRow(), offerMap) as any).reason, "OFFER_NOT_CONVERSION_ALLOWED");
 
     offerMap.set(1, { ...createValidOffer(), publicationStatus: "archived" });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
@@ -74,6 +75,7 @@ test("Checkout Line Eligibility Validation", async (t) => {
 
     offerMap.set(1, { ...createValidOffer(), offerModel: "rfq", conversionType: "inbound" });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
+    assert.equal((validateCheckoutLine(createValidCartRow(), offerMap) as any).reason, "OFFER_NOT_ECOMMERCE");
 
     offerMap.set(1, { ...createValidOffer(), offerModel: "rfq", conversionType: "outbound" });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
@@ -90,12 +92,15 @@ test("Checkout Line Eligibility Validation", async (t) => {
 
     offerMap.set(1, { ...createValidOffer(), priceOnRequest: true });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
+    assert.equal((validateCheckoutLine(createValidCartRow(), offerMap) as any).reason, "PRICE_ON_REQUEST");
 
     offerMap.set(1, { ...createValidOffer(), normalizedPrice: null });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
+    assert.equal((validateCheckoutLine(createValidCartRow(), offerMap) as any).reason, "PRICE_MISSING");
 
     offerMap.set(1, { ...createValidOffer(), normalizedPrice: "0" });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
+    assert.equal((validateCheckoutLine(createValidCartRow(), offerMap) as any).reason, "PRICE_INVALID");
 
     offerMap.set(1, { ...createValidOffer(), normalizedPrice: "-10.00" });
     assert.equal(validateCheckoutLine(createValidCartRow(), offerMap).ok, false);
@@ -109,6 +114,7 @@ test("Checkout Line Eligibility Validation", async (t) => {
     offerMap.set(1, createValidOffer());
 
     assert.equal(validateCheckoutLine({ ...createValidCartRow(), quantity: 0 }, offerMap).ok, false);
+    assert.equal((validateCheckoutLine({ ...createValidCartRow(), quantity: 0 }, offerMap) as any).reason, "QUANTITY_INVALID");
     assert.equal(validateCheckoutLine({ ...createValidCartRow(), quantity: 1000 }, offerMap).ok, false);
     assert.equal(validateCheckoutLine({ ...createValidCartRow(), quantity: 1.5 }, offerMap).ok, false);
   });
