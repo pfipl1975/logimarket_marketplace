@@ -1,14 +1,13 @@
 # LOGIMARKET MARKETPLACE LOGICAL DATA MODEL (LM-MARKETPLACE-DATA-MODEL-56B0)
 
-DOCUMENT_ROLE=NORMATIVE_LOGICAL_DATA_MODEL_DRAFT
-DOCUMENT_STATUS=READY_FOR_INDEPENDENT_LOGICAL_MODEL_REVIEW
-SPRINT_TYPE=DOCUMENTATION_ONLY
-PHYSICAL_SCHEMA_STATUS=NOT_DESIGNED
-APPLICATION_IMPLEMENTATION_STATUS=NOT_STARTED
+LOGICAL_MODEL_REVIEW=COMPLETED
+DOCUMENT_TYPE=NORMATIVE
+PHYSICAL_SCHEMA_IMPLEMENTATION_STATUS=NOT_STARTED
+PHYSICAL_SCHEMA_56B1=READY_CANDIDATE_PENDING_56C0B_MERGE_AND_OWNER_REVIEW
 
-## 1. SCOPE AND EXCLUSIONS
-This normative logical data model defines the Intermediary-First Marketplace architecture (R3). It establishes aggregate boundaries, elements, lifecycles, and invariants for multi-seller commerce. It excludes physical database schema (tables, Drizzle), which remains blocked pending independent logical-model review.
+## 1. PURPOSE
 
+This normative logical data model defines the Intermediary-First Marketplace architecture (R3). It establishes aggregate boundaries, elements, lifecycles, and invariants for multi-seller commerce. It excludes physical database schema (tables, Drizzle).
 ## 2. NORMATIVE SOURCE PRECEDENCE
 1. R3 business approval record
 2. R3 intermediary-first contract
@@ -23,47 +22,57 @@ MODEL_A_ACTIVE_IN_INITIAL_MVP=NO
 FUTURE_RESELLER_CHANNEL_SUPPORTED=YES
 FUTURE_RESELLER_CHANNEL_ENABLED=NO
 
-CANONICAL_BUSINESS_KEY=offerModel
+RAW_OFFER_MODEL_FIELD=offers.offerModel
+RAW_CONVERSION_TYPE_FIELD=offers.conversionType
 LOGICAL_REPRESENTATION=OfferConversionClassification
+CANONICAL_CONVERSION_RESOLVER=resolveCanonicalOfferModel
 
 CURRENT_CONTRACT_MODEL_FIELD_EXISTS=NO
 OFFER_MODEL_AND_CONTRACT_MODEL_CONFLATION_ALLOWED=NO
 OFFER_MODEL_AND_CONTRACT_MODEL_ARE_INDEPENDENT=YES
 
-offers.offerModel is the current conversion-mode field (rfq/ecommerce/outbound).
-It is not equivalent to contractModel.
-contractModel is a logical construct with no current physical field.
-These two concepts are separately represented in the logical model:
-  OfferConversionClassification — represents offers.offerModel (canonical business key: offerModel)
+A. RAW STORAGE
+   offerModel = rfq | marketplace
+   conversionType = inbound | outbound
+
+B. CANONICAL CONVERSION CLASSIFICATION
+   computed via resolveCanonicalOfferModel(...)
+   result = rfq | ecommerce | outbound | unknown
+
+C. CONTRACT CLASSIFICATION
+   explicit independent contractModel
+
+These concepts are separately represented in the logical model:
+  OfferConversionClassification — represents CANONICAL_OFFER_MODEL
   OfferContractClassification  — represents contractModel (NO_CURRENT_ELEMENT)
 
 ## 4. APPROVED COMBINATION MATRIX
 
 ### Active MVP Combinations
 1.
-offerModel=rfq
+CANONICAL_OFFER_MODEL=rfq
 contractModel=partner_marketplace
 seller=Partner
 
 2.
-offerModel=ecommerce
+CANONICAL_OFFER_MODEL=ecommerce
 contractModel=partner_marketplace
 seller=Partner
 
 3.
-offerModel=outbound
+CANONICAL_OFFER_MODEL=outbound
 contractModel=external_redirect
 seller=External Partner
 
 ### Future Combinations
 4.
-offerModel=rfq
+CANONICAL_OFFER_MODEL=rfq
 contractModel=logimarket_reseller
 seller=LogiMarket
 active_in_initial_mvp=NO
 
 5.
-offerModel=ecommerce
+CANONICAL_OFFER_MODEL=ecommerce
 contractModel=logimarket_reseller
 seller=LogiMarket
 active_in_initial_mvp=NO
@@ -90,12 +99,12 @@ GLOBAL_RESELLER_SWITCH=NO
 
    Audit-only element: ConversionTypeField
    CURRENT_SCHEMA_AUDIT_REFERENCE_ONLY=YES
-   Note: offers.conversionType requires further audit; its semantic relationship to offerModel is unresolved. Not elevated to normative aggregate element.
+   Note: offers.conversionType is a raw storage input (inbound | outbound) to the canonical resolver.
 
 2. MARKETPLACE_ORDER_ORCHESTRATION
-   Roots: RfqRequest, MarketplaceOrder (mutually exclusive per offerModel value)
-   Note: RfqRequest is the conversion aggregate for offerModel=rfq.
-   MarketplaceOrder is the conversion aggregate for offerModel=ecommerce.
+   Roots: RfqRequest, MarketplaceOrder (mutually exclusive per CANONICAL_OFFER_MODEL value)
+   Note: RfqRequest is the conversion aggregate for CANONICAL_OFFER_MODEL=rfq.
+   MarketplaceOrder is the conversion aggregate for CANONICAL_OFFER_MODEL=ecommerce.
    Contains: RfqSellerDisclosureSnapshot (applies to RfqRequest), EcommerceSellerDisclosureSnapshot (applies to MarketplaceOrder),
              RfqRoutingEvent, RfqPartnerResponse, RfqBuyerLegalContextSnapshot,
              EcommerceBuyerLegalContextSnapshot
