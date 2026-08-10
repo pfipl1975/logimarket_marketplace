@@ -156,7 +156,7 @@ INV-MKT-06: Each seller order contains items belonging only to its seller.
 INV-MKT-07: Each seller order stores a contractModel snapshot.
 INV-MKT-08: Each seller order stores seller identity and responsibility snapshots.
 INV-MKT-09: Seller acceptance and contract formation must remain separately representable.
-INV-MKT-10: Contract formation semantics remain unresolved until OMQ-MKT-01 and OMQ-MKT-02 are closed.
+INV-MKT-10: Contract formation semantics: E2=intent, E7=explicit Partner acceptance (contract formation event). Silence != acceptance. RFQ is nonbinding negotiation by default.
 INV-MKT-11: Partner owns partner-marketplace goods revenue.
 INV-MKT-12: Partner is responsible for the buyer goods invoice.
 INV-MKT-13: LogiMarket platform revenue is separate from partner goods revenue.
@@ -174,7 +174,7 @@ INV-MKT-24: Manual/deferred freight e-commerce remains inactive.
 INV-MKT-25: Outbound offers create no LogiMarket seller order or payment record.
 INV-MKT-26: Outbound redirects use only /go/[id].
 INV-MKT-27: Buyer legal context must not be inferred solely from NIP.
-INV-MKT-28: Privacy-controller roles remain unresolved and configurable.
+INV-MKT-28: Privacy roles are determined per processing operation. No global predetermined controller, processor or joint-controller role. (DPO_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED; PRIVACY_IMPLEMENTATION_EVIDENCE=OPEN_BEFORE_GO_LIVE)
 INV-MKT-29: Future reseller activation is explicit, offer-specific and disabled.
 INV-MKT-30: No initial-MVP aggregate depends on activation of the future reseller channel.
 INV-MKT-31: RFQ initial MVP does not create a MarketplaceOrder, SellerOrder or PaymentOrchestration.
@@ -345,3 +345,8 @@ erDiagram
 
 ## 14. READINESS SUMMARY
 The logical data model defines requirements and rules safely supporting MVP combinations while explicitly managing unresolved decisions through snapshotting and PSP abstractions.
+
+## 15. TAX AND REPORTING GUARDRAILS
+TAX_DAC7_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED_WITH_GUARDRAILS
+EXTERNAL_TAX_ADVISOR_CONFIRMATION=REQUIRED_BEFORE_GO_LIVE
+DAC7_56B1_GUARDRAIL=PRE_LAUNCH_TAX_REPORTING_REQUIREMENT_NOT_56B1_SCHEMA_BLOCKER

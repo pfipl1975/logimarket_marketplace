@@ -4,6 +4,27 @@ CURRENT_SCHEMA_IS_NOT_THE_NORMATIVE_FUTURE_MODEL=YES
 CURRENT_BEHAVIOR_MUST_BE_MAPPED_BEFORE_EXTENSION=YES
 PHYSICAL_CHANGE_ALLOWED_IN_56B0=NO
 
+CURRENT_STORAGE_CONTRACT:
+offers.offerModel = legacy raw classification
+values: rfq | marketplace
+
+offers.conversionType = legacy raw conversion direction
+values: inbound | outbound
+
+PUBLIC/CANONICAL MODEL:
+computed by resolveCanonicalOfferModel(offerModel, conversionType)
+
+canonical result:
+rfq | ecommerce | outbound | unknown
+
+CURRENT_CONTRACT_MODEL_FIELD_EXISTS=NO
+OFFER_MODEL_AND_CONTRACT_MODEL_CONFLATION_ALLOWED=NO
+OFFER_MODEL_AND_CONTRACT_MODEL_ARE_INDEPENDENT=YES
+CONTRACT_MODEL_DERIVED_BY_CANONICAL_OFFER_RESOLVER=NO
+- contractModel is NOT offerModel.
+- contractModel is NOT conversionType.
+- contractModel is NOT legal agency qualification.
+
 VERIFIED_DATA_TYPES:
 - partners.id = BIGSERIAL PRIMARY KEY
 - offers.id = BIGSERIAL PRIMARY KEY
@@ -29,9 +50,9 @@ All rows: PHYSICAL_CHANGE_ALLOWED_IN_56B0=NO
 | ROW | CURRENT_ELEMENT | CURRENT_PATH | CURRENT_SYMBOL | CURRENT_BEHAVIOR | R3_LOGICAL_ELEMENT | MAPPING_CLASSIFICATION | EVIDENCE_CLASSIFICATION | REUSE_RISK | MIGRATION_RISK | OPEN_QUESTION |
 |-----|-----------------|--------------|----------------|------------------|--------------------|------------------------|-------------------------|------------|----------------|---------------|
 | 01 | Offer identity | src/lib/schema.ts | offers.id (bigserial PK) | BIGSERIAL primary key for offers table. Referenced by orderItems.offerId (bigint), rfqLeads.offerId (bigint), clicks.offerId (bigint), cartItems.offerId (bigint). | Offer | DIRECT_REUSE_CANDIDATE | VERIFIED_CURRENT_FACT | Low | Low | None. |
-| 02 | offerModel field | src/lib/schema.ts | offers.offerModel (varchar(20), default 'rfq', no CHECK constraint) | Controls conversion behavior. Canonical business key. Values observed in application: rfq, ecommerce, outbound. No database CHECK constraint. Not equivalent to contractModel. | OfferConversionClassification | EXTENSION_CANDIDATE | VERIFIED_CURRENT_FACT | Medium | Medium | Controlled-value enforcement strategy must be selected during physical schema design; no CHECK or enum implementation is selected in 56B0. Must not be conflated with contractModel. |
-| 03 | conversionType field | src/lib/schema.ts | offers.conversionType (varchar(20), default 'outbound') | Parallel varchar field. Used in CatalogOffer projection (src/app/actions.ts rowToOffer). Semantic relationship to offerModel is unresolved. Possible legacy or overlapping conversion field. | ConversionTypeField (audit-only) | REQUIRES_FURTHER_AUDIT | REQUIRES_FURTHER_AUDIT | High | High | Must be resolved before either field drives offer routing in extended model. |
-| 04 | contractModel absence | src/lib/schema.ts | (none) | No contractModel field exists in offers or any other table. Logical OfferContractClassification concept has no physical representation. | OfferContractClassification | NO_CURRENT_ELEMENT | VERIFIED_ABSENCE | N/A | High | A physical representation of OfferContractClassification is required for future implementation. Its table, column, relation, controlled-value and constraint design remains undecided pending physical-schema review. |
+| 02 | offerModel field | src/lib/schema.ts | offers.offerModel (varchar(20), default 'rfq', no CHECK constraint) | CURRENT_STORAGE_CONTRACT: legacy raw classification (values: rfq \| marketplace). Does NOT directly contain ecommerce/outbound. | OfferConversionClassification | EXTENSION_CANDIDATE | VERIFIED_CURRENT_FACT | Medium | Medium | Computed by resolveCanonicalOfferModel(offerModel, conversionType) to yield rfq \| ecommerce \| outbound \| unknown. |
+| 03 | conversionType field | src/lib/schema.ts | offers.conversionType (varchar(20), default 'outbound') | CURRENT_STORAGE_CONTRACT: legacy raw conversion direction (values: inbound \| outbound). | ConversionTypeField (audit-only) | EXTENSION_CANDIDATE | VERIFIED_CURRENT_FACT | Medium | Medium | Semantic relationship is strictly resolved via resolveCanonicalOfferModel. |
+| 04 | contractModel absence | src/lib/schema.ts | (none) | CURRENT_CONTRACT_MODEL_FIELD_EXISTS=NO. contractModel is NOT offerModel, NOT conversionType, NOT legal agency qualification. | OfferContractClassification | NO_CURRENT_ELEMENT | VERIFIED_ABSENCE | N/A | High | A physical representation of OfferContractClassification is required for future implementation. |
 | 05 | Partner relationship | src/lib/schema.ts, src/app/actions.ts | offers.partnerId (bigint, NOT NULL); leftJoin partners on offers.partnerId = partners.id | Application-level join; no database FK declared. partners.id is BIGSERIAL PK. partnerId not validated as immutable at DB level. | OfferSellerAssignment | EXTENSION_CANDIDATE | VERIFIED_CURRENT_FACT | Medium | Medium | Referential-integrity and historical-snapshot strategy must be selected during physical schema design; no database FK implementation is selected in 56B0. |
 | 06 | Partner legal identity | src/lib/schema.ts | partners (bigserial PK, company_name, logo_url, website_url, contact_email, created_at) | partners table exists. No KYB/KYC, legal identity, NIP, VAT or regulatory fields observed. | SellerLegalIdentity | REQUIRES_FURTHER_AUDIT | REQUIRES_FURTHER_AUDIT | Medium | High | Partner legal identity fields must be audited before onboarding flow design. |
 | 07 | RFQ flow — dialog | src/components/RfqDialog.tsx | RfqDialog | React component presenting RFQ form to buyer. Invokes submitRfq server action on submit. | RfqRequest | EXTENSION_CANDIDATE | VERIFIED_CURRENT_FACT | Medium | Medium | No MarketplaceOrder, SellerOrder or payment created by this flow. |
