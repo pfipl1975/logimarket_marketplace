@@ -132,8 +132,8 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 ## 10. EXACT OMQ-MKT TRACEABILITY
 | OPEN_MODEL_QUESTION_ID | UNRESOLVED_QUESTION | SAFE_DOCUMENTATION_DEFAULT | AFFECTED_AGGREGATES | AFFECTED_ELEMENTS | LOGICAL_REPRESENTATION_STRATEGY | LOGICAL_MODEL_BLOCKED | PHYSICAL_SCHEMA_BLOCKED | APPLICATION_IMPLEMENTATION_BLOCKED | PRIMARY_EVIDENCE_OWNER | SUPPORTING_REVIEWER |
 |------------------------|---------------------|----------------------------|---------------------|-------------------|---------------------------------|-----------------------|-------------------------|------------------------------------|------------------------|---------------------|
-| OMQ-MKT-01 | e-commerce contract-formation moment | CONTRACT_FORMATION_EVENT_UNRESOLVED | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder; SellerOrder; SellerAcceptanceDecision | separate order intent and seller acceptance lifecycle | NO | YES | YES | Legal Counsel | (None) |
-| OMQ-MKT-02 | RFQ contract-formation moment | RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED | MARKETPLACE_ORDER_ORCHESTRATION | RfqRequest; RfqPartnerResponse | separate RFQ request and Partner response lifecycle | NO | YES | YES | Legal Counsel | (None) |
+| OMQ-MKT-01 | e-commerce contract-formation moment | CONTRACT_FORMATION_EVENT_RESOLVED | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | MarketplaceOrder; SellerOrder; SellerAcceptanceDecision | separate order intent and seller acceptance lifecycle | NO | NO | YES | Legal Counsel | (None) |
+| OMQ-MKT-02 | RFQ contract-formation moment | RFQ_CONTRACT_FORMATION_EVENT_RESOLVED | MARKETPLACE_ORDER_ORCHESTRATION | RfqRequest; RfqPartnerResponse | separate RFQ request and Partner response lifecycle | NO | NO | YES | Legal Counsel | (None) |
 | OMQ-MKT-03 | PSP marketplace architecture | ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | PAYMENT_AND_ALLOCATION; AUDIT_IDEMPOTENCY_AND_PRIVACY | PaymentOrchestration; PSPTransactionReference; PaymentAllocation; SellerSettlementReference; WebhookInboxMessage; IdempotencyRecord | abstract licensed-PSP references, allocation and settlement capabilities | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-04 | seller KYB/KYC responsibilities | PENDING_PSP_AND_LEGAL_VALIDATION | SELLER_AND_OFFER_CLASSIFICATION; PAYMENT_AND_ALLOCATION | SellerLegalIdentity; SellerEligibility; PaymentOrchestration | abstract seller legal identity, eligibility and KYB/KYC status reference | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-05 | payment allocation and seller payout | NO_SELF_CUSTODY_NO_ESCROW | PAYMENT_AND_ALLOCATION | PaymentOrchestration; PaymentAllocation; SellerSettlementReference | abstract allocation and settlement references with no selected payout architecture | NO | YES | YES | Legal Counsel | (None) |
@@ -142,8 +142,8 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 | OMQ-MKT-08 | refund technical execution | REFUND_TECHNICAL_EXECUTOR_UNRESOLVED | AFTER_SALES_AND_DISPUTES | RefundCase | separate financial liability, business decision, platform orchestration and unresolved technical executor | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-09 | chargeback responsibility and allocation | CHARGEBACK_ALLOCATION_UNRESOLVED | AFTER_SALES_AND_DISPUTES | ChargebackDispute | abstract dispute record with unresolved responsibility and allocation | NO | YES | YES | Legal Counsel | (None) |
 | OMQ-MKT-10 | seller goods invoice and KSeF exchange | NO_DELEGATED_INVOICING | SELLER_ORDER | GoodsInvoiceResponsibilitySnapshot | invoice-responsibility snapshot and external invoice/KSeF reference | NO | YES | YES | Tax Advisor | (None) |
-| OMQ-MKT-11 | privacy-role allocation and retention | NO_PREDETERMINED_CONTROLLER_ROLE | AUDIT_IDEMPOTENCY_AND_PRIVACY | PrivacyProcessingContext; RetentionPolicySnapshot; DomainAuditEvent | configurable privacy-processing context and retention snapshot | NO | YES | YES | Legal Counsel | DPO |
-| OMQ-MKT-12 | future reseller activation | LOGIMARKET_RESELLER_DISABLED | FUTURE_LOGIMARKET_RESELLER_EXTENSION | FutureResellerActivationPolicy; OfferContractClassification | isolated disabled future-extension policy | NO | INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=NO, FUTURE_RESELLER_PHYSICAL_SCHEMA_BLOCKED=YES | INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=NO, FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES, FUTURE_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED | Legal Counsel | (None) |
+| OMQ-MKT-11 | privacy-role allocation and retention | DPO_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED | AUDIT_IDEMPOTENCY_AND_PRIVACY | PrivacyProcessingContext; RetentionPolicySnapshot; DomainAuditEvent | configurable privacy-processing context and retention snapshot | NO | NO | YES | Legal Counsel | DPO |
+| OMQ-MKT-12 | future reseller activation | LOGIMARKET_RESELLER_DISABLED | FUTURE_LOGIMARKET_RESELLER_EXTENSION | FutureResellerActivationPolicy; OfferContractClassification | isolated disabled future-extension policy | NO | LM_MARKETPLACE_SCHEMA_56B1_BLOCKED=NO, FUTURE_RESELLER_PHYSICAL_SCHEMA_BLOCKED=YES | LM_MARKETPLACE_SCHEMA_56B1_APPLICATION_BLOCKED=NO, FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES, FUTURE_RESELLER_ACTIVATION_SPRINT=NOT_YET_SCHEDULED | Legal Counsel | (None) |
 
 ## 11. REJECTED ASSUMPTIONS
 - LOGIMARKET_AS_GLOBAL_SELLER (Rejected)
@@ -167,16 +167,31 @@ Unresolved external validations block the physical schema.
 Physical schema implementation is BLOCKED until evidence closes OMQ-MKT items.
 
 ## 13. PHYSICAL-SCHEMA BLOCKERS
-INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=YES
-INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=YES
+LM_MARKETPLACE_SCHEMA_56B1_BLOCKED=NO
+LM_MARKETPLACE_SCHEMA_56B1_READY_CANDIDATE=YES
+INITIAL_MVP_PHYSICAL_SCHEMA_READY=NO
+ALL_MARKETPLACE_SCHEMA_SPRINTS_UNBLOCKED=NO
 FUTURE_RESELLER_PHYSICAL_SCHEMA_BLOCKED=YES
 FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES
 
 (Note: For OMQ-MKT-12, the initial MVP is NOT blocked:
-INITIAL_MVP_PHYSICAL_SCHEMA_BLOCKED=NO
-INITIAL_MVP_APPLICATION_IMPLEMENTATION_BLOCKED=NO
+LM_MARKETPLACE_SCHEMA_56B1_BLOCKED=NO
+INITIAL_MVP_PHYSICAL_SCHEMA_READY=NO
+ALL_MARKETPLACE_SCHEMA_SPRINTS_UNBLOCKED=NO
 FUTURE_RESELLER_PHYSICAL_SCHEMA_BLOCKED=YES
 FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES)
+
+## 14. 56B1 SCOPE LOCK
+IN SCOPE:
+- B2B seller onboarding metadata (Identity, NIP, VAT status).
+- 56B0 Seller Profile and Seller Legal Identity structural foundations.
+- Safe, non-blocking default flags for missing data.
+
+OUT OF SCOPE:
+- B2C data flows or consumer protections.
+- Global privacy implementation (handled pre-launch).
+- DAC7/KSeF reporting or enforcement (handled pre-launch/later).
+- Reseller model activation.
 
 ## 14. INDEPENDENT-REVIEW CHECKLIST
 - [ ] Aggregate boundaries accurately reflect R3 Intermediary-First model.

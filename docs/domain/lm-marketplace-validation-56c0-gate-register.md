@@ -7,7 +7,7 @@ TOTAL_VALIDATION_ITEMS=22
 ## LEG-MKT ITEMS
 
 ### LEG-MKT-01
-STATUS=OPEN
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: LEG-MKT-01
 - exact canonical meaning: intermediary legal qualification and terms
 - exact current safe documentation default: LOGIMARKET_INTERMEDIARY_ONLY; NO_SELLER_ROLE_FOR_PARTNER_MARKETPLACE
@@ -16,7 +16,7 @@ STATUS=OPEN
 - affected aggregate boundaries: SELLER_AND_OFFER_CLASSIFICATION
 - affected model elements: OfferMarketplaceClassification, OfferSellerAssignment, OfferConversionClassification, OfferContractClassification
 - affected lifecycles: LC-01, LC-02A, LC-02B, LC-02C
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
@@ -27,7 +27,7 @@ STATUS=OPEN
 - downstream artifacts affected: Physical schema, Application code
 
 ### LEG-MKT-02
-STATUS=OPEN
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: LEG-MKT-02
 - exact canonical meaning: contract formation for RFQ and e-commerce
 - exact current safe documentation default: CONTRACT_FORMATION_EVENT_UNRESOLVED; MODEL_ORDER_INTENT_AND_SELLER_ACCEPTANCE_SEPARATELY; MODEL_RFQ_REQUEST_AND_PARTNER_RESPONSE_SEPARATELY
@@ -36,7 +36,7 @@ STATUS=OPEN
 - affected aggregate boundaries: MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER
 - affected model elements: RfqRequest, RfqPartnerResponse, MarketplaceOrder, SellerOrder, SellerOrderItem, SellerAcceptanceDecision
 - affected lifecycles: LC-03, LC-04, LC-05, LC-06, LC-17
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
@@ -44,10 +44,10 @@ STATUS=OPEN
 - acceptance criteria: Written definition of contract formation moments.
 - decision options supported by source documents: SEPARATE_ORDER_AND_ACCEPTANCE
 - explicitly prohibited assumptions: DEFAULT_AUTOMATIC_ACCEPTANCE
-- downstream artifacts affected: Physical schema, Application code
+- downstream artifacts affected: Physical schema, Application code (56B2 implications remain)
 
 ### LEG-MKT-03
-STATUS=OPEN
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: LEG-MKT-03
 - exact canonical meaning: seller identity and pre-contract disclosure
 - exact current safe documentation default: DISPLAY_SELLER_IDENTITY_AND_RESPONSIBILITY_BEFORE_CONVERSION
@@ -56,7 +56,7 @@ STATUS=OPEN
 - affected aggregate boundaries: MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER
 - affected model elements: RfqSellerDisclosureSnapshot, EcommerceSellerDisclosureSnapshot
 - affected lifecycles: LC-03, LC-04
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
@@ -64,10 +64,10 @@ STATUS=OPEN
 - acceptance criteria: Written rules for seller disclosure timing and content.
 - decision options supported by source documents: PRE_CONVERSION_DISCLOSURE
 - explicitly prohibited assumptions: SILENT_SELLER_ASSIGNMENT
-- downstream artifacts affected: Physical schema, UI/UX, Application code
+- downstream artifacts affected: Physical schema, UI/UX, Application code (seller disclosure requirements remain downstream implementation obligations)
 
 ### LEG-MKT-04
-STATUS=OPEN
+STATUS=NOT_APPLICABLE_WHILE_PURE_B2B
 - ID: LEG-MKT-04
 - exact canonical meaning: P2B terms, rankings, suspension and complaints
 - exact current safe documentation default: NO_AUTOMATIC_RANKING_PENALTY_OR_SUSPENSION_EFFECT_WITHOUT_VALIDATED_RULES
@@ -76,12 +76,12 @@ STATUS=OPEN
 - affected aggregate boundaries: SELLER_AND_OFFER_CLASSIFICATION; AFTER_SALES_AND_DISPUTES
 - affected model elements: SellerEligibility; PlatformServiceComplaintCase
 - affected lifecycles: LC-01; LC-11B
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
 - evidence required: EXTERNAL_EVIDENCE_REQUIRED
-- acceptance criteria: Validated P2B compliance rules.
+- acceptance criteria: Validated P2B compliance rules. (reopen trigger = business model ceases to be pure B2B / P2B becomes applicable)
 - decision options supported by source documents: EXPLICIT_PLATFORM_COMPLAINTS, EXPLICIT_SUSPENSION_REASONS
 - explicitly prohibited assumptions: ARBITRARY_SUSPENSION
 - downstream artifacts affected: Physical schema, Application code
@@ -167,21 +167,21 @@ STATUS=OPEN
 - downstream artifacts affected: Physical schema, Application code, Registration UX
 
 ### LEG-MKT-09
-STATUS=OPEN
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: LEG-MKT-09
 - exact canonical meaning: privacy roles and retention
-- exact current safe documentation default: NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION
+- exact current safe documentation default: NO_PREDETERMINED_CONTROLLER_ROLE; DOCUMENT_DATA_FLOWS; CONFIGURABLE_RETENTION; PRIVACY_IMPLEMENTATION_EVIDENCE=OPEN_BEFORE_GO_LIVE
 - primary evidence owner: Legal Counsel
 - supporting reviewer: DPO
 - affected aggregate boundaries: AUDIT_IDEMPOTENCY_AND_PRIVACY
 - affected model elements: DomainAuditEvent, RetentionPolicySnapshot, PrivacyProcessingContext
 - affected lifecycles: no dedicated lifecycle; map audit/privacy elements explicitly
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO (DPO_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED)
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
 - evidence required: EXTERNAL_EVIDENCE_REQUIRED
-- acceptance criteria: Defined controller/processor roles and retention periods.
+- acceptance criteria: Defined controller/processor roles and retention periods. (implementation/privacy evidence remains before go-live)
 - decision options supported by source documents: EXPLICIT_ROLES_PER_AGGREGATE
 - explicitly prohibited assumptions: JOINT_CONTROLLERSHIP_CONFIRMED
 - downstream artifacts affected: Physical schema, Application code, GDPR artifacts
@@ -209,17 +209,17 @@ STATUS=OPEN
 ## OMQ-MKT ITEMS
 
 ### OMQ-MKT-01
-STATUS=OPEN
+STATUS=CLOSED
 - ID: OMQ-MKT-01
 - exact unresolved question: e-commerce contract-formation moment
-- exact safe documentation default: CONTRACT_FORMATION_EVENT_UNRESOLVED
+- exact safe documentation default: CONTRACT_FORMATION_EVENT_RESOLVED
 - exact primary evidence owner: Legal Counsel
 - supporting reviewer: UNASSIGNED
 - affected aggregates: MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER
 - affected elements: MarketplaceOrder; SellerOrder; SellerAcceptanceDecision
 - logical representation strategy: separate order intent and seller acceptance lifecycle
 - logical-model blocker: NO
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
@@ -229,17 +229,17 @@ STATUS=OPEN
 - downstream artifacts affected: Physical schema, Application code
 
 ### OMQ-MKT-02
-STATUS=OPEN
+STATUS=CLOSED
 - ID: OMQ-MKT-02
 - exact unresolved question: RFQ contract-formation moment
-- exact safe documentation default: RFQ_CONTRACT_FORMATION_EVENT_UNRESOLVED
+- exact safe documentation default: RFQ_CONTRACT_FORMATION_EVENT_RESOLVED
 - exact primary evidence owner: Legal Counsel
 - supporting reviewer: UNASSIGNED
 - affected aggregates: MARKETPLACE_ORDER_ORCHESTRATION
 - affected elements: RfqRequest; RfqPartnerResponse
 - logical representation strategy: separate RFQ request and Partner response lifecycle
 - logical-model blocker: NO
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
@@ -409,17 +409,17 @@ STATUS=OPEN
 - downstream artifacts affected: Physical schema, Application code
 
 ### OMQ-MKT-11
-STATUS=OPEN
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: OMQ-MKT-11
 - exact unresolved question: privacy-role allocation and retention
-- exact safe documentation default: NO_PREDETERMINED_CONTROLLER_ROLE
+- exact safe documentation default: DPO_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED; PRIVACY_IMPLEMENTATION_EVIDENCE=OPEN_BEFORE_GO_LIVE
 - exact primary evidence owner: Legal Counsel
 - supporting reviewer: DPO
 - affected aggregates: AUDIT_IDEMPOTENCY_AND_PRIVACY
 - affected elements: PrivacyProcessingContext; RetentionPolicySnapshot; DomainAuditEvent
 - logical representation strategy: configurable privacy-processing context and retention snapshot
 - logical-model blocker: NO
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
