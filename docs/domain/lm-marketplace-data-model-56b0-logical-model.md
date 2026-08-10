@@ -174,7 +174,7 @@ INV-MKT-24: Manual/deferred freight e-commerce remains inactive.
 INV-MKT-25: Outbound offers create no LogiMarket seller order or payment record.
 INV-MKT-26: Outbound redirects use only /go/[id].
 INV-MKT-27: Buyer legal context must not be inferred solely from NIP.
-INV-MKT-28: Privacy-controller roles: DPO_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED, implementation/privacy evidence remains before go-live.
+INV-MKT-28: Privacy roles are determined per processing operation. No global predetermined controller, processor or joint-controller role. (DPO_ARCHITECTURAL_BLOCKER_FOR_56B1=CLEARED; PRIVACY_IMPLEMENTATION_EVIDENCE=OPEN_BEFORE_GO_LIVE)
 INV-MKT-29: Future reseller activation is explicit, offer-specific and disabled.
 INV-MKT-30: No initial-MVP aggregate depends on activation of the future reseller channel.
 INV-MKT-31: RFQ initial MVP does not create a MarketplaceOrder, SellerOrder or PaymentOrchestration.

@@ -119,7 +119,7 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 | LEGAL_GATE_ID | NORMATIVE_MEANING | AFFECTED_AGGREGATES | AFFECTED_ELEMENTS | AFFECTED_LIFECYCLES | SAFE_DOCUMENTATION_DEFAULT | PHYSICAL_SCHEMA_BLOCKER | EVIDENCE_OWNER |
 |---------------|-------------------|---------------------|-------------------|---------------------|----------------------------|-------------------------|----------------|
 | LEG-MKT-01 | intermediary legal qualification and terms | SELLER_AND_OFFER_CLASSIFICATION | OfferMarketplaceClassification, OfferSellerAssignment, OfferConversionClassification, OfferContractClassification | LC-01, LC-02A, LC-02B, LC-02C | LOGIMARKET_INTERMEDIARY_ONLY; NO_SELLER_ROLE_FOR_PARTNER_MARKETPLACE | YES | Legal Counsel |
-| LEG-MKT-02 | contract formation for RFQ and e-commerce | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | RfqRequest, RfqPartnerResponse, MarketplaceOrder, SellerOrder, SellerOrderItem, SellerAcceptanceDecision | LC-03, LC-04, LC-05, LC-06, LC-17 | CONTRACT_FORMATION_EVENT_UNRESOLVED; MODEL_ORDER_INTENT_AND_SELLER_ACCEPTANCE_SEPARATELY; MODEL_RFQ_REQUEST_AND_PARTNER_RESPONSE_SEPARATELY | YES | Legal Counsel |
+| LEG-MKT-02 | contract formation for RFQ and e-commerce | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | RfqRequest, RfqPartnerResponse, MarketplaceOrder, SellerOrder, SellerOrderItem, SellerAcceptanceDecision | LC-03, LC-04, LC-05, LC-06, LC-17 | E2=BUYER_ORDER_INTENT; E3=TECHNICAL_RECEIPT_ACKNOWLEDGEMENT; E6=ROUTED_TO_PARTNER; E7=EXPLICIT_PARTNER_ACCEPTANCE; CONTRACT_FORMATION_EVENT=E7; SILENCE_IS_ACCEPTANCE=NO; RFQ_NONBINDING_BY_DEFAULT=YES; RFQ_SUBMISSION_CREATES_MARKETPLACE_CONTRACT=NO | YES | Legal Counsel |
 | LEG-MKT-03 | seller identity and pre-contract disclosure | MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER | RfqSellerDisclosureSnapshot, EcommerceSellerDisclosureSnapshot | LC-03, LC-04 | DISPLAY_SELLER_IDENTITY_AND_RESPONSIBILITY_BEFORE_CONVERSION | YES | Legal Counsel |
 | LEG-MKT-04 | P2B terms, rankings, suspension and complaints | SELLER_AND_OFFER_CLASSIFICATION; AFTER_SALES_AND_DISPUTES | SellerEligibility; PlatformServiceComplaintCase | LC-01; LC-11B | NO_AUTOMATIC_RANKING_PENALTY_OR_SUSPENSION_EFFECT_WITHOUT_VALIDATED_RULES | YES | Legal Counsel |
 | LEG-MKT-05 | PSP architecture, KYB/KYC, allocations and payouts | PAYMENT_AND_ALLOCATION, AUDIT_IDEMPOTENCY_AND_PRIVACY | PaymentOrchestration, PSPTransactionReference, PaymentAllocation, SellerSettlementReference, IdempotencyRecord, WebhookInboxMessage | LC-01, LC-07, LC-08, LC-15 | NO_SELF_CUSTODY; NO_LOGIMARKET_ESCROW; ABSTRACT_PSP_ALLOCATION_AND_PAYOUT | YES | Legal Counsel |
@@ -163,8 +163,7 @@ Audited `src/lib/schema.ts`, `src/app/actions.ts`, `src/app/go/[id]/route.ts`. M
 - PHYSICAL_SCHEMA_READY (Rejected)
 
 ## 12. UNRESOLVED EXTERNAL VALIDATIONS
-Unresolved external validations block the physical schema.
-Physical schema implementation is BLOCKED until evidence closes OMQ-MKT items.
+Remaining unresolved external validations block only their mapped downstream schema/application sprints. They do not block 56B1 where the 56B1-specific architectural gate is explicitly cleared.
 
 ## 13. PHYSICAL-SCHEMA BLOCKERS
 LM_MARKETPLACE_SCHEMA_56B1_BLOCKED=NO
@@ -183,26 +182,53 @@ FUTURE_RESELLER_APPLICATION_IMPLEMENTATION_BLOCKED=YES)
 
 ## 14. 56B1 SCOPE LOCK
 IN SCOPE:
-- B2B seller onboarding metadata (Identity, NIP, VAT status).
-- 56B0 Seller Profile and Seller Legal Identity structural foundations.
-- Safe, non-blocking default flags for missing data.
+- curated SellerProfile foundation
+- SellerLegalIdentity
+- seller legal/company name
+- country / jurisdiction
+- neutral tax identifiers where applicable
+- VAT identifier where applicable
+- registry identifiers
+- verification status / metadata / source reference
+- offer → seller relationship
+- explicit OfferContractClassification
+- explicit contractModel:
+    partner_marketplace
+    external_redirect
+    logimarket_reseller [future disabled]
+- seller/contract classification snapshot foundation where required by the later approved physical design
 
 OUT OF SCOPE:
-- B2C data flows or consumer protections.
-- Global privacy implementation (handled pre-launch).
-- DAC7/KSeF reporting or enforcement (handled pre-launch/later).
-- Reseller model activation.
+- BuyerLegalContext
+- buyer B2B gating
+- professional-purpose declaration
+- MarketplaceOrder
+- SellerOrder
+- SellerOrderItem
+- SellerAcceptanceDecision
+- E2/E3/E6/E7 application workflow
+- PSP/payment/preauth/capture/void
+- PSP-specific KYB/KYC
+- DAC7 reporting
+- global dac7Required
+- KSeF integration
+- refunds/chargebacks
+- fulfillment/shipments
+- privacy retention automation
+- Partner Portal
+- seller self-publishing
+- automated vendor registration
 
-## 14. INDEPENDENT-REVIEW CHECKLIST
+## 15. INDEPENDENT-REVIEW CHECKLIST
 - [ ] Aggregate boundaries accurately reflect R3 Intermediary-First model.
 - [ ] Logical invariants satisfy business rules.
 - [ ] OMQ handling strategy properly defers decisions to legal/tax without blocking logical drafting.
 - [ ] No Drizzle/PostgreSQL details leaked into logical design.
 
-## 15. ROLLBACK/REOPENING CONDITIONS
+## 16. ROLLBACK/REOPENING CONDITIONS
 If independent review discovers a logical leak of physical schema details, or an assumption of Model A behavior in an active aggregate, this sprint will be reopened.
 
-## 16. READINESS STATEMENT
+## 17. READINESS STATEMENT
 READY_FOR_INDEPENDENT_LOGICAL_MODEL_REVIEW=YES
 READY_FOR_PHYSICAL_SCHEMA=NO
 READY_FOR_APPLICATION_IMPLEMENTATION=NO

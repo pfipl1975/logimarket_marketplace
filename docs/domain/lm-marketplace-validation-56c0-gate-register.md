@@ -30,7 +30,7 @@ STATUS=APPROVED_WITH_CONDITIONS
 STATUS=APPROVED_WITH_CONDITIONS
 - ID: LEG-MKT-02
 - exact canonical meaning: contract formation for RFQ and e-commerce
-- exact current safe documentation default: CONTRACT_FORMATION_EVENT_UNRESOLVED; MODEL_ORDER_INTENT_AND_SELLER_ACCEPTANCE_SEPARATELY; MODEL_RFQ_REQUEST_AND_PARTNER_RESPONSE_SEPARATELY
+- exact current safe documentation default: E2=BUYER_ORDER_INTENT; E3=TECHNICAL_RECEIPT_ACKNOWLEDGEMENT; E6=ROUTED_TO_PARTNER; E7=EXPLICIT_PARTNER_ACCEPTANCE; CONTRACT_FORMATION_EVENT=E7; SILENCE_IS_ACCEPTANCE=NO; RFQ_NONBINDING_BY_DEFAULT=YES; RFQ_SUBMISSION_CREATES_MARKETPLACE_CONTRACT=NO
 - primary evidence owner: Legal Counsel
 - supporting reviewer: UNASSIGNED
 - affected aggregate boundaries: MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER
@@ -209,16 +209,17 @@ STATUS=OPEN
 ## OMQ-MKT ITEMS
 
 ### OMQ-MKT-01
-STATUS=CLOSED
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: OMQ-MKT-01
 - exact unresolved question: e-commerce contract-formation moment
-- exact safe documentation default: CONTRACT_FORMATION_EVENT_RESOLVED
+- exact safe documentation default: E7=EXPLICIT_PARTNER_ACCEPTANCE
 - exact primary evidence owner: Legal Counsel
 - supporting reviewer: UNASSIGNED
 - affected aggregates: MARKETPLACE_ORDER_ORCHESTRATION, SELLER_ORDER
 - affected elements: MarketplaceOrder; SellerOrder; SellerAcceptanceDecision
 - logical representation strategy: separate order intent and seller acceptance lifecycle
 - logical-model blocker: NO
+- 56B1_PHYSICAL_SCHEMA_BLOCKER=NO
 - initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
@@ -229,16 +230,17 @@ STATUS=CLOSED
 - downstream artifacts affected: Physical schema, Application code
 
 ### OMQ-MKT-02
-STATUS=CLOSED
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: OMQ-MKT-02
 - exact unresolved question: RFQ contract-formation moment
-- exact safe documentation default: RFQ_CONTRACT_FORMATION_EVENT_RESOLVED
+- exact safe documentation default: RFQ_NONBINDING_BY_DEFAULT=YES
 - exact primary evidence owner: Legal Counsel
 - supporting reviewer: UNASSIGNED
 - affected aggregates: MARKETPLACE_ORDER_ORCHESTRATION
 - affected elements: RfqRequest; RfqPartnerResponse
 - logical representation strategy: separate RFQ request and Partner response lifecycle
 - logical-model blocker: NO
+- 56B1_PHYSICAL_SCHEMA_BLOCKER=NO
 - initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
