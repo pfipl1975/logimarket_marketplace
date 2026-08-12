@@ -2,14 +2,14 @@ import { test } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { RUNTIME_MIGRATIONS_FOLDER, EXPECTED_BASELINE_TABLES } from "../../scripts/database/runtime-migration-contract";
+import { RUNTIME_MIGRATIONS_FOLDER, PREVIOUS_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 test("baseline sql contains exactly expected objects", () => {
   const sqlPath = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "0000_production_runtime_baseline.sql");
   const sql = fs.readFileSync(sqlPath, "utf-8");
 
   // 15 tables
-  EXPECTED_BASELINE_TABLES.forEach(t => {
+  Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT).forEach(t => {
     assert.ok(sql.includes(`CREATE TABLE ${t}`));
   });
 

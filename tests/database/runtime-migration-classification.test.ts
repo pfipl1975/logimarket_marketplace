@@ -4,12 +4,12 @@ import { classifyRuntimeTarget } from "../../scripts/database/verify-runtime-sch
 import { EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 import type { TableFingerprintSide } from "../../scripts/database/verify-runtime-schema-fingerprint";
 
-test("classifyRuntimeTarget - EMPTY", () => {
+test("EMPTY", () => {
   const result = classifyRuntimeTarget({}, []);
   assert.strictEqual(result.state, "EMPTY");
 });
 
-test("classifyRuntimeTarget - EXACT_EXISTING (New Fingerprint)", () => {
+test("TARGET_EXACT_19_TABLES", () => {
   const actual: Record<string, TableFingerprintSide> = {};
   for (const table of EXPECTED_BASELINE_TABLES) {
     actual[table] = {
@@ -45,9 +45,9 @@ test("classifyRuntimeTarget - EXACT_EXISTING (PostgreSQL Canonical Strings)", ()
   assert.strictEqual(result.state, "EXACT_EXISTING");
 });
 
-test("classifyRuntimeTarget - MIGRATABLE_PREVIOUS (Old Fingerprint)", () => {
+test("PREVIOUS_EXACT_15_TABLES", () => {
   const actual: Record<string, TableFingerprintSide> = {};
-  for (const table of EXPECTED_BASELINE_TABLES) {
+  for (const table of Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT)) {
     actual[table] = {
       ...JSON.parse(JSON.stringify(PREVIOUS_PRODUCTION_FINGERPRINT[table])),
       rlsForced: false,
@@ -55,13 +55,13 @@ test("classifyRuntimeTarget - MIGRATABLE_PREVIOUS (Old Fingerprint)", () => {
       triggerCount: 0,
     };
   }
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT));
   assert.strictEqual(result.state, "MIGRATABLE_PREVIOUS");
 });
 
-test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Unexpected Change)", () => {
+test("PREVIOUS_PLUS_UNEXPECTED_TABLE", () => {
   const actual: Record<string, TableFingerprintSide> = {};
-  for (const table of EXPECTED_BASELINE_TABLES) {
+  for (const table of Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT)) {
     actual[table] = {
       ...JSON.parse(JSON.stringify(PREVIOUS_PRODUCTION_FINGERPRINT[table])),
       rlsForced: false,
@@ -78,13 +78,13 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Unexpected Change)", () => {
     sequenceName: null
   });
 
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT));
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
 test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Partially applied RFQ migration)", () => {
   const actual: Record<string, TableFingerprintSide> = {};
-  for (const table of EXPECTED_BASELINE_TABLES) {
+  for (const table of Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT)) {
     actual[table] = {
       ...JSON.parse(JSON.stringify(PREVIOUS_PRODUCTION_FINGERPRINT[table])),
       rlsForced: false,
@@ -103,7 +103,7 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Partially applied RFQ migratio
     }
   ];
 
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT));
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
@@ -146,5 +146,106 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Missing index)", () => {
   actual["rfq_leads"]!.explicitIndexes = actual["rfq_leads"]!.explicitIndexes.filter(i => i.name !== "idx_rfq_leads_offer");
 
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("TARGET_PLUS_UNEXPECTED_TABLE", () => {
+  const actual: Record<string, TableFingerprintSide> = {};
+  for (const table of EXPECTED_BASELINE_TABLES) {
+    actual[table] = {
+      ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[table])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+  actual["unexpected_table"] = {
+    columns: [],
+    constraints: [],
+    explicitIndexes: [],
+    rlsEnabled: false,
+    rlsForced: false,
+    policyCount: 0,
+    triggerCount: 0
+  };
+  const allTables = [...EXPECTED_BASELINE_TABLES, "unexpected_table"];
+  const result = classifyRuntimeTarget(actual, allTables);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("PARTIAL_16_TABLES", () => {
+  const actual: Record<string, TableFingerprintSide> = {};
+  const tables = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
+  for (const table of tables) {
+    actual[table] = {
+      ...JSON.parse(JSON.stringify(PREVIOUS_PRODUCTION_FINGERPRINT[table])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+  // Add one table from the new 19-table target
+  const newTables = EXPECTED_BASELINE_TABLES.filter(t => !tables.includes(t));
+  const t = newTables[0];
+  actual[t] = {
+    ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[t])),
+    rlsForced: false,
+    policyCount: 0,
+    triggerCount: 0,
+  };
+  const allTables = [...tables, t];
+  const result = classifyRuntimeTarget(actual, allTables);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("PARTIAL_17_TABLES", () => {
+  const actual: Record<string, TableFingerprintSide> = {};
+  const tables = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
+  for (const table of tables) {
+    actual[table] = {
+      ...JSON.parse(JSON.stringify(PREVIOUS_PRODUCTION_FINGERPRINT[table])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+  const newTables = EXPECTED_BASELINE_TABLES.filter(t => !tables.includes(t));
+  for (let i = 0; i < 2; i++) {
+    const t = newTables[i];
+    actual[t] = {
+      ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[t])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+  const allTables = [...tables, newTables[0], newTables[1]];
+  const result = classifyRuntimeTarget(actual, allTables);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("PARTIAL_18_TABLES", () => {
+  const actual: Record<string, TableFingerprintSide> = {};
+  const tables = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
+  for (const table of tables) {
+    actual[table] = {
+      ...JSON.parse(JSON.stringify(PREVIOUS_PRODUCTION_FINGERPRINT[table])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+  const newTables = EXPECTED_BASELINE_TABLES.filter(t => !tables.includes(t));
+  for (let i = 0; i < 3; i++) {
+    const t = newTables[i];
+    actual[t] = {
+      ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[t])),
+      rlsForced: false,
+      policyCount: 0,
+      triggerCount: 0,
+    };
+  }
+  const allTables = [...tables, newTables[0], newTables[1], newTables[2]];
+  const result = classifyRuntimeTarget(actual, allTables);
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });

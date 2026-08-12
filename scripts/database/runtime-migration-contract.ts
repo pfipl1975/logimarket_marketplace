@@ -17,19 +17,23 @@ export const EXPECTED_BASELINE_TABLES = [
   "order_items",
   "orders",
   "partners",
-  "rfq_leads"
+  "rfq_leads",
+  "seller_eligibility",
+  "seller_legal_identities",
+  "seller_registry_identifiers",
+  "seller_tax_identifiers"
 ];
 
 export const EXPECTED_COUNTS = {
-  TABLES: 15,
+  TABLES: 19,
   get COLUMNS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.columns.length, 0); },
-  SEQUENCES: 15,
-  PRIMARY_KEYS: 15,
-  FOREIGN_KEYS: 20,
-  UNIQUE_CONSTRAINTS: 10,
-  CHECK_CONSTRAINTS: 9,
-  INDEXES: 35, // 15 PK + 10 UC + 10 explicit
-  RLS_ENABLED: 15,
+  SEQUENCES: 17,
+  PRIMARY_KEYS: 19,
+  FOREIGN_KEYS: 24,
+  UNIQUE_CONSTRAINTS: 12,
+  CHECK_CONSTRAINTS: 11,
+  INDEXES: 41, // 19 PK + 12 UC + 10 explicit
+  RLS_ENABLED: 19,
   POLICIES: 0
 };
 
@@ -426,6 +430,96 @@ const previousRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
 
 export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   ...PREVIOUS_PRODUCTION_FINGERPRINT,
+  "offers": {
+    ...PREVIOUS_PRODUCTION_FINGERPRINT["offers"],
+    columns: [
+      ...PREVIOUS_PRODUCTION_FINGERPRINT["offers"].columns,
+      { name: "contract_model", type: "character varying(30)", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      ...PREVIOUS_PRODUCTION_FINGERPRINT["offers"].constraints,
+      { name: "offers_contract_model_check", type: "CHECK", definition: "CHECK (((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[])))" }
+    ]
+  },
+  "seller_legal_identities": {
+    name: "seller_legal_identities",
+    columns: [
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "legal_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "jurisdiction_country", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "verification_status", type: "character varying(30)", nullable: false, defaultVal: "'unverified'::character varying", sequenceName: null },
+      { name: "verified_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "verification_source", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "verification_reference", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "seller_legal_identities_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (partner_id)" },
+      { name: "seller_legal_identities_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "seller_tax_identifiers": {
+    name: "seller_tax_identifiers",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_tax_identifiers_id_seq'::regclass)", sequenceName: "seller_tax_identifiers_id_seq" },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "identifier_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "identifier_value", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "country_code", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "verification_status", type: "character varying(30)", nullable: false, defaultVal: "'unverified'::character varying", sequenceName: null },
+      { name: "verified_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "verification_source", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "verification_reference", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "seller_tax_identifiers_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "seller_tax_identifiers_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES seller_legal_identities(partner_id)" },
+      { name: "uq_seller_tax_identifier_identity", type: "UNIQUE", definition: "UNIQUE (partner_id, identifier_type, country_code, identifier_value)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "seller_registry_identifiers": {
+    name: "seller_registry_identifiers",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_registry_identifiers_id_seq'::regclass)", sequenceName: "seller_registry_identifiers_id_seq" },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "registry_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "registry_value", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "jurisdiction_country", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "seller_registry_identifiers_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "seller_registry_identifiers_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES seller_legal_identities(partner_id)" },
+      { name: "uq_seller_registry_identifier_identity", type: "UNIQUE", definition: "UNIQUE (partner_id, registry_type, jurisdiction_country, registry_value)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
+  "seller_eligibility": {
+    name: "seller_eligibility",
+    columns: [
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "eligibility_status", type: "character varying(30)", nullable: false, defaultVal: "'pending'::character varying", sequenceName: null },
+      { name: "reason", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "seller_eligibility_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (partner_id)" },
+      { name: "seller_eligibility_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" },
+      { name: "seller_eligibility_status_check", type: "CHECK", definition: "CHECK (((eligibility_status)::text = ANY ((ARRAY['pending'::character varying, 'eligible'::character varying, 'ineligible'::character varying, 'suspended'::character varying])::text[])))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
   "rfq_leads": {
     ...previousRfq,
     columns: [...previousRfq.columns],

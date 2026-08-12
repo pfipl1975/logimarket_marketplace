@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
-import { RUNTIME_MIGRATIONS_FOLDER, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, EXPECTED_COUNTS } from "../../scripts/database/runtime-migration-contract";
+import { RUNTIME_MIGRATIONS_FOLDER, EXPECTED_BASELINE_TABLES, PREVIOUS_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 import { PostgresSqlParser } from "./helpers/runtime-baseline-sql-parser";
 
@@ -37,18 +37,17 @@ function parseSqlBaseline() {
 }
 
 test("SYNC 1 & 3: Contract and Baseline have exactly 15 tables", () => {
-  assert.strictEqual(Object.keys(PRODUCTION_FINGERPRINT).length, 15);
+  assert.strictEqual(Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT).length, 15);
   const sqlTables = parseSqlBaseline();
   assert.strictEqual(Object.keys(sqlTables).length, 15);
 });
 
 test("SYNC 2, 4, 14: Contract and Baseline column counts match", () => {
   let contractCount = 0;
-  for (const t of Object.values(PRODUCTION_FINGERPRINT)) {
+  for (const t of Object.values(PREVIOUS_PRODUCTION_FINGERPRINT)) {
     contractCount += t.columns.length;
   }
   assert.strictEqual(contractCount, 122);
-  assert.strictEqual(EXPECTED_COUNTS.COLUMNS, 122);
 
   const sqlTables = parseSqlBaseline();
   let sqlCount = 0;
@@ -61,8 +60,8 @@ test("SYNC 2, 4, 14: Contract and Baseline column counts match", () => {
 test("SYNC 5, 6, 12: Column set, order and per-table counts are identical", () => {
   const sqlTables = parseSqlBaseline();
 
-  for (const tableName of EXPECTED_BASELINE_TABLES) {
-    const contractCols = PRODUCTION_FINGERPRINT[tableName].columns;
+  for (const tableName of Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT)) {
+    const contractCols = PREVIOUS_PRODUCTION_FINGERPRINT[tableName].columns;
     const sqlCols = sqlTables[tableName];
 
     assert.strictEqual(contractCols.length, sqlCols.length, `Table ${tableName} col count mismatch`);
@@ -76,8 +75,8 @@ test("SYNC 5, 6, 12: Column set, order and per-table counts are identical", () =
 test("SYNC 7, 8, 9: Column types, nullability, defaults are compliant", () => {
   const sqlTables = parseSqlBaseline();
 
-  for (const tableName of EXPECTED_BASELINE_TABLES) {
-    const contractCols = PRODUCTION_FINGERPRINT[tableName].columns;
+  for (const tableName of Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT)) {
+    const contractCols = PREVIOUS_PRODUCTION_FINGERPRINT[tableName].columns;
     const sqlCols = sqlTables[tableName];
 
     for (let i = 0; i < contractCols.length; i++) {
@@ -93,7 +92,7 @@ test("SYNC 7, 8, 9: Column types, nullability, defaults are compliant", () => {
 });
 
 test("SYNC 10: order_items.currency_code does not exist", () => {
-  const orderItemsContract = PRODUCTION_FINGERPRINT["order_items"].columns;
+  const orderItemsContract = PREVIOUS_PRODUCTION_FINGERPRINT["order_items"].columns;
   assert.strictEqual(orderItemsContract.find(c => c.name === "currency_code"), undefined);
 
   const sqlTables = parseSqlBaseline();
@@ -102,7 +101,7 @@ test("SYNC 10: order_items.currency_code does not exist", () => {
 });
 
 test("SYNC 11: clicks.is_unique_24h is nullable and has default true", () => {
-  const clicksContract = PRODUCTION_FINGERPRINT["clicks"].columns;
+  const clicksContract = PREVIOUS_PRODUCTION_FINGERPRINT["clicks"].columns;
   const col = clicksContract.find(c => c.name === "is_unique_24h");
   assert.ok(col);
   assert.strictEqual(col.nullable, true);
