@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
+import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT, BASELINE_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 test("normalizeProjectRef extracts refs correctly", () => {
   assert.strictEqual(normalizeProjectRef("postgres://postgres.abc@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"), "abc");
@@ -124,21 +124,26 @@ test("CONTRACT_SYNC: 15. Zero policies and triggers", () => {
   }
 });
 
-test("CONTRACT_SYNC: 16. RFQ schema evolution (PREVIOUS vs NEW)", () => {
-  const oldRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
-  const newRfq = PRODUCTION_FINGERPRINT["rfq_leads"];
+test("CONTRACT_SYNC: 16. RFQ schema evolution (BASELINE vs PREVIOUS vs PRODUCTION)", () => {
+  const baselineRfq = BASELINE_PRODUCTION_FINGERPRINT["rfq_leads"];
+  const previousRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
+  const productionRfq = PRODUCTION_FINGERPRINT["rfq_leads"];
 
-  // Prove PREVIOUS fingerprint has NO RFQ CHECK, NO RFQ FKs, NO RFQ indexes
-  assert.ok(!oldRfq.constraints.some(c => c.name === "rfq_leads_status_check"));
-  assert.ok(!oldRfq.constraints.some(c => c.name === "rfq_leads_offer_id_fkey"));
-  assert.ok(!oldRfq.constraints.some(c => c.name === "rfq_leads_partner_id_fkey"));
-  assert.ok(!oldRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_offer"));
-  assert.ok(!oldRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_partner"));
+  // BASELINE (post-0000) has NO RFQ CHECK, NO RFQ FKs, NO RFQ indexes
+  assert.ok(!baselineRfq.constraints.some(c => c.name === "rfq_leads_status_check"), "BASELINE must not have rfq_leads_status_check");
+  assert.ok(!baselineRfq.constraints.some(c => c.name === "rfq_leads_offer_id_fkey"), "BASELINE must not have rfq_leads_offer_id_fkey");
+  assert.ok(!baselineRfq.constraints.some(c => c.name === "rfq_leads_partner_id_fkey"), "BASELINE must not have rfq_leads_partner_id_fkey");
+  assert.ok(!baselineRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_offer"), "BASELINE must not have idx_rfq_leads_offer");
+  assert.ok(!baselineRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_partner"), "BASELINE must not have idx_rfq_leads_partner");
 
-  // Prove NEW fingerprint HAS all five objects
-  assert.ok(newRfq.constraints.some(c => c.name === "rfq_leads_status_check"));
-  assert.ok(newRfq.constraints.some(c => c.name === "rfq_leads_offer_id_fkey"));
-  assert.ok(newRfq.constraints.some(c => c.name === "rfq_leads_partner_id_fkey"));
-  assert.ok(newRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_offer"));
-  assert.ok(newRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_partner"));
+  // PREVIOUS (post-0001) HAS all five RFQ objects added by 0001_rfq_workflow_hardening
+  assert.ok(previousRfq.constraints.some(c => c.name === "rfq_leads_status_check"), "PREVIOUS must have rfq_leads_status_check");
+  assert.ok(previousRfq.constraints.some(c => c.name === "rfq_leads_offer_id_fkey"), "PREVIOUS must have rfq_leads_offer_id_fkey");
+  assert.ok(previousRfq.constraints.some(c => c.name === "rfq_leads_partner_id_fkey"), "PREVIOUS must have rfq_leads_partner_id_fkey");
+  assert.ok(previousRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_offer"), "PREVIOUS must have idx_rfq_leads_offer");
+  assert.ok(previousRfq.explicitIndexes.some(i => i.name === "idx_rfq_leads_partner"), "PREVIOUS must have idx_rfq_leads_partner");
+
+  // PRODUCTION (post-0002) rfq_leads is identical to PREVIOUS — 0002 adds no new rfq objects
+  assert.strictEqual(productionRfq.constraints.length, previousRfq.constraints.length, "PRODUCTION rfq_leads constraints count must equal PREVIOUS");
+  assert.strictEqual(productionRfq.explicitIndexes.length, previousRfq.explicitIndexes.length, "PRODUCTION rfq_leads index count must equal PREVIOUS");
 });

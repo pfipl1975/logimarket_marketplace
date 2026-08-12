@@ -103,7 +103,7 @@ export type TableContract = {
   rlsEnabled: boolean;
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+export const BASELINE_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   "attribute_definitions": {
     name: "attribute_definitions",
     columns: [
@@ -426,6 +426,50 @@ export const PREVIOUS_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   }
 };
 
+// PREVIOUS_PRODUCTION_FINGERPRINT = exact physical state after 0000 + 0001
+// Adds the three rfq_leads constraints and two indexes introduced by 0001_rfq_workflow_hardening.
+const baselineRfq = BASELINE_PRODUCTION_FINGERPRINT["rfq_leads"];
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...BASELINE_PRODUCTION_FINGERPRINT,
+  "rfq_leads": {
+    ...baselineRfq,
+    columns: [...baselineRfq.columns],
+    constraints: [
+      ...baselineRfq.constraints,
+      {
+        name: "rfq_leads_offer_id_fkey",
+        type: "FOREIGN KEY",
+        definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)"
+      },
+      {
+        name: "rfq_leads_partner_id_fkey",
+        type: "FOREIGN KEY",
+        definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)"
+      },
+      {
+        name: "rfq_leads_status_check",
+        type: "CHECK",
+        definition: "CHECK (((status)::text = ANY ((ARRAY['new'::character varying, 'in_progress'::character varying, 'responded'::character varying, 'closed'::character varying])::text[])))"
+      }
+    ],
+    explicitIndexes: [
+      ...baselineRfq.explicitIndexes,
+      {
+        name: "idx_rfq_leads_offer",
+        method: "btree",
+        expressions: "offer_id"
+      },
+      {
+        name: "idx_rfq_leads_partner",
+        method: "btree",
+        expressions: "partner_id"
+      }
+    ]
+  }
+};
+
+// PRODUCTION_FINGERPRINT = exact physical state after 0000 + 0001 + 0002
 const previousRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
 
 export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
@@ -520,39 +564,11 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     explicitIndexes: [],
     rlsEnabled: true
   },
+  // rfq_leads in PRODUCTION_FINGERPRINT is identical to PREVIOUS (0001 already applied these)
   "rfq_leads": {
     ...previousRfq,
     columns: [...previousRfq.columns],
-    constraints: [
-      ...previousRfq.constraints,
-      {
-        name: "rfq_leads_offer_id_fkey",
-        type: "FOREIGN KEY",
-        definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)"
-      },
-      {
-        name: "rfq_leads_partner_id_fkey",
-        type: "FOREIGN KEY",
-        definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)"
-      },
-      {
-        name: "rfq_leads_status_check",
-        type: "CHECK",
-        definition: "CHECK (((status)::text = ANY ((ARRAY['new'::character varying, 'in_progress'::character varying, 'responded'::character varying, 'closed'::character varying])::text[])))"
-      }
-    ],
-    explicitIndexes: [
-      ...previousRfq.explicitIndexes,
-      {
-        name: "idx_rfq_leads_offer",
-        method: "btree",
-        expressions: "offer_id"
-      },
-      {
-        name: "idx_rfq_leads_partner",
-        method: "btree",
-        expressions: "partner_id"
-      }
-    ]
+    constraints: [...previousRfq.constraints],
+    explicitIndexes: [...previousRfq.explicitIndexes]
   }
 };
