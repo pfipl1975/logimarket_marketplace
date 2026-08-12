@@ -197,9 +197,9 @@ function metadataRouter(options?: MetadataOptions): Router {
 function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "PARTIAL", fp?: Record<string, TableContract>): Router {
   const base =
     state === "EXACT"
-      ? metadataRouter({ fingerprint: fp })
+      ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
       : state === "PREVIOUS"
-        ? metadataRouter({ fingerprint: fp })
+        ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
         : state === "PARTIAL"
           ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
           : emptyRouter();
@@ -492,7 +492,7 @@ test("COMPARE: detects unexpected table", () => {
 
 test("COMPARE: detects missing table", () => {
   const allTables = EXPECTED_BASELINE_TABLES.filter((t) => t !== "offers");
-  const result = compareRuntimeFingerprint(PRODUCTION_FINGERPRINT, allTables);
+  const result = compareRuntimeFingerprint(PRODUCTION_FINGERPRINT, allTables, PRODUCTION_FINGERPRINT);
   assert.strictEqual(result.isExactMatch, false);
   assert.ok(result.driftReasons[0].includes("Missing: 1"));
 });
@@ -732,7 +732,7 @@ test("GRANT_SEQUENCE_ACL_TEST: grant verifier counts sequence grants per role", 
   assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, 1);
 });
 
-test("GRANT_SCOPE_TEST: queries are restricted to the 15 approved tables and sequences", async () => {
+test("GRANT_SCOPE_TEST: queries are restricted to the approved tables and sequences", async () => {
   const captured: { text: string; values?: unknown[] }[] = [];
   const fakeQ: Queryable = {
     async query(text: string, values?: unknown[]): Promise<{ rows: unknown[] }> {
@@ -757,7 +757,7 @@ test("GRANT_SCOPE_TEST: queries are restricted to the 15 approved tables and seq
   assert.ok(seqQuery.text.includes("any($1)"), "sequence grants must be scoped via ANY($1)");
   assert.deepStrictEqual(tableQuery.values?.[0], EXPECTED_BASELINE_TABLES);
   assert.deepStrictEqual(seqQuery.values?.[0], EXPECTED_RUNTIME_SEQUENCES);
-  assert.strictEqual((seqQuery.values?.[0] as string[]).length, 15);
+  assert.strictEqual((seqQuery.values?.[0] as string[]).length, 17);
 });
 
 test("GRANT: verifier never issues write SQL", async () => {
@@ -908,7 +908,7 @@ test("COUNT_NUMBER_HANDLING_TEST: numeric counts are accepted", async () => {
 test("COUNT_NUMBER_HANDLING_TEST: numeric policy/trigger counts parse to numbers", async () => {
   const q = new StrictFakeQueryable(metadataRouter({ countsAsNumbers: true }));
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
-  assert.strictEqual(publicTables.length, 15);
+  assert.strictEqual(publicTables.length, 19);
   for (const t of EXPECTED_BASELINE_TABLES) {
     assert.strictEqual(typeof fingerprint[t].policyCount, "number");
     assert.strictEqual(fingerprint[t].policyCount, 0);
@@ -1002,9 +1002,9 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
   const droppedTables = statements
     .map((s) => s.match(/DROP TABLE IF EXISTS public\.(\w+)/)?.[1])
     .filter(Boolean);
-  assert.strictEqual(droppedTables.length, 15);
+  assert.strictEqual(droppedTables.length, 19);
   assert.strictEqual(droppedTables[0], "clicks");
-  assert.strictEqual(droppedTables[14], "partners");
+  assert.strictEqual(droppedTables[18], "partners");
 });
 
 // ---------------------------------------------------------------------------
@@ -1020,8 +1020,8 @@ test("ROLLBACK_FULL_WRAPPER_TEST: preflight + single client transaction + cleanu
   assert.strictEqual(statements[0], "BEGIN");
   assert.strictEqual(statements[statements.length - 1], "COMMIT");
   assert.ok(
-    statements.filter((s) => s.startsWith("DROP TABLE IF EXISTS public.")).length === 15,
-    "all 15 tables must be dropped on the client"
+    statements.filter((s) => s.startsWith("DROP TABLE IF EXISTS public.")).length === 19,
+    "all tables must be dropped on the client"
   );
   assert.ok(!statements.some((s) => s.toUpperCase().includes("CASCADE")));
   assert.ok(state.released, "client.release must be called");

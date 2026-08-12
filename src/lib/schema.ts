@@ -57,7 +57,10 @@ export const offers = pgTable("offers", {
   archivedAt: timestamp("archived_at", { withTimezone: true }),
   deletedAt: timestamp("deleted_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
-});
+  contractModel: varchar("contract_model", { length: 30 }),
+}, () => [
+  check("offers_contract_model_check", sql`((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[]))`)
+]);
 
 export const clicks = pgTable("clicks", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
@@ -128,6 +131,77 @@ export const orderItems = pgTable("order_items", {
   unitPrice: varchar("unit_price", { length: 50 }),
   totalPrice: varchar("total_price", { length: 50 }),
 });
+
+export const sellerLegalIdentities = pgTable("seller_legal_identities", {
+  partnerId: bigint("partner_id", { mode: "number" }).primaryKey(),
+  legalName: varchar("legal_name", { length: 255 }).notNull(),
+  jurisdictionCountry: varchar("jurisdiction_country", { length: 2 }).notNull(),
+  verificationStatus: varchar("verification_status", { length: 30 }).notNull().default("unverified"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  verificationSource: varchar("verification_source", { length: 100 }),
+  verificationReference: text("verification_reference"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  foreignKey({
+    name: "seller_legal_identities_partner_id_fkey",
+    columns: [t.partnerId],
+    foreignColumns: [partners.id]
+  }).onDelete("no action").onUpdate("no action")
+]);
+
+export const sellerTaxIdentifiers = pgTable("seller_tax_identifiers", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  partnerId: bigint("partner_id", { mode: "number" }).notNull(),
+  identifierType: varchar("identifier_type", { length: 50 }).notNull(),
+  identifierValue: varchar("identifier_value", { length: 100 }).notNull(),
+  countryCode: varchar("country_code", { length: 2 }).notNull(),
+  verificationStatus: varchar("verification_status", { length: 30 }).notNull().default("unverified"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  verificationSource: varchar("verification_source", { length: 100 }),
+  verificationReference: text("verification_reference"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  unique("uq_seller_tax_identifier_identity").on(t.partnerId, t.identifierType, t.countryCode, t.identifierValue),
+  foreignKey({
+    name: "seller_tax_identifiers_partner_id_fkey",
+    columns: [t.partnerId],
+    foreignColumns: [sellerLegalIdentities.partnerId]
+  }).onDelete("no action").onUpdate("no action")
+]);
+
+export const sellerRegistryIdentifiers = pgTable("seller_registry_identifiers", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  partnerId: bigint("partner_id", { mode: "number" }).notNull(),
+  registryType: varchar("registry_type", { length: 50 }).notNull(),
+  registryValue: varchar("registry_value", { length: 100 }).notNull(),
+  jurisdictionCountry: varchar("jurisdiction_country", { length: 2 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  unique("uq_seller_registry_identifier_identity").on(t.partnerId, t.registryType, t.jurisdictionCountry, t.registryValue),
+  foreignKey({
+    name: "seller_registry_identifiers_partner_id_fkey",
+    columns: [t.partnerId],
+    foreignColumns: [sellerLegalIdentities.partnerId]
+  }).onDelete("no action").onUpdate("no action")
+]);
+
+export const sellerEligibility = pgTable("seller_eligibility", {
+  partnerId: bigint("partner_id", { mode: "number" }).primaryKey(),
+  eligibilityStatus: varchar("eligibility_status", { length: 30 }).notNull().default("pending"),
+  reason: text("reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  check("seller_eligibility_status_check", sql`((eligibility_status)::text = ANY ((ARRAY['pending'::character varying, 'eligible'::character varying, 'ineligible'::character varying, 'suspended'::character varying])::text[]))`),
+  foreignKey({
+    name: "seller_eligibility_partner_id_fkey",
+    columns: [t.partnerId],
+    foreignColumns: [partners.id]
+  }).onDelete("no action").onUpdate("no action")
+]);
 
 // Faceted Filter & Relational Attribute Model
 
@@ -572,6 +646,10 @@ export const controlledOptionValueTranslations = pgTable(
 export type Partner = typeof partners.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
+export type SellerLegalIdentity = typeof sellerLegalIdentities.$inferSelect;
+export type SellerTaxIdentifier = typeof sellerTaxIdentifiers.$inferSelect;
+export type SellerRegistryIdentifier = typeof sellerRegistryIdentifiers.$inferSelect;
+export type SellerEligibility = typeof sellerEligibility.$inferSelect;
 export type TechnicalAttributes = Record<string, string | number>;
 
 export type CategoryAttributeAssignment = typeof categoryAttributeAssignments.$inferSelect;

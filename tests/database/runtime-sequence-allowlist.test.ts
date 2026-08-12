@@ -47,19 +47,43 @@ function contractSequenceOwnership(): string[] {
   return pairs.sort();
 }
 
-const BASELINE_SQL = fs.readFileSync(
-  path.join(process.cwd(), "drizzle-runtime/0000_production_runtime_baseline.sql"),
-  "utf8"
-);
+function getSqlFilesContent(): string {
+  const dir = path.join(process.cwd(), "drizzle-runtime");
+  const files = fs.readdirSync(dir).filter(f => f.endsWith('.sql'));
+  return files.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+}
 
 function sqlSequenceNames(): string[] {
-  return [...BASELINE_SQL.matchAll(/CREATE SEQUENCE (\w+) AS/g)].map((m) => m[1]).sort();
+  const sql = getSqlFilesContent();
+  const seqs = [...sql.matchAll(/CREATE SEQUENCE (\w+) AS/g)].map((m) => m[1]);
+
+  const tables = [...sql.matchAll(/CREATE TABLE IF NOT EXISTS "(\w+)" \(([^;]+)\)/g)];
+  for (const table of tables) {
+    const tableName = table[1];
+    const columns = table[2];
+    const matches = [...columns.matchAll(/"(\w+)" (bigserial|serial)/g)];
+    for (const match of matches) {
+      seqs.push(`${tableName}_${match[1]}_seq`);
+    }
+  }
+  return seqs.sort();
 }
 
 function sqlSequenceOwnership(): string[] {
-  return [...BASELINE_SQL.matchAll(/ALTER SEQUENCE (\w+) OWNED BY (\w+)\.(\w+);/g)]
-    .map((m) => `${m[1]} -> ${m[2]}.${m[3]}`)
-    .sort();
+  const sql = getSqlFilesContent();
+  const ownership = [...sql.matchAll(/ALTER SEQUENCE (\w+) OWNED BY (\w+)\.(\w+);/g)]
+    .map((m) => `${m[1]} -> ${m[2]}.${m[3]}`);
+
+  const tables = [...sql.matchAll(/CREATE TABLE IF NOT EXISTS "(\w+)" \(([^;]+)\)/g)];
+  for (const table of tables) {
+    const tableName = table[1];
+    const columns = table[2];
+    const matches = [...columns.matchAll(/"(\w+)" (bigserial|serial)/g)];
+    for (const match of matches) {
+      ownership.push(`${tableName}_${match[1]}_seq -> ${tableName}.${match[1]}`);
+    }
+  }
+  return ownership.sort();
 }
 
 /** Drift-detection predicate shared by the source-parity tests. */
@@ -107,9 +131,9 @@ function fakeDb(opts: { seqAclRows?: AclRow[]; tableAclRows?: AclRow[] }): {
 // 1-4. Allowlist parity with both authoritative sources
 // ---------------------------------------------------------------------------
 
-test("ALLOWLIST: exact runtime sequence allowlist contains 15 names", () => {
-  assert.strictEqual(EXPECTED_RUNTIME_SEQUENCES.length, 15);
-  assert.strictEqual(new Set(EXPECTED_RUNTIME_SEQUENCES).size, 15, "names must be unique");
+test("ALLOWLIST: exact runtime sequence allowlist contains 17 names", () => {
+  assert.strictEqual(EXPECTED_RUNTIME_SEQUENCES.length, 17);
+  assert.strictEqual(new Set(EXPECTED_RUNTIME_SEQUENCES).size, 17, "names must be unique");
 });
 
 test("ALLOWLIST_CONTRACT_TEST: allowlist is identical to the contract sequenceName data", () => {
@@ -122,7 +146,7 @@ test("ALLOWLIST_SQL_TEST: allowlist is identical to the baseline SQL sequences",
 
 test("SEQUENCE_OWNERSHIP_TEST: ownership matches contract and baseline SQL", () => {
   assert.deepStrictEqual(contractSequenceOwnership(), sqlSequenceOwnership());
-  assert.strictEqual(contractSequenceOwnership().length, 15);
+  assert.strictEqual(contractSequenceOwnership().length, 17);
   for (const pair of contractSequenceOwnership()) {
     const [seq] = pair.split(" -> ");
     assert.ok(
@@ -196,11 +220,11 @@ test("EXTRA_PUBLIC_SEQUENCE_IGNORED_TEST: a random extra public sequence is neve
     !(seqQuery?.values?.[0] as string[]).includes("random_public_seq"),
     "scope must not include unapproved sequences"
   );
-  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, 15);
+  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, sqlSequenceNames().length);
   assert.strictEqual(result.ANON_SEQUENCE_GRANT_COUNT, 0, "extra sequence grant must not leak in");
 });
 
-test("SEQUENCE_COUNT_TEST: all 15 approved sequences are counted", async () => {
+test("SEQUENCE_COUNT_TEST: all approved sequences are counted", async () => {
   const { q } = fakeDb({
     seqAclRows: EXPECTED_RUNTIME_SEQUENCES.map((name) => ({
       object_name: name,
@@ -209,7 +233,7 @@ test("SEQUENCE_COUNT_TEST: all 15 approved sequences are counted", async () => {
     })),
   });
   const result = await queryRuntimeGrants(q);
-  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, 15);
+  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, sqlSequenceNames().length);
 });
 
 test("ANON_SEQUENCE_GRANT_TEST: anon sequence grants are counted", async () => {
@@ -248,7 +272,7 @@ test("SERVICE_ROLE_SEQUENCE_GRANT_TEST: service_role sequence grants are counted
 // 13-15. Table allowlist, read-only SQL, import side effects
 // ---------------------------------------------------------------------------
 
-test("TABLE_ALLOWLIST_TEST: table grants remain scoped to the exact 15 runtime tables", async () => {
+test("TABLE_ALLOWLIST_TEST: table grants remain scoped to the exact runtime tables", async () => {
   const { q, captured } = fakeDb({});
   await queryRuntimeGrants(q);
   const tableQuery = captured.find(
@@ -256,7 +280,7 @@ test("TABLE_ALLOWLIST_TEST: table grants remain scoped to the exact 15 runtime t
   );
   assert.ok(tableQuery?.text.includes("any($1)"));
   assert.deepStrictEqual(tableQuery?.values?.[0], EXPECTED_BASELINE_TABLES);
-  assert.strictEqual((tableQuery?.values?.[0] as string[]).length, 15);
+  assert.strictEqual((tableQuery?.values?.[0] as string[]).length, 19);
 });
 
 test("GRANT_NO_WRITE_SQL_TEST: verifier never issues write SQL", async () => {

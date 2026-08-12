@@ -15,6 +15,13 @@
       "when": 1785590000000,
       "tag": "0001_rfq_workflow_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1785590500000,
+      "tag": "0002_seller_identity_56b1",
+      "breakpoints": true
     }
   ]
 }

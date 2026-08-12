@@ -9,7 +9,6 @@
  */
 
 import {
-  EXPECTED_BASELINE_TABLES,
   PRODUCTION_FINGERPRINT,
   PREVIOUS_PRODUCTION_FINGERPRINT,
   ColumnContract,
@@ -427,13 +426,15 @@ export function compareRuntimeFingerprint(
     driftReasons: [],
   };
 
+  const expectedTableNames = Object.keys(expectedFingerprint);
+
   for (const t of allPublicTables) {
-    if (!EXPECTED_BASELINE_TABLES.includes(t)) {
+    if (!expectedTableNames.includes(t)) {
       result.unexpectedTables.push(t);
     }
   }
 
-  for (const expected of EXPECTED_BASELINE_TABLES) {
+  for (const expected of expectedTableNames) {
     if (!allPublicTables.includes(expected)) {
       result.missingTables.push(expected);
     }
@@ -448,7 +449,7 @@ export function compareRuntimeFingerprint(
   }
 
   // Deep per-table comparison
-  for (const tableName of EXPECTED_BASELINE_TABLES) {
+  for (const tableName of expectedTableNames) {
     const exp = expectedFingerprint[tableName];
     const got = actual[tableName];
 

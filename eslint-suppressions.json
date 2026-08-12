@@ -158,9 +158,6 @@
   "tests/database/drizzle-runtime-schema-sync.test.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 2
-    },
-    "prefer-const": {
-      "count": 1
     }
   },
   "tests/database/helpers/runtime-baseline-sql-parser.ts": {

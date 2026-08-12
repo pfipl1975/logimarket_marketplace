@@ -25,7 +25,7 @@ test("executeRollback drop order and statements", async () => {
   }
 
   // Exact 15 tables dropped
-  assert.strictEqual(dropTables.length, 15);
+  assert.strictEqual(dropTables.length, 19);
 
   const tableOrder = dropTables.map(q => q.replace("DROP TABLE IF EXISTS public.", ""));
 

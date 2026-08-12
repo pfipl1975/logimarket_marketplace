@@ -43,6 +43,10 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "offer_attribute_values",
   "category_attribute_assignments",
   "offers",
+  "seller_tax_identifiers",
+  "seller_registry_identifiers",
+  "seller_eligibility",
+  "seller_legal_identities",
   "orders",
   "controlled_option_value_translations",
   "controlled_option_values",
@@ -68,6 +72,8 @@ const EXPECTED_SEQUENCES: readonly string[] = [
   "orders_id_seq",
   "partners_id_seq",
   "rfq_leads_id_seq",
+  "seller_registry_identifiers_id_seq",
+  "seller_tax_identifiers_id_seq",
 ] as const;
 
 const BASELINE_CREATED_AT = 1785589560000;
@@ -132,11 +138,11 @@ export async function verifyRollbackPreconditions(
     };
   }
 
-  // 6. Exactly 15 tables, no extra public tables
-  if (publicTables.length !== 15) {
+  // 6. Exactly 19 tables, no extra public tables
+  if (publicTables.length !== EXPECTED_BASELINE_TABLES.length) {
     return {
       allowed: false,
-      reason: `Expected exactly 15 public tables, found ${publicTables.length}`,
+      reason: `Expected exactly ${EXPECTED_BASELINE_TABLES.length} public tables, found ${publicTables.length}`,
     };
   }
 
