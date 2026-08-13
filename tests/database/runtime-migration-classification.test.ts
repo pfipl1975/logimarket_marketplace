@@ -47,9 +47,8 @@ test("BASELINE_0000_CLASSIFICATION", () => {
   // Pass the baseline tables as the observed table set
   const tableNames = Object.keys(BASELINE_PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, tableNames);
-  // Baseline lacks the 0001 rfq_leads constraints/indexes -> PARTIAL_OR_DRIFTED
-  // (it is NOT MIGRATABLE_PREVIOUS because it does not match PREVIOUS_PRODUCTION_FINGERPRINT)
-  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+  // Baseline lacks the 0001 rfq_leads constraints/indexes -> MIGRATABLE_BASELINE
+  assert.strictEqual(result.state, "MIGRATABLE_BASELINE");
 });
 
 // ===========================================================================

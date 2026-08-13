@@ -11,6 +11,7 @@
 import {
   PRODUCTION_FINGERPRINT,
   PREVIOUS_PRODUCTION_FINGERPRINT,
+  BASELINE_PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
   IndexContract,
@@ -56,7 +57,7 @@ export type Queryable = {
 // Target classification
 // ---------------------------------------------------------------------------
 
-export type RuntimeTargetState = "EMPTY" | "EXACT_EXISTING" | "MIGRATABLE_PREVIOUS" | "PARTIAL_OR_DRIFTED";
+export type RuntimeTargetState = "EMPTY" | "EXACT_EXISTING" | "MIGRATABLE_PREVIOUS" | "MIGRATABLE_BASELINE" | "PARTIAL_OR_DRIFTED";
 
 export type RuntimeTargetResult = {
   state: RuntimeTargetState;
@@ -494,6 +495,12 @@ export function classifyRuntimeTarget(
 
   if (matchPrevious.isExactMatch) {
     return { state: "MIGRATABLE_PREVIOUS", publicTableCount, differences: [] };
+  }
+
+  const matchBaseline = compareRuntimeFingerprint(actual, allPublicTables, BASELINE_PRODUCTION_FINGERPRINT);
+
+  if (matchBaseline.isExactMatch) {
+    return { state: "MIGRATABLE_BASELINE", publicTableCount, differences: [] };
   }
 
   return {

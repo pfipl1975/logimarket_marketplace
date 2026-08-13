@@ -21,6 +21,7 @@ import {
   RUNTIME_JOURNAL_SCHEMA,
   RUNTIME_JOURNAL_TABLE,
 } from "./runtime-migration-contract";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 
 // ---------------------------------------------------------------------------
 // Shared Pool factory type — allows injection in tests
@@ -38,7 +39,8 @@ export type PoolFactory = (connectionString: string) => {
 export async function runMigrations(
   env: NodeJS.ProcessEnv,
   poolFactory?: PoolFactory,
-  migrateFn?: typeof migrate
+  migrateFn?: typeof migrate,
+  readMigrationFilesFn?: typeof readMigrationFiles
 ): Promise<void> {
   // 1. Target guard — validates env vars before any DB connection
   verifyTarget(env);
@@ -70,6 +72,38 @@ export async function runMigrations(
       throw new Error(
         `RUNNER: schema is PARTIAL_OR_DRIFTED. Migration aborted. Differences:\n${classification.differences.join("\n")}`
       );
+    }
+
+    if (classification.state === "MIGRATABLE_BASELINE") {
+      console.log("RUNNER: MIGRATABLE_BASELINE detected. Validating journal safety.");
+      try {
+        const res = await pool.query(`SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}.${RUNTIME_JOURNAL_TABLE} ORDER BY created_at ASC`);
+        const rows = res.rows as { hash: string; created_at: string | number }[];
+        
+        if (rows.length > 0) {
+          const actualReadFn = readMigrationFilesFn ?? readMigrationFiles;
+          const diskMigrations = actualReadFn({ migrationsFolder: `./${RUNTIME_MIGRATIONS_FOLDER}` });
+          const m0000 = diskMigrations.find(m => m.folderMillis === 1785589560000);
+          
+          if (!m0000) {
+            throw new Error("RUNNER: BLOCKED. Canonical 0000 migration not found on disk.");
+          }
+
+          if (rows.length === 1 && String(rows[0].created_at) === String(m0000.folderMillis) && rows[0].hash === m0000.hash) {
+             console.log("RUNNER: Journal contains only exact 0000 canonical migration. Safety proven.");
+          } else {
+             throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (claimed: ${rows.length}, ts: ${rows[0]?.created_at}, hash: ${rows[0]?.hash}).`);
+          }
+        } else {
+          console.log("RUNNER: Journal is empty. Safe to adopt baseline.");
+        }
+      } catch (err: any) {
+        if (err.message.includes("does not exist") || err.code === '42P01' || err.code === '3F000') {
+           console.log("RUNNER: Journal table or schema absent. Safe to adopt baseline.");
+        } else {
+           throw err;
+        }
+      }
     }
 
     // 4. Run migration via Drizzle (EMPTY → create; EXACT_EXISTING → adopt baseline; MIGRATABLE_PREVIOUS → additive migration)

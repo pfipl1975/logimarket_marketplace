@@ -35,6 +35,7 @@ import {
   EXPECTED_BASELINE_TABLES,
   PRODUCTION_FINGERPRINT,
   PREVIOUS_PRODUCTION_FINGERPRINT,
+  BASELINE_PRODUCTION_FINGERPRINT,
 } from "../../scripts/database/runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -194,12 +195,14 @@ function metadataRouter(options?: MetadataOptions): Router {
 }
 
 /** metadataRouter extended with the grant-verifier queries (pg_roles + ACL). */
-function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "PARTIAL", fp?: Record<string, TableContract>): Router {
+function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PARTIAL", fp?: Record<string, TableContract>): Router {
   const base =
     state === "EXACT"
       ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
       : state === "PREVIOUS"
         ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
+        : state === "BASELINE"
+          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
         : state === "PARTIAL"
           ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
           : emptyRouter();
@@ -606,6 +609,219 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
 
   assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
   assert.ok(state.ended, "pool must be closed");
+});
+
+test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE schema", async () => {
+  let migrateCallCount = 0;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const q: { router?: Router; queries: string[]; unmatched: string[]; query: (text: string) => Promise<unknown> } = {} as any;
+  const fakeMigrate = async () => {
+    migrateCallCount++;
+    q.router = runnerRouter("EXACT");
+  };
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "fakehash" }];
+
+  let currentRouter = runnerRouter("BASELINE", Object.fromEntries(
+     Object.entries(PRODUCTION_FINGERPRINT).map(([k, v]) => [k, { ...v }]) // We pass BASELINE but use router defaults, it will be checked below
+  ) as any);
+  // Wait, we need to pass BASELINE_PRODUCTION_FINGERPRINT so it classifies as MIGRATABLE_BASELINE
+  currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT as any);
+  
+  const routerProxy = (t: string) => currentRouter(t);
+  const state = { ended: false };
+  const qObj = {
+    queries: [], unmatched: [],
+    set router(newRouter: Router) { currentRouter = newRouter; },
+    async query(text: string) {
+      const normalized = text.trim().replace(/\s+/g, " ");
+      this.queries.push(normalized);
+      const result = routerProxy(normalized.toLowerCase());
+      if (result === null) throw new Error("UNMATCHED_FAKE_QUERY");
+      return result;
+    }
+  };
+  Object.assign(q, qObj);
+  Object.defineProperty(q, "router", {
+    set(newRouter: Router) {
+      currentRouter = newRouter;
+    }
+  });
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => { state.ended = true; },
+  });
+
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+
+  assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once for BASELINE");
+  assert.ok(state.ended, "pool must be closed");
+});
+
+test("BASELINE_ABSENT_JOURNAL_TEST", async () => {
+  let migrateCallCount = 0;
+  let q: any;
+  const fakeMigrate = async () => { 
+    migrateCallCount++; 
+    q.router = runnerRouter("EXACT");
+  };
+  
+  // Custom router returning MIGRATABLE_BASELINE but throwing on journal query
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      throw Object.assign(new Error("relation does not exist"), { code: '42P01' });
+    }
+    return baseRouter(t);
+  };
+  
+  const qObj = new StrictFakeQueryable(routerProxy) as any;
+  qObj.router = baseRouter;
+  q = qObj;
+
+  const factory = () => ({
+    query: async (text: string) => {
+      // Need to let it use the current router state if it changed
+      return qObj.query(text);
+    },
+    end: async () => {},
+  });
+
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never);
+  assert.strictEqual(migrateCallCount, 1);
+});
+
+test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {
+  let migrateCallCount = 0;
+  let q: any;
+  const fakeMigrate = async () => { 
+    migrateCallCount++; 
+    q.router = runnerRouter("EXACT");
+  };
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      return { rows: [{ hash: "exacthash0000", created_at: "1785589560000" }] };
+    }
+    return baseRouter(t);
+  };
+
+  const qObj = new StrictFakeQueryable(routerProxy) as any;
+  qObj.router = baseRouter;
+  q = qObj;
+
+  const factory = () => ({
+    query: async (text: string) => {
+      return qObj.query(text);
+    },
+    end: async () => {},
+  });
+
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  assert.strictEqual(migrateCallCount, 1);
+});
+
+test("BASELINE_0000_WRONG_HASH_TEST", async () => {
+  const fakeMigrate = async () => {};
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      return { rows: [{ hash: "wronghash", created_at: "1785589560000" }] };
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    /BLOCKED.*do not match exact canonical 0000/
+  );
+});
+
+test("BASELINE_0000_WRONG_TIMESTAMP_TEST", async () => {
+  const fakeMigrate = async () => {};
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      return { rows: [{ hash: "exacthash0000", created_at: "1785589999999" }] };
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    /BLOCKED.*do not match exact canonical 0000/
+  );
+});
+
+test("BASELINE_FALSE_0001_JOURNAL_TEST", async () => {
+  const fakeMigrate = async () => {};
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      return { rows: [
+        { hash: "exacthash0000", created_at: "1785589560000" },
+        { hash: "hash0001", created_at: "1785590000000" }
+      ] };
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    /BLOCKED.*do not match exact canonical 0000/
+  );
+});
+
+test("BASELINE_DUPLICATE_JOURNAL_TEST", async () => {
+  const fakeMigrate = async () => {};
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      return { rows: [
+        { hash: "exacthash0000", created_at: "1785589560000" },
+        { hash: "exacthash0000", created_at: "1785589560000" }
+      ] };
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    /BLOCKED.*do not match exact canonical 0000/
+  );
 });
 
 test("RUNNER_DRIFT_TEST: runner throws and never calls migrate on PARTIAL_OR_DRIFTED", async () => {
