@@ -343,8 +343,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_publication_status_check;
       INSERT INTO public.partners (id, company_name, contact_email) VALUES (1, 'Test Partner', 'test@test.test') ON CONFLICT DO NOTHING;
       INSERT INTO public.categories (id, name, slug) VALUES (1, 'Test Cat', 'test-cat-neg') ON CONFLICT DO NOTHING;
-      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status)
-      VALUES (998, 1, 1, 'Invalid Status Offer', 'rfq', 'inbound', 'invalid_status');
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, outbound_url)
+      VALUES (998, 1, 1, 'Invalid Status Offer', 'rfq', 'outbound', 'invalid_status', 'https://example.com/test');
       ALTER TABLE public.offers ADD CONSTRAINT offers_publication_status_check
         CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[]))) NOT VALID;
     `);
@@ -356,11 +356,28 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       errorThrown = true;
       assert.ok((err as Error).message.includes("0003 precheck failed: unsupported publication_status exists"));
     }
-    assert.strictEqual(errorThrown, true);
+    assert.strictEqual(errorThrown, true, "Must throw 0003 unsupported publication_status exception");
 
+    // 1. Live schema fingerprint remains MIGRATABLE_PROD_LEGACY
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const postFailureClassification = classifyRuntimeTarget(fingerprint, publicTables);
     assert.strictEqual(postFailureClassification.state, "MIGRATABLE_PROD_LEGACY");
+
+    // 2. Pre-existing test row remains unchanged
+    const testRowRes = await pool.query(`SELECT publication_status FROM public.offers WHERE id = 998`);
+    assert.strictEqual(testRowRes.rows.length, 1);
+    assert.strictEqual(testRowRes.rows[0].publication_status, "invalid_status");
+
+    // 3. No journal progression (table absent or 0 rows)
+    const journalRes = await pool.query(`
+      SELECT count(*) as cnt
+      FROM information_schema.tables
+      WHERE table_schema = 'drizzle_runtime' AND table_name = '__drizzle_migrations'
+    `);
+    if (Number(journalRes.rows[0].cnt) > 0) {
+      const rowsRes = await pool.query(`SELECT count(*) as cnt FROM drizzle_runtime.__drizzle_migrations`);
+      assert.strictEqual(Number(rowsRes.rows[0].cnt), 0, "No journal progression on rollback");
+    }
   });
 
   await pool.end();

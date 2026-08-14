@@ -267,7 +267,7 @@ BEGIN
     CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
   ELSIF idxdef ILIKE '%(ip_hash, offer_id, clicked_at)%' THEN
     NULL; -- Already final
-  ELSIF idxdef ILIKE '%(offer_id, session_hash, clicked_at)%' OR idxdef ILIKE '%(session_hash, offer_id, clicked_at)%' THEN
+  ELSIF idxdef ILIKE '%(offer_id, partner_id, clicked_at)%' THEN
     DROP INDEX public.idx_clicks_tracking;
     CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
   ELSE
