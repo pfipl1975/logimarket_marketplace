@@ -23,8 +23,20 @@ test("normalizeProjectRef: password z dwukropkiem", () => {
   assert.strictEqual(normalizeProjectRef("postgresql://postgres.abcdefgh:PASS:WORD@aws-0.pooler.supabase.com:6543/postgres"), "abcdefgh");
 });
 
-test("normalizeProjectRef: unknown format", () => {
-  assert.strictEqual(normalizeProjectRef("postgresql://localhost:5432/mydb"), null);
+test("normalizeProjectRef: localhost support", () => {
+  assert.strictEqual(normalizeProjectRef("postgres://postgres:postgres@localhost:5432/postgres"), "localhost");
+  assert.strictEqual(normalizeProjectRef("postgresql://user:pass@localhost:5432/mydb"), "localhost");
+});
+
+test("normalizeProjectRef: 127.0.0.1 support", () => {
+  assert.strictEqual(normalizeProjectRef("postgres://postgres:postgres@127.0.0.1:5432/postgres"), "localhost");
+  assert.strictEqual(normalizeProjectRef("postgresql://user:pass@127.0.0.1:5432/mydb"), "localhost");
+});
+
+test("normalizeProjectRef: arbitrary non-Supabase remote host returns null", () => {
+  assert.strictEqual(normalizeProjectRef("postgresql://user:pass@example.com:5432/mydb"), null);
+  assert.strictEqual(normalizeProjectRef("postgresql://user:pass@internal-db.corp.net:5432/mydb"), null);
+  assert.strictEqual(normalizeProjectRef("postgresql://user:pass@db.not-supabase.io:5432/postgres"), null);
 });
 
 test("verifyTarget: brak URL", () => {

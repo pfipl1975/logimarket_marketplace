@@ -2,14 +2,19 @@ import { test } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
 import { Pool } from "pg";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
+import {
+  fetchLiveSchemaMetadata,
+  classifyRuntimeTarget,
+} from "../../scripts/database/verify-runtime-schema-fingerprint";
 
 const MIGRATIONS_DIR = "./drizzle-runtime";
 const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
 
 test("CI_POSTGRES_INTEGRATION_PROOF_PREFLIGHT", async (t) => {
   if (!process.env.DATABASE_URL) {
-    console.log("Skipping CI integration test (no DATABASE_URL)");
+    t.skip("Skipping CI integration test (no DATABASE_URL)");
     return;
   }
 
@@ -79,8 +84,30 @@ test("CI_POSTGRES_INTEGRATION_PROOF_PREFLIGHT", async (t) => {
     assert.strictEqual(Number(stats.rls_tables), 19, "rls_tables mismatch");
     assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
 
-    const journal = await pool.query(`SELECT hash FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`);
-    assert.strictEqual(journal.rows.length, 3, "Journal should have 3 rows (0000, 0001, 0002)");
+    // Post-migration classification must be EXACT_EXISTING
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING", "Success post-classification must be EXACT_EXISTING");
+
+    // Exact canonical migration identity check for journal
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    assert.strictEqual(diskMigrations.length, 3, "Disk migrations should have 3 files");
+
+    const journalRes = await pool.query(`SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`);
+    const journalRows = journalRes.rows as { hash: string; created_at: string | number }[];
+    assert.strictEqual(journalRows.length, 3, "Journal should have exactly 3 rows");
+
+    // row 1: 0000
+    assert.strictEqual(journalRows[0].hash, diskMigrations[0].hash, "Row 1 (0000) hash mismatch");
+    assert.strictEqual(String(journalRows[0].created_at), String(diskMigrations[0].folderMillis), "Row 1 (0000) created_at mismatch");
+
+    // row 2: 0001
+    assert.strictEqual(journalRows[1].hash, diskMigrations[1].hash, "Row 2 (0001) hash mismatch");
+    assert.strictEqual(String(journalRows[1].created_at), String(diskMigrations[1].folderMillis), "Row 2 (0001) created_at mismatch");
+
+    // row 3: 0002
+    assert.strictEqual(journalRows[2].hash, diskMigrations[2].hash, "Row 3 (0002) hash mismatch");
+    assert.strictEqual(String(journalRows[2].created_at), String(diskMigrations[2].folderMillis), "Row 3 (0002) created_at mismatch");
   });
 
   await t.test("B. FAILURE PATH", async () => {
@@ -101,19 +128,41 @@ test("CI_POSTGRES_INTEGRATION_PROOF_PREFLIGHT", async (t) => {
     }
     assert.strictEqual(errorThrown, true, "runMigrations should have thrown an error");
 
-    // Directly verify physical schema after failure
-    const contractColCount = await pool.query(`SELECT count(*) as cnt FROM information_schema.columns WHERE table_name = 'offers' AND column_name = 'contract_model'`);
-    assert.strictEqual(Number(contractColCount.rows[0].cnt), 0, "contract_model should remain absent");
+    // Directly classify runtime target after failure
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const postFailureClassification = classifyRuntimeTarget(fingerprint, publicTables);
+    assert.strictEqual(postFailureClassification.state, "MIGRATABLE_BASELINE", "Post-failure classification must be MIGRATABLE_BASELINE");
 
-    const sellersCount = await pool.query(`SELECT count(*) as cnt FROM pg_class WHERE relname = 'sellers'`);
-    assert.strictEqual(Number(sellersCount.rows[0].cnt), 0, "seller tables should be absent");
-
-    // Verify journal state after failure
-    const journalRes = await pool.query(`SELECT hash FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`).catch(() => null);
-    // Depending on transaction handling, journal might be 0000 or absent
-    if (journalRes) {
-       assert.ok(journalRes.rows.length <= 1, "Journal should not contain 0001 or 0002");
+    // Characterize exact journal state after failure
+    let journalRows: { hash: string; created_at: string | number }[] = [];
+    try {
+      const journalRes = await pool.query(`SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`);
+      journalRows = journalRes.rows as { hash: string; created_at: string | number }[];
+    } catch (err: any) {
+      if (err.code === "42P01" || err.code === "3F000") {
+        journalRows = [];
+      } else {
+        throw err;
+      }
     }
+
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const m0000 = diskMigrations.find(m => m.folderMillis === 1785589560000);
+    const m0001 = diskMigrations.find(m => m.folderMillis === 1785590000000);
+    const m0002 = diskMigrations.find(m => m.folderMillis === 1785590500000);
+
+    assert.ok(m0000, "0000 migration must exist on disk");
+    assert.ok(m0001, "0001 migration must exist on disk");
+    assert.ok(m0002, "0002 migration must exist on disk");
+
+    // 0001 and 0002 must be absent from journal
+    assert.strictEqual(journalRows.some(r => r.hash === m0001!.hash || String(r.created_at) === String(m0001!.folderMillis)), false, "0001 journal row must be ABSENT on failure");
+    assert.strictEqual(journalRows.some(r => r.hash === m0002!.hash || String(r.created_at) === String(m0002!.folderMillis)), false, "0002 journal row must be ABSENT on failure");
+
+    // Exact state: 0000 baseline was adopted before 0001 precheck failure rolled back 0001
+    assert.strictEqual(journalRows.length, 1, "Journal must contain exactly 1 row (0000 baseline adoption)");
+    assert.strictEqual(journalRows[0].hash, m0000!.hash, "0000 hash mismatch in journal");
+    assert.strictEqual(String(journalRows[0].created_at), String(m0000!.folderMillis), "0000 created_at mismatch in journal");
   });
 
   await pool.end();
