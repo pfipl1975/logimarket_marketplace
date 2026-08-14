@@ -7,7 +7,9 @@ import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import {
   fetchLiveSchemaMetadata,
   classifyRuntimeTarget,
+  compareRuntimeFingerprint,
 } from "../../scripts/database/verify-runtime-schema-fingerprint";
+import { PROD_LEGACY_BASELINE_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 const MIGRATIONS_DIR = "./drizzle-runtime";
 const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
@@ -405,9 +407,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables);
     assert.strictEqual(classification.state, "PARTIAL_OR_DRIFTED");
+
+    // Verify that legacy comparison specifically detects the NOT VALID constraint
+    const legacyComp = compareRuntimeFingerprint(fingerprint, publicTables, PROD_LEGACY_BASELINE_FINGERPRINT);
+    assert.strictEqual(legacyComp.isExactMatch, false);
     assert.ok(
-      classification.differences.some(d => d.includes("validation status mismatch") || d.includes("NOT VALID") || d.includes("definition mismatch")),
-      "Classification must report NOT VALID constraint drift"
+      legacyComp.driftReasons.some(d => d.includes("validation status mismatch") || d.includes("NOT VALID") || d.includes("definition mismatch")),
+      "Legacy comparison must report NOT VALID constraint drift"
     );
 
     // Official runner must abort before calling migrate
