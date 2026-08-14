@@ -275,9 +275,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     let errorThrown = false;
     try {
       await runMigrations(process.env);
-    } catch (err: any) {
+    } catch (err: unknown) {
       errorThrown = true;
-      assert.ok(err.message.includes("RFQ migration blocked: invalid status rows exist"));
+      assert.ok((err as Error).message.includes("RFQ migration blocked: invalid status rows exist"));
     }
     assert.strictEqual(errorThrown, true);
 
@@ -300,9 +300,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     let errorThrown = false;
     try {
       await runMigrations(process.env);
-    } catch (err: any) {
+    } catch (err: unknown) {
       errorThrown = true;
-      assert.ok(err.message.includes("0003 precheck failed: unsupported (offer_model, conversion_type) tuple exists"));
+      assert.ok((err as Error).message.includes("0003 precheck failed: unsupported (offer_model, conversion_type) tuple exists"));
     }
     assert.strictEqual(errorThrown, true);
 

@@ -200,7 +200,15 @@ function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PART
     state === "EXACT"
       ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
       : state === "PREVIOUS"
-        ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
+        ? metadataRouter({
+            fingerprint: fp,
+            tables: fp ? Object.keys(fp) : undefined,
+            journalRows: [
+              { hash: FAKE_HASH, created_at: "1785589560000" },
+              { hash: FAKE_HASH, created_at: "1785590000000" },
+              { hash: FAKE_HASH, created_at: "1785590500000" },
+            ],
+          })
         : state === "BASELINE"
           ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
         : state === "PARTIAL"
@@ -388,7 +396,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0003");
 });
 
 test("TARGET: PARTIAL_OR_DRIFTED when missing table", () => {
@@ -569,8 +577,11 @@ test("RUNNER_EXACT_TEST: runner completes full flow on EXACT_EXISTING schema", a
 
 test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS schema", async () => {
   let migrateCallCount = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const q: { router?: Router; queries: string[]; unmatched: string[]; query: (text: string) => Promise<unknown> } = {} as any;
+  const q: { router?: Router; queries: string[]; unmatched: string[]; query: (text: string) => Promise<unknown> } = {
+    queries: [],
+    unmatched: [],
+    query: async () => ({ rows: [] }),
+  };
   const fakeMigrate = async () => {
     migrateCallCount++;
     // Simulate migration side-effect by switching the router to EXACT
@@ -583,8 +594,8 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
 
   const state = { ended: false };
   const qObj = {
-    queries: [],
-    unmatched: [],
+    queries: [] as string[],
+    unmatched: [] as string[],
     set router(newRouter: Router) { currentRouter = newRouter; },
     async query(text: string) {
       const normalized = text.trim().replace(/\s+/g, " ");
@@ -605,7 +616,14 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
     end: async () => { state.ended = true; },
   });
 
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never);
+  const fakeRead = () => [
+    { folderMillis: 1785589560000, hash: FAKE_HASH },
+    { folderMillis: 1785590000000, hash: FAKE_HASH },
+    { folderMillis: 1785590500000, hash: FAKE_HASH },
+    { folderMillis: 1785591000000, hash: FAKE_HASH },
+  ];
+
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
 
   assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
   assert.ok(state.ended, "pool must be closed");
@@ -613,24 +631,24 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
 
 test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE schema", async () => {
   let migrateCallCount = 0;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const q: { router?: Router; queries: string[]; unmatched: string[]; query: (text: string) => Promise<unknown> } = {} as any;
+  const q: { router?: Router; queries: string[]; unmatched: string[]; query: (text: string) => Promise<unknown> } = {
+    queries: [],
+    unmatched: [],
+    query: async () => ({ rows: [] }),
+  };
   const fakeMigrate = async () => {
     migrateCallCount++;
     q.router = runnerRouter("EXACT");
   };
   const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
-  let currentRouter = runnerRouter("BASELINE", Object.fromEntries(
-     Object.entries(PRODUCTION_FINGERPRINT).map(([k, v]) => [k, { ...v }]) // We pass BASELINE but use router defaults, it will be checked below
-  ) as any);
-  // Wait, we need to pass BASELINE_PRODUCTION_FINGERPRINT so it classifies as MIGRATABLE_BASELINE
-  currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT as any);
+  let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   
   const routerProxy = (t: string) => currentRouter(t);
   const state = { ended: false };
   const qObj = {
-    queries: [], unmatched: [],
+    queries: [] as string[],
+    unmatched: [] as string[],
     set router(newRouter: Router) { currentRouter = newRouter; },
     async query(text: string) {
       const normalized = text.trim().replace(/\s+/g, " ");
@@ -659,13 +677,16 @@ test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE sc
 
 test("BASELINE_ABSENT_JOURNAL_TEST", async () => {
   let migrateCallCount = 0;
-  let q: any;
+  let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const q: { router?: Router; query: (text: string) => Promise<unknown> } = {
+    query: async (text: string) => qObj.query(text),
+    set router(newRouter: Router) { currentRouter = newRouter; }
+  };
   const fakeMigrate = async () => { 
     migrateCallCount++; 
     q.router = runnerRouter("EXACT");
   };
   
-  let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
       throw Object.assign(new Error("relation does not exist"), { code: '42P01' });
@@ -673,11 +694,7 @@ test("BASELINE_ABSENT_JOURNAL_TEST", async () => {
     return currentRouter(t);
   };
   
-  const qObj = new StrictFakeQueryable(routerProxy) as any;
-  q = {
-    query: (text: string) => qObj.query(text),
-    set router(newRouter: any) { currentRouter = newRouter; }
-  };
+  const qObj = new StrictFakeQueryable(routerProxy);
 
   const factory = () => ({
     query: async (text: string) => {
@@ -694,14 +711,17 @@ test("BASELINE_ABSENT_JOURNAL_TEST", async () => {
 
 test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {
   let migrateCallCount = 0;
-  let q: any;
+  let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const q: { router?: Router; query: (text: string) => Promise<unknown> } = {
+    query: async (text: string) => qObj.query(text),
+    set router(newRouter: Router) { currentRouter = newRouter; }
+  };
   const fakeMigrate = async () => { 
     migrateCallCount++; 
     q.router = runnerRouter("EXACT");
   };
   const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
 
-  let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
       return { rows: [{ hash: "exacthash0000", created_at: "1785589560000" }] };
@@ -709,11 +729,7 @@ test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {
     return currentRouter(t);
   };
 
-  const qObj = new StrictFakeQueryable(routerProxy) as any;
-  q = {
-    query: (text: string) => qObj.query(text),
-    set router(newRouter: any) { currentRouter = newRouter; }
-  };
+  const qObj = new StrictFakeQueryable(routerProxy);
 
   const factory = () => ({
     query: async (text: string) => {

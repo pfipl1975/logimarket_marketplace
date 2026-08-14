@@ -97,8 +97,9 @@ export async function runMigrations(
         } else {
           console.log("RUNNER: Journal is empty. Safe to adopt baseline.");
         }
-      } catch (err: any) {
-        if (err.message.includes("does not exist") || err.code === '42P01' || err.code === '3F000') {
+      } catch (err: unknown) {
+        const pgErr = err as { message?: string; code?: string };
+        if (pgErr.message?.includes("does not exist") || pgErr.code === '42P01' || pgErr.code === '3F000') {
            console.log("RUNNER: Journal table or schema absent. Safe to adopt baseline.");
         } else {
            throw err;
@@ -108,38 +109,34 @@ export async function runMigrations(
 
     if (classification.state === "MIGRATABLE_POST_0002" || classification.state === "MIGRATABLE_PREVIOUS") {
       console.log(`RUNNER: ${classification.state} detected. Validating journal safety.`);
-      try {
-        const res = await pool.query(`SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}.${RUNTIME_JOURNAL_TABLE} ORDER BY created_at ASC`);
-        const rows = res.rows as { hash: string; created_at: string | number }[];
+      const res = await pool.query(`SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}.${RUNTIME_JOURNAL_TABLE} ORDER BY created_at ASC`);
+      const rows = res.rows as { hash: string; created_at: string | number }[];
 
-        const actualReadFn = readMigrationFilesFn ?? readMigrationFiles;
-        const diskMigrations = actualReadFn({ migrationsFolder: `./${RUNTIME_MIGRATIONS_FOLDER}` });
-        const m0000 = diskMigrations.find(m => m.folderMillis === 1785589560000);
-        const m0001 = diskMigrations.find(m => m.folderMillis === 1785590000000);
-        const m0002 = diskMigrations.find(m => m.folderMillis === 1785590500000);
+      const actualReadFn = readMigrationFilesFn ?? readMigrationFiles;
+      const diskMigrations = actualReadFn({ migrationsFolder: `./${RUNTIME_MIGRATIONS_FOLDER}` });
+      const m0000 = diskMigrations.find(m => m.folderMillis === 1785589560000);
+      const m0001 = diskMigrations.find(m => m.folderMillis === 1785590000000);
+      const m0002 = diskMigrations.find(m => m.folderMillis === 1785590500000);
 
-        if (!m0000 || !m0001 || !m0002) {
-          throw new Error("RUNNER: BLOCKED. Canonical 0000-0002 migrations not found on disk.");
-        }
+      if (!m0000 || !m0001 || !m0002) {
+        throw new Error("RUNNER: BLOCKED. Canonical 0000-0002 migrations not found on disk.");
+      }
 
-        if (
-          rows.length === 3 &&
-          String(rows[0].created_at) === String(m0000.folderMillis) && rows[0].hash === m0000.hash &&
-          String(rows[1].created_at) === String(m0001.folderMillis) && rows[1].hash === m0001.hash &&
-          String(rows[2].created_at) === String(m0002.folderMillis) && rows[2].hash === m0002.hash
-        ) {
-          console.log("RUNNER: Journal contains exact 0000-0002 canonical migrations. Safety proven.");
-        } else {
-          throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000-0002.`);
-        }
-      } catch (err: any) {
-        throw err;
+      if (
+        rows.length === 3 &&
+        String(rows[0].created_at) === String(m0000.folderMillis) && rows[0].hash === m0000.hash &&
+        String(rows[1].created_at) === String(m0001.folderMillis) && rows[1].hash === m0001.hash &&
+        String(rows[2].created_at) === String(m0002.folderMillis) && rows[2].hash === m0002.hash
+      ) {
+        console.log("RUNNER: Journal contains exact 0000-0002 canonical migrations. Safety proven.");
+      } else {
+        throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000-0002.`);
       }
     }
 
     // 4. Run migration via Drizzle
     const actualMigrate = migrateFn ?? migrate;
-    const db = drizzle(pool as any);
+    const db = drizzle(pool as never);
     await actualMigrate(db, {
       migrationsFolder: `./${RUNTIME_MIGRATIONS_FOLDER}`,
       migrationsSchema: RUNTIME_JOURNAL_SCHEMA,

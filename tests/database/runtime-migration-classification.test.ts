@@ -3,7 +3,6 @@ import assert from "node:assert";
 import { classifyRuntimeTarget } from "../../scripts/database/verify-runtime-schema-fingerprint";
 import {
   EXPECTED_BASELINE_TABLES,
-  BASELINE_PRODUCTION_FINGERPRINT,
   PROD_LEGACY_BASELINE_FINGERPRINT,
   CANONICAL_0000_BASELINE_FINGERPRINT,
   PRE_0003_PRODUCTION_FINGERPRINT,
