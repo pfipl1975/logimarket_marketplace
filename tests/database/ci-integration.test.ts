@@ -20,6 +20,20 @@ test("CI_POSTGRES_INTEGRATION_PROOF_PREFLIGHT", async (t) => {
     await pool.query(`DROP SCHEMA IF EXISTS public CASCADE;`);
     await pool.query(`DROP SCHEMA IF EXISTS drizzle_runtime CASCADE;`);
     await pool.query(`CREATE SCHEMA public;`);
+    
+    // Create Supabase-specific roles required by the baseline migration dump
+    await pool.query(`
+      DO $$
+      BEGIN
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'anon') THEN
+          CREATE ROLE anon;
+        END IF;
+        IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'authenticated') THEN
+          CREATE ROLE authenticated;
+        END IF;
+      END
+      $$;
+    `);
   };
 
   const setup0000 = async () => {
