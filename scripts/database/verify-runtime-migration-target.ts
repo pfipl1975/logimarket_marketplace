@@ -1,5 +1,8 @@
 import { normalizeProjectRef, RUNTIME_ENV_VARS } from "./runtime-migration-contract";
 
+export const DEV_WRITE_AUTHORIZATION = "AUTHORIZED_DEV_BASELINE_WRITE";
+export const PROD_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_RUNTIME_0000_TO_0002";
+
 export function verifyTarget(env: NodeJS.ProcessEnv): void {
   const url = env.DATABASE_URL;
   if (!url) throw new Error("Missing DATABASE_URL");
@@ -18,9 +21,20 @@ export function verifyTarget(env: NodeJS.ProcessEnv): void {
   if (ref === forbiddenRef) throw new Error("URL points to forbidden ref");
   if (ref !== expectedRef) throw new Error("URL does not point to expected ref");
 
-  if (env.RUNTIME_MIGRATION_TARGET !== "development") throw new Error("Target is not development");
-  if (env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION !== "AUTHORIZED_DEV_BASELINE_WRITE") {
-    throw new Error("Missing exact write authorization");
+  const target = env.RUNTIME_MIGRATION_TARGET;
+  const auth = env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION;
+  if (!auth) throw new Error("Missing exact write authorization");
+
+  if (target === "development") {
+    if (auth !== DEV_WRITE_AUTHORIZATION) {
+      throw new Error("Invalid write authorization for development target");
+    }
+  } else if (target === "production") {
+    if (auth !== PROD_WRITE_AUTHORIZATION) {
+      throw new Error("Invalid write authorization for production target");
+    }
+  } else {
+    throw new Error(`Target is unknown or unsupported: ${target}`);
   }
 }
 
