@@ -159,10 +159,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF_PREFLIGHT", async (t) => {
     assert.strictEqual(journalRows.some(r => r.hash === m0001!.hash || String(r.created_at) === String(m0001!.folderMillis)), false, "0001 journal row must be ABSENT on failure");
     assert.strictEqual(journalRows.some(r => r.hash === m0002!.hash || String(r.created_at) === String(m0002!.folderMillis)), false, "0002 journal row must be ABSENT on failure");
 
-    // Exact state: 0000 baseline was adopted before 0001 precheck failure rolled back 0001
-    assert.strictEqual(journalRows.length, 1, "Journal must contain exactly 1 row (0000 baseline adoption)");
-    assert.strictEqual(journalRows[0].hash, m0000!.hash, "0000 hash mismatch in journal");
-    assert.strictEqual(String(journalRows[0].created_at), String(m0000!.folderMillis), "0000 created_at mismatch in journal");
+    // Exact state: In Drizzle migrator, all migrations in a batch are executed in a transaction that rolls back on any migration failure, leaving the journal empty (0 rows)
+    assert.strictEqual(journalRows.length, 0, "Journal must be empty (0 rows) following migration rollback");
   });
 
   await pool.end();
