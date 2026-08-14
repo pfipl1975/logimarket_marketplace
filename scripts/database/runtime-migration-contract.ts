@@ -90,6 +90,7 @@ export type ConstraintContract = {
   name: string;
   type: 'PRIMARY KEY' | 'FOREIGN KEY' | 'UNIQUE' | 'CHECK';
   definition: string;
+  isValidated?: boolean;
 };
 
 export type IndexContract = {

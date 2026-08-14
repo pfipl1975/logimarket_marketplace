@@ -176,6 +176,7 @@ function metadataRouter(options?: MetadataOptions): Router {
             constraint_name: con.name,
             constraint_type: con.type,
             constraint_def: con.definition,
+            is_validated: con.isValidated ?? true,
           });
         }
       }
@@ -1034,6 +1035,43 @@ test("RUNNER_DRIFT_TEST: runner throws and never calls migrate on PARTIAL_OR_DRI
   );
   assert.strictEqual(migrateCallCount, 0, "migrate must NOT be called on drift");
   assert.ok(state.ended, "pool must be closed even on drift");
+});
+
+test("NOT_VALID_RUNNER_ABORTS: runner rejects schema with NOT VALID constraint without calling migrate", async () => {
+  let migrateCallCount = 0;
+  const fakeMigrate = async () => {
+    migrateCallCount++;
+  };
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("pg_constraint") && t.includes("convalidated")) {
+      const res = baseRouter(t);
+      if (res && res.rows) {
+        return {
+          rows: (res.rows as Array<{ constraint_name: string; is_validated?: boolean; constraint_def?: string }>).map((r) => {
+            if (r.constraint_name === "offers_publication_status_check") {
+              return { ...r, is_validated: false, constraint_def: (r.constraint_def ?? "") + " NOT VALID" };
+            }
+            return r;
+          })
+        };
+      }
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never),
+    /PARTIAL_OR_DRIFTED/
+  );
+  assert.strictEqual(migrateCallCount, 0, "MIGRATE_CALL_COUNT_ZERO");
 });
 
 test("RUNNER_POOL_CLOSE_TEST: pool is always closed even when migrate throws", async () => {

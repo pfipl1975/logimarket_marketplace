@@ -13,6 +13,7 @@ const MIGRATIONS_DIR = "./drizzle-runtime";
 const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
 const M0001_FILE = `${MIGRATIONS_DIR}/0001_rfq_workflow_hardening.sql`;
 const M0002_FILE = `${MIGRATIONS_DIR}/0002_seller_identity_56b1.sql`;
+const M0003_FILE = `${MIGRATIONS_DIR}/0003_prod_legacy_offer_reconciliation.sql`;
 
 test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   if (!process.env.DATABASE_URL) {
@@ -338,35 +339,45 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await t.test("NEGATIVE PATH: 0003 FAILURE PUBLICATION STATUS PRECHECK ROLLBACK", async () => {
     await setupProdLegacyFixture();
 
-    // Insert invalid publication status via NOT VALID constraint to preserve schema fingerprint
+    // Insert invalid publication status row directly
     await pool.query(`
       ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_publication_status_check;
       INSERT INTO public.partners (id, company_name, contact_email) VALUES (1, 'Test Partner', 'test@test.test') ON CONFLICT DO NOTHING;
       INSERT INTO public.categories (id, name, slug) VALUES (1, 'Test Cat', 'test-cat-neg') ON CONFLICT DO NOTHING;
       INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, outbound_url)
       VALUES (998, 1, 1, 'Invalid Status Offer', 'rfq', 'outbound', 'invalid_status', 'https://example.com/test');
-      ALTER TABLE public.offers ADD CONSTRAINT offers_publication_status_check
-        CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[]))) NOT VALID;
     `);
 
+    // Execute 0003 migration directly in a transactional client
+    const migration0003Sql = fs.readFileSync(M0003_FILE, "utf-8");
+    const client = await pool.connect();
     let errorThrown = false;
     try {
-      await runMigrations(process.env);
+      await client.query("BEGIN;");
+      await client.query(migration0003Sql);
+      await client.query("COMMIT;");
     } catch (err: unknown) {
+      await client.query("ROLLBACK;");
       errorThrown = true;
       assert.ok((err as Error).message.includes("0003 precheck failed: unsupported publication_status exists"));
+    } finally {
+      client.release();
     }
-    assert.strictEqual(errorThrown, true, "Must throw 0003 unsupported publication_status exception");
+    assert.strictEqual(errorThrown, true, "PUBLICATION_PRECHECK_DIRECT: must throw 0003 unsupported publication_status exception");
 
-    // 1. Live schema fingerprint remains MIGRATABLE_PROD_LEGACY
-    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
-    const postFailureClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postFailureClassification.state, "MIGRATABLE_PROD_LEGACY");
-
-    // 2. Pre-existing test row remains unchanged
+    // PUBLICATION_PRECHECK_ROLLBACK assertions:
+    // 1. Pre-existing test row remains unchanged
     const testRowRes = await pool.query(`SELECT publication_status FROM public.offers WHERE id = 998`);
     assert.strictEqual(testRowRes.rows.length, 1);
     assert.strictEqual(testRowRes.rows[0].publication_status, "invalid_status");
+
+    // 2. 0003 DDL did not commit (delivery_options column absent)
+    const colRes = await pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'offers' AND column_name = 'delivery_options'
+    `);
+    assert.strictEqual(colRes.rows.length, 0, "PUBLICATION_PRECHECK_ROLLBACK: 0003 DDL must have rolled back cleanly");
 
     // 3. No journal progression (table absent or 0 rows)
     const journalRes = await pool.query(`
@@ -377,6 +388,47 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     if (Number(journalRes.rows[0].cnt) > 0) {
       const rowsRes = await pool.query(`SELECT count(*) as cnt FROM drizzle_runtime.__drizzle_migrations`);
       assert.strictEqual(Number(rowsRes.rows[0].cnt), 0, "No journal progression on rollback");
+    }
+  });
+
+  await t.test("NEGATIVE PATH: NOT VALID CONSTRAINT CAUSES RUNNER ABORT AS PARTIAL_OR_DRIFTED", async () => {
+    await setupProdLegacyFixture();
+
+    // Create a NOT VALID constraint on legacy prod fixture
+    await pool.query(`
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_partner_id_fkey;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_partner_id_fkey
+        FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE NOT VALID;
+    `);
+
+    // Verify classification is PARTIAL_OR_DRIFTED
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables);
+    assert.strictEqual(classification.state, "PARTIAL_OR_DRIFTED");
+    assert.ok(
+      classification.differences.some(d => d.includes("validation status mismatch") || d.includes("NOT VALID") || d.includes("definition mismatch")),
+      "Classification must report NOT VALID constraint drift"
+    );
+
+    // Official runner must abort before calling migrate
+    let runnerThrew = false;
+    try {
+      await runMigrations(process.env);
+    } catch (err: unknown) {
+      runnerThrew = true;
+      assert.ok((err as Error).message.includes("PARTIAL_OR_DRIFTED"));
+    }
+    assert.strictEqual(runnerThrew, true, "NOT_VALID_RUNNER_ABORTS: runner must abort on NOT VALID constraint");
+
+    // No journal progression
+    const journalRes = await pool.query(`
+      SELECT count(*) as cnt
+      FROM information_schema.tables
+      WHERE table_schema = 'drizzle_runtime' AND table_name = '__drizzle_migrations'
+    `);
+    if (Number(journalRes.rows[0].cnt) > 0) {
+      const rowsRes = await pool.query(`SELECT count(*) as cnt FROM drizzle_runtime.__drizzle_migrations`);
+      assert.strictEqual(Number(rowsRes.rows[0].cnt), 0, "No journal progression when runner aborts");
     }
   });
 

@@ -211,3 +211,52 @@ test("MIGRATION_0003_REPLAY_SAFE_STATIC_TEST", () => {
   assert.ok(sql.includes("offers_publication_status_check"), "0003 must converge publication status check");
   assert.ok(sql.includes("idx_clicks_tracking"), "0003 must converge clicks tracking index");
 });
+
+// ===========================================================================
+// 13. NOT_VALID_CHECK_IS_DRIFT
+// ===========================================================================
+test("NOT_VALID_CHECK_IS_DRIFT", () => {
+  // A. Validated CHECK matching expected -> exact state
+  const actualValid = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const resultValid = classifyRuntimeTarget(actualValid, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultValid.state, "MIGRATABLE_PROD_LEGACY");
+
+  // B. Same CHECK but NOT VALID (via definition or isValidated=false) -> PARTIAL_OR_DRIFTED
+  const actualInvalidDef = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const checkIdx = actualInvalidDef["offers"].constraints.findIndex(c => c.name === "offers_publication_status_check");
+  actualInvalidDef["offers"].constraints[checkIdx] = {
+    ...actualInvalidDef["offers"].constraints[checkIdx],
+    definition: actualInvalidDef["offers"].constraints[checkIdx].definition + " NOT VALID",
+    isValidated: false,
+  };
+  const resultInvalidDef = classifyRuntimeTarget(actualInvalidDef, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultInvalidDef.state, "PARTIAL_OR_DRIFTED");
+
+  const actualInvalidFlag = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualInvalidFlag["offers"].constraints[checkIdx] = {
+    ...actualInvalidFlag["offers"].constraints[checkIdx],
+    isValidated: false,
+  };
+  const resultInvalidFlag = classifyRuntimeTarget(actualInvalidFlag, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultInvalidFlag.state, "PARTIAL_OR_DRIFTED");
+});
+
+// ===========================================================================
+// 14. NOT_VALID_FK_IS_DRIFT
+// ===========================================================================
+test("NOT_VALID_FK_IS_DRIFT", () => {
+  // C. Validated FK matching expected -> exact state
+  const actualValid = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const resultValid = classifyRuntimeTarget(actualValid, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultValid.state, "MIGRATABLE_PROD_LEGACY");
+
+  // D. Same FK but convalidated=false / NOT VALID -> PARTIAL_OR_DRIFTED
+  const actualInvalidFk = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const fkIdx = actualInvalidFk["offers"].constraints.findIndex(c => c.name === "offers_partner_id_fkey");
+  actualInvalidFk["offers"].constraints[fkIdx] = {
+    ...actualInvalidFk["offers"].constraints[fkIdx],
+    isValidated: false,
+  };
+  const resultInvalidFk = classifyRuntimeTarget(actualInvalidFk, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultInvalidFk.state, "PARTIAL_OR_DRIFTED");
+});
