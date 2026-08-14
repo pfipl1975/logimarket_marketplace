@@ -346,7 +346,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, outbound_url)
       VALUES (998, 1, 1, 'Invalid Status Offer', 'rfq', 'outbound', 'invalid_status', 'https://example.com/test');
       ALTER TABLE public.offers ADD CONSTRAINT offers_publication_status_check
-        CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[]))) NOT VALID;
+        CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'archived'::character varying])::text[]))) NOT VALID;
     `);
 
     let errorThrown = false;
