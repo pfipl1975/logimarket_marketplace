@@ -55,6 +55,9 @@ export function normalizeProjectRef(url: string | undefined): string | null {
         return parts[1];
       }
     }
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      return 'localhost';
+    }
     if (parsed.username) {
       const username = decodeURIComponent(parsed.username);
       const parts = username.split('.');
