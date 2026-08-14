@@ -1,12 +1,29 @@
 -- 0003_prod_legacy_offer_reconciliation.sql
--- LM-DB-PROD-RECONCILIATION-02C: reconcile legacy production offers data, align check constraints and foreign keys
+-- LM-DB-PROD-RECONCILIATION-02D: reconcile legacy production offers data, align check constraints, FKs and indexes
 
--- 1. FAIL-CLOSED PRECHECK: assert only recognized offer tuples exist
+-- 1. FAIL-CLOSED PRECHECKS: assert only recognized offer tuples and publication statuses exist
 DO $$
 DECLARE
-  unsupported_count int;
+  unsupported_tuple_count int;
+  unsupported_status_count int;
 BEGIN
-  SELECT count(*) INTO unsupported_count
+  -- A. Precheck publication_status
+  SELECT count(*) INTO unsupported_status_count
+  FROM public.offers
+  WHERE publication_status NOT IN (
+    'draft',
+    'published',
+    'hidden',
+    'archived',
+    'deleted'
+  );
+
+  IF unsupported_status_count > 0 THEN
+    RAISE EXCEPTION '0003 precheck failed: unsupported publication_status exists';
+  END IF;
+
+  -- B. Precheck (offer_model, conversion_type) tuples
+  SELECT count(*) INTO unsupported_tuple_count
   FROM public.offers
   WHERE (offer_model, conversion_type) NOT IN (
     ('rfq', 'inbound'),
@@ -17,7 +34,7 @@ BEGIN
     ('ecommerce', 'outbound')
   );
 
-  IF unsupported_count > 0 THEN
+  IF unsupported_tuple_count > 0 THEN
     RAISE EXCEPTION '0003 precheck failed: unsupported (offer_model, conversion_type) tuple exists';
   END IF;
 END $$;
@@ -75,55 +92,185 @@ END $$;
 --> statement-breakpoint
 
 -- 6. CONVERGE PUBLICATION STATUS CHECK (5 allowed statuses)
-ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_publication_status_check;
---> statement-breakpoint
-ALTER TABLE public.offers
-  ADD CONSTRAINT offers_publication_status_check
-  CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])));
+DO $$
+DECLARE
+  def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO def
+  FROM pg_constraint
+  WHERE conname = 'offers_publication_status_check'
+    AND conrelid = 'public.offers'::regclass;
+
+  IF def IS NULL THEN
+    ALTER TABLE public.offers
+      ADD CONSTRAINT offers_publication_status_check
+      CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])));
+  ELSIF def ILIKE '%draft%' AND def ILIKE '%published%' AND def ILIKE '%hidden%' AND def ILIKE '%archived%' AND def ILIKE '%deleted%' THEN
+    NULL; -- Already final
+  ELSE
+    ALTER TABLE public.offers DROP CONSTRAINT offers_publication_status_check;
+    ALTER TABLE public.offers
+      ADD CONSTRAINT offers_publication_status_check
+      CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])));
+  END IF;
+END $$;
 --> statement-breakpoint
 
--- 7. CONVERGE FOREIGN KEY DEFINITIONS
--- categories.parent_id -> ON DELETE RESTRICT
-ALTER TABLE public.categories DROP CONSTRAINT IF EXISTS categories_parent_id_fkey;
---> statement-breakpoint
-ALTER TABLE public.categories
-  ADD CONSTRAINT categories_parent_id_fkey
-  FOREIGN KEY (parent_id) REFERENCES public.categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT;
+-- 7. CONDITIONAL FOREIGN KEY CONVERGENCE
+-- A. categories_parent_id_fkey -> ON DELETE RESTRICT
+DO $$
+DECLARE
+  def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO def
+  FROM pg_constraint
+  WHERE conname = 'categories_parent_id_fkey'
+    AND conrelid = 'public.categories'::regclass;
+
+  IF def IS NULL THEN
+    ALTER TABLE public.categories
+      ADD CONSTRAINT categories_parent_id_fkey
+      FOREIGN KEY (parent_id) REFERENCES public.categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT;
+  ELSIF def ILIKE '%ON DELETE RESTRICT%' THEN
+    NULL; -- Already final
+  ELSIF def NOT ILIKE '%ON DELETE%' OR def ILIKE '%ON DELETE NO ACTION%' THEN
+    ALTER TABLE public.categories DROP CONSTRAINT categories_parent_id_fkey;
+    ALTER TABLE public.categories
+      ADD CONSTRAINT categories_parent_id_fkey
+      FOREIGN KEY (parent_id) REFERENCES public.categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT;
+  ELSE
+    RAISE EXCEPTION 'categories_parent_id_fkey has unexpected definition: %', def;
+  END IF;
+END $$;
 --> statement-breakpoint
 
--- offers.category_id -> ON DELETE RESTRICT
-ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_category_id_fkey;
---> statement-breakpoint
-ALTER TABLE public.offers
-  ADD CONSTRAINT offers_category_id_fkey
-  FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT;
+-- B. offers_category_id_fkey -> ON DELETE RESTRICT
+DO $$
+DECLARE
+  def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO def
+  FROM pg_constraint
+  WHERE conname = 'offers_category_id_fkey'
+    AND conrelid = 'public.offers'::regclass;
+
+  IF def IS NULL THEN
+    ALTER TABLE public.offers
+      ADD CONSTRAINT offers_category_id_fkey
+      FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT;
+  ELSIF def ILIKE '%ON DELETE RESTRICT%' THEN
+    NULL; -- Already final
+  ELSIF def NOT ILIKE '%ON DELETE%' OR def ILIKE '%ON DELETE NO ACTION%' THEN
+    ALTER TABLE public.offers DROP CONSTRAINT offers_category_id_fkey;
+    ALTER TABLE public.offers
+      ADD CONSTRAINT offers_category_id_fkey
+      FOREIGN KEY (category_id) REFERENCES public.categories(id) ON UPDATE NO ACTION ON DELETE RESTRICT;
+  ELSE
+    RAISE EXCEPTION 'offers_category_id_fkey has unexpected definition: %', def;
+  END IF;
+END $$;
 --> statement-breakpoint
 
--- offers.partner_id -> ON DELETE CASCADE
-ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_partner_id_fkey;
---> statement-breakpoint
-ALTER TABLE public.offers
-  ADD CONSTRAINT offers_partner_id_fkey
-  FOREIGN KEY (partner_id) REFERENCES public.partners(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+-- C. offers_partner_id_fkey -> ON DELETE CASCADE
+DO $$
+DECLARE
+  def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO def
+  FROM pg_constraint
+  WHERE conname = 'offers_partner_id_fkey'
+    AND conrelid = 'public.offers'::regclass;
+
+  IF def IS NULL THEN
+    ALTER TABLE public.offers
+      ADD CONSTRAINT offers_partner_id_fkey
+      FOREIGN KEY (partner_id) REFERENCES public.partners(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+  ELSIF def ILIKE '%ON DELETE CASCADE%' THEN
+    NULL; -- Already final
+  ELSIF def NOT ILIKE '%ON DELETE%' OR def ILIKE '%ON DELETE NO ACTION%' THEN
+    ALTER TABLE public.offers DROP CONSTRAINT offers_partner_id_fkey;
+    ALTER TABLE public.offers
+      ADD CONSTRAINT offers_partner_id_fkey
+      FOREIGN KEY (partner_id) REFERENCES public.partners(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+  ELSE
+    RAISE EXCEPTION 'offers_partner_id_fkey has unexpected definition: %', def;
+  END IF;
+END $$;
 --> statement-breakpoint
 
--- clicks.offer_id -> ON DELETE CASCADE
-ALTER TABLE public.clicks DROP CONSTRAINT IF EXISTS clicks_offer_id_fkey;
---> statement-breakpoint
-ALTER TABLE public.clicks
-  ADD CONSTRAINT clicks_offer_id_fkey
-  FOREIGN KEY (offer_id) REFERENCES public.offers(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+-- D. clicks_offer_id_fkey -> ON DELETE CASCADE
+DO $$
+DECLARE
+  def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO def
+  FROM pg_constraint
+  WHERE conname = 'clicks_offer_id_fkey'
+    AND conrelid = 'public.clicks'::regclass;
+
+  IF def IS NULL THEN
+    ALTER TABLE public.clicks
+      ADD CONSTRAINT clicks_offer_id_fkey
+      FOREIGN KEY (offer_id) REFERENCES public.offers(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+  ELSIF def ILIKE '%ON DELETE CASCADE%' THEN
+    NULL; -- Already final
+  ELSIF def NOT ILIKE '%ON DELETE%' OR def ILIKE '%ON DELETE NO ACTION%' THEN
+    ALTER TABLE public.clicks DROP CONSTRAINT clicks_offer_id_fkey;
+    ALTER TABLE public.clicks
+      ADD CONSTRAINT clicks_offer_id_fkey
+      FOREIGN KEY (offer_id) REFERENCES public.offers(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+  ELSE
+    RAISE EXCEPTION 'clicks_offer_id_fkey has unexpected definition: %', def;
+  END IF;
+END $$;
 --> statement-breakpoint
 
--- clicks.partner_id -> ON DELETE CASCADE
-ALTER TABLE public.clicks DROP CONSTRAINT IF EXISTS clicks_partner_id_fkey;
---> statement-breakpoint
-ALTER TABLE public.clicks
-  ADD CONSTRAINT clicks_partner_id_fkey
-  FOREIGN KEY (partner_id) REFERENCES public.partners(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+-- E. clicks_partner_id_fkey -> ON DELETE CASCADE
+DO $$
+DECLARE
+  def text;
+BEGIN
+  SELECT pg_get_constraintdef(oid) INTO def
+  FROM pg_constraint
+  WHERE conname = 'clicks_partner_id_fkey'
+    AND conrelid = 'public.clicks'::regclass;
+
+  IF def IS NULL THEN
+    ALTER TABLE public.clicks
+      ADD CONSTRAINT clicks_partner_id_fkey
+      FOREIGN KEY (partner_id) REFERENCES public.partners(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+  ELSIF def ILIKE '%ON DELETE CASCADE%' THEN
+    NULL; -- Already final
+  ELSIF def NOT ILIKE '%ON DELETE%' OR def ILIKE '%ON DELETE NO ACTION%' THEN
+    ALTER TABLE public.clicks DROP CONSTRAINT clicks_partner_id_fkey;
+    ALTER TABLE public.clicks
+      ADD CONSTRAINT clicks_partner_id_fkey
+      FOREIGN KEY (partner_id) REFERENCES public.partners(id) ON UPDATE NO ACTION ON DELETE CASCADE;
+  ELSE
+    RAISE EXCEPTION 'clicks_partner_id_fkey has unexpected definition: %', def;
+  END IF;
+END $$;
 --> statement-breakpoint
 
--- 8. CONVERGE CLICKS TRACKING INDEX TO PHYSICAL PROD DEFINITION
-DROP INDEX IF EXISTS public.idx_clicks_tracking;
---> statement-breakpoint
-CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
+-- 8. CONDITIONAL CLICKS TRACKING INDEX CONVERGENCE
+DO $$
+DECLARE
+  idxdef text;
+BEGIN
+  SELECT indexdef INTO idxdef
+  FROM pg_indexes
+  WHERE schemaname = 'public'
+    AND tablename = 'clicks'
+    AND indexname = 'idx_clicks_tracking';
+
+  IF idxdef IS NULL THEN
+    CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
+  ELSIF idxdef ILIKE '%(ip_hash, offer_id, clicked_at)%' THEN
+    NULL; -- Already final
+  ELSIF idxdef ILIKE '%(offer_id, session_hash, clicked_at)%' OR idxdef ILIKE '%(session_hash, offer_id, clicked_at)%' THEN
+    DROP INDEX public.idx_clicks_tracking;
+    CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
+  ELSE
+    RAISE EXCEPTION 'idx_clicks_tracking has unexpected definition: %', idxdef;
+  END IF;
+END $$;

@@ -98,8 +98,8 @@ export async function runMigrations(
           console.log("RUNNER: Journal is empty. Safe to adopt baseline.");
         }
       } catch (err: unknown) {
-        const pgErr = err as { message?: string; code?: string };
-        if (pgErr.message?.includes("does not exist") || pgErr.code === '42P01' || pgErr.code === '3F000') {
+        const pgErr = err as { code?: string };
+        if (pgErr.code === '42P01' || pgErr.code === '3F000') {
            console.log("RUNNER: Journal table or schema absent. Safe to adopt baseline.");
         } else {
            throw err;

@@ -675,7 +675,7 @@ test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE sc
   assert.ok(state.ended, "pool must be closed");
 });
 
-test("BASELINE_ABSENT_JOURNAL_TEST", async () => {
+test("BASELINE_ABSENT_JOURNAL_TEST / JOURNAL_42P01_ALLOWED_TEST", async () => {
   let migrateCallCount = 0;
   let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const q: { router?: Router; query: (text: string) => Promise<unknown> } = {
@@ -707,6 +707,119 @@ test("BASELINE_ABSENT_JOURNAL_TEST", async () => {
 
   await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
   assert.strictEqual(migrateCallCount, 1);
+});
+
+test("JOURNAL_3F000_ALLOWED_TEST", async () => {
+  let migrateCallCount = 0;
+  let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const q: { router?: Router; query: (text: string) => Promise<unknown> } = {
+    query: async (text: string) => qObj.query(text),
+    set router(newRouter: Router) { currentRouter = newRouter; }
+  };
+  const fakeMigrate = async () => {
+    migrateCallCount++;
+    q.router = runnerRouter("EXACT");
+  };
+
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      throw Object.assign(new Error("schema does not exist"), { code: '3F000' });
+    }
+    return currentRouter(t);
+  };
+
+  const qObj = new StrictFakeQueryable(routerProxy);
+
+  const factory = () => ({
+    query: async (text: string) => {
+      return q.query(text);
+    },
+    end: async () => {},
+  });
+
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
+
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  assert.strictEqual(migrateCallCount, 1);
+});
+
+test("JOURNAL_42703_BLOCKED_TEST", async () => {
+  let migrateCallCount = 0;
+  const fakeMigrate = async () => { migrateCallCount++; };
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      throw Object.assign(new Error("column hash does not exist"), { code: '42703' });
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    (err: Error) => err.message.includes("column hash does not exist")
+  );
+  assert.strictEqual(migrateCallCount, 0, "migrate callback must NOT be called on 42703");
+});
+
+test("JOURNAL_42501_BLOCKED_TEST", async () => {
+  let migrateCallCount = 0;
+  const fakeMigrate = async () => { migrateCallCount++; };
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      throw Object.assign(new Error("permission denied for relation __drizzle_migrations"), { code: '42501' });
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    (err: Error) => err.message.includes("permission denied")
+  );
+  assert.strictEqual(migrateCallCount, 0, "migrate callback must NOT be called on 42501");
+});
+
+test("JOURNAL_GENERIC_DOES_NOT_EXIST_BLOCKED_TEST", async () => {
+  let migrateCallCount = 0;
+  const fakeMigrate = async () => { migrateCallCount++; };
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
+
+  const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
+  const routerProxy = (t: string) => {
+    if (t.includes("drizzle_runtime") && t.includes("hash")) {
+      // Error without Postgres error code
+      throw new Error("column hash does not exist");
+    }
+    return baseRouter(t);
+  };
+
+  const q = new StrictFakeQueryable(routerProxy);
+  const factory = () => ({
+    query: (text: string) => q.query(text),
+    end: async () => {},
+  });
+
+  await assert.rejects(
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    (err: Error) => err.message.includes("column hash does not exist")
+  );
+  assert.strictEqual(migrateCallCount, 0, "migrate callback must NOT be called on generic error without code");
 });
 
 test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {

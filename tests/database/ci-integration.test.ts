@@ -225,8 +225,32 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         (303, 1, 1, 'RFQ Inbound 3', 'rfq', 'rfq', 'published', true);
     `);
 
+    // Capture OIDs to prove no DROP/CREATE occurs on already-final objects
+    const getLegacyOids = async () => {
+      const res = await pool.query(`
+        SELECT
+          (SELECT oid FROM pg_constraint WHERE conname = 'categories_parent_id_fkey' AND conrelid = 'public.categories'::regclass) as cat_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'offers_category_id_fkey' AND conrelid = 'public.offers'::regclass) as off_cat_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'offers_partner_id_fkey' AND conrelid = 'public.offers'::regclass) as off_part_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'clicks_offer_id_fkey' AND conrelid = 'public.clicks'::regclass) as clk_off_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'clicks_partner_id_fkey' AND conrelid = 'public.clicks'::regclass) as clk_part_fkey_oid,
+          (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_clicks_tracking' AND n.nspname = 'public') as idx_oid
+      `);
+      return res.rows[0];
+    };
+    const preOids = await getLegacyOids();
+
     // Run official runner
     await runMigrations(process.env);
+
+    // Verify DDL NO-OP: OIDs must be identical (not reconstructed)
+    const postOids = await getLegacyOids();
+    assert.strictEqual(postOids.cat_fkey_oid, preOids.cat_fkey_oid, "categories_parent_id_fkey must NOT be reconstructed");
+    assert.strictEqual(postOids.off_cat_fkey_oid, preOids.off_cat_fkey_oid, "offers_category_id_fkey must NOT be reconstructed");
+    assert.strictEqual(postOids.off_part_fkey_oid, preOids.off_part_fkey_oid, "offers_partner_id_fkey must NOT be reconstructed");
+    assert.strictEqual(postOids.clk_off_fkey_oid, preOids.clk_off_fkey_oid, "clicks_offer_id_fkey must NOT be reconstructed");
+    assert.strictEqual(postOids.clk_part_fkey_oid, preOids.clk_part_fkey_oid, "clicks_partner_id_fkey must NOT be reconstructed");
+    assert.strictEqual(postOids.idx_oid, preOids.idx_oid, "idx_clicks_tracking must NOT be reconstructed");
 
     // Verify data transformations:
     // Total count must be 9
@@ -286,7 +310,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(postFailureClassification.state, "MIGRATABLE_BASELINE");
   });
 
-  await t.test("NEGATIVE PATH: 0003 FAILURE PRECHECK ROLLBACK", async () => {
+  await t.test("NEGATIVE PATH: 0003 FAILURE TUPLE PRECHECK ROLLBACK", async () => {
     await setupProdLegacyFixture();
 
     // Insert invalid offer tuple that violates 0003 precheck
@@ -303,6 +327,34 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     } catch (err: unknown) {
       errorThrown = true;
       assert.ok((err as Error).message.includes("0003 precheck failed: unsupported (offer_model, conversion_type) tuple exists"));
+    }
+    assert.strictEqual(errorThrown, true);
+
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const postFailureClassification = classifyRuntimeTarget(fingerprint, publicTables);
+    assert.strictEqual(postFailureClassification.state, "MIGRATABLE_PROD_LEGACY");
+  });
+
+  await t.test("NEGATIVE PATH: 0003 FAILURE PUBLICATION STATUS PRECHECK ROLLBACK", async () => {
+    await setupProdLegacyFixture();
+
+    // Insert invalid publication status via NOT VALID constraint to preserve schema fingerprint
+    await pool.query(`
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_publication_status_check;
+      INSERT INTO public.partners (id, company_name, contact_email) VALUES (1, 'Test Partner', 'test@test.test') ON CONFLICT DO NOTHING;
+      INSERT INTO public.categories (id, name, slug) VALUES (1, 'Test Cat', 'test-cat-neg') ON CONFLICT DO NOTHING;
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status)
+      VALUES (998, 1, 1, 'Invalid Status Offer', 'rfq', 'inbound', 'invalid_status');
+      ALTER TABLE public.offers ADD CONSTRAINT offers_publication_status_check
+        CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[]))) NOT VALID;
+    `);
+
+    let errorThrown = false;
+    try {
+      await runMigrations(process.env);
+    } catch (err: unknown) {
+      errorThrown = true;
+      assert.ok((err as Error).message.includes("0003 precheck failed: unsupported publication_status exists"));
     }
     assert.strictEqual(errorThrown, true);
 
