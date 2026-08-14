@@ -12,6 +12,10 @@ import {
   PRODUCTION_FINGERPRINT,
   PREVIOUS_PRODUCTION_FINGERPRINT,
   BASELINE_PRODUCTION_FINGERPRINT,
+  PROD_LEGACY_BASELINE_FINGERPRINT,
+  CANONICAL_0000_BASELINE_FINGERPRINT,
+  PRE_0003_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0003_PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
   IndexContract,
@@ -57,7 +61,15 @@ export type Queryable = {
 // Target classification
 // ---------------------------------------------------------------------------
 
-export type RuntimeTargetState = "EMPTY" | "EXACT_EXISTING" | "MIGRATABLE_PREVIOUS" | "MIGRATABLE_BASELINE" | "PARTIAL_OR_DRIFTED";
+export type RuntimeTargetState =
+  | "EMPTY"
+  | "EXACT_EXISTING_POST_0003"
+  | "MIGRATABLE_POST_0002"
+  | "MIGRATABLE_PROD_LEGACY"
+  | "PARTIAL_OR_DRIFTED"
+  | "EXACT_EXISTING"
+  | "MIGRATABLE_PREVIOUS"
+  | "MIGRATABLE_BASELINE";
 
 export type RuntimeTargetResult = {
   state: RuntimeTargetState;
@@ -485,28 +497,34 @@ export function classifyRuntimeTarget(
     return { state: "EMPTY", publicTableCount, differences: [] };
   }
 
-  const matchNew = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
+  const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0003_PRODUCTION_FINGERPRINT);
 
-  if (matchNew.isExactMatch) {
-    return { state: "EXACT_EXISTING", publicTableCount, differences: [] };
+  if (matchFinal.isExactMatch) {
+    return { state: "EXACT_EXISTING_POST_0003", publicTableCount, differences: [] };
   }
 
-  const matchPrevious = compareRuntimeFingerprint(actual, allPublicTables, PREVIOUS_PRODUCTION_FINGERPRINT);
+  const matchPre0003 = compareRuntimeFingerprint(actual, allPublicTables, PRE_0003_PRODUCTION_FINGERPRINT);
 
-  if (matchPrevious.isExactMatch) {
-    return { state: "MIGRATABLE_PREVIOUS", publicTableCount, differences: [] };
+  if (matchPre0003.isExactMatch) {
+    return { state: "MIGRATABLE_POST_0002", publicTableCount, differences: [] };
   }
 
-  const matchBaseline = compareRuntimeFingerprint(actual, allPublicTables, BASELINE_PRODUCTION_FINGERPRINT);
+  const matchProdLegacy = compareRuntimeFingerprint(actual, allPublicTables, PROD_LEGACY_BASELINE_FINGERPRINT);
 
-  if (matchBaseline.isExactMatch) {
+  if (matchProdLegacy.isExactMatch) {
+    return { state: "MIGRATABLE_PROD_LEGACY", publicTableCount, differences: [] };
+  }
+
+  const matchCanonical0000 = compareRuntimeFingerprint(actual, allPublicTables, CANONICAL_0000_BASELINE_FINGERPRINT);
+
+  if (matchCanonical0000.isExactMatch) {
     return { state: "MIGRATABLE_BASELINE", publicTableCount, differences: [] };
   }
 
   return {
     state: "PARTIAL_OR_DRIFTED",
     publicTableCount,
-    differences: matchNew.driftReasons, // Report drift from the target NEW schema
+    differences: matchFinal.driftReasons, // Report drift from the target FINAL schema
   };
 }
 
