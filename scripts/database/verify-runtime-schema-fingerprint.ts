@@ -246,6 +246,9 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
     s = s.replace(/\((\w+)\)::(\w+)/g, "$1::$2");
   }
 
+  // Step 7: Strip trailing NOT VALID if present
+  s = s.replace(/\s+not valid$/i, "");
+
   return s.trim();
 }
 
