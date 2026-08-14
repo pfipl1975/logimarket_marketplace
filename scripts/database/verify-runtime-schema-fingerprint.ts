@@ -210,20 +210,23 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
   // Step 1: Lowercase SQL syntax only — literals are left unchanged.
   s = transformNonLiterals(s, (part) => part.toLowerCase());
 
-  // Step 2: Collapse runs of whitespace in non-literal parts.
+  // Step 2: Strip trailing NOT VALID if present
+  s = s.replace(/\s+not valid$/i, "");
+
+  // Step 3: Collapse runs of whitespace in non-literal parts.
   s = transformNonLiterals(s, (part) => part.replace(/\s+/g, " "));
 
-  // Step 3: Trim spaces immediately inside parentheses (non-literal parts only).
+  // Step 4: Trim spaces immediately inside parentheses (non-literal parts only).
   //   "( x )" → "(x)"
   s = transformNonLiterals(s, (part) =>
     part.replace(/\(\s+/g, "(").replace(/\s+\)/g, ")")
   );
 
-  // Step 4: Strip redundant outer double-parens produced by pg_get_constraintdef:
+  // Step 5: Strip redundant outer double-parens produced by pg_get_constraintdef:
   //   check (( ... )) → check ( ... )
   s = s.replace(/^check \(\((.+)\)\)$/, "check ($1)");
 
-  // Step 5: Normalise ARRAY cast forms so contract-style and pg-style agree.
+  // Step 6: Normalise ARRAY cast forms so contract-style and pg-style agree.
   //
   //   Form A (contract):  (array['x'::character varying, ...])::text[]
   //   Form B (pg):        array['x'::character varying::text, ...]
@@ -241,13 +244,10 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
     (_, inner) => "array[" + normalizeArrayElements(inner) + "]"
   );
 
-  // Step 6: Parenthesised cast: (col)::type → col::type (repeated for nesting)
+  // Step 7: Parenthesised cast: (col)::type → col::type (repeated for nesting)
   for (let i = 0; i < 3; i++) {
     s = s.replace(/\((\w+)\)::(\w+)/g, "$1::$2");
   }
-
-  // Step 7: Strip trailing NOT VALID if present
-  s = s.replace(/\s+not valid$/i, "");
 
   return s.trim();
 }
