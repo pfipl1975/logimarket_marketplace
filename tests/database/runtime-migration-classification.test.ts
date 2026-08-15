@@ -311,4 +311,10 @@ test("NUM_NONNULLS_NORMALIZATION", () => {
     normalizeCheckConstraintDefinition("num_nonnulls(value_number::numeric::text)"),
     normalizeCheckConstraintDefinition("num_nonnulls(value_number::numeric)")
   );
+
+  // H. Arbitrary expression negative test
+  assert.notStrictEqual(
+    normalizeCheckConstraintDefinition("CHECK ((num_nonnulls((value_number + 1)::text) = 1))"),
+    normalizeCheckConstraintDefinition("CHECK ((num_nonnulls(value_number + 1) = 1))")
+  );
 });
