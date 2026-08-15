@@ -252,6 +252,14 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
     s = s.replace(/\((\w+)\)::(\w+)/g, "$1::$2");
   }
 
+  // Step 7: Normalize num_nonnulls arguments.
+  // Redundant ::text casts on simple arguments inside num_nonnulls(...) don't affect nullness counting.
+  // We match num_nonnulls( ... ) and strip ::text from the inner arguments.
+  s = s.replace(/num_nonnulls\(([^)]+)\)/g, (_, inner) => {
+    const args = inner.split(',').map((arg: string) => arg.trim().replace(/::text$/, ""));
+    return `num_nonnulls(${args.join(", ")})`;
+  });
+
   // Re-attach trailing NOT VALID if present — NOT VALID is semantic drift and must not be stripped
   if (isNotValid) {
     s = s + " not valid";

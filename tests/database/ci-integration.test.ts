@@ -82,6 +82,18 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       DROP INDEX IF EXISTS public.idx_clicks_tracking;
       CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
+
+      ALTER TABLE public.offer_attribute_values DROP CONSTRAINT IF EXISTS chk_oav_value_exclusivity;
+      ALTER TABLE public.offer_attribute_values ADD CONSTRAINT chk_oav_value_exclusivity CHECK (
+        (num_nonnulls(
+          value_text,
+          value_number,
+          value_boolean,
+          value_date,
+          value_year,
+          option_id
+        ) = 1)
+      );
     `);
   };
 

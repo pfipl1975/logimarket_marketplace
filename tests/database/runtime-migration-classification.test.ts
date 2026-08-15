@@ -260,3 +260,41 @@ test("NOT_VALID_FK_IS_DRIFT", () => {
   const resultInvalidFk = classifyRuntimeTarget(actualInvalidFk, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
   assert.strictEqual(resultInvalidFk.state, "PARTIAL_OR_DRIFTED");
 });
+
+// ===========================================================================
+// 15. NUM_NONNULLS NORMALIZATION
+// ===========================================================================
+test("NUM_NONNULLS_NORMALIZATION", () => {
+  // A. PROD_FORM == CONTRACT_FORM handled by actual classification comparison.
+  // B. Exact 15-table PROD legacy fingerprint with ONLY the real PROD OAV no-cast definition
+  const actual = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const chkIdx = actual["offer_attribute_values"].constraints.findIndex(c => c.name === "chk_oav_value_exclusivity");
+
+  // Replace the definition with the EXACT prod definition
+  actual["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) = 1))";
+
+  const result = classifyRuntimeTarget(actual, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(result.state, "MIGRATABLE_PROD_LEGACY");
+
+  // C. Negative: changing = 1 to = 2
+  const actualWrongCount = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualWrongCount["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) = 2))";
+  const resultWrongCount = classifyRuntimeTarget(actualWrongCount, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultWrongCount.state, "PARTIAL_OR_DRIFTED");
+
+  // D. Negative: removing one argument
+  const actualMissingArg = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualMissingArg["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year) = 1))";
+  const resultMissingArg = classifyRuntimeTarget(actualMissingArg, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultMissingArg.state, "PARTIAL_OR_DRIFTED");
+
+  // E. Negative: changing an argument column
+  const actualWrongCol = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualWrongCol["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, wrong_column, value_boolean, value_date, value_year, option_id) = 1))";
+  const resultWrongCol = classifyRuntimeTarget(actualWrongCol, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultWrongCol.state, "PARTIAL_OR_DRIFTED");
+});
