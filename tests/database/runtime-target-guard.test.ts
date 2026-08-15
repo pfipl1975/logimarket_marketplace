@@ -59,8 +59,18 @@ test("verifyTarget PASS: production + exact PROD token + expected PROD ref", () 
     RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "myprodref",
     RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "mydevref",
     RUNTIME_MIGRATION_TARGET: "production",
-    RUNTIME_MIGRATION_WRITE_AUTHORIZATION: "AUTHORIZED_PROD_RUNTIME_0000_TO_0002"
+    RUNTIME_MIGRATION_WRITE_AUTHORIZATION: "AUTHORIZED_PROD_RUNTIME_0000_TO_0003"
   }));
+});
+
+test("verifyTarget FAIL: production + obsolete 0000_TO_0002 token", () => {
+  assert.throws(() => verifyTarget({
+    DATABASE_URL: "postgresql://postgres:pass@db.myprodref.supabase.co:5432/postgres",
+    RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "myprodref",
+    RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "mydevref",
+    RUNTIME_MIGRATION_TARGET: "production",
+    RUNTIME_MIGRATION_WRITE_AUTHORIZATION: "AUTHORIZED_PROD_RUNTIME_0000_TO_0002"
+  }), /Invalid write authorization for production target/);
 });
 
 test("verifyTarget FAIL: production + DEV token", () => {
@@ -79,7 +89,7 @@ test("verifyTarget FAIL: development + PROD token", () => {
     RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "mydevref",
     RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "myprodref",
     RUNTIME_MIGRATION_TARGET: "development",
-    RUNTIME_MIGRATION_WRITE_AUTHORIZATION: "AUTHORIZED_PROD_RUNTIME_0000_TO_0002"
+    RUNTIME_MIGRATION_WRITE_AUTHORIZATION: "AUTHORIZED_PROD_RUNTIME_0000_TO_0003"
   }), /Invalid write authorization for development target/);
 });
 

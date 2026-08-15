@@ -1,7 +1,7 @@
 import { normalizeProjectRef, RUNTIME_ENV_VARS } from "./runtime-migration-contract";
 
 export const DEV_WRITE_AUTHORIZATION = "AUTHORIZED_DEV_BASELINE_WRITE";
-export const PROD_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_RUNTIME_0000_TO_0002";
+export const PROD_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_RUNTIME_0000_TO_0003";
 
 export function verifyTarget(env: NodeJS.ProcessEnv): void {
   const url = env.DATABASE_URL;
