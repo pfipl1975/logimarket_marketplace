@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-import { classifyRuntimeTarget } from "../../scripts/database/verify-runtime-schema-fingerprint";
+import { classifyRuntimeTarget, normalizeCheckConstraintDefinition } from "../../scripts/database/verify-runtime-schema-fingerprint";
 import {
   EXPECTED_BASELINE_TABLES,
   PROD_LEGACY_BASELINE_FINGERPRINT,
@@ -297,4 +297,18 @@ test("NUM_NONNULLS_NORMALIZATION", () => {
     "CHECK ((num_nonnulls(value_text, wrong_column, value_boolean, value_date, value_year, option_id) = 1))";
   const resultWrongCol = classifyRuntimeTarget(actualWrongCol, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
   assert.strictEqual(resultWrongCol.state, "PARTIAL_OR_DRIFTED");
+
+  // F. Direct Unit Test A: Exact PROD_FORM vs CONTRACT_FORM
+  const PROD_FORM = "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) = 1))";
+  const CONTRACT_FORM = "CHECK ((num_nonnulls(value_text, (value_number)::text, (value_boolean)::text, (value_date)::text, (value_year)::text, (option_id)::text) = 1))";
+  assert.strictEqual(
+    normalizeCheckConstraintDefinition(PROD_FORM),
+    normalizeCheckConstraintDefinition(CONTRACT_FORM)
+  );
+
+  // G. Required narrowness negative test
+  assert.notStrictEqual(
+    normalizeCheckConstraintDefinition("num_nonnulls(value_number::numeric::text)"),
+    normalizeCheckConstraintDefinition("num_nonnulls(value_number::numeric)")
+  );
 });

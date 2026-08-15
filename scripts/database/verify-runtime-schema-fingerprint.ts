@@ -256,7 +256,11 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
   // Redundant ::text casts on simple arguments inside num_nonnulls(...) don't affect nullness counting.
   // We match num_nonnulls( ... ) and strip ::text from the inner arguments.
   s = s.replace(/num_nonnulls\(([^)]+)\)/g, (_, inner) => {
-    const args = inner.split(',').map((arg: string) => arg.trim().replace(/::text$/, ""));
+    const args = inner.split(',').map((arg: string) => {
+      const trimmed = arg.trim();
+      const match = trimmed.match(/^([a-z_][a-z0-9_]*)::text$/i);
+      return match ? match[1] : trimmed;
+    });
     return `num_nonnulls(${args.join(", ")})`;
   });
 
