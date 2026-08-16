@@ -60,6 +60,8 @@ export function isDatabaseUnavailableError(error: unknown, depth = 0): boolean {
     "timeout expired",
     "database system is starting up",
     "database system is shutting down",
+    "emaxconnsession",
+    "max clients reached in session mode",
   ].some((needle) => message.includes(needle));
 
   if (hasUnavailableMessage) return true;

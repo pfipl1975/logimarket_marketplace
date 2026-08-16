@@ -21,7 +21,7 @@ function getPool() {
   pool = new Pool({
     connectionString,
     ssl: isSslRequired ? { rejectUnauthorized: false } : false,
-    max: Number(process.env.DATABASE_POOL_MAX ?? 3),
+    max: Number(process.env.DATABASE_POOL_MAX ?? 1),
     idleTimeoutMillis: 5_000,
     connectionTimeoutMillis: 5_000,
     maxLifetimeSeconds: 60,
