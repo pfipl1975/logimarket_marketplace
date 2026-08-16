@@ -9,14 +9,12 @@ export interface AdminNavigationProps {
   offersPath: string;
   partnersPath: string;
   rfqPath: string;
-  ordersPath: string;
   labels: {
     navigationLabel: string;
     dashboardNav: string;
     offersNav: string;
     partnersNav: string;
     rfqNav: string;
-    ordersNav: string;
     taxonomyNav: string;
     plannedLabel: string;
   };
@@ -28,7 +26,6 @@ export function AdminNavigation({
   offersPath,
   partnersPath,
   rfqPath,
-  ordersPath,
   labels,
 }: AdminNavigationProps) {
   const pathname = usePathname();
@@ -37,7 +34,6 @@ export function AdminNavigation({
   const isOffersActive = pathname === offersPath || pathname.startsWith(`${offersPath}/`);
   const isPartnersActive = pathname === partnersPath || pathname.startsWith(`${partnersPath}/`);
   const isRfqActive = pathname === rfqPath || pathname.startsWith(`${rfqPath}/`);
-  const isOrdersActive = pathname === ordersPath || pathname.startsWith(`${ordersPath}/`);
 
   const linkClassBase = "px-4 rounded-industrial transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex justify-between items-center";
   const linkClassSize = variant === "mobile" ? "py-2" : "py-3";
@@ -78,13 +74,6 @@ export function AdminNavigation({
         aria-current={isRfqActive ? "page" : undefined}
       >
         {labels.rfqNav}
-      </Link>
-      <Link
-        href={ordersPath}
-        className={`${linkClassBase} ${linkClassSize} ${isOrdersActive ? activeClass : inactiveClass}`}
-        aria-current={isOrdersActive ? "page" : undefined}
-      >
-        {labels.ordersNav}
       </Link>
       <span aria-disabled="true" className={disabledClass}>
         {labels.taxonomyNav} <span className="text-xs uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded">{labels.plannedLabel}</span>

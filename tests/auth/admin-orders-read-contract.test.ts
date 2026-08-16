@@ -181,42 +181,38 @@ test("Admin Orders Read Contract", async (t) => {
     assert.match(page, /rounded-industrial/);
   });
 
-  await t.test("Navigation - Orders is Link and has active state", async () => {
+  await t.test("Navigation - Orders is removed from primary AdminNavigation", async () => {
     const nav = await fs.readFile(path.join(process.cwd(), "src/components/admin/AdminNavigation.tsx"), "utf-8");
 
-    assert.match(nav, /ordersPath: string/);
-    assert.match(nav, /pathname === ordersPath/);
-    assert.match(nav, /pathname\.startsWith\(`\$\{ordersPath\}\/`\)/);
+    assert.doesNotMatch(nav, /ordersPath/);
+    assert.doesNotMatch(nav, /isOrdersActive/);
+    assert.doesNotMatch(nav, /<Link[^>]*href=\{ordersPath\}/);
 
-    // Orders is now a real Link
-    assert.match(nav, /<Link[^>]*href=\{ordersPath\}/);
+    // Primary modules remain
+    assert.match(nav, /dashboardPath/);
+    assert.match(nav, /offersPath/);
+    assert.match(nav, /partnersPath/);
+    assert.match(nav, /rfqPath/);
 
     // Taxonomy remains planned/disabled
     assert.match(nav, /\{labels\.taxonomyNav\} <span[^>]*>\{labels\.plannedLabel\}<\/span>/);
   });
 
-  await t.test("AdminShell - ordersPath passed to AdminNavigation", async () => {
+  await t.test("AdminShell - ordersPath is not passed to primary AdminNavigation", async () => {
     const shell = await fs.readFile(path.join(process.cwd(), "src/components/admin/AdminShell.tsx"), "utf-8");
 
-    assert.match(shell, /ordersPath/);
-    assert.match(shell, /admin\/zamowienia/);
-    assert.match(shell, /admin\/orders/);
+    assert.doesNotMatch(shell, /ordersPath=\{ordersPath\}/);
+    assert.doesNotMatch(shell, /ordersNav:/);
   });
 
-  await t.test("AdminEntryPage - RFQ and Orders both show as read-only", async () => {
+  await t.test("AdminEntryPage - Orders is removed from primary module list", async () => {
     const entry = await fs.readFile(path.join(process.cwd(), "src/app/_shared/AdminEntryPage.tsx"), "utf-8");
 
-    // Both rfqNav and ordersNav should appear with moduleReadOnlyStatus
     const rfqIdx = entry.indexOf("rfqNav");
     const ordersIdx = entry.indexOf("ordersNav");
 
     assert.ok(rfqIdx !== -1, "rfqNav must be present");
-    assert.ok(ordersIdx !== -1, "ordersNav must be present");
-
-    // Orders should NOT appear with plannedLabel anymore
-    const ordersBlock = entry.slice(ordersIdx, ordersIdx + 200);
-    assert.doesNotMatch(ordersBlock, /plannedLabel/);
-    assert.match(ordersBlock, /moduleReadOnlyStatus/);
+    assert.equal(ordersIdx, -1, "ordersNav must not be present in primary entry list");
   });
 
   await t.test("i18n - all 7 locales have adminOrders with aligned keys", async () => {
