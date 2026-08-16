@@ -9,8 +9,10 @@
  */
 
 import {
-  PRODUCTION_FINGERPRINT,
-  PREVIOUS_PRODUCTION_FINGERPRINT,
+  PROD_LEGACY_BASELINE_FINGERPRINT,
+  CANONICAL_0000_BASELINE_FINGERPRINT,
+  PRE_0003_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0003_PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
   IndexContract,
@@ -56,7 +58,15 @@ export type Queryable = {
 // Target classification
 // ---------------------------------------------------------------------------
 
-export type RuntimeTargetState = "EMPTY" | "EXACT_EXISTING" | "MIGRATABLE_PREVIOUS" | "PARTIAL_OR_DRIFTED";
+export type RuntimeTargetState =
+  | "EMPTY"
+  | "EXACT_EXISTING_POST_0003"
+  | "MIGRATABLE_POST_0002"
+  | "MIGRATABLE_PROD_LEGACY"
+  | "PARTIAL_OR_DRIFTED"
+  | "EXACT_EXISTING"
+  | "MIGRATABLE_PREVIOUS"
+  | "MIGRATABLE_BASELINE";
 
 export type RuntimeTargetResult = {
   state: RuntimeTargetState;
@@ -200,6 +210,12 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
   // Step 1: Lowercase SQL syntax only — literals are left unchanged.
   s = transformNonLiterals(s, (part) => part.toLowerCase());
 
+  // Check if constraint has trailing NOT VALID (preserve it in output)
+  const isNotValid = /\s+not valid$/i.test(s);
+  if (isNotValid) {
+    s = s.replace(/\s+not valid$/i, "");
+  }
+
   // Step 2: Collapse runs of whitespace in non-literal parts.
   s = transformNonLiterals(s, (part) => part.replace(/\s+/g, " "));
 
@@ -234,6 +250,23 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
   // Step 6: Parenthesised cast: (col)::type → col::type (repeated for nesting)
   for (let i = 0; i < 3; i++) {
     s = s.replace(/\((\w+)\)::(\w+)/g, "$1::$2");
+  }
+
+  // Step 7: Normalize num_nonnulls arguments.
+  // Redundant ::text casts on simple arguments inside num_nonnulls(...) don't affect nullness counting.
+  // We match num_nonnulls( ... ) and strip ::text from the inner arguments.
+  s = s.replace(/num_nonnulls\(([^)]+)\)/g, (_, inner) => {
+    const args = inner.split(',').map((arg: string) => {
+      const trimmed = arg.trim();
+      const match = trimmed.match(/^([a-z_][a-z0-9_]*)::text$/i);
+      return match ? match[1] : trimmed;
+    });
+    return `num_nonnulls(${args.join(", ")})`;
+  });
+
+  // Re-attach trailing NOT VALID if present — NOT VALID is semantic drift and must not be stripped
+  if (isNotValid) {
+    s = s + " not valid";
   }
 
   return s.trim();
@@ -371,6 +404,13 @@ function compareTableContract(
           `Table ${tableName} constraint ${ec.name} type: expected ${ec.type}, got ${gc.type}`
         );
       }
+      const expectedValidated = ec.isValidated ?? true;
+      const gotValidated = gc.isValidated ?? !(/\bnot valid$/i.test(gc.definition));
+      if (expectedValidated !== gotValidated) {
+        reasons.push(
+          `Table ${tableName} constraint ${ec.name} validation status mismatch: expected ${expectedValidated ? "VALID" : "NOT VALID"}, got ${gotValidated ? "VALID" : "NOT VALID"}`
+        );
+      }
       // CHECK constraints: use semantic canonicalization that tolerates pg_get_constraintdef
       // formatting differences (redundant parens, array cast form, element-level casts).
       // Non-CHECK constraints: use simple whitespace+case normalization.
@@ -484,22 +524,34 @@ export function classifyRuntimeTarget(
     return { state: "EMPTY", publicTableCount, differences: [] };
   }
 
-  const matchNew = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
+  const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0003_PRODUCTION_FINGERPRINT);
 
-  if (matchNew.isExactMatch) {
-    return { state: "EXACT_EXISTING", publicTableCount, differences: [] };
+  if (matchFinal.isExactMatch) {
+    return { state: "EXACT_EXISTING_POST_0003", publicTableCount, differences: [] };
   }
 
-  const matchPrevious = compareRuntimeFingerprint(actual, allPublicTables, PREVIOUS_PRODUCTION_FINGERPRINT);
+  const matchPre0003 = compareRuntimeFingerprint(actual, allPublicTables, PRE_0003_PRODUCTION_FINGERPRINT);
 
-  if (matchPrevious.isExactMatch) {
-    return { state: "MIGRATABLE_PREVIOUS", publicTableCount, differences: [] };
+  if (matchPre0003.isExactMatch) {
+    return { state: "MIGRATABLE_POST_0002", publicTableCount, differences: [] };
+  }
+
+  const matchProdLegacy = compareRuntimeFingerprint(actual, allPublicTables, PROD_LEGACY_BASELINE_FINGERPRINT);
+
+  if (matchProdLegacy.isExactMatch) {
+    return { state: "MIGRATABLE_PROD_LEGACY", publicTableCount, differences: [] };
+  }
+
+  const matchCanonical0000 = compareRuntimeFingerprint(actual, allPublicTables, CANONICAL_0000_BASELINE_FINGERPRINT);
+
+  if (matchCanonical0000.isExactMatch) {
+    return { state: "MIGRATABLE_BASELINE", publicTableCount, differences: [] };
   }
 
   return {
     state: "PARTIAL_OR_DRIFTED",
     publicTableCount,
-    differences: matchNew.driftReasons, // Report drift from the target NEW schema
+    differences: matchFinal.driftReasons, // Report drift from the target FINAL schema
   };
 }
 
@@ -613,7 +665,8 @@ export async function fetchLiveSchemaMetadata(
              WHEN 'u' THEN 'UNIQUE'
              WHEN 'c' THEN 'CHECK'
            END AS constraint_type,
-           pg_get_constraintdef(con.oid) AS constraint_def
+           pg_get_constraintdef(con.oid) AS constraint_def,
+           con.convalidated AS is_validated
     FROM   pg_constraint con
     JOIN   pg_class c ON c.oid = con.conrelid
     JOIN   pg_namespace n ON n.oid = c.relnamespace
@@ -628,6 +681,7 @@ export async function fetchLiveSchemaMetadata(
     constraint_name: string;
     constraint_type: string;
     constraint_def: string;
+    is_validated: boolean;
   };
 
   // 6. Explicit non-constraint indexes
@@ -697,6 +751,7 @@ export async function fetchLiveSchemaMetadata(
       name: row.constraint_name,
       type: row.constraint_type as ConstraintContract["type"],
       definition: row.constraint_def,
+      isValidated: row.is_validated,
     });
   }
 

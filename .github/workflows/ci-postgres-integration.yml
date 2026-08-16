@@ -1,0 +1,49 @@
+name: Runtime Database Integration
+
+on:
+  push:
+    branches:
+      - "feat/lm-db-runtime-baseline-adoption-01"
+      - "main"
+  pull_request:
+
+jobs:
+  integration:
+    name: Real PostgreSQL Integration Proof
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run Integration Tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/postgres
+          RUNTIME_MIGRATION_TARGET: development
+          RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: localhost
+          RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
+          RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
+          RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK

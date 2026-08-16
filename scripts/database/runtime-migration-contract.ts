@@ -55,6 +55,9 @@ export function normalizeProjectRef(url: string | undefined): string | null {
         return parts[1];
       }
     }
+    if (parsed.hostname === 'localhost' || parsed.hostname === '127.0.0.1') {
+      return 'localhost';
+    }
     if (parsed.username) {
       const username = decodeURIComponent(parsed.username);
       const parts = username.split('.');
@@ -87,6 +90,7 @@ export type ConstraintContract = {
   name: string;
   type: 'PRIMARY KEY' | 'FOREIGN KEY' | 'UNIQUE' | 'CHECK';
   definition: string;
+  isValidated?: boolean;
 };
 
 export type IndexContract = {
@@ -103,7 +107,11 @@ export type TableContract = {
   rlsEnabled: boolean;
 };
 
-export const BASELINE_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+// ---------------------------------------------------------------------------
+// 1. CANONICAL_0000_BASELINE_FINGERPRINT
+// Exact physical state after 0000_production_runtime_baseline.sql on empty DB
+// ---------------------------------------------------------------------------
+export const CANONICAL_0000_BASELINE_FINGERPRINT: Record<string, TableContract> = {
   "attribute_definitions": {
     name: "attribute_definitions",
     columns: [
@@ -195,6 +203,26 @@ export const BASELINE_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     explicitIndexes: [],
     rlsEnabled: true
   },
+  "controlled_option_value_translations": {
+    name: "controlled_option_value_translations",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('controlled_option_value_translations_id_seq'::regclass)", sequenceName: "controlled_option_value_translations_id_seq" },
+      { name: "controlled_option_value_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "locale", type: "character varying(10)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "label", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "controlled_option_value_translations_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_covt_option_locale", type: "UNIQUE", definition: "UNIQUE (controlled_option_value_id, locale)" },
+      { name: "fk_covt_controlled_option_value", type: "FOREIGN KEY", definition: "FOREIGN KEY (controlled_option_value_id) REFERENCES controlled_option_values(id)" },
+      { name: "chk_covt_locale", type: "CHECK", definition: "CHECK (((locale)::text = ANY ((ARRAY['pl'::character varying, 'en'::character varying, 'de'::character varying, 'fr'::character varying, 'uk'::character varying, 'es'::character varying, 'zh'::character varying])::text[])))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true
+  },
   "category_attribute_assignments": {
     name: "category_attribute_assignments",
     columns: [
@@ -222,26 +250,6 @@ export const BASELINE_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
       { name: "idx_caa_cat_filterable_sort", method: "btree", expressions: "category_id, is_filterable, sort_order" },
       { name: "idx_caa_cat_visible_sort", method: "btree", expressions: "category_id, is_visible, sort_order" }
     ],
-    rlsEnabled: true
-  },
-  "controlled_option_value_translations": {
-    name: "controlled_option_value_translations",
-    columns: [
-      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('controlled_option_value_translations_id_seq'::regclass)", sequenceName: "controlled_option_value_translations_id_seq" },
-      { name: "controlled_option_value_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "locale", type: "character varying(10)", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "label", type: "text", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "description", type: "text", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
-      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
-    ],
-    constraints: [
-      { name: "controlled_option_value_translations_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
-      { name: "uq_covt_option_locale", type: "UNIQUE", definition: "UNIQUE (controlled_option_value_id, locale)" },
-      { name: "fk_covt_controlled_option_value", type: "FOREIGN KEY", definition: "FOREIGN KEY (controlled_option_value_id) REFERENCES controlled_option_values(id)" },
-      { name: "chk_covt_locale", type: "CHECK", definition: "CHECK (((locale)::text = ANY ((ARRAY['pl'::character varying, 'en'::character varying, 'de'::character varying, 'fr'::character varying, 'uk'::character varying, 'es'::character varying, 'zh'::character varying])::text[])))" }
-    ],
-    explicitIndexes: [],
     rlsEnabled: true
   },
   "offers": {
@@ -426,12 +434,66 @@ export const BASELINE_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   }
 };
 
-// PREVIOUS_PRODUCTION_FINGERPRINT = exact physical state after 0000 + 0001
-// Adds the three rfq_leads constraints and two indexes introduced by 0001_rfq_workflow_hardening.
-const baselineRfq = BASELINE_PRODUCTION_FINGERPRINT["rfq_leads"];
+// ---------------------------------------------------------------------------
+// 2. PROD_LEGACY_BASELINE_FINGERPRINT
+// Exact physical legacy PROD pre-migration schema (15 tables)
+// ---------------------------------------------------------------------------
+export const PROD_LEGACY_BASELINE_FINGERPRINT: Record<string, TableContract> = {
+  ...CANONICAL_0000_BASELINE_FINGERPRINT,
+  "categories": {
+    ...CANONICAL_0000_BASELINE_FINGERPRINT["categories"],
+    constraints: [
+      { name: "categories_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "categories_slug_key", type: "UNIQUE", definition: "UNIQUE (slug)" },
+      { name: "categories_parent_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE RESTRICT" }
+    ]
+  },
+  "offers": {
+    ...CANONICAL_0000_BASELINE_FINGERPRINT["offers"],
+    constraints: [
+      { name: "offers_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "offers_category_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT" },
+      { name: "offers_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE" },
+      { name: "offers_conversion_type_check", type: "CHECK", definition: "CHECK (((conversion_type)::text = ANY ((ARRAY['rfq'::character varying, 'cart'::character varying, 'outbound'::character varying])::text[])))" },
+      { name: "offers_offer_model_check", type: "CHECK", definition: "CHECK (((offer_model)::text = ANY ((ARRAY['rfq'::character varying, 'ecommerce'::character varying, 'outbound'::character varying])::text[])))" },
+      { name: "offers_publication_status_check", type: "CHECK", definition: "CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])))" }
+    ]
+  },
+  "clicks": {
+    ...CANONICAL_0000_BASELINE_FINGERPRINT["clicks"],
+    constraints: [
+      { name: "clicks_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "clicks_offer_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE" },
+      { name: "clicks_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE" }
+    ],
+    explicitIndexes: [
+      { name: "idx_clicks_tracking", method: "btree", expressions: "ip_hash, offer_id, clicked_at" }
+    ]
+  }
+};
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
-  ...BASELINE_PRODUCTION_FINGERPRINT,
+// BASELINE_PRODUCTION_FINGERPRINT alias pointing to PROD legacy baseline
+export const BASELINE_PRODUCTION_FINGERPRINT = PROD_LEGACY_BASELINE_FINGERPRINT;
+
+// ---------------------------------------------------------------------------
+// 3. PRE_0003_PRODUCTION_FINGERPRINT (Exact state after 0000 + 0001 + 0002)
+// Used by QA and existing 0002 migration chain (19 tables)
+// ---------------------------------------------------------------------------
+const baselineRfq = CANONICAL_0000_BASELINE_FINGERPRINT["rfq_leads"];
+
+export const PRE_0003_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...CANONICAL_0000_BASELINE_FINGERPRINT,
+  "offers": {
+    ...CANONICAL_0000_BASELINE_FINGERPRINT["offers"],
+    columns: [
+      ...CANONICAL_0000_BASELINE_FINGERPRINT["offers"].columns,
+      { name: "contract_model", type: "character varying(30)", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      ...CANONICAL_0000_BASELINE_FINGERPRINT["offers"].constraints,
+      { name: "offers_contract_model_check", type: "CHECK", definition: "CHECK (((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[])))" }
+    ]
+  },
   "rfq_leads": {
     ...baselineRfq,
     columns: [...baselineRfq.columns],
@@ -465,24 +527,6 @@ export const PREVIOUS_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
         method: "btree",
         expressions: "partner_id"
       }
-    ]
-  }
-};
-
-// PRODUCTION_FINGERPRINT = exact physical state after 0000 + 0001 + 0002
-const previousRfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
-
-export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
-  ...PREVIOUS_PRODUCTION_FINGERPRINT,
-  "offers": {
-    ...PREVIOUS_PRODUCTION_FINGERPRINT["offers"],
-    columns: [
-      ...PREVIOUS_PRODUCTION_FINGERPRINT["offers"].columns,
-      { name: "contract_model", type: "character varying(30)", nullable: true, defaultVal: null, sequenceName: null }
-    ],
-    constraints: [
-      ...PREVIOUS_PRODUCTION_FINGERPRINT["offers"].constraints,
-      { name: "offers_contract_model_check", type: "CHECK", definition: "CHECK (((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[])))" }
     ]
   },
   "seller_legal_identities": {
@@ -563,12 +607,48 @@ export const PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
     ],
     explicitIndexes: [],
     rlsEnabled: true
-  },
-  // rfq_leads in PRODUCTION_FINGERPRINT is identical to PREVIOUS (0001 already applied these)
-  "rfq_leads": {
-    ...previousRfq,
-    columns: [...previousRfq.columns],
-    constraints: [...previousRfq.constraints],
-    explicitIndexes: [...previousRfq.explicitIndexes]
   }
 };
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = PRE_0003_PRODUCTION_FINGERPRINT;
+
+// ---------------------------------------------------------------------------
+// 4. FINAL_POST_0003_PRODUCTION_FINGERPRINT
+// Single exact final runtime schema after 0003 (19 tables)
+// ---------------------------------------------------------------------------
+export const FINAL_POST_0003_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...PRE_0003_PRODUCTION_FINGERPRINT,
+  "categories": {
+    ...PRE_0003_PRODUCTION_FINGERPRINT["categories"],
+    constraints: [
+      { name: "categories_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "categories_slug_key", type: "UNIQUE", definition: "UNIQUE (slug)" },
+      { name: "categories_parent_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE RESTRICT" }
+    ]
+  },
+  "offers": {
+    ...PRE_0003_PRODUCTION_FINGERPRINT["offers"],
+    constraints: [
+      { name: "offers_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "offers_category_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT" },
+      { name: "offers_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE" },
+      { name: "offers_conversion_type_check", type: "CHECK", definition: "CHECK (((conversion_type)::text = ANY ((ARRAY['inbound'::character varying, 'outbound'::character varying])::text[])))" },
+      { name: "offers_offer_model_check", type: "CHECK", definition: "CHECK (((offer_model)::text = ANY ((ARRAY['rfq'::character varying, 'marketplace'::character varying])::text[])))" },
+      { name: "offers_publication_status_check", type: "CHECK", definition: "CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])))" },
+      { name: "offers_contract_model_check", type: "CHECK", definition: "CHECK (((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[])))" }
+    ]
+  },
+  "clicks": {
+    ...PRE_0003_PRODUCTION_FINGERPRINT["clicks"],
+    constraints: [
+      { name: "clicks_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "clicks_offer_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE" },
+      { name: "clicks_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE" }
+    ],
+    explicitIndexes: [
+      { name: "idx_clicks_tracking", method: "btree", expressions: "ip_hash, offer_id, clicked_at" }
+    ]
+  }
+};
+
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0003_PRODUCTION_FINGERPRINT;

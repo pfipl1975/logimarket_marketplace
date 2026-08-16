@@ -14,7 +14,8 @@
     "db:runtime:verify-grants": "tsx scripts/database/verify-runtime-data-api-grants.ts",
     "db:runtime:migrate": "tsx scripts/database/run-runtime-migrations.ts",
     "db:runtime:rollback-empty-dev": "tsx scripts/database/rollback-empty-development-baseline.ts",
-    "test:database": "tsx --test tests/database/*.test.ts"
+    "test:database": "tsx --test tests/database/*.test.ts",
+    "test:integration": "tsx --test tests/database/ci-integration.test.ts"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.15",

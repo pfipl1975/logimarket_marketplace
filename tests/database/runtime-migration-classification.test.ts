@@ -1,10 +1,12 @@
 import test from "node:test";
 import assert from "node:assert";
-import { classifyRuntimeTarget } from "../../scripts/database/verify-runtime-schema-fingerprint";
+import { classifyRuntimeTarget, normalizeCheckConstraintDefinition } from "../../scripts/database/verify-runtime-schema-fingerprint";
 import {
   EXPECTED_BASELINE_TABLES,
-  BASELINE_PRODUCTION_FINGERPRINT,
-  PREVIOUS_PRODUCTION_FINGERPRINT,
+  PROD_LEGACY_BASELINE_FINGERPRINT,
+  CANONICAL_0000_BASELINE_FINGERPRINT,
+  PRE_0003_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0003_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT
 } from "../../scripts/database/runtime-migration-contract";
 import type { TableFingerprintSide } from "../../scripts/database/verify-runtime-schema-fingerprint";
@@ -36,74 +38,70 @@ test("EMPTY", () => {
 });
 
 // ===========================================================================
-// 2. BASELINE 0000 — 15-table state, no 0001 RFQ additions
-//    The classifier's supported-generation policy determines its classification.
-//    BASELINE is NOT an accepted MIGRATABLE_PREVIOUS target because the runner
-//    only accepts PREVIOUS_PRODUCTION_FINGERPRINT (post-0001) as migratable.
-//    Therefore BASELINE_0000 should be PARTIAL_OR_DRIFTED (rfq constraints missing).
+// 2. BASELINE PROD LEGACY — 15-table state
 // ===========================================================================
-test("BASELINE_0000_CLASSIFICATION", () => {
-  const actual = buildSide(BASELINE_PRODUCTION_FINGERPRINT);
-  // Pass the baseline tables as the observed table set
-  const tableNames = Object.keys(BASELINE_PRODUCTION_FINGERPRINT);
+test("PROD_LEGACY_BASELINE_CLASSIFICATION", () => {
+  const actual = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const tableNames = Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, tableNames);
-  // Baseline lacks the 0001 rfq_leads constraints/indexes -> PARTIAL_OR_DRIFTED
-  // (it is NOT MIGRATABLE_PREVIOUS because it does not match PREVIOUS_PRODUCTION_FINGERPRINT)
-  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+  assert.strictEqual(result.state, "MIGRATABLE_PROD_LEGACY");
+});
+
+test("CANONICAL_0000_BASELINE_CLASSIFICATION", () => {
+  const actual = buildSide(CANONICAL_0000_BASELINE_FINGERPRINT);
+  const tableNames = Object.keys(CANONICAL_0000_BASELINE_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, tableNames);
+  assert.strictEqual(result.state, "MIGRATABLE_BASELINE");
 });
 
 // ===========================================================================
-// 3. POST-0001 exact state — MIGRATABLE_PREVIOUS
-//    Proves rfq_leads has exactly the 0001 additions.
+// 3. POST-0002 exact state — MIGRATABLE_POST_0002
 // ===========================================================================
-test("PREVIOUS_EXACT_POST_0001", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const tableNames = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
+test("PRE_0003_EXACT_POST_0002", () => {
+  const actual = buildSide(PRE_0003_PRODUCTION_FINGERPRINT);
+  const tableNames = Object.keys(PRE_0003_PRODUCTION_FINGERPRINT);
 
-  // Explicitly verify the 0001 rfq_leads additions are present
-  const rfq = PREVIOUS_PRODUCTION_FINGERPRINT["rfq_leads"];
+  const rfq = PRE_0003_PRODUCTION_FINGERPRINT["rfq_leads"];
   const constraintNames = rfq.constraints.map(c => c.name);
   const indexNames = rfq.explicitIndexes.map(i => i.name);
 
-  assert.ok(constraintNames.includes("rfq_leads_offer_id_fkey"),   "rfq_leads_offer_id_fkey must be in PREVIOUS");
-  assert.ok(constraintNames.includes("rfq_leads_partner_id_fkey"), "rfq_leads_partner_id_fkey must be in PREVIOUS");
-  assert.ok(constraintNames.includes("rfq_leads_status_check"),    "rfq_leads_status_check must be in PREVIOUS");
-  assert.ok(indexNames.includes("idx_rfq_leads_offer"),            "idx_rfq_leads_offer must be in PREVIOUS");
-  assert.ok(indexNames.includes("idx_rfq_leads_partner"),          "idx_rfq_leads_partner must be in PREVIOUS");
+  assert.ok(constraintNames.includes("rfq_leads_offer_id_fkey"),   "rfq_leads_offer_id_fkey must be in PRE_0003");
+  assert.ok(constraintNames.includes("rfq_leads_partner_id_fkey"), "rfq_leads_partner_id_fkey must be in PRE_0003");
+  assert.ok(constraintNames.includes("rfq_leads_status_check"),    "rfq_leads_status_check must be in PRE_0003");
+  assert.ok(indexNames.includes("idx_rfq_leads_offer"),            "idx_rfq_leads_offer must be in PRE_0003");
+  assert.ok(indexNames.includes("idx_rfq_leads_partner"),          "idx_rfq_leads_partner must be in PRE_0003");
 
   const result = classifyRuntimeTarget(actual, tableNames);
-  assert.strictEqual(result.state, "MIGRATABLE_PREVIOUS");
+  assert.strictEqual(result.state, "MIGRATABLE_POST_0002");
 });
 
 // ===========================================================================
-// 4. POST-0001 with one RFQ constraint missing → PARTIAL_OR_DRIFTED
+// 4. POST-0002 with one RFQ constraint missing → PARTIAL_OR_DRIFTED
 // ===========================================================================
 test("RFQ_DRIFT_CLASSIFICATION", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
-  // Remove idx_rfq_leads_offer to simulate partial 0001 application
+  const actual = buildSide(PRE_0003_PRODUCTION_FINGERPRINT);
   actual["rfq_leads"]!.explicitIndexes = actual["rfq_leads"]!.explicitIndexes.filter(
     i => i.name !== "idx_rfq_leads_offer"
   );
-  const result = classifyRuntimeTarget(actual, Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT));
+  const result = classifyRuntimeTarget(actual, Object.keys(PRE_0003_PRODUCTION_FINGERPRINT));
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
 // ===========================================================================
-// 5. POST-0002 exact — EXACT_EXISTING
+// 5. POST-0003 exact — EXACT_EXISTING_POST_0003
 // ===========================================================================
 test("TARGET_EXACT_19_TABLES", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0003");
 });
 
 // ===========================================================================
-// 6. POST-0002 exact with PostgreSQL canonical FK strings (no schema prefix)
+// 6. POST-0003 exact with PostgreSQL Canonical Strings
 // ===========================================================================
-test("classifyRuntimeTarget - EXACT_EXISTING (PostgreSQL Canonical Strings)", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+test("classifyRuntimeTarget - EXACT_EXISTING_POST_0003 (PostgreSQL Canonical Strings)", () => {
+  const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
 
-  // Simulate PostgreSQL pg_get_constraintdef omitting schema prefix
   const offerFkIndex = actual["rfq_leads"].constraints.findIndex(c => c.name === "rfq_leads_offer_id_fkey");
   const partnerFkIndex = actual["rfq_leads"].constraints.findIndex(c => c.name === "rfq_leads_partner_id_fkey");
 
@@ -111,14 +109,14 @@ test("classifyRuntimeTarget - EXACT_EXISTING (PostgreSQL Canonical Strings)", ()
   actual["rfq_leads"].constraints[partnerFkIndex].definition = "FOREIGN KEY (partner_id) REFERENCES partners(id)";
 
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0003");
 });
 
 // ===========================================================================
-// 7. Partial 56B1: PREVIOUS tables + drift → PARTIAL_OR_DRIFTED
+// 7. PRE_0003 plus unexpected table / drift → PARTIAL_OR_DRIFTED
 // ===========================================================================
 test("PREVIOUS_PLUS_UNEXPECTED_TABLE", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
+  const actual = buildSide(PRE_0003_PRODUCTION_FINGERPRINT);
   actual["categories"]!.columns.push({
     name: "drift_col",
     type: "text",
@@ -126,7 +124,7 @@ test("PREVIOUS_PLUS_UNEXPECTED_TABLE", () => {
     defaultVal: null,
     sequenceName: null
   });
-  const result = classifyRuntimeTarget(actual, Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT));
+  const result = classifyRuntimeTarget(actual, Object.keys(PRE_0003_PRODUCTION_FINGERPRINT));
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
@@ -134,10 +132,9 @@ test("PREVIOUS_PLUS_UNEXPECTED_TABLE", () => {
 // 8. Partially applied 0001 (only one constraint added) → PARTIAL_OR_DRIFTED
 // ===========================================================================
 test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Partially applied RFQ migration)", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
+  const actual = buildSide(PRE_0003_PRODUCTION_FINGERPRINT);
 
-  // Strip RFQ additions, then add only one constraint (partial)
-  const baseRfqConstraints = BASELINE_PRODUCTION_FINGERPRINT["rfq_leads"].constraints;
+  const baseRfqConstraints = CANONICAL_0000_BASELINE_FINGERPRINT["rfq_leads"].constraints;
   actual["rfq_leads"]!.constraints = [
     ...JSON.parse(JSON.stringify(baseRfqConstraints)),
     {
@@ -148,15 +145,15 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Partially applied RFQ migratio
   ];
   actual["rfq_leads"]!.explicitIndexes = [];
 
-  const result = classifyRuntimeTarget(actual, Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT));
+  const result = classifyRuntimeTarget(actual, Object.keys(PRE_0003_PRODUCTION_FINGERPRINT));
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
 // ===========================================================================
-// 9. Wrong CHECK value in post-0002 target → PARTIAL_OR_DRIFTED
+// 9. Wrong CHECK value in post-0003 target → PARTIAL_OR_DRIFTED
 // ===========================================================================
 test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Wrong CHECK values)", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
 
   actual["rfq_leads"]!.constraints = actual["rfq_leads"]!.constraints.map(c => {
     if (c.name === "rfq_leads_status_check") {
@@ -173,20 +170,20 @@ test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Wrong CHECK values)", () => {
 });
 
 // ===========================================================================
-// 10. Missing index in post-0002 target → PARTIAL_OR_DRIFTED
+// 10. Missing index in post-0003 target → PARTIAL_OR_DRIFTED
 // ===========================================================================
 test("classifyRuntimeTarget - PARTIAL_OR_DRIFTED (Missing index)", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
   actual["rfq_leads"]!.explicitIndexes = actual["rfq_leads"]!.explicitIndexes.filter(i => i.name !== "idx_rfq_leads_offer");
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
 // ===========================================================================
-// 11. Post-0002 + unexpected table → PARTIAL_OR_DRIFTED
+// 11. Post-0003 + unexpected table → PARTIAL_OR_DRIFTED
 // ===========================================================================
 test("TARGET_PLUS_UNEXPECTED_TABLE", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
   actual["unexpected_table"] = {
     columns: [],
     constraints: [],
@@ -202,91 +199,122 @@ test("TARGET_PLUS_UNEXPECTED_TABLE", () => {
 });
 
 // ===========================================================================
-// 12-14. Partial 56B1 application (16, 17, 18 tables) → PARTIAL_OR_DRIFTED
+// 12. MIGRATION_0003_REPLAY_SAFE_STATIC_TEST
 // ===========================================================================
-test("PARTIAL_16_TABLES", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const tables = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const newTables = EXPECTED_BASELINE_TABLES.filter(t => !tables.includes(t));
-  const t = newTables[0];
-  actual[t] = {
-    ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[t])),
-    rlsForced: false,
-    policyCount: 0,
-    triggerCount: 0,
-  };
-  const allTables = [...tables, t];
-  const result = classifyRuntimeTarget(actual, allTables);
-  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
-});
-
-test("PARTIAL_17_TABLES", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const tables = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const newTables = EXPECTED_BASELINE_TABLES.filter(t => !tables.includes(t));
-  for (let i = 0; i < 2; i++) {
-    const t = newTables[i];
-    actual[t] = {
-      ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[t])),
-      rlsForced: false,
-      policyCount: 0,
-      triggerCount: 0,
-    };
-  }
-  const allTables = [...tables, newTables[0], newTables[1]];
-  const result = classifyRuntimeTarget(actual, allTables);
-  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
-});
-
-test("PARTIAL_18_TABLES", () => {
-  const actual = buildSide(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const tables = Object.keys(PREVIOUS_PRODUCTION_FINGERPRINT);
-  const newTables = EXPECTED_BASELINE_TABLES.filter(t => !tables.includes(t));
-  for (let i = 0; i < 3; i++) {
-    const t = newTables[i];
-    actual[t] = {
-      ...JSON.parse(JSON.stringify(PRODUCTION_FINGERPRINT[t])),
-      rlsForced: false,
-      policyCount: 0,
-      triggerCount: 0,
-    };
-  }
-  const allTables = [...tables, newTables[0], newTables[1], newTables[2]];
-  const result = classifyRuntimeTarget(actual, allTables);
-  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
-});
-
-// ===========================================================================
-// 15. MIGRATION_0002_REPLAY_SAFE_STATIC_TEST
-//     Proves all five non-table additive DDL items in 0002 are guarded.
-// ===========================================================================
-test("MIGRATION_0002_REPLAY_SAFE_STATIC_TEST", () => {
-  const sqlPath = path.join(process.cwd(), "drizzle-runtime", "0002_seller_identity_56b1.sql");
+test("MIGRATION_0003_REPLAY_SAFE_STATIC_TEST", () => {
+  const sqlPath = path.join(process.cwd(), "drizzle-runtime", "0003_prod_legacy_offer_reconciliation.sql");
   const sql = fs.readFileSync(sqlPath, "utf-8");
 
-  // contract_model must use ADD COLUMN IF NOT EXISTS
-  assert.ok(
-    /ALTER TABLE\s+"?offers"?\s+ADD COLUMN IF NOT EXISTS\s+"?contract_model"?/i.test(sql),
-    "contract_model addition must use ADD COLUMN IF NOT EXISTS"
+  assert.ok(sql.includes("0003 precheck failed"), "0003 must contain precheck assertion");
+  assert.ok(sql.includes("UPDATE public.offers"), "0003 must contain data transformation DML");
+  assert.ok(sql.includes("0003 validation failed"), "0003 must contain post-DML assertion");
+  assert.ok(sql.includes("offers_publication_status_check"), "0003 must converge publication status check");
+  assert.ok(sql.includes("idx_clicks_tracking"), "0003 must converge clicks tracking index");
+});
+
+// ===========================================================================
+// 13. NOT_VALID_CHECK_IS_DRIFT
+// ===========================================================================
+test("NOT_VALID_CHECK_IS_DRIFT", () => {
+  // A. Validated CHECK matching expected -> exact state
+  const actualValid = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const resultValid = classifyRuntimeTarget(actualValid, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultValid.state, "MIGRATABLE_PROD_LEGACY");
+
+  // B. Same CHECK but NOT VALID (via definition or isValidated=false) -> PARTIAL_OR_DRIFTED
+  const actualInvalidDef = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const checkIdx = actualInvalidDef["offers"].constraints.findIndex(c => c.name === "offers_publication_status_check");
+  actualInvalidDef["offers"].constraints[checkIdx] = {
+    ...actualInvalidDef["offers"].constraints[checkIdx],
+    definition: actualInvalidDef["offers"].constraints[checkIdx].definition + " NOT VALID",
+    isValidated: false,
+  };
+  const resultInvalidDef = classifyRuntimeTarget(actualInvalidDef, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultInvalidDef.state, "PARTIAL_OR_DRIFTED");
+
+  const actualInvalidFlag = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualInvalidFlag["offers"].constraints[checkIdx] = {
+    ...actualInvalidFlag["offers"].constraints[checkIdx],
+    isValidated: false,
+  };
+  const resultInvalidFlag = classifyRuntimeTarget(actualInvalidFlag, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultInvalidFlag.state, "PARTIAL_OR_DRIFTED");
+});
+
+// ===========================================================================
+// 14. NOT_VALID_FK_IS_DRIFT
+// ===========================================================================
+test("NOT_VALID_FK_IS_DRIFT", () => {
+  // C. Validated FK matching expected -> exact state
+  const actualValid = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const resultValid = classifyRuntimeTarget(actualValid, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultValid.state, "MIGRATABLE_PROD_LEGACY");
+
+  // D. Same FK but convalidated=false / NOT VALID -> PARTIAL_OR_DRIFTED
+  const actualInvalidFk = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const fkIdx = actualInvalidFk["offers"].constraints.findIndex(c => c.name === "offers_partner_id_fkey");
+  actualInvalidFk["offers"].constraints[fkIdx] = {
+    ...actualInvalidFk["offers"].constraints[fkIdx],
+    isValidated: false,
+  };
+  const resultInvalidFk = classifyRuntimeTarget(actualInvalidFk, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultInvalidFk.state, "PARTIAL_OR_DRIFTED");
+});
+
+// ===========================================================================
+// 15. NUM_NONNULLS NORMALIZATION
+// ===========================================================================
+test("NUM_NONNULLS_NORMALIZATION", () => {
+  // A. PROD_FORM == CONTRACT_FORM handled by actual classification comparison.
+  // B. Exact 15-table PROD legacy fingerprint with ONLY the real PROD OAV no-cast definition
+  const actual = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  const chkIdx = actual["offer_attribute_values"].constraints.findIndex(c => c.name === "chk_oav_value_exclusivity");
+
+  // Replace the definition with the EXACT prod definition
+  actual["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) = 1))";
+
+  const result = classifyRuntimeTarget(actual, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(result.state, "MIGRATABLE_PROD_LEGACY");
+
+  // C. Negative: changing = 1 to = 2
+  const actualWrongCount = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualWrongCount["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) = 2))";
+  const resultWrongCount = classifyRuntimeTarget(actualWrongCount, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultWrongCount.state, "PARTIAL_OR_DRIFTED");
+
+  // D. Negative: removing one argument
+  const actualMissingArg = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualMissingArg["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year) = 1))";
+  const resultMissingArg = classifyRuntimeTarget(actualMissingArg, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultMissingArg.state, "PARTIAL_OR_DRIFTED");
+
+  // E. Negative: changing an argument column
+  const actualWrongCol = buildSide(PROD_LEGACY_BASELINE_FINGERPRINT);
+  actualWrongCol["offer_attribute_values"].constraints[chkIdx].definition =
+    "CHECK ((num_nonnulls(value_text, wrong_column, value_boolean, value_date, value_year, option_id) = 1))";
+  const resultWrongCol = classifyRuntimeTarget(actualWrongCol, Object.keys(PROD_LEGACY_BASELINE_FINGERPRINT));
+  assert.strictEqual(resultWrongCol.state, "PARTIAL_OR_DRIFTED");
+
+  // F. Direct Unit Test A: Exact PROD_FORM vs CONTRACT_FORM
+  const PROD_FORM = "CHECK ((num_nonnulls(value_text, value_number, value_boolean, value_date, value_year, option_id) = 1))";
+  const CONTRACT_FORM = "CHECK ((num_nonnulls(value_text, (value_number)::text, (value_boolean)::text, (value_date)::text, (value_year)::text, (option_id)::text) = 1))";
+  assert.strictEqual(
+    normalizeCheckConstraintDefinition(PROD_FORM),
+    normalizeCheckConstraintDefinition(CONTRACT_FORM)
   );
 
-  // Each non-FK constraint must be inside a DO block with an IF NOT EXISTS pg_constraint guard
-  const doBlocks = [...sql.matchAll(/DO\s+\$\$([\s\S]*?)\$\$;/g)].map(m => m[1]);
+  // G. Required narrowness negative test
+  assert.notStrictEqual(
+    normalizeCheckConstraintDefinition("num_nonnulls(value_number::numeric::text)"),
+    normalizeCheckConstraintDefinition("num_nonnulls(value_number::numeric)")
+  );
 
-  function hasGuardedConstraint(name: string): boolean {
-    return doBlocks.some(block =>
-      block.includes(`conname = '${name}'`) &&
-      block.includes("pg_constraint") &&
-      block.includes("IF NOT EXISTS")
-    );
-  }
-
-  assert.ok(hasGuardedConstraint("offers_contract_model_check"),
-    "offers_contract_model_check must be guarded by pg_constraint IF NOT EXISTS");
-  assert.ok(hasGuardedConstraint("seller_eligibility_status_check"),
-    "seller_eligibility_status_check must be guarded by pg_constraint IF NOT EXISTS");
-  assert.ok(hasGuardedConstraint("uq_seller_tax_identifier_identity"),
-    "uq_seller_tax_identifier_identity must be guarded by pg_constraint IF NOT EXISTS");
-  assert.ok(hasGuardedConstraint("uq_seller_registry_identifier_identity"),
-    "uq_seller_registry_identifier_identity must be guarded by pg_constraint IF NOT EXISTS");
+  // H. Arbitrary expression negative test
+  assert.notStrictEqual(
+    normalizeCheckConstraintDefinition("CHECK ((num_nonnulls((value_number + 1)::text) = 1))"),
+    normalizeCheckConstraintDefinition("CHECK ((num_nonnulls(value_number + 1) = 1))")
+  );
 });
