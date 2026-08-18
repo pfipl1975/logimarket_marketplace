@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { AdminPartnerDto } from "@/lib/admin/partners-read-model-core";
 
 export function AdminPartnersTable({
@@ -29,7 +30,12 @@ export function AdminPartnersTable({
           <tr key={item.id} className="hover:bg-brand-light-gray/30 transition-colors group">
             <td className="px-4 py-3">
               <div className="flex flex-col gap-0.5">
-                <span className="font-medium text-brand-navy">{item.companyName}</span>
+                <Link
+                  href={locale === "pl" ? `/admin/partnerzy/${item.id}` : `/${locale}/admin/partners/${item.id}`}
+                  className="font-medium text-brand-navy hover:text-brand-teal focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-1 rounded-sm w-fit"
+                >
+                  {item.companyName}
+                </Link>
                 <span className="font-mono text-xs text-muted-foreground">#{item.id}</span>
               </div>
             </td>
