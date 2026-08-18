@@ -732,3 +732,17 @@ export async function changeAdminOfferPublicationState(rawInput: unknown) {
   return result;
 }
 
+export async function getAdminPartnerDetail(rawId: string) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminPartnerDetailReadModel } = await import("@/lib/admin/partner-detail-read-model-core");
+    const { db } = await import("@/lib/db");
+    
+    return await getAdminPartnerDetailReadModel(db, rawId);
+  } catch {
+    console.error("Admin partner detail read query failed.");
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
