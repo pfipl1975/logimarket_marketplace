@@ -191,4 +191,17 @@ test("Admin Partner Detail Read Model", async (t) => {
       }
     }
   });
+
+  await t.test("eligibility updatedAt null remains null", async () => {
+    const db = createMockDb({
+      partners: [{ id: 123, companyName: "Test", contactEmail: "test@test.com", websiteUrl: null, logoUrl: null, createdAt: new Date("2023-01-01") }],
+      eligibility: [{ eligibilityStatus: "pending", reason: null, updatedAt: null, createdAt: new Date("2023-01-01") }]
+    });
+
+    const result = await getAdminPartnerDetailReadModel(db, "123");
+    assert.equal(result.ok, true);
+    if (result.ok) {
+      assert.equal(result.data.eligibility?.updatedAt, null);
+    }
+  });
 });

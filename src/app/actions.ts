@@ -739,7 +739,7 @@ export async function getAdminPartnerDetail(rawId: string) {
   try {
     const { getAdminPartnerDetailReadModel } = await import("@/lib/admin/partner-detail-read-model-core");
     const { db } = await import("@/lib/db");
-    
+
     return await getAdminPartnerDetailReadModel(db, rawId);
   } catch {
     console.error("Admin partner detail read query failed.");

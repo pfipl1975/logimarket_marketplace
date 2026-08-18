@@ -139,7 +139,7 @@ export async function getAdminPartnerDetailReadModel(
       eligibility: eligibilityRows.length > 0 ? {
         eligibilityStatus: eligibilityRows[0].eligibilityStatus,
         reason: eligibilityRows[0].reason,
-        updatedAt: eligibilityRows[0].updatedAt?.toISOString() ?? eligibilityRows[0].createdAt.toISOString(),
+        updatedAt: eligibilityRows[0].updatedAt?.toISOString() ?? null,
       } : null,
     }
   };

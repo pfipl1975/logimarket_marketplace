@@ -208,7 +208,7 @@ export async function AdminPartnerDetailPage({
             )}
           </div>
         </section>
-        
+
         {/* Seller Eligibility */}
         <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden h-fit">
           <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center gap-2">
