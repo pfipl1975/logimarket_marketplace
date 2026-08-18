@@ -152,9 +152,6 @@
   "tests/database/helpers/runtime-baseline-sql-parser.ts": {
     "@typescript-eslint/no-unused-vars": {
       "count": 1
-    },
-    "prefer-const": {
-      "count": 3
     }
   },
   "tests/database/rollback-empty-development-baseline.test.ts": {
