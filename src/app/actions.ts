@@ -755,7 +755,7 @@ export async function changeAdminSellerEligibility(rawInput: unknown) {
   
   const inputRes = parseAdminSellerEligibilityInput(rawInput);
   if (!inputRes.ok) {
-    return { ok: false as const, code: "ELIGIBILITY_INVALID_INPUT" as const };
+    return inputRes;
   }
 
   try {

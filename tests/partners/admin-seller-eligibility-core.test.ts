@@ -169,5 +169,31 @@ test("Admin Seller Eligibility Core", async (t) => {
       }
       assert.equal(db._getUpdated(), null);
     });
+
+    await st.test("idempotent unchanged (normalized)", async () => {
+      const db = createMockDb({ partnerExists: true, eligibilityRows: [{ eligibilityStatus: "ineligible", reason: "  reason  " }] });
+      const { executeSellerEligibilityChange } = await import("@/lib/admin/seller-eligibility-core");
+      const res = await executeSellerEligibilityChange(db, { partnerId: 1, expectedStatus: "ineligible", targetStatus: "ineligible", reason: "reason" });
+      assert.equal(res.ok, true);
+      if (res.ok) {
+        assert.equal(res.code, "ELIGIBILITY_UNCHANGED");
+        assert.equal(res.changed, false);
+      }
+      assert.equal(db._getUpdated(), null);
+    });
+
+    await st.test("stale reason cleared on pending/eligible", async () => {
+      const db = createMockDb({ partnerExists: true, eligibilityRows: [{ eligibilityStatus: "eligible", reason: "legacy stale reason" }] });
+      const { executeSellerEligibilityChange } = await import("@/lib/admin/seller-eligibility-core");
+      const res = await executeSellerEligibilityChange(db, { partnerId: 1, expectedStatus: "eligible", targetStatus: "eligible", reason: null });
+      assert.equal(res.ok, true);
+      if (res.ok) {
+        assert.equal(res.code, "ELIGIBILITY_UPDATED");
+        assert.equal(res.changed, true);
+      }
+      assert.ok(db._getUpdated());
+      assert.equal((db._getUpdated() as any).eligibilityStatus, "eligible");
+      assert.equal((db._getUpdated() as any).reason, null);
+    });
   });
 });

@@ -476,7 +476,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.ok(dbRowA.rows[0].updated_at);
     
     // Helper wait for timing deterministic updatedAt comparison
-    await new Promise(r => setTimeout(r, 10));
+    await pool.query(`UPDATE public.seller_eligibility SET updated_at = '2000-01-01T00:00:00Z' WHERE partner_id = $1`, [partnerId]);
+    const dbRowA_fixed = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
 
     // B. eligible -> suspended
     const resB = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "eligible", targetStatus: "suspended", reason: "Fraud" });
@@ -488,9 +489,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const dbRowB = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
     assert.strictEqual(dbRowB.rows[0].eligibility_status, "suspended");
     assert.strictEqual(dbRowB.rows[0].reason, "Fraud");
-    assert.ok(dbRowB.rows[0].updated_at.getTime() > dbRowA.rows[0].updated_at.getTime());
-
-    await new Promise(r => setTimeout(r, 10));
+    assert.ok(dbRowB.rows[0].updated_at.getTime() > dbRowA_fixed.rows[0].updated_at.getTime());
 
     // C. stale expectedStatus -> conflict
     const resC = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "eligible", targetStatus: "eligible", reason: null });
@@ -502,8 +501,6 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(dbRowC.rows[0].eligibility_status, "suspended"); // Unchanged
     assert.strictEqual(dbRowC.rows[0].reason, "Fraud");
 
-    await new Promise(r => setTimeout(r, 10));
-
     // D. suspended -> eligible (reason clear proof)
     const resD = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "suspended", targetStatus: "eligible", reason: null });
     assert.strictEqual(resD.ok, true);
@@ -511,7 +508,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(dbRowD.rows[0].eligibility_status, "eligible");
     assert.strictEqual(dbRowD.rows[0].reason, null); // Must be cleared
 
-    await new Promise(r => setTimeout(r, 10));
+    // Save timestamp to prove idempotency
+    const tsBefore = dbRowD.rows[0].updated_at.getTime();
 
     // E. same state + same normalized reason -> idempotent
     const resE = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "eligible", targetStatus: "eligible", reason: null });
@@ -521,7 +519,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(resE.changed, false);
     }
     const dbRowE = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
-    assert.strictEqual(dbRowE.rows[0].updated_at.getTime(), dbRowD.rows[0].updated_at.getTime()); // Not updated
+    assert.strictEqual(dbRowE.rows[0].updated_at.getTime(), tsBefore);
   });
 
   await pool.end();

@@ -241,24 +241,29 @@ export async function AdminPartnerDetailPage({
               eligibility={eligibility}
               dictionary={{
                 currentStatus: dict.eligibilityStatusLabel,
-                targetStatusLabel: dict.targetStatusLabel ?? "Target status",
+                targetStatusLabel: dict.targetStatusLabel,
                 reasonLabel: dict.eligibilityReasonLabel,
-                saveStatus: dict.saveStatus ?? "Save status",
+                reasonOptionalLabel: dict.reasonOptionalLabel,
+                saveStatus: dict.saveStatus,
                 statuses: {
-                  pending: dict.statusPending ?? "Pending",
-                  eligible: dict.statusEligible ?? "Eligible",
-                  ineligible: dict.statusIneligible ?? "Ineligible",
-                  suspended: dict.statusSuspended ?? "Suspended",
-                  none: dict.statusNone ?? "None",
+                  pending: dict.statusPending,
+                  eligible: dict.statusEligible,
+                  ineligible: dict.statusIneligible,
+                  suspended: dict.statusSuspended,
+                  none: dict.statusNone,
                 },
                 errors: {
-                  invalidInput: dict.errorInvalidInput ?? "Invalid input",
-                  conflict: dict.errorConflict ?? "Conflict",
-                  reasonRequired: dict.errorReasonRequired ?? "Reason is required",
-                  systemError: dict.errorSystemError ?? "System error",
-                  partnerNotFound: dict.errorPartnerNotFound ?? "Partner not found",
+                  invalidInput: dict.errorInvalidInput,
+                  conflict: dict.errorConflict,
+                  reasonRequired: dict.errorReasonRequired,
+                  systemError: dict.errorSystemError,
+                  partnerNotFound: dict.errorPartnerNotFound,
                 },
-                pendingMessage: dict.pendingMessage ?? "Saving...",
+                success: {
+                  saved: dict.successSaved,
+                  unchanged: dict.successUnchanged,
+                },
+                pendingMessage: dict.pendingMessage,
               }}
             />
           </div>

@@ -8,6 +8,7 @@ type Dictionary = {
   currentStatus: string;
   targetStatusLabel: string;
   reasonLabel: string;
+  reasonOptionalLabel: string;
   saveStatus: string;
   statuses: {
     pending: string;
@@ -22,6 +23,10 @@ type Dictionary = {
     reasonRequired: string;
     systemError: string;
     partnerNotFound: string;
+  };
+  success: {
+    saved: string;
+    unchanged: string;
   };
   pendingMessage: string;
 };
@@ -50,6 +55,7 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
   );
 
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const isSuspended = targetStatus === "suspended";
   const isIneligible = targetStatus === "ineligible";
@@ -58,6 +64,7 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setSuccessMsg(null);
 
     startTransition(async () => {
       const result = await changeAdminSellerEligibility({
@@ -70,6 +77,7 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
       if (!result.ok) {
         if (result.code === "ELIGIBILITY_CONFLICT") {
           setErrorMsg(dictionary.errors.conflict);
+          router.refresh();
         } else if (result.code === "ELIGIBILITY_REASON_REQUIRED") {
           setErrorMsg(dictionary.errors.reasonRequired);
         } else if (result.code === "ELIGIBILITY_INVALID_INPUT") {
@@ -82,6 +90,7 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
         return;
       }
 
+      setSuccessMsg(result.changed ? dictionary.success.saved : dictionary.success.unchanged);
       router.refresh();
     });
   };
@@ -91,6 +100,11 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
       {errorMsg && (
         <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded-industrial text-sm">
           {errorMsg}
+        </div>
+      )}
+      {successMsg && (
+        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded-industrial text-sm">
+          {successMsg}
         </div>
       )}
       
@@ -117,7 +131,7 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
             <label className="block text-xs font-semibold text-text-muted mb-1 uppercase tracking-wider flex items-center gap-1">
               {dictionary.reasonLabel}
               {isSuspended && <span className="text-red-500">*</span>}
-              {isIneligible && <span className="text-text-muted opacity-60">(opcjonalnie)</span>}
+              {isIneligible && <span className="text-text-muted opacity-60">({dictionary.reasonOptionalLabel})</span>}
             </label>
             <textarea
               value={reason}

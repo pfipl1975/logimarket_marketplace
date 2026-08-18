@@ -106,13 +106,27 @@ export async function executeSellerEligibilityChange(
         .limit(1);
 
       const currentStatus = eligibilityRows.length > 0 ? eligibilityRows[0].eligibilityStatus : "none";
-      const currentReason = eligibilityRows.length > 0 ? eligibilityRows[0].reason : null;
+      const currentReasonRaw = eligibilityRows.length > 0 ? eligibilityRows[0].reason : null;
 
       if (currentStatus !== input.expectedStatus) {
         return { ok: false, code: "ELIGIBILITY_CONFLICT" };
       }
 
-      if (currentStatus === input.targetStatus && currentReason === input.reason) {
+      let isUnchanged = false;
+      if (currentStatus === input.targetStatus) {
+        if (input.targetStatus === "pending" || input.targetStatus === "eligible") {
+          if (currentReasonRaw === null) {
+            isUnchanged = true;
+          }
+        } else {
+          const normalizedCurrentReason = currentReasonRaw?.trim() || null;
+          if (normalizedCurrentReason === input.reason) {
+            isUnchanged = true;
+          }
+        }
+      }
+
+      if (isUnchanged) {
         return { ok: true, code: "ELIGIBILITY_UNCHANGED", changed: false };
       }
 
@@ -137,7 +151,8 @@ export async function executeSellerEligibilityChange(
       }
     });
   } catch (err) {
-    console.error("executeSellerEligibilityChange system error", err);
+    const errorName = err instanceof Error ? err.name : "UnknownError";
+    console.error("executeSellerEligibilityChange system error", { errorName });
     return { ok: false, code: "SYSTEM_ERROR" };
   }
 }
