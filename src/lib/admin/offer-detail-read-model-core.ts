@@ -88,12 +88,21 @@ export function projectAttributeValues(
   const values: string[] = [];
 
   if (dataType === "multi_enum") {
-    // Deterministic order: sort by stableKey if available in config, fallback to optionId
+    // Deterministic TOTAL order:
+    // A. both configured -> by stableKey, tie-break by optionId
+    // B. only one configured -> configured option first
+    // C. neither configured -> by optionId
     const opts = oaovRows.filter((r) => r.attributeId === attrId);
     const sorted = [...opts].sort((a, b) => {
       const cfgA = config?.options.find((o) => o.optionId === a.optionId);
       const cfgB = config?.options.find((o) => o.optionId === b.optionId);
-      if (cfgA && cfgB) return cfgA.stableKey.localeCompare(cfgB.stableKey);
+      if (cfgA && cfgB) {
+        const byStableKey = cfgA.stableKey.localeCompare(cfgB.stableKey);
+        if (byStableKey !== 0) return byStableKey;
+        return a.optionId - b.optionId;
+      }
+      if (cfgA) return -1;
+      if (cfgB) return 1;
       return a.optionId - b.optionId;
     });
     for (const opt of sorted) {

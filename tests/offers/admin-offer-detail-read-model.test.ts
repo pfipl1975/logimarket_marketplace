@@ -656,3 +656,62 @@ describe("getAdminOfferDetailReadModel – successful projection", () => {
     assert.strictEqual(result.data.categorySlug, "—");
   });
 });
+
+// ─── 14. MULTI_ENUM TOTAL ORDER — MIXED KNOWN + UNKNOWN ─────────────────────
+
+describe("projectAttributeValues – multi_enum total order (mixed known + unknown)", () => {
+  const mixedConfig = makeConfig(50, "size", "multi_enum", {
+    options: [
+      { optionId: 30, stableKey: "large", label: "Duży", description: null },
+      { optionId: 28, stableKey: "medium", label: "Średni", description: null },
+    ],
+  });
+
+  const expected = ["Duży", "Średni", "[Option 29]"];
+
+  it("permutation 1: [30, 29, 28] -> configured first in stableKey order, orphan last", () => {
+    const result = projectAttributeValues(
+      50, "multi_enum", mixedConfig, [],
+      [makeOaov(50, 30), makeOaov(50, 29), makeOaov(50, 28)]
+    );
+    assert.deepStrictEqual(result, expected);
+  });
+
+  it("permutation 2: [29, 28, 30] -> identical result (permutation invariance)", () => {
+    const result = projectAttributeValues(
+      50, "multi_enum", mixedConfig, [],
+      [makeOaov(50, 29), makeOaov(50, 28), makeOaov(50, 30)]
+    );
+    assert.deepStrictEqual(result, expected);
+  });
+
+  it("permutation 3: [28, 30, 29] -> identical result (permutation invariance)", () => {
+    const result = projectAttributeValues(
+      50, "multi_enum", mixedConfig, [],
+      [makeOaov(50, 28), makeOaov(50, 30), makeOaov(50, 29)]
+    );
+    assert.deepStrictEqual(result, expected);
+  });
+
+  it("orphan with optionId LOWER than configured IDs still sorts after configured group", () => {
+    const result = projectAttributeValues(
+      50, "multi_enum", mixedConfig, [],
+      [makeOaov(50, 1), makeOaov(50, 28), makeOaov(50, 30)]
+    );
+    assert.deepStrictEqual(result, ["Duży", "Średni", "[Option 1]"]);
+  });
+
+  it("equal stableKey in config: tie-break by optionId", () => {
+    const tieConfig = makeConfig(51, "tie", "multi_enum", {
+      options: [
+        { optionId: 30, stableKey: "same", label: "Same A", description: null },
+        { optionId: 28, stableKey: "same", label: "Same B", description: null },
+      ],
+    });
+    const result = projectAttributeValues(
+      51, "multi_enum", tieConfig, [],
+      [makeOaov(51, 30), makeOaov(51, 28)]
+    );
+    assert.deepStrictEqual(result, ["Same B", "Same A"]); // optionId 28 before 30
+  });
+});
