@@ -450,5 +450,79 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     }
   });
 
+  await t.test("ADMIN_SELLER_ELIGIBILITY_MUTATION_PROOF", async () => {
+    // Isolated CI mutation proof
+    await cleanDB();
+    await runMigrations(process.env); // Setup full current schema
+
+    // 1. Setup disposable partner
+    const partnerId = 9999;
+    await pool.query(`INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'Elig Test', 'elig@test.com')`, [partnerId]);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { executeSellerEligibilityChange } = await import("@/lib/admin/seller-eligibility-core");
+    const db = drizzle(pool);
+
+    // A. none -> eligible
+    const resA = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "none", targetStatus: "eligible", reason: null });
+    assert.strictEqual(resA.ok, true);
+    if (resA.ok) {
+      assert.strictEqual(resA.code, "ELIGIBILITY_CREATED");
+      assert.strictEqual(resA.changed, true);
+    }
+    const dbRowA = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
+    assert.strictEqual(dbRowA.rows[0].eligibility_status, "eligible");
+    assert.strictEqual(dbRowA.rows[0].reason, null);
+    assert.ok(dbRowA.rows[0].updated_at);
+    
+    // Helper wait for timing deterministic updatedAt comparison
+    await new Promise(r => setTimeout(r, 10));
+
+    // B. eligible -> suspended
+    const resB = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "eligible", targetStatus: "suspended", reason: "Fraud" });
+    assert.strictEqual(resB.ok, true);
+    if (resB.ok) {
+      assert.strictEqual(resB.code, "ELIGIBILITY_UPDATED");
+      assert.strictEqual(resB.changed, true);
+    }
+    const dbRowB = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
+    assert.strictEqual(dbRowB.rows[0].eligibility_status, "suspended");
+    assert.strictEqual(dbRowB.rows[0].reason, "Fraud");
+    assert.ok(dbRowB.rows[0].updated_at.getTime() > dbRowA.rows[0].updated_at.getTime());
+
+    await new Promise(r => setTimeout(r, 10));
+
+    // C. stale expectedStatus -> conflict
+    const resC = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "eligible", targetStatus: "eligible", reason: null });
+    assert.strictEqual(resC.ok, false);
+    if (!resC.ok) {
+      assert.strictEqual(resC.code, "ELIGIBILITY_CONFLICT");
+    }
+    const dbRowC = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
+    assert.strictEqual(dbRowC.rows[0].eligibility_status, "suspended"); // Unchanged
+    assert.strictEqual(dbRowC.rows[0].reason, "Fraud");
+
+    await new Promise(r => setTimeout(r, 10));
+
+    // D. suspended -> eligible (reason clear proof)
+    const resD = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "suspended", targetStatus: "eligible", reason: null });
+    assert.strictEqual(resD.ok, true);
+    const dbRowD = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
+    assert.strictEqual(dbRowD.rows[0].eligibility_status, "eligible");
+    assert.strictEqual(dbRowD.rows[0].reason, null); // Must be cleared
+
+    await new Promise(r => setTimeout(r, 10));
+
+    // E. same state + same normalized reason -> idempotent
+    const resE = await executeSellerEligibilityChange(db, { partnerId, expectedStatus: "eligible", targetStatus: "eligible", reason: null });
+    assert.strictEqual(resE.ok, true);
+    if (resE.ok) {
+      assert.strictEqual(resE.code, "ELIGIBILITY_UNCHANGED");
+      assert.strictEqual(resE.changed, false);
+    }
+    const dbRowE = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
+    assert.strictEqual(dbRowE.rows[0].updated_at.getTime(), dbRowD.rows[0].updated_at.getTime()); // Not updated
+  });
+
   await pool.end();
 });

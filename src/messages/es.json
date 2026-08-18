@@ -634,6 +634,19 @@
     "noEligibility": "Sin estado de elegibilidad registrado.",
     "eligibilityStatusLabel": "Estado de elegibilidad",
     "eligibilityUpdatedAtLabel": "Última actualización",
-    "eligibilityReasonLabel": "Motivo"
+    "eligibilityReasonLabel": "Motivo",
+    "targetStatusLabel": "New status",
+    "saveStatus": "Save status",
+    "statusPending": "Pending",
+    "statusEligible": "Eligible",
+    "statusIneligible": "Ineligible",
+    "statusSuspended": "Suspended",
+    "statusNone": "No decision",
+    "errorInvalidInput": "Invalid input.",
+    "errorConflict": "Partner status was changed in another session. Refresh and try again.",
+    "errorReasonRequired": "Reason is required for Suspended status.",
+    "errorSystemError": "System error occurred.",
+    "errorPartnerNotFound": "Partner not found.",
+    "pendingMessage": "Saving..."
   }
 }

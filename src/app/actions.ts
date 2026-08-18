@@ -746,3 +746,23 @@ export async function getAdminPartnerDetail(rawId: string) {
     return { ok: false as const, code: "SYSTEM_ERROR" as const };
   }
 }
+
+export async function changeAdminSellerEligibility(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminSellerEligibilityInput, executeSellerEligibilityChange } = await import("@/lib/admin/seller-eligibility-core");
+  
+  const inputRes = parseAdminSellerEligibilityInput(rawInput);
+  if (!inputRes.ok) {
+    return { ok: false as const, code: "ELIGIBILITY_INVALID_INPUT" as const };
+  }
+
+  try {
+    const { db } = await import("@/lib/db");
+    return await executeSellerEligibilityChange(db, inputRes.data);
+  } catch (error) {
+    console.error("changeAdminSellerEligibility execution failed:", error);
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}

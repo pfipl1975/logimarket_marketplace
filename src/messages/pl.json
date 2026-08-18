@@ -634,6 +634,19 @@
     "noEligibility": "Brak statusu kwalifikacji.",
     "eligibilityStatusLabel": "Status kwalifikacji",
     "eligibilityUpdatedAtLabel": "Ostatnia aktualizacja",
-    "eligibilityReasonLabel": "Uzasadnienie / Powód"
+    "eligibilityReasonLabel": "Uzasadnienie / Powód",
+    "targetStatusLabel": "Nowy status",
+    "saveStatus": "Zapisz status",
+    "statusPending": "Oczekujący",
+    "statusEligible": "Kwalifikujący się",
+    "statusIneligible": "Niekwalifikujący się",
+    "statusSuspended": "Zawieszony",
+    "statusNone": "Brak decyzji",
+    "errorInvalidInput": "Nieprawidłowe dane wejściowe.",
+    "errorConflict": "Status partnera został zmieniony w innej sesji. Odśwież dane i spróbuj ponownie.",
+    "errorReasonRequired": "Uzasadnienie jest wymagane dla statusu Zawieszony.",
+    "errorSystemError": "Wystąpił błąd systemowy.",
+    "errorPartnerNotFound": "Nie znaleziono partnera.",
+    "pendingMessage": "Zapisywanie..."
   }
 }
