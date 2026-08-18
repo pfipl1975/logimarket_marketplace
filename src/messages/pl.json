@@ -647,6 +647,9 @@
     "errorReasonRequired": "Uzasadnienie jest wymagane dla statusu Zawieszony.",
     "errorSystemError": "Wystąpił błąd systemowy.",
     "errorPartnerNotFound": "Nie znaleziono partnera.",
-    "pendingMessage": "Zapisywanie..."
+    "pendingMessage": "Zapisywanie...",
+    "reasonOptionalLabel": "opcjonalnie",
+    "successSaved": "Status zapisany pomyślnie.",
+    "successUnchanged": "Nie wymaga zmian."
   }
 }
