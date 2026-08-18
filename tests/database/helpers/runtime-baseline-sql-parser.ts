@@ -205,7 +205,7 @@ export class PostgresSqlParser {
 
       if (fIdx >= filteredTokens.length || filteredTokens[fIdx].raw !== '(') return null;
 
-      const idx = tokens.indexOf(filteredTokens[fIdx]) + 1;
+      let idx = tokens.indexOf(filteredTokens[fIdx]) + 1;
 
       let endIdx = idx;
       let openParenDepth = 1;
@@ -245,7 +245,7 @@ export class PostgresSqlParser {
         if (!isConstraint) {
            const columnName = first.value;
 
-           const typeTokens = [];
+           let typeTokens = [];
            const constraintKeywords = ['COLLATE', 'CONSTRAINT', 'NOT', 'NULL', 'DEFAULT', 'GENERATED', 'IDENTITY', 'PRIMARY', 'UNIQUE', 'REFERENCES', 'CHECK'];
 
            let fIdx = 1;
@@ -286,7 +286,7 @@ export class PostgresSqlParser {
                    }
                } else if (t.upperValue === 'DEFAULT') {
                    fIdx++;
-                   const defTokens = [];
+                   let defTokens = [];
                    let defDepth = 0;
                    while (fIdx < filtered.length) {
                        const dt = filtered[fIdx];
