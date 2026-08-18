@@ -776,8 +776,8 @@ export async function getAdminOfferDetail(rawId: string, locale: Locale): Promis
   try {
     const { getAdminOfferDetailReadModel } = await import("@/lib/admin/offer-detail-read-model-core");
     return await getAdminOfferDetailReadModel(db, rawId, locale);
-  } catch (error) {
-    console.error("[getAdminOfferDetail] Error:", error instanceof Error ? error.message : "Unknown error");
+  } catch {
+    console.error("[getAdminOfferDetail] read model execution failed.");
     return { ok: false, code: "SYSTEM_ERROR" };
   }
 }

@@ -697,8 +697,9 @@
     "previewAvailable": "Відкрити перегляд",
     "previewUnavailable": "Перегляд недоступний",
     "noAttributes": "Немає реляційних атрибутів для цієї пропозиції.",
-    "noLegacyAttributes": "Немає технічних атрибутів (порожній об єкт).",
+    "noLegacyAttributes": "Немає технічних атрибутів (порожній об’єкт).",
     "unassignedAttribute": "Не призначено до категорії",
-    "detailLink": "Деталі"
+    "detailLink": "Деталі",
+    "fieldPriceBruttoRaw": "Ціна брутто (raw)"
   }
 }

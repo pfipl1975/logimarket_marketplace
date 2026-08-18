@@ -699,6 +699,7 @@
     "noAttributes": "Brak atrybutów relacyjnych dla tej oferty.",
     "noLegacyAttributes": "Brak atrybutów technicznych (pusty obiekt).",
     "unassignedAttribute": "Nieprzypisany do kategorii",
-    "detailLink": "Szczegóły"
+    "detailLink": "Szczegóły",
+    "fieldPriceBruttoRaw": "Cena brutto (raw)"
   }
 }

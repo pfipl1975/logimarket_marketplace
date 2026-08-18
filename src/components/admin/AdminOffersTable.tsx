@@ -90,8 +90,14 @@ export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps)
                 >
                   #{item.id}
                 </Link>
-                <div className="text-muted-foreground text-xs truncate max-w-[200px] mt-0.5" title={item.title}>
-                  {item.title}
+                <div className="mt-0.5">
+                  <Link
+                    href={getDetailUrl(item.id)}
+                    className="text-muted-foreground text-xs truncate max-w-[200px] block hover:text-brand-navy transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                    title={item.title}
+                  >
+                    {item.title}
+                  </Link>
                 </div>
               </td>
               <td className="px-4 py-3 text-muted-foreground">

@@ -699,6 +699,7 @@
     "noAttributes": "No relational attributes for this offer.",
     "noLegacyAttributes": "No technical attributes (empty object).",
     "unassignedAttribute": "Not assigned to category",
-    "detailLink": "Details"
+    "detailLink": "Details",
+    "fieldPriceBruttoRaw": "Gross price (raw)"
   }
 }

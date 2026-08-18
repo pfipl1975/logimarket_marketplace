@@ -654,9 +654,9 @@
   },
   "adminOfferDetail": {
     "errorTitle": "Erreur de chargement",
-    "errorDescription": "Impossible de charger les détails de l offre ou l offre n existe pas.",
+    "errorDescription": "Impossible de charger les détails de l’offre ou l’offre n’existe pas.",
     "backToOffers": "Retour à la liste des offres",
-    "sectionIdentity": "Identité de l offre",
+    "sectionIdentity": "Identité de l’offre",
     "sectionBusinessModel": "Modèle commercial",
     "sectionPricing": "Prix et conversion",
     "sectionLifecycle": "Cycle de vie de la publication",
@@ -681,7 +681,7 @@
     "fieldPublishedAt": "Publié le",
     "fieldArchivedAt": "Archivé le",
     "fieldDeletedAt": "Supprimé le",
-    "fieldImageUrl": "URL de l image",
+    "fieldImageUrl": "URL de l’image",
     "fieldDescription": "Description",
     "statusDraft": "Brouillon",
     "statusPublished": "Publié",
@@ -694,11 +694,12 @@
     "modelUnknown": "Modèle inconnu",
     "booleanYes": "Oui",
     "booleanNo": "Non",
-    "previewAvailable": "Ouvrir l aperçu",
+    "previewAvailable": "Ouvrir l’aperçu",
     "previewUnavailable": "Aperçu indisponible",
     "noAttributes": "Aucun attribut relationnel pour cette offre.",
     "noLegacyAttributes": "Aucun attribut technique (objet vide).",
     "unassignedAttribute": "Non assigné à la catégorie",
-    "detailLink": "Détails"
+    "detailLink": "Détails",
+    "fieldPriceBruttoRaw": "Prix TTC (raw)"
   }
 }

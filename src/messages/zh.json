@@ -699,6 +699,7 @@
     "noAttributes": "此报价没有关系属性。",
     "noLegacyAttributes": "没有技术属性（空对象）。",
     "unassignedAttribute": "未分配到分类",
-    "detailLink": "详情"
+    "detailLink": "详情",
+    "fieldPriceBruttoRaw": "含税价格（原始）"
   }
 }

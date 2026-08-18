@@ -99,7 +99,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <h1 className="text-2xl font-bold text-brand-navy">#{offer.id}</h1>
               <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold ${
                   offer.canonicalModel === "unknown"
                     ? "bg-red-100 text-red-800"
                     : "bg-brand-navy/10 text-brand-navy"
@@ -107,7 +107,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
               >
                 {getModelLabel(offer.canonicalModel)}
               </span>
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-secondary text-secondary-foreground">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-semibold bg-secondary text-secondary-foreground">
                 {getStatusLabel(offer.publicationStatus)}
               </span>
             </div>
@@ -194,9 +194,18 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPriceBrutto}</p>
-              <p className="text-sm font-mono font-medium text-brand-navy">
-                {offer.priceBrutto !== null ? formatPrice(offer.priceBrutto, locale) : "—"}
-              </p>
+              {offer.priceBrutto !== null ? (
+                <>
+                  <p className="text-sm font-mono font-medium text-brand-navy" title={dict.fieldPriceBruttoRaw}>
+                    {offer.priceBrutto}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {formatPrice(offer.priceBrutto, locale)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm font-mono font-medium text-brand-navy">—</p>
+              )}
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPriceOnRequest}</p>
