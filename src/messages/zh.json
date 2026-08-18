@@ -634,6 +634,22 @@
     "noEligibility": "未注册销售资格状态。",
     "eligibilityStatusLabel": "资格状态",
     "eligibilityUpdatedAtLabel": "最后更新时间",
-    "eligibilityReasonLabel": "原因"
+    "eligibilityReasonLabel": "原因",
+    "targetStatusLabel": "新状态",
+    "saveStatus": "保存状态",
+    "statusPending": "待定",
+    "statusEligible": "合格",
+    "statusIneligible": "不合格",
+    "statusSuspended": "已暂停",
+    "statusNone": "未决定",
+    "errorInvalidInput": "输入无效。",
+    "errorConflict": "合作伙伴状态在另一个会话中已被修改。请刷新并重试。",
+    "errorReasonRequired": "暂停状态需要提供原因。",
+    "errorSystemError": "发生系统错误。",
+    "errorPartnerNotFound": "未找到合作伙伴。",
+    "pendingMessage": "保存中...",
+    "reasonOptionalLabel": "可选",
+    "successSaved": "状态保存成功。",
+    "successUnchanged": "无需更改。"
   }
 }

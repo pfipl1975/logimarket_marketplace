@@ -634,6 +634,22 @@
     "noEligibility": "Sin estado de elegibilidad registrado.",
     "eligibilityStatusLabel": "Estado de elegibilidad",
     "eligibilityUpdatedAtLabel": "Última actualización",
-    "eligibilityReasonLabel": "Motivo"
+    "eligibilityReasonLabel": "Motivo",
+    "targetStatusLabel": "Nuevo estado",
+    "saveStatus": "Guardar estado",
+    "statusPending": "Pendiente",
+    "statusEligible": "Elegible",
+    "statusIneligible": "No elegible",
+    "statusSuspended": "Suspendido",
+    "statusNone": "Sin decisión",
+    "errorInvalidInput": "Entrada no válida.",
+    "errorConflict": "El estado del socio fue modificado en otra sesión. Actualice la página y vuelva a intentarlo.",
+    "errorReasonRequired": "Se requiere un motivo para el estado Suspendido.",
+    "errorSystemError": "Ocurrió un error en el sistema.",
+    "errorPartnerNotFound": "Socio no encontrado.",
+    "pendingMessage": "Guardando...",
+    "reasonOptionalLabel": "opcional",
+    "successSaved": "Estado guardado con éxito.",
+    "successUnchanged": "No se requieren cambios."
   }
 }

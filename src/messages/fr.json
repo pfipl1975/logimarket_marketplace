@@ -634,6 +634,22 @@
     "noEligibility": "Aucun statut d'éligibilité enregistré.",
     "eligibilityStatusLabel": "Statut d'éligibilité",
     "eligibilityUpdatedAtLabel": "Dernière mise à jour",
-    "eligibilityReasonLabel": "Raison"
+    "eligibilityReasonLabel": "Raison",
+    "targetStatusLabel": "Nouveau statut",
+    "saveStatus": "Enregistrer le statut",
+    "statusPending": "En attente",
+    "statusEligible": "Éligible",
+    "statusIneligible": "Inéligible",
+    "statusSuspended": "Suspendu",
+    "statusNone": "Aucune décision",
+    "errorInvalidInput": "Saisie invalide.",
+    "errorConflict": "Le statut du partenaire a été modifié dans une autre session. Veuillez actualiser et réessayer.",
+    "errorReasonRequired": "La raison est requise pour le statut Suspendu.",
+    "errorSystemError": "Une erreur système est survenue.",
+    "errorPartnerNotFound": "Partenaire introuvable.",
+    "pendingMessage": "Enregistrement en cours...",
+    "reasonOptionalLabel": "facultatif",
+    "successSaved": "Statut enregistré avec succès.",
+    "successUnchanged": "Aucune modification requise."
   }
 }

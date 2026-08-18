@@ -634,6 +634,22 @@
     "noEligibility": "Kein Berechtigungsstatus registriert.",
     "eligibilityStatusLabel": "Berechtigungsstatus",
     "eligibilityUpdatedAtLabel": "Zuletzt aktualisiert",
-    "eligibilityReasonLabel": "Grund"
+    "eligibilityReasonLabel": "Grund",
+    "targetStatusLabel": "Neuer Status",
+    "saveStatus": "Status speichern",
+    "statusPending": "Ausstehend",
+    "statusEligible": "Berechtigt",
+    "statusIneligible": "Nicht berechtigt",
+    "statusSuspended": "Gesperrt",
+    "statusNone": "Keine Entscheidung",
+    "errorInvalidInput": "Ungültige Eingabe.",
+    "errorConflict": "Partnerstatus wurde in einer anderen Sitzung geändert. Bitte aktualisieren und erneut versuchen.",
+    "errorReasonRequired": "Grund ist für den Status Gesperrt erforderlich.",
+    "errorSystemError": "Systemfehler aufgetreten.",
+    "errorPartnerNotFound": "Partner nicht gefunden.",
+    "pendingMessage": "Wird gespeichert...",
+    "reasonOptionalLabel": "optional",
+    "successSaved": "Status erfolgreich gespeichert.",
+    "successUnchanged": "Keine Änderungen erforderlich."
   }
 }

@@ -4,6 +4,7 @@ import { getAdminPartnerDetail } from "@/app/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Building2, FileText, Landmark, ShieldCheck, FileKey } from "lucide-react";
+import { AdminSellerEligibilityControl } from "@/components/admin/AdminSellerEligibilityControl";
 
 export async function AdminPartnerDetailPage({
   locale,
@@ -234,6 +235,37 @@ export async function AdminPartnerDetailPage({
                 </div>
               </div>
             )}
+            
+            <AdminSellerEligibilityControl
+              partnerId={partner.id}
+              eligibility={eligibility}
+              dictionary={{
+                currentStatus: dict.eligibilityStatusLabel,
+                targetStatusLabel: dict.targetStatusLabel,
+                reasonLabel: dict.eligibilityReasonLabel,
+                reasonOptionalLabel: dict.reasonOptionalLabel,
+                saveStatus: dict.saveStatus,
+                statuses: {
+                  pending: dict.statusPending,
+                  eligible: dict.statusEligible,
+                  ineligible: dict.statusIneligible,
+                  suspended: dict.statusSuspended,
+                  none: dict.statusNone,
+                },
+                errors: {
+                  invalidInput: dict.errorInvalidInput,
+                  conflict: dict.errorConflict,
+                  reasonRequired: dict.errorReasonRequired,
+                  systemError: dict.errorSystemError,
+                  partnerNotFound: dict.errorPartnerNotFound,
+                },
+                success: {
+                  saved: dict.successSaved,
+                  unchanged: dict.successUnchanged,
+                },
+                pendingMessage: dict.pendingMessage,
+              }}
+            />
           </div>
         </section>
       </div>
