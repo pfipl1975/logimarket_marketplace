@@ -761,8 +761,8 @@ export async function changeAdminSellerEligibility(rawInput: unknown) {
   try {
     const { db } = await import("@/lib/db");
     return await executeSellerEligibilityChange(db, inputRes.data);
-  } catch (error) {
-    console.error("changeAdminSellerEligibility execution failed:", error);
+  } catch {
+    console.error("changeAdminSellerEligibility execution failed.");
     return { ok: false as const, code: "SYSTEM_ERROR" as const };
   }
 }
