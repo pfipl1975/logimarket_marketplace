@@ -766,3 +766,18 @@ export async function changeAdminSellerEligibility(rawInput: unknown) {
     return { ok: false as const, code: "SYSTEM_ERROR" as const };
   }
 }
+
+import type { AdminOfferDetailResult } from "@/lib/admin/offer-detail-read-model-core";
+
+export async function getAdminOfferDetail(rawId: string, locale: Locale): Promise<AdminOfferDetailResult | { ok: false, code: "SYSTEM_ERROR" }> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminOfferDetailReadModel } = await import("@/lib/admin/offer-detail-read-model-core");
+    return await getAdminOfferDetailReadModel(db, rawId, locale);
+  } catch (error) {
+    console.error("[getAdminOfferDetail] Error:", error instanceof Error ? error.message : "Unknown error");
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}

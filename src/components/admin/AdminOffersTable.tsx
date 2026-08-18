@@ -10,6 +10,10 @@ interface AdminOffersTableProps {
 }
 
 export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps) {
+  const getDetailUrl = (id: number) => {
+    return locale === "pl" ? `/admin/oferty/${id}` : `/${locale}/admin/offers/${id}`;
+  };
+
   const getModelLabel = (model: string) => {
     switch (model) {
       case "rfq": return dict.modelRfq;
@@ -80,8 +84,13 @@ export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps)
           {items.map((item) => (
             <tr key={item.id} className="hover:bg-muted/50 transition-colors">
               <td className="px-4 py-3">
-                <div className="font-medium text-primary">#{item.id}</div>
-                <div className="text-muted-foreground text-xs truncate max-w-[200px]" title={item.title}>
+                <Link
+                  href={getDetailUrl(item.id)}
+                  className="font-medium text-brand-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+                >
+                  #{item.id}
+                </Link>
+                <div className="text-muted-foreground text-xs truncate max-w-[200px] mt-0.5" title={item.title}>
                   {item.title}
                 </div>
               </td>
