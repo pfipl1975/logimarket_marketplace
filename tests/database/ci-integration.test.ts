@@ -307,7 +307,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // Create invalid status row
     await pool.query(`
-      INSERT INTO rfq_leads (offer_id, partner_id, contact_name, email, status) 
+      INSERT INTO rfq_leads (offer_id, partner_id, contact_name, email, status)
       VALUES (999, 999, 'Bad Guy', 'bad@example.com', 'hacked_status')
     `);
 
@@ -474,7 +474,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(dbRowA.rows[0].eligibility_status, "eligible");
     assert.strictEqual(dbRowA.rows[0].reason, null);
     assert.ok(dbRowA.rows[0].updated_at);
-    
+
     // Helper wait for timing deterministic updatedAt comparison
     await pool.query(`UPDATE public.seller_eligibility SET updated_at = '2000-01-01T00:00:00Z' WHERE partner_id = $1`, [partnerId]);
     const dbRowA_fixed = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
@@ -520,6 +520,133 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     }
     const dbRowE = await pool.query(`SELECT * FROM public.seller_eligibility WHERE partner_id = $1`, [partnerId]);
     assert.strictEqual(dbRowE.rows[0].updated_at.getTime(), tsBefore);
+  });
+
+  await t.test("ADMIN_OFFER_EDIT_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const partnerId = 9999;
+    await pool.query(`INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'Edit Test', 'edit@test.com')`, [partnerId]);
+    
+    const categoryId = 8889;
+    await pool.query(`INSERT INTO public.categories (id, name, slug) VALUES ($1, 'Edit Cat', 'edit-cat')`, [categoryId]);
+
+    const offerId = 8888;
+    await pool.query(`INSERT INTO public.offers (
+      id, partner_id, category_id, title, description, 
+      publication_status, is_active, offer_model, conversion_type,
+      updated_at
+    ) VALUES (
+      $1, $2, $3, 'Old Title', 'Old Desc',
+      'draft', false, 'rfq', 'outbound',
+      '2024-01-01T10:00:00.000Z'
+    )`, [offerId, partnerId, categoryId]);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { executeAdminOfferEdit } = await import("@/lib/admin/offer-edit-core");
+    const db = drizzle(pool);
+
+    // A. NOT FOUND
+    const resA = await executeAdminOfferEdit(db, {
+      offerId: 7777, expectedUpdatedAt: null, title: 'T', description: null, imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+    assert.strictEqual(resA.ok, false);
+    if (!resA.ok) assert.strictEqual(resA.code, "OFFER_NOT_FOUND");
+
+    // B. SUCCESS UPDATE
+    const initialRow = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    const expectedUpdatedAt = initialRow.rows[0].updated_at.toISOString();
+
+    const resB = await executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt, title: 'New Title', description: 'New Desc', imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+    assert.strictEqual(resB.ok, true);
+    if (resB.ok) {
+      assert.strictEqual(resB.code, "OFFER_UPDATED");
+      assert.strictEqual(resB.changed, true);
+    }
+
+    const rowAfterB = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assert.strictEqual(rowAfterB.rows[0].title, 'New Title');
+    assert.notStrictEqual(rowAfterB.rows[0].updated_at.getTime(), initialRow.rows[0].updated_at.getTime());
+
+    // C. UNRELATED FIELDS UNCHANGED
+    assert.strictEqual(rowAfterB.rows[0].partner_id, partnerId);
+    assert.strictEqual(rowAfterB.rows[0].category_id, null);
+    assert.strictEqual(rowAfterB.rows[0].publication_status, 'draft');
+
+    // D. IDEMPOTENT
+    const resD = await executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: rowAfterB.rows[0].updated_at.toISOString(), title: 'New Title', description: 'New Desc', imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+    assert.strictEqual(resD.ok, true);
+    if (resD.ok) {
+      assert.strictEqual(resD.code, "OFFER_UNCHANGED");
+      assert.strictEqual(resD.changed, false);
+    }
+    const rowAfterD = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assert.strictEqual(rowAfterD.rows[0].updated_at.getTime(), rowAfterB.rows[0].updated_at.getTime());
+
+    // E. CONFLICT
+    const resE = await executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: expectedUpdatedAt, // stale
+      title: 'Conflicting Title', description: null, imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+    assert.strictEqual(resE.ok, false);
+    if (!resE.ok) assert.strictEqual(resE.code, "OFFER_CONFLICT");
+
+    // G. HIDDEN/DELETED NOT EDITABLE
+    await pool.query(`UPDATE public.offers SET publication_status = 'hidden' WHERE id = $1`, [offerId]);
+    const rowHidden = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    const resG = await executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: rowHidden.rows[0].updated_at.toISOString(),
+      title: 'Hidden Edit', description: null, imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+    assert.strictEqual(resG.ok, false);
+    if (!resG.ok) assert.strictEqual(resG.code, "OFFER_NOT_EDITABLE_STATUS");
+
+    // H. PUBLISHED BUSINESS VALIDATION
+    await pool.query(`UPDATE public.offers SET publication_status = 'published', updated_at = '2024-01-01T10:00:00.000Z' WHERE id = $1`, [offerId]);
+    const resH = await executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: '2024-01-01T10:00:00.000Z',
+      title: 'Published Edit', description: null, imageUrl: null,
+      priceBrutto: null, priceOnRequest: false, offerModel: 'marketplace', conversionType: 'inbound', outboundUrl: null, isFeatured: false // ecommerce without price
+    });
+    assert.strictEqual(resH.ok, false);
+    if (!resH.ok) assert.strictEqual(resH.code, "OFFER_TARGET_INVALID");
+    // I. CONCURRENCY ROW LOCK PROOF
+    await pool.query(`UPDATE public.offers SET title = 'Base Title', updated_at = '2024-01-01T12:00:00.000Z' WHERE id = $1`, [offerId]);
+    const baseExpectedDate = '2024-01-01T12:00:00.000Z';
+
+    const p1 = executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: baseExpectedDate,
+      title: 'Update 1', description: null, imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+
+    const p2 = executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: baseExpectedDate,
+      title: 'Update 2', description: null, imageUrl: null,
+      priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false
+    });
+
+    const [res1, res2] = await Promise.all([p1, p2]);
+
+    let updatedCount = 0;
+    let conflictCount = 0;
+    if (res1.ok && res1.code === "OFFER_UPDATED") updatedCount++;
+    if (!res1.ok && res1.code === "OFFER_CONFLICT") conflictCount++;
+    if (res2.ok && res2.code === "OFFER_UPDATED") updatedCount++;
+    if (!res2.ok && res2.code === "OFFER_CONFLICT") conflictCount++;
+
+    assert.strictEqual(updatedCount, 1, "Exactly one concurrent update should succeed");
+    assert.strictEqual(conflictCount, 1, "Exactly one concurrent update should fail with conflict");
   });
 
   await pool.end();

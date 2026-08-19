@@ -781,3 +781,32 @@ export async function getAdminOfferDetail(rawId: string, locale: Locale): Promis
     return { ok: false, code: "SYSTEM_ERROR" };
   }
 }
+
+import type { AdminOfferEditResult } from "@/lib/admin/offer-edit-core";
+
+export async function updateAdminOffer(rawInput: unknown): Promise<AdminOfferEditResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOfferEditInput, executeAdminOfferEdit } = await import("@/lib/admin/offer-edit-core");
+
+  const inputRes = parseAdminOfferEditInput(rawInput);
+  if (!inputRes.ok) {
+    return inputRes;
+  }
+
+  try {
+    const { db } = await import("@/lib/db");
+    const result = await executeAdminOfferEdit(db, inputRes.data);
+
+    if (result.ok && result.changed) {
+      revalidatePath("/", "layout");
+    }
+
+    return result;
+  } catch (error) {
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    console.error("[updateAdminOffer] execution failed.", { errorName });
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
