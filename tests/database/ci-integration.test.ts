@@ -803,6 +803,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const rowE = await pool.query(`SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1005`);
     assert.equal(rowE.rows[0].publication_status, "hidden");
     assert.equal(rowE.rows[0].updated_at.toISOString(), "2024-01-01T10:00:00.000Z");
+    assert.equal(rowE.rows[0].published_at, null);
+    assert.equal(rowE.rows[0].archived_at, null);
+    assert.equal(rowE.rows[0].deleted_at, null);
     assert.equal(rowE.rows[0].title, "Pub Title");
 
     // F. current deleted -> attempt archived
@@ -812,23 +815,32 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const rowF = await pool.query(`SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1006`);
     assert.equal(rowF.rows[0].publication_status, "deleted");
     assert.equal(rowF.rows[0].updated_at.toISOString(), "2024-01-01T10:00:00.000Z");
+    assert.equal(rowF.rows[0].published_at, null);
+    assert.equal(rowF.rows[0].archived_at, null);
+    assert.equal(rowF.rows[0].deleted_at, null);
     assert.equal(rowF.rows[0].title, "Pub Title");
 
     // G. Idempotent published
     await insertOffer(1007, "published", "1.23");
     const resG = await executeOfferPublicationStateChange(db, { offerId: 1007, expectedStatus: "published", targetStatus: "published" });
     assert.deepEqual(resG, { ok: true, code: "OFFER_PUBLISHED", changed: false });
-    const rowG = await pool.query(`SELECT publication_status, updated_at FROM public.offers WHERE id = 1007`);
+    const rowG = await pool.query(`SELECT publication_status, updated_at, published_at, archived_at, deleted_at FROM public.offers WHERE id = 1007`);
     assert.equal(rowG.rows[0].publication_status, "published");
     assert.equal(rowG.rows[0].updated_at.toISOString(), "2024-01-01T10:00:00.000Z");
+    assert.equal(rowG.rows[0].published_at, null);
+    assert.equal(rowG.rows[0].archived_at, null);
+    assert.equal(rowG.rows[0].deleted_at, null);
 
     // H. Idempotent archived
     await insertOffer(1008, "archived", "1.23");
     const resH = await executeOfferPublicationStateChange(db, { offerId: 1008, expectedStatus: "archived", targetStatus: "archived" });
     assert.deepEqual(resH, { ok: true, code: "OFFER_ARCHIVED", changed: false });
-    const rowH = await pool.query(`SELECT publication_status, updated_at FROM public.offers WHERE id = 1008`);
+    const rowH = await pool.query(`SELECT publication_status, updated_at, published_at, archived_at, deleted_at FROM public.offers WHERE id = 1008`);
     assert.equal(rowH.rows[0].publication_status, "archived");
     assert.equal(rowH.rows[0].updated_at.toISOString(), "2024-01-01T10:00:00.000Z");
+    assert.equal(rowH.rows[0].published_at, null);
+    assert.equal(rowH.rows[0].archived_at, null);
+    assert.equal(rowH.rows[0].deleted_at, null);
   });
 
   await pool.end();
