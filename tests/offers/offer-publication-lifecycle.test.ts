@@ -68,8 +68,8 @@ describe("Offer Publication Parser", () => {
   });
 
   test("rejects invalid expectedStatus constraints", () => {
-    assert.equal(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "hidden", targetStatus: "published" }), null);
-    assert.equal(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "deleted", targetStatus: "published" }), null);
+    assert.equal(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "foo", targetStatus: "published" }), null);
+    assert.equal(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "bar", targetStatus: "archived" }), null);
   });
 });
 
@@ -102,8 +102,30 @@ describe("Offer Publication State Machine", () => {
     assert.deepEqual(evaluateOfferPublicationTransition("archived", "draft", "published"), { kind: "CONFLICT" });
   });
 
-  test("CONFLICT: stale expected published, current draft, target archived", () => {
-    assert.deepEqual(evaluateOfferPublicationTransition("draft", "published", "archived"), { kind: "CONFLICT" });
+  test("INVALID: draft -> archived", () => {
+    assert.deepEqual(evaluateOfferPublicationTransition("draft", "draft", "archived"), { kind: "INVALID_TRANSITION" });
+  });
+
+  test("INVALID: archived -> published", () => {
+    assert.deepEqual(evaluateOfferPublicationTransition("archived", "archived", "published"), { kind: "INVALID_TRANSITION" });
+  });
+
+  test("INVALID: hidden -> published/archived", () => {
+    assert.deepEqual(evaluateOfferPublicationTransition("hidden", "hidden", "published"), { kind: "INVALID_TRANSITION" });
+    assert.deepEqual(evaluateOfferPublicationTransition("hidden", "hidden", "archived"), { kind: "INVALID_TRANSITION" });
+  });
+
+  test("INVALID: deleted -> published/archived", () => {
+    assert.deepEqual(evaluateOfferPublicationTransition("deleted", "deleted", "published"), { kind: "INVALID_TRANSITION" });
+    assert.deepEqual(evaluateOfferPublicationTransition("deleted", "deleted", "archived"), { kind: "INVALID_TRANSITION" });
+  });
+
+  test("No target: hidden, deleted, draft should be parse valid", () => {
+    
+    
+    assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "hidden", targetStatus: "published" }));
+    assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "deleted", targetStatus: "archived" }));
+    assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "draft", targetStatus: "published" }));
   });
 });
 
@@ -302,3 +324,27 @@ describe("DB Architecture Contract", () => {
     assert.equal(setBlocks.includes("categoryId:"), false, "Should not mutate categoryId");
   });
 });
+
+describe("Auth Function-Scoped Contract Test", () => {
+  test("changeAdminOfferPublicationState enforces requireAdmin before DB/execution", () => {
+    
+    const actionsSrc = fs.readFileSync("src/app/actions.ts", "utf8");
+    
+    // Extract only changeAdminOfferPublicationState source
+    const match = actionsSrc.match(/export async function changeAdminOfferPublicationState[\s\S]*?\n\}/);
+    assert.ok(match, "Function changeAdminOfferPublicationState must exist");
+    const funcSrc = match[0];
+    
+    const requireAdminIdx = funcSrc.indexOf("await requireAdmin()");
+    const dbIdx = funcSrc.indexOf("const { db } =");
+    const executeIdx = funcSrc.indexOf("executeOfferPublicationStateChange(");
+    
+    assert.ok(requireAdminIdx !== -1, "requireAdmin() must be present");
+    assert.ok(dbIdx !== -1, "DB access must be present");
+    assert.ok(executeIdx !== -1, "executeOfferPublicationStateChange must be present");
+    
+    assert.ok(requireAdminIdx < dbIdx, "requireAdmin() must be before DB access");
+    assert.ok(requireAdminIdx < executeIdx, "requireAdmin() must be before executeOfferPublicationStateChange()");
+  });
+});
+

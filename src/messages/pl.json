@@ -687,7 +687,7 @@
     "fieldDescription": "Opis",
     "statusDraft": "Szkic",
     "statusPublished": "Opublikowana",
-    "statusHidden": "Ukryta (Moderacja)",
+    "statusHidden": "Ukryta",
     "statusArchived": "Archiwalna",
     "statusDeleted": "Usunięta",
     "modelRfq": "Zapytanie (RFQ)",
@@ -713,8 +713,8 @@
     "eligibilityModelUnknown": "Nieprawidłowy model oferty",
     "eligibilityPriceInvalid": "Brak lub nieprawidłowa cena dla E-Commerce",
     "eligibilityOutboundInvalid": "Brak lub nieprawidłowy link wychodzący",
-    "moderationStateReadOnly": "Stan moderacji - tylko do odczytu",
-    "moderationStateDescription": "Ta oferta znajduje się w stanie ograniczonym ze względów bezpieczeństwa lub moderacji. Akcje cyklu życia są niedostępne."
+    "moderationStateReadOnly": "Stan tylko do odczytu",
+    "moderationStateDescription": "Dla tego statusu akcje publikacji i edycji są niedostępne."
   },
   "adminOfferEdit": {
     "title": "Edytuj ofertę",

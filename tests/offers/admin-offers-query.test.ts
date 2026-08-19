@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseAdminOffersQuery, buildAdminOffersUrl } from "../../src/lib/admin/offers-query";
+import { normalizeAdminOfferPublicationStatus } from "@/lib/admin/offers-read-model-core";
 
 test("Admin Offers Query Parser and Builder", async (t) => {
   await t.test("defaults to safe values when empty", () => {
@@ -60,9 +61,20 @@ test("Admin Offers Query Parser and Builder", async (t) => {
     assert.equal(q.model, null);
   });
 
-  await t.test("parses correct statuses", () => {
-    const q = parseAdminOffersQuery({ status: "published" });
-    assert.equal(q.status, "published");
+  await t.test("empty object defaults", () => {
+    const q = parseAdminOffersQuery({});
+    assert.equal(q.page, 1);
+    assert.equal(q.status, null);
+  });
+
+  await t.test("normalizeAdminOfferPublicationStatus", () => {
+    assert.equal(normalizeAdminOfferPublicationStatus("draft"), "draft");
+    assert.equal(normalizeAdminOfferPublicationStatus("published"), "published");
+    assert.equal(normalizeAdminOfferPublicationStatus("hidden"), "hidden");
+    assert.equal(normalizeAdminOfferPublicationStatus("archived"), "archived");
+    assert.equal(normalizeAdminOfferPublicationStatus("deleted"), "deleted");
+    assert.equal(normalizeAdminOfferPublicationStatus("unknown_status"), "unknown");
+    assert.equal(normalizeAdminOfferPublicationStatus(""), "unknown");
   });
 
   await t.test("rejects incorrect statuses", () => {

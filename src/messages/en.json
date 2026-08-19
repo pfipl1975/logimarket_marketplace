@@ -687,7 +687,7 @@
     "fieldDescription": "Description",
     "statusDraft": "Draft",
     "statusPublished": "Published",
-    "statusHidden": "Hidden (Moderation)",
+    "statusHidden": "Hidden",
     "statusArchived": "Archived",
     "statusDeleted": "Deleted",
     "modelRfq": "Quote request (RFQ)",
@@ -713,8 +713,8 @@
     "eligibilityModelUnknown": "Invalid offer model",
     "eligibilityPriceInvalid": "Missing or invalid price for E-Commerce",
     "eligibilityOutboundInvalid": "Missing or invalid outbound link",
-    "moderationStateReadOnly": "Moderation state - read only",
-    "moderationStateDescription": "This offer is in a restricted state for security or moderation reasons. Lifecycle actions are unavailable."
+    "moderationStateReadOnly": "Read-only state",
+    "moderationStateDescription": "For this status, publication and editing actions are unavailable."
   },
   "adminOfferEdit": {
     "title": "Edit offer",

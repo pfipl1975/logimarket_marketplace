@@ -96,6 +96,17 @@ function buildFilters(query: AdminOffersQuery) {
   return conditions.length > 0 ? and(...conditions) : undefined;
 }
 
+export function normalizeAdminOfferPublicationStatus(raw: string): AdminOfferStatusFilter | "unknown" {
+  switch (raw) {
+    case "draft": return "draft";
+    case "published": return "published";
+    case "archived": return "archived";
+    case "hidden": return "hidden";
+    case "deleted": return "deleted";
+    default: return "unknown";
+  }
+}
+
 export async function getAdminOffersReadModel(
   db: NodePgDatabase<typeof schema>,
   query: AdminOffersQuery
@@ -133,18 +144,15 @@ export async function getAdminOffersReadModel(
     .offset(offset);
 
   const items: AdminOfferDto[] = itemsRows.map((row) => {
-    const rawStatus = row.offer.publicationStatus;
-    const isExpectedStatus = rawStatus === "draft" || rawStatus === "published" || rawStatus === "archived" || rawStatus === "hidden" || rawStatus === "deleted";
-    
     return {
       id: Number(row.offer.id),
       title: row.offer.title,
       partnerId: Number(row.offer.partnerId),
-      partnerName: row.partner?.companyName ?? "—",
+      partnerName: row.partner?.companyName ?? "-",
       categoryId: Number(row.offer.categoryId),
-      categoryName: row.category?.name ?? "—",
+      categoryName: row.category?.name ?? "-",
       canonicalModel: resolveCanonicalOfferModel(row.offer.offerModel, row.offer.conversionType),
-      publicationStatus: isExpectedStatus ? (rawStatus as AdminOfferStatusFilter) : "unknown",
+      publicationStatus: normalizeAdminOfferPublicationStatus(row.offer.publicationStatus),
       isActive: row.offer.isActive,
       isFeatured: row.offer.isFeatured,
       priceBrutto: row.offer.priceBrutto,

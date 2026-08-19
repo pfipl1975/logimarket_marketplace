@@ -55,7 +55,7 @@ export function parseAdminOfferPublicationInput(rawInput: unknown): AdminOfferPu
     return null;
   }
 
-  const validExpected = ["draft", "published", "archived"];
+  const validExpected = ["draft", "published", "archived", "hidden", "deleted"];
   const validTarget = ["published", "archived"];
 
   if (

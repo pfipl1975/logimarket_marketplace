@@ -4,27 +4,13 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { changeAdminOfferPublicationState } from "@/app/actions";
+import type { Dictionary } from "@/lib/i18n/types";
 
 export interface AdminOfferLifecycleActionProps {
   offerId: number;
   currentStatus: string;
   isPublishEligible?: boolean;
-  dict: {
-    publish: string;
-    publishing: string;
-    archive: string;
-    archiving: string;
-    archiveConfirm: string;
-    confirm: string;
-    cancel: string;
-    publishedSuccess: string;
-    archivedSuccess: string;
-    publishRejected: string;
-    offerInactive: string;
-    invalidTransition: string;
-    transitionConflict: string;
-    systemError: string;
-  };
+  dict: Dictionary["adminOffers"] & Dictionary["adminOfferDetail"];
 }
 
 export function AdminOfferLifecycleAction({

@@ -4,6 +4,7 @@ import { getAdminOfferDetail } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { ArrowLeft, Box, Info, Settings, FileText, List, HardDrive, Eye } from "lucide-react";
+import { AdminOfferLifecycleAction } from "@/components/admin/AdminOfferLifecycleAction";
 
 interface AdminOfferDetailPageProps {
   id: string;
@@ -63,15 +64,27 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
     ? `/oferta/${offer.id}`
     : `/${locale}/oferta/${offer.id}`;
 
-  const getStatusLabel = (status: string): string => {
-    const map: Record<string, string> = {
-      draft: dict.statusDraft,
-      published: dict.statusPublished,
-      hidden: dict.statusHidden,
-      archived: dict.statusArchived,
-      deleted: dict.statusDeleted,
-    };
-    return map[status] ?? status;
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case "draft": return dict.statusDraft;
+      case "published": return dict.statusPublished;
+      case "archived": return dict.statusArchived;
+      case "hidden": return dict.statusHidden;
+      case "deleted": return dict.statusDeleted;
+      default: return dictionary.adminOffers.statusUnknown || status;
+    }
+  };
+
+  const getReasonLabel = (reason?: string) => {
+    if (!reason) return "";
+    switch (reason) {
+      case "OFFER_INACTIVE": return dict.eligibilityInactive;
+      case "TITLE_INVALID": return dict.eligibilityTitleInvalid;
+      case "MODEL_UNKNOWN": return dict.eligibilityModelUnknown;
+      case "ECOMMERCE_PRICE_INVALID": return dict.eligibilityPriceInvalid;
+      case "OUTBOUND_URL_INVALID": return dict.eligibilityOutboundInvalid;
+      default: return reason;
+    }
   };
 
   const getModelLabel = (model: string): string => {
@@ -247,7 +260,9 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
               )}
             </div>
           </div>
-            {/* SECTION 4 - Publication workspace */}
+        </section>
+
+        {/* SECTION 4 - Publication workspace */}
         <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
           <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -262,7 +277,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
                 dict={{
                   ...dictionary.adminOffers,
                   ...dictionary.adminOfferDetail,
-                } as unknown as AdminOfferLifecycleActionProps["dict"]}
+                }}
               />
             )}
           </div>
@@ -289,7 +304,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
             {offer.publicationStatus === "draft" && (
               <div className={`p-4 rounded-industrial border ${eligibility.eligible ? "bg-green-50 border-green-200" : "bg-destructive/5 border-destructive/20"}`}>
                 <h3 className={`text-sm font-medium mb-1 ${eligibility.eligible ? "text-green-800" : "text-destructive"}`}>
-                  {eligibility.eligible ? (dict.eligibilityOk || "Oferta gotowa do publikacji") : (dict.eligibilityFailed || "Oferta nie może zostać opublikowana")}
+                  {eligibility.eligible ? dict.eligibilityOk : dict.eligibilityFailed}
                 </h3>
                 {!eligibility.eligible && (
                   <p className="text-sm text-destructive/80 mt-1">
@@ -302,10 +317,10 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
             {(offer.publicationStatus === "hidden" || offer.publicationStatus === "deleted") && (
               <div className="p-4 rounded-industrial border bg-muted border-border-industrial">
                 <h3 className="text-sm font-medium text-card-foreground mb-1">
-                  {dict.moderationStateReadOnly || "Stan moderacji - tylko do odczytu"}
+                  {dict.moderationStateReadOnly}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  {dict.moderationStateDescription || "Ta oferta znajduje się w stanie ograniczonym ze względów bezpieczeństwa lub moderacji. Akcje cyklu życia są niedostępne."}
+                  {dict.moderationStateDescription}
                 </p>
               </div>
             )}
