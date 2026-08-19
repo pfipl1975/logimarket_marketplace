@@ -42,3 +42,12 @@ test("ROUTE_CONTRACT_TEST: Async params check", () => {
   assert.ok(locCode.includes("Promise<{"), "Localized route must use Promise for params type");
   assert.ok(locCode.includes("await params"), "Localized route must await params");
 });
+
+test("REMOUNT_CONTRACT_TEST: AdminOfferEditForm has key based on offer.updatedAt", () => {
+  const pagePath = path.join(__dirname, "../../src/app/_shared/AdminOfferEditPage.tsx");
+  const pageCode = fs.readFileSync(pagePath, "utf-8");
+  assert.ok(
+    pageCode.includes("key={offer.updatedAt"),
+    "AdminOfferEditPage must pass key based on offer.updatedAt to AdminOfferEditForm"
+  );
+});

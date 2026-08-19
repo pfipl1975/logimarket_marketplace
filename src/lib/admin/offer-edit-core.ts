@@ -70,13 +70,13 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
   }
 
   // title
-  if (typeof title !== "string" || title.trim().length > 255) {
+  if (typeof title !== "string") {
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
-  if (title.trim().length === 0) {
+  const normalizedTitle = title.trim();
+  if (normalizedTitle.length === 0 || normalizedTitle.length > 255) {
     return { ok: false, code: "OFFER_TARGET_INVALID", reason: "TITLE_INVALID" };
   }
-  const normalizedTitle = title.trim();
 
   // description
   let normalizedDescription: string | null = null;
@@ -199,6 +199,10 @@ export function validateOfferEditBusinessRules(
   return { valid: true };
 }
 
+export function isAdminOfferEditableStatus(status: unknown): boolean {
+  return status === "draft" || status === "published" || status === "archived";
+}
+
 export async function executeAdminOfferEdit(
   db: NodePgDatabase<typeof schema>,
   input: AdminOfferEditInput
@@ -213,7 +217,7 @@ export async function executeAdminOfferEdit(
           title: offers.title,
           description: offers.description,
           imageUrl: offers.imageUrl,
-          priceBrutto: sql<string | null>`ROUND(${offers.priceBrutto}, 2)::text`,
+          priceBrutto: sql<string | null>`${offers.priceBrutto}::text`,
           priceOnRequest: offers.priceOnRequest,
           offerModel: offers.offerModel,
           conversionType: offers.conversionType,
@@ -230,7 +234,7 @@ export async function executeAdminOfferEdit(
 
       const current = offerRows[0];
 
-      if (current.publicationStatus !== "draft" && current.publicationStatus !== "published" && current.publicationStatus !== "archived") {
+      if (!isAdminOfferEditableStatus(current.publicationStatus)) {
         return { ok: false, code: "OFFER_NOT_EDITABLE_STATUS" };
       }
 

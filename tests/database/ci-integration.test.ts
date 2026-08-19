@@ -607,6 +607,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(resE.ok, false);
     if (!resE.ok) assert.strictEqual(resE.code, "OFFER_CONFLICT");
 
+    // Helper for no-write assertions
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const assertNoWrite = (before: any, after: any) => {
+      assert.strictEqual(after.title, before.title);
+      assert.strictEqual(after.description, before.description);
+      assert.strictEqual(after.image_url, before.image_url);
+      assert.strictEqual(after.price_brutto?.toString(), before.price_brutto?.toString());
+      assert.strictEqual(after.price_on_request, before.price_on_request);
+      assert.strictEqual(after.offer_model, before.offer_model);
+      assert.strictEqual(after.conversion_type, before.conversion_type);
+      assert.strictEqual(after.outbound_url, before.outbound_url);
+      assert.strictEqual(after.is_featured, before.is_featured);
+      assert.strictEqual(after.updated_at.getTime(), before.updated_at.getTime());
+    };
+
     // G1. HIDDEN NOT EDITABLE
     await pool.query(`UPDATE public.offers SET publication_status = 'hidden' WHERE id = $1`, [offerId]);
     const rowHidden = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
@@ -618,7 +633,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(resG1.ok, false);
     if (!resG1.ok) assert.strictEqual(resG1.code, "OFFER_NOT_EDITABLE_STATUS");
     const afterG1 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
-    assert.strictEqual(afterG1.rows[0].updated_at.getTime(), rowHidden.rows[0].updated_at.getTime());
+    assertNoWrite(rowHidden.rows[0], afterG1.rows[0]);
 
     // G2. DELETED NOT EDITABLE
     await pool.query(`UPDATE public.offers SET publication_status = 'deleted' WHERE id = $1`, [offerId]);
@@ -631,12 +646,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(resG2.ok, false);
     if (!resG2.ok) assert.strictEqual(resG2.code, "OFFER_NOT_EDITABLE_STATUS");
     const afterG2 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
-    assert.strictEqual(afterG2.rows[0].updated_at.getTime(), rowDeleted.rows[0].updated_at.getTime());
+    assertNoWrite(rowDeleted.rows[0], afterG2.rows[0]);
 
     // H1. PUBLISHED ECOMMERCE VALIDATION
     await pool.query(`UPDATE public.offers SET publication_status = 'published', updated_at = '2024-01-01T10:00:00.000Z' WHERE id = $1`, [offerId]);
+    const rowPub1 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
     const resH1 = await executeAdminOfferEdit(db, {
-      offerId, expectedUpdatedAt: '2024-01-01T10:00:00.000Z',
+      offerId, expectedUpdatedAt: rowPub1.rows[0].updated_at.toISOString(),
       title: 'Published Edit', description: null, imageUrl: null,
       priceBrutto: null, priceOnRequest: false, offerModel: 'marketplace', conversionType: 'inbound', outboundUrl: null, isFeatured: false // ecommerce without price
     });
@@ -645,10 +661,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(resH1.code, "OFFER_TARGET_INVALID");
       if (resH1.code === "OFFER_TARGET_INVALID") assert.strictEqual(resH1.reason, "ECOMMERCE_PRICE_INVALID");
     }
+    const afterH1 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assertNoWrite(rowPub1.rows[0], afterH1.rows[0]);
 
     // H2. PUBLISHED OUTBOUND VALIDATION
+    const rowPub2 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
     const resH2 = await executeAdminOfferEdit(db, {
-      offerId, expectedUpdatedAt: '2024-01-01T10:00:00.000Z',
+      offerId, expectedUpdatedAt: rowPub2.rows[0].updated_at.toISOString(),
       title: 'Published Edit', description: null, imageUrl: null,
       priceBrutto: null, priceOnRequest: true, offerModel: 'rfq', conversionType: 'outbound', outboundUrl: null, isFeatured: false // outbound without url
     });
@@ -657,8 +676,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(resH2.code, "OFFER_TARGET_INVALID");
       if (resH2.code === "OFFER_TARGET_INVALID") assert.strictEqual(resH2.reason, "OUTBOUND_URL_INVALID");
     }
+    const afterH2 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assertNoWrite(rowPub2.rows[0], afterH2.rows[0]);
     // I. CONCURRENCY ROW LOCK PROOF
-    await pool.query(`UPDATE public.offers SET title = 'Base Title', updated_at = '2024-01-01T12:00:00.000Z' WHERE id = $1`, [offerId]);
+    await pool.query(`UPDATE public.offers SET publication_status = 'draft', title = 'Base Title', updated_at = '2024-01-01T12:00:00.000Z' WHERE id = $1`, [offerId]);
     const baseExpectedDate = '2024-01-01T12:00:00.000Z';
 
     const p1 = executeAdminOfferEdit(db, {
@@ -684,6 +705,24 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     assert.strictEqual(updatedCount, 1, "Exactly one concurrent update should succeed");
     assert.strictEqual(conflictCount, 1, "Exactly one concurrent update should fail with conflict");
+
+    const finalRow = await pool.query(`SELECT title FROM public.offers WHERE id = $1`, [offerId]);
+    assert.ok(finalRow.rows[0].title === 'Update 1' || finalRow.rows[0].title === 'Update 2', "Title should be one of the updates");
+
+    // J. EXACT DB PRICE READ / 3 DECIMAL LEGACY TEST
+    await pool.query(`UPDATE public.offers SET publication_status = 'draft', price_brutto = 1.234 WHERE id = $1`, [offerId]);
+    const rowJ = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    const resJ = await executeAdminOfferEdit(db, {
+      offerId, expectedUpdatedAt: rowJ.rows[0].updated_at.toISOString(),
+      title: 'Price Precision Edit', description: null, imageUrl: null,
+      priceBrutto: '1.23', priceOnRequest: false, offerModel: 'marketplace', conversionType: 'inbound', outboundUrl: null, isFeatured: false
+    });
+    assert.strictEqual(resJ.ok, true);
+    if (resJ.ok) {
+      assert.strictEqual(resJ.code, "OFFER_UPDATED");
+      const afterJ = await pool.query(`SELECT price_brutto FROM public.offers WHERE id = $1`, [offerId]);
+      assert.strictEqual(afterJ.rows[0].price_brutto?.toString(), "1.23");
+    }
   });
 
   await pool.end();
