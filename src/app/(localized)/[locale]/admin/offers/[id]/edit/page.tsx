@@ -11,9 +11,24 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page({ params }: { params: { id: string; locale: string } }) {
-  if (!isLocale(params.locale)) {
+export default async function Page({
+  params,
+}: {
+  params: Promise<{
+    locale: string;
+    id: string;
+  }>;
+}) {
+  const { locale, id } = await params;
+
+  if (!isLocale(locale)) {
     notFound();
   }
-  return <AdminOfferEditPage id={params.id} locale={params.locale} />;
+
+  return (
+    <AdminOfferEditPage
+      id={id}
+      locale={locale}
+    />
+  );
 }

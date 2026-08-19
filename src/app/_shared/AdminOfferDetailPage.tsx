@@ -38,6 +38,7 @@ function formatPrice(val: string | null, locale: Locale): string {
 export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageProps) {
   const dictionary = await getDictionary(locale);
   const dict = dictionary.adminOfferDetail;
+  const actionEdit = dict.actionEdit;
 
   const result = await getAdminOfferDetail(id, locale);
 
@@ -119,7 +120,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
                 href={locale === "pl" ? `/admin/oferty/${offer.id}/edytuj` : `/${locale}/admin/offers/${offer.id}/edit`}
                 className="inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-industrial bg-white border border-border-industrial text-brand-navy hover:bg-brand-light-gray transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
               >
-                {dict.actionEdit ?? "Edytuj"}
+                {actionEdit}
               </Link>
             )}
           </div>

@@ -59,9 +59,9 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
       if (result.code === "OFFER_CONFLICT") {
         setConflict(true);
       } else if (result.code === "OFFER_TARGET_INVALID") {
-        setError(dict.errors[result.reason as keyof typeof dict.errors] || `Invalid target: ${result.reason}`);
+        setError(dict.errors[result.reason as keyof typeof dict.errors]);
       } else {
-        setError(dict.errors[result.code as keyof typeof dict.errors] || `Error: ${result.code}`);
+        setError(dict.errors[result.code as keyof typeof dict.errors]);
       }
     }
     setIsPending(false);
@@ -196,7 +196,7 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
                   id="priceBrutto"
                   name="priceBrutto"
                   type="text"
-                  placeholder="np. 149.99"
+                  placeholder="149.99"
                   defaultValue={offer.priceBrutto || ""}
                   className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
                 />

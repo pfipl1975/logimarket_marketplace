@@ -11,9 +11,11 @@ test("AUTH_CONTRACT_TEST: updateAdminOffer enforces requireAdmin()", () => {
   // This is a static source analysis test because Next.js headers/cache make it
   // difficult to unit-test server actions purely in node:test
   
-  const funcStart = actionsCode.indexOf('export async function updateAdminOffer');
-  const funcStr = actionsCode.slice(funcStart);
-  const functionMatch = funcStr.includes('requireAdmin()');
+  const requireAdminIndex = actionsCode.indexOf("requireAdmin()");
+  const dbImportIndex = actionsCode.indexOf("@/lib/db", requireAdminIndex);
+  const executeIndex = actionsCode.indexOf("executeAdminOfferEdit", requireAdminIndex);
   
-  assert.ok(functionMatch, "updateAdminOffer must be exported and must call requireAdmin()");
+  assert.ok(requireAdminIndex > -1, "requireAdmin() must be called");
+  assert.ok(dbImportIndex > requireAdminIndex, "requireAdmin() must be called before db import");
+  assert.ok(executeIndex > requireAdminIndex, "requireAdmin() must be called before executeAdminOfferEdit");
 });

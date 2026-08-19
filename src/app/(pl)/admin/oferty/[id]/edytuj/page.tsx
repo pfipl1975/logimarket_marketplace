@@ -10,6 +10,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function Page({ params }: { params: { id: string } }) {
-  return <AdminOfferEditPage id={params.id} locale={defaultLocale} />;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = await params;
+
+  return (
+    <AdminOfferEditPage
+      id={id}
+      locale={defaultLocale}
+    />
+  );
 }

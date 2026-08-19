@@ -41,7 +41,7 @@ export async function AdminOfferEditPage({ id, locale }: AdminOfferEditPageProps
   return (
     <div className="max-w-4xl mx-auto pb-16">
       <h1 className="text-2xl font-bold text-brand-navy mb-6">{dict.title} #{offer.id}</h1>
-      <AdminOfferEditForm offer={offer} locale={locale} dict={dict} />
+      <AdminOfferEditForm key={offer.updatedAt ?? 'never-updated'} offer={offer} locale={locale} dict={dict} />
     </div>
   );
 }
