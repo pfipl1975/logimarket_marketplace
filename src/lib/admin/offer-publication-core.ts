@@ -6,7 +6,8 @@ import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import { parseDecimalToMinorUnits } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
 
-export type PhysicalOfferPublicationStatus = "draft" | "published" | "archived";
+import type { OfferPublicationStatus } from "@/lib/schema";
+
 export type AdminOfferPublicationTarget = "published" | "archived";
 
 export type PublishEligibilityReason =
@@ -36,7 +37,7 @@ export type AdminOfferPublicationResult =
 
 export interface AdminOfferPublicationInput {
   offerId: number;
-  expectedStatus: PhysicalOfferPublicationStatus;
+  expectedStatus: OfferPublicationStatus;
   targetStatus: AdminOfferPublicationTarget;
 }
 
@@ -69,7 +70,7 @@ export function parseAdminOfferPublicationInput(rawInput: unknown): AdminOfferPu
 
   return {
     offerId: idNum,
-    expectedStatus: expectedStatus as PhysicalOfferPublicationStatus,
+    expectedStatus: expectedStatus as OfferPublicationStatus,
     targetStatus: targetStatus as AdminOfferPublicationTarget,
   };
 }
@@ -84,7 +85,7 @@ export type TransitionResult =
 
 export function evaluateOfferPublicationTransition(
   currentStatus: string,
-  expectedStatus: PhysicalOfferPublicationStatus,
+  expectedStatus: OfferPublicationStatus,
   targetStatus: AdminOfferPublicationTarget
 ): TransitionResult {
   // Invalid targets (draft cannot be target)

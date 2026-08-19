@@ -1,14 +1,14 @@
-"use strict";
 "use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { changeAdminOfferPublicationState } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
+import type { OfferPublicationStatus } from "@/lib/schema";
 
 export interface AdminOfferLifecycleActionProps {
   offerId: number;
-  currentStatus: string;
+  currentStatus: OfferPublicationStatus | "unknown";
   isPublishEligible?: boolean;
   dict: Dictionary["adminOffers"] & Dictionary["adminOfferDetail"];
 }

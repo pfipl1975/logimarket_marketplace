@@ -5,6 +5,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { ArrowLeft, Box, Info, Settings, FileText, List, HardDrive, Eye } from "lucide-react";
 import { AdminOfferLifecycleAction } from "@/components/admin/AdminOfferLifecycleAction";
+import { evaluateOfferPublishEligibility } from "@/lib/admin/offer-publication-core";
 
 interface AdminOfferDetailPageProps {
   id: string;
@@ -64,6 +65,16 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
     ? `/oferta/${offer.id}`
     : `/${locale}/oferta/${offer.id}`;
 
+  const eligibility = evaluateOfferPublishEligibility({
+    isActive: offer.isActive,
+    title: offer.title,
+    offerModel: offer.rawOfferModel,
+    conversionType: offer.rawConversionType,
+    priceOnRequest: offer.priceOnRequest,
+    normalizedPrice: offer.priceBrutto,
+    outboundUrl: offer.outboundUrl,
+  });
+
   const getStatusLabel = (status: string) => {
     switch (status) {
       case "draft": return dict.statusDraft;
@@ -71,7 +82,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
       case "archived": return dict.statusArchived;
       case "hidden": return dict.statusHidden;
       case "deleted": return dict.statusDeleted;
-      default: return dictionary.adminOffers.statusUnknown || status;
+      default: return dictionary.adminOffers.statusUnknown;
     }
   };
 

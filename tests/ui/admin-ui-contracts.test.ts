@@ -19,6 +19,13 @@ describe("UI Contract Tests", () => {
     
     assert.ok(detailSrc.includes("sectionLifecycle"), "Must render lifecycle section");
     
+    assert.ok(detailSrc.includes("import { evaluateOfferPublishEligibility }"), "Must import evaluateOfferPublishEligibility");
+    assert.ok(detailSrc.includes("evaluateOfferPublishEligibility({"), "Must call evaluateOfferPublishEligibility");
+    assert.ok(detailSrc.includes("isPublishEligible={eligibility.eligible}"), "Must pass eligibility.eligible to AdminOfferLifecycleAction");
+
+    assert.ok(!detailSrc.includes("dict.statusUnknown || status;"), "Unknown status must NOT fall back to raw status");
+    assert.ok(detailSrc.match(/default:\s*return\s+(dictionary\.adminOffers\.)?statusUnknown;/), "Unknown status must strictly use dictionary value without raw fallback");
+
     assert.ok(
       detailSrc.includes("offer.publicationStatus === \"draft\" || offer.publicationStatus === \"published\""),
       "AdminOfferLifecycleAction must only render for draft or published"

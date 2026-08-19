@@ -148,5 +148,21 @@ test("Admin Offers Query Parser and Builder", async (t) => {
     // Zmiana filtra (status) -> reset do page 1
     const url2 = buildAdminOffersUrl("/base", { status: "published" }, current);
     assert.equal(url2, "/base?status=published"); // page 1 is omitted
+
+    // Check hidden and deleted page-only changes
+    const currentHidden = parseAdminOffersQuery({ status: "hidden", page: "3" });
+    const urlHidden = buildAdminOffersUrl("/base", { page: 4 }, currentHidden);
+    assert.equal(urlHidden, "/base?status=hidden&page=4");
+
+    const currentDeleted = parseAdminOffersQuery({ status: "deleted", page: "3" });
+    const urlDeleted = buildAdminOffersUrl("/base", { page: 4 }, currentDeleted);
+    assert.equal(urlDeleted, "/base?status=deleted&page=4");
+
+    // Check filter switch to hidden/deleted resets page
+    const urlSwitchHidden = buildAdminOffersUrl("/base", { status: "hidden" }, current);
+    assert.equal(urlSwitchHidden, "/base?status=hidden");
+
+    const urlSwitchDeleted = buildAdminOffersUrl("/base", { status: "deleted" }, current);
+    assert.equal(urlSwitchDeleted, "/base?status=deleted");
   });
 });
