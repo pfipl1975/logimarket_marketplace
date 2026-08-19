@@ -68,6 +68,8 @@ export async function AdminOffersPage({ locale, searchParams, dict, basePath }: 
               <option value="draft">{dict.statusDraft}</option>
               <option value="published">{dict.statusPublished}</option>
               <option value="archived">{dict.statusArchived}</option>
+              <option value="hidden">{dict.statusHidden}</option>
+              <option value="deleted">{dict.statusDeleted}</option>
             </select>
           </div>
 

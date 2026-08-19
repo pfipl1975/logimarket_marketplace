@@ -509,7 +509,9 @@
     "offerInactive": "L'offre est inactive.",
     "invalidTransition": "Transition de statut invalide.",
     "transitionConflict": "Conflit de statut. Veuillez rafraîchir.",
-    "systemError": "Une erreur système est survenue."
+    "systemError": "Une erreur système est survenue.",
+    "statusHidden": "Masqué",
+    "statusDeleted": "Supprimé"
   },
   "adminPartners": {
     "metaTitle": "Partenaires",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Non assigné à la catégorie",
     "detailLink": "Détails",
     "fieldPriceBruttoRaw": "Prix TTC (raw)",
-    "actionEdit": "Modifier"
+    "actionEdit": "Modifier",
+    "cancel": "Annuler",
+    "confirm": "Confirmer",
+    "eligibilityOk": "Offre prête à être publiée",
+    "eligibilityFailed": "L'offre ne peut pas être publiée",
+    "eligibilityInactive": "L'offre est inactive",
+    "eligibilityTitleInvalid": "Titre manquant ou invalide",
+    "eligibilityModelUnknown": "Modèle d'offre invalide",
+    "eligibilityPriceInvalid": "Prix manquant ou invalide pour le E-Commerce",
+    "eligibilityOutboundInvalid": "Lien sortant manquant ou invalide",
+    "moderationStateReadOnly": "État en lecture seule",
+    "moderationStateDescription": "Pour ce statut, les actions de publication et d'édition ne sont pas disponibles."
   },
   "adminOfferEdit": {
     "title": "Modifier l'offre",

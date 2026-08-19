@@ -509,7 +509,9 @@
     "offerInactive": "报价未激活。",
     "invalidTransition": "无效的状态转换。",
     "transitionConflict": "状态冲突。请刷新。",
-    "systemError": "系统发生错误。"
+    "systemError": "系统发生错误。",
+    "statusHidden": "隐藏",
+    "statusDeleted": "已删除"
   },
   "adminPartners": {
     "metaTitle": "合作伙伴",
@@ -685,7 +687,7 @@
     "fieldDescription": "描述",
     "statusDraft": "草稿",
     "statusPublished": "已发布",
-    "statusHidden": "已隐藏",
+    "statusHidden": "隐藏",
     "statusArchived": "已归档",
     "statusDeleted": "已删除",
     "modelRfq": "询价（RFQ）",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "未分配到分类",
     "detailLink": "详情",
     "fieldPriceBruttoRaw": "含税价格（原始）",
-    "actionEdit": "编辑"
+    "actionEdit": "编辑",
+    "cancel": "取消",
+    "confirm": "确认",
+    "eligibilityOk": "优惠已准备好发布",
+    "eligibilityFailed": "优惠无法发布",
+    "eligibilityInactive": "优惠未激活",
+    "eligibilityTitleInvalid": "标题缺失或无效",
+    "eligibilityModelUnknown": "无效的优惠模型",
+    "eligibilityPriceInvalid": "电子商务价格缺失或无效",
+    "eligibilityOutboundInvalid": "出站链接缺失或无效",
+    "moderationStateReadOnly": "只读状态",
+    "moderationStateDescription": "对于此状态，发布和编辑操作不可用。"
   },
   "adminOfferEdit": {
     "title": "编辑优惠",

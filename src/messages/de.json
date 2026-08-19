@@ -509,7 +509,9 @@
     "offerInactive": "Angebot ist inaktiv.",
     "invalidTransition": "Ungültiger Statusübergang.",
     "transitionConflict": "Statuskonflikt. Bitte aktualisieren.",
-    "systemError": "Systemfehler aufgetreten."
+    "systemError": "Systemfehler aufgetreten.",
+    "statusHidden": "Versteckt",
+    "statusDeleted": "Gelöscht"
   },
   "adminPartners": {
     "metaTitle": "Partner",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Nicht der Kategorie zugeordnet",
     "detailLink": "Details",
     "fieldPriceBruttoRaw": "Bruttopreis (raw)",
-    "actionEdit": "Bearbeiten"
+    "actionEdit": "Bearbeiten",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "eligibilityOk": "Angebot zur Veröffentlichung bereit",
+    "eligibilityFailed": "Angebot kann nicht veröffentlicht werden",
+    "eligibilityInactive": "Angebot ist inaktiv",
+    "eligibilityTitleInvalid": "Fehlender oder ungültiger Titel",
+    "eligibilityModelUnknown": "Ungültiges Angebotsmodell",
+    "eligibilityPriceInvalid": "Fehlender oder ungültiger Preis für E-Commerce",
+    "eligibilityOutboundInvalid": "Fehlender oder ungültiger ausgehender Link",
+    "moderationStateReadOnly": "Schreibgeschützter Zustand",
+    "moderationStateDescription": "Für diesen Status sind Veröffentlichungs- und Bearbeitungsaktionen nicht verfügbar."
   },
   "adminOfferEdit": {
     "title": "Angebot bearbeiten",

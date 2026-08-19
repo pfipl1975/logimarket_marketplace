@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { parseAdminOffersQuery, buildAdminOffersUrl } from "../../src/lib/admin/offers-query";
+import { normalizeAdminOfferPublicationStatus } from "@/lib/admin/offers-read-model-core";
 
 test("Admin Offers Query Parser and Builder", async (t) => {
   await t.test("defaults to safe values when empty", () => {
@@ -60,14 +61,31 @@ test("Admin Offers Query Parser and Builder", async (t) => {
     assert.equal(q.model, null);
   });
 
-  await t.test("parses correct statuses", () => {
-    const q = parseAdminOffersQuery({ status: "published" });
-    assert.equal(q.status, "published");
+  await t.test("empty object defaults", () => {
+    const q = parseAdminOffersQuery({});
+    assert.equal(q.page, 1);
+    assert.equal(q.status, null);
+  });
+
+  await t.test("normalizeAdminOfferPublicationStatus", () => {
+    assert.equal(normalizeAdminOfferPublicationStatus("draft"), "draft");
+    assert.equal(normalizeAdminOfferPublicationStatus("published"), "published");
+    assert.equal(normalizeAdminOfferPublicationStatus("hidden"), "hidden");
+    assert.equal(normalizeAdminOfferPublicationStatus("archived"), "archived");
+    assert.equal(normalizeAdminOfferPublicationStatus("deleted"), "deleted");
+    assert.equal(normalizeAdminOfferPublicationStatus("unknown_status"), "unknown");
+    assert.equal(normalizeAdminOfferPublicationStatus(""), "unknown");
   });
 
   await t.test("rejects incorrect statuses", () => {
-    const q = parseAdminOffersQuery({ status: "deleted" }); // Not allowed in this sprint
-    assert.equal(q.status, null);
+    const q1 = parseAdminOffersQuery({ status: "deleted" });
+    assert.equal(q1.status, "deleted");
+    
+    const q2 = parseAdminOffersQuery({ status: "hidden" });
+    assert.equal(q2.status, "hidden");
+
+    const q3 = parseAdminOffersQuery({ status: "unknown_status" });
+    assert.equal(q3.status, null);
   });
 
   await t.test("partner and category must be positive safe integers", () => {
@@ -130,5 +148,21 @@ test("Admin Offers Query Parser and Builder", async (t) => {
     // Zmiana filtra (status) -> reset do page 1
     const url2 = buildAdminOffersUrl("/base", { status: "published" }, current);
     assert.equal(url2, "/base?status=published"); // page 1 is omitted
+
+    // Check hidden and deleted page-only changes
+    const currentHidden = parseAdminOffersQuery({ status: "hidden", page: "3" });
+    const urlHidden = buildAdminOffersUrl("/base", { page: 4 }, currentHidden);
+    assert.equal(urlHidden, "/base?status=hidden&page=4");
+
+    const currentDeleted = parseAdminOffersQuery({ status: "deleted", page: "3" });
+    const urlDeleted = buildAdminOffersUrl("/base", { page: 4 }, currentDeleted);
+    assert.equal(urlDeleted, "/base?status=deleted&page=4");
+
+    // Check filter switch to hidden/deleted resets page
+    const urlSwitchHidden = buildAdminOffersUrl("/base", { status: "hidden" }, current);
+    assert.equal(urlSwitchHidden, "/base?status=hidden");
+
+    const urlSwitchDeleted = buildAdminOffersUrl("/base", { status: "deleted" }, current);
+    assert.equal(urlSwitchDeleted, "/base?status=deleted");
   });
 });

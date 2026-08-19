@@ -1,6 +1,6 @@
 export const ADMIN_OFFERS_PAGE_SIZE = 25;
 
-export type AdminOfferStatusFilter = "draft" | "published" | "archived";
+export type AdminOfferStatusFilter = "draft" | "published" | "archived" | "hidden" | "deleted";
 export type AdminOfferModelFilter = "rfq" | "ecommerce" | "outbound" | "unknown";
 
 export interface AdminOffersQuery {
@@ -31,7 +31,7 @@ function parsePositiveSafeInteger(val: unknown): number | null {
 
 function parseStatus(val: unknown): AdminOfferStatusFilter | null {
   const str = getSingleString(val);
-  if (str === "draft" || str === "published" || str === "archived") return str;
+  if (str === "draft" || str === "published" || str === "archived" || str === "hidden" || str === "deleted") return str;
   return null;
 }
 

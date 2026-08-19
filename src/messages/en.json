@@ -509,7 +509,9 @@
     "offerInactive": "Offer is inactive.",
     "invalidTransition": "Invalid status transition.",
     "transitionConflict": "Status conflict. Please refresh.",
-    "systemError": "System error occurred."
+    "systemError": "System error occurred.",
+    "statusHidden": "Hidden",
+    "statusDeleted": "Deleted"
   },
   "adminPartners": {
     "metaTitle": "Partners",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Not assigned to category",
     "detailLink": "Details",
     "fieldPriceBruttoRaw": "Gross price (raw)",
-    "actionEdit": "Edit"
+    "actionEdit": "Edit",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "eligibilityOk": "Offer ready to publish",
+    "eligibilityFailed": "Offer cannot be published",
+    "eligibilityInactive": "Offer is inactive",
+    "eligibilityTitleInvalid": "Missing or invalid title",
+    "eligibilityModelUnknown": "Invalid offer model",
+    "eligibilityPriceInvalid": "Missing or invalid price for E-Commerce",
+    "eligibilityOutboundInvalid": "Missing or invalid outbound link",
+    "moderationStateReadOnly": "Read-only state",
+    "moderationStateDescription": "For this status, publication and editing actions are unavailable."
   },
   "adminOfferEdit": {
     "title": "Edit offer",

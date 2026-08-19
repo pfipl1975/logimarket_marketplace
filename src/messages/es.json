@@ -509,7 +509,9 @@
     "offerInactive": "La oferta está inactiva.",
     "invalidTransition": "Transición de estado inválida.",
     "transitionConflict": "Conflicto de estado. Por favor, actualiza.",
-    "systemError": "Ocurrió un error en el sistema."
+    "systemError": "Ocurrió un error en el sistema.",
+    "statusHidden": "Oculto",
+    "statusDeleted": "Eliminado"
   },
   "adminPartners": {
     "metaTitle": "Socios",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "No asignado a la categoría",
     "detailLink": "Detalles",
     "fieldPriceBruttoRaw": "Precio bruto (raw)",
-    "actionEdit": "Editar"
+    "actionEdit": "Editar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "eligibilityOk": "Oferta lista para publicar",
+    "eligibilityFailed": "La oferta no se puede publicar",
+    "eligibilityInactive": "La oferta está inactiva",
+    "eligibilityTitleInvalid": "Título faltante o inválido",
+    "eligibilityModelUnknown": "Modelo de oferta inválido",
+    "eligibilityPriceInvalid": "Precio faltante o inválido para E-Commerce",
+    "eligibilityOutboundInvalid": "Enlace saliente faltante o inválido",
+    "moderationStateReadOnly": "Estado de solo lectura",
+    "moderationStateDescription": "Para este estado, las acciones de publicación y edición no están disponibles."
   },
   "adminOfferEdit": {
     "title": "Editar oferta",

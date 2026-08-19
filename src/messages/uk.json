@@ -509,7 +509,9 @@
     "offerInactive": "Пропозиція неактивна.",
     "invalidTransition": "Неприпустима зміна статусу.",
     "transitionConflict": "Конфлікт статусу. Оновіть сторінку.",
-    "systemError": "Сталася системна помилка."
+    "systemError": "Сталася системна помилка.",
+    "statusHidden": "Приховано",
+    "statusDeleted": "Видалено"
   },
   "adminPartners": {
     "metaTitle": "Партнери",
@@ -685,9 +687,9 @@
     "fieldDescription": "Опис",
     "statusDraft": "Чернетка",
     "statusPublished": "Опублікована",
-    "statusHidden": "Прихована",
+    "statusHidden": "Приховано",
     "statusArchived": "Архівна",
-    "statusDeleted": "Видалена",
+    "statusDeleted": "Видалено",
     "modelRfq": "Запит ціни (RFQ)",
     "modelEcommerce": "E-commerce",
     "modelOutbound": "Вихідна",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Не призначено до категорії",
     "detailLink": "Деталі",
     "fieldPriceBruttoRaw": "Ціна брутто (raw)",
-    "actionEdit": "Редагувати"
+    "actionEdit": "Редагувати",
+    "cancel": "Скасувати",
+    "confirm": "Підтвердити",
+    "eligibilityOk": "Пропозиція готова до публікації",
+    "eligibilityFailed": "Пропозиція не може бути опублікована",
+    "eligibilityInactive": "Пропозиція неактивна",
+    "eligibilityTitleInvalid": "Відсутній або недійсний заголовок",
+    "eligibilityModelUnknown": "Недійсна модель пропозиції",
+    "eligibilityPriceInvalid": "Відсутня або недійсна ціна для E-Commerce",
+    "eligibilityOutboundInvalid": "Відсутнє або недійсне вихідне посилання",
+    "moderationStateReadOnly": "Стан лише для читання",
+    "moderationStateDescription": "Для цього статусу дії публікації та редагування недоступні."
   },
   "adminOfferEdit": {
     "title": "Редагувати пропозицію",
