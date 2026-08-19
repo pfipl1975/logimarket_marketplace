@@ -509,7 +509,9 @@
     "offerInactive": "报价未激活。",
     "invalidTransition": "无效的状态转换。",
     "transitionConflict": "状态冲突。请刷新。",
-    "systemError": "系统发生错误。"
+    "systemError": "系统发生错误。",
+    "statusHidden": "Hidden",
+    "statusDeleted": "Deleted"
   },
   "adminPartners": {
     "metaTitle": "合作伙伴",
@@ -685,9 +687,9 @@
     "fieldDescription": "描述",
     "statusDraft": "草稿",
     "statusPublished": "已发布",
-    "statusHidden": "已隐藏",
+    "statusHidden": "Hidden (Moderation)",
     "statusArchived": "已归档",
-    "statusDeleted": "已删除",
+    "statusDeleted": "Deleted",
     "modelRfq": "询价（RFQ）",
     "modelEcommerce": "电子商务",
     "modelOutbound": "外链",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "未分配到分类",
     "detailLink": "详情",
     "fieldPriceBruttoRaw": "含税价格（原始）",
-    "actionEdit": "编辑"
+    "actionEdit": "编辑",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "eligibilityOk": "Offer ready to publish",
+    "eligibilityFailed": "Offer cannot be published",
+    "eligibilityInactive": "Offer is inactive",
+    "eligibilityTitleInvalid": "Missing or invalid title",
+    "eligibilityModelUnknown": "Invalid offer model",
+    "eligibilityPriceInvalid": "Missing or invalid price for E-Commerce",
+    "eligibilityOutboundInvalid": "Missing or invalid outbound link",
+    "moderationStateReadOnly": "Moderation state - read only",
+    "moderationStateDescription": "This offer is in a restricted state for security or moderation reasons. Lifecycle actions are unavailable."
   },
   "adminOfferEdit": {
     "title": "编辑优惠",

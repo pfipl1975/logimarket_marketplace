@@ -509,7 +509,9 @@
     "offerInactive": "Пропозиція неактивна.",
     "invalidTransition": "Неприпустима зміна статусу.",
     "transitionConflict": "Конфлікт статусу. Оновіть сторінку.",
-    "systemError": "Сталася системна помилка."
+    "systemError": "Сталася системна помилка.",
+    "statusHidden": "Hidden",
+    "statusDeleted": "Deleted"
   },
   "adminPartners": {
     "metaTitle": "Партнери",
@@ -685,9 +687,9 @@
     "fieldDescription": "Опис",
     "statusDraft": "Чернетка",
     "statusPublished": "Опублікована",
-    "statusHidden": "Прихована",
+    "statusHidden": "Hidden (Moderation)",
     "statusArchived": "Архівна",
-    "statusDeleted": "Видалена",
+    "statusDeleted": "Deleted",
     "modelRfq": "Запит ціни (RFQ)",
     "modelEcommerce": "E-commerce",
     "modelOutbound": "Вихідна",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Не призначено до категорії",
     "detailLink": "Деталі",
     "fieldPriceBruttoRaw": "Ціна брутто (raw)",
-    "actionEdit": "Редагувати"
+    "actionEdit": "Редагувати",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "eligibilityOk": "Offer ready to publish",
+    "eligibilityFailed": "Offer cannot be published",
+    "eligibilityInactive": "Offer is inactive",
+    "eligibilityTitleInvalid": "Missing or invalid title",
+    "eligibilityModelUnknown": "Invalid offer model",
+    "eligibilityPriceInvalid": "Missing or invalid price for E-Commerce",
+    "eligibilityOutboundInvalid": "Missing or invalid outbound link",
+    "moderationStateReadOnly": "Moderation state - read only",
+    "moderationStateDescription": "This offer is in a restricted state for security or moderation reasons. Lifecycle actions are unavailable."
   },
   "adminOfferEdit": {
     "title": "Редагувати пропозицію",

@@ -509,7 +509,9 @@
     "offerInactive": "Oferta jest nieaktywna.",
     "invalidTransition": "Niedozwolona zmiana statusu.",
     "transitionConflict": "Konflikt statusu. Odśwież stronę.",
-    "systemError": "Wystąpił błąd systemu."
+    "systemError": "Wystąpił błąd systemu.",
+    "statusHidden": "Ukryta",
+    "statusDeleted": "Usunięta"
   },
   "adminPartners": {
     "metaTitle": "Partnerzy",
@@ -685,7 +687,7 @@
     "fieldDescription": "Opis",
     "statusDraft": "Szkic",
     "statusPublished": "Opublikowana",
-    "statusHidden": "Ukryta",
+    "statusHidden": "Ukryta (Moderacja)",
     "statusArchived": "Archiwalna",
     "statusDeleted": "Usunięta",
     "modelRfq": "Zapytanie (RFQ)",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Nieprzypisany do kategorii",
     "detailLink": "Szczegóły",
     "fieldPriceBruttoRaw": "Cena brutto (raw)",
-    "actionEdit": "Edytuj"
+    "actionEdit": "Edytuj",
+    "cancel": "Anuluj",
+    "confirm": "Potwierdź",
+    "eligibilityOk": "Oferta gotowa do publikacji",
+    "eligibilityFailed": "Oferta nie może zostać opublikowana",
+    "eligibilityInactive": "Oferta jest nieaktywna",
+    "eligibilityTitleInvalid": "Brak lub nieprawidłowy tytuł",
+    "eligibilityModelUnknown": "Nieprawidłowy model oferty",
+    "eligibilityPriceInvalid": "Brak lub nieprawidłowa cena dla E-Commerce",
+    "eligibilityOutboundInvalid": "Brak lub nieprawidłowy link wychodzący",
+    "moderationStateReadOnly": "Stan moderacji - tylko do odczytu",
+    "moderationStateDescription": "Ta oferta znajduje się w stanie ograniczonym ze względów bezpieczeństwa lub moderacji. Akcje cyklu życia są niedostępne."
   },
   "adminOfferEdit": {
     "title": "Edytuj ofertę",

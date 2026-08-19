@@ -247,31 +247,68 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
               )}
             </div>
           </div>
-        </section>
-
-        {/* SECTION 4 — Publication lifecycle */}
+            {/* SECTION 4 - Publication workspace */}
         <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
-          <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center gap-2">
-            <List className="h-5 w-5 text-brand-teal" />
-            <h2 className="font-medium text-brand-navy">{dict.sectionLifecycle}</h2>
+          <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <List className="h-5 w-5 text-brand-teal" />
+              <h2 className="font-medium text-brand-navy">{dict.sectionLifecycle}</h2>
+            </div>
+            {(offer.publicationStatus === "draft" || offer.publicationStatus === "published") && (
+              <AdminOfferLifecycleAction
+                offerId={offer.id}
+                currentStatus={offer.publicationStatus}
+                isPublishEligible={eligibility.eligible}
+                dict={{
+                  ...dictionary.adminOffers,
+                  ...dictionary.adminOfferDetail,
+                } as unknown as AdminOfferLifecycleActionProps["dict"]}
+              />
+            )}
           </div>
-          <div className="p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPublicationStatus}</p>
-              <p className="text-sm font-medium text-brand-navy">{getStatusLabel(offer.publicationStatus)}</p>
+          <div className="p-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPublicationStatus}</p>
+                <p className="text-sm font-medium text-brand-navy">{getStatusLabel(offer.publicationStatus)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPublishedAt}</p>
+                <p className="text-sm text-brand-navy">{formatDate(offer.publishedAt, locale)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldArchivedAt}</p>
+                <p className="text-sm text-brand-navy">{formatDate(offer.archivedAt, locale)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldDeletedAt}</p>
+                <p className="text-sm text-brand-navy">{formatDate(offer.deletedAt, locale)}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPublishedAt}</p>
-              <p className="text-sm text-brand-navy">{formatDate(offer.publishedAt, locale)}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldArchivedAt}</p>
-              <p className="text-sm text-brand-navy">{formatDate(offer.archivedAt, locale)}</p>
-            </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldDeletedAt}</p>
-              <p className="text-sm text-brand-navy">{formatDate(offer.deletedAt, locale)}</p>
-            </div>
+
+            {offer.publicationStatus === "draft" && (
+              <div className={`p-4 rounded-industrial border ${eligibility.eligible ? "bg-green-50 border-green-200" : "bg-destructive/5 border-destructive/20"}`}>
+                <h3 className={`text-sm font-medium mb-1 ${eligibility.eligible ? "text-green-800" : "text-destructive"}`}>
+                  {eligibility.eligible ? (dict.eligibilityOk || "Oferta gotowa do publikacji") : (dict.eligibilityFailed || "Oferta nie może zostać opublikowana")}
+                </h3>
+                {!eligibility.eligible && (
+                  <p className="text-sm text-destructive/80 mt-1">
+                    {getReasonLabel(eligibility.reason)}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {(offer.publicationStatus === "hidden" || offer.publicationStatus === "deleted") && (
+              <div className="p-4 rounded-industrial border bg-muted border-border-industrial">
+                <h3 className="text-sm font-medium text-card-foreground mb-1">
+                  {dict.moderationStateReadOnly || "Stan moderacji - tylko do odczytu"}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {dict.moderationStateDescription || "Ta oferta znajduje się w stanie ograniczonym ze względów bezpieczeństwa lub moderacji. Akcje cyklu życia są niedostępne."}
+                </p>
+              </div>
+            )}
           </div>
         </section>
 

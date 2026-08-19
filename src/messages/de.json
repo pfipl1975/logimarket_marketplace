@@ -509,7 +509,9 @@
     "offerInactive": "Angebot ist inaktiv.",
     "invalidTransition": "Ungültiger Statusübergang.",
     "transitionConflict": "Statuskonflikt. Bitte aktualisieren.",
-    "systemError": "Systemfehler aufgetreten."
+    "systemError": "Systemfehler aufgetreten.",
+    "statusHidden": "Hidden",
+    "statusDeleted": "Deleted"
   },
   "adminPartners": {
     "metaTitle": "Partner",
@@ -685,9 +687,9 @@
     "fieldDescription": "Beschreibung",
     "statusDraft": "Entwurf",
     "statusPublished": "Veröffentlicht",
-    "statusHidden": "Versteckt",
+    "statusHidden": "Hidden (Moderation)",
     "statusArchived": "Archiviert",
-    "statusDeleted": "Gelöscht",
+    "statusDeleted": "Deleted",
     "modelRfq": "Angebotsanfrage (RFQ)",
     "modelEcommerce": "E-Commerce",
     "modelOutbound": "Outbound",
@@ -701,7 +703,18 @@
     "unassignedAttribute": "Nicht der Kategorie zugeordnet",
     "detailLink": "Details",
     "fieldPriceBruttoRaw": "Bruttopreis (raw)",
-    "actionEdit": "Bearbeiten"
+    "actionEdit": "Bearbeiten",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "eligibilityOk": "Offer ready to publish",
+    "eligibilityFailed": "Offer cannot be published",
+    "eligibilityInactive": "Offer is inactive",
+    "eligibilityTitleInvalid": "Missing or invalid title",
+    "eligibilityModelUnknown": "Invalid offer model",
+    "eligibilityPriceInvalid": "Missing or invalid price for E-Commerce",
+    "eligibilityOutboundInvalid": "Missing or invalid outbound link",
+    "moderationStateReadOnly": "Moderation state - read only",
+    "moderationStateDescription": "This offer is in a restricted state for security or moderation reasons. Lifecycle actions are unavailable."
   },
   "adminOfferEdit": {
     "title": "Angebot bearbeiten",

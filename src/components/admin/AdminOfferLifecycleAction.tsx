@@ -1,18 +1,22 @@
+"use strict";
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { changeAdminOfferPublicationState } from "@/app/actions";
-import type { OfferPublicationStatus } from "@/lib/schema";
 
 export interface AdminOfferLifecycleActionProps {
   offerId: number;
-  currentStatus: OfferPublicationStatus;
+  currentStatus: string;
+  isPublishEligible?: boolean;
   dict: {
     publish: string;
     publishing: string;
     archive: string;
     archiving: string;
     archiveConfirm: string;
+    confirm: string;
+    cancel: string;
     publishedSuccess: string;
     archivedSuccess: string;
     publishRejected: string;
@@ -26,16 +30,20 @@ export interface AdminOfferLifecycleActionProps {
 export function AdminOfferLifecycleAction({
   offerId,
   currentStatus,
+  isPublishEligible = false,
   dict,
 }: AdminOfferLifecycleActionProps) {
+  const router = useRouter();
   const [pending, setPending] = useState(false);
+  const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
-  if (currentStatus === "archived") {
+  if (currentStatus !== "draft" && currentStatus !== "published") {
     return null;
   }
 
   const handlePublish = async () => {
+    if (!isPublishEligible) return;
     setPending(true);
     setMessage(null);
     try {
@@ -47,6 +55,7 @@ export function AdminOfferLifecycleAction({
 
       if (result.ok) {
         setMessage({ text: dict.publishedSuccess, isError: false });
+        if (result.changed) router.refresh();
       } else {
         const errorText = getErrorText(result.code, result.reason);
         setMessage({ text: errorText, isError: true });
@@ -59,10 +68,6 @@ export function AdminOfferLifecycleAction({
   };
 
   const handleArchive = async () => {
-    if (!window.confirm(dict.archiveConfirm)) {
-      return;
-    }
-
     setPending(true);
     setMessage(null);
     try {
@@ -74,12 +79,16 @@ export function AdminOfferLifecycleAction({
 
       if (result.ok) {
         setMessage({ text: dict.archivedSuccess, isError: false });
+        setShowArchiveConfirm(false);
+        if (result.changed) router.refresh();
       } else {
         const errorText = getErrorText(result.code, result.reason);
         setMessage({ text: errorText, isError: true });
+        setShowArchiveConfirm(false);
       }
     } catch {
       setMessage({ text: dict.systemError, isError: true });
+      setShowArchiveConfirm(false);
     } finally {
       setPending(false);
     }
@@ -96,31 +105,53 @@ export function AdminOfferLifecycleAction({
   };
 
   return (
-    <div className="flex flex-col gap-1 items-end">
+    <div className="flex flex-col gap-2">
       {currentStatus === "draft" && (
         <button
           onClick={handlePublish}
-          disabled={pending}
-          className="text-xs font-semibold bg-[#147487] text-white px-2 py-1 rounded hover:bg-[#105d6c] disabled:opacity-50"
+          disabled={pending || !isPublishEligible}
+          className="inline-flex justify-center items-center px-4 py-2 bg-brand-teal text-primary-foreground text-sm font-medium rounded-industrial hover:bg-brand-teal/90 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {pending ? dict.publishing : dict.publish}
         </button>
       )}
 
-      {currentStatus === "published" && (
+      {currentStatus === "published" && !showArchiveConfirm && (
         <button
-          onClick={handleArchive}
+          onClick={() => setShowArchiveConfirm(true)}
           disabled={pending}
-          className="text-xs font-semibold border border-red-200 text-red-600 bg-red-50 px-2 py-1 rounded hover:bg-red-100 disabled:opacity-50"
+          className="inline-flex justify-center items-center px-4 py-2 border border-destructive text-destructive bg-destructive/5 text-sm font-medium rounded-industrial hover:bg-destructive/10 transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {pending ? dict.archiving : dict.archive}
+          {dict.archive}
         </button>
+      )}
+
+      {currentStatus === "published" && showArchiveConfirm && (
+        <div className="flex flex-col gap-3 p-3 bg-card border border-border-industrial rounded-industrial shadow-sm">
+          <p className="text-sm text-card-foreground">{dict.archiveConfirm}</p>
+          <div className="flex gap-2 justify-end">
+            <button
+              onClick={() => setShowArchiveConfirm(false)}
+              disabled={pending}
+              className="px-3 py-1.5 border border-input bg-background text-sm font-medium rounded-industrial hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              {dict.cancel}
+            </button>
+            <button
+              onClick={handleArchive}
+              disabled={pending}
+              className="px-3 py-1.5 bg-destructive text-destructive-foreground text-sm font-medium rounded-industrial hover:bg-destructive/90 transition-colors disabled:opacity-50"
+            >
+              {pending ? dict.archiving : dict.confirm}
+            </button>
+          </div>
+        </div>
       )}
 
       {message && (
         <p
-          className={`text-[10px] mt-1 ${
-            message.isError ? "text-red-600" : "text-green-600"
+          className={`text-sm ${
+            message.isError ? "text-destructive" : "text-brand-teal"
           }`}
         >
           {message.text}

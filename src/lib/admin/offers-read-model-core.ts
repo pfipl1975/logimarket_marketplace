@@ -134,7 +134,7 @@ export async function getAdminOffersReadModel(
 
   const items: AdminOfferDto[] = itemsRows.map((row) => {
     const rawStatus = row.offer.publicationStatus;
-    const isExpectedStatus = rawStatus === "draft" || rawStatus === "published" || rawStatus === "archived";
+    const isExpectedStatus = rawStatus === "draft" || rawStatus === "published" || rawStatus === "archived" || rawStatus === "hidden" || rawStatus === "deleted";
     
     return {
       id: Number(row.offer.id),

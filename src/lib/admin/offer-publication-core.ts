@@ -178,7 +178,7 @@ export async function executeOfferPublicationStateChange(
           offerModel: offers.offerModel,
           conversionType: offers.conversionType,
           priceOnRequest: offers.priceOnRequest,
-          normalizedPrice: sql<string | null>`ROUND(${offers.priceBrutto}, 2)::text`,
+          normalizedPrice: sql<string | null>`${offers.priceBrutto}::text`,
           outboundUrl: offers.outboundUrl,
         })
         .from(offers)

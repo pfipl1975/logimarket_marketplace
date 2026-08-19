@@ -66,8 +66,14 @@ test("Admin Offers Query Parser and Builder", async (t) => {
   });
 
   await t.test("rejects incorrect statuses", () => {
-    const q = parseAdminOffersQuery({ status: "deleted" }); // Not allowed in this sprint
-    assert.equal(q.status, null);
+    const q1 = parseAdminOffersQuery({ status: "deleted" });
+    assert.equal(q1.status, "deleted");
+    
+    const q2 = parseAdminOffersQuery({ status: "hidden" });
+    assert.equal(q2.status, "hidden");
+
+    const q3 = parseAdminOffersQuery({ status: "unknown_status" });
+    assert.equal(q3.status, null);
   });
 
   await t.test("partner and category must be positive safe integers", () => {

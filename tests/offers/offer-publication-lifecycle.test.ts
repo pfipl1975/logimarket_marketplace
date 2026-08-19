@@ -135,7 +135,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("Ecommerce: price variants", () => {
-    const cases = ["0", "-1", "abc"];
+    const cases = ["0", "-1", "abc", "1.234"];
     for (const val of cases) {
       const res = evaluateOfferPublishEligibility({
         isActive: true,
