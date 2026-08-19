@@ -91,6 +91,23 @@ test("validateOfferEditBusinessRules - draft ecommerce allows missing price", ()
   assert.strictEqual(result.valid, true);
 });
 
+test("validateOfferEditBusinessRules - incomplete draft/archived allowed", () => {
+  const input = {
+    offerId: 1, expectedUpdatedAt: null, title: "t", description: null, imageUrl: null,
+    priceBrutto: null, priceOnRequest: false, offerModel: "marketplace" as const, conversionType: "outbound" as const, outboundUrl: null, isFeatured: false,
+  };
+
+  // draft outbound with outboundUrl=null
+  assert.strictEqual(validateOfferEditBusinessRules(input, "draft").valid, true);
+
+  // archived ecommerce with priceBrutto=null, priceOnRequest=true
+  const ecommerceInput = { ...input, conversionType: "inbound" as const, priceBrutto: null, priceOnRequest: true };
+  assert.strictEqual(validateOfferEditBusinessRules(ecommerceInput, "archived").valid, true);
+
+  // archived outbound with outboundUrl=null
+  assert.strictEqual(validateOfferEditBusinessRules(input, "archived").valid, true);
+});
+
 test("validateOfferEditBusinessRules - published outbound requires url", () => {
   const input = {
     offerId: 1,
@@ -206,6 +223,8 @@ test("parseAdminOfferEditInput - boolean fields matrix", () => {
   assert.strictEqual(p2(true).ok, true);
   assert.strictEqual(p2(false).ok, true);
   assert.strictEqual(p2("true").ok, false);
+  assert.strictEqual(p2(1).ok, false);
+  assert.strictEqual(p2(null).ok, false);
 });
 
 test("parseAdminOfferEditInput - model and conversionType matrix", () => {
