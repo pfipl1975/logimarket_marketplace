@@ -1,7 +1,7 @@
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { getAdminRfqDetail } from "@/app/actions";
-import { AdminRfqStatusControl } from "@/components/admin/AdminRfqStatusControl";
+import { AdminRfqStatusControl, getRfqStatusLabel } from "@/components/admin/AdminRfqStatusControl";
 import Link from "next/link";
 
 export async function AdminRfqDetailPage({
@@ -51,13 +51,15 @@ export async function AdminRfqDetailPage({
     minute: "2-digit",
   });
 
-  const statusLabel = (status: string): string => {
+  const getOfferPublicationLabel = (status: string | null): string => {
+    if (status === null) return "—";
     switch (status) {
-      case "new": return dict.status_new;
-      case "in_progress": return dict.status_in_progress;
-      case "responded": return dict.status_responded;
-      case "closed": return dict.status_closed;
-      default: return status;
+      case "draft": return adminOffersDict.statusDraft;
+      case "published": return adminOffersDict.statusPublished;
+      case "hidden": return adminOffersDict.statusHidden;
+      case "archived": return adminOffersDict.statusArchived;
+      case "deleted": return adminOffersDict.statusDeleted;
+      default: return adminOffersDict.statusUnknown;
     }
   };
 
@@ -144,7 +146,7 @@ export async function AdminRfqDetailPage({
             <dt className="text-sm font-medium text-muted-foreground sm:w-48 shrink-0">{dict.detailOfferStatus}</dt>
             <dd className="text-sm mt-0.5 sm:mt-0">
               <span className="bg-brand-light-gray/50 text-muted-foreground px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wider">
-                {rfq.offerPublicationStatus === "draft" ? adminOffersDict.statusDraft : rfq.offerPublicationStatus === "published" ? adminOffersDict.statusPublished : rfq.offerPublicationStatus === "hidden" ? adminOffersDict.statusHidden : rfq.offerPublicationStatus === "archived" ? adminOffersDict.statusArchived : rfq.offerPublicationStatus === "deleted" ? adminOffersDict.statusDeleted : (rfq.offerPublicationStatus || "—")}
+                {getOfferPublicationLabel(rfq.offerPublicationStatus)}
               </span>
             </dd>
           </div>
@@ -183,7 +185,7 @@ export async function AdminRfqDetailPage({
           <div className="flex items-center gap-3">
             <span className="text-sm font-medium text-muted-foreground">{dict.detailCurrentStatus}:</span>
             <span className="bg-brand-light-gray/50 text-muted-foreground px-2 py-1 rounded text-xs font-medium uppercase tracking-wider">
-              {statusLabel(rfq.status)}
+              {getRfqStatusLabel(rfq.status, dict)}
             </span>
           </div>
           <AdminRfqStatusControl

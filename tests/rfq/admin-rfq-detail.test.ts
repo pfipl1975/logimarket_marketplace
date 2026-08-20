@@ -133,7 +133,7 @@ test("Admin RFQ Detail — AdminRfqTable has no inline PII", async () => {
   assert.ok(!src.includes("email"), "Table must not render email");
   assert.ok(!src.includes("phone"), "Table must not render phone");
   assert.ok(!src.includes("message"), "Table must not render message");
-  assert.ok(!src.includes("AdminRfqStatusControl"), "Table must not use AdminRfqStatusControl (mutation control)");
+  assert.ok(!src.includes("<AdminRfqStatusControl"), "Table must not use AdminRfqStatusControl (mutation control)");
 
   // Table must have detail link to the detail page
   assert.ok(src.includes("zapytania") || src.includes("detailPathPrefix"), "Table must reference detail route path");

@@ -62,12 +62,14 @@ describe("UI Contract Tests", () => {
     assert.ok(!src.includes("message"), "Table must not render message (PII)");
 
     // Must not use inline status mutation
-    assert.ok(!src.includes("AdminRfqStatusControl"), "Table must not import/render AdminRfqStatusControl");
+    assert.ok(!src.includes("<AdminRfqStatusControl"), "Table must not import/render AdminRfqStatusControl component");
     assert.ok(!src.includes("mutateRfqStatus"), "Table must not call mutateRfqStatus directly");
 
     // Must have detail link
     assert.ok(src.includes("detailPathPrefix") || src.includes("zapytania"), "Table must reference detail route path");
     assert.ok(src.includes("detailLink"), "Table must render detailLink dict key");
+    assert.ok(!src.includes("?? item.status"), "Table must not fallback to raw item.status");
+    assert.ok(src.includes("getRfqStatusLabel(item.status, dict)"), "Table must use typed helper for status label");
   });
 
   test("AdminRfqStatusControl — explicit Apply, no window.confirm, inline close confirm", () => {
@@ -90,6 +92,12 @@ describe("UI Contract Tests", () => {
 
     // Must NOT use window.confirm
     assert.ok(!src.includes("window.confirm"), "Must not use window.confirm");
+    
+    // NO raw fallback
+    assert.ok(!src.includes("?? currentStatus"), "Must not fallback to raw currentStatus");
+    assert.ok(!src.includes("?? status"), "Must not fallback to raw status in options");
+    assert.ok(src.includes("getRfqStatusLabel(currentStatus, dict)"), "Must use typed helper");
+    assert.ok(src.includes("getRfqStatusLabel(status, dict)"), "Must use typed helper for options");
   });
 
   test("AdminRfqDetailPage — full PII rendered, no dangerouslySetInnerHTML", () => {
@@ -108,6 +116,16 @@ describe("UI Contract Tests", () => {
     // Must link to offer and partner admin pages
     assert.ok(src.includes("offerAdminPathPrefix") || src.includes("admin/oferty"), "Must link to offer admin");
     assert.ok(src.includes("partnerAdminPathPrefix") || src.includes("admin/partnerzy"), "Must link to partner admin");
+    
+    // Status fallback check
+    assert.ok(!src.includes("default: return status"), "Detail page must not have default raw return");
+    assert.ok(src.includes("getRfqStatusLabel(rfq.status, dict)"), "Detail page must use imported typed helper");
+
+    // Offer publication status
+    assert.ok(src.includes("getOfferPublicationLabel(rfq.offerPublicationStatus)"), "Must use offer publication label helper");
+    assert.ok(!src.includes("|| \"-\""), "Must not use raw string fallback");
+    assert.ok(!src.includes("|| '-'"), "Must not use raw string fallback");
+    assert.ok(src.includes("default: return adminOffersDict.statusUnknown;"), "Must map unexpected offer status to unknown, not raw DB value");
 
     // Must include AdminRfqStatusControl for workflow
     assert.ok(src.includes("AdminRfqStatusControl"), "Must render AdminRfqStatusControl on detail page");

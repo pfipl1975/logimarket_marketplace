@@ -1,5 +1,6 @@
 import type { AdminRfqListItemDto } from "@/lib/admin/rfq-read-model-core";
 import Link from "next/link";
+import { getRfqStatusLabel } from "./AdminRfqStatusControl";
 
 export function AdminRfqTable({
   items,
@@ -46,7 +47,7 @@ export function AdminRfqTable({
               </td>
               <td className="px-4 py-3">
                 <span className="bg-brand-light-gray/50 text-muted-foreground px-2 py-1 rounded text-xs font-medium uppercase tracking-wider">
-                  {dict[`status_${item.status}`] ?? item.status}
+                  {getRfqStatusLabel(item.status, dict)}
                 </span>
               </td>
               <td className="px-4 py-3">

@@ -6,6 +6,16 @@ import { mutateRfqStatus } from "@/app/actions";
 import type { RfqStatus } from "@/lib/schema";
 import { getAllowedRfqStatusTransitions } from "@/lib/rfq/workflow";
 
+export function getRfqStatusLabel(status: RfqStatus, dict: Record<string, string>): string {
+  switch (status) {
+    case "new": return dict.status_new;
+    case "in_progress": return dict.status_in_progress;
+    case "responded": return dict.status_responded;
+    case "closed": return dict.status_closed;
+  }
+}
+
+
 interface AdminRfqStatusControlProps {
   rfqId: number;
   currentStatus: RfqStatus;
@@ -25,7 +35,7 @@ export function AdminRfqStatusControl({ rfqId, currentStatus, dict }: AdminRfqSt
     return (
       <div className="inline-flex items-center">
         <span className="bg-brand-light-gray/50 text-muted-foreground px-3 py-1.5 rounded text-sm font-medium uppercase tracking-wider">
-          {dict[`status_${currentStatus}`] ?? currentStatus}
+          {getRfqStatusLabel(currentStatus, dict)}
         </span>
       </div>
     );
@@ -88,7 +98,7 @@ export function AdminRfqStatusControl({ rfqId, currentStatus, dict }: AdminRfqSt
             <option value="">{dict.workflowSelectPlaceholder}</option>
             {allowedTransitions.map((status) => (
               <option key={status} value={status}>
-                {dict[`status_${status}`] ?? status}
+                {getRfqStatusLabel(status, dict)}
               </option>
             ))}
           </select>
