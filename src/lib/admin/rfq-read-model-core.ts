@@ -1,17 +1,18 @@
-import { sql, or, eq, ilike, desc } from "drizzle-orm";
+import { sql, or, and, eq, ilike, desc, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { ADMIN_RFQ_PAGE_SIZE, isCanonicalPositiveInteger } from "./rfq-query";
 import type { AdminRfqQuery } from "./rfq-query";
 
-export interface AdminRfqDto {
+// ---------------------------------------------------------------------------
+// List DTO — intentional PII minimization (no contactName/email/phone/message)
+// ---------------------------------------------------------------------------
+export interface AdminRfqListItemDto {
   id: number;
   createdAt: string | null;
-  status: string;
+  status: schema.RfqStatus;
 
   companyName: string | null;
-  contactName: string;
-  email: string;
 
   offerId: number;
   offerTitle: string | null;
@@ -26,26 +27,38 @@ export interface AdminRfqReadModel {
   pageSize: number;
   total: number;
   pageCount: number;
-  items: AdminRfqDto[];
+  items: AdminRfqListItemDto[];
 }
 
 function buildFilters(query: AdminRfqQuery) {
-  if (!query.q) return undefined;
+  const clauses: SQL[] = [];
 
-  const searchConditions = [
-    ilike(schema.rfqLeads.companyName, `%${query.q}%`),
-    ilike(schema.offers.title, `%${query.q}%`),
-    ilike(schema.partners.companyName, `%${query.q}%`),
-  ];
+  // Text search across company/offer/partner (no PII fields)
+  if (query.q) {
+    const textConditions: SQL[] = [
+      ilike(schema.rfqLeads.companyName, `%${query.q}%`),
+      ilike(schema.offers.title, `%${query.q}%`),
+      ilike(schema.partners.companyName, `%${query.q}%`),
+    ];
 
-  if (isCanonicalPositiveInteger(query.q)) {
-    const num = Number(query.q);
-    searchConditions.push(eq(schema.rfqLeads.id, num));
-    searchConditions.push(eq(schema.rfqLeads.offerId, num));
-    searchConditions.push(eq(schema.rfqLeads.partnerId, num));
+    if (isCanonicalPositiveInteger(query.q)) {
+      const num = Number(query.q);
+      textConditions.push(eq(schema.rfqLeads.id, num));
+      textConditions.push(eq(schema.rfqLeads.offerId, num));
+      textConditions.push(eq(schema.rfqLeads.partnerId, num));
+    }
+
+    clauses.push(or(...textConditions)!);
   }
 
-  return or(...searchConditions);
+  // Status server-side filter
+  if (query.status) {
+    clauses.push(eq(schema.rfqLeads.status, query.status));
+  }
+
+  if (clauses.length === 0) return undefined;
+  if (clauses.length === 1) return clauses[0];
+  return and(...clauses);
 }
 
 export async function getAdminRfqReadModel(
@@ -73,8 +86,6 @@ export async function getAdminRfqReadModel(
       createdAt: schema.rfqLeads.createdAt,
       status: schema.rfqLeads.status,
       companyName: schema.rfqLeads.companyName,
-      contactName: schema.rfqLeads.contactName,
-      email: schema.rfqLeads.email,
       offerId: schema.rfqLeads.offerId,
       offerTitle: schema.offers.title,
       partnerId: schema.rfqLeads.partnerId,
@@ -91,13 +102,11 @@ export async function getAdminRfqReadModel(
     .limit(ADMIN_RFQ_PAGE_SIZE)
     .offset(offset);
 
-  const items: AdminRfqDto[] = itemsRows.map((row) => ({
+  const items: AdminRfqListItemDto[] = itemsRows.map((row) => ({
     id: Number(row.id),
     createdAt: row.createdAt ? row.createdAt.toISOString() : null,
     status: row.status,
     companyName: row.companyName,
-    contactName: row.contactName,
-    email: row.email,
     offerId: Number(row.offerId),
     offerTitle: row.offerTitle,
     partnerId: Number(row.partnerId),

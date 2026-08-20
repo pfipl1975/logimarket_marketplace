@@ -63,18 +63,67 @@ test("Admin RFQ Read Contract", async (t) => {
     assert.match(actionBody, /ADMIN_RFQ_UNAVAILABLE/);
   });
 
+  await t.test("getAdminRfqDetail - Auth First & No DB import for invalid ID", async () => {
+    const actions = await fs.readFile(path.join(process.cwd(), "src/app/actions.ts"), "utf-8");
+
+    const actionMatch = actions.match(/export async function getAdminRfqDetail[\s\S]*?(catch[\s\S]*?})/);
+    assert.ok(actionMatch);
+    const actionBody = actionMatch[0];
+
+    assert.match(actionBody, /requireAdmin/);
+
+    const requireAdminIdx = actionBody.indexOf("await requireAdmin()");
+    const parseIdx = actionBody.indexOf("parseAdminRfqDetailId(rawId)");
+    const dbImportIdx = actionBody.indexOf('import("@/lib/db")');
+    const dbExecutorIdx = actionBody.indexOf("fetchDetail(db");
+
+    assert.ok(requireAdminIdx !== -1);
+    assert.ok(parseIdx !== -1);
+    assert.ok(dbImportIdx !== -1);
+    assert.ok(dbExecutorIdx !== -1);
+
+    // requireAdmin must be before parsing
+    assert.ok(requireAdminIdx < parseIdx, "requireAdmin must precede parseAdminRfqDetailId");
+    
+    // requireAdmin must be before DB import
+    assert.ok(requireAdminIdx < dbImportIdx, "requireAdmin must precede DB import");
+    
+    // DB import must be AFTER parsing (so invalid ID doesn't require DB import)
+    assert.ok(parseIdx < dbImportIdx, "DB import must happen AFTER parsing ID");
+
+    // Executor must be after DB import
+    assert.ok(dbImportIdx < dbExecutorIdx, "DB import must precede fetchDetail execution");
+  });
+
   await t.test("DTO minimization and PII protection", async () => {
     const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/rfq-read-model-core.ts"), "utf-8");
 
-    // Must have allowed fields
-    assert.match(core, /email:/);
-    assert.match(core, /contactName:/);
-
-    // Must NOT have forbidden fields
+    // MVP-08 contract: list read model (triage) must NOT fetch or carry PII.
+    // Full contact/message data lives ONLY in the detail read model.
+    assert.doesNotMatch(core, /contactName:/);
+    assert.doesNotMatch(core, /email:/);
     assert.doesNotMatch(core, /phone:/);
     assert.doesNotMatch(core, /message:/);
+    assert.doesNotMatch(core, /schema\.rfqLeads\.contactName/);
+    assert.doesNotMatch(core, /schema\.rfqLeads\.email/);
     assert.doesNotMatch(core, /schema\.rfqLeads\.phone/);
     assert.doesNotMatch(core, /schema\.rfqLeads\.message/);
+
+    // List DTO keeps non-PII triage fields
+    assert.match(core, /companyName:/);
+    assert.match(core, /offerTitle:/);
+    assert.match(core, /partnerCompanyName:/);
+
+    // Detail read model MUST expose full contact/message data (admin-protected)
+    const detailCore = await fs.readFile(path.join(process.cwd(), "src/lib/admin/rfq-detail-read-model-core.ts"), "utf-8");
+    assert.match(detailCore, /contactName:/);
+    assert.match(detailCore, /email:/);
+    assert.match(detailCore, /phone:/);
+    assert.match(detailCore, /message:/);
+    assert.match(detailCore, /schema\.rfqLeads\.contactName/);
+    assert.match(detailCore, /schema\.rfqLeads\.email/);
+    assert.match(detailCore, /schema\.rfqLeads\.phone/);
+    assert.match(detailCore, /schema\.rfqLeads\.message/);
   });
 
   await t.test("Search and structural contract", async () => {
@@ -130,9 +179,9 @@ test("Admin RFQ Read Contract", async (t) => {
     assert.match(page, /rounded-industrial/);
   });
 
-  await t.test("i18n check", async () => {
+  await t.test("I18N Parity and Native Translation Contract", async () => {
     const locales = ["pl", "en", "de", "fr", "uk", "es", "zh"];
-    const sections: Record<string, Record<string, unknown>> = {};
+    const sections: Record<string, Record<string, string>> = {};
 
     for (const locale of locales) {
       sections[locale] = JSON.parse(
@@ -140,7 +189,34 @@ test("Admin RFQ Read Contract", async (t) => {
       ).adminRfq;
     }
 
-    const en = sections["en"] as Record<string, unknown>;
-    assert.ok(en.idColumn === "RFQ");
+    const en = sections["en"];
+    const baseKeys = Object.keys(en);
+
+    // Assert parity
+    for (const locale of locales) {
+      const keys = Object.keys(sections[locale]);
+      for (const key of baseKeys) {
+        assert.ok(keys.includes(key), `Locale ${locale} is missing key ${key}`);
+      }
+    }
+
+    // Keys that represent generic UI that should definitely be translated natively (not RFQ, LogiMarket, ID)
+    const checkKeys = [
+      "eyebrow", "description", "searchLabel", "applyFilters", 
+      "clearFilters", "createdColumn", "companyColumn", "emptyTitle", 
+      "errorTitle", "statusFilterAll", "paginationPrevious"
+    ];
+
+    const nonEnLocales = ["de", "fr", "uk", "es", "zh"];
+
+    for (const locale of nonEnLocales) {
+      for (const key of checkKeys) {
+        assert.notEqual(
+          sections[locale][key], 
+          en[key], 
+          `Locale ${locale} has EN fallback for key ${key} (${en[key]})`
+        );
+      }
+    }
   });
 });
