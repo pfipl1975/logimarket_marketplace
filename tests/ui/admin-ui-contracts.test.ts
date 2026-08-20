@@ -124,4 +124,26 @@ describe("UI Contract Tests", () => {
     // Must pass basePath to table
     assert.ok(src.includes("basePath={basePath}"), "Must pass basePath prop to AdminRfqTable");
   });
+
+  test("AdminRfqDetailPage — system error handling semantics", () => {
+    const src = fs.readFileSync("src/app/_shared/AdminRfqDetailPage.tsx", "utf8");
+    
+    // Assert SYSTEM_ERROR maps to errorDescription
+    assert.ok(
+      src.includes('result.code === "SYSTEM_ERROR" ? "errorDescription"'),
+      "Must map SYSTEM_ERROR to errorDescription"
+    );
+
+    // Assert INVALID_ID maps to detailErrorInvalidId
+    assert.ok(
+      src.includes('result.code === "INVALID_ID" ? "detailErrorInvalidId"'),
+      "Must map INVALID_ID to detailErrorInvalidId"
+    );
+
+    // Assert fallback to detailErrorNotFound
+    assert.ok(
+      src.includes(': "detailErrorNotFound"'),
+      "Must fallback NOT_FOUND to detailErrorNotFound"
+    );
+  });
 });

@@ -10,7 +10,7 @@ import { isCanonicalPositiveInteger } from "./rfq-query";
 export interface AdminRfqDetailDto {
   id: number;
   createdAt: string | null;
-  status: string;
+  status: schema.RfqStatus;
 
   companyName: string | null;
   contactName: string | null;

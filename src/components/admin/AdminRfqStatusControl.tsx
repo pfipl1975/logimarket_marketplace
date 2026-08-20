@@ -106,14 +106,14 @@ export function AdminRfqStatusControl({ rfqId, currentStatus, dict }: AdminRfqSt
 
       {/* Inline close confirmation block */}
       {showCloseConfirm && (
-        <div className="border border-orange-200 bg-orange-50 rounded-industrial p-4 flex flex-col gap-3">
-          <p className="text-sm font-medium text-orange-800">{dict.closeConfirmMessage}</p>
+        <div className="border border-border-industrial bg-brand-light-gray/30 rounded-industrial p-4 flex flex-col gap-3">
+          <p className="text-sm font-medium text-brand-navy">{dict.closeConfirmMessage}</p>
           <div className="flex flex-row gap-2">
             <button
               type="button"
               disabled={isPending}
               onClick={() => executeTransition("closed")}
-              className="px-4 py-2 bg-orange-700 hover:bg-orange-800 text-white rounded-industrial text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-orange-500 disabled:opacity-50"
+              className="px-4 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal disabled:opacity-50"
             >
               {dict.closeConfirmApply}
             </button>

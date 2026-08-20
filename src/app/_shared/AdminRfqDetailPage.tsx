@@ -2,7 +2,6 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { getAdminRfqDetail } from "@/app/actions";
 import { AdminRfqStatusControl } from "@/components/admin/AdminRfqStatusControl";
-import type { RfqStatus } from "@/lib/schema";
 import Link from "next/link";
 
 export async function AdminRfqDetailPage({
@@ -14,6 +13,7 @@ export async function AdminRfqDetailPage({
 }) {
   const dictionary = await getDictionary(locale);
   const dict = dictionary.adminRfq;
+  const adminOffersDict = dictionary.adminOffers;
 
   const listPath = locale === "pl" ? "/admin/zapytania" : `/${locale}/admin/rfq`;
   const offerAdminPathPrefix = locale === "pl" ? "/admin/oferty" : `/${locale}/admin/offers`;
@@ -23,12 +23,14 @@ export async function AdminRfqDetailPage({
 
   if (!result.ok) {
     const errorKey =
-      result.code === "INVALID_ID" ? "detailErrorInvalidId" : "detailErrorNotFound";
+      result.code === "INVALID_ID" ? "detailErrorInvalidId" :
+      result.code === "SYSTEM_ERROR" ? "errorDescription" : "detailErrorNotFound";
+    const errorMessage = dict[errorKey as keyof typeof dict] ?? dict.errorDescription;
     return (
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="rounded-industrial border border-border-industrial bg-white p-12 text-center shadow-soft">
           <h2 className="text-xl font-semibold text-brand-navy mb-2">{dict.errorTitle}</h2>
-          <p className="text-muted-foreground mb-6">{dict[errorKey] ?? dict.errorDescription}</p>
+          <p className="text-muted-foreground mb-6">{errorMessage}</p>
           <Link
             href={listPath}
             className="inline-block px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
@@ -142,7 +144,7 @@ export async function AdminRfqDetailPage({
             <dt className="text-sm font-medium text-muted-foreground sm:w-48 shrink-0">{dict.detailOfferStatus}</dt>
             <dd className="text-sm mt-0.5 sm:mt-0">
               <span className="bg-brand-light-gray/50 text-muted-foreground px-2 py-0.5 rounded text-xs font-medium uppercase tracking-wider">
-                {rfq.offerPublicationStatus || "—"}
+                {rfq.offerPublicationStatus === "draft" ? adminOffersDict.statusDraft : rfq.offerPublicationStatus === "published" ? adminOffersDict.statusPublished : rfq.offerPublicationStatus === "hidden" ? adminOffersDict.statusHidden : rfq.offerPublicationStatus === "archived" ? adminOffersDict.statusArchived : rfq.offerPublicationStatus === "deleted" ? adminOffersDict.statusDeleted : (rfq.offerPublicationStatus || "—")}
               </span>
             </dd>
           </div>
@@ -187,7 +189,7 @@ export async function AdminRfqDetailPage({
           <AdminRfqStatusControl
             key={`${rfq.id}:${rfq.status}`}
             rfqId={rfq.id}
-            currentStatus={rfq.status as RfqStatus}
+            currentStatus={rfq.status}
             dict={dict}
           />
         </div>

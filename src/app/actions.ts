@@ -816,13 +816,13 @@ export async function getAdminRfqDetail(rawId: unknown) {
 
   try {
     const { parseAdminRfqDetailId, getAdminRfqDetail: fetchDetail } = await import("@/lib/admin/rfq-detail-read-model-core");
-    const { db } = await import("@/lib/db");
 
     const id = parseAdminRfqDetailId(rawId);
     if (id === null) {
       return { ok: false as const, code: "INVALID_ID" as const };
     }
 
+    const { db } = await import("@/lib/db");
     const result = await fetchDetail(db, id);
     return result;
   } catch {

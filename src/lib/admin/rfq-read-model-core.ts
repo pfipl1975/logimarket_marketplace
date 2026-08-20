@@ -1,4 +1,4 @@
-import { sql, or, and, eq, ilike, desc } from "drizzle-orm";
+import { sql, or, and, eq, ilike, desc, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { ADMIN_RFQ_PAGE_SIZE, isCanonicalPositiveInteger } from "./rfq-query";
@@ -10,7 +10,7 @@ import type { AdminRfqQuery } from "./rfq-query";
 export interface AdminRfqListItemDto {
   id: number;
   createdAt: string | null;
-  status: string;
+  status: schema.RfqStatus;
 
   companyName: string | null;
 
@@ -31,24 +31,24 @@ export interface AdminRfqReadModel {
 }
 
 function buildFilters(query: AdminRfqQuery) {
-  const clauses = [];
+  const clauses: SQL[] = [];
 
   // Text search across company/offer/partner (no PII fields)
   if (query.q) {
-    const textConditions: ReturnType<typeof eq>[] = [
-      ilike(schema.rfqLeads.companyName, `%${query.q}%`) as ReturnType<typeof eq>,
-      ilike(schema.offers.title, `%${query.q}%`) as ReturnType<typeof eq>,
-      ilike(schema.partners.companyName, `%${query.q}%`) as ReturnType<typeof eq>,
+    const textConditions: SQL[] = [
+      ilike(schema.rfqLeads.companyName, `%${query.q}%`),
+      ilike(schema.offers.title, `%${query.q}%`),
+      ilike(schema.partners.companyName, `%${query.q}%`),
     ];
 
     if (isCanonicalPositiveInteger(query.q)) {
       const num = Number(query.q);
-      textConditions.push(eq(schema.rfqLeads.id, num) as ReturnType<typeof eq>);
-      textConditions.push(eq(schema.rfqLeads.offerId, num) as ReturnType<typeof eq>);
-      textConditions.push(eq(schema.rfqLeads.partnerId, num) as ReturnType<typeof eq>);
+      textConditions.push(eq(schema.rfqLeads.id, num));
+      textConditions.push(eq(schema.rfqLeads.offerId, num));
+      textConditions.push(eq(schema.rfqLeads.partnerId, num));
     }
 
-    clauses.push(or(...textConditions));
+    clauses.push(or(...textConditions)!);
   }
 
   // Status server-side filter

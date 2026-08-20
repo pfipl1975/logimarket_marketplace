@@ -42,7 +42,7 @@ export function AdminRfqTable({
                 #{item.id}
               </td>
               <td className="px-4 py-3 text-muted-foreground">
-                {item.createdAt ? dateFormatter.format(new Date(item.createdAt)) : "-"}
+                {item.createdAt ? dateFormatter.format(new Date(item.createdAt)) : "—"}
               </td>
               <td className="px-4 py-3">
                 <span className="bg-brand-light-gray/50 text-muted-foreground px-2 py-1 rounded text-xs font-medium uppercase tracking-wider">
@@ -50,7 +50,7 @@ export function AdminRfqTable({
                 </span>
               </td>
               <td className="px-4 py-3">
-                <span className="font-medium text-brand-navy">{item.companyName || "-"}</span>
+                <span className="font-medium text-brand-navy">{item.companyName || "—"}</span>
               </td>
               <td className="px-4 py-3">
                 <div className="flex flex-col gap-0.5">
