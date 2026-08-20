@@ -396,8 +396,7 @@ export async function mutateRfqStatus(rawInput: unknown): Promise<AdminRfqMutati
     const result = await db.transaction(async (tx) => mutateRfqStatusCore(tx, data));
 
     if (result.ok && result.code === "UPDATED") {
-      revalidatePath("/admin/zapytania", "page");
-      revalidatePath("/[locale]/admin", "layout");
+      revalidatePath("/", "layout");
     }
 
     return result;
@@ -808,5 +807,26 @@ export async function updateAdminOffer(rawInput: unknown): Promise<AdminOfferEdi
     const errorName = error instanceof Error ? error.name : "UnknownError";
     console.error("[updateAdminOffer] execution failed.", { errorName });
     return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function getAdminRfqDetail(rawId: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { parseAdminRfqDetailId, getAdminRfqDetail: fetchDetail } = await import("@/lib/admin/rfq-detail-read-model-core");
+    const { db } = await import("@/lib/db");
+
+    const id = parseAdminRfqDetailId(rawId);
+    if (id === null) {
+      return { ok: false as const, code: "INVALID_ID" as const };
+    }
+
+    const result = await fetchDetail(db, id);
+    return result;
+  } catch {
+    console.error("[getAdminRfqDetail] read model execution failed.");
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
   }
 }

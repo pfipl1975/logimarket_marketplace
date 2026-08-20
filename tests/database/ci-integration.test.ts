@@ -4,6 +4,8 @@ import fs from "node:fs";
 import { Pool } from "pg";
 import { getDb } from "@/lib/db";
 import { executeOfferPublicationStateChange } from "@/lib/admin/offer-publication-core";
+import { mutateRfqStatusCore } from "@/lib/rfq/admin-core";
+import type { RfqStatus } from "@/lib/schema";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import {
@@ -841,6 +843,95 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(rowH.rows[0].published_at, null);
     assert.equal(rowH.rows[0].archived_at, null);
     assert.equal(rowH.rows[0].deleted_at, null);
+  });
+
+  await t.test("ADMIN_RFQ_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const partnerId = 9997;
+    await pool.query("INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'RFQ Test', 'rfq@test.com')", [partnerId]);
+
+    const categoryId = 8887;
+    await pool.query("INSERT INTO public.categories (id, name, slug) VALUES ($1, 'RFQ Cat', 'rfq-cat')", [categoryId]);
+
+    const offerId = 7777;
+    await pool.query(`
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active)
+      VALUES ($1, $2, $3, 'RFQ Offer', 'rfq', 'rfq', 'published', true)
+    `, [offerId, partnerId, categoryId]);
+
+    const db = getDb();
+
+    const PII = {
+      company_name: "Test Corp",
+      contact_name: "Jane Doe",
+      email: "jane@test.com",
+      phone: "+48000000000",
+      message: "Need info",
+    };
+
+    const insertRfq = async (id: number, status: string) => {
+      await pool.query(`
+        INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `, [id, offerId, partnerId, PII.company_name, PII.contact_name, PII.email, PII.phone, PII.message, status]);
+    };
+
+    const runCase = async (
+      id: number,
+      current: RfqStatus,
+      expected: RfqStatus,
+      target: RfqStatus,
+      wantOk: boolean,
+      wantCode: string,
+      wantStatus: RfqStatus
+    ) => {
+      await insertRfq(id, current);
+      const res = await db.transaction(async (tx) =>
+        mutateRfqStatusCore(tx, { rfqId: id, expectedStatus: expected, targetStatus: target })
+      );
+      assert.equal(res.ok, wantOk, `rfq ${id}: expected ok=${wantOk}`);
+      assert.equal(res.code, wantCode, `rfq ${id}: expected code=${wantCode}`);
+      const row = await pool.query(
+        `SELECT status, company_name, contact_name, email, phone, message FROM public.rfq_leads WHERE id = $1`,
+        [id]
+      );
+      assert.equal(row.rows[0].status, wantStatus, `rfq ${id}: status must be ${wantStatus}`);
+      // PII fields must remain unchanged by any status mutation
+      assert.equal(row.rows[0].company_name, PII.company_name);
+      assert.equal(row.rows[0].contact_name, PII.contact_name);
+      assert.equal(row.rows[0].email, PII.email);
+      assert.equal(row.rows[0].phone, PII.phone);
+      assert.equal(row.rows[0].message, PII.message);
+    };
+
+    // Allowed forward transitions — status must change (UPDATED)
+    await runCase(2001, "new", "new", "in_progress", true, "UPDATED", "in_progress"); // A
+    await runCase(2002, "new", "new", "responded", true, "UPDATED", "responded");     // B
+    await runCase(2003, "new", "new", "closed", true, "UPDATED", "closed");           // C
+    await runCase(2004, "in_progress", "in_progress", "responded", true, "UPDATED", "responded"); // D
+    await runCase(2005, "in_progress", "in_progress", "closed", true, "UPDATED", "closed");       // E
+    await runCase(2006, "responded", "responded", "closed", true, "UPDATED", "closed");           // F
+
+    // G. stale expectedStatus -> CONFLICT, NO WRITE
+    await runCase(2007, "responded", "new", "closed", false, "CONFLICT", "responded");
+
+    // H. same-state idempotent -> UNCHANGED, NO WRITE
+    await runCase(2008, "in_progress", "in_progress", "in_progress", true, "UNCHANGED", "in_progress");
+
+    // I. closed -> new (reopen) -> TRANSITION_NOT_ALLOWED, NO WRITE (closed is terminal)
+    await runCase(2009, "closed", "closed", "new", false, "TRANSITION_NOT_ALLOWED", "closed");
+
+    // Extra: backward transition in_progress -> new -> TRANSITION_NOT_ALLOWED, NO WRITE
+    await runCase(2010, "in_progress", "in_progress", "new", false, "TRANSITION_NOT_ALLOWED", "in_progress");
+
+    // Extra: NOT_FOUND for non-existent RFQ id
+    const resNotFound = await db.transaction(async (tx) =>
+      mutateRfqStatusCore(tx, { rfqId: 99999, expectedStatus: "new", targetStatus: "in_progress" })
+    );
+    assert.equal(resNotFound.ok, false);
+    assert.equal(resNotFound.code, "NOT_FOUND");
   });
 
   await pool.end();

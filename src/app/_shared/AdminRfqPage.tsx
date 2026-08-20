@@ -28,8 +28,16 @@ export async function AdminRfqPage({
   }
 
   const { items, total, pageCount, query } = result.data;
-  const hasFilters = Boolean(query.q);
+  const hasFilters = Boolean(query.q || query.status);
   const basePath = locale === "pl" ? "/admin/zapytania" : `/${locale}/admin/rfq`;
+
+  const statusOptions = [
+    { value: "", label: dict.statusFilterAll },
+    { value: "new", label: dict.status_new },
+    { value: "in_progress", label: dict.status_in_progress },
+    { value: "responded", label: dict.status_responded },
+    { value: "closed", label: dict.status_closed },
+  ];
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto w-full">
@@ -42,8 +50,9 @@ export async function AdminRfqPage({
       </div>
 
       <div className="bg-white p-4 rounded-industrial border border-border-industrial shadow-soft">
-        <form method="GET" action={basePath} className="flex flex-col md:flex-row gap-4 items-end">
-          <div className="w-full md:w-96 flex flex-col gap-1.5">
+        <form method="GET" action={basePath} className="flex flex-col md:flex-row gap-4 items-end flex-wrap">
+          {/* Search field */}
+          <div className="w-full md:w-80 flex flex-col gap-1.5">
             <label htmlFor="q" className="text-xs font-medium text-muted-foreground">{dict.searchLabel}</label>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -57,7 +66,22 @@ export async function AdminRfqPage({
               />
             </div>
           </div>
-          
+
+          {/* Status filter */}
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="status" className="text-xs font-medium text-muted-foreground">{dict.statusFilterLabel}</label>
+            <select
+              id="status"
+              name="status"
+              defaultValue={query.status ?? ""}
+              className="px-3 py-2 bg-brand-light-gray border border-border-industrial rounded-industrial text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal transition-all min-w-[160px]"
+            >
+              {statusOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div className="flex gap-2 w-full md:w-auto">
             <button
               type="submit"
@@ -105,7 +129,7 @@ export async function AdminRfqPage({
         ) : (
           <>
             <div className="flex-1 overflow-x-auto">
-              <AdminRfqTable items={items} dict={dict} locale={locale} />
+              <AdminRfqTable items={items} dict={dict} locale={locale} basePath={basePath} />
             </div>
 
             {pageCount > 1 && (

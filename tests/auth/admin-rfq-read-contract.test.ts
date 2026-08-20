@@ -66,15 +66,32 @@ test("Admin RFQ Read Contract", async (t) => {
   await t.test("DTO minimization and PII protection", async () => {
     const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/rfq-read-model-core.ts"), "utf-8");
 
-    // Must have allowed fields
-    assert.match(core, /email:/);
-    assert.match(core, /contactName:/);
-
-    // Must NOT have forbidden fields
+    // MVP-08 contract: list read model (triage) must NOT fetch or carry PII.
+    // Full contact/message data lives ONLY in the detail read model.
+    assert.doesNotMatch(core, /contactName:/);
+    assert.doesNotMatch(core, /email:/);
     assert.doesNotMatch(core, /phone:/);
     assert.doesNotMatch(core, /message:/);
+    assert.doesNotMatch(core, /schema\.rfqLeads\.contactName/);
+    assert.doesNotMatch(core, /schema\.rfqLeads\.email/);
     assert.doesNotMatch(core, /schema\.rfqLeads\.phone/);
     assert.doesNotMatch(core, /schema\.rfqLeads\.message/);
+
+    // List DTO keeps non-PII triage fields
+    assert.match(core, /companyName:/);
+    assert.match(core, /offerTitle:/);
+    assert.match(core, /partnerCompanyName:/);
+
+    // Detail read model MUST expose full contact/message data (admin-protected)
+    const detailCore = await fs.readFile(path.join(process.cwd(), "src/lib/admin/rfq-detail-read-model-core.ts"), "utf-8");
+    assert.match(detailCore, /contactName:/);
+    assert.match(detailCore, /email:/);
+    assert.match(detailCore, /phone:/);
+    assert.match(detailCore, /message:/);
+    assert.match(detailCore, /schema\.rfqLeads\.contactName/);
+    assert.match(detailCore, /schema\.rfqLeads\.email/);
+    assert.match(detailCore, /schema\.rfqLeads\.phone/);
+    assert.match(detailCore, /schema\.rfqLeads\.message/);
   });
 
   await t.test("Search and structural contract", async () => {

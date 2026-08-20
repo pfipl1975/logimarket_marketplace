@@ -1,8 +1,19 @@
+import type { RfqStatus } from "@/lib/schema";
+
 export const ADMIN_RFQ_PAGE_SIZE = 25;
+
+export type AdminRfqStatusFilter = RfqStatus | null;
 
 export interface AdminRfqQuery {
   q: string;
+  status: AdminRfqStatusFilter;
   page: number;
+}
+
+const VALID_RFQ_STATUSES: readonly RfqStatus[] = ["new", "in_progress", "responded", "closed"];
+
+function isValidRfqStatus(value: string): value is RfqStatus {
+  return (VALID_RFQ_STATUSES as readonly string[]).includes(value);
 }
 
 export function isCanonicalPositiveInteger(value: string): boolean {
@@ -18,7 +29,7 @@ function getSingleString(value: unknown): string | null {
 
 export function parseAdminRfqQuery(rawInput: unknown): AdminRfqQuery {
   if (!rawInput || typeof rawInput !== "object") {
-    return { q: "", page: 1 };
+    return { q: "", status: null, page: 1 };
   }
 
   const params = rawInput as Record<string, unknown>;
@@ -26,13 +37,17 @@ export function parseAdminRfqQuery(rawInput: unknown): AdminRfqQuery {
   const rawQ = getSingleString(params.q);
   const q = rawQ ? rawQ.trim().slice(0, 100) : "";
 
+  const rawStatus = getSingleString(params.status);
+  const status: AdminRfqStatusFilter =
+    rawStatus && isValidRfqStatus(rawStatus) ? rawStatus : null;
+
   let page = 1;
   const rawPage = getSingleString(params.page);
   if (rawPage && isCanonicalPositiveInteger(rawPage)) {
     page = parseInt(rawPage, 10);
   }
 
-  return { q, page };
+  return { q, status, page };
 }
 
 export function buildAdminRfqUrl(
@@ -45,11 +60,18 @@ export function buildAdminRfqUrl(
   if ("q" in updates && updates.q !== currentQuery.q) {
     merged.page = 1;
   }
+  if ("status" in updates && updates.status !== currentQuery.status) {
+    merged.page = 1;
+  }
 
   const params = new URLSearchParams();
 
   if (merged.q) {
     params.set("q", merged.q);
+  }
+
+  if (merged.status) {
+    params.set("status", merged.status);
   }
 
   if (merged.page > 1) {
