@@ -792,5 +792,57 @@
       "OUTBOUND_URL_INVALID": "URL invalide pour l'offre sortante",
       "SYSTEM_ERROR": "Une erreur système s'est produite"
     }
+  },
+  "adminDashboard": {
+    "title": "Admin Dashboard",
+    "subtitle": "Overview of marketplace operations",
+    "sections": {
+      "partners": "Partners",
+      "offers": "Offers",
+      "rfq": "RFQ",
+      "recentRfq": "Recent RFQs"
+    },
+    "labels": {
+      "total": "Total"
+    },
+    "eligibility": {
+      "none": "Unassigned",
+      "pending": "Pending",
+      "eligible": "Eligible",
+      "ineligible": "Ineligible",
+      "suspended": "Suspended"
+    },
+    "offers": {
+      "draft": "Draft",
+      "published": "Published",
+      "hidden": "Hidden",
+      "archived": "Archived",
+      "deleted": "Deleted"
+    },
+    "rfq": {
+      "new": "New",
+      "inProgress": "In Progress",
+      "responded": "Responded",
+      "closed": "Closed"
+    },
+    "empty": {
+      "recentRfq": "No active RFQs in queue."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Date",
+      "company": "Company",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "actions": {
+      "viewPartners": "View all partners",
+      "viewOffers": "View all offers",
+      "viewRfq": "View all RFQs",
+      "viewDetail": "View"
+    },
+    "errors": {
+      "unavailable": "Dashboard is currently unavailable."
+    }
   }
 }

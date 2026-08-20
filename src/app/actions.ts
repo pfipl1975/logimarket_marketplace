@@ -830,3 +830,21 @@ export async function getAdminRfqDetail(rawId: unknown) {
     return { ok: false as const, code: "SYSTEM_ERROR" as const };
   }
 }
+export type AdminDashboardPageResult =
+  | { ok: true; data: import("@/lib/admin/dashboard-read-model-core").AdminDashboardReadResult }
+  | { ok: false; code: "ADMIN_DASHBOARD_UNAVAILABLE" };
+
+export async function getAdminDashboardPage(): Promise<AdminDashboardPageResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminDashboardReadModel } = await import("@/lib/admin/dashboard-read-model-core");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminDashboardReadModel(db);
+    return { ok: true, data };
+  } catch {
+    console.error("Admin dashboard read query failed.");
+    return { ok: false, code: "ADMIN_DASHBOARD_UNAVAILABLE" };
+  }
+}

@@ -189,4 +189,36 @@ describe("UI Contract Tests", () => {
       "AdminRfqDetailPage must not import getRfqStatusLabel from AdminRfqStatusControl"
     );
   });
+
+  test("AdminDashboardPage respects PII boundaries and layout", () => {
+    const dashboardSrc = fs.readFileSync("src/app/_shared/AdminDashboardPage.tsx", "utf8");
+    
+    assert.ok(!dashboardSrc.includes("contactEmail"), "Must not leak contactEmail in dashboard");
+    assert.ok(!dashboardSrc.includes("contactName"), "Must not leak contactName in dashboard");
+    assert.ok(!dashboardSrc.includes("phone"), "Must not leak phone in dashboard");
+    assert.ok(!dashboardSrc.includes("message"), "Must not leak message in dashboard");
+    
+    // Check links
+    assert.ok(dashboardSrc.includes("href={//admin/partners}"), "Must link to partners");
+    assert.ok(dashboardSrc.includes("href={//admin/offers}"), "Must link to offers");
+    assert.ok(dashboardSrc.includes("href={//admin/rfq}"), "Must link to rfq");
+    assert.ok(dashboardSrc.includes("href={//admin/rfq/}"), "Must link to rfq detail");
+    
+    // Check missing charts
+    assert.ok(!dashboardSrc.includes("Chart"), "Must not contain Charts");
+    assert.ok(!dashboardSrc.includes("analytics"), "Must not contain analytics");
+    assert.ok(!dashboardSrc.includes("GMV"), "Must not contain GMV");
+    assert.ok(!dashboardSrc.includes("Revenue"), "Must not contain Revenue");
+  });
+
+  test("actions.ts correctly implements getAdminDashboardPage", () => {
+    const actionsSrc = fs.readFileSync("src/app/actions.ts", "utf8");
+    
+    assert.ok(actionsSrc.includes("export async function getAdminDashboardPage"), "Must export getAdminDashboardPage");
+    
+    // Auth boundary
+    const getDashboardFn = actionsSrc.split("export async function getAdminDashboardPage")[1].split("}")[0];
+    assert.ok(getDashboardFn.includes("await requireAdmin();"), "Dashboard must require admin auth BEFORE db query");
+  });
+
 });
