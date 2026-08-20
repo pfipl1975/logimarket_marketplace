@@ -189,4 +189,48 @@ describe("UI Contract Tests", () => {
       "AdminRfqDetailPage must not import getRfqStatusLabel from AdminRfqStatusControl"
     );
   });
+
+  test("AdminDashboardPage respects PII boundaries and layout", () => {
+    const dashboardSrc = fs.readFileSync("src/app/_shared/AdminDashboardPage.tsx", "utf8");
+    
+    assert.ok(!dashboardSrc.includes("contactEmail"), "Must not leak contactEmail in dashboard");
+    assert.ok(!dashboardSrc.includes("contactName"), "Must not leak contactName in dashboard");
+    assert.ok(!dashboardSrc.includes("phone"), "Must not leak phone in dashboard");
+    assert.ok(!dashboardSrc.includes("message"), "Must not leak message in dashboard");
+    
+    // Check links
+    assert.ok(dashboardSrc.includes("href={routes.partners}"), "Must link to partners");
+    assert.ok(dashboardSrc.includes("href={routes.offers}"), "Must link to offers");
+    assert.ok(dashboardSrc.includes("href={routes.rfq}"), "Must link to rfq");
+    assert.ok(dashboardSrc.includes("routes.rfqDetail"), "Must link to rfq detail");
+    
+    // Check missing charts
+    assert.ok(!dashboardSrc.includes("Chart"), "Must not contain Charts");
+    assert.ok(!dashboardSrc.includes("analytics"), "Must not contain analytics");
+    assert.ok(!dashboardSrc.includes("GMV"), "Must not contain GMV");
+    assert.ok(!dashboardSrc.includes("Revenue"), "Must not contain Revenue");
+
+    // Phase B Correction Pass 2 assertions
+    assert.ok(!dashboardSrc.includes("<object"), "Must not use <object> link workaround");
+    assert.ok(dashboardSrc.includes("href={`${routes.offers}?status=draft`}"), "Must contain offer status filter link");
+    assert.ok(dashboardSrc.includes("href={`${routes.rfq}?status=new`}"), "Must contain rfq status filter link");
+    
+    // Seller eligibility panel should not have status links to partners
+    assert.ok(!dashboardSrc.includes("routes.partners}?eligibility="), "Seller eligibility must not link to partners with eligibility filter");
+    assert.ok(!dashboardSrc.includes("routes.partners}?status="), "Seller eligibility must not link to partners with status filter");
+  });
+
+  test("actions.ts correctly implements getAdminDashboardPage", () => {
+    const actionsSrc = fs.readFileSync("src/app/actions.ts", "utf8");
+    
+    assert.ok(actionsSrc.includes("export async function getAdminDashboardPage"), "Must export getAdminDashboardPage");
+    
+    // Auth boundary extraction pattern
+    const dashboardMatch = actionsSrc.match(/export async function getAdminDashboardPage\(\)[^{]*\{([\s\S]*?)getAdminDashboardReadModel/);
+    assert.ok(dashboardMatch, "getAdminDashboardPage must contain getAdminDashboardReadModel");
+    
+    const bodyBeforeQuery = dashboardMatch[1];
+    assert.ok(bodyBeforeQuery.includes("await requireAdmin();"), "Dashboard must require admin auth BEFORE db query");
+  });
+
 });

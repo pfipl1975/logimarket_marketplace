@@ -792,5 +792,48 @@
       "OUTBOUND_URL_INVALID": "Недійсне посилання для зовнішньої пропозиції",
       "SYSTEM_ERROR": "Виникла системна помилка"
     }
+  },
+  "adminDashboard": {
+    "metaTitle": "Панель адміністратора LogiMarket",
+    "metaDescription": "Оперативний огляд LogiMarket.",
+    "title": "Оперативна панель",
+    "subtitle": "Огляд показників LogiMarket у реальному часі.",
+    "sections": {
+      "offers": "Пропозиції",
+      "partners": "Партнери",
+      "rfq": "Операції Запитів",
+      "recentRfq": "Останні Запити"
+    },
+    "labels": {
+      "total": "Всього"
+    },
+    "eligibility": {
+      "none": "Не встановлено",
+      "pending": "В очікуванні",
+      "eligible": "Має право",
+      "ineligible": "Не має права",
+      "suspended": "Призупинено"
+    },
+    "actions": {
+      "viewOffers": "Переглянути пропозиції",
+      "viewPartners": "Переглянути партнерів",
+      "viewRfq": "Переглянути запити",
+      "viewDetail": "Деталі"
+    },
+    "empty": {
+      "recentRfq": "Немає останніх відкритих запитів."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Створено",
+      "company": "Компанія",
+      "status": "Статус",
+      "offer": "Пропозиція",
+      "partner": "Партнер",
+      "actions": "Дії"
+    },
+    "errors": {
+      "unavailable": "Панель наразі недоступна."
+    }
   }
 }

@@ -792,5 +792,48 @@
       "OUTBOUND_URL_INVALID": "URL no válida para la oferta de salida",
       "SYSTEM_ERROR": "Ocurrió un error del sistema"
     }
+  },
+  "adminDashboard": {
+    "metaTitle": "Panel de control Admin LogiMarket",
+    "metaDescription": "Resumen operativo de LogiMarket.",
+    "title": "Panel Operativo",
+    "subtitle": "Resumen en tiempo real de métricas de LogiMarket.",
+    "sections": {
+      "offers": "Ofertas",
+      "partners": "Socios",
+      "rfq": "Operaciones RFQ",
+      "recentRfq": "RFQs Recientes"
+    },
+    "labels": {
+      "total": "Total"
+    },
+    "eligibility": {
+      "none": "No establecido",
+      "pending": "Pendiente",
+      "eligible": "Elegible",
+      "ineligible": "No elegible",
+      "suspended": "Suspendido"
+    },
+    "actions": {
+      "viewOffers": "Ver Ofertas",
+      "viewPartners": "Ver Socios",
+      "viewRfq": "Ver RFQs",
+      "viewDetail": "Detalles"
+    },
+    "empty": {
+      "recentRfq": "No hay RFQs abiertos recientes."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Creado",
+      "company": "Empresa",
+      "status": "Estado",
+      "offer": "Oferta",
+      "partner": "Socio",
+      "actions": "Acciones"
+    },
+    "errors": {
+      "unavailable": "El panel de control no está disponible actualmente."
+    }
   }
 }

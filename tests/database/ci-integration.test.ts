@@ -934,5 +934,79 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(resNotFound.code, "NOT_FOUND");
   });
 
+  await t.test("ADMIN_DASHBOARD_READ_MODEL_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    // Insert 5 Partners
+    for (let i = 1; i <= 5; i++) {
+      await pool.query("INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, $2, 'p@test.com')", [i, `Partner ${i}`]);
+    }
+
+    // 1 pending, 1 eligible, 1 ineligible, 1 suspended, 1 none (Partner 5)
+    await pool.query("INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (1, 'pending')");
+    await pool.query("INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (2, 'eligible')");
+    await pool.query("INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (3, 'ineligible')");
+    await pool.query("INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (4, 'suspended')");
+
+    // 1 category
+    await pool.query("INSERT INTO public.categories (id, name, slug) VALUES (1, 'Cat', 'cat')");
+
+    // 5 Offers (1 of each status)
+    const statuses = ['draft', 'published', 'hidden', 'archived', 'deleted'];
+    for (let i = 1; i <= 5; i++) {
+      await pool.query("INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active) VALUES ($1, 1, 1, $2, 'rfq', 'inbound', $3, true)", [i, `Offer ${i}`, statuses[i - 1]]);
+    }
+
+    // Insert RFQ Leads
+    // 1 closed
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (10, 1, 1, 'Buyer 10', 'Bob', 'bob@test.com', '123', 'Msg', 'closed', '2026-08-01T10:00:00Z')");
+    // 1 responded
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (11, 2, 2, 'Buyer 11', 'Bob', 'bob@test.com', '123', 'Msg', 'responded', '2026-08-02T10:00:00Z')");
+    // 1 in_progress
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (12, 3, 3, 'Buyer 12', 'Bob', 'bob@test.com', '123', 'Msg', 'in_progress', '2026-08-03T10:00:00Z')");
+    // 4 new
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (13, 4, 4, 'Buyer 13', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-04T10:00:00Z')");
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (14, 5, 5, 'Buyer 14', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-05T10:00:00Z')");
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (15, 1, 1, 'Buyer 15', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-06T10:00:00Z')");
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (16, 2, 2, 'Buyer 16', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-07T10:00:00Z')");
+
+    const db = getDb();
+    const { getAdminDashboardReadModel } = await import("../../src/lib/admin/dashboard-read-model-core.js");
+
+    const result = await getAdminDashboardReadModel(db);
+    
+    assert.deepEqual(result.counts.partners, { total: 5 });
+    assert.deepEqual(result.counts.offers, { total: 5, draft: 1, published: 1, hidden: 1, archived: 1, deleted: 1 });
+    assert.deepEqual(result.counts.sellerEligibility, { none: 1, pending: 1, eligible: 1, ineligible: 1, suspended: 1 });
+    assert.deepEqual(result.counts.rfq, { total: 7, new: 4, inProgress: 1, responded: 1, closed: 1 });
+
+    assert.equal(result.recentRfqQueue.length, 5);
+    
+    // Check sorting: created_at DESC NULLS LAST, then id DESC
+    assert.equal(result.recentRfqQueue[0].id, 16);
+    assert.equal(result.recentRfqQueue[1].id, 15);
+    assert.equal(result.recentRfqQueue[2].id, 14);
+    assert.equal(result.recentRfqQueue[3].id, 13);
+    assert.equal(result.recentRfqQueue[4].id, 12);
+
+    const q0 = result.recentRfqQueue[0];
+    const allowedKeys = ["id", "createdAt", "status", "companyName", "offerId", "offerTitle", "partnerId", "partnerCompanyName"];
+    assert.deepEqual(Object.keys(q0).sort(), allowedKeys.sort());
+
+    assert.equal(q0.status, "new");
+    assert.equal(q0.companyName, "Buyer 16");
+    assert.equal(q0.offerId, 2);
+    assert.equal(q0.offerTitle, "Offer 2");
+    assert.equal(q0.partnerId, 2);
+    assert.equal(q0.partnerCompanyName, "Partner 2");
+    
+    const stringified = JSON.stringify(q0);
+    assert.ok(!stringified.includes("bob@test.com"), "PII email leaked");
+    assert.ok(!stringified.includes("Bob"), "PII contactName leaked");
+    assert.ok(!stringified.includes("123"), "PII phone leaked");
+    assert.ok(!stringified.includes("Msg"), "PII message leaked");
+  });
+
   await pool.end();
 });

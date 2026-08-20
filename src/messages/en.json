@@ -792,5 +792,48 @@
       "SYSTEM_ERROR": "A system error occurred",
       "PRICE_INVALID": "Invalid gross price"
     }
+  },
+  "adminDashboard": {
+    "metaTitle": "LogiMarket Admin Dashboard",
+    "metaDescription": "LogiMarket marketplace operational overview.",
+    "title": "Operational Dashboard",
+    "subtitle": "Real-time overview of LogiMarket marketplace metrics.",
+    "sections": {
+      "offers": "Offers",
+      "partners": "Partners",
+      "rfq": "RFQ Operations",
+      "recentRfq": "Recent RFQ Queue"
+    },
+    "labels": {
+      "total": "Total"
+    },
+    "eligibility": {
+      "none": "Not Set",
+      "pending": "Pending",
+      "eligible": "Eligible",
+      "ineligible": "Ineligible",
+      "suspended": "Suspended"
+    },
+    "actions": {
+      "viewOffers": "View Offers",
+      "viewPartners": "View Partners",
+      "viewRfq": "View RFQs",
+      "viewDetail": "Details"
+    },
+    "empty": {
+      "recentRfq": "No recent non-closed RFQs."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Created",
+      "company": "Company",
+      "status": "Status",
+      "offer": "Offer",
+      "partner": "Partner",
+      "actions": "Actions"
+    },
+    "errors": {
+      "unavailable": "Dashboard is currently unavailable."
+    }
   }
 }

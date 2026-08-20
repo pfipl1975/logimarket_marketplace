@@ -792,5 +792,48 @@
       "SYSTEM_ERROR": "Wystąpił błąd systemu",
       "PRICE_INVALID": "Nieprawidłowa cena brutto"
     }
+  },
+  "adminDashboard": {
+    "metaTitle": "Panel operacyjny LogiMarket",
+    "metaDescription": "Przegląd operacyjny platformy LogiMarket.",
+    "title": "Panel Operacyjny",
+    "subtitle": "Przegląd wskaźników platformy LogiMarket w czasie rzeczywistym.",
+    "sections": {
+      "offers": "Oferty",
+      "partners": "Partnerzy",
+      "rfq": "Operacje Zapytania",
+      "recentRfq": "Kolejka Zapytań"
+    },
+    "labels": {
+      "total": "Suma"
+    },
+    "eligibility": {
+      "none": "Nieustalony",
+      "pending": "Oczekujący",
+      "eligible": "Kwalifikuje się",
+      "ineligible": "Nie kwalifikuje się",
+      "suspended": "Zawieszony"
+    },
+    "actions": {
+      "viewOffers": "Zobacz Oferty",
+      "viewPartners": "Zobacz Partnerów",
+      "viewRfq": "Zobacz Zapytania",
+      "viewDetail": "Szczegóły"
+    },
+    "empty": {
+      "recentRfq": "Brak otwartych zapytań."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Utworzono",
+      "company": "Firma",
+      "status": "Status",
+      "offer": "Oferta",
+      "partner": "Partner",
+      "actions": "Akcje"
+    },
+    "errors": {
+      "unavailable": "Panel jest obecnie niedostępny."
+    }
   }
 }

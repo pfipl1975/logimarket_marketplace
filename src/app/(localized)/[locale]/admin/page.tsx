@@ -1,25 +1,24 @@
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { AdminDashboardPage } from "@/app/_shared/AdminDashboardPage";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLocale, type Locale } from "@/lib/i18n/config";
-import { AdminEntryPage } from "@/app/_shared/AdminEntryPage";
-import { notFound } from "next/navigation";
-import type { Metadata } from "next";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }): Promise<Metadata> {
-  const resolvedParams = await params;
-  
-  if (!isLocale(resolvedParams.locale) || resolvedParams.locale === "pl") {
+  const p = await params;
+  if (!isLocale(p.locale) || p.locale === "pl") {
     notFound();
   }
-  
-  const dictionary = await getDictionary(resolvedParams.locale as Locale);
-  
+  const dictionary = await getDictionary(p.locale as Locale);
   return {
-    title: dictionary.admin.metaTitle,
-    description: dictionary.admin.metaDescription,
+    title: dictionary.adminDashboard.metaTitle,
+    description: dictionary.adminDashboard.metaDescription,
     robots: {
       index: false,
       follow: false,
@@ -28,19 +27,25 @@ export async function generateMetadata({
   };
 }
 
-export default async function LocalizedAdminPage({
+export default async function AdminRootLocalized({
   params,
 }: {
   params: Promise<{ locale: string }>;
 }) {
-  const resolvedParams = await params;
-  
-  if (!isLocale(resolvedParams.locale) || resolvedParams.locale === "pl") {
+  const p = await params;
+  if (!isLocale(p.locale) || p.locale === "pl") {
     notFound();
   }
 
-  const locale = resolvedParams.locale as Locale;
-  const dictionary = await getDictionary(locale);
-
-  return <AdminEntryPage dictionary={dictionary.admin} />;
+  return (
+    <AdminDashboardPage 
+      locale={p.locale} 
+      routes={{
+        partners: `/${p.locale}/admin/partners`,
+        offers: `/${p.locale}/admin/offers`,
+        rfq: `/${p.locale}/admin/rfq`,
+        rfqDetail: (id: number) => `/${p.locale}/admin/rfq/${id}`,
+      }}
+    />
+  );
 }

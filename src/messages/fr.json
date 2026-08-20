@@ -792,5 +792,48 @@
       "OUTBOUND_URL_INVALID": "URL invalide pour l'offre sortante",
       "SYSTEM_ERROR": "Une erreur système s'est produite"
     }
+  },
+  "adminDashboard": {
+    "metaTitle": "Tableau de bord Admin LogiMarket",
+    "metaDescription": "Aperçu opérationnel LogiMarket.",
+    "title": "Tableau de Bord Opérationnel",
+    "subtitle": "Aperçu en temps réel des métriques LogiMarket.",
+    "sections": {
+      "offers": "Offres",
+      "partners": "Partenaires",
+      "rfq": "Opérations RFQ",
+      "recentRfq": "RFQs Récents"
+    },
+    "labels": {
+      "total": "Total"
+    },
+    "eligibility": {
+      "none": "Non défini",
+      "pending": "En attente",
+      "eligible": "Éligible",
+      "ineligible": "Non éligible",
+      "suspended": "Suspendu"
+    },
+    "actions": {
+      "viewOffers": "Voir Offres",
+      "viewPartners": "Voir Partenaires",
+      "viewRfq": "Voir RFQs",
+      "viewDetail": "Détails"
+    },
+    "empty": {
+      "recentRfq": "Aucun RFQ ouvert récent."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Créé",
+      "company": "Entreprise",
+      "status": "Statut",
+      "offer": "Offre",
+      "partner": "Partenaire",
+      "actions": "Actions"
+    },
+    "errors": {
+      "unavailable": "Le tableau de bord est actuellement indisponible."
+    }
   }
 }

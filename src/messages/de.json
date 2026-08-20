@@ -792,5 +792,48 @@
       "OUTBOUND_URL_INVALID": "Ungültige URL für Outbound-Angebot",
       "SYSTEM_ERROR": "Ein Systemfehler ist aufgetreten"
     }
+  },
+  "adminDashboard": {
+    "metaTitle": "LogiMarket Admin Dashboard",
+    "metaDescription": "LogiMarket operativer Überblick.",
+    "title": "Operatives Dashboard",
+    "subtitle": "Echtzeit-Überblick über LogiMarket-Metriken.",
+    "sections": {
+      "offers": "Angebote",
+      "partners": "Partner",
+      "rfq": "RFQ Operationen",
+      "recentRfq": "Aktuelle RFQs"
+    },
+    "labels": {
+      "total": "Gesamt"
+    },
+    "eligibility": {
+      "none": "Nicht festgelegt",
+      "pending": "Ausstehend",
+      "eligible": "Qualifiziert",
+      "ineligible": "Nicht qualifiziert",
+      "suspended": "Gesperrt"
+    },
+    "actions": {
+      "viewOffers": "Angebote anzeigen",
+      "viewPartners": "Partner anzeigen",
+      "viewRfq": "RFQs anzeigen",
+      "viewDetail": "Details"
+    },
+    "empty": {
+      "recentRfq": "Keine offenen RFQs."
+    },
+    "table": {
+      "id": "ID",
+      "createdAt": "Erstellt",
+      "company": "Unternehmen",
+      "status": "Status",
+      "offer": "Angebot",
+      "partner": "Partner",
+      "actions": "Aktionen"
+    },
+    "errors": {
+      "unavailable": "Dashboard ist derzeit nicht verfügbar."
+    }
   }
 }
