@@ -42,8 +42,8 @@ export async function AdminDashboardPage({
         <p className="text-muted-foreground mt-1">{t.subtitle}</p>
       </div>
 
+      {/* PRIMARY KPI GRID */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Offers */}
         <Link href={routes.offers} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors">
           <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
             {t.sections.offers}
@@ -52,31 +52,8 @@ export async function AdminDashboardPage({
             <span className="text-sm text-muted-foreground tracking-wider">{t.labels.total}</span>
             <div className="text-3xl font-bold text-brand-navy">{counts.offers.total}</div>
           </div>
-          <div className="space-y-2 text-sm text-brand-navy">
-            <div className="flex justify-between">
-              <object><Link href={`${routes.offers}?status=draft`} className="hover:text-brand-teal">{dictOffers.statusDraft}</Link></object>
-              <span className="font-medium">{counts.offers.draft}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.offers}?status=published`} className="hover:text-brand-teal">{dictOffers.statusPublished}</Link></object>
-              <span className="font-medium">{counts.offers.published}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.offers}?status=hidden`} className="hover:text-brand-teal">{dictOffers.statusHidden}</Link></object>
-              <span className="font-medium">{counts.offers.hidden}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.offers}?status=archived`} className="hover:text-brand-teal">{dictOffers.statusArchived}</Link></object>
-              <span className="font-medium">{counts.offers.archived}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.offers}?status=deleted`} className="hover:text-brand-teal">{dictOffers.statusDeleted}</Link></object>
-              <span className="font-medium">{counts.offers.deleted}</span>
-            </div>
-          </div>
         </Link>
 
-        {/* Partners */}
         <Link href={routes.partners} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors">
           <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
             {t.sections.partners}
@@ -85,6 +62,55 @@ export async function AdminDashboardPage({
             <span className="text-sm text-muted-foreground tracking-wider">{t.labels.total}</span>
             <div className="text-3xl font-bold text-brand-navy">{counts.partners.total}</div>
           </div>
+        </Link>
+
+        <Link href={routes.rfq} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors">
+          <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
+            {t.sections.rfq}
+          </h2>
+          <div className="mb-4">
+            <span className="text-sm text-muted-foreground tracking-wider">{t.labels.total}</span>
+            <div className="text-3xl font-bold text-brand-navy">{counts.rfq.total}</div>
+          </div>
+        </Link>
+      </div>
+
+      {/* STATUS PANELS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* OFFER STATUS PANEL */}
+        <div className="bg-white shadow rounded-industrial p-6 border border-industrial">
+          <h3 className="text-md font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
+            {t.sections.offers}
+          </h3>
+          <div className="space-y-2 text-sm text-brand-navy">
+            <Link href={`${routes.offers}?status=draft`} className="flex justify-between hover:text-brand-teal">
+              <span>{dictOffers.statusDraft}</span>
+              <span className="font-medium">{counts.offers.draft}</span>
+            </Link>
+            <Link href={`${routes.offers}?status=published`} className="flex justify-between hover:text-brand-teal">
+              <span>{dictOffers.statusPublished}</span>
+              <span className="font-medium">{counts.offers.published}</span>
+            </Link>
+            <Link href={`${routes.offers}?status=hidden`} className="flex justify-between hover:text-brand-teal">
+              <span>{dictOffers.statusHidden}</span>
+              <span className="font-medium">{counts.offers.hidden}</span>
+            </Link>
+            <Link href={`${routes.offers}?status=archived`} className="flex justify-between hover:text-brand-teal">
+              <span>{dictOffers.statusArchived}</span>
+              <span className="font-medium">{counts.offers.archived}</span>
+            </Link>
+            <Link href={`${routes.offers}?status=deleted`} className="flex justify-between hover:text-brand-teal">
+              <span>{dictOffers.statusDeleted}</span>
+              <span className="font-medium">{counts.offers.deleted}</span>
+            </Link>
+          </div>
+        </div>
+
+        {/* SELLER ELIGIBILITY PANEL */}
+        <div className="bg-white shadow rounded-industrial p-6 border border-industrial">
+          <h3 className="text-md font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
+            <Link href={routes.partners} className="hover:text-brand-teal">{t.sections.partners}</Link>
+          </h3>
           <div className="space-y-2 text-sm text-brand-navy">
             <div className="flex justify-between">
               <span>{t.eligibility.none}</span>
@@ -107,36 +133,32 @@ export async function AdminDashboardPage({
               <span className="font-medium">{counts.sellerEligibility.suspended}</span>
             </div>
           </div>
-        </Link>
+        </div>
 
-        {/* RFQ */}
-        <Link href={routes.rfq} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors">
-          <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
+        {/* RFQ STATUS PANEL */}
+        <div className="bg-white shadow rounded-industrial p-6 border border-industrial">
+          <h3 className="text-md font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
             {t.sections.rfq}
-          </h2>
-          <div className="mb-4">
-            <span className="text-sm text-muted-foreground tracking-wider">{t.labels.total}</span>
-            <div className="text-3xl font-bold text-brand-navy">{counts.rfq.total}</div>
-          </div>
+          </h3>
           <div className="space-y-2 text-sm text-brand-navy">
-            <div className="flex justify-between">
-              <object><Link href={`${routes.rfq}?status=new`} className="hover:text-brand-teal">{getRfqStatusLabel("new", dictRfq)}</Link></object>
+            <Link href={`${routes.rfq}?status=new`} className="flex justify-between hover:text-brand-teal">
+              <span>{getRfqStatusLabel("new", dictRfq)}</span>
               <span className="font-medium">{counts.rfq.new}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.rfq}?status=in_progress`} className="hover:text-brand-teal">{getRfqStatusLabel("in_progress", dictRfq)}</Link></object>
+            </Link>
+            <Link href={`${routes.rfq}?status=in_progress`} className="flex justify-between hover:text-brand-teal">
+              <span>{getRfqStatusLabel("in_progress", dictRfq)}</span>
               <span className="font-medium">{counts.rfq.inProgress}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.rfq}?status=responded`} className="hover:text-brand-teal">{getRfqStatusLabel("responded", dictRfq)}</Link></object>
+            </Link>
+            <Link href={`${routes.rfq}?status=responded`} className="flex justify-between hover:text-brand-teal">
+              <span>{getRfqStatusLabel("responded", dictRfq)}</span>
               <span className="font-medium">{counts.rfq.responded}</span>
-            </div>
-            <div className="flex justify-between">
-              <object><Link href={`${routes.rfq}?status=closed`} className="hover:text-brand-teal">{getRfqStatusLabel("closed", dictRfq)}</Link></object>
+            </Link>
+            <Link href={`${routes.rfq}?status=closed`} className="flex justify-between hover:text-brand-teal">
+              <span>{getRfqStatusLabel("closed", dictRfq)}</span>
               <span className="font-medium">{counts.rfq.closed}</span>
-            </div>
+            </Link>
           </div>
-        </Link>
+        </div>
       </div>
 
       <div className="bg-white shadow rounded-industrial p-6 border border-industrial">

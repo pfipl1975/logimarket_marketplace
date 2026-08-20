@@ -73,6 +73,7 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
 
     db
       .select({
+        total: sql<number>`count(*)`,
         pending: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'pending')`,
         eligible: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'eligible')`,
         ineligible: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'ineligible')`,
@@ -111,7 +112,7 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
 
   const offersData = offersAgg[0] || { total: 0, draft: 0, published: 0, hidden: 0, archived: 0, deleted: 0 };
   const partnersData = partnersAgg[0] || { total: 0 };
-  const eligibilityData = eligibilityAgg[0] || { pending: 0, eligible: 0, ineligible: 0, suspended: 0 };
+  const eligibilityData = eligibilityAgg[0] || { total: 0, pending: 0, eligible: 0, ineligible: 0, suspended: 0 };
   const rfqData = rfqAgg[0] || { total: 0, new: 0, inProgress: 0, responded: 0, closed: 0 };
 
   const parsedOffers = {
@@ -128,6 +129,7 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
   };
 
   const parsedEligibility = {
+    total: Number(eligibilityData.total),
     pending: Number(eligibilityData.pending),
     eligible: Number(eligibilityData.eligible),
     ineligible: Number(eligibilityData.ineligible),
@@ -142,29 +144,17 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
     closed: Number(rfqData.closed),
   };
 
-  // Invariants
-  const storedEligibilityTotal = parsedEligibility.pending + parsedEligibility.eligible + parsedEligibility.ineligible + parsedEligibility.suspended;
-  if (storedEligibilityTotal > parsedPartners.total) {
-    throw new Error("Dashboard Invariant Violation: storedEligibilityTotal > partnersTotal");
-  }
-  const noneEligibility = parsedPartners.total - storedEligibilityTotal;
-
-  const storedOffersTotal = parsedOffers.draft + parsedOffers.published + parsedOffers.hidden + parsedOffers.archived + parsedOffers.deleted;
-  if (parsedOffers.total !== storedOffersTotal) {
-    throw new Error("Dashboard Invariant Violation: unknown offer status present");
-  }
-
-  const storedRfqTotal = parsedRfq.new + parsedRfq.inProgress + parsedRfq.responded + parsedRfq.closed;
-  if (parsedRfq.total !== storedRfqTotal) {
-    throw new Error("Dashboard Invariant Violation: unknown rfq status present");
-  }
+  const { noneEligibility } = validateDashboardInvariants(parsedOffers, parsedPartners, parsedEligibility, parsedRfq);
 
   return {
     counts: {
       offers: parsedOffers,
       partners: parsedPartners,
       sellerEligibility: {
-        ...parsedEligibility,
+        pending: parsedEligibility.pending,
+        eligible: parsedEligibility.eligible,
+        ineligible: parsedEligibility.ineligible,
+        suspended: parsedEligibility.suspended,
         none: noneEligibility,
       },
       rfq: parsedRfq,
@@ -180,4 +170,32 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
       partnerCompanyName: r.partnerCompanyName || null,
     })),
   };
+}
+
+export function validateDashboardInvariants(
+  parsedOffers: { total: number, draft: number, published: number, hidden: number, archived: number, deleted: number },
+  parsedPartners: { total: number },
+  parsedEligibility: { total: number, pending: number, eligible: number, ineligible: number, suspended: number },
+  parsedRfq: { total: number, new: number, inProgress: number, responded: number, closed: number }
+) {
+  const storedEligibilityTotal = parsedEligibility.pending + parsedEligibility.eligible + parsedEligibility.ineligible + parsedEligibility.suspended;
+  if (parsedEligibility.total !== storedEligibilityTotal) {
+    throw new Error("Dashboard Invariant Violation: unknown eligibility status present");
+  }
+  
+  if (parsedEligibility.total > parsedPartners.total) {
+    throw new Error("Dashboard Invariant Violation: storedEligibilityTotal > partnersTotal");
+  }
+  const noneEligibility = parsedPartners.total - parsedEligibility.total;
+
+  const storedOffersTotal = parsedOffers.draft + parsedOffers.published + parsedOffers.hidden + parsedOffers.archived + parsedOffers.deleted;
+  if (parsedOffers.total !== storedOffersTotal) {
+    throw new Error("Dashboard Invariant Violation: unknown offer status present");
+  }
+
+  const storedRfqTotal = parsedRfq.new + parsedRfq.inProgress + parsedRfq.responded + parsedRfq.closed;
+  if (parsedRfq.total !== storedRfqTotal) {
+    throw new Error("Dashboard Invariant Violation: unknown rfq status present");
+  }
+  return { noneEligibility };
 }

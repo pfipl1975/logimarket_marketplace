@@ -209,6 +209,15 @@ describe("UI Contract Tests", () => {
     assert.ok(!dashboardSrc.includes("analytics"), "Must not contain analytics");
     assert.ok(!dashboardSrc.includes("GMV"), "Must not contain GMV");
     assert.ok(!dashboardSrc.includes("Revenue"), "Must not contain Revenue");
+
+    // Phase B Correction Pass 2 assertions
+    assert.ok(!dashboardSrc.includes("<object"), "Must not use <object> link workaround");
+    assert.ok(dashboardSrc.includes("href={`${routes.offers}?status=draft`}"), "Must contain offer status filter link");
+    assert.ok(dashboardSrc.includes("href={`${routes.rfq}?status=new`}"), "Must contain rfq status filter link");
+    
+    // Seller eligibility panel should not have status links to partners
+    assert.ok(!dashboardSrc.includes("routes.partners}?eligibility="), "Seller eligibility must not link to partners with eligibility filter");
+    assert.ok(!dashboardSrc.includes("routes.partners}?status="), "Seller eligibility must not link to partners with status filter");
   });
 
   test("actions.ts correctly implements getAdminDashboardPage", () => {

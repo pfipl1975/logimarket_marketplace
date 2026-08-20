@@ -13,7 +13,7 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const p = await params;
   if (!isLocale(p.locale) || p.locale === "pl") {
-    return {};
+    notFound();
   }
   const dictionary = await getDictionary(p.locale as Locale);
   return {
