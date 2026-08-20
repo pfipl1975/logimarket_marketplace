@@ -794,55 +794,46 @@
     }
   },
   "adminDashboard": {
-    "title": "Admin Dashboard",
-    "subtitle": "Overview of marketplace operations",
+    "metaTitle": "Panel operacyjny LogiMarket",
+    "metaDescription": "Przegląd operacyjny platformy LogiMarket.",
+    "title": "Panel Operacyjny",
+    "subtitle": "Przegląd wskaźników platformy LogiMarket w czasie rzeczywistym.",
     "sections": {
-      "partners": "Partners",
-      "offers": "Offers",
-      "rfq": "RFQ",
-      "recentRfq": "Recent RFQs"
+      "offers": "Oferty",
+      "partners": "Partnerzy",
+      "rfq": "Operacje Zapytania",
+      "recentRfq": "Kolejka Zapytań"
     },
     "labels": {
-      "total": "Total"
+      "total": "Suma"
     },
     "eligibility": {
-      "none": "Unassigned",
-      "pending": "Pending",
-      "eligible": "Eligible",
-      "ineligible": "Ineligible",
-      "suspended": "Suspended"
+      "none": "Nieustalony",
+      "pending": "Oczekujący",
+      "eligible": "Kwalifikuje się",
+      "ineligible": "Nie kwalifikuje się",
+      "suspended": "Zawieszony"
     },
-    "offers": {
-      "draft": "Draft",
-      "published": "Published",
-      "hidden": "Hidden",
-      "archived": "Archived",
-      "deleted": "Deleted"
-    },
-    "rfq": {
-      "new": "New",
-      "inProgress": "In Progress",
-      "responded": "Responded",
-      "closed": "Closed"
+    "actions": {
+      "viewOffers": "Zobacz Oferty",
+      "viewPartners": "Zobacz Partnerów",
+      "viewRfq": "Zobacz Zapytania",
+      "viewDetail": "Szczegóły"
     },
     "empty": {
-      "recentRfq": "No active RFQs in queue."
+      "recentRfq": "Brak otwartych zapytań."
     },
     "table": {
       "id": "ID",
-      "createdAt": "Date",
-      "company": "Company",
+      "createdAt": "Utworzono",
+      "company": "Firma",
       "status": "Status",
-      "actions": "Actions"
-    },
-    "actions": {
-      "viewPartners": "View all partners",
-      "viewOffers": "View all offers",
-      "viewRfq": "View all RFQs",
-      "viewDetail": "View"
+      "offer": "Oferta",
+      "partner": "Partner",
+      "actions": "Akcje"
     },
     "errors": {
-      "unavailable": "Dashboard is currently unavailable."
+      "unavailable": "Panel jest obecnie niedostępny."
     }
   }
 }

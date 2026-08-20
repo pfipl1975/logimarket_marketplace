@@ -794,55 +794,46 @@
     }
   },
   "adminDashboard": {
-    "title": "Admin Dashboard",
-    "subtitle": "Overview of marketplace operations",
+    "metaTitle": "LogiMarket Admin Dashboard",
+    "metaDescription": "LogiMarket operativer Überblick.",
+    "title": "Operatives Dashboard",
+    "subtitle": "Echtzeit-Überblick über LogiMarket-Metriken.",
     "sections": {
-      "partners": "Partners",
-      "offers": "Offers",
-      "rfq": "RFQ",
-      "recentRfq": "Recent RFQs"
+      "offers": "Angebote",
+      "partners": "Partner",
+      "rfq": "RFQ Operationen",
+      "recentRfq": "Aktuelle RFQs"
     },
     "labels": {
-      "total": "Total"
+      "total": "Gesamt"
     },
     "eligibility": {
-      "none": "Unassigned",
-      "pending": "Pending",
-      "eligible": "Eligible",
-      "ineligible": "Ineligible",
-      "suspended": "Suspended"
+      "none": "Nicht festgelegt",
+      "pending": "Ausstehend",
+      "eligible": "Qualifiziert",
+      "ineligible": "Nicht qualifiziert",
+      "suspended": "Gesperrt"
     },
-    "offers": {
-      "draft": "Draft",
-      "published": "Published",
-      "hidden": "Hidden",
-      "archived": "Archived",
-      "deleted": "Deleted"
-    },
-    "rfq": {
-      "new": "New",
-      "inProgress": "In Progress",
-      "responded": "Responded",
-      "closed": "Closed"
+    "actions": {
+      "viewOffers": "Angebote anzeigen",
+      "viewPartners": "Partner anzeigen",
+      "viewRfq": "RFQs anzeigen",
+      "viewDetail": "Details"
     },
     "empty": {
-      "recentRfq": "No active RFQs in queue."
+      "recentRfq": "Keine offenen RFQs."
     },
     "table": {
       "id": "ID",
-      "createdAt": "Date",
-      "company": "Company",
+      "createdAt": "Erstellt",
+      "company": "Unternehmen",
       "status": "Status",
-      "actions": "Actions"
-    },
-    "actions": {
-      "viewPartners": "View all partners",
-      "viewOffers": "View all offers",
-      "viewRfq": "View all RFQs",
-      "viewDetail": "View"
+      "offer": "Angebot",
+      "partner": "Partner",
+      "actions": "Aktionen"
     },
     "errors": {
-      "unavailable": "Dashboard is currently unavailable."
+      "unavailable": "Dashboard ist derzeit nicht verfügbar."
     }
   }
 }

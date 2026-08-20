@@ -794,55 +794,46 @@
     }
   },
   "adminDashboard": {
-    "title": "Admin Dashboard",
-    "subtitle": "Overview of marketplace operations",
+    "metaTitle": "Tableau de bord Admin LogiMarket",
+    "metaDescription": "Aperçu opérationnel LogiMarket.",
+    "title": "Tableau de Bord Opérationnel",
+    "subtitle": "Aperçu en temps réel des métriques LogiMarket.",
     "sections": {
-      "partners": "Partners",
-      "offers": "Offers",
-      "rfq": "RFQ",
-      "recentRfq": "Recent RFQs"
+      "offers": "Offres",
+      "partners": "Partenaires",
+      "rfq": "Opérations RFQ",
+      "recentRfq": "RFQs Récents"
     },
     "labels": {
       "total": "Total"
     },
     "eligibility": {
-      "none": "Unassigned",
-      "pending": "Pending",
-      "eligible": "Eligible",
-      "ineligible": "Ineligible",
-      "suspended": "Suspended"
+      "none": "Non défini",
+      "pending": "En attente",
+      "eligible": "Éligible",
+      "ineligible": "Non éligible",
+      "suspended": "Suspendu"
     },
-    "offers": {
-      "draft": "Draft",
-      "published": "Published",
-      "hidden": "Hidden",
-      "archived": "Archived",
-      "deleted": "Deleted"
-    },
-    "rfq": {
-      "new": "New",
-      "inProgress": "In Progress",
-      "responded": "Responded",
-      "closed": "Closed"
+    "actions": {
+      "viewOffers": "Voir Offres",
+      "viewPartners": "Voir Partenaires",
+      "viewRfq": "Voir RFQs",
+      "viewDetail": "Détails"
     },
     "empty": {
-      "recentRfq": "No active RFQs in queue."
+      "recentRfq": "Aucun RFQ ouvert récent."
     },
     "table": {
       "id": "ID",
-      "createdAt": "Date",
-      "company": "Company",
-      "status": "Status",
+      "createdAt": "Créé",
+      "company": "Entreprise",
+      "status": "Statut",
+      "offer": "Offre",
+      "partner": "Partenaire",
       "actions": "Actions"
     },
-    "actions": {
-      "viewPartners": "View all partners",
-      "viewOffers": "View all offers",
-      "viewRfq": "View all RFQs",
-      "viewDetail": "View"
-    },
     "errors": {
-      "unavailable": "Dashboard is currently unavailable."
+      "unavailable": "Le tableau de bord est actuellement indisponible."
     }
   }
 }

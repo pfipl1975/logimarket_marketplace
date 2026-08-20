@@ -794,55 +794,46 @@
     }
   },
   "adminDashboard": {
-    "title": "Admin Dashboard",
-    "subtitle": "Overview of marketplace operations",
+    "metaTitle": "LogiMarket管理仪表板",
+    "metaDescription": "LogiMarket操作概览",
+    "title": "操作仪表板",
+    "subtitle": "LogiMarket实时指标概览。",
     "sections": {
-      "partners": "Partners",
-      "offers": "Offers",
-      "rfq": "RFQ",
-      "recentRfq": "Recent RFQs"
+      "offers": "优惠",
+      "partners": "合作伙伴",
+      "rfq": "询价操作",
+      "recentRfq": "近期询价"
     },
     "labels": {
-      "total": "Total"
+      "total": "总计"
     },
     "eligibility": {
-      "none": "Unassigned",
-      "pending": "Pending",
-      "eligible": "Eligible",
-      "ineligible": "Ineligible",
-      "suspended": "Suspended"
+      "none": "未设置",
+      "pending": "待定",
+      "eligible": "合格",
+      "ineligible": "不合格",
+      "suspended": "已暂停"
     },
-    "offers": {
-      "draft": "Draft",
-      "published": "Published",
-      "hidden": "Hidden",
-      "archived": "Archived",
-      "deleted": "Deleted"
-    },
-    "rfq": {
-      "new": "New",
-      "inProgress": "In Progress",
-      "responded": "Responded",
-      "closed": "Closed"
+    "actions": {
+      "viewOffers": "查看优惠",
+      "viewPartners": "查看合作伙伴",
+      "viewRfq": "查看询价",
+      "viewDetail": "详情"
     },
     "empty": {
-      "recentRfq": "No active RFQs in queue."
+      "recentRfq": "没有近期开放的询价。"
     },
     "table": {
       "id": "ID",
-      "createdAt": "Date",
-      "company": "Company",
-      "status": "Status",
-      "actions": "Actions"
-    },
-    "actions": {
-      "viewPartners": "View all partners",
-      "viewOffers": "View all offers",
-      "viewRfq": "View all RFQs",
-      "viewDetail": "View"
+      "createdAt": "创建时间",
+      "company": "公司",
+      "status": "状态",
+      "offer": "优惠",
+      "partner": "合作伙伴",
+      "actions": "操作"
     },
     "errors": {
-      "unavailable": "Dashboard is currently unavailable."
+      "unavailable": "仪表板目前不可用。"
     }
   }
 }

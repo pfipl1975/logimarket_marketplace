@@ -934,5 +934,49 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(resNotFound.code, "NOT_FOUND");
   });
 
+  await t.test("ADMIN_DASHBOARD_READ_MODEL_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    // Insert synthetic fixtures
+    await pool.query("INSERT INTO public.partners (id, company_name, contact_email) VALUES (1, 'Partner 1', 'p1@test.com')");
+    await pool.query("INSERT INTO public.partners (id, company_name, contact_email) VALUES (2, 'Partner 2', 'p2@test.com')");
+    await pool.query("INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (1, 'eligible')");
+
+    await pool.query("INSERT INTO public.categories (id, name, slug) VALUES (1, 'Cat', 'cat')");
+
+    await pool.query("INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active) VALUES (1, 1, 1, 'Offer 1', 'rfq', 'inbound', 'published', true)");
+    await pool.query("INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active) VALUES (2, 2, 1, 'Offer 2', 'rfq', 'inbound', 'draft', false)");
+    
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (10, 1, 1, 'Buyer 1', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-01T10:00:00Z')");
+    await pool.query("INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (11, 2, 2, 'Buyer 2', 'Alice', 'ali@test.com', '123', 'Msg', 'closed', '2026-08-02T10:00:00Z')");
+
+    const db = getDb();
+    const { getAdminDashboardReadModel } = await import("../../src/lib/admin/dashboard-read-model-core.js");
+
+    const result = await getAdminDashboardReadModel(db as any);
+    
+    assert.deepEqual(result.counts.partners, { total: 2 });
+    assert.deepEqual(result.counts.offers, { total: 2, draft: 1, published: 1, hidden: 0, archived: 0, deleted: 0 });
+    assert.deepEqual(result.counts.sellerEligibility, { none: 1, pending: 0, eligible: 1, ineligible: 0, suspended: 0 });
+    assert.deepEqual(result.counts.rfq, { total: 2, new: 1, inProgress: 0, responded: 0, closed: 1 });
+
+    assert.equal(result.recentRfqQueue.length, 1);
+    const q0 = result.recentRfqQueue[0];
+    assert.equal(q0.id, 10);
+    assert.equal(q0.status, "new");
+    assert.equal(q0.companyName, "Buyer 1");
+    assert.equal(q0.offerId, 1);
+    assert.equal(q0.offerTitle, "Offer 1");
+    assert.equal(q0.partnerId, 1);
+    assert.equal(q0.partnerCompanyName, "Partner 1");
+    
+    const stringified = JSON.stringify(q0);
+    assert.ok(!stringified.includes("bob@test.com"), "PII email leaked");
+    assert.ok(!stringified.includes("Bob"), "PII contactName leaked");
+    assert.ok(!stringified.includes("123"), "PII phone leaked");
+    assert.ok(!stringified.includes("Msg"), "PII message leaked");
+  });
+
   await pool.end();
 });

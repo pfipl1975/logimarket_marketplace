@@ -794,55 +794,46 @@
     }
   },
   "adminDashboard": {
-    "title": "Admin Dashboard",
-    "subtitle": "Overview of marketplace operations",
+    "metaTitle": "Panel de control Admin LogiMarket",
+    "metaDescription": "Resumen operativo de LogiMarket.",
+    "title": "Panel Operativo",
+    "subtitle": "Resumen en tiempo real de métricas de LogiMarket.",
     "sections": {
-      "partners": "Partners",
-      "offers": "Offers",
-      "rfq": "RFQ",
-      "recentRfq": "Recent RFQs"
+      "offers": "Ofertas",
+      "partners": "Socios",
+      "rfq": "Operaciones RFQ",
+      "recentRfq": "RFQs Recientes"
     },
     "labels": {
       "total": "Total"
     },
     "eligibility": {
-      "none": "Unassigned",
-      "pending": "Pending",
-      "eligible": "Eligible",
-      "ineligible": "Ineligible",
-      "suspended": "Suspended"
+      "none": "No establecido",
+      "pending": "Pendiente",
+      "eligible": "Elegible",
+      "ineligible": "No elegible",
+      "suspended": "Suspendido"
     },
-    "offers": {
-      "draft": "Draft",
-      "published": "Published",
-      "hidden": "Hidden",
-      "archived": "Archived",
-      "deleted": "Deleted"
-    },
-    "rfq": {
-      "new": "New",
-      "inProgress": "In Progress",
-      "responded": "Responded",
-      "closed": "Closed"
+    "actions": {
+      "viewOffers": "Ver Ofertas",
+      "viewPartners": "Ver Socios",
+      "viewRfq": "Ver RFQs",
+      "viewDetail": "Detalles"
     },
     "empty": {
-      "recentRfq": "No active RFQs in queue."
+      "recentRfq": "No hay RFQs abiertos recientes."
     },
     "table": {
       "id": "ID",
-      "createdAt": "Date",
-      "company": "Company",
-      "status": "Status",
-      "actions": "Actions"
-    },
-    "actions": {
-      "viewPartners": "View all partners",
-      "viewOffers": "View all offers",
-      "viewRfq": "View all RFQs",
-      "viewDetail": "View"
+      "createdAt": "Creado",
+      "company": "Empresa",
+      "status": "Estado",
+      "offer": "Oferta",
+      "partner": "Socio",
+      "actions": "Acciones"
     },
     "errors": {
-      "unavailable": "Dashboard is currently unavailable."
+      "unavailable": "El panel de control no está disponible actualmente."
     }
   }
 }

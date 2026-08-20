@@ -1,5 +1,6 @@
-import { sql } from "drizzle-orm";
-import { offers, partners, rfqLeads, sellerEligibility } from "@/lib/schema";
+import { sql, inArray, eq } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "@/lib/schema";
 
 export interface AdminDashboardCounts {
   offers: {
@@ -30,10 +31,14 @@ export interface AdminDashboardCounts {
 }
 
 export interface AdminDashboardQueueRfq {
-  id: string;
-  createdAt: string;
-  companyName: string;
+  id: number;
+  createdAt: string | null;
   status: "new" | "in_progress" | "responded";
+  companyName: string | null;
+  offerId: number;
+  offerTitle: string | null;
+  partnerId: number;
+  partnerCompanyName: string | null;
 }
 
 export interface AdminDashboardReadResult {
@@ -41,8 +46,7 @@ export interface AdminDashboardReadResult {
   recentRfqQueue: AdminDashboardQueueRfq[];
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function getAdminDashboardReadModel(db: any): Promise<AdminDashboardReadResult> {
+export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schema>): Promise<AdminDashboardReadResult> {
   const [
     offersAgg,
     partnersAgg,
@@ -53,49 +57,55 @@ export async function getAdminDashboardReadModel(db: any): Promise<AdminDashboar
     db
       .select({
         total: sql<number>`count(*)`,
-        draft: sql<number>`count(*) filter (where ${offers.publicationStatus} = 'draft')`,
-        published: sql<number>`count(*) filter (where ${offers.publicationStatus} = 'published')`,
-        hidden: sql<number>`count(*) filter (where ${offers.publicationStatus} = 'hidden')`,
-        archived: sql<number>`count(*) filter (where ${offers.publicationStatus} = 'archived')`,
-        deleted: sql<number>`count(*) filter (where ${offers.publicationStatus} = 'deleted')`,
+        draft: sql<number>`count(*) filter (where ${schema.offers.publicationStatus} = 'draft')`,
+        published: sql<number>`count(*) filter (where ${schema.offers.publicationStatus} = 'published')`,
+        hidden: sql<number>`count(*) filter (where ${schema.offers.publicationStatus} = 'hidden')`,
+        archived: sql<number>`count(*) filter (where ${schema.offers.publicationStatus} = 'archived')`,
+        deleted: sql<number>`count(*) filter (where ${schema.offers.publicationStatus} = 'deleted')`,
       })
-      .from(offers),
+      .from(schema.offers),
 
     db
       .select({
         total: sql<number>`count(*)`,
       })
-      .from(partners),
+      .from(schema.partners),
 
     db
       .select({
-        pending: sql<number>`count(*) filter (where ${sellerEligibility.status} = 'pending')`,
-        eligible: sql<number>`count(*) filter (where ${sellerEligibility.status} = 'eligible')`,
-        ineligible: sql<number>`count(*) filter (where ${sellerEligibility.status} = 'ineligible')`,
-        suspended: sql<number>`count(*) filter (where ${sellerEligibility.status} = 'suspended')`,
+        pending: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'pending')`,
+        eligible: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'eligible')`,
+        ineligible: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'ineligible')`,
+        suspended: sql<number>`count(*) filter (where ${schema.sellerEligibility.eligibilityStatus} = 'suspended')`,
       })
-      .from(sellerEligibility),
+      .from(schema.sellerEligibility),
 
     db
       .select({
         total: sql<number>`count(*)`,
-        new: sql<number>`count(*) filter (where ${rfqLeads.status} = 'new')`,
-        inProgress: sql<number>`count(*) filter (where ${rfqLeads.status} = 'in_progress')`,
-        responded: sql<number>`count(*) filter (where ${rfqLeads.status} = 'responded')`,
-        closed: sql<number>`count(*) filter (where ${rfqLeads.status} = 'closed')`,
+        new: sql<number>`count(*) filter (where ${schema.rfqLeads.status} = 'new')`,
+        inProgress: sql<number>`count(*) filter (where ${schema.rfqLeads.status} = 'in_progress')`,
+        responded: sql<number>`count(*) filter (where ${schema.rfqLeads.status} = 'responded')`,
+        closed: sql<number>`count(*) filter (where ${schema.rfqLeads.status} = 'closed')`,
       })
-      .from(rfqLeads),
+      .from(schema.rfqLeads),
 
     db
       .select({
-        id: rfqLeads.id,
-        createdAt: rfqLeads.createdAt,
-        companyName: rfqLeads.companyName,
-        status: rfqLeads.status,
+        id: schema.rfqLeads.id,
+        createdAt: schema.rfqLeads.createdAt,
+        status: schema.rfqLeads.status,
+        companyName: schema.rfqLeads.companyName,
+        offerId: schema.offers.id,
+        offerTitle: schema.offers.title,
+        partnerId: schema.partners.id,
+        partnerCompanyName: schema.partners.companyName,
       })
-      .from(rfqLeads)
-      .where(sql`${rfqLeads.status} != 'closed'`)
-      .orderBy(sql`${rfqLeads.createdAt} DESC NULLS LAST, ${rfqLeads.id} DESC`)
+      .from(schema.rfqLeads)
+      .innerJoin(schema.offers, eq(schema.rfqLeads.offerId, schema.offers.id))
+      .innerJoin(schema.partners, eq(schema.rfqLeads.partnerId, schema.partners.id))
+      .where(inArray(schema.rfqLeads.status, ["new", "in_progress", "responded"]))
+      .orderBy(sql`${schema.rfqLeads.createdAt} DESC NULLS LAST, ${schema.rfqLeads.id} DESC`)
       .limit(5)
   ]);
 
@@ -132,7 +142,22 @@ export async function getAdminDashboardReadModel(db: any): Promise<AdminDashboar
     closed: Number(rfqData.closed),
   };
 
-  const noneEligibility = Math.max(0, parsedPartners.total - (parsedEligibility.pending + parsedEligibility.eligible + parsedEligibility.ineligible + parsedEligibility.suspended));
+  // Invariants
+  const storedEligibilityTotal = parsedEligibility.pending + parsedEligibility.eligible + parsedEligibility.ineligible + parsedEligibility.suspended;
+  if (storedEligibilityTotal > parsedPartners.total) {
+    throw new Error("Dashboard Invariant Violation: storedEligibilityTotal > partnersTotal");
+  }
+  const noneEligibility = parsedPartners.total - storedEligibilityTotal;
+
+  const storedOffersTotal = parsedOffers.draft + parsedOffers.published + parsedOffers.hidden + parsedOffers.archived + parsedOffers.deleted;
+  if (parsedOffers.total !== storedOffersTotal) {
+    throw new Error("Dashboard Invariant Violation: unknown offer status present");
+  }
+
+  const storedRfqTotal = parsedRfq.new + parsedRfq.inProgress + parsedRfq.responded + parsedRfq.closed;
+  if (parsedRfq.total !== storedRfqTotal) {
+    throw new Error("Dashboard Invariant Violation: unknown rfq status present");
+  }
 
   return {
     counts: {
@@ -145,10 +170,14 @@ export async function getAdminDashboardReadModel(db: any): Promise<AdminDashboar
       rfq: parsedRfq,
     },
     recentRfqQueue: recentRfqQueue.map((r) => ({
-      id: String(r.id),
-      createdAt: (r.createdAt as Date).toISOString(),
-      companyName: r.companyName || "",
+      id: Number(r.id),
+      createdAt: r.createdAt ? (r.createdAt as Date).toISOString() : null,
       status: r.status as "new" | "in_progress" | "responded",
+      companyName: r.companyName || null,
+      offerId: Number(r.offerId),
+      offerTitle: r.offerTitle || null,
+      partnerId: Number(r.partnerId),
+      partnerCompanyName: r.partnerCompanyName || null,
     })),
   };
 }

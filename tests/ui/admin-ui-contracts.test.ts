@@ -199,10 +199,10 @@ describe("UI Contract Tests", () => {
     assert.ok(!dashboardSrc.includes("message"), "Must not leak message in dashboard");
     
     // Check links
-    assert.ok(dashboardSrc.includes("href={//admin/partners}"), "Must link to partners");
-    assert.ok(dashboardSrc.includes("href={//admin/offers}"), "Must link to offers");
-    assert.ok(dashboardSrc.includes("href={//admin/rfq}"), "Must link to rfq");
-    assert.ok(dashboardSrc.includes("href={//admin/rfq/}"), "Must link to rfq detail");
+    assert.ok(dashboardSrc.includes("href={routes.partners}"), "Must link to partners");
+    assert.ok(dashboardSrc.includes("href={routes.offers}"), "Must link to offers");
+    assert.ok(dashboardSrc.includes("href={routes.rfq}"), "Must link to rfq");
+    assert.ok(dashboardSrc.includes("routes.rfqDetail"), "Must link to rfq detail");
     
     // Check missing charts
     assert.ok(!dashboardSrc.includes("Chart"), "Must not contain Charts");
@@ -216,9 +216,12 @@ describe("UI Contract Tests", () => {
     
     assert.ok(actionsSrc.includes("export async function getAdminDashboardPage"), "Must export getAdminDashboardPage");
     
-    // Auth boundary
-    const getDashboardFn = actionsSrc.split("export async function getAdminDashboardPage")[1].split("}")[0];
-    assert.ok(getDashboardFn.includes("await requireAdmin();"), "Dashboard must require admin auth BEFORE db query");
+    // Auth boundary extraction pattern
+    const dashboardMatch = actionsSrc.match(/export async function getAdminDashboardPage\(\)[^{]*\{([\s\S]*?)getAdminDashboardReadModel/);
+    assert.ok(dashboardMatch, "getAdminDashboardPage must contain getAdminDashboardReadModel");
+    
+    const bodyBeforeQuery = dashboardMatch[1];
+    assert.ok(bodyBeforeQuery.includes("await requireAdmin();"), "Dashboard must require admin auth BEFORE db query");
   });
 
 });
