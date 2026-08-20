@@ -2,7 +2,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { getAdminRfqDetail } from "@/app/actions";
 import { AdminRfqStatusControl } from "@/components/admin/AdminRfqStatusControl";
-import { getRfqStatusLabel, type RfqStatusLabels } from "@/lib/admin/rfq-status-label";
+import { getRfqStatusLabel } from "@/lib/admin/rfq-status-label";
 import Link from "next/link";
 
 export async function AdminRfqDetailPage({
