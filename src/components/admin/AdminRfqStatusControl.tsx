@@ -5,21 +5,12 @@ import { useRouter } from "next/navigation";
 import { mutateRfqStatus } from "@/app/actions";
 import type { RfqStatus } from "@/lib/schema";
 import { getAllowedRfqStatusTransitions } from "@/lib/rfq/workflow";
-
-export function getRfqStatusLabel(status: RfqStatus, dict: Record<string, string>): string {
-  switch (status) {
-    case "new": return dict.status_new;
-    case "in_progress": return dict.status_in_progress;
-    case "responded": return dict.status_responded;
-    case "closed": return dict.status_closed;
-  }
-}
-
+import { getRfqStatusLabel, type RfqStatusLabels } from "@/lib/admin/rfq-status-label";
 
 interface AdminRfqStatusControlProps {
   rfqId: number;
   currentStatus: RfqStatus;
-  dict: Record<string, string>;
+  dict: Record<string, string> & RfqStatusLabels;
 }
 
 export function AdminRfqStatusControl({ rfqId, currentStatus, dict }: AdminRfqStatusControlProps) {

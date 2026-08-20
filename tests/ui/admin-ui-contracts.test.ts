@@ -164,4 +164,29 @@ describe("UI Contract Tests", () => {
       "Must fallback NOT_FOUND to detailErrorNotFound"
     );
   });
+
+  test("Server/Client Component Boundary - rfq-status-label", () => {
+    const statusControlSrc = fs.readFileSync("src/components/admin/AdminRfqStatusControl.tsx", "utf8");
+    assert.ok(statusControlSrc.includes('"use client"'), "AdminRfqStatusControl must be a client component");
+
+    const pureHelperSrc = fs.readFileSync("src/lib/admin/rfq-status-label.ts", "utf8");
+    assert.ok(!pureHelperSrc.includes('"use client"'), "pure rfq-status-label must not be a client component");
+
+    const tableSrc = fs.readFileSync("src/components/admin/AdminRfqTable.tsx", "utf8");
+    assert.ok(
+      tableSrc.includes('import { getRfqStatusLabel') && tableSrc.includes('@/lib/admin/rfq-status-label'),
+      "AdminRfqTable must import getRfqStatusLabel from pure lib module"
+    );
+    assert.ok(!tableSrc.includes('<AdminRfqStatusControl'), "AdminRfqTable must not import AdminRfqStatusControl at all");
+
+    const detailSrc = fs.readFileSync("src/app/_shared/AdminRfqDetailPage.tsx", "utf8");
+    assert.ok(
+      detailSrc.includes('import { getRfqStatusLabel') && detailSrc.includes('@/lib/admin/rfq-status-label'),
+      "AdminRfqDetailPage must import getRfqStatusLabel from pure lib module"
+    );
+    assert.ok(
+      !detailSrc.includes('import { AdminRfqStatusControl, getRfqStatusLabel } from "@/components/admin/AdminRfqStatusControl"'),
+      "AdminRfqDetailPage must not import getRfqStatusLabel from AdminRfqStatusControl"
+    );
+  });
 });

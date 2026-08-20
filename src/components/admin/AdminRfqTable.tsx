@@ -1,6 +1,6 @@
 import type { AdminRfqListItemDto } from "@/lib/admin/rfq-read-model-core";
 import Link from "next/link";
-import { getRfqStatusLabel } from "./AdminRfqStatusControl";
+import { getRfqStatusLabel, type RfqStatusLabels } from "@/lib/admin/rfq-status-label";
 
 export function AdminRfqTable({
   items,
@@ -9,7 +9,7 @@ export function AdminRfqTable({
   basePath,
 }: {
   items: AdminRfqListItemDto[];
-  dict: Record<string, string>;
+  dict: Record<string, string> & RfqStatusLabels;
   locale: string;
   basePath: string;
 }) {
