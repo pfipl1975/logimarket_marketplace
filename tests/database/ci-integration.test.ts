@@ -858,7 +858,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const offerId = 7777;
     await pool.query(`
       INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active)
-      VALUES ($1, $2, $3, 'RFQ Offer', 'rfq', 'rfq', 'published', true)
+      VALUES ($1, $2, $3, 'RFQ Offer', 'rfq', 'inbound', 'published', true)
     `, [offerId, partnerId, categoryId]);
 
     const db = getDb();
