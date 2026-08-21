@@ -2,10 +2,12 @@ import Link from "next/link";
 import type { AdminOfferDto } from "@/lib/admin/offers-read-model-core";
 import type { Locale } from "@/lib/i18n/config";
 
+import type { Dictionary } from "@/lib/i18n/types";
+
 interface AdminOffersTableProps {
   items: AdminOfferDto[];
   locale: Locale;
-  dict: Record<string, string>;
+  dict: Dictionary["adminOffers"];
 }
 
 export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps) {
