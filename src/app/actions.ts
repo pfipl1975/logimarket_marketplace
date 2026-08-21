@@ -373,7 +373,7 @@ export async function submitRfq(rawInput: unknown): Promise<RfqActionResult> {
       phone: data.phone ?? null,
       message: data.message ?? null,
     });
-    
+
     return { ok: true, code: "RFQ_SENT" };
   } catch {
     return { ok: false, code: "SYSTEM_ERROR" };
@@ -751,7 +751,7 @@ export async function changeAdminSellerEligibility(rawInput: unknown) {
   await requireAdmin();
 
   const { parseAdminSellerEligibilityInput, executeSellerEligibilityChange } = await import("@/lib/admin/seller-eligibility-core");
-  
+
   const inputRes = parseAdminSellerEligibilityInput(rawInput);
   if (!inputRes.ok) {
     return inputRes;
@@ -846,5 +846,43 @@ export async function getAdminDashboardPage(): Promise<AdminDashboardPageResult>
   } catch {
     console.error("Admin dashboard read query failed.");
     return { ok: false, code: "ADMIN_DASHBOARD_UNAVAILABLE" };
+  }
+}
+
+import type { OfferDraftCreateResult } from "@/lib/offers/draft-core";
+import type { AdminCreateOptionsResult } from "@/lib/admin/create-options-read-model";
+
+export async function createAdminOfferDraft(rawInput: unknown): Promise<OfferDraftCreateResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseOfferDraftCreateInput, createOfferDraftCore } = await import("@/lib/offers/draft-core");
+  const inputRes = parseOfferDraftCreateInput(rawInput);
+
+  if (!inputRes.ok) {
+    return inputRes;
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await createOfferDraftCore(db, inputRes.data);
+
+  if (result.ok) {
+    revalidatePath("/", "layout");
+  }
+
+  return result;
+}
+
+export async function getAdminCreateOptions(): Promise<{ ok: true; data: AdminCreateOptionsResult } | { ok: false; code: "SYSTEM_ERROR" }> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminCreateOptionsReadModel } = await import("@/lib/admin/create-options-read-model");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminCreateOptionsReadModel(db);
+    return { ok: true, data };
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
   }
 }

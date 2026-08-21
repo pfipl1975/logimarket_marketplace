@@ -511,7 +511,32 @@
     "transitionConflict": "状态冲突。请刷新。",
     "systemError": "系统发生错误。",
     "statusHidden": "隐藏",
-    "statusDeleted": "已删除"
+    "statusDeleted": "已删除",
+    "addOffer": "Add Offer",
+    "createTitle": "Create New Offer (Draft)",
+    "createPartnerLabel": "Partner / Seller *",
+    "createSelectPartner": "-- Select Partner --",
+    "createCategoryLabel": "Category *",
+    "createSelectCategory": "-- Select Category --",
+    "createTitleLabel": "Offer Title *",
+    "createModelLabel": "Offer Model *",
+    "createSelectModel": "-- Select Model --",
+    "createModelRfq": "RFQ (Request for Quote)",
+    "createModelMarketplace": "Marketplace (E-Commerce)",
+    "createConversionTypeLabel": "Conversion Type *",
+    "createSelectConversion": "-- Select Conversion --",
+    "createConversionOutbound": "External (Outbound)",
+    "createConversionInbound": "Internal (Inbound)",
+    "createSave": "Save as Draft",
+    "createSaving": "Saving...",
+    "createCancel": "Cancel",
+    "createErrors": {
+      "OFFER_INVALID_INPUT": "Invalid input data.",
+      "PARTNER_NOT_FOUND": "Selected partner not found.",
+      "CATEGORY_NOT_FOUND": "Selected category not found.",
+      "MODEL_UNKNOWN": "Invalid model and conversion type combination.",
+      "SYSTEM_ERROR": "A system error occurred."
+    }
   },
   "adminPartners": {
     "metaTitle": "合作伙伴",

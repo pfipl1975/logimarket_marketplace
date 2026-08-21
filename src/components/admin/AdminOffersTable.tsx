@@ -5,7 +5,7 @@ import type { Locale } from "@/lib/i18n/config";
 interface AdminOffersTableProps {
   items: AdminOfferDto[];
   locale: Locale;
-  dict: Record<string, string>;
+  dict: any;
 }
 
 export function AdminOffersTable({ items, locale, dict }: AdminOffersTableProps) {

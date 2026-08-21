@@ -511,7 +511,32 @@
     "transitionConflict": "Conflit de statut. Veuillez rafraîchir.",
     "systemError": "Une erreur système est survenue.",
     "statusHidden": "Masqué",
-    "statusDeleted": "Supprimé"
+    "statusDeleted": "Supprimé",
+    "addOffer": "Add Offer",
+    "createTitle": "Create New Offer (Draft)",
+    "createPartnerLabel": "Partner / Seller *",
+    "createSelectPartner": "-- Select Partner --",
+    "createCategoryLabel": "Category *",
+    "createSelectCategory": "-- Select Category --",
+    "createTitleLabel": "Offer Title *",
+    "createModelLabel": "Offer Model *",
+    "createSelectModel": "-- Select Model --",
+    "createModelRfq": "RFQ (Request for Quote)",
+    "createModelMarketplace": "Marketplace (E-Commerce)",
+    "createConversionTypeLabel": "Conversion Type *",
+    "createSelectConversion": "-- Select Conversion --",
+    "createConversionOutbound": "External (Outbound)",
+    "createConversionInbound": "Internal (Inbound)",
+    "createSave": "Save as Draft",
+    "createSaving": "Saving...",
+    "createCancel": "Cancel",
+    "createErrors": {
+      "OFFER_INVALID_INPUT": "Invalid input data.",
+      "PARTNER_NOT_FOUND": "Selected partner not found.",
+      "CATEGORY_NOT_FOUND": "Selected category not found.",
+      "MODEL_UNKNOWN": "Invalid model and conversion type combination.",
+      "SYSTEM_ERROR": "A system error occurred."
+    }
   },
   "adminPartners": {
     "metaTitle": "Partenaires",

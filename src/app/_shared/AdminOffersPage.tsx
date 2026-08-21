@@ -4,10 +4,12 @@ import { getAdminOffersPage } from "@/app/actions";
 import { buildAdminOffersUrl } from "@/lib/admin/offers-query";
 import type { Locale } from "@/lib/i18n/config";
 
+import type { Dictionary } from "@/lib/i18n/types";
+
 interface AdminOffersPageProps {
   locale: Locale;
   searchParams: unknown;
-  dict: Record<string, string>;
+  dict: Dictionary["adminOffers"];
   basePath: string;
 }
 
@@ -28,18 +30,28 @@ export async function AdminOffersPage({ locale, searchParams, dict, basePath }: 
   const hasFilters = Boolean(currentQuery.q || currentQuery.status || currentQuery.model || currentQuery.partner || currentQuery.category);
   const isEmpty = items.length === 0;
 
+  const createUrl = locale === "pl" ? "/admin/oferty/nowa" : `/${locale}/admin/offers/new`;
+
   return (
     <div className="space-y-8 max-w-7xl">
-      <header className="border-b border-border-industrial pb-6">
-        <p className="text-accent text-xs font-semibold tracking-widest uppercase mb-2">
-          {dict.eyebrow}
-        </p>
-        <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-primary mb-2">
-          {dict.title}
-        </h1>
-        <p className="text-muted-foreground max-w-3xl">
-          {dict.description}
-        </p>
+      <header className="border-b border-border-industrial pb-6 flex items-start justify-between">
+        <div>
+          <p className="text-accent text-xs font-semibold tracking-widest uppercase mb-2">
+            {dict.eyebrow}
+          </p>
+          <h1 className="text-2xl sm:text-3xl font-light tracking-tight text-primary mb-2">
+            {dict.title}
+          </h1>
+          <p className="text-muted-foreground max-w-3xl">
+            {dict.description}
+          </p>
+        </div>
+        <Link
+          href={createUrl}
+          className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-industrial bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+        >
+          {dict.addOffer}
+        </Link>
       </header>
 
       <div className="bg-card p-6 rounded-industrial border border-border-industrial shadow-sm">
