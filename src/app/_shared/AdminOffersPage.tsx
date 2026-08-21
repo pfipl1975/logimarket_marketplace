@@ -34,7 +34,7 @@ export async function AdminOffersPage({ locale, searchParams, dict, basePath }: 
 
   return (
     <div className="space-y-8 max-w-7xl">
-      <header className="border-b border-border-industrial pb-6 flex items-start justify-between">
+      <header className="border-b border-border-industrial pb-6 flex flex-col sm:flex-row sm:items-start justify-between gap-4">
         <div>
           <p className="text-accent text-xs font-semibold tracking-widest uppercase mb-2">
             {dict.eyebrow}
@@ -48,7 +48,7 @@ export async function AdminOffersPage({ locale, searchParams, dict, basePath }: 
         </div>
         <Link
           href={createUrl}
-          className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-industrial bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+          className="inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-industrial bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal whitespace-nowrap shrink-0"
         >
           {dict.addOffer}
         </Link>

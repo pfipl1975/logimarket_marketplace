@@ -536,7 +536,9 @@
       "CATEGORY_NOT_FOUND": "Selected category not found.",
       "MODEL_UNKNOWN": "Invalid model and conversion type combination.",
       "SYSTEM_ERROR": "A system error occurred."
-    }
+    },
+    "createLoadErrorTitle": "Error",
+    "createLoadErrorDescription": "System error occurred while loading form options."
   },
   "adminPartners": {
     "metaTitle": "Partners",

@@ -1,5 +1,5 @@
 import { AdminOfferCreatePage } from "@/app/_shared/AdminOfferCreatePage";
-import { type Locale, isLocale } from "@/lib/i18n/config";
+import { type Locale, isLocale, defaultLocale } from "@/lib/i18n/config";
 import { notFound } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +10,7 @@ interface LocalizedNewOfferPageProps {
 
 export default async function LocalizedNewOfferPage({ params }: LocalizedNewOfferPageProps) {
   const { locale } = await params;
-  if (!isLocale(locale)) {
+  if (!isLocale(locale) || locale === defaultLocale) {
     notFound();
   }
 

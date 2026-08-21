@@ -16,8 +16,8 @@ export async function AdminOfferCreatePage({ locale }: AdminOfferCreatePageProps
   if (!result.ok) {
     return (
       <div className="max-w-4xl mx-auto p-12 text-center">
-        <h2 className="text-xl font-semibold text-brand-navy mb-2">Error</h2>
-        <p className="text-muted-foreground">System error occurred while loading form options.</p>
+        <h2 className="text-xl font-semibold text-brand-navy mb-2">{dict.createLoadErrorTitle}</h2>
+        <p className="text-muted-foreground">{dict.createLoadErrorDescription}</p>
       </div>
     );
   }

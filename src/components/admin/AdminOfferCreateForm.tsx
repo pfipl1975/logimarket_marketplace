@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/i18n/config";
@@ -12,47 +12,59 @@ import type { Dictionary } from "@/lib/i18n/types";
 interface AdminOfferCreateFormProps {
   options: AdminCreateOptionsResult;
   locale: Locale;
-  dict: Dictionary["adminOffers"]; // We will use adminOffers.create
+  dict: Dictionary["adminOffers"];
 }
 
 export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreateFormProps) {
   const router = useRouter();
 
   const [isPending, setIsPending] = useState(false);
+  const submitLockRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const backUrl = locale === "pl" ? `/admin/oferty` : `/${locale}/admin/offers`;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isPending) return;
+    if (submitLockRef.current) return;
 
+    submitLockRef.current = true;
     setIsPending(true);
     setError(null);
 
-    const fd = new FormData(e.currentTarget);
-    
-    const input = {
-      partnerId: fd.get("partnerId")?.toString() || "",
-      categoryId: fd.get("categoryId")?.toString() || "",
-      title: fd.get("title")?.toString() || "",
-      offerModel: fd.get("offerModel")?.toString() || "",
-      conversionType: fd.get("conversionType")?.toString() || "",
-    };
+    try {
+      const fd = new FormData(e.currentTarget);
+      
+      const input = {
+        partnerId: fd.get("partnerId")?.toString() || "",
+        categoryId: fd.get("categoryId")?.toString() || "",
+        title: fd.get("title")?.toString() || "",
+        offerModel: fd.get("offerModel")?.toString() || "",
+        conversionType: fd.get("conversionType")?.toString() || "",
+      };
 
-    const result = await createAdminOfferDraft(input);
+      const result = await createAdminOfferDraft(input);
 
-    if (result.ok) {
-      // Redirect to the existing edit page for this new ID
-      const targetUrl = locale === "pl" 
-        ? `/admin/oferty/${result.offerId}/edytuj`
-        : `/${locale}/admin/offers/${result.offerId}/edit`;
-      router.push(targetUrl);
-      router.refresh();
-    } else {
-      // @ts-expect-error - dictionary keys might not be perfectly typed here, but we will add them
-      setError(dict.createErrors?.[result.code] || dict.createErrors?.SYSTEM_ERROR || result.code);
+      if (result.ok) {
+        // Redirect to the existing edit page for this new ID
+        const targetUrl = locale === "pl" 
+          ? `/admin/oferty/${result.offerId}/edytuj`
+          : `/${locale}/admin/offers/${result.offerId}/edit`;
+        router.push(targetUrl);
+        router.refresh();
+      } else {
+        const errorMsg = dict.createErrors && (result.code in dict.createErrors)
+          ? dict.createErrors[result.code as keyof typeof dict.createErrors]
+          : dict.createErrors?.SYSTEM_ERROR || result.code;
+        setError(errorMsg);
+        setIsPending(false);
+        submitLockRef.current = false;
+      }
+    } catch (err) {
+      console.error(err);
+      setError(dict.createErrors?.SYSTEM_ERROR || "System error");
       setIsPending(false);
+      submitLockRef.current = false;
     }
   };
 
