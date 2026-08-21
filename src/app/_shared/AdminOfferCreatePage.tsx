@@ -2,6 +2,7 @@ import { getAdminCreateOptions } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { AdminOfferCreateForm } from "@/components/admin/AdminOfferCreateForm";
+import { resolveCategoryName } from "@/lib/i18n/category-labels";
 
 interface AdminOfferCreatePageProps {
   locale: Locale;
@@ -9,6 +10,7 @@ interface AdminOfferCreatePageProps {
 
 export async function AdminOfferCreatePage({ locale }: AdminOfferCreatePageProps) {
   const dictionary = await getDictionary(locale);
+  const plDictionary = await getDictionary("pl");
   const dict = dictionary.adminOffers;
 
   const result = await getAdminCreateOptions();
@@ -22,10 +24,23 @@ export async function AdminOfferCreatePage({ locale }: AdminOfferCreatePageProps
     );
   }
 
+  const mappedOptions = {
+    ...result.data,
+    categories: result.data.categories.map((c) => ({
+      ...c,
+      name: resolveCategoryName({
+        slug: c.slug,
+        dbName: c.name,
+        localeBySlug: dictionary.categories?.bySlug,
+        fallbackBySlug: plDictionary.categories?.bySlug,
+      }),
+    })),
+  };
+
   return (
     <div className="max-w-4xl mx-auto pb-16">
       <h1 className="text-2xl font-bold text-brand-navy mb-6">{dict.createTitle}</h1>
-      <AdminOfferCreateForm options={result.data} locale={locale} dict={dict} />
+      <AdminOfferCreateForm options={mappedOptions} locale={locale} dict={dict} />
     </div>
   );
 }

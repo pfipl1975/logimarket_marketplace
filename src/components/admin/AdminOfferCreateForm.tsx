@@ -53,16 +53,16 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
         router.push(targetUrl);
         router.refresh();
       } else {
-        const errorMsg = dict.createErrors && (result.code in dict.createErrors)
+        const errorMsg = (result.code in dict.createErrors)
           ? dict.createErrors[result.code as keyof typeof dict.createErrors]
-          : dict.createErrors?.SYSTEM_ERROR || result.code;
+          : dict.createErrors.SYSTEM_ERROR;
         setError(errorMsg);
         setIsPending(false);
         submitLockRef.current = false;
       }
     } catch (err) {
       console.error(err);
-      setError(dict.createErrors?.SYSTEM_ERROR || "System error");
+      setError(dict.createErrors.SYSTEM_ERROR);
       setIsPending(false);
       submitLockRef.current = false;
     }

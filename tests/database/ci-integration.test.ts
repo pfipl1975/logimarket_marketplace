@@ -1008,110 +1008,84 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.ok(!stringified.includes("Msg"), "PII message leaked");
   });
 
-  await pool.end();
-});
 
-test("ADMIN_OFFER_CREATE_DRAFT_MUTATION_PROOF", async (t) => {
-  if (!process.env.DATABASE_URL) {
-    t.skip("Skipping (no DATABASE_URL)");
-    return;
-  }
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  
-  // Minimal clean and migrate logic for this test to be isolated
-  await pool.query(`DROP SCHEMA IF EXISTS public CASCADE;`);
-  await pool.query(`DROP SCHEMA IF EXISTS drizzle_runtime CASCADE;`);
-  await pool.query(`CREATE SCHEMA public;`);
-  await pool.query(`
-    DO \$\$
-    BEGIN
-      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'anon') THEN
-        CREATE ROLE anon;
-      END IF;
-      IF NOT EXISTS (SELECT FROM pg_catalog.pg_roles WHERE rolname = 'authenticated') THEN
-        CREATE ROLE authenticated;
-      END IF;
-    END
-    \$\$;
-  `);
-  
-  const m0 = fs.readFileSync(M0000_FILE, "utf-8");
-  await pool.query(m0);
-  await runMigrations({ DATABASE_URL: process.env.DATABASE_URL });
+  await t.test("ADMIN_OFFER_CREATE_DRAFT_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+    
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const db = drizzle(pool);
+    const { parseOfferDraftCreateInput, createOfferDraftCore } = await import("../../src/lib/offers/draft-core");
 
-  // A. setup
-  await pool.query(`INSERT INTO partners (id, company_name) VALUES (1, 'Test Partner 1');`);
-  await pool.query(`INSERT INTO categories (id, slug, pl_name) VALUES (10, 'c-10', 'Cat 10');`);
-  
-  const offersRes1 = await pool.query(`SELECT count(*) as c FROM offers;`);
-  const initialOffers = parseInt(offersRes1.rows[0].c, 10);
-  assert.equal(initialOffers, 0, "Should start with 0 offers");
+    // A. setup
+    await pool.query(`INSERT INTO public.partners (id, company_name, contact_email) VALUES (99991, 'Create Draft Test Partner', 'create-draft@test.invalid');`);
+    await pool.query(`INSERT INTO public.categories (id, name, slug) VALUES (99992, 'Create Draft Test Category', 'create-draft-test-category');`);
+    
+    const offersRes1 = await pool.query(`SELECT count(*) as c FROM offers;`);
+    const initialOffers = parseInt(offersRes1.rows[0].c, 10);
 
-  // B. successful creation
-  const { parseOfferDraftCreateInput, createOfferDraftCore } = await import("../../src/lib/offers/draft-core");
-  const { getDb } = await import("@/lib/db");
-  const db = getDb();
-  
-  const input = {
-    partnerId: "1",
-    categoryId: "10",
-    title: "  My New Draft  ",
-    offerModel: "rfq",
-    conversionType: "outbound"
-  };
-  
-  const parsed = parseOfferDraftCreateInput(input);
-  assert.equal(parsed.ok, true, "Input should parse");
-  if (parsed.ok) {
-    const res = await createOfferDraftCore(db, parsed.data);
-    assert.equal(res.ok, true, "Core should succeed");
+    // B. successful creation
+    const input = {
+      partnerId: "99991",
+      categoryId: "99992",
+      title: "  My New Draft  ",
+      offerModel: "rfq",
+      conversionType: "outbound"
+    };
     
-    // C. assert
-    assert.equal(res.code, "OFFER_DRAFT_CREATED");
-    assert.ok(res.offerId > 0, "Should return positive ID");
+    const parsed = parseOfferDraftCreateInput(input);
+    assert.equal(parsed.ok, true, "Input should parse");
+    if (parsed.ok) {
+      const res = await createOfferDraftCore(db, parsed.data);
+      assert.equal(res.ok, true, "Core should succeed");
+      
+      // C. assert
+      assert.equal(res.code, "OFFER_DRAFT_CREATED");
+      assert.ok(res.offerId > 0, "Should return positive ID");
+      
+      const offersRes2 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(parseInt(offersRes2.rows[0].c, 10), initialOffers + 1, "Should have exactly 1 more offer now");
+      
+      const rowRes = await pool.query(`SELECT * FROM offers WHERE id = $1;`, [res.offerId]);
+      const row = rowRes.rows[0];
+      assert.equal(row.partner_id, 99991);
+      assert.equal(row.category_id, 99992);
+      assert.equal(row.title, "My New Draft"); // trimmed
+      assert.equal(row.offer_model, "rfq");
+      assert.equal(row.conversion_type, "outbound");
+      assert.equal(row.publication_status, "draft");
+      assert.equal(row.contract_model, null);
+      assert.equal(row.published_at, null);
+      assert.equal(row.archived_at, null);
+      assert.equal(row.deleted_at, null);
+    }
     
-    const offersRes2 = await pool.query(`SELECT count(*) as c FROM offers;`);
-    assert.equal(parseInt(offersRes2.rows[0].c, 10), 1, "Should have 1 offer now");
+    // D. nonexistent Partner
+    const badPartnerInput = parseOfferDraftCreateInput({ partnerId: "99999", categoryId: "99992", title: "T", offerModel: "rfq", conversionType: "outbound" });
+    if (badPartnerInput.ok) {
+      const res = await createOfferDraftCore(db, badPartnerInput.data);
+      assert.equal(res.ok, false);
+      assert.equal(res.code, "PARTNER_NOT_FOUND");
+      
+      const c3 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(parseInt(c3.rows[0].c, 10), initialOffers + 1, "Count unchanged");
+    }
     
-    const rowRes = await pool.query(`SELECT * FROM offers WHERE id = $1;`, [res.offerId]);
-    const row = rowRes.rows[0];
-    assert.equal(row.partner_id, 1);
-    assert.equal(row.category_id, 10);
-    assert.equal(row.title, "My New Draft"); // trimmed
-    assert.equal(row.offer_model, "rfq");
-    assert.equal(row.conversion_type, "outbound");
-    assert.equal(row.publication_status, "draft");
-    assert.equal(row.contract_model, null);
-    assert.equal(row.published_at, null);
-    assert.equal(row.archived_at, null);
-    assert.equal(row.deleted_at, null);
-  }
-  
-  // D. nonexistent Partner
-  const badPartnerInput = parseOfferDraftCreateInput({ partnerId: "99", categoryId: "10", title: "T", offerModel: "rfq", conversionType: "outbound" });
-  if (badPartnerInput.ok) {
-    const res = await createOfferDraftCore(db, badPartnerInput.data);
-    assert.equal(res.ok, false);
-    assert.equal(res.code, "PARTNER_NOT_FOUND");
+    // E. nonexistent Category
+    const badCatInput = parseOfferDraftCreateInput({ partnerId: "99991", categoryId: "99999", title: "T", offerModel: "rfq", conversionType: "outbound" });
+    if (badCatInput.ok) {
+      const res = await createOfferDraftCore(db, badCatInput.data);
+      assert.equal(res.ok, false);
+      assert.equal(res.code, "CATEGORY_NOT_FOUND");
+      
+      const c4 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(parseInt(c4.rows[0].c, 10), initialOffers + 1, "Count unchanged");
+    }
     
-    const c3 = await pool.query(`SELECT count(*) as c FROM offers;`);
-    assert.equal(parseInt(c3.rows[0].c, 10), 1, "Count unchanged");
-  }
-  
-  // E. nonexistent Category
-  const badCatInput = parseOfferDraftCreateInput({ partnerId: "1", categoryId: "99", title: "T", offerModel: "rfq", conversionType: "outbound" });
-  if (badCatInput.ok) {
-    const res = await createOfferDraftCore(db, badCatInput.data);
-    assert.equal(res.ok, false);
-    assert.equal(res.code, "CATEGORY_NOT_FOUND");
-    
-    const c4 = await pool.query(`SELECT count(*) as c FROM offers;`);
-    assert.equal(parseInt(c4.rows[0].c, 10), 1, "Count unchanged");
-  }
-  
-  // F. malformed model
-  const badModelInput = parseOfferDraftCreateInput({ partnerId: "1", categoryId: "10", title: "T", offerModel: "invalid_model", conversionType: "outbound" });
-  assert.equal(badModelInput.ok, false, "Parser must reject invalid model before INSERT");
-  
+    // F. malformed model
+    const badModelInput = parseOfferDraftCreateInput({ partnerId: "99991", categoryId: "99992", title: "T", offerModel: "invalid_model", conversionType: "outbound" });
+    assert.equal(badModelInput.ok, false, "Parser must reject invalid model before INSERT");
+  });
+
   await pool.end();
 });
