@@ -1999,31 +1999,33 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       assert.equal(vm.rows.length, 0); // cleared
     }
+      // Create minimal CI test fixture for provenance tables
+      await pool.query(`
+        CREATE TABLE public.migration_oav_targets (
+          id bigint PRIMARY KEY,
+          target_row_id_current bigint
+        )
+      `);
+
+      await pool.query(`
+        CREATE TABLE public.migration_oaov_targets (
+          id bigint PRIMARY KEY,
+          target_row_id_current bigint
+        )
+      `);
+
+      const tCheck2 = await pool.query(`SELECT to_regclass('public.migration_oav_targets') AS has_oav, to_regclass('public.migration_oaov_targets') AS has_oaov`);
+      assert.notEqual(tCheck2.rows[0].has_oav, null);
+      assert.notEqual(tCheck2.rows[0].has_oaov, null);
+
       // D. Provenance Lock Guard
       // 1. Re-insert OAV and OAOV
       await pool.query(`INSERT INTO offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (1001, 99993, 1, 'Locked')`);
       await pool.query(`INSERT INTO offer_attribute_option_values (id, offer_id, attribute_id, option_id) VALUES (1002, 99993, 7, 11)`);
 
-      // Mock migration batch & source
-      await pool.query(`INSERT INTO migration_batches (id, status, source_description, created_by) VALUES (1, 'completed', 'CI Test', 'admin')`);
-      await pool.query(`INSERT INTO migration_source_entries (
-        id, batch_id, source_offer_id, source_key, raw_value, source_hash, source_payload_version, processing_status, classification_status, expected_target_count
-      ) VALUES
-        (1, 1, 99993, 'k1', '{}', 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'lm-source-v1', 'processed', 'migrated', 1),
-        (2, 1, 99993, 'k2', '{}', 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 'lm-source-v1', 'processed', 'migrated', 1)`);
-
-      // Assign targets
-      await pool.query(`INSERT INTO migration_oav_targets (
-        id, batch_id, source_entry_id, target_row_id_current, target_row_id_original, target_offer_id, target_attribute_id, target_hash_at_creation, canonical_payload_version, target_provenance, rollback_status
-      ) VALUES (
-        1, 1, 1, 1001, 1001, 99993, 1, 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', 'lm-source-v1', 'created_by_batch', 'pending'
-      )`);
-
-      await pool.query(`INSERT INTO migration_oaov_targets (
-        id, batch_id, source_entry_id, target_row_id_current, target_row_id_original, target_offer_id, target_attribute_id, target_option_id, target_hash_at_creation, canonical_payload_version, target_provenance, rollback_status
-      ) VALUES (
-        1, 1, 2, 1002, 1002, 99993, 7, 11, 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', 'lm-source-v1', 'created_by_batch', 'pending'
-      )`);
+      // Assign minimal targets
+      await pool.query(`INSERT INTO migration_oav_targets (id, target_row_id_current) VALUES (1, 1001)`);
+      await pool.query(`INSERT INTO migration_oaov_targets (id, target_row_id_current) VALUES (1, 1002)`);
 
       const currentUpdatedAt = (
       await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
@@ -2087,9 +2089,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
 
       // Atomicity check: mixed valid update and invalid clear
+      const atomicityUpdatedAt = (await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)).rows[0].updated_at.toISOString();
       const atomicityInput = parseAdminOfferAttributesEditInput({
         offerId: 99993,
-        expectedUpdatedAt: currentUpdatedAt,
+        expectedUpdatedAt: atomicityUpdatedAt,
         attributes: [
           { attributeId: 1, value: { type: "clear" } }, // invalid (locked OAV)
           { attributeId: 2, value: { type: "text", value: "ValidButShouldBeRolledBack" } } // valid
