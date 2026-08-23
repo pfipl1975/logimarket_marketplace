@@ -2108,33 +2108,48 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.equal(checkOav2.rows[0].value_text, null);
 
       // Unrelated inactive option preservation
-    await pool.query(
-      `UPDATE controlled_option_values SET is_active=false WHERE id=10`,
-    ); // set enum1's opt 10 inactive
-    await pool.query(
-      `INSERT INTO offer_attribute_values (id, offer_id, attribute_id, option_id) VALUES (1003, 99993, 6, 10)`,
-    );
+      const existingEnumOav = await pool.query(`
+        SELECT id, option_id
+        FROM offer_attribute_values
+        WHERE offer_id = 99993
+          AND attribute_id = 6
+      `);
+      assert.equal(existingEnumOav.rows.length, 1);
+      assert.equal(Number(existingEnumOav.rows[0].option_id), 10);
 
-    const newUpdatedAt = (
-      await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
-    ).rows[0].updated_at.toISOString();
-    // Try to assign a NEW inactive option (multi_enum 12) -> should fail
-    await pool.query(
-      `UPDATE controlled_option_values SET is_active=false WHERE id=12`,
-    );
-    const inactiveReject = parseAdminOfferAttributesEditInput({
-      offerId: 99993,
-      expectedUpdatedAt: newUpdatedAt,
-      attributes: [
-        { attributeId: 7, value: { type: "multi_enum", optionIds: [11, 12] } },
-      ],
-    })!;
-    const rInactive = await executeAdminOfferAttributesMutation(
-      db,
-      inactiveReject,
-    );
-    assert.equal(rInactive.ok, false);
-    assert.equal((rInactive as any).code, "OPTION_INACTIVE");
+      await pool.query(
+        `UPDATE controlled_option_values SET is_active=false WHERE id=10`,
+      ); // set enum1's opt 10 inactive
+
+      const beforeInactiveUpdatedAt = (
+        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+      ).rows[0].updated_at.toISOString();
+      // Try to assign a NEW inactive option (multi_enum 12) -> should fail
+      await pool.query(
+        `UPDATE controlled_option_values SET is_active=false WHERE id=12`,
+      );
+
+      const preInactiveOaov = await pool.query(`SELECT option_id FROM offer_attribute_option_values WHERE offer_id=99993 AND attribute_id=7 ORDER BY option_id`);
+      assert.deepEqual(preInactiveOaov.rows.map(r => Number(r.option_id)), [11]);
+
+      const inactiveReject = parseAdminOfferAttributesEditInput({
+        offerId: 99993,
+        expectedUpdatedAt: beforeInactiveUpdatedAt,
+        attributes: [
+          { attributeId: 7, value: { type: "multi_enum", optionIds: [11, 12] } },
+        ],
+      })!;
+      const rInactive = await executeAdminOfferAttributesMutation(
+        db,
+        inactiveReject,
+      );
+      assert.equal(rInactive.ok, false);
+      assert.equal((rInactive as any).code, "OPTION_INACTIVE");
+
+      const afterInactiveUpdatedAt = (
+        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+      ).rows[0].updated_at.toISOString();
+      assert.equal(afterInactiveUpdatedAt, beforeInactiveUpdatedAt);
 
     // Partial schema fail-closed
     const partialUpdatedAt = (await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)).rows[0].updated_at.toISOString();
