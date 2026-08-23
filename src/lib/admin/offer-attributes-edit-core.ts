@@ -433,8 +433,8 @@ export async function executeAdminOfferAttributesMutation(
             if (v.type === "text") valObj.valueText = v.value;
             if (v.type === "number") valObj.valueNumber = v.value;
             if (v.type === "boolean") valObj.valueBoolean = v.value;
-            if (v.type === "date") valObj.valueDate = new Date(v.value);
-            if (v.type === "year") valObj.valueYear = parseInt(v.value, 10);
+            if (v.type === "date") valObj.valueDate = v.value;
+            if (v.type === "year") valObj.valueYear = v.value;
             if (v.type === "enum") valObj.optionId = v.optionId;
 
             if (!existingRow) {

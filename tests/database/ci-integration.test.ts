@@ -1947,7 +1947,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     if (parsed) {
       const res = await executeAdminOfferAttributesMutation(db, parsed);
-      if(!res.ok) { console.error("!!! MUTATION FAILED WITH:", res); assert.fail(); }
+      assert.equal(res.ok, true);
       assert.equal(res.code, "ATTRIBUTES_UPDATED");
 
       const v1 = await pool.query(
@@ -1969,6 +1969,32 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     }
 
 
+    // C. Clear mutation
+    const clearInput = {
+      offerId: 99993,
+      expectedUpdatedAt: (
+        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+      ).rows[0].updated_at.toISOString(),
+      attributes: [
+        { attributeId: 1, value: { type: "clear" } },
+        { attributeId: 7, value: { type: "clear" } },
+      ],
+    };
+    const cParsed = parseAdminOfferAttributesEditInput(clearInput);
+    if (cParsed) {
+      const res = await executeAdminOfferAttributesMutation(db, cParsed);
+      assert.equal(res.ok, true);
+
+      const v1 = await pool.query(
+        `SELECT * FROM offer_attribute_values WHERE offer_id=99993 AND attribute_id=1;`,
+      );
+      assert.equal(v1.rows.length, 0); // cleared
+
+      const vm = await pool.query(
+        `SELECT * FROM offer_attribute_option_values WHERE offer_id=99993 AND attribute_id=7;`,
+      );
+      assert.equal(vm.rows.length, 0); // cleared
+    }
       // D. Provenance Lock Guard
       // 1. Re-insert OAV and OAOV
       await pool.query(`INSERT INTO offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (1001, 99993, 1, 'Locked')`);
@@ -2103,32 +2129,6 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(rInactive.ok, false);
     assert.equal((rInactive as any).code, "OPTION_INACTIVE");
 
-    // C. Clear mutation
-    const clearInput = {
-      offerId: 99993,
-      expectedUpdatedAt: (
-        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
-      ).rows[0].updated_at.toISOString(),
-      attributes: [
-        { attributeId: 1, value: { type: "clear" } },
-        { attributeId: 7, value: { type: "clear" } },
-      ],
-    };
-    const cParsed = parseAdminOfferAttributesEditInput(clearInput);
-    if (cParsed) {
-      const res = await executeAdminOfferAttributesMutation(db, cParsed);
-      if(!res.ok) { console.error("!!! MUTATION FAILED WITH:", res); assert.fail(); }
-
-      const v1 = await pool.query(
-        `SELECT * FROM offer_attribute_values WHERE offer_id=99993 AND attribute_id=1;`,
-      );
-      assert.equal(v1.rows.length, 0); // cleared
-
-      const vm = await pool.query(
-        `SELECT * FROM offer_attribute_option_values WHERE offer_id=99993 AND attribute_id=7;`,
-      );
-      assert.equal(vm.rows.length, 0); // cleared
-    }
   });
 
   await pool.end();
