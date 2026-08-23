@@ -1969,6 +1969,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     }
 
 
+    const tCheck = await pool.query(`SELECT to_regclass('public.migration_oav_targets') AS has_oav, to_regclass('public.migration_oaov_targets') AS has_oaov`);
+    assert.equal(tCheck.rows[0].has_oav, null);
+    assert.equal(tCheck.rows[0].has_oaov, null);
+
     // C. Clear mutation
     const clearInput = {
       offerId: 99993,
@@ -2129,6 +2133,20 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(rInactive.ok, false);
     assert.equal((rInactive as any).code, "OPTION_INACTIVE");
 
+    // Partial schema fail-closed
+    await pool.query(`DROP TABLE public.migration_oav_targets`);
+    const partialInput = parseAdminOfferAttributesEditInput({
+      offerId: 99993,
+      expectedUpdatedAt: newUpdatedAt,
+      attributes: [{ attributeId: 7, value: { type: "clear" } }],
+    })!;
+    const rPartial = await executeAdminOfferAttributesMutation(db, partialInput);
+    assert.equal(rPartial.ok, false);
+    assert.equal((rPartial as any).code, "SYSTEM_ERROR");
+
+    // Cleanup
+    await pool.query(`DROP TABLE IF EXISTS public.migration_oav_targets`);
+    await pool.query(`DROP TABLE IF EXISTS public.migration_oaov_targets`);
   });
 
   await pool.end();

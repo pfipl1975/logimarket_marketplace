@@ -465,31 +465,47 @@ export async function executeAdminOfferAttributesMutation(
         }
       }
 
-      if (oavToDelete.length > 0) {
-        const lockedOav = await tx
-          .select({ id: schema.migrationOavTargets.id })
-          .from(schema.migrationOavTargets)
-          .where(
-            inArray(schema.migrationOavTargets.targetRowIdCurrent, oavToDelete),
-          )
-          .limit(1);
-        if (lockedOav.length > 0)
-          return { ok: false, code: "ATTRIBUTE_PROVENANCE_LOCKED" };
-      }
+      if (oavToDelete.length > 0 || oaovToDelete.length > 0) {
+        const checkRes = (await tx.execute(
+          sql`SELECT to_regclass('public.migration_oav_targets') AS has_oav, to_regclass('public.migration_oaov_targets') AS has_oaov`
+        )) as unknown as { rows?: { has_oav: string | null; has_oaov: string | null }[] };
+        const rows = checkRes.rows || checkRes;
+        const row = Array.isArray(rows) ? rows[0] : undefined;
+        const hasOav = !!row?.has_oav;
+        const hasOaov = !!row?.has_oaov;
 
-      if (oaovToDelete.length > 0) {
-        const lockedOaov = await tx
-          .select({ id: schema.migrationOaovTargets.id })
-          .from(schema.migrationOaovTargets)
-          .where(
-            inArray(
-              schema.migrationOaovTargets.targetRowIdCurrent,
-              oaovToDelete,
-            ),
-          )
-          .limit(1);
-        if (lockedOaov.length > 0)
-          return { ok: false, code: "ATTRIBUTE_PROVENANCE_LOCKED" };
+        if (hasOav !== hasOaov) {
+          return { ok: false, code: "SYSTEM_ERROR" };
+        }
+
+        if (hasOav && hasOaov) {
+          if (oavToDelete.length > 0) {
+            const lockedOav = await tx
+              .select({ id: schema.migrationOavTargets.id })
+              .from(schema.migrationOavTargets)
+              .where(
+                inArray(schema.migrationOavTargets.targetRowIdCurrent, oavToDelete),
+              )
+              .limit(1);
+            if (lockedOav.length > 0)
+              return { ok: false, code: "ATTRIBUTE_PROVENANCE_LOCKED" };
+          }
+
+          if (oaovToDelete.length > 0) {
+            const lockedOaov = await tx
+              .select({ id: schema.migrationOaovTargets.id })
+              .from(schema.migrationOaovTargets)
+              .where(
+                inArray(
+                  schema.migrationOaovTargets.targetRowIdCurrent,
+                  oaovToDelete,
+                ),
+              )
+              .limit(1);
+            if (lockedOaov.length > 0)
+              return { ok: false, code: "ATTRIBUTE_PROVENANCE_LOCKED" };
+          }
+        }
       }
 
       if (!hasChanges) {
