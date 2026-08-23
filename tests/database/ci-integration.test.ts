@@ -2095,7 +2095,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         expectedUpdatedAt: atomicityUpdatedAt,
         attributes: [
           { attributeId: 1, value: { type: "clear" } }, // invalid (locked OAV)
-          { attributeId: 2, value: { type: "text", value: "ValidButShouldBeRolledBack" } } // valid
+          { attributeId: 2, value: { type: "number", value: "99.5" } } // valid
         ]
       })!;
       const rAtomicity = await executeAdminOfferAttributesMutation(db, atomicityInput);
@@ -2137,15 +2137,19 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal((rInactive as any).code, "OPTION_INACTIVE");
 
     // Partial schema fail-closed
+    const partialUpdatedAt = (await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)).rows[0].updated_at.toISOString();
     await pool.query(`DROP TABLE public.migration_oav_targets`);
     const partialInput = parseAdminOfferAttributesEditInput({
       offerId: 99993,
-      expectedUpdatedAt: newUpdatedAt,
+      expectedUpdatedAt: partialUpdatedAt,
       attributes: [{ attributeId: 7, value: { type: "clear" } }],
     })!;
     const rPartial = await executeAdminOfferAttributesMutation(db, partialInput);
     assert.equal(rPartial.ok, false);
     assert.equal((rPartial as any).code, "SYSTEM_ERROR");
+
+    const partialCheckOaov = await pool.query(`SELECT * FROM offer_attribute_option_values WHERE id=1002`);
+    assert.equal(partialCheckOaov.rows.length, 1);
 
     // Cleanup
     await pool.query(`DROP TABLE IF EXISTS public.migration_oav_targets`);
