@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { getCategoryAttributeConfiguration, getCategoryBySlug, getFilteredCategoryOffers } from "@/app/actions";
+import {
+  getCategoryAttributeConfiguration,
+  getCategoryBySlug,
+  getFilteredCategoryOffers,
+} from "@/app/actions";
 import type { CatalogOffer } from "@/app/actions";
 import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -10,7 +14,10 @@ import { OfferCard } from "@/components/OfferCard";
 import { OfferProcurementListRow } from "@/components/offers/OfferProcurementListRow";
 import { CategoryOfferFilters } from "@/components/catalog/CategoryOfferFilters";
 import { CategoryAttributeFilters } from "@/components/catalog/CategoryAttributeFilters";
-import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
+import {
+  resolveCategoryName,
+  resolveCategoryIntro,
+} from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
@@ -23,13 +30,24 @@ import {
   type CatalogOfferSort,
 } from "@/lib/catalog/query";
 import { resolveAttributeFilterUrlState } from "@/lib/catalog/attribute-filter-url";
-import { getCategoryBreadcrumbs, buildCategoryTree, type CatalogCategoryNode } from "@/lib/catalog/tree";
+import {
+  getCategoryBreadcrumbs,
+  buildCategoryTree,
+  type CatalogCategoryNode,
+} from "@/lib/catalog/tree";
 import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
-import { JsonLdScript, createCategoryItemListJsonLd, createFaqPageJsonLd } from "@/lib/seo/json-ld";
+import {
+  JsonLdScript,
+  createCategoryItemListJsonLd,
+  createFaqPageJsonLd,
+} from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
 import { CategoryPagination } from "@/components/catalog/CategoryPagination";
 import { CategoryOfferSort } from "@/components/catalog/CategoryOfferSort";
-import { CATALOG_PAGE_SIZE, buildCategoryPaginationHref } from "@/lib/catalog/pagination";
+import {
+  CATALOG_PAGE_SIZE,
+  buildCategoryPaginationHref,
+} from "@/lib/catalog/pagination";
 import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
 import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
 import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks";
@@ -56,7 +74,8 @@ const blockHeadings = {
   pl: {
     decisionGuidance: "Wskazówki decyzyjne / Kryteria wyboru",
     technicalParameters: "Specyfikacja i parametry techniczne",
-    inquiryChecklist: "Lista kontrolna zapytania (RFQ) — Co przygotować do wyceny?",
+    inquiryChecklist:
+      "Lista kontrolna zapytania (RFQ) — Co przygotować do wyceny?",
     faq: "Często zadawane pytania (FAQ)",
     relatedLinks: "Powiązane kategorie i rozwiązania",
   },
@@ -91,7 +110,8 @@ const blockHeadings = {
   es: {
     decisionGuidance: "Guía de decisión / Criterios de selección",
     technicalParameters: "Especificaciones técnicas y parámetros",
-    inquiryChecklist: "Lista de verificación de consulta (RFQ) — ¿Qué preparar?",
+    inquiryChecklist:
+      "Lista de verificación de consulta (RFQ) — ¿Qué preparar?",
     faq: "Preguntas frecuentes (FAQ)",
     relatedLinks: "Categorías y soluciones relacionadas",
   },
@@ -106,7 +126,12 @@ const blockHeadings = {
 
 function PackageIcon({ className = "" }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         className="fill-none stroke-current"
         d="m3 7 9-4 9 4-9 4-9-4ZM3 7v10l9 4 9-4V7M12 11v10"
@@ -139,17 +164,31 @@ export async function CategoryPage({
     notFound();
   }
 
-  const attributeDefinitions = await getCategoryAttributeConfiguration(category.id, locale, true, true);
-  const attributeState = resolveAttributeFilterUrlState(attributeDefinitions, filters.attributeParams);
+  const attributeDefinitions = await getCategoryAttributeConfiguration(
+    category.id,
+    locale,
+    true,
+    true,
+  );
+  const attributeState = resolveAttributeFilterUrlState(
+    attributeDefinitions,
+    filters.attributeParams,
+  );
   const effectiveFilters: CategoryOfferFiltersState = {
     ...filters,
     attributeParams: attributeState.params,
   };
-  
+
   const basePath = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog/c-${category.slug}`;
 
   if (!attributeState.isCanonical) {
-    redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, currentPage));
+    redirect(
+      buildCategoryPaginationHref(
+        basePath,
+        { view, sort, filters: effectiveFilters },
+        currentPage,
+      ),
+    );
   }
 
   const filteredResult = await getFilteredCategoryOffers({
@@ -170,17 +209,33 @@ export async function CategoryPage({
 
   if (filteredResult.ok) {
     if (totalOffers === 0 && currentPage > 1) {
-      redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, 1));
+      redirect(
+        buildCategoryPaginationHref(
+          basePath,
+          { view, sort, filters: effectiveFilters },
+          1,
+        ),
+      );
     }
     if (totalOffers > 0 && currentPage > totalPages) {
-      redirect(buildCategoryPaginationHref(basePath, { view, sort, filters: effectiveFilters }, totalPages));
+      redirect(
+        buildCategoryPaginationHref(
+          basePath,
+          { view, sort, filters: effectiveFilters },
+          totalPages,
+        ),
+      );
     }
   }
 
-  const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
-  const fallbackBySlug = fallbackDict.categories?.bySlug as Record<string, string> | undefined;
-  const localeIntrosBySlug = dict.categories?.introsBySlug as Record<string, string> | undefined;
-  const fallbackIntrosBySlug = fallbackDict.categories?.introsBySlug as Record<string, string> | undefined;
+  const localeBySlug = dict.categories?.bySlug as
+    Record<string, string> | undefined;
+  const fallbackBySlug = fallbackDict.categories?.bySlug as
+    Record<string, string> | undefined;
+  const localeIntrosBySlug = dict.categories?.introsBySlug as
+    Record<string, string> | undefined;
+  const fallbackIntrosBySlug = fallbackDict.categories?.introsBySlug as
+    Record<string, string> | undefined;
 
   const activeCategoryLabel = resolveCategoryName({
     slug: category.slug,
@@ -196,12 +251,13 @@ export async function CategoryPage({
     fallbackIntro: "",
   });
 
-  const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
-
   // ── Tree + subcategory resolution ─────────────────────────────────────────
   const categoryTree = buildCategoryTree(allCategories);
 
-  const findNode = (nodes: CatalogCategoryNode[], targetId: number): CatalogCategoryNode | null => {
+  const findNode = (
+    nodes: CatalogCategoryNode[],
+    targetId: number,
+  ): CatalogCategoryNode | null => {
     for (const node of nodes) {
       if (node.id === targetId) return node;
       const found = findNode(node.children, targetId);
@@ -213,9 +269,10 @@ export async function CategoryPage({
   const activeNode = findNode(categoryTree, category.id);
   const subcategories = activeNode ? activeNode.children : [];
 
-  const parentCategory = category.parentId !== null
-    ? allCategories.find((c) => c.id === category.parentId) ?? null
-    : null;
+  const parentCategory =
+    category.parentId !== null
+      ? (allCategories.find((c) => c.id === category.parentId) ?? null)
+      : null;
 
   // ── PageRole (stateless, in-memory, no DB flags, no extra SQL) ────────────
   const pageRole = resolveCategoryPageRole({
@@ -226,7 +283,6 @@ export async function CategoryPage({
   // ── Breadcrumbs ───────────────────────────────────────────────────────────
   const breadcrumbs = getCategoryBreadcrumbs(allCategories, category.id);
   const categoryFilterBasePath = getHomePath(locale);
-
 
   // ── JSON-LD: BreadcrumbList ───────────────────────────────────────────────
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
@@ -256,21 +312,27 @@ export async function CategoryPage({
   const breadcrumbJsonLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
-    "itemListElement": breadcrumbItems,
+    itemListElement: breadcrumbItems,
   };
 
   // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
-  const hasFacetedState = view !== "grid" || hasActiveCategoryOfferFilters(effectiveFilters) || sort !== "default";
-  const cleanPaginationSuffix = currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
+  const hasFacetedState =
+    view !== "grid" ||
+    hasActiveCategoryOfferFilters(effectiveFilters) ||
+    sort !== "default";
+  const cleanPaginationSuffix =
+    currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
   const pageJsonLdUrl = absoluteUrl(`${canonicalPath}${cleanPaginationSuffix}`);
 
   const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     "@id": `${pageJsonLdUrl}#collection`,
-    "url": pageJsonLdUrl,
-    "name": activeCategoryLabel,
-    "description": activeCategoryIntro || `${activeCategoryLabel} - ${dict.meta.description}`,
+    url: pageJsonLdUrl,
+    name: activeCategoryLabel,
+    description:
+      activeCategoryIntro ||
+      `${activeCategoryLabel} - ${dict.meta.description}`,
   };
 
   // ── JSON-LD: ItemList (role-aware, no Product schema) ────────────────────
@@ -294,9 +356,10 @@ export async function CategoryPage({
     }));
   })();
 
-  const startPosition = !isSubcategories && currentPage > 1
-    ? (currentPage - 1) * CATALOG_PAGE_SIZE + 1
-    : 1;
+  const startPosition =
+    !isSubcategories && currentPage > 1
+      ? (currentPage - 1) * CATALOG_PAGE_SIZE + 1
+      : 1;
 
   const itemListJsonLd = createCategoryItemListJsonLd({
     pageUrl: pageJsonLdUrl,
@@ -330,10 +393,15 @@ export async function CategoryPage({
     return resolved.length > 0 ? resolved : null;
   })();
 
-  const inquiryChecklistGroups = categoryContent?.inquiryChecklist?.groups || null;
-  const inquiryChecklistDescription = categoryContent?.inquiryChecklist?.description || null;
+  const inquiryChecklistGroups =
+    categoryContent?.inquiryChecklist?.groups || null;
+  const inquiryChecklistDescription =
+    categoryContent?.inquiryChecklist?.description || null;
   const faqItems = categoryContent?.faq || null;
-  const glossaryLinks = resolveGlossaryLinksForCategory(category.slug, locale as any);
+  const glossaryLinks = resolveGlossaryLinksForCategory(
+    category.slug,
+    locale as any,
+  );
   const relatedSolutionLinks = resolveCategorySolutionLinks({
     categorySlug: category.slug,
     ancestorSlugs: breadcrumbs.map((breadcrumb) => breadcrumb.slug),
@@ -351,17 +419,27 @@ export async function CategoryPage({
 
   const headings = blockHeadings[locale] || blockHeadings.pl;
   const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
-  const hasNestedSubcategories = subcategories.some((sub) => sub.children.length > 0);
+  const hasNestedSubcategories = subcategories.some(
+    (sub) => sub.children.length > 0,
+  );
   const queryState = { view, sort, filters: effectiveFilters };
   const hasActiveFilters = hasActiveCategoryOfferFilters(effectiveFilters);
   const renderedOffers = offers;
-  const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "grid" });
-  const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, { view: "list" });
-  const clearFiltersHref = buildClearAllCategoryFiltersHref(viewBasePath, queryState);
-
+  const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, {
+    view: "grid",
+  });
+  const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, {
+    view: "list",
+  });
+  const clearFiltersHref = buildClearAllCategoryFiltersHref(
+    viewBasePath,
+    queryState,
+  );
 
   const renderedOfferCountLabel = `${totalOffers} ${
-    totalOffers === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther
+    totalOffers === 1
+      ? dict.catalog.offerCountOne
+      : dict.catalog.offerCountOther
   }`;
   const offerCountLabel = hasActiveFilters
     ? `${dict.catalog.filtersResultsLabel}: ${renderedOfferCountLabel}`
@@ -391,11 +469,17 @@ export async function CategoryPage({
       />
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
-
         {/* ── Breadcrumbs nav ──────────────────────────────────────────── */}
-        <nav aria-label="Breadcrumbs" className="mb-6 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+        <nav
+          aria-label="Breadcrumbs"
+          className="mb-6 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground"
+        >
           <Link
-            href={categoryFilterBasePath === "/" ? "/katalog" : `${categoryFilterBasePath}/katalog`}
+            href={
+              categoryFilterBasePath === "/"
+                ? "/katalog"
+                : `${categoryFilterBasePath}/katalog`
+            }
             className="hover:text-foreground transition-colors"
           >
             {dict.nav.catalog}
@@ -412,7 +496,10 @@ export async function CategoryPage({
               <span key={bc.id} className="flex items-center gap-1.5">
                 <span>/</span>
                 {isLast ? (
-                  <span className="font-semibold text-foreground" aria-current="page">
+                  <span
+                    className="font-semibold text-foreground"
+                    aria-current="page"
+                  >
                     {bcLabel}
                   </span>
                 ) : (
@@ -428,387 +515,439 @@ export async function CategoryPage({
           })}
         </nav>
 
-
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           <div className="min-w-0 flex-1 w-full">
             {/* ── Hero / header section ─────────────────────────────────────── */}
             <div className="flex flex-col gap-2">
-          <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
-            {activeCategoryLabel}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            {totalOffers} {totalOffers === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
-          </p>
-          {activeCategoryIntro && (
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
-              {activeCategoryIntro}
-            </p>
-          )}
-          {categoryContent?.definition && (
-            <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed border-l-2 border-brand-teal pl-3">
-              {categoryContent.definition}
-            </p>
-          )}
-        </div>
+              <h1 className="text-3xl font-bold tracking-tight text-brand-navy">
+                {activeCategoryLabel}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {totalOffers}{" "}
+                {totalOffers === 1
+                  ? dict.catalog.offerCountOne
+                  : dict.catalog.offerCountOther}
+              </p>
+              {activeCategoryIntro && (
+                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+                  {activeCategoryIntro}
+                </p>
+              )}
+              {categoryContent?.definition && (
+                <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed border-l-2 border-brand-teal pl-3">
+                  {categoryContent.definition}
+                </p>
+              )}
+            </div>
 
-        {/* ── Subcategory navigation (Section → groups, Group → leaf chips) */}
-        {subcategories.length > 0 && (
-          <div className="mt-8 border-t border-border pt-8 mb-10">
-            <h2 className="text-xl font-bold text-brand-navy mb-6">
-              {dict.catalog.allCategories}
-            </h2>
+            {/* ── Subcategory navigation (Section → groups, Group → leaf chips) */}
+            {subcategories.length > 0 && (
+              <div className="mt-8 border-t border-border pt-8 mb-10">
+                <h2 className="text-xl font-bold text-brand-navy mb-6">
+                  {dict.catalog.allCategories}
+                </h2>
 
-            {pageRole === "section" || hasNestedSubcategories ? (
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {subcategories.map((group: CatalogCategoryNode) => {
-                  const groupLabel = resolveCategoryName({
-                    slug: group.slug,
-                    dbName: group.name,
-                    localeBySlug,
-                    fallbackBySlug,
-                  });
-                  return (
-                    <div key={group.id} className="rounded-lg border border-border bg-white p-5 shadow-sm">
-                      <h3 className="text-sm font-bold text-brand-navy mb-3">
-                        <Link
-                          href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`}
-                          className="hover:text-brand-teal transition-colors"
+                {pageRole === "section" || hasNestedSubcategories ? (
+                  <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    {subcategories.map((group: CatalogCategoryNode) => {
+                      const groupLabel = resolveCategoryName({
+                        slug: group.slug,
+                        dbName: group.name,
+                        localeBySlug,
+                        fallbackBySlug,
+                      });
+                      return (
+                        <div
+                          key={group.id}
+                          className="rounded-lg border border-border bg-white p-5 shadow-sm"
                         >
-                          {groupLabel}
-                        </Link>
-                      </h3>
-                      {group.children.length > 0 && (
-                        <ul className="space-y-1.5 border-t border-gray-50 pt-2.5">
-                          {group.children.map((cat: CatalogCategoryNode) => {
-                            const catLabel = resolveCategoryName({
-                              slug: cat.slug,
-                              dbName: cat.name,
-                              localeBySlug,
-                              fallbackBySlug,
-                            });
-                            return (
-                              <li key={cat.id}>
-                                <Link
-                                  href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`}
-                                  className={`text-xs transition-colors hover:text-brand-teal ${
-                                    cat.children.length > 0
-                                      ? "font-semibold text-brand-navy/80"
-                                      : "text-muted-foreground"
-                                  }`}
-                                >
-                                  {catLabel}
-                                </Link>
-                                {cat.children.length > 0 && (
-                                  <ul className="mt-1.5 space-y-1 border-l border-border pl-3">
-                                    {cat.children.map((leaf: CatalogCategoryNode) => {
-                                      const leafLabel = resolveCategoryName({
-                                        slug: leaf.slug,
-                                        dbName: leaf.name,
-                                        localeBySlug,
-                                        fallbackBySlug,
-                                      });
+                          <h3 className="text-sm font-bold text-brand-navy mb-3">
+                            <Link
+                              href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`}
+                              className="hover:text-brand-teal transition-colors"
+                            >
+                              {groupLabel}
+                            </Link>
+                          </h3>
+                          {group.children.length > 0 && (
+                            <ul className="space-y-1.5 border-t border-gray-50 pt-2.5">
+                              {group.children.map(
+                                (cat: CatalogCategoryNode) => {
+                                  const catLabel = resolveCategoryName({
+                                    slug: cat.slug,
+                                    dbName: cat.name,
+                                    localeBySlug,
+                                    fallbackBySlug,
+                                  });
+                                  return (
+                                    <li key={cat.id}>
+                                      <Link
+                                        href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`}
+                                        className={`text-xs transition-colors hover:text-brand-teal ${
+                                          cat.children.length > 0
+                                            ? "font-semibold text-brand-navy/80"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        {catLabel}
+                                      </Link>
+                                      {cat.children.length > 0 && (
+                                        <ul className="mt-1.5 space-y-1 border-l border-border pl-3">
+                                          {cat.children.map(
+                                            (leaf: CatalogCategoryNode) => {
+                                              const leafLabel =
+                                                resolveCategoryName({
+                                                  slug: leaf.slug,
+                                                  dbName: leaf.name,
+                                                  localeBySlug,
+                                                  fallbackBySlug,
+                                                });
 
-                                      return (
-                                        <li key={leaf.id}>
-                                          <Link
-                                            href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${leaf.slug}`}
-                                            className="text-xs text-muted-foreground transition-colors hover:text-brand-teal"
-                                          >
-                                            {leafLabel}
-                                          </Link>
-                                        </li>
-                                      );
-                                    })}
-                                  </ul>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              /* Group: Leaf children as pill chips */
-              <div className="flex flex-wrap gap-2">
-                {subcategories.map((sub: CatalogCategoryNode) => {
-                  const subLabel = resolveCategoryName({
-                    slug: sub.slug,
-                    dbName: sub.name,
-                    localeBySlug,
-                    fallbackBySlug,
-                  });
-                  return (
-                    <Link
-                      key={sub.id}
-                      href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
-                      className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
-                    >
-                      {subLabel}
-                    </Link>
-                  );
-                })}
+                                              return (
+                                                <li key={leaf.id}>
+                                                  <Link
+                                                    href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${leaf.slug}`}
+                                                    className="text-xs text-muted-foreground transition-colors hover:text-brand-teal"
+                                                  >
+                                                    {leafLabel}
+                                                  </Link>
+                                                </li>
+                                              );
+                                            },
+                                          )}
+                                        </ul>
+                                      )}
+                                    </li>
+                                  );
+                                },
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  /* Group: Leaf children as pill chips */
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((sub: CatalogCategoryNode) => {
+                      const subLabel = resolveCategoryName({
+                        slug: sub.slug,
+                        dbName: sub.name,
+                        localeBySlug,
+                        fallbackBySlug,
+                      });
+                      return (
+                        <Link
+                          key={sub.id}
+                          href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
+                          className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-all hover:border-brand-teal hover:text-brand-teal"
+                        >
+                          {subLabel}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             )}
-          </div>
-        )}
 
-        {/* ── Optional content slots (null = no DOM output) ────────────── */}
-        <CategoryDecisionGuidance
-          items={decisionGuidanceItems}
-          heading={headings.decisionGuidance}
-        />
-        <CategoryTechnicalParameters
-          params={technicalParams}
-          heading={headings.technicalParameters}
-        />
-        <CategoryInquiryChecklist
-          groups={inquiryChecklistGroups}
-          heading={headings.inquiryChecklist}
-          description={inquiryChecklistDescription}
-        />
+            {/* ── Optional content slots (null = no DOM output) ────────────── */}
+            <CategoryDecisionGuidance
+              items={decisionGuidanceItems}
+              heading={headings.decisionGuidance}
+            />
+            <CategoryTechnicalParameters
+              params={technicalParams}
+              heading={headings.technicalParameters}
+            />
+            <CategoryInquiryChecklist
+              groups={inquiryChecklistGroups}
+              heading={headings.inquiryChecklist}
+              description={inquiryChecklistDescription}
+            />
 
-        {/* ── Global Clear All Filters ──────────────────────────────────── */}
-        {hasActiveFilters && (
-          <div className="mb-4 flex justify-end">
-            <Link
-              href={clearFiltersHref}
-              className="inline-flex min-h-11 items-center gap-2 rounded bg-white px-4 py-2 text-sm font-semibold text-brand-navy shadow-sm border border-border transition-colors hover:border-brand-teal hover:text-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
-            >
-              <svg aria-hidden="true" focusable="false" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-              {dict.catalog.filtersClearAll}
-            </Link>
-          </div>
-        )}
+            {/* ── Global Clear All Filters ──────────────────────────────────── */}
+            {hasActiveFilters && (
+              <div className="mb-4 flex justify-end">
+                <Link
+                  href={clearFiltersHref}
+                  className="inline-flex min-h-11 items-center gap-2 rounded bg-white px-4 py-2 text-sm font-semibold text-brand-navy shadow-sm border border-border transition-colors hover:border-brand-teal hover:text-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
+                >
+                  <svg
+                    aria-hidden="true"
+                    focusable="false"
+                    className="h-4 w-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                  {dict.catalog.filtersClearAll}
+                </Link>
+              </div>
+            )}
 
-        {/* ── Offer filters + listing ──────────────────────────────────── */}
-        {offers.length > 0 && (
-          <CategoryOfferFilters
-            basePath={viewBasePath}
-            view={view}
-            sort={sort}
-            filters={effectiveFilters}
-            labels={{
-              filtersHeading: dict.catalog.filtersHeading,
-              filtersSummary: dict.catalog.filtersSummary,
-              filtersAll: dict.catalog.filtersAll,
-              filtersModelHeading: dict.catalog.filtersModelHeading,
-              filtersModelRfq: dict.catalog.filtersModelRfq,
-              filtersModelEcommerce: dict.catalog.filtersModelEcommerce,
-              filtersModelOutbound: dict.catalog.filtersModelOutbound,
-              filtersFeaturedOnly: dict.catalog.filtersFeaturedOnly,
-            }}
-          />
-        )}
+            {/* ── Offer filters + listing ──────────────────────────────────── */}
+            {offers.length > 0 && (
+              <CategoryOfferFilters
+                basePath={viewBasePath}
+                view={view}
+                sort={sort}
+                filters={effectiveFilters}
+                labels={{
+                  filtersHeading: dict.catalog.filtersHeading,
+                  filtersSummary: dict.catalog.filtersSummary,
+                  filtersAll: dict.catalog.filtersAll,
+                  filtersModelHeading: dict.catalog.filtersModelHeading,
+                  filtersModelRfq: dict.catalog.filtersModelRfq,
+                  filtersModelEcommerce: dict.catalog.filtersModelEcommerce,
+                  filtersModelOutbound: dict.catalog.filtersModelOutbound,
+                  filtersFeaturedOnly: dict.catalog.filtersFeaturedOnly,
+                }}
+              />
+            )}
 
-        <CategoryAttributeFilters
-          basePath={viewBasePath}
-          view={view}
-          sort={sort}
-          filters={effectiveFilters}
-          definitions={attributeDefinitions}
-          labels={{
-            heading: dict.catalog.attributeFiltersHeading,
-            summary: dict.catalog.attributeFiltersSummary,
-            from: dict.catalog.attributeFiltersFrom,
-            to: dict.catalog.attributeFiltersTo,
-            apply: dict.catalog.attributeFiltersApply,
-            clear: dict.catalog.attributeFiltersClear,
-            booleanAny: dict.catalog.filtersBooleanAny,
-            booleanYes: dict.catalog.filtersBooleanYes,
-            booleanNo: dict.catalog.filtersBooleanNo,
-            multiEnumGuidance: dict.catalog.filtersMultiEnumGuidance,
-          }}
-        />
-
-        <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-bold text-brand-navy">
-              {dict.catalog.allOffers}
-            </h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {offerCountLabel}
-            </p>
-          </div>
-
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <CategoryOfferSort
+            <CategoryAttributeFilters
               basePath={viewBasePath}
               view={view}
-              currentSort={sort}
+              sort={sort}
               filters={effectiveFilters}
+              definitions={attributeDefinitions}
               labels={{
-                sortLabel: dict.catalog.sortLabel || "Sortuj:",
-                sortDefault: dict.catalog.sortDefault || "Domyślnie",
-                sortPriceAsc: dict.catalog.sortPriceAsc || "Cena: od najniższej",
-                sortPriceDesc: dict.catalog.sortPriceDesc || "Cena: od najwyższej",
-                sortNewest: dict.catalog.sortNewest || "Najnowsze",
-                apply: dict.catalog.attributeFiltersApply || "Zastosuj",
+                heading: dict.catalog.attributeFiltersHeading,
+                summary: dict.catalog.attributeFiltersSummary,
+                from: dict.catalog.attributeFiltersFrom,
+                to: dict.catalog.attributeFiltersTo,
+                apply: dict.catalog.attributeFiltersApply,
+                clear: dict.catalog.attributeFiltersClear,
+                booleanAny: dict.catalog.filtersBooleanAny,
+                booleanYes: dict.catalog.filtersBooleanYes,
+                booleanNo: dict.catalog.filtersBooleanNo,
+                multiEnumGuidance: dict.catalog.filtersMultiEnumGuidance,
               }}
             />
 
-            <nav aria-label={dict.offers.viewSwitcherAria} className="flex w-fit overflow-hidden rounded border border-border">
-            <Link
-              href={gridHref}
-              aria-current={view === "grid" ? "page" : undefined}
-              className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
-                view === "grid"
-                  ? "bg-brand-navy text-white"
-                  : "bg-white text-brand-navy hover:bg-gray-50"
-              }`}
-            >
-              {dict.offers.gridView}
-            </Link>
-            <Link
-              href={listHref}
-              aria-current={view === "list" ? "page" : undefined}
-              className={`border-l border-border px-3 py-1.5 text-xs font-semibold transition-colors ${
-                view === "list"
-                  ? "bg-brand-navy text-white"
-                  : "bg-white text-brand-navy hover:bg-gray-50"
-              }`}
-            >
-              {dict.offers.listView}
-            </Link>
-          </nav>
-          </div>
-        </div>
+            <div className="mt-10 flex flex-col gap-3 border-t border-border pt-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-brand-navy">
+                  {dict.catalog.allOffers}
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {offerCountLabel}
+                </p>
+              </div>
 
-        {renderedOffers.length === 0 ? (
-          <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
-            <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
-            <p className="text-lg font-semibold">
-              {hasActiveFilters ? dict.catalog.filtersEmptyTitle : dict.catalog.emptyTitle}
-            </p>
-            <p className="text-sm text-muted-foreground max-w-xs">
-              {hasActiveFilters
-                ? dict.catalog.filtersEmptyDescription
-                : dict.catalog.emptyDescription}
-            </p>
-            {hasActiveFilters && (
-              <Link
-                href={buildCategoryOfferQueryHref(viewBasePath, { view, sort, filters: effectiveFilters }, { clearAttributeFilters: true })}
-                className="mt-4 rounded bg-brand-navy px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-teal"
-              >
-                {dict.catalog.filtersClear}
-              </Link>
-            )}
-          </div>
-        ) : view === "list" ? (
-          <div className="mt-6 flex flex-col gap-3">
-            {renderedOffers.map((offer) => (
-              <OfferProcurementListRow
-                key={offer.id}
-                offer={offer}
-                detailHref={getOfferPath(locale, String(offer.id))}
-                offerLabels={dict.offers}
-                ctaLabels={dict.cta}
-                rfqLabels={dict.rfq}
-                formLabels={dict.form}
-                systemLabels={dict.system}
-                closeLabel={dict.common.close}
-                categoryLabels={localeBySlug || {}}
-                technicalAttributeLabels={technicalAttributeLabels}
-              />
-            ))}
-          </div>
-        ) : (
-          <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {renderedOffers.map((offer) => (
-              <OfferCard
-                key={offer.id}
-                offer={offer}
-                detailHref={getOfferPath(locale, String(offer.id))}
-                offerLabels={dict.offers}
-                ctaLabels={dict.cta}
-                rfqLabels={dict.rfq}
-                formLabels={dict.form}
-                systemLabels={dict.system}
-                closeLabel={dict.common.close}
-                categoryLabels={localeBySlug || {}}
-                technicalAttributeLabels={technicalAttributeLabels}
-              />
-            ))}
-          </div>
-        )}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+                <CategoryOfferSort
+                  basePath={viewBasePath}
+                  view={view}
+                  currentSort={sort}
+                  filters={effectiveFilters}
+                  labels={{
+                    sortLabel: dict.catalog.sortLabel || "Sortuj:",
+                    sortDefault: dict.catalog.sortDefault || "Domyślnie",
+                    sortPriceAsc:
+                      dict.catalog.sortPriceAsc || "Cena: od najniższej",
+                    sortPriceDesc:
+                      dict.catalog.sortPriceDesc || "Cena: od najwyższej",
+                    sortNewest: dict.catalog.sortNewest || "Najnowsze",
+                    apply: dict.catalog.attributeFiltersApply || "Zastosuj",
+                  }}
+                />
 
-        <CategoryPagination
-          basePath={viewBasePath}
-          state={queryState}
-          currentPage={currentPage}
-          totalPages={totalPages}
-          labels={{
-            paginationLabel: dict.catalog.paginationLabel || "Paginacja katalogu",
-            paginationPrevious: dict.catalog.paginationPrevious || "Poprzednia",
-            paginationNext: dict.catalog.paginationNext || "Następna",
-            paginationPage: dict.catalog.paginationPage || "Strona {page}",
-            paginationCurrentPage: dict.catalog.paginationCurrentPage || "Bieżąca strona, strona {page}",
-          }}
-        />
-
-        {/* ── Optional lower content slots (FAQ + related) ─────────────── */}
-        <CategoryFaqBlock
-          items={faqItems}
-          heading={headings.faq}
-        />
-
-        {/* Słownik branżowy - Powiązane pojęcia */}
-        {(locale === "pl" || locale === "en" || locale === "de") && glossaryLinks && glossaryLinks.length > 0 && (() => {
-          const secLabels = {
-            pl: { sectionTitle: "Pojęcia branżowe", viewDefinition: "Definicja pojęcia" },
-            en: { sectionTitle: "Industry terms", viewDefinition: "Term definition" },
-            de: { sectionTitle: "Fachbegriffe", viewDefinition: "Definition anzeigen" }
-          };
-          const activeLabels = secLabels[locale as "pl" | "en" | "de"] || secLabels.pl;
-
-          return (
-            <div className="mt-8 border-t border-border pt-8">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal block mb-3">
-                {activeLabels.sectionTitle}
-              </span>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {glossaryLinks.map((link) => (
-                  <div key={link.slug} className="border border-border bg-white p-4 rounded-none shadow-none flex flex-col justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-brand-navy mb-1.5">
-                        <Link href={link.href} className="hover:text-brand-teal transition-colors">
-                          {link.term}
-                        </Link>
-                      </h3>
-                      <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-                        {link.shortDefinition}
-                      </p>
-                    </div>
-                    <div className="mt-3 text-right">
-                      <Link href={link.href} className="text-xs font-semibold text-brand-teal hover:underline inline-flex items-center gap-1">
-                        {activeLabels.viewDefinition} <span>→</span>
-                      </Link>
-                    </div>
-                  </div>
-                ))}
+                <nav
+                  aria-label={dict.offers.viewSwitcherAria}
+                  className="flex w-fit overflow-hidden rounded border border-border"
+                >
+                  <Link
+                    href={gridHref}
+                    aria-current={view === "grid" ? "page" : undefined}
+                    className={`px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      view === "grid"
+                        ? "bg-brand-navy text-white"
+                        : "bg-white text-brand-navy hover:bg-gray-50"
+                    }`}
+                  >
+                    {dict.offers.gridView}
+                  </Link>
+                  <Link
+                    href={listHref}
+                    aria-current={view === "list" ? "page" : undefined}
+                    className={`border-l border-border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                      view === "list"
+                        ? "bg-brand-navy text-white"
+                        : "bg-white text-brand-navy hover:bg-gray-50"
+                    }`}
+                  >
+                    {dict.offers.listView}
+                  </Link>
+                </nav>
               </div>
             </div>
-          );
-        })()}
 
-        <CategoryRelatedLinks
-          links={relatedLinks}
-          heading={headings.relatedLinks}
-        />
+            {renderedOffers.length === 0 ? (
+              <div className="mt-12 flex flex-col items-center gap-3 py-16 text-center">
+                <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
+                <p className="text-lg font-semibold">
+                  {hasActiveFilters
+                    ? dict.catalog.filtersEmptyTitle
+                    : dict.catalog.emptyTitle}
+                </p>
+                <p className="text-sm text-muted-foreground max-w-xs">
+                  {hasActiveFilters
+                    ? dict.catalog.filtersEmptyDescription
+                    : dict.catalog.emptyDescription}
+                </p>
+                {hasActiveFilters && (
+                  <Link
+                    href={buildCategoryOfferQueryHref(
+                      viewBasePath,
+                      { view, sort, filters: effectiveFilters },
+                      { clearAttributeFilters: true },
+                    )}
+                    className="mt-4 rounded bg-brand-navy px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-teal"
+                  >
+                    {dict.catalog.filtersClear}
+                  </Link>
+                )}
+              </div>
+            ) : view === "list" ? (
+              <div className="mt-6 flex flex-col gap-3">
+                {renderedOffers.map((offer) => (
+                  <OfferProcurementListRow
+                    key={offer.id}
+                    offer={offer}
+                    detailHref={getOfferPath(locale, String(offer.id))}
+                    offerLabels={dict.offers}
+                    ctaLabels={dict.cta}
+                    rfqLabels={dict.rfq}
+                    formLabels={dict.form}
+                    systemLabels={dict.system}
+                    closeLabel={dict.common.close}
+                    categoryLabels={localeBySlug || {}}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {renderedOffers.map((offer) => (
+                  <OfferCard
+                    key={offer.id}
+                    offer={offer}
+                    detailHref={getOfferPath(locale, String(offer.id))}
+                    offerLabels={dict.offers}
+                    ctaLabels={dict.cta}
+                    rfqLabels={dict.rfq}
+                    formLabels={dict.form}
+                    systemLabels={dict.system}
+                    closeLabel={dict.common.close}
+                    categoryLabels={localeBySlug || {}}
+                  />
+                ))}
+              </div>
+            )}
 
-        <RelatedSolutions
-          links={relatedSolutionLinks}
-          heading={dict.solutions.relatedHeading}
-          intro={dict.solutions.relatedIntro}
-        />
+            <CategoryPagination
+              basePath={viewBasePath}
+              state={queryState}
+              currentPage={currentPage}
+              totalPages={totalPages}
+              labels={{
+                paginationLabel:
+                  dict.catalog.paginationLabel || "Paginacja katalogu",
+                paginationPrevious:
+                  dict.catalog.paginationPrevious || "Poprzednia",
+                paginationNext: dict.catalog.paginationNext || "Następna",
+                paginationPage: dict.catalog.paginationPage || "Strona {page}",
+                paginationCurrentPage:
+                  dict.catalog.paginationCurrentPage ||
+                  "Bieżąca strona, strona {page}",
+              }}
+            />
 
+            {/* ── Optional lower content slots (FAQ + related) ─────────────── */}
+            <CategoryFaqBlock items={faqItems} heading={headings.faq} />
+
+            {/* Słownik branżowy - Powiązane pojęcia */}
+            {(locale === "pl" || locale === "en" || locale === "de") &&
+              glossaryLinks &&
+              glossaryLinks.length > 0 &&
+              (() => {
+                const secLabels = {
+                  pl: {
+                    sectionTitle: "Pojęcia branżowe",
+                    viewDefinition: "Definicja pojęcia",
+                  },
+                  en: {
+                    sectionTitle: "Industry terms",
+                    viewDefinition: "Term definition",
+                  },
+                  de: {
+                    sectionTitle: "Fachbegriffe",
+                    viewDefinition: "Definition anzeigen",
+                  },
+                };
+                const activeLabels =
+                  secLabels[locale as "pl" | "en" | "de"] || secLabels.pl;
+
+                return (
+                  <div className="mt-8 border-t border-border pt-8">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal block mb-3">
+                      {activeLabels.sectionTitle}
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {glossaryLinks.map((link) => (
+                        <div
+                          key={link.slug}
+                          className="border border-border bg-white p-4 rounded-none shadow-none flex flex-col justify-between"
+                        >
+                          <div>
+                            <h3 className="text-sm font-bold text-brand-navy mb-1.5">
+                              <Link
+                                href={link.href}
+                                className="hover:text-brand-teal transition-colors"
+                              >
+                                {link.term}
+                              </Link>
+                            </h3>
+                            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                              {link.shortDefinition}
+                            </p>
+                          </div>
+                          <div className="mt-3 text-right">
+                            <Link
+                              href={link.href}
+                              className="text-xs font-semibold text-brand-teal hover:underline inline-flex items-center gap-1"
+                            >
+                              {activeLabels.viewDefinition} <span>→</span>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+            <CategoryRelatedLinks
+              links={relatedLinks}
+              heading={headings.relatedLinks}
+            />
+
+            <RelatedSolutions
+              links={relatedSolutionLinks}
+              heading={dict.solutions.relatedHeading}
+              intro={dict.solutions.relatedIntro}
+            />
           </div>
         </div>
-
       </main>
 
       <SiteFooter

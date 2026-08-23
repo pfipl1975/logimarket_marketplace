@@ -818,6 +818,24 @@
       "PRICE_INVALID": "Ungültiger Bruttopreis",
       "OUTBOUND_URL_INVALID": "Ungültige URL für Outbound-Angebot",
       "SYSTEM_ERROR": "Ein Systemfehler ist aufgetreten"
+    },
+    "technicalAttributesForm": {
+      "trueLabel": "Ja",
+      "falseLabel": "Nein",
+      "unsetLabel": "--",
+      "inactiveOptionLabel": "Inaktiv",
+      "required": "Erforderlich",
+      "clear": "Löschen",
+      "saving": "Speichern...",
+      "save": "Attribute speichern",
+      "conflict": "Bearbeitungskonflikt. Angebot wurde aktualisiert.",
+      "error": "Speicherfehler",
+      "empty": "Keine Attribute zugewiesen.",
+      "orphanWarning": "Verwaistes Attribut",
+      "inactiveWarning": "Inaktives Attribut",
+      "title": "Technische Attribute",
+      "description": "Bearbeiten Sie die relationalen technischen Attribute.",
+      "provenanceLocked": "Die Bearbeitung dieses Attributs ist aufgrund seiner Verknüpfung mit Migrationsdaten gesperrt."
     }
   },
   "adminDashboard": {

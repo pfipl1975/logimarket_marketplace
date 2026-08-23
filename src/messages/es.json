@@ -818,6 +818,24 @@
       "PRICE_INVALID": "Precio bruto no válido",
       "OUTBOUND_URL_INVALID": "URL no válida para la oferta de salida",
       "SYSTEM_ERROR": "Ocurrió un error del sistema"
+    },
+    "technicalAttributesForm": {
+      "trueLabel": "Sí",
+      "falseLabel": "No",
+      "unsetLabel": "--",
+      "inactiveOptionLabel": "Inactivo",
+      "required": "Requerido",
+      "clear": "Borrar",
+      "saving": "Guardando...",
+      "save": "Guardar atributos",
+      "conflict": "Conflicto. Oferta actualizada.",
+      "error": "Error",
+      "empty": "Sin atributos.",
+      "orphanWarning": "Atributo huérfano",
+      "inactiveWarning": "Atributo inactivo",
+      "title": "Atributos técnicos",
+      "description": "Editar atributos técnicos.",
+      "provenanceLocked": "La edición de este atributo está bloqueada debido a su vínculo con los datos de migración."
     }
   },
   "adminDashboard": {

@@ -9,8 +9,8 @@ describe("Offer Presentation Contract", () => {
     // Must define the flags
     assert.equal(sourceCode.includes("const isArchived = offer.publicationStatus === \"archived\";"), true, "Missing isArchived definition");
     assert.equal(
-      sourceCode.includes("const isOperationallyUnavailable = offer.publicationStatus === \"published\" && !offer.isActive;") ||
-      sourceCode.includes("const isOperationallyUnavailable = !offer.isActive && offer.publicationStatus === \"published\";"),
+      /const isOperationallyUnavailable =\s*offer\.publicationStatus === \"published\" && !offer\.isActive;/.test(sourceCode) ||
+      /const isOperationallyUnavailable =\s*!offer\.isActive && offer\.publicationStatus === \"published\";/.test(sourceCode),
       true,
       "Missing isOperationallyUnavailable definition"
     );

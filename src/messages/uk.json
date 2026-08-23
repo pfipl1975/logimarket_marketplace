@@ -818,6 +818,24 @@
       "PRICE_INVALID": "Недійсна ціна брутто",
       "OUTBOUND_URL_INVALID": "Недійсне посилання для зовнішньої пропозиції",
       "SYSTEM_ERROR": "Виникла системна помилка"
+    },
+    "technicalAttributesForm": {
+      "trueLabel": "Так",
+      "falseLabel": "Ні",
+      "unsetLabel": "--",
+      "inactiveOptionLabel": "Неактивний",
+      "required": "Обов'язково",
+      "clear": "Очистити",
+      "saving": "Збереження...",
+      "save": "Зберегти атрибути",
+      "conflict": "Конфлікт. Пропозицію оновлено.",
+      "error": "Помилка",
+      "empty": "Немає атрибутів.",
+      "orphanWarning": "Атрибут сирота",
+      "inactiveWarning": "Неактивний атрибут",
+      "title": "Технічні атрибути",
+      "description": "Редагувати технічні атрибути.",
+      "provenanceLocked": "Редагування цього атрибута заблоковано через його зв’язок із даними міграції."
     }
   },
   "adminDashboard": {

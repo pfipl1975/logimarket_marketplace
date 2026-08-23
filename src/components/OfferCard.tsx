@@ -5,7 +5,6 @@ import Image from "next/image";
 import { Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
-import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { formatPrice } from "@/lib/utils";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "./OfferAction";
@@ -16,25 +15,42 @@ interface OfferCardProps {
   offer: CatalogOffer;
   detailHref?: string;
   offerLabels: Dictionary["offers"];
-  ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
+  ctaLabels: Pick<
+    Dictionary["cta"],
+    "addToCart" | "requestQuote" | "sendRequest"
+  >;
   rfqLabels: Dictionary["rfq"];
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
   categoryLabels: Record<string, string>;
-  technicalAttributeLabels: Record<string, string>;
 }
 
-export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels, formLabels, systemLabels, closeLabel, categoryLabels, technicalAttributeLabels }: OfferCardProps) {
-  const attributes = Object.entries(offer.technicalAttributes).slice(0, 4);
-  const isEcommerce = offer.offerModel === "ecommerce";
-  const isOutbound = offer.offerModel === "outbound";
+export function OfferCard({
+  offer,
+  detailHref,
+  offerLabels,
+  ctaLabels,
+  rfqLabels,
+  formLabels,
+  systemLabels,
+  closeLabel,
+  categoryLabels,
+}: OfferCardProps) {
+  const attributes = (offer.attributes || []).slice(0, 4);
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
-  const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
+  const categoryLabel = getLocalizedCategoryLabel(
+    categoryLabels,
+    offer.categorySlug,
+    offer.categoryName,
+  );
 
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all duration-200 hover:shadow-md border-[#d9dde2] hover:border-brand-teal/30">
-      <Link href={offerDetailHref} className="relative block aspect-[4/3] overflow-hidden bg-gray-100">
+      <Link
+        href={offerDetailHref}
+        className="relative block aspect-[4/3] overflow-hidden bg-gray-100"
+      >
         {offer.imageUrl ? (
           <Image
             src={offer.imageUrl}
@@ -50,7 +66,9 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
         )}
         <div className="absolute left-3 top-3 flex flex-wrap gap-1.5">
           {offer.isFeatured && (
-            <Badge className="border-0 bg-brand-teal text-[10px] font-semibold uppercase tracking-wider text-white">{offerLabels.featured}</Badge>
+            <Badge className="border-0 bg-brand-teal text-[10px] font-semibold uppercase tracking-wider text-white">
+              {offerLabels.featured}
+            </Badge>
           )}
           <OfferModelBadge
             offerModel={offer.offerModel}
@@ -61,22 +79,37 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
       </Link>
 
       <div className="flex flex-1 flex-col p-4">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-teal">{categoryLabel}</span>
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-brand-teal">
+          {categoryLabel}
+        </span>
         <h3 className="mt-1.5 text-base font-bold leading-snug">
-          <Link href={offerDetailHref} className="text-[#141c2c] transition-colors hover:text-[#147487]">{offer.title}</Link>
+          <Link
+            href={offerDetailHref}
+            className="text-[#141c2c] transition-colors hover:text-[#147487]"
+          >
+            {offer.title}
+          </Link>
         </h3>
         <p className="mt-1 text-xs flex items-center gap-1 text-[#5a6472]">
-          <Wrench className="h-3 w-3" />{offer.partnerName}
+          <Wrench className="h-3 w-3" />
+          {offer.partnerName}
         </p>
 
         {attributes.length > 0 && (
           <div className="mt-3 rounded border overflow-hidden border-[#d9dde2]/60">
             <table className="w-full text-xs">
               <tbody>
-                {attributes.map(([key, value], idx) => (
-                  <tr key={key} className={idx % 2 === 0 ? "bg-white/50" : "bg-transparent"}>
-                    <td className="px-2.5 py-1.5 font-medium w-1/2 border-r text-muted-foreground border-border">{getLocalizedTechnicalAttributeLabel(technicalAttributeLabels, key)}</td>
-                    <td className="px-2.5 py-1.5 font-bold w-1/2 text-brand-navy">{String(value)}</td>
+                {attributes.map((attr, idx) => (
+                  <tr
+                    key={attr.attributeId}
+                    className={idx % 2 === 0 ? "bg-white/50" : "bg-transparent"}
+                  >
+                    <td className="px-2.5 py-1.5 font-medium w-1/2 border-r text-muted-foreground border-border">
+                      {attr.name}
+                    </td>
+                    <td className="px-2.5 py-1.5 font-bold w-1/2 text-brand-navy">
+                      {attr.values.join(", ")} {attr.unitCode || ""}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -86,7 +119,13 @@ export function OfferCard({ offer, detailHref, offerLabels, ctaLabels, rfqLabels
 
         <div className="mt-auto">
           <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
-            <p className="text-lg font-bold text-brand-navy">{formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest)}</p>
+            <p className="text-lg font-bold text-brand-navy">
+              {formatPrice(
+                offer.priceBrutto,
+                offer.priceOnRequest,
+                offerLabels.priceOnRequest,
+              )}
+            </p>
             <OfferAction
               offer={{
                 id: offer.id,
