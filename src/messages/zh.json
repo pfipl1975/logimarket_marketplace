@@ -818,6 +818,24 @@
       "PRICE_INVALID": "无效的总价",
       "OUTBOUND_URL_INVALID": "外部优惠的 URL 无效",
       "SYSTEM_ERROR": "发生系统错误"
+    },
+    "technicalAttributesForm": {
+      "trueLabel": "是",
+      "falseLabel": "否",
+      "unsetLabel": "--",
+      "inactiveOptionLabel": "非活动",
+      "required": "必填",
+      "clear": "清除",
+      "saving": "保存中...",
+      "save": "保存属性",
+      "conflict": "冲突。报价已更新。",
+      "error": "保存错误",
+      "empty": "没有分配属性。",
+      "orphanWarning": "孤立属性",
+      "inactiveWarning": "非活动属性",
+      "title": "技术属性",
+      "description": "编辑此报价的技术属性。",
+      "provenanceLocked": "由于该属性与迁移数据关联，因此无法编辑。"
     }
   },
   "adminDashboard": {

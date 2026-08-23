@@ -2,7 +2,6 @@ import Link from "next/link";
 import { OfferAction } from "@/components/OfferAction";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
-import { getLocalizedTechnicalAttributeLabel } from "@/lib/i18n/technical-attributes";
 import { formatPrice } from "@/lib/utils";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
@@ -11,13 +10,15 @@ interface OfferProcurementListRowProps {
   offer: CatalogOffer;
   detailHref: string;
   offerLabels: Dictionary["offers"];
-  ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
+  ctaLabels: Pick<
+    Dictionary["cta"],
+    "addToCart" | "requestQuote" | "sendRequest"
+  >;
   rfqLabels: Dictionary["rfq"];
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
   categoryLabels: Record<string, string>;
-  technicalAttributeLabels: Record<string, string>;
 }
 
 export function OfferProcurementListRow({
@@ -30,7 +31,6 @@ export function OfferProcurementListRow({
   systemLabels,
   closeLabel,
   categoryLabels,
-  technicalAttributeLabels,
 }: OfferProcurementListRowProps) {
   const categoryLabel = getLocalizedCategoryLabel(
     categoryLabels,
@@ -42,7 +42,7 @@ export function OfferProcurementListRow({
     offer.priceOnRequest,
     offerLabels.priceOnRequest,
   );
-  const highlights = Object.entries(offer.technicalAttributes).slice(0, 3);
+  const highlights = (offer.attributes || []).slice(0, 3);
 
   return (
     <article className="grid gap-4 rounded border border-border bg-white p-4 shadow-sm transition-shadow hover:shadow-md lg:grid-cols-[minmax(0,1fr)_220px]">
@@ -64,7 +64,10 @@ export function OfferProcurementListRow({
         </div>
 
         <h3 className="mt-2 text-base font-bold leading-snug text-brand-navy">
-          <Link href={detailHref} className="transition-colors hover:text-brand-teal">
+          <Link
+            href={detailHref}
+            className="transition-colors hover:text-brand-teal"
+          >
             {offer.title}
           </Link>
         </h3>
@@ -75,13 +78,16 @@ export function OfferProcurementListRow({
 
         {highlights.length > 0 ? (
           <dl className="mt-3 grid gap-2 sm:grid-cols-3">
-            {highlights.map(([key, value]) => (
-              <div key={key} className="border-l border-border pl-3">
+            {highlights.map((attr) => (
+              <div
+                key={attr.attributeId}
+                className="border-l border-border pl-3"
+              >
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {getLocalizedTechnicalAttributeLabel(technicalAttributeLabels, key)}
+                  {attr.name}
                 </dt>
                 <dd className="mt-0.5 text-xs font-semibold text-brand-navy">
-                  {String(value)}
+                  {attr.values.join(", ")} {attr.unitCode || ""}
                 </dd>
               </div>
             ))}
@@ -94,9 +100,7 @@ export function OfferProcurementListRow({
       </div>
 
       <div className="flex min-w-0 flex-col justify-between gap-3 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-        <p className="text-base font-bold text-brand-navy">
-          {priceLabel}
-        </p>
+        <p className="text-base font-bold text-brand-navy">{priceLabel}</p>
         <OfferAction
           offer={{
             id: offer.id,

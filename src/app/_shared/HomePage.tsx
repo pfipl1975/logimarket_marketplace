@@ -7,7 +7,11 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { OfferCard } from "@/components/OfferCard";
 import { OfferListItem } from "@/components/offers/OfferListItem";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getHomeLocaleLinks, getHomePath, getOfferPath } from "@/lib/i18n/paths";
+import {
+  getHomeLocaleLinks,
+  getHomePath,
+  getOfferPath,
+} from "@/lib/i18n/paths";
 import { HomepageSolutionsDiscovery } from "@/components/home/HomepageSolutionsDiscovery";
 import { ProductGroupTiles } from "@/components/home/ProductGroupTiles";
 import type { Locale } from "@/lib/i18n/types";
@@ -29,7 +33,12 @@ interface HomePageProps {
 
 function ShieldCheckIcon({ className = "" }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         className="fill-none stroke-current"
         d="M12 3 19 6v5c0 4.2-2.8 7.7-7 10-4.2-2.3-7-5.8-7-10V6l7-3Z"
@@ -50,7 +59,12 @@ function ShieldCheckIcon({ className = "" }: { className?: string }) {
 
 function InfoIcon({ className = "" }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         className="fill-none stroke-current"
         d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18ZM12 11v5M12 8h.01"
@@ -64,7 +78,12 @@ function InfoIcon({ className = "" }: { className?: string }) {
 
 function PackageIcon({ className = "" }: { className?: string }) {
   return (
-    <svg aria-hidden="true" className={className} viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
       <path
         className="fill-none stroke-current"
         d="m3 7 9-4 9 4-9 4-9-4ZM3 7v10l9 4 9-4V7M12 11v10"
@@ -77,9 +96,11 @@ function PackageIcon({ className = "" }: { className?: string }) {
 }
 
 export async function HomePage({ locale, view = "grid" }: HomePageProps) {
-  const [dict, offers] = await Promise.all([getDictionary(locale), getOffers()]);
+  const [dict, offers] = await Promise.all([
+    getDictionary(locale),
+    getOffers(undefined, locale),
+  ]);
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
-  const technicalAttributeLabels = dict.technicalAttributes.labels as Record<string, string>;
   const heroTitleAccent = dict.hero.titleAccent;
   const heroTitleLead = dict.hero.title.endsWith(heroTitleAccent)
     ? dict.hero.title.slice(0, -heroTitleAccent.length)
@@ -112,10 +133,12 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
         <div className="absolute inset-0 bg-brand-navy/80" />
         <div className="relative mx-auto max-w-7xl px-4 py-14 md:px-6 md:py-20">
           <span className="inline-flex items-center gap-1.5 rounded-full border border-brand-teal/20 bg-brand-teal/15 px-3 py-1.5 text-xs font-semibold text-brand-teal">
-            <ShieldCheckIcon className="h-3.5 w-3.5" />{dict.hero.badge}
+            <ShieldCheckIcon className="h-3.5 w-3.5" />
+            {dict.hero.badge}
           </span>
           <h1 className="mt-5 text-balance text-3xl font-bold leading-tight text-white md:text-5xl tracking-tight">
-            {heroTitleLead}<span className="text-brand-teal">{heroTitleAccent}</span>
+            {heroTitleLead}
+            <span className="text-brand-teal">{heroTitleAccent}</span>
           </h1>
           <p className="mt-4 max-w-xl text-pretty leading-relaxed text-white/60 text-base md:text-lg">
             {dict.hero.description} {dict.hero.modelDescription}
@@ -135,7 +158,10 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
             {dict.catalog.allOffers}
           </h2>
           <p className="text-sm text-muted-foreground">
-            {offers.length} {offers.length === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
+            {offers.length}{" "}
+            {offers.length === 1
+              ? dict.catalog.offerCountOne
+              : dict.catalog.offerCountOther}
           </p>
         </div>
 
@@ -152,7 +178,10 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
           </div>
 
           {/* View switcher — URL-driven, locale-aware */}
-          <nav aria-label="Zmień widok ofert" className="flex overflow-hidden rounded border border-border">
+          <nav
+            aria-label="Zmień widok ofert"
+            className="flex overflow-hidden rounded border border-border"
+          >
             <Link
               href={gridHref}
               aria-current={view === "grid" ? "page" : undefined}
@@ -183,7 +212,9 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
             <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
             <div>
               <p className="text-lg font-semibold">{dict.catalog.allOffers}</p>
-              <p className="mt-1 text-sm text-muted-foreground max-w-xs">{dict.catalog.emptyDescription}</p>
+              <p className="mt-1 text-sm text-muted-foreground max-w-xs">
+                {dict.catalog.emptyDescription}
+              </p>
             </div>
             <Link
               href={catalogHref}
@@ -219,7 +250,6 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
                 systemLabels={dict.system}
                 closeLabel={dict.common.close}
                 categoryLabels={categoryLabels}
-                technicalAttributeLabels={technicalAttributeLabels}
               />
             ))}
           </div>
@@ -227,9 +257,7 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
 
         <div className="mt-12 flex items-start gap-3 rounded-lg border border-border bg-white p-4 text-sm text-muted-foreground">
           <InfoIcon className="mt-0.5 h-5 w-5 shrink-0 text-brand-teal" />
-          <p className="leading-relaxed">
-            {dict.catalog.platformNotice}
-          </p>
+          <p className="leading-relaxed">{dict.catalog.platformNotice}</p>
         </div>
       </main>
 

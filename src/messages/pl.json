@@ -818,6 +818,24 @@
       "OUTBOUND_URL_INVALID": "Nieprawidłowy adres URL dla oferty outbound",
       "SYSTEM_ERROR": "Wystąpił błąd systemu",
       "PRICE_INVALID": "Nieprawidłowa cena brutto"
+    },
+    "technicalAttributesForm": {
+      "trueLabel": "Tak",
+      "falseLabel": "Nie",
+      "unsetLabel": "--",
+      "inactiveOptionLabel": "Nieaktywna",
+      "required": "Wymagane",
+      "clear": "Wyczyść",
+      "saving": "Zapisywanie...",
+      "save": "Zapisz atrybuty",
+      "conflict": "Konflikt edycji. Oferta została zaktualizowana.",
+      "error": "Błąd zapisu",
+      "empty": "Brak przypisanych atrybutów.",
+      "orphanWarning": "Atrybut sierocy (nieprzypisany do bieżącej konfiguracji kategorii)",
+      "inactiveWarning": "Atrybut nieaktywny",
+      "title": "Atrybuty techniczne",
+      "description": "Edytuj relacyjne atrybuty techniczne dla tej oferty.",
+      "provenanceLocked": "Edycja tego parametru jest zablokowana ze względu na powiązanie z danymi migracyjnymi."
     }
   },
   "adminDashboard": {

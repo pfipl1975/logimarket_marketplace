@@ -2,12 +2,15 @@ import { eq, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import type { TechnicalAttributes } from "@/lib/schema";
-import { resolveCanonicalOfferModel, type CanonicalOfferModelResolution } from "@/lib/offers/model";
+import {
+  resolveCanonicalOfferModel,
+  type CanonicalOfferModelResolution,
+} from "@/lib/offers/model";
 import { isPublicOfferDetailStatus } from "@/lib/offers/status";
 import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model-core";
-import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model-core";
 import type { Locale } from "@/lib/i18n/config";
 import { isCanonicalPositiveInteger } from "./offers-query";
+import { projectAttributeValues } from "@/lib/catalog/offer-attributes-read-model";
 
 export interface AdminOfferDetailRelationalAttribute {
   attributeId: number;
@@ -63,82 +66,10 @@ export type AdminOfferDetailResult =
   | { ok: true; data: AdminOfferDetailDto }
   | { ok: false; code: "INVALID_ID" | "NOT_FOUND" };
 
-/**
- * Pure projection helper — projects a single attribute's value(s) from raw DB rows.
- * Extracted for deterministic unit testing without DB.
- */
-export function projectAttributeValues(
-  attrId: number,
-  dataType: string,
-  config: CategoryAttributeConfiguration | undefined,
-  oavRows: Array<{
-    attributeId: number;
-    valueText: string | null;
-    valueNumber: string | null;
-    valueBoolean: boolean | null;
-    valueDate: Date | null;
-    valueYear: number | null;
-    optionId: number | null;
-  }>,
-  oaovRows: Array<{
-    attributeId: number;
-    optionId: number;
-  }>
-): string[] {
-  const values: string[] = [];
-
-  if (dataType === "multi_enum") {
-    // Deterministic TOTAL order:
-    // A. both configured -> by stableKey, tie-break by optionId
-    // B. only one configured -> configured option first
-    // C. neither configured -> by optionId
-    const opts = oaovRows.filter((r) => r.attributeId === attrId);
-    const sorted = [...opts].sort((a, b) => {
-      const cfgA = config?.options.find((o) => o.optionId === a.optionId);
-      const cfgB = config?.options.find((o) => o.optionId === b.optionId);
-      if (cfgA && cfgB) {
-        const byStableKey = cfgA.stableKey.localeCompare(cfgB.stableKey);
-        if (byStableKey !== 0) return byStableKey;
-        return a.optionId - b.optionId;
-      }
-      if (cfgA) return -1;
-      if (cfgB) return 1;
-      return a.optionId - b.optionId;
-    });
-    for (const opt of sorted) {
-      const optionConfig = config?.options.find((o) => o.optionId === opt.optionId);
-      // Show label if available, otherwise show numeric optionId (no template literal interpolation risk)
-      values.push(optionConfig ? optionConfig.label : `[Option ${opt.optionId}]`);
-    }
-  } else {
-    const val = oavRows.find((r) => r.attributeId === attrId);
-    if (val) {
-      if (dataType === "text" && val.valueText !== null) {
-        values.push(val.valueText);
-      } else if (dataType === "number" && val.valueNumber !== null) {
-        values.push(val.valueNumber);
-      } else if (dataType === "boolean" && val.valueBoolean !== null) {
-        values.push(val.valueBoolean ? "true" : "false");
-      } else if (dataType === "date" && val.valueDate !== null) {
-        const d = new Date(val.valueDate);
-        values.push(!isNaN(d.getTime()) ? d.toISOString().split("T")[0] : "");
-      } else if (dataType === "year" && val.valueYear !== null) {
-        values.push(val.valueYear.toString());
-      } else if (dataType === "enum" && val.optionId !== null) {
-        const optionConfig = config?.options.find((o) => o.optionId === val.optionId);
-        // Show label if available, otherwise show numeric optionId
-        values.push(optionConfig ? optionConfig.label : `[Option ${val.optionId}]`);
-      }
-    }
-  }
-
-  return values;
-}
-
 export async function getAdminOfferDetailReadModel(
   db: NodePgDatabase<typeof schema>,
   rawId: string,
-  locale: Locale
+  locale: Locale,
 ): Promise<AdminOfferDetailResult> {
   if (!isCanonicalPositiveInteger(rawId)) {
     return { ok: false, code: "INVALID_ID" };
@@ -153,7 +84,10 @@ export async function getAdminOfferDetailReadModel(
     })
     .from(schema.offers)
     .leftJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id))
-    .leftJoin(schema.categories, eq(schema.offers.categoryId, schema.categories.id))
+    .leftJoin(
+      schema.categories,
+      eq(schema.offers.categoryId, schema.categories.id),
+    )
     .where(eq(schema.offers.id, id))
     .limit(1);
 
@@ -168,7 +102,7 @@ export async function getAdminOfferDetailReadModel(
     offer.categoryId,
     locale,
     false,
-    false
+    false,
   );
   const configByAttrId = new Map(categoryConfig.map((c) => [c.attributeId, c]));
 
@@ -209,7 +143,19 @@ export async function getAdminOfferDetailReadModel(
     const unitCode = config?.unitCode ?? null;
     const isAssignedToCategory = config !== undefined;
 
-    const values = projectAttributeValues(attrId, dataType, config, oavRows, oaovRows);
+    const configOptions =
+      config?.options.map((o) => ({
+        optionId: o.optionId,
+        stableKey: o.stableKey,
+        label: o.label,
+      })) || [];
+    const values = projectAttributeValues(
+      attrId,
+      dataType,
+      configOptions,
+      oavRows,
+      oaovRows,
+    );
 
     relationalAttributes.push({
       attributeId: attrId,
@@ -227,7 +173,8 @@ export async function getAdminOfferDetailReadModel(
     const configA = configByAttrId.get(a.attributeId);
     const configB = configByAttrId.get(b.attributeId);
     if (configA && configB) {
-      if (configA.sortOrder !== configB.sortOrder) return configA.sortOrder - configB.sortOrder;
+      if (configA.sortOrder !== configB.sortOrder)
+        return configA.sortOrder - configB.sortOrder;
       return a.stableKey.localeCompare(b.stableKey);
     } else if (configA) {
       return -1;
@@ -258,7 +205,10 @@ export async function getAdminOfferDetailReadModel(
 
       rawOfferModel: offer.offerModel,
       rawConversionType: offer.conversionType,
-      canonicalModel: resolveCanonicalOfferModel(offer.offerModel, offer.conversionType),
+      canonicalModel: resolveCanonicalOfferModel(
+        offer.offerModel,
+        offer.conversionType,
+      ),
       contractModel: offer.contractModel,
 
       outboundUrl: offer.outboundUrl,

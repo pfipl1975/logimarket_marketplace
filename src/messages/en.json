@@ -818,6 +818,24 @@
       "OUTBOUND_URL_INVALID": "Invalid URL for outbound offer",
       "SYSTEM_ERROR": "A system error occurred",
       "PRICE_INVALID": "Invalid gross price"
+    },
+    "technicalAttributesForm": {
+      "trueLabel": "Yes",
+      "falseLabel": "No",
+      "unsetLabel": "--",
+      "inactiveOptionLabel": "Inactive",
+      "required": "Required",
+      "clear": "Clear",
+      "saving": "Saving...",
+      "save": "Save attributes",
+      "conflict": "Edit conflict. Offer was updated.",
+      "error": "Save error",
+      "empty": "No attributes assigned.",
+      "orphanWarning": "Orphan attribute (not assigned to current category config)",
+      "inactiveWarning": "Inactive attribute",
+      "title": "Technical Attributes",
+      "description": "Edit relational technical attributes for this offer.",
+      "provenanceLocked": "Editing this attribute is blocked because it is linked to migration provenance."
     }
   },
   "adminDashboard": {
