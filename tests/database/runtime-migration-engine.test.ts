@@ -626,7 +626,7 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
     end: async () => { state.ended = true; },
   });
 
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }]; const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }}); await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, prevFakeRead as never, prevFakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, prevFakeRead as never, prevFakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
 
   assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
   assert.ok(state.ended, "pool must be closed");

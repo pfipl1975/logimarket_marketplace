@@ -1,4 +1,4 @@
-import { isPortableHashEquivalent, isLegacyDev0000Exception, getPortableHashes } from "./runtime-migration-hashing";
+import { isPortableHashEquivalent, isLegacyDev0000Exception } from "./runtime-migration-hashing";
 
 export interface MigrationFileMeta {
   folderMillis: number;
