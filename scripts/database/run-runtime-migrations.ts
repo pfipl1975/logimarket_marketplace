@@ -27,7 +27,7 @@ export async function runMigrations(
   poolFactory?: PoolFactory,
   migrateFn?: typeof migrate,
   readMigrationFilesFn?: typeof readMigrationFiles,
-  readDiskJournalFn?: () => { entries: { tag: string; when: number }[] },
+  readDiskJournalFn?: () => { text: string; parsed: { entries: { tag: string; when: number }[] } },
   getMigrationBufferFn?: (tag: string) => Buffer
 ): Promise<void> {
   verifyTarget(env);
@@ -45,7 +45,6 @@ export async function runMigrations(
     });
 
   const pool = factory(url);
-
   let tempDir: string | null = null;
 
   try {
@@ -76,46 +75,33 @@ export async function runMigrations(
     const actualReadFn = readMigrationFilesFn ?? readMigrationFiles;
     const diskMigrations = actualReadFn({ migrationsFolder: `./${RUNTIME_MIGRATIONS_FOLDER}` });
     
-    let diskJournal: { entries: { tag: string; when: number }[] };
+    let diskJournal: { text: string; parsed: { entries: { tag: string; when: number }[] } };
     if (readDiskJournalFn) {
       diskJournal = readDiskJournalFn();
-    } else if (readMigrationFilesFn) {
-      diskJournal = {
-        entries: diskMigrations.map((m, i) => ({
-          tag: `fake_tag_${i}`,
-          when: m.folderMillis
-        }))
-      };
     } else {
       const journalPath = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "meta", "_journal.json");
       if (!fs.existsSync(journalPath)) {
         throw new Error("RUNNER: BLOCKED. _journal.json not found");
       }
-      diskJournal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
+      const text = fs.readFileSync(journalPath, "utf-8");
+      diskJournal = { text, parsed: JSON.parse(text) };
     }
     
     const getBuffer = getMigrationBufferFn ?? ((tag: string) => {
-      if (readMigrationFilesFn) {
-        // mock buffer that hashes to whatever fake hash is provided
-        diskMigrations.find(m => tag.includes(String(m.folderMillis)) || tag.startsWith("fake_tag_"));
-        // if tests are running, we just need the hashing validation to pass or fail exactly as old tests expect
-        return Buffer.from("");
-      }
       return fs.readFileSync(path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, `${tag}.sql`));
     });
 
-    if (classification.state !== "EXACT_EXISTING" && classification.state !== "EXACT_EXISTING_POST_0003") {validateAppliedMigrationPrefix(
+    validateAppliedMigrationPrefix(
       env.RUNTIME_MIGRATION_TARGET || "production",
       classification.state,
-      diskJournal,
+      diskJournal.parsed,
       diskMigrations,
       rows,
       getBuffer
     );
-    
-    }console.log("RUNNER: Journal prefix validated successfully.");
+    console.log("RUNNER: Journal prefix validated successfully.");
 
-    tempDir = createCanonicalRuntimeMigrationDirectory(diskJournal, getBuffer);
+    tempDir = createCanonicalRuntimeMigrationDirectory(diskJournal.text, diskJournal.parsed, getBuffer);
 
     const actualMigrate = migrateFn ?? migrate;
     const db = drizzle(pool as never);

@@ -1,4 +1,4 @@
-import { isPortableHashEquivalent, isLegacyDev0000Exception } from "./runtime-migration-hashing";
+import { isPortableHashEquivalent, isLegacyDev0000Exception, getPortableHashes } from "./runtime-migration-hashing";
 
 export interface MigrationFileMeta {
   folderMillis: number;
@@ -13,6 +13,31 @@ export function validateAppliedMigrationPrefix(
   appliedRows: { hash: string; created_at: string | number }[],
   getMigrationBuffer: (tag: string) => Buffer
 ): void {
+  // Enforce state/journal cardinality constraints
+  if (schemaClassificationState === "EMPTY") {
+    if (appliedRows.length !== 0) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is EMPTY but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "MIGRATABLE_POST_0002") {
+    if (appliedRows.length !== 3) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0002 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "MIGRATABLE_PREVIOUS") {
+    if (appliedRows.length !== 3) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is PREVIOUS but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0003" || schemaClassificationState === "EXACT_EXISTING") {
+    if (appliedRows.length !== 4) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is EXACT_EXISTING but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "PARTIAL_OR_DRIFTED") {
+    throw new Error(`RUNNER: BLOCKED. Schema is PARTIAL_OR_DRIFTED`);
+  } else if (schemaClassificationState === "MIGRATABLE_PROD_LEGACY" || schemaClassificationState === "MIGRATABLE_BASELINE") {
+    if (appliedRows.length > 1) {
+       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (legacy prod/baseline must have 0 or 1 row)`);
+    }
+  }
+  
   if (appliedRows.length > diskJournal.entries.length) {
     throw new Error("RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (claimed: " + appliedRows.length + ")");
   }
@@ -35,16 +60,7 @@ export function validateAppliedMigrationPrefix(
     }
     
     const sqlBuffer = getMigrationBuffer(diskEntry.tag);
-    
-    // For mocked test execution where buffer is faked, we can just check if row.hash === diskMig.hash
-    // We only check portable hash if the mock hash is not directly equal, meaning it could be a real file.
-    console.log("HASHES:", row.hash, diskMig.hash); let isEquivalent = false;
-    if (row.hash === diskMig.hash) {
-      isEquivalent = true;
-    } else {
-      isEquivalent = isPortableHashEquivalent(row.hash, sqlBuffer);
-    }
-    
+    const isEquivalent = isPortableHashEquivalent(row.hash, sqlBuffer); 
     const isLegacy = isLegacyDev0000Exception(
       i,
       Number(row.created_at),
@@ -54,8 +70,10 @@ export function validateAppliedMigrationPrefix(
     );
 
     if (!isEquivalent && !isLegacy) {
-      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (hash mismatch)`);
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (hash mismatch): [rowHash: ${row.hash}] [isEquivalent: ${isEquivalent}] [isLegacy: ${isLegacy}]`);
     }
   }
 }
+
+
 

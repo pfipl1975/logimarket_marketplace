@@ -31,7 +31,7 @@ export function isLegacyDev0000Exception(
   if (index !== 0) return false;
   if (folderMillis !== 1785589560000) return false;
   if (journalHash !== KNOWN_LEGACY_DEVELOPMENT_BASELINE_HASH) return false;
-  if (targetClassification !== "development" && targetClassification !== "SHARED_DEV") return false;
+  if (targetClassification !== "development") return false;
   if (schemaClassificationState !== "MIGRATABLE_POST_0002") return false;
   return true;
 }
