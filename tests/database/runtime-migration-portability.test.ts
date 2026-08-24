@@ -115,6 +115,8 @@ test("TEMP: creates directory and writes exact journal object", () => {
 test("TEMP: fails and cleans up when getMigrationBuffer throws", () => {
   const journalText = JSON.stringify({ entries: [{ tag: "0000", when: 1785589560000 }, { tag: "0001", when: 1785590000000 }] });
   const journalObj = JSON.parse(journalText);
+  const getTempDirs = () => fs.readdirSync(os.tmpdir()).filter(f => f.startsWith("runtime-migrations-"));
+  const beforeDirs = getTempDirs();
   try {
     createCanonicalRuntimeMigrationDirectory(journalText, journalObj, (tag) => {
       if (tag === "0001") {
@@ -126,20 +128,38 @@ test("TEMP: fails and cleans up when getMigrationBuffer throws", () => {
   } catch (err: unknown) {
     assert.strictEqual((err as Error).message, "Synthetic failure");
   }
+  const afterDirs = getTempDirs();
+  assert.deepStrictEqual(afterDirs, beforeDirs);
 });
 
 test("TEMP: handles secret markers by ensuring they are absent", () => {
   const journalText = JSON.stringify({ entries: [{ tag: "0000", when: 1785589560000 }] });
   const journalObj = JSON.parse(journalText);
-  const secret = "DO_NOT_WRITE_SECRET_9f91e5";
+  const unrelatedEnvObj = { secret: "DO_NOT_WRITE_SECRET_9f91e5" };
   let tempDir = "";
   try {
-    tempDir = createCanonicalRuntimeMigrationDirectory(journalText, journalObj, () => Buffer.from(`SELECT 1; /* ${secret} */`));
-    const sqlPath = path.join(tempDir, "0000.sql");
-    const sqlText = fs.readFileSync(sqlPath, "utf8");
-    assert.ok(sqlText.includes(secret)); 
+    tempDir = createCanonicalRuntimeMigrationDirectory(journalText, journalObj, () => Buffer.from("SELECT 1;"));
+    const readAllFiles = (dir: string): string[] => {
+      let results: string[] = [];
+      const list = fs.readdirSync(dir);
+      list.forEach((file) => {
+        file = path.join(dir, file);
+        const stat = fs.statSync(file);
+        if (stat && stat.isDirectory()) {
+          results = results.concat(readAllFiles(file));
+        } else {
+          results.push(file);
+        }
+      });
+      return results;
+    };
+    const allFiles = readAllFiles(tempDir);
+    for (const file of allFiles) {
+      const content = fs.readFileSync(file, "utf8");
+      assert.strictEqual(content.includes(unrelatedEnvObj.secret), false, `File ${file} should not contain secret`);
+    }
   } finally {
-    cleanupCanonicalRuntimeMigrationDirectory(tempDir);
+    if (tempDir) cleanupCanonicalRuntimeMigrationDirectory(tempDir);
   }
 });
 

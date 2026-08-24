@@ -1073,16 +1073,22 @@ test("NOT_VALID_RUNNER_ABORTS: runner rejects schema with NOT VALID constraint w
 });
 
 test("RUNNER_POOL_CLOSE_TEST: pool is always closed even when migrate throws", async () => {
-  const fakeMigrate = async () => {
-    throw new Error("migrate exploded");
+  let migrateCallCount = 0;
+  let capturedFolder = "";
+  const fakeMigrate = async (db: unknown, opts: { migrationsFolder: string }) => {
+    migrateCallCount++;
+    capturedFolder = opts.migrationsFolder;
+    throw new Error("Synthetic migrate failure");
   };
   const { state, factory } = fakeRunnerPool(runnerRouter("EMPTY"));
 
   await assert.rejects(
     async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
-    /migrate exploded/
+    /Synthetic migrate failure/
   );
   assert.ok(state.ended, "pool must be closed even when migrate throws");
+  assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
+  assert.strictEqual(fs.existsSync(capturedFolder), false, "migrations folder must be cleaned up");
 });
 
 test("RUNNER_POSTCHECK_DRIFT_TEST: post-check drift causes error after migration", async () => {
