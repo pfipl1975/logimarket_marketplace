@@ -6,12 +6,6 @@ import { readMigrationFiles } from "drizzle-orm/migrator";
 async function run() {
   try {
     const migrations = readMigrationFiles({ migrationsFolder: RUNTIME_MIGRATIONS_FOLDER });
-
-    if (migrations.length !== 2) {
-      console.error(`MIGRATION_COUNT=${migrations.length} (Expected 2)`);
-      process.exit(1);
-    }
-
     const journalPath = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "meta", "_journal.json");
     if (!fs.existsSync(journalPath)) {
       console.error("Missing _journal.json");
@@ -19,25 +13,62 @@ async function run() {
     }
 
     const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
-    if (journal.entries.length !== 2) {
-      console.error(`JOURNAL_COUNT=${journal.entries.length} (Expected 2)`);
+    if (!Array.isArray(journal.entries) || journal.entries.length === 0) {
+      console.error(`JOURNAL_COUNT=0 (Expected > 0)`);
       process.exit(1);
     }
 
-    if (journal.entries[0].tag !== "0000_production_runtime_baseline" ||
-        journal.entries[1].tag !== "0001_rfq_workflow_hardening") {
-      console.error("Migration order or names do not match expected contract");
+    if (migrations.length !== journal.entries.length) {
+      console.error(`MIGRATION_COUNT=${migrations.length} !== JOURNAL_COUNT=${journal.entries.length}`);
       process.exit(1);
     }
 
-    if (!migrations[0].sql || !migrations[1].sql) {
-      console.error("Failed to load SQL files");
-      process.exit(1);
+    const tags = new Set<string>();
+    const timestamps = new Set<number>();
+    let lastTs = -1;
+
+    for (let i = 0; i < journal.entries.length; i++) {
+      const entry = journal.entries[i];
+      const mig = migrations[i];
+      
+      if (!entry.tag || !entry.when) {
+        console.error(`Invalid journal entry at index ${i}`);
+        process.exit(1);
+      }
+
+      if (tags.has(entry.tag)) {
+        console.error(`Duplicate tag in journal: ${entry.tag}`);
+        process.exit(1);
+      }
+      tags.add(entry.tag);
+
+      if (timestamps.has(entry.when)) {
+        console.error(`Duplicate timestamp in journal: ${entry.when}`);
+        process.exit(1);
+      }
+      timestamps.add(entry.when);
+
+      if (entry.when <= lastTs) {
+        console.error(`Timestamps not strictly increasing at index ${i}`);
+        process.exit(1);
+      }
+      lastTs = entry.when;
+
+      if (!mig.sql) {
+        console.error(`Failed to load SQL file for migration at index ${i}`);
+        process.exit(1);
+      }
+      
+      if (mig.folderMillis !== entry.when) {
+        console.error(`Disk folderMillis ${mig.folderMillis} does not match journal when ${entry.when} at index ${i}`);
+        process.exit(1);
+      }
     }
 
-    console.log(`MIGRATION_COUNT=2`);
-    console.log(`MIGRATION_0=${journal.entries[0].tag}`);
-    console.log(`MIGRATION_1=${journal.entries[1].tag}`);
+    console.log(`MIGRATION_COUNT=${migrations.length}`);
+    for (let i = 0; i < journal.entries.length; i++) {
+      console.log(`MIGRATION_${i}=${journal.entries[i].tag}`);
+    }
     console.log(`MIGRATION_ORDER_MATCH=YES`);
     console.log(`SQL_FILES_LOADED=YES`);
     console.log(`HASH_ALGORITHM=sha256`);
@@ -49,3 +80,4 @@ async function run() {
 }
 
 run();
+

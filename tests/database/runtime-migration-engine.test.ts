@@ -12,6 +12,7 @@
 
 import { test } from "node:test";
 import assert from "node:assert";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 
@@ -42,7 +43,12 @@ import {
 // Constants (no real secrets — synthetic values only)
 // ---------------------------------------------------------------------------
 
-const FAKE_HASH = "46c077075a4500cafb67237e23aa672f7f617cbd28e28a508e3bde64a446dfb7";
+const FAKE_HASH = crypto.createHash("sha256").update("SELECT 1;").digest("hex");
+const exactFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }];
+const exactFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }});
+const prevFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }];
+const prevFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }] }});
+const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }});
 const FAKE_DEV_URL = "postgres://postgres.devref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 const FAKE_PROD_URL = "postgres://postgres.prodref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 const DEV_REF = "devref";
@@ -196,10 +202,10 @@ function metadataRouter(options?: MetadataOptions): Router {
 }
 
 /** metadataRouter extended with the grant-verifier queries (pg_roles + ACL). */
-function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PARTIAL", fp?: Record<string, TableContract>): Router {
+function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PARTIAL", fp?: Record<string, TableContract>, journalRowsOverride?: { hash: string; created_at: string | number }[]): Router {
   const base =
     state === "EXACT"
-      ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
+      ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride })
       : state === "PREVIOUS"
         ? metadataRouter({
             fingerprint: fp,
@@ -211,7 +217,7 @@ function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PART
             ],
           })
         : state === "BASELINE"
-          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined })
+          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride })
         : state === "PARTIAL"
           ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
           : emptyRouter();
@@ -244,6 +250,9 @@ function emptyRouter(): Router {
       t.includes("aclexplode")
     ) {
       return { rows: [] };
+    }
+    if (t.includes("drizzle_runtime") || t.includes("__drizzle_migrations")) {
+      throw Object.assign(new Error("relation does not exist"), { code: "42P01" });
     }
     return null;
   };
@@ -549,7 +558,7 @@ test("RUNNER_EMPTY_TEST: runner calls migrate exactly once on EMPTY schema", asy
   const { state, factory } = fakeRunnerPool(runnerRouter("EMPTY"));
 
   try {
-    await runMigrations(emptyEnv(), factory as never, fakeMigrate as never);
+    await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never);
   } catch {
     // post-check fails (schema still empty after fake migrate) — expected here
   }
@@ -563,10 +572,10 @@ test("RUNNER_EXACT_TEST: runner completes full flow on EXACT_EXISTING schema", a
   const fakeMigrate = async () => {
     migrateCallCount++;
   };
-  const { q, state, factory } = fakeRunnerPool(runnerRouter("EXACT"));
+  const { q, state, factory } = fakeRunnerPool(runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]));
 
   // EXACT pre-check → migrate → EXACT post-check → grant post-check → success
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never);
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, exactFakeRead as never, exactFakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
 
   assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
   assert.ok(state.ended, "pool must be closed");
@@ -586,7 +595,7 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
   const fakeMigrate = async () => {
     migrateCallCount++;
     // Simulate migration side-effect by switching the router to EXACT
-    q.router = runnerRouter("EXACT");
+    q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
 
   // Custom router switching
@@ -617,14 +626,7 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
     end: async () => { state.ended = true; },
   });
 
-  const fakeRead = () => [
-    { folderMillis: 1785589560000, hash: FAKE_HASH },
-    { folderMillis: 1785590000000, hash: FAKE_HASH },
-    { folderMillis: 1785590500000, hash: FAKE_HASH },
-    { folderMillis: 1785591000000, hash: FAKE_HASH },
-  ];
-
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, prevFakeRead as never, prevFakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
 
   assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
   assert.ok(state.ended, "pool must be closed");
@@ -639,7 +641,7 @@ test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE sc
   };
   const fakeMigrate = async () => {
     migrateCallCount++;
-    q.router = runnerRouter("EXACT");
+    q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
   const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
@@ -670,7 +672,7 @@ test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE sc
     end: async () => { state.ended = true; },
   });
 
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, fakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
 
   assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once for BASELINE");
   assert.ok(state.ended, "pool must be closed");
@@ -685,7 +687,7 @@ test("BASELINE_ABSENT_JOURNAL_TEST / JOURNAL_42P01_ALLOWED_TEST", async () => {
   };
   const fakeMigrate = async () => { 
     migrateCallCount++; 
-    q.router = runnerRouter("EXACT");
+    q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
   
   const routerProxy = (t: string) => {
@@ -704,9 +706,7 @@ test("BASELINE_ABSENT_JOURNAL_TEST / JOURNAL_42P01_ALLOWED_TEST", async () => {
     end: async () => {},
   });
 
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
-
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }]; const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }}); await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, fakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
   assert.strictEqual(migrateCallCount, 1);
 });
 
@@ -719,7 +719,7 @@ test("JOURNAL_3F000_ALLOWED_TEST", async () => {
   };
   const fakeMigrate = async () => {
     migrateCallCount++;
-    q.router = runnerRouter("EXACT");
+    q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
 
   const routerProxy = (t: string) => {
@@ -738,9 +738,7 @@ test("JOURNAL_3F000_ALLOWED_TEST", async () => {
     end: async () => {},
   });
 
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
-
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }]; const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }}); await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, fakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
   assert.strictEqual(migrateCallCount, 1);
 });
 
@@ -764,7 +762,7 @@ test("JOURNAL_42703_BLOCKED_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     (err: Error) => err.message.includes("column hash does not exist")
   );
   assert.strictEqual(migrateCallCount, 0, "migrate callback must NOT be called on 42703");
@@ -790,7 +788,7 @@ test("JOURNAL_42501_BLOCKED_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     (err: Error) => err.message.includes("permission denied")
   );
   assert.strictEqual(migrateCallCount, 0, "migrate callback must NOT be called on 42501");
@@ -817,7 +815,7 @@ test("JOURNAL_GENERIC_DOES_NOT_EXIST_BLOCKED_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     (err: Error) => err.message.includes("column hash does not exist")
   );
   assert.strictEqual(migrateCallCount, 0, "migrate callback must NOT be called on generic error without code");
@@ -832,13 +830,13 @@ test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {
   };
   const fakeMigrate = async () => { 
     migrateCallCount++; 
-    q.router = runnerRouter("EXACT");
+    q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
-      return { rows: [{ hash: "exacthash0000", created_at: "1785589560000" }] };
+      return { rows: [{ hash: FAKE_HASH, created_at: "1785589560000" }] };
     }
     return currentRouter(t);
   };
@@ -852,14 +850,14 @@ test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {
     end: async () => {},
   });
 
-  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never);
+  await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, fakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
   assert.strictEqual(migrateCallCount, 1);
 });
 
 test("BASELINE_0000_WRONG_HASH_TEST", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
@@ -876,7 +874,7 @@ test("BASELINE_0000_WRONG_HASH_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /BLOCKED.*do not match exact canonical 0000/
   );
   assert.strictEqual(migrateCallCount, 0);
@@ -885,12 +883,12 @@ test("BASELINE_0000_WRONG_HASH_TEST", async () => {
 test("BASELINE_0000_WRONG_TIMESTAMP_TEST", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
-      return { rows: [{ hash: "exacthash0000", created_at: "1785589999999" }] };
+      return { rows: [{ hash: FAKE_HASH, created_at: "1785589999999" }] };
     }
     return baseRouter(t);
   };
@@ -902,7 +900,7 @@ test("BASELINE_0000_WRONG_TIMESTAMP_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /BLOCKED.*do not match exact canonical 0000/
   );
   assert.strictEqual(migrateCallCount, 0);
@@ -911,13 +909,13 @@ test("BASELINE_0000_WRONG_TIMESTAMP_TEST", async () => {
 test("BASELINE_FALSE_0001_JOURNAL_TEST", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
       return { rows: [
-        { hash: "exacthash0000", created_at: "1785589560000" },
+        { hash: FAKE_HASH, created_at: "1785589560000" },
         { hash: "hash0001", created_at: "1785590000000" }
       ] };
     }
@@ -931,7 +929,7 @@ test("BASELINE_FALSE_0001_JOURNAL_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /BLOCKED.*do not match exact canonical 0000/
   );
   assert.strictEqual(migrateCallCount, 0);
@@ -940,14 +938,14 @@ test("BASELINE_FALSE_0001_JOURNAL_TEST", async () => {
 test("BASELINE_DUPLICATE_JOURNAL_TEST", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
       return { rows: [
-        { hash: "exacthash0000", created_at: "1785589560000" },
-        { hash: "exacthash0000", created_at: "1785589560000" }
+        { hash: FAKE_HASH, created_at: "1785589560000" },
+        { hash: FAKE_HASH, created_at: "1785589560000" }
       ] };
     }
     return baseRouter(t);
@@ -960,7 +958,7 @@ test("BASELINE_DUPLICATE_JOURNAL_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /BLOCKED.*do not match exact canonical 0000/
   );
   assert.strictEqual(migrateCallCount, 0);
@@ -969,13 +967,13 @@ test("BASELINE_DUPLICATE_JOURNAL_TEST", async () => {
 test("BASELINE_FALSE_0002_JOURNAL_TEST", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
       return { rows: [
-        { hash: "exacthash0000", created_at: "1785589560000" },
+        { hash: FAKE_HASH, created_at: "1785589560000" },
         { hash: "hash0001", created_at: "1785590000000" },
         { hash: "hash0002", created_at: "1785591000000" }
       ] };
@@ -990,7 +988,7 @@ test("BASELINE_FALSE_0002_JOURNAL_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /BLOCKED.*do not match exact canonical 0000/
   );
   assert.strictEqual(migrateCallCount, 0);
@@ -999,7 +997,7 @@ test("BASELINE_FALSE_0002_JOURNAL_TEST", async () => {
 test("BASELINE_UNKNOWN_JOURNAL_TEST", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; };
-  const fakeRead = () => [{ folderMillis: 1785589560000, hash: "exacthash0000" }];
+  const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   const baseRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
   const routerProxy = (t: string) => {
@@ -1016,7 +1014,7 @@ test("BASELINE_UNKNOWN_JOURNAL_TEST", async () => {
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, fakeRead as never, (() => ({ text: JSON.stringify({ entries: [] }), parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /BLOCKED.*do not match exact canonical 0000/
   );
   assert.strictEqual(migrateCallCount, 0);
@@ -1030,7 +1028,7 @@ test("RUNNER_DRIFT_TEST: runner throws and never calls migrate on PARTIAL_OR_DRI
   const { state, factory } = fakeRunnerPool(runnerRouter("PARTIAL"));
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /PARTIAL_OR_DRIFTED/
   );
   assert.strictEqual(migrateCallCount, 0, "migrate must NOT be called on drift");
@@ -1068,23 +1066,29 @@ test("NOT_VALID_RUNNER_ABORTS: runner rejects schema with NOT VALID constraint w
   });
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /PARTIAL_OR_DRIFTED/
   );
   assert.strictEqual(migrateCallCount, 0, "MIGRATE_CALL_COUNT_ZERO");
 });
 
 test("RUNNER_POOL_CLOSE_TEST: pool is always closed even when migrate throws", async () => {
-  const fakeMigrate = async () => {
-    throw new Error("migrate exploded");
+  let migrateCallCount = 0;
+  let capturedFolder = "";
+  const fakeMigrate = async (db: unknown, opts: { migrationsFolder: string }) => {
+    migrateCallCount++;
+    capturedFolder = opts.migrationsFolder;
+    throw new Error("Synthetic migrate failure");
   };
   const { state, factory } = fakeRunnerPool(runnerRouter("EMPTY"));
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never),
-    /migrate exploded/
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
+    /Synthetic migrate failure/
   );
   assert.ok(state.ended, "pool must be closed even when migrate throws");
+  assert.strictEqual(migrateCallCount, 1, "migrate must be called exactly once");
+  assert.strictEqual(fs.existsSync(capturedFolder), false, "migrations folder must be cleaned up");
 });
 
 test("RUNNER_POSTCHECK_DRIFT_TEST: post-check drift causes error after migration", async () => {
@@ -1092,7 +1096,7 @@ test("RUNNER_POSTCHECK_DRIFT_TEST: post-check drift causes error after migration
   const { state, factory } = fakeRunnerPool(runnerRouter("EMPTY"));
 
   await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never),
+    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
     /post-check failed/
   );
   assert.ok(state.ended);
@@ -1102,7 +1106,7 @@ test("RUNNER: error messages never contain DATABASE_URL or project refs", async 
   const fakeMigrate = async () => {};
   const { factory } = fakeRunnerPool(runnerRouter("PARTIAL"));
 
-  const error = await runMigrations(emptyEnv(), factory as never, fakeMigrate as never).catch(
+  const error = await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never).catch(
     (e) => e
   );
   assert.ok(error instanceof Error);
@@ -1524,3 +1528,10 @@ test("NORM: normalizeConstraintDefinition lowercases", () => {
   const result = normalizeConstraintDefinition("PRIMARY KEY (id)");
   assert.strictEqual(result, "primary key (id)");
 });
+
+
+
+
+
+
+
