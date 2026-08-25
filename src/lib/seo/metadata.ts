@@ -143,3 +143,26 @@ export async function generateOfferMetadata(
     },
   };
 }
+
+export async function generatePrivacyPolicyMetadata(locale: Locale): Promise<Metadata> {
+  const dict = await getDictionary(locale);
+  const privacyPath = locale === defaultLocale ? "/polityka-prywatnosci" : `/${locale}/polityka-prywatnosci`;
+
+  return {
+    title: dict.privacy.metaTitle,
+    description: dict.privacy.metaDescription,
+    alternates: {
+      canonical: absoluteUrl(privacyPath),
+      languages: {
+        pl: absoluteUrl("/polityka-prywatnosci"),
+        en: absoluteUrl("/en/polityka-prywatnosci"),
+        de: absoluteUrl("/de/polityka-prywatnosci"),
+        fr: absoluteUrl("/fr/polityka-prywatnosci"),
+        uk: absoluteUrl("/uk/polityka-prywatnosci"),
+        es: absoluteUrl("/es/polityka-prywatnosci"),
+        zh: absoluteUrl("/zh/polityka-prywatnosci"),
+        "x-default": absoluteUrl("/polityka-prywatnosci"),
+      },
+    },
+  };
+}

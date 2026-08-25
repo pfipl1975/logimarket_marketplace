@@ -305,11 +305,12 @@
   "rfq": {
     "title": "Angebotsanfrage (RFQ)",
     "successTitle": "Anfrage erfolgreich gesendet!",
-    "successDescription": "Der Partner bereitet ein B2B-Angebot vor und kontaktiert Sie.",
-    "descriptionSuffix": "Die Anfrage wird direkt an den Partner weitergeleitet.",
+    "successDescription": "Ihre Anfrage wurde registriert. Nach Prüfung und Weiterleitung an den entsprechenden Partner erhalten Sie ein Angebot.",
+    "descriptionSuffix": "B2B-Anfragebearbeitung und Angebotserstellung.",
     "pending": "Wird gesendet...",
-    "consent": "Mit dem Absenden des Formulars stimmen Sie der Weitergabe Ihrer Daten an den Partner zu.",
-    "messagePlaceholder": "Stückzahl, Liefertermin, zusätzliche Anforderungen..."
+    "messagePlaceholder": "Stückzahl, Liefertermin, zusätzliche Anforderungen...",
+    "art13Notice": "Wir verarbeiten die Daten aus dem RFQ-Formular zur Bearbeitung Ihrer Anfrage und – sofern die Weiterleitung aktiv ist – zur Übermittlung an den ausgewählten Partner zur Angebotserstellung. Details finden Sie in unserer",
+    "privacyPolicyLink": "Datenschutzerklärung"
   },
   "cart": {
     "title": "Ihr Warenkorb",
@@ -326,8 +327,9 @@
     "successDescription": "Ihre B2B-Bestellung wurde gespeichert. Unser Team wird sich mit Ihnen in Verbindung setzen.",
     "description": "Füllen Sie das Formular aus, um eine Bestellung aufzugeben. Dies ist keine Online-Transaktion – unser Team wird die Verfügbarkeit prüfen.",
     "pending": "Wird verarbeitet...",
-    "legalNote": "Die Abgabe einer Bestellung ist keine Online-Transaktion. Unser Team prüft die Verfügbarkeit und kontaktiert Sie.",
-    "orderNotesPlaceholder": "Liefertermin, Lieferadresse, zusätzliche Anforderungen..."
+    "legalNote": "Verantwortlicher für die Datenverarbeitung ist der in der Datenschutzerklärung genannte Betreiber von LogiMarket. Wir verarbeiten Daten zur Bestellabwicklung und Plattformsicherheit sowie bei aktivem Routing zur Weitergabe an den Verkäufer. Details:",
+    "orderNotesPlaceholder": "Liefertermin, Lieferadresse, zusätzliche Anforderungen...",
+    "privacyPolicyLink": "Datenschutzerklärung"
   },
   "form": {
     "companyName": "Firmenname *",
@@ -336,14 +338,16 @@
     "phone": "Telefon",
     "message": "Nachricht",
     "orderNotes": "Bestellhinweise",
-    "validationError": "Bitte überprüfen Sie die erforderlichen Formularfelder."
+    "validationError": "Bitte überprüfen Sie die erforderlichen Formularfelder.",
+    "messagePrivacyHint": "Bitte geben Sie in der Nachricht keine besonderen Datenkategorien oder für die Anfrage/Bestellung nicht erforderlichen Informationen an."
   },
   "footer": {
     "portal": "Portal",
     "partners": "Für Partner",
     "description": "B2B-Marktplatz für Lagertechnik und Lagerausstattung. Ein Angebotskatalog, der Einkäufer mit verifizierten Partnern verbindet.",
     "partnerPrompt": "Möchten Sie Ihre Produkte listem? Kontaktieren Sie uns:",
-    "copyrightSuffix": "Verkauf erfolgt direkt durch die Partner."
+    "copyrightSuffix": "Verkauf erfolgt direkt durch die Partner.",
+    "privacyPolicy": "Datenschutzerklärung"
   },
   "system": {
     "offerNotFound": "Angebot existiert nicht",
@@ -880,5 +884,86 @@
     "errors": {
       "unavailable": "Dashboard ist derzeit nicht verfügbar."
     }
+  },
+  "privacy": {
+    "metaTitle": "Datenschutzerklärung | LogiMarket B2B",
+    "metaDescription": "Datenschutzgrundsätze und Regeln zur Verarbeitung personenbezogener Daten auf der B2B-Plattform LogiMarket. Informationen über den Verantwortlichen, Rechtsgrundlagen, Cookies und Nutzerrechte.",
+    "title": "Datenschutzerklärung",
+    "lastUpdated": "Letzte Aktualisierung: 25. August 2026",
+    "breadcrumbs": "Datenschutzerklärung",
+    "tagline": "Datenschutz und DSGVO",
+    "sections": {
+      "admin": {
+        "title": "1. Verantwortlicher für die Datenverarbeitung",
+        "content": "Verantwortlicher für die über die B2B-Plattform LogiMarket (logimarket.pl / logimarket.eu) erhobenen personenbezogenen Daten ist PF CONSULTING Piotr Fiszer mit Sitz in ul. Promienista 114/2, 60-142 Poznań, Polen, Steuernummer (NIP): 7792017326."
+      },
+      "contact": {
+        "title": "2. Kontakt in Datenschutzfragen",
+        "content": "In Angelegenheiten des Datenschutzes und zur Ausübung von Betroffenenrechten können Sie den Verantwortlichen per E-Mail unter: kontakt@logimarket.pl oder schriftlich an die Geschäftsadresse kontaktieren. Ein förmlicher Datenschutzbeauftragter (DSB) wurde nicht bestellt."
+      },
+      "scope": {
+        "title": "3. Geltungsbereich der Erklärung",
+        "content": "Diese Datenschutzerklärung legt die Regeln für die Verarbeitung personenbezogener Daten von Nutzern, Geschäftskunden, Ansprechpartnern und Vertretern von Handelspartnern fest, die den B2B-Marktplatz LogiMarket nutzen."
+      },
+      "categories": {
+        "title": "4. Kategorien verarbeiteter Daten",
+        "content": "Wir verarbeiten die für B2B-Prozesse erforderlichen Daten: Unternehmensangaben (Firmenname, Steuernummer), Angaben zu Vertretern und Ansprechpartnern (Name, geschäftliche E-Mail-Adresse, Telefonnummer), Daten in Preisanfragen (RFQ) und B2B-Bestellungen, Nachrichten- und Anmerkungsinhalte sowie technische Sitzungskennungen und für den Betrieb erforderliche Telemetriedaten."
+      },
+      "purposes": {
+        "title": "5. Zwecke und Rechtsgrundlagen der Datenverarbeitung",
+        "intro": "Personenbezogene Daten werden für folgende Zwecke verarbeitet:",
+        "rfq": "Bearbeitung von Preisanfragen (RFQ) und Angebotserstellung – Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (für Einzelunternehmer als Vertragspartei) oder Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse des Verantwortlichen und Partners an der B2B-Geschäftskommunikation für Mitarbeiter/Vertreter);",
+        "checkout": "Bearbeitung von B2B-Bestellungen und Verfügbarkeitsprüfung – Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen für Einzelunternehmer) oder Art. 6 Abs. 1 lit. f DSGVO (Geschäftsabwicklung für Unternehmensvertreter);",
+        "auth": "Authentifizierung und administrative Zugangskontrolle – Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Sicherheit und Zugriffskontrolle);",
+        "attribution": "Weiterleitung zu externen Angeboten – der Dienst führt sichere technische Weiterleitungen (/go/[id]) durch; eine aktive sitzungsbasierte Zuordnungsverfolgung ist derzeit deaktiviert und führt weder zur Erstellung von Cookies noch zum Profiling;",
+        "cart": "Aufrechterhaltung der aktiven Warenkorbsitzung – Rechtsgrundlage: Art. 6 Abs. 1 lit. b und f DSGVO sowie Art. 399 Abs. 3 des Telekommunikationsgesetzes (unbedingt erforderliche Session-Cookies);",
+        "partners": "Verwaltung von B2B-Partnerbeziehungen und KYB-Prüfung – Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO und Art. 6 Abs. 1 lit. b DSGVO (im Rahmen von Partnerverträgen)."
+      },
+      "legalBasesSplit": {
+        "title": "6. Aufteilung der Rechtsgrundlagen für Unternehmer und Vertreter",
+        "content": "Für natürliche Personen, die als Einzelunternehmer selbst Partei einer Anfrage oder Bestellung sind, ist die Rechtsgrundlage Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung oder vorvertragliche Maßnahmen). Für Vertreter juristischer Personen oder Mitarbeiter Dritter ist die Rechtsgrundlage Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an der Abwicklung von B2B-Transaktionen)."
+      },
+      "legitimateInterests": {
+        "title": "7. Berechtigte Interessen des Verantwortlichen",
+        "content": "Die vom Verantwortlichen verfolgten berechtigten Interessen (Art. 6 Abs. 1 lit. f DSGVO) umfassen: Abwicklung der laufenden geschäftlichen B2B-Kommunikation und Anfragen, Gewährleistung der Sicherheit und Integrität der Plattform, Betrugsprävention, Bereitstellung sicherer technischer Weiterleitungen sowie Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen."
+      },
+      "recipients": {
+        "title": "8. Empfänger von Daten",
+        "content": "Daten können weitergegeben werden an: (1) autorisiertes Personal und Auftragnehmer des Verantwortlichen; (2) IT- und technische Infrastrukturdienstleister als Auftragsverarbeiter, einschließlich Supabase (mit Hauptdatenbankregion in West EU / Irland); (3) ausgewählte Partner und Verkäufer – ausschließlich wenn ein Nutzer eine Anfrage oder Bestellung zu einem Angebot des Partners übermittelt und das Routing zur Transaktionsabwicklung aktiv ist."
+      },
+      "transfers": {
+        "title": "9. Datenübermittlung außerhalb des Europäischen Wirtschaftsraums (EWR)",
+        "content": "Die primäre Datenbankinfrastruktur befindet sich im EWR (Irland). Im Rahmen der IT-Infrastruktur-Dienstleisterkette (einschließlich Supabase und Unterauftragsverarbeitern) können Daten in Drittländern außerhalb des EWR verarbeitet werden. Übermittlungen stützen sich auf Mechanismen nach Kapitel V DSGVO, insbesondere Standardvertragsklauseln (SCC 2021/914) und Angemessenheitsbeschlüsse."
+      },
+      "retention": {
+        "title": "10. Speicherdauer (Aufbewahrung)",
+        "content": "Personenbezogene Daten und Sitzungskennungen unterliegen unterschiedlichen Aufbewahrungsregeln: (1) Die Sitzungskennung ('session_hash'-Cookie) wird ausschließlich lokal im Browser für die Dauer der Sitzung gespeichert und erlischt beim Schließen des Browsers; (2) Backend-Datensätze werden nach festgelegten Kriterien aufbewahrt – RFQ-Preisanfragen in der Regel bis zu 12 Monate nach der letzten Aktivität, Bestelldaten (Plattform-PII) bis zu 3 Jahre zur Rechtsverteidigung, historische technische und Sicherheitsprotokolle bis zu 12 Monate und Buchhaltungsdaten gemäß gesetzlichen Aufbewahrungsfristen. Die Datenaufbewahrung in Datenbanken wird gemäß unserer internen Aufbewahrungsrichtlinie gesteuert."
+      },
+      "rights": {
+        "title": "11. Rechte der betroffenen Personen",
+        "content": "Betroffene Personen haben das Recht auf: Auskunft (Art. 15 DSGVO), Berichtigung (Art. 16 DSGVO), Löschung (Art. 17 DSGVO), Einschränkung der Verarbeitung (Art. 18 DSGVO), Datenübertragbarkeit (Art. 20 DSGVO) sowie Widerspruch gegen die Verarbeitung nach berechtigtem Interesse (Art. 21 DSGVO). Zur Ausübung kontaktieren Sie bitte: kontakt@logimarket.pl."
+      },
+      "complaint": {
+        "title": "12. Beschwerderecht bei einer Aufsichtsbehörde",
+        "content": "Betroffene Personen haben das Recht, eine Beschwerde bei der zuständigen Aufsichtsbehörde (in Polen: Präsident des Amtes für den Schutz personenbezogener Daten - PUODO, ul. Stawki 2, 00-193 Warschau) einzureichen, wenn sie der Ansicht sind, dass die Verarbeitung ihrer Daten gegen die DSGVO verstößt."
+      },
+      "voluntary": {
+        "title": "13. Freiwilligkeit der Datenbereitstellung",
+        "content": "Die Bereitstellung personenbezogener Daten in RFQ- und B2B-Bestellformularen ist freiwillig, aber zur Übermittlung der Anfrage an den Partner oder Einleitung der Bestellung erforderlich. Ohne diese Daten können die Dienste nicht erbracht werden."
+      },
+      "automatedDecision": {
+        "title": "14. Automatisierte Entscheidungsfindung und Profiling",
+        "content": "Im Rahmen von LogiMarket findet keine automatisierte Entscheidungsfindung mit rechtlicher Wirkung für natürliche Personen oder Profiling gemäß Art. 22 DSGVO statt."
+      },
+      "cookies": {
+        "title": "15. Cookies und Sitzungstechnologien",
+        "content": "Die LogiMarket-Plattform verwendet ausschließlich technisch notwendige Cookies (strictly necessary cookies): (1) für den öffentlichen Warenkorb wird eine Sitzungskennung ('session_hash') erst beim Hinzufügen des ersten Produkts zum Warenkorb erstellt und beim Schließen des Browsers gelöscht; (2) für authentifizierte Funktionen und Administrationsbereiche werden technische Authentifizierungs- und Sitzungscookies verwendet, die zur Aufrechterhaltung einer sicheren Benutzersitzung erforderlich sind. Der Dienst verwendet keine Marketing-, Werbe- oder Drittanbieter-Profiling-Cookies."
+      },
+      "updates": {
+        "title": "16. Änderungen der Datenschutzerklärung",
+        "content": "Der Verantwortliche behält sich das Recht vor, diese Erklärung bei gesetzlichen oder technischen Änderungen zu aktualisieren. Die aktuelle Version ist stets unter /polityka-prywatnosci verfügbar."
+      }
+    },
+    "tableOfContents": "Inhaltsverzeichnis"
   }
 }

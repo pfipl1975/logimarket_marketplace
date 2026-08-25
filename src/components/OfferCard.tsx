@@ -24,6 +24,7 @@ interface OfferCardProps {
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
   categoryLabels: Record<string, string>;
+  privacyPolicyHref: string;
 }
 
 export function OfferCard({
@@ -36,6 +37,7 @@ export function OfferCard({
   systemLabels,
   closeLabel,
   categoryLabels,
+  privacyPolicyHref,
 }: OfferCardProps) {
   const attributes = (offer.attributes || []).slice(0, 4);
   const offerDetailHref = detailHref ?? `/oferta/${offer.id}`;
@@ -139,6 +141,7 @@ export function OfferCard({
               systemLabels={systemLabels}
               closeLabel={closeLabel}
               externalOfferLabel={offerLabels.externalOffer}
+              privacyPolicyHref={privacyPolicyHref}
               variant="card"
             />
           </div>

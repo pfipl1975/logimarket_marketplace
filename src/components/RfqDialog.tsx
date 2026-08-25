@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { CheckCircle2, FileText, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -42,9 +43,21 @@ interface RfqDialogProps {
   systemLabels: Dictionary["system"];
   ctaLabels: Pick<Dictionary["cta"], "sendRequest" | "requestQuote">;
   closeLabel: Dictionary["common"]["close"];
+  privacyPolicyHref: string;
 }
 
-export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabels, formLabels, systemLabels, ctaLabels, closeLabel }: RfqDialogProps) {
+export function RfqDialog({
+  offerId,
+  offerTitle,
+  partnerName,
+  className,
+  rfqLabels,
+  formLabels,
+  systemLabels,
+  ctaLabels,
+  closeLabel,
+  privacyPolicyHref,
+}: RfqDialogProps) {
   const [open, setOpen] = useState(false);
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
@@ -106,9 +119,14 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
                 <div className="grid gap-1.5"><Label htmlFor="rfq-phone">{formLabels.phone}</Label>
                   <Input id="rfq-phone" type="tel" maxLength={100} value={formData.phone} onChange={(e) => setFormData({ ...formData, phone: e.target.value })} /></div>
               </div>
-              <div className="grid gap-1.5"><Label htmlFor="rfq-msg">{formLabels.message}</Label>
+              <div className="grid gap-1.5">
+                <Label htmlFor="rfq-msg">{formLabels.message}</Label>
                 <Textarea id="rfq-msg" rows={3} maxLength={5000} placeholder={rfqLabels.messagePlaceholder}
-                  value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} /></div>
+                  value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} />
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  {formLabels.messagePrivacyHint}
+                </p>
+              </div>
               {errorMessage ? (
                 <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
                   {errorMessage}
@@ -117,7 +135,13 @@ export function RfqDialog({ offerId, offerTitle, partnerName, className, rfqLabe
               <Button type="submit" disabled={pending} className="w-full font-semibold gap-2 text-white border-0 bg-brand-teal hover:bg-[#0e5a6a] disabled:opacity-50">
                 {pending ? <><Loader2 className="h-4 w-4 animate-spin" />{rfqLabels.pending}</> : ctaLabels.sendRequest}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">{rfqLabels.consent}</p>
+              <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                {rfqLabels.art13Notice}{" "}
+                <Link href={privacyPolicyHref} className="text-brand-teal underline hover:text-brand-navy">
+                  {rfqLabels.privacyPolicyLink}
+                </Link>
+                .
+              </p>
             </form>
           </>
         )}

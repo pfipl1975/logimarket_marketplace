@@ -18,12 +18,13 @@ describe("Outbound Route Contract", () => {
     coreSource = "";
   }
 
-  test("uses Next.js after()", () => {
-    assert.match(routeSource, /import \{.*?after.*?\} from "next\/server"/);
-    assert.match(routeSource, /after\(async \(\) => \{/);
+  test("does not use after() or background click recording while ACT-04 is disabled", () => {
+    assert.doesNotMatch(routeSource, /import \{.*?after.*?\} from "next\/server"/);
+    assert.doesNotMatch(routeSource, /after\(/);
+    assert.doesNotMatch(routeSource, /recordOutboundClick/);
   });
 
-  test("does not use fire-and-forget Promise without after", () => {
+  test("does not use fire-and-forget Promise or unhandled click writes", () => {
     assert.doesNotMatch(routeSource, /void db\.execute/);
     assert.doesNotMatch(routeSource, /void db\.insert/);
     assert.doesNotMatch(routeSource, /\.catch\(/);

@@ -305,11 +305,12 @@
   "rfq": {
     "title": "Solicitud de presupuesto (RFQ)",
     "successTitle": "¡Solicitud enviada correctamente!",
-    "successDescription": "El socio preparará un presupuesto B2B y se pondrá en contacto con usted.",
-    "descriptionSuffix": "La solicitud se enviará directamente al socio.",
+    "successDescription": "Su solicitud ha sido registrada. Tras la verificación y transferencia al Socio correspondiente, recibirá una respuesta comercial.",
+    "descriptionSuffix": "Tramitación de consulta B2B y elaboración de presupuesto.",
     "pending": "Enviando...",
-    "consent": "Al enviar el formulario, acepta compartir sus datos con el socio.",
-    "messagePlaceholder": "Cantidad, fecha de entrega, requisitos adicionales..."
+    "messagePlaceholder": "Cantidad, fecha de entrega, requisitos adicionales...",
+    "art13Notice": "Tratamos los datos del formulario RFQ para gestionar su consulta y – cuando el enrutamiento esté activo – transferirlos al Socio seleccionado para preparar una cotización. Detalles en nuestra",
+    "privacyPolicyLink": "Política de privacidad"
   },
   "cart": {
     "title": "Su carrito",
@@ -326,8 +327,9 @@
     "successDescription": "Su pedido B2B ha sido guardado. Nuestro equipo se pondrá en contacto con usted.",
     "description": "Complete el formulario para realizar un pedido. Esto no es una transacción en línea – nuestro equipo verificará la disponibilidad.",
     "pending": "Procesando...",
-    "legalNote": "La presentación de un pedido no es una transacción en línea. Nuestro equipo verificará la disponibilidad y se pondrá en contacto con usted.",
-    "orderNotesPlaceholder": "Fecha de entrega, dirección, requisitos adicionales..."
+    "legalNote": "El responsable del tratamiento es la entidad operadora de LogiMarket indicada en la Política de privacidad. Tratamos los datos para gestionar el pedido y la seguridad de la plataforma, y con enrutamiento activo, los transferimos al Vendedor. Detalles:",
+    "orderNotesPlaceholder": "Fecha de entrega, dirección, requisitos adicionales...",
+    "privacyPolicyLink": "Política de privacidad"
   },
   "form": {
     "companyName": "Nombre de la empresa *",
@@ -336,14 +338,16 @@
     "phone": "Teléfono",
     "message": "Mensaje",
     "orderNotes": "Notas del pedido",
-    "validationError": "Por favor, compruebe los campos obligatorios del formulario."
+    "validationError": "Por favor, compruebe los campos obligatorios del formulario.",
+    "messagePrivacyHint": "No incluya en el mensaje categorías especiales de datos personales ni información innecesaria para procesar su consulta/pedido."
   },
   "footer": {
     "portal": "Portal",
     "partners": "Para socios",
     "description": "Mercado B2B de equipos y suministros para almacén. Un catálogo de ofertas que conecta a compradores con socios verificados.",
     "partnerPrompt": "¿Quiere listar sus productos? Contáctenos:",
-    "copyrightSuffix": "Ventas gestionadas directamente por los socios."
+    "copyrightSuffix": "Ventas gestionadas directamente por los socios.",
+    "privacyPolicy": "Política de privacidad"
   },
   "system": {
     "offerNotFound": "La oferta no existe",
@@ -880,5 +884,86 @@
     "errors": {
       "unavailable": "El panel de control no está disponible actualmente."
     }
+  },
+  "privacy": {
+    "metaTitle": "Política de Privacidad | LogiMarket B2B",
+    "metaDescription": "Principios de privacidad y reglas de tratamiento de datos personales en la plataforma B2B LogiMarket. Información sobre el responsable, bases jurídicas, cookies y derechos de los usuarios.",
+    "title": "Política de Privacidad",
+    "lastUpdated": "Última actualización: 25 de agosto de 2026",
+    "breadcrumbs": "Política de Privacidad",
+    "tagline": "Protección de Datos Personales y RGPD",
+    "sections": {
+      "admin": {
+        "title": "1. Responsable del tratamiento de datos",
+        "content": "El responsable del tratamiento de los datos personales recogidos a través de la plataforma B2B LogiMarket (logimarket.pl / logimarket.eu) es PF CONSULTING Piotr Fiszer, con domicilio social en ul. Promienista 114/2, 60-142 Poznań, Polonia, NIF: 7792017326."
+      },
+      "contact": {
+        "title": "2. Contacto sobre privacidad",
+        "content": "Para asuntos relativos a la protección de datos o el ejercicio de sus derechos, puede contactar al Responsable por correo electrónico en: kontakt@logimarket.pl o por escrito a su domicilio social. No se ha designado un Delegado de Protección de Datos (DPO) formal."
+      },
+      "scope": {
+        "title": "3. Ámbito de aplicación de la política",
+        "content": "Esta Política de Privacidad establece las reglas para el tratamiento de datos personales de usuarios, clientes comerciales, personas de contacto y representantes de socios comerciales que utilizan la plataforma B2B LogiMarket."
+      },
+      "categories": {
+        "title": "4. Categorías de datos tratados",
+        "content": "Tratamos los datos necesarios para operaciones B2B: datos de empresas (nombre, NIF), datos de representantes y contactos (nombre, e-mail profesional, teléfono), datos en solicitudes de cotización (RFQ) y pedidos B2B, mensajes, identificadores técnicos de sesión y datos de telemetría."
+      },
+      "purposes": {
+        "title": "5. Fines y bases jurídicas del tratamiento",
+        "intro": "Los datos personales se tratan para los siguientes fines:",
+        "rfq": "Gestión de solicitudes de cotización (RFQ) y elaboración de ofertas – base jurídica: art. 6(1)(b) RGPD (para autónomos que son parte de la solicitud) o art. 6(1)(f) RGPD (interés legítimo en la gestión de comunicaciones comerciales B2B para representantes/empleados);",
+        "checkout": "Tramitación de pedidos B2B y verificación de disponibilidad – base jurídica: art. 6(1)(b) RGPD o art. 6(1)(f) RGPD ;",
+        "auth": "Autenticación y control de acceso administrativo – base jurídica: art. 6(1)(f) RGPD (seguridad y control de acceso);",
+        "attribution": "Redirección a ofertas externas – el servicio gestiona redirecciones técnicas seguras (/go/[id]); el seguimiento activo de atribución basado en sesiones está actualmente desactivado y no genera cookies ni realiza elaboración de perfiles;",
+        "cart": "Mantenimiento de la sesión activa del carrito – base jurídica: art. 6(1)(b) y (f) RGPD y art. 399(3) de la Ley de Comunicaciones Electrónicas (cookies de sesión estrictamente necesarias);",
+        "partners": "Gestión de relaciones comerciales B2B y verificación KYB – base jurídica: art. 6(1)(f) RGPD y art. 6(1)(b) RGPD."
+      },
+      "legalBasesSplit": {
+        "title": "6. Distinción de bases jurídicas para empresarios y representantes",
+        "content": "Para personas físicas que actúan como autónomos (JDG) y son parte de la consulta o pedido, la base jurídica es el art. 6(1)(b) RGPD (ejecución de contrato o medidas precontractuales). Para representantes o empleados de personas jurídicas, la base jurídica es el art. 6(1)(f) RGPD (interés legítimo en transacciones B2B)."
+      },
+      "legitimateInterests": {
+        "title": "7. Intereses legítimos del Responsable",
+        "content": "Los intereses legítimos perseguidos por el Responsable (art. 6, ap. 1, letra f del RGPD) incluyen: la gestión de la comunicación y consultas comerciales B2B habituales, garantizar la seguridad e integridad de la plataforma, la prevención de fraudes, la gestión de redirecciones técnicas seguras, así como el reconocimiento, ejercicio o defensa de reclamaciones legales."
+      },
+      "recipients": {
+        "title": "8. Destinatarios de los datos",
+        "content": "Los datos pueden comunicarse a: (1) personal autorizado del Responsable; (2) proveedores de infraestructura y servicios TI en calidad de encargados del tratamiento, incluido Supabase (base de datos ubicada en West EU / Irlanda); (3) Socios y Vendedores seleccionados – únicamente cuando un usuario envía una consulta o pedido sobre su oferta y el enrutamiento está activo."
+      },
+      "transfers": {
+        "title": "9. Transferencias de datos fuera del Espacio Económico Europeo (EEE)",
+        "content": "La infraestructura principal se encuentra en el EEE (Irlanda). Dentro de la cadena de proveedores tecnológicos (incluido Supabase), los datos pueden tratarse en terceros países fuera del EEE conforme al Capítulo V del RGPD, en particular mediante Cláusulas Contractuales Tipo (SCC 2021/914) y decisiones de adecuación."
+      },
+      "retention": {
+        "title": "10. Plazos de conservación de datos",
+        "content": "Los datos personales y los identificadores de sesión se rigen por principios de conservación diferenciados: (1) El identificador de sesión (cookie 'session_hash') se almacena estrictamente en el navegador durante la sesión activa y caduca al cerrarlo; (2) Los registros en los sistemas de backend se conservan conforme a criterios establecidos – solicitudes RFQ generalmente hasta 12 meses tras la última actividad, registros de pedidos (PII de plataforma) hasta 3 años para la defensa legal, registros técnicos y de seguridad históricos hasta 12 meses, y documentación contable durante los plazos fiscales obligatorios. La retención de datos en bases de datos se gestiona según nuestra política interna de conservación."
+      },
+      "rights": {
+        "title": "11. Derechos de los interesados",
+        "content": "Toda persona interesada tiene derecho a: acceso (art. 15 RGPD), rectificación (art. 16 RGPD), supresión (art. 17 RGPD), limitación del tratamiento (art. 18 RGPD), portabilidad (art. 20 RGPD) y oposición (art. 21 RGPD). Para ejercer estos derechos: kontakt@logimarket.pl."
+      },
+      "complaint": {
+        "title": "12. Derecho a presentar una reclamación ante una autoridad de control",
+        "content": "Los interesados tienen derecho a presentar una reclamación ante la autoridad de control competente (en Polonia: PUODO, ul. Stawki 2, 00-193 Varsovia) si consideran que el tratamiento de sus datos infringe el RGPD."
+      },
+      "voluntary": {
+        "title": "13. Carácter voluntario de la aportación de datos",
+        "content": "La aportación de datos en los formularios RFQ y de pedidos es voluntaria pero imprescindible para remitir la consulta al Socio o tramitar el pedido. Sin estos datos no es posible prestar los servicios."
+      },
+      "automatedDecision": {
+        "title": "14. Decisiones automatizadas y elaboración de perfiles",
+        "content": "En LogiMarket no se aplican decisiones automatizadas que produzcan efectos jurídicos ni elaboración de perfiles en el sentido del art. 22 del RGPD."
+      },
+      "cookies": {
+        "title": "15. Cookies y tecnologías de sesión",
+        "content": "La plataforma LogiMarket utiliza exclusivamente cookies estrictamente necesarias: (1) para el carrito de compra público, se genera un identificador de sesión ('session_hash') únicamente al añadir el primer producto al carrito y se elimina al cerrar el navegador; (2) para las funciones autenticadas y el panel de administración, se utilizan cookies técnicas de autenticación y sesión indispensables para mantener una sesión de usuario segura. El servicio no utiliza cookies de marketing, publicidad ni rastreadores de terceros para elaboración de perfiles."
+      },
+      "updates": {
+        "title": "16. Modificaciones de la política de privacidad",
+        "content": "El Responsable se reserva el derecho de actualizar esta política ante cambios legales o técnicos. La versión vigente está siempre disponible en /polityka-prywatnosci."
+      }
+    },
+    "tableOfContents": "Índice de contenidos"
   }
 }

@@ -305,11 +305,12 @@
   "rfq": {
     "title": "请求报价 (RFQ)",
     "successTitle": "询盘发送成功！",
-    "successDescription": "合作伙伴将为您准备 B2B 报价并与您联系。",
-    "descriptionSuffix": "询盘将直接发送给合作伙伴。",
+    "successDescription": "您的询价已登记。核实并转交至相应合作伙伴后，您将收到商业回复。",
+    "descriptionSuffix": "B2B询价处理与报价准备。",
     "pending": "发送中...",
-    "consent": "提交表单即表示您同意将数据传递给合作伙伴。",
-    "messagePlaceholder": "数量、交货期、其他要求..."
+    "messagePlaceholder": "数量、交货期、其他要求...",
+    "art13Notice": "我们处理询价（RFQ）表单数据以处理您的咨询，并在转接功能启用时将其转交至选定的合作伙伴以准备商业报价。详情请参见",
+    "privacyPolicyLink": "隐私政策"
   },
   "cart": {
     "title": "您的购物车",
@@ -326,8 +327,9 @@
     "successDescription": "您的 B2B 订单已保存。我们的团队将与您联系。",
     "description": "填写表单以提交订单。这并非在线支付交易 — 我们的团队将核实库存。",
     "pending": "处理中...",
-    "legalNote": "提交订单并非在线支付交易。我们的团队将核实库存并与您联系。",
-    "orderNotesPlaceholder": "交货日期、地址、其他要求..."
+    "legalNote": "数据控制方为隐私政策中指明的LogiMarket运营主体。我们处理数据以处理订单并确保平台安全，并在转接功能启用时将其转交至卖家以履行交易。详情：",
+    "orderNotesPlaceholder": "交货日期、地址、其他要求...",
+    "privacyPolicyLink": "隐私政策"
   },
   "form": {
     "companyName": "公司名称 *",
@@ -336,14 +338,16 @@
     "phone": "电话",
     "message": "留言",
     "orderNotes": "订单备注",
-    "validationError": "请检查表单中的必填项。"
+    "validationError": "请检查表单中的必填项。",
+    "messagePrivacyHint": "请勿在留言中包含特殊类别个人数据或与处理您的询价/订单无关的信息。"
   },
   "footer": {
     "portal": "Portal",
     "partners": "合作伙伴",
     "description": "B2B 仓储设备和用品交易市场。连接买家与验证合作伙伴的报价目录。",
     "partnerPrompt": "想要展示您的产品？联系我们：",
-    "copyrightSuffix": "销售由合作伙伴直接处理。"
+    "copyrightSuffix": "销售由合作伙伴直接处理。",
+    "privacyPolicy": "隐私政策"
   },
   "system": {
     "offerNotFound": "报价不存在",
@@ -880,5 +884,86 @@
     "errors": {
       "unavailable": "仪表板目前不可用。"
     }
+  },
+  "privacy": {
+    "metaTitle": "隐私政策 | LogiMarket B2B",
+    "metaDescription": "LogiMarket B2B平台上的隐私原则和个人数据处理规则。有关数据控制方、法律依据、Cookie及用户权利的信息。",
+    "title": "隐私政策",
+    "lastUpdated": "最后更新时间：2026年8月25日",
+    "breadcrumbs": "隐私政策",
+    "tagline": "个人数据保护与GDPR合规",
+    "sections": {
+      "admin": {
+        "title": "1. 个人数据控制方",
+        "content": "通过LogiMarket B2B平台（logimarket.pl / logimarket.eu）收集的个人数据控制方为PF CONSULTING Piotr Fiszer，注册地址：ul. Promienista 114/2, 60-142 Poznań, 波兰，税号（NIP）：7792017326。"
+      },
+      "contact": {
+        "title": "2. 隐私事务联系方式",
+        "content": "如涉及个人数据保护或行使数据主体权利，您可以通过电子邮件 kontakt@logimarket.pl 或寄信至控制方注册地址与我们联系。控制方未设立正式的数据保护官（DPO）。"
+      },
+      "scope": {
+        "title": "3. 政策适用范围",
+        "content": "本隐私政策规定了使用LogiMarket B2B交易平台的用户、企业客户、联系人及商业合作伙伴代表的个人数据处理规则。"
+      },
+      "categories": {
+        "title": "4. 处理的数据类别",
+        "content": "我们处理B2B交易所必需的数据：企业信息（公司名称、税号）、代表与联系人信息（姓名、工作邮箱、电话号码）、询价（RFQ）及B2B订单中的数据、留言及备注内容，以及平台运行所必需的技术会话标识符和遥测数据。"
+      },
+      "purposes": {
+        "title": "5. 数据处理目的与法律依据",
+        "intro": "个人数据出于以下目的进行处理：",
+        "rfq": "处理询价（RFQ）及准备商业报价 – 法律依据：GDPR第6(1)(b)条（针对作为请求方的个体经营者）或GDPR第6(1)(f)条（针对员工/代表进行B2B商业沟通的合法利益）；",
+        "checkout": "处理B2B订单及核实货源 – 法律依据：GDPR第6(1)(b)条或GDPR第6(1)(f)条；",
+        "auth": "身份验证及管理权限控制 – 法律依据：GDPR第6(1)(f)条（安全与访问控制）；",
+        "attribution": "外部报价跳转 – 本服务提供安全的技术跳转（/go/[id]）；当前基于会话的归因追踪处于禁用状态，不生成Cookie亦不进行用户画像；",
+        "cart": "维护当前购物车会话 – 法律依据：GDPR第6(1)(b)和(f)条及电子通信法第399(3)条（严格必需的会话Cookie）；",
+        "partners": "管理B2B合作伙伴关系及KYB核验 – 法律依据：GDPR第6(1)(f)条及第6(1)(b)条。"
+      },
+      "legalBasesSplit": {
+        "title": "6. 企业主与代表的法律依据区分",
+        "content": "对于作为个体经营者（JDG）自身作为咨询或订单一方的自然人，法律依据为GDPR第6(1)(b)条（履行合同或采取订约前措施的必要性）。对于代表法人或第三方主体的员工，法律依据为GDPR第6(1)(f)条（开展B2B交易的合法利益）。"
+      },
+      "legitimateInterests": {
+        "title": "7. 控制方的合法利益",
+        "content": "控制者所追求的正当利益（GDPR第6条第1款(f)项）包括：处理日常B2B商业沟通与咨询、确保平台安全与完整性、防范欺诈行为、提供安全的技术跳转，以及建立、行使或抗辩法律主张。"
+      },
+      "recipients": {
+        "title": "8. 数据接收方",
+        "content": "数据可能披露给：(1) 控制方的授权员工及承包商；(2) 作为数据处理者的IT及技术基础设施服务商，包括Supabase（主数据库位于西欧/爱尔兰）；(3) 平台上注册的选定合作伙伴和卖家 – 仅限用户就其报价提交询价或订单且转接功能启用以履行交易时。"
+      },
+      "transfers": {
+        "title": "9. 向欧洲经济区（EEA）境外传输数据",
+        "content": "平台的主数据库基础设施位于欧洲经济区（爱尔兰）。在技术服务商链条中（包括Supabase及其分处理者），数据可能在EEA境外的第三国进行处理。数据传输遵循GDPR第五章的规定，特别是依据欧盟委员会的标准合同条款（SCC 2021/914）和充分性认定。"
+      },
+      "retention": {
+        "title": "10. 数据保存期限",
+        "content": "个人数据与会话标识符适用不同的保存原则：(1) 会话标识符（'session_hash' Cookie）仅在浏览器中保存于活动会话期间，并在关闭浏览器时失效；(2) 后端系统中的数据根据既定标准进行保存 – 询价（RFQ）数据自最后一次活动起通常最长保存12个月，订单数据（平台个人信息）最长保存3年用于法律抗辩，历史技术与安全日志最长保存12个月，会计账目按法定期限保存。数据库数据的留存根据内部数据留存政策进行管理。"
+      },
+      "rights": {
+        "title": "11. 数据主体权利",
+        "content": "每位数据主体享有：访问权（GDPR第15条）、更正权（第16条）、删除权（'被遗忘权'，第17条）、限制处理权（第18条）、数据可携权（第20条）以及基于合法利益反对处理的权利（第21条）。行使权利请联系：kontakt@logimarket.pl。"
+      },
+      "complaint": {
+        "title": "12. 向监管机构投诉的权利",
+        "content": "如数据主体认为其数据处理违反了GDPR规定，有权向主管监管机构（波兰个人数据保护局局长 - PUODO, ul. Stawki 2, 00-193 Warsaw）提出投诉。"
+      },
+      "voluntary": {
+        "title": "13. 提供数据的自愿性",
+        "content": "在询价和B2B订单表单中提供个人数据属于自愿行为，但这是将咨询转交给合作伙伴或启动订单流程所必需的。如不提供，将无法提供相关服务。"
+      },
+      "automatedDecision": {
+        "title": "14. 自动化决策与画像",
+        "content": "LogiMarket不采用对自然人产生法律效力的自动化决策，亦不进行GDPR第22条所指的画像。"
+      },
+      "cookies": {
+        "title": "15. Cookie与会话技术",
+        "content": "LogiMarket平台仅使用严格必要（strictly necessary）的技术Cookie：(1) 对于公开购物车，仅在将第一件商品加入购物车时生成会话标识符（'session_hash'），并在关闭浏览器时删除；(2) 对于需要身份验证的功能及管理后台，使用技术性身份验证和会话Cookie以维持安全的用户会话。本服务不使用任何营销、广告或第三方画像追踪Cookie。"
+      },
+      "updates": {
+        "title": "16. 隐私政策的更新",
+        "content": "控制方保留在法律法规或技术架构变更时更新本政策的权利。最新版本始终发布在 /polityka-prywatnosci。"
+      }
+    },
+    "tableOfContents": "目录"
   }
 }

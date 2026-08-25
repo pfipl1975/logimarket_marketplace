@@ -55,3 +55,21 @@ export function getGlossaryPath(locale: Locale): string | null {
   }
   return null;
 }
+
+export function getPrivacyPolicyPath(locale: Locale): string {
+  return locale === defaultLocale
+    ? "/polityka-prywatnosci"
+    : `/${locale}/polityka-prywatnosci`;
+}
+
+export function getPrivacyPolicyLocaleLinks(): Record<Locale, string> {
+  return {
+    pl: getPrivacyPolicyPath("pl"),
+    en: getPrivacyPolicyPath("en"),
+    de: getPrivacyPolicyPath("de"),
+    fr: getPrivacyPolicyPath("fr"),
+    uk: getPrivacyPolicyPath("uk"),
+    es: getPrivacyPolicyPath("es"),
+    zh: getPrivacyPolicyPath("zh"),
+  } satisfies Record<Locale, string>;
+}

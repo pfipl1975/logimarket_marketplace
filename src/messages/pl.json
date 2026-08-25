@@ -305,11 +305,12 @@
   "rfq": {
     "title": "Zapytanie o wycenę (RFQ)",
     "successTitle": "Zapytanie wysłane pomyślnie!",
-    "successDescription": "Partner przygotuje wycenę B2B i skontaktuje się z Tobą.",
-    "descriptionSuffix": "Zapytanie trafi bezpośrednio do partnera.",
+    "successDescription": "Zapytanie zostało zarejestrowane. Po weryfikacji i przekazaniu do właściwego Partnera otrzymasz odpowiedź handlową.",
+    "descriptionSuffix": "Wycena i warunki handlowe B2B.",
     "pending": "Wysyłanie...",
-    "consent": "Wysyłając formularz wyrażasz zgodę na przekazanie danych partnerowi.",
-    "messagePlaceholder": "Liczba sztuk, termin, dodatkowe wymagania..."
+    "messagePlaceholder": "Liczba sztuk, termin, dodatkowe wymagania...",
+    "art13Notice": "Dane z formularza RFQ przetwarzamy w celu obsługi zapytania i – gdy funkcja przekazywania jest aktywna – przekazania ich wybranemu Partnerowi do przygotowania odpowiedzi handlowej. Szczegóły określa",
+    "privacyPolicyLink": "Polityka Prywatności"
   },
   "cart": {
     "title": "Twój koszyk",
@@ -326,8 +327,9 @@
     "successDescription": "Twoje zamówienie B2B zostało zapisane. Nasz zespół skontaktuje się z Tobą.",
     "description": "Wypełnij formularz, aby złożyć zamówienie. Nie jest to transakcja online — nasz zespół zweryfikuje dostępność.",
     "pending": "Przetwarzanie...",
-    "legalNote": "Złożenie zamówienia nie jest transakcją online. Nasz zespół zweryfikuje dostępność i skontaktuje się z Tobą.",
-    "orderNotesPlaceholder": "Termin dostawy, adres, dodatkowe wymagania..."
+    "legalNote": "Administratorem danych jest podmiot prowadzący LogiMarket wskazany w Polityce Prywatności. Dane przetwarzamy w celu obsługi zamówienia oraz bezpieczeństwa platformy, a w razie aktywnego routingu – przekazujemy Sprzedawcy do realizacji transakcji. Szczegóły:",
+    "orderNotesPlaceholder": "Termin dostawy, adres, dodatkowe wymagania...",
+    "privacyPolicyLink": "Polityka Prywatności"
   },
   "form": {
     "companyName": "Nazwa firmy *",
@@ -336,14 +338,16 @@
     "phone": "Telefon",
     "message": "Wiadomość",
     "orderNotes": "Uwagi do zamówienia",
-    "validationError": "Sprawdź wymagane pola formularza."
+    "validationError": "Sprawdź wymagane pola formularza.",
+    "messagePrivacyHint": "Nie podawaj w wiadomości danych szczególnych ani informacji, które nie są potrzebne do obsługi zapytania/zamówienia."
   },
   "footer": {
     "portal": "Portal",
     "partners": "Dla partnerów",
     "description": "Giełda B2B sprzętu i wyposażenia magazynowego. Katalog ofertowy łączący kupujących ze zweryfikowanymi partnerami.",
     "partnerPrompt": "Chcesz wystawić swoje produkty? Napisz do nas:",
-    "copyrightSuffix": "Sprzedaż realizowana bezpośrednio przez partnerów."
+    "copyrightSuffix": "Sprzedaż realizowana bezpośrednio przez partnerów.",
+    "privacyPolicy": "Polityka Prywatności"
   },
   "system": {
     "offerNotFound": "Oferta nie istnieje",
@@ -880,5 +884,86 @@
     "errors": {
       "unavailable": "Panel jest obecnie niedostępny."
     }
+  },
+  "privacy": {
+    "metaTitle": "Polityka Prywatności | LogiMarket.pl",
+    "metaDescription": "Zasady ochrony prywatności i przetwarzania danych osobowych na platformie B2B LogiMarket. Informacje o administratorze, podstawach prawnych, cookies i prawach użytkowników.",
+    "title": "Polityka Prywatności",
+    "lastUpdated": "Ostatnia aktualizacja: 25 sierpnia 2026 r.",
+    "breadcrumbs": "Polityka Prywatności",
+    "tagline": "Ochrona Danych Osobowych i RODO",
+    "sections": {
+      "admin": {
+        "title": "1. Administrator danych osobowych",
+        "content": "Administratorem danych osobowych zbieranych za pośrednictwem platformy B2B LogiMarket (logimarket.pl / logimarket.eu) jest PF CONSULTING Piotr Fiszer z siedzibą przy ul. Promienistej 114/2, 60-142 Poznań, Polska, NIP: 7792017326."
+      },
+      "contact": {
+        "title": "2. Kontakt w sprawach prywatności",
+        "content": "W sprawach związanych z ochroną danych osobowych oraz realizacją praw osób, których dane dotyczą, można kontaktować się z Administratorem pod adresem e-mail: kontakt@logimarket.pl lub pisemnie na adres siedziby Administratora. Administrator nie wyznaczył formalnego Inspektora Ochrony Danych (IOD)."
+      },
+      "scope": {
+        "title": "3. Zakres stosowania polityki",
+        "content": "Niniejsza Polityka Prywatności określa zasady przetwarzania danych osobowych użytkowników, klientów biznesowych, osób kontaktowych oraz reprezentantów partnerów handlowych korzystających z platformy handlowej B2B LogiMarket."
+      },
+      "categories": {
+        "title": "4. Kategorie przetwarzanych danych",
+        "content": "Przetwarzamy dane niezbędne do obsługi procesów B2B: dane firmowe (nazwa firmy, NIP), dane osób reprezentujących i kontaktowych (imię i nazwisko, służbowy adres e-mail, numer telefonu), dane zawarte w zapytaniach ofertowych (RFQ) i zamówieniach B2B, treść wiadomości i uwag, a także techniczne identyfikatory sesji oraz dane telemetryczne niezbędne do funkcjonowania serwisu."
+      },
+      "purposes": {
+        "title": "5. Cele i podstawy prawne przetwarzania danych",
+        "intro": "Dane osobowe przetwarzane są w następujących celach:",
+        "rfq": "Obsługa zapytań o wycenę (RFQ) oraz przygotowanie oferty handlowej – podstawa: art. 6 ust. 1 lit. b RODO (dla osób fizycznych prowadzących JDG będących stroną) lub art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes Administratora i partnera w obsłudze komunikacji handlowej B2B dla pracowników/reprezentantów);",
+        "checkout": "Obsługa procesu zamówienia B2B i weryfikacja dostępności – podstawa: art. 6 ust. 1 lit. b RODO (kroki przed zawarciem umowy dla JDG) lub art. 6 ust. 1 lit. f RODO (obsługa relacji biznesowej dla reprezentantów);",
+        "auth": "Uwierzytelnianie i zarządzanie dostępem administracyjnym – podstawa: art. 6 ust. 1 lit. f RODO (bezpieczeństwo i kontrola dostępu);",
+        "attribution": "Przekierowania do ofert zewnętrznych – serwis obsługuje bezpieczne przekierowania techniczne (/go/[id]); bieżące śledzenie atrybucji w oparciu o identyfikatory sesyjne jest obecnie wyłączone i nie prowadzi do tworzenia cookies ani profilowania;",
+        "cart": "Utrzymanie bieżącej sesji koszyka zakupowego – podstawa: art. 6 ust. 1 lit. b i lit. f RODO oraz art. 399 ust. 3 Prawa komunikacji elektronicznej (ściśle niezbędne cookies sesyjne);",
+        "partners": "Zarządzanie relacjami partnerskimi B2B i weryfikacja KYB – podstawa: art. 6 ust. 1 lit. f RODO oraz art. 6 ust. 1 lit. b RODO (w zakresie umów partnerskich)."
+      },
+      "legalBasesSplit": {
+        "title": "6. Rozdzielenie podstaw prawnych dla przedsiębiorców i reprezentantów",
+        "content": "W przypadku osób fizycznych prowadzących jednoosobową działalność gospodarczą (JDG), które same są stroną zapytania lub zamówienia, podstawą prawną jest art. 6 ust. 1 lit. b RODO (niezbędność do wykonania umowy lub podjęcia działań przed jej zawarciem). W przypadku osób reprezentujących osoby prawne lub pracowników podmiotów trzecich, podstawą prawną jest art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes w realizacji transakcji B2B)."
+      },
+      "legitimateInterests": {
+        "title": "7. Prawnie uzasadnione interesy Administratora",
+        "content": "Prawnie uzasadnione interesy realizowane przez Administratora (art. 6 ust. 1 lit. f RODO) obejmują: obsługę bieżącej komunikacji i zapytań handlowych B2B, zapewnienie bezpieczeństwa i integralności platformy, przeciwdziałanie oszustwom i nadużyciom, obsługę bezpiecznych przekierowań technicznych oraz ustalanie, dochodzenie lub obronę przed ewentualnymi roszczeniami prawnymi."
+      },
+      "recipients": {
+        "title": "8. Odbiorcy danych",
+        "content": "Dane mogą być udostępniane: (1) upoważnionemu personelowi i współpracownikom Administratora; (2) dostawcom usług IT i infrastruktury technicznej działającym jako podmioty przetwarzające, w tym Supabase (z głównym regionem bazy danych w West EU / Irlandia); (3) wybranym Partnerom i Sprzedawcom zarejestrowanym na platformie – wyłącznie w sytuacji, gdy użytkownik składa zapytanie ofertowe (RFQ) lub zamówienie dotyczące oferty danego Partnera, a routing danych jest aktywny w celu obsługi transakcji."
+      },
+      "transfers": {
+        "title": "9. Przekazywanie danych poza Europejski Obszar Gospodarczy (EOG)",
+        "content": "Główna infrastruktura bazodanowa platformy zlokalizowana jest w Europejskim Obszarze Gospodarczym (Irlandia). W ramach łańcucha dostawców infrastruktury IT (w tym Supabase i powiązanych podwykonawców) dane mogą być przetwarzane w państwach trzecich poza EOG. Przekazywanie danych odbywa się w oparciu o odpowiednie mechanizmy prawne zgodne z Rozdziałem V RODO, w szczególności Standardowe Klauzule Umowne (SCC 2021/914) zatwierdzone przez Komisję Europejską oraz decyzje stwierdzające odpowiedni stopień ochrony."
+      },
+      "retention": {
+        "title": "10. Okres przechowywania danych (retencja)",
+        "content": "Dane osobowe i identyfikatory sesyjne podlegają zróżnicowanym zasadom przechowywania: (1) Identyfikator sesji (plik cookie 'session_hash') przechowywany jest wyłącznie lokalnie w przeglądarce na czas trwania sesji i wygasa po jej zamknięciu; (2) Dane w systemach backendowych przetwarzane są zgodnie z ustalonymi kryteriami retencji – dane zapytań ofertowych (RFQ) są przechowywane co do zasady przez okres do 12 miesięcy od ostatniej aktywności, dane transakcyjne zamówień (PII platformowe) do 3 lat w celach obrony przed roszczeniami prawnymi, historyczne logi techniczne i bezpieczeństwa do 12 miesięcy, a dokumentacja księgowa przez okres wymagany przepisami podatkowymi. Retencja danych bazodanowych jest zarządzana zgodnie z wewnętrzną polityką retencji."
+      },
+      "rights": {
+        "title": "11. Prawa osób, których dane dotyczą",
+        "content": "Każdej osobie, której dane dotyczą, przysługuje prawo do: dostępu do swoich danych (art. 15 RODO), ich sprostowania (art. 16 RODO), usunięcia danych („prawo do bycia zapomnianym”, art. 17 RODO), ograniczenia przetwarzania (art. 18 RODO), przenoszenia danych (art. 20 RODO) oraz prawo wniesienia sprzeciwu wobec przetwarzania opartego na prawnie uzasadnionym interesie (art. 21 RODO). W celu realizacji praw prosimy o kontakt pod adresem: kontakt@logimarket.pl."
+      },
+      "complaint": {
+        "title": "12. Prawo wniesienia skargi do organu nadzorczego",
+        "content": "Osoba, której dane dotyczą, ma prawo wniesienia skargi do Prezesa Urzędu Ochrony Danych Osobowych (PUODO), ul. Stawki 2, 00-193 Warszawa, jeżeli uzna, że przetwarzanie jej danych osobowych narusza przepisy RODO."
+      },
+      "voluntary": {
+        "title": "13. Informacja o dobrowolności podania danych",
+        "content": "Podanie danych osobowych w formularzach RFQ oraz zamówień B2B jest dobrowolne, jednak niezbędne do przesłania zapytania do Partnera lub zainicjowania procesu zamówienia. Niepodanie danych uniemożliwia realizację tych usług."
+      },
+      "automatedDecision": {
+        "title": "14. Zautomatyzowane podejmowanie decyzji i profilowanie",
+        "content": "W ramach platformy LogiMarket nie stosuje się zautomatyzowanego podejmowania decyzji wywołującego skutki prawne wobec osób fizycznych ani profilowania w rozumieniu art. 22 RODO."
+      },
+      "cookies": {
+        "title": "15. Pliki cookies i technologie sesyjne",
+        "content": "Platforma LogiMarket stosuje wyłącznie technicznie niezbędne pliki cookies (strictly necessary cookies): (1) dla anonimowego koszyka zakupowego generowany jest identyfikator sesyjny 'session_hash', tworzony dopiero w momencie dodania pierwszego produktu do koszyka i usuwany po zamknięciu przeglądarki; (2) dla funkcji wymagających logowania i panelu administracyjnego wykorzystywane są techniczne cookies uwierzytelniające i sesyjne, niezbędne do utrzymania bezpiecznej sesji użytkownika. Serwis nie stosuje cookies marketingowych, reklamowych ani profilujących trackerów podmiotów trzecich."
+      },
+      "updates": {
+        "title": "16. Zmiany Polityki Prywatności",
+        "content": "Administrator zastrzega sobie prawo do aktualizacji niniejszej Polityki Prywatności w przypadku zmian w prawie, architekturze technicznej platformy lub rozszerzenia zakresu świadczonych usług. Aktualna wersja dokumentu jest zawsze publikowana pod adresem /polityka-prywatnosci."
+      }
+    },
+    "tableOfContents": "Spis treści"
   }
 }

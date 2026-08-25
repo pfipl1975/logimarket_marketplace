@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,9 +51,23 @@ interface CheckoutModalProps {
   cartLabels: Pick<Dictionary["cart"], "total" | "emptyTitle" | "emptyDescription" | "cartChanged">;
   offerLabels: Pick<Dictionary["offers"], "onRequest">;
   closeLabel: Dictionary["common"]["close"];
+  privacyPolicyHref: string;
 }
 
-export function CheckoutModal({ open, onClose, items, total, checkoutLabels, formLabels, systemLabels, ctaLabels, cartLabels, offerLabels, closeLabel }: CheckoutModalProps) {
+export function CheckoutModal({
+  open,
+  onClose,
+  items,
+  total,
+  checkoutLabels,
+  formLabels,
+  systemLabels,
+  ctaLabels,
+  cartLabels,
+  offerLabels,
+  closeLabel,
+  privacyPolicyHref,
+}: CheckoutModalProps) {
   const { refresh } = useCart();
   const [success, setSuccess] = useState(false);
   const [pending, setPending] = useState(false);
@@ -146,6 +161,9 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
                 <Label htmlFor="co-msg" className="flex items-center gap-1.5"><MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />{formLabels.orderNotes}</Label>
                 <Textarea id="co-msg" rows={2} placeholder={checkoutLabels.orderNotesPlaceholder}
                   value={formData.message} onChange={(e) => setFormData({ ...formData, message: e.target.value })} />
+                <p className="text-[11px] text-muted-foreground leading-tight">
+                  {formLabels.messagePrivacyHint}
+                </p>
               </div>
               {errorMessage ? (
                 <p role="alert" className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -159,8 +177,12 @@ export function CheckoutModal({ open, onClose, items, total, checkoutLabels, for
               >
                 {pending ? <><Loader2 className="h-4 w-4 animate-spin" />{checkoutLabels.pending}</> : ctaLabels.placeOrder}
               </Button>
-              <p className="text-center text-xs text-muted-foreground">
-                {checkoutLabels.legalNote}
+              <p className="text-center text-xs text-muted-foreground leading-relaxed">
+                {checkoutLabels.legalNote}{" "}
+                <Link href={privacyPolicyHref} className="text-brand-teal underline hover:text-brand-navy">
+                  {checkoutLabels.privacyPolicyLink}
+                </Link>
+                .
               </p>
             </form>
           </>

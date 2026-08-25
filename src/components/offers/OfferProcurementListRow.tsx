@@ -19,6 +19,7 @@ interface OfferProcurementListRowProps {
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
   categoryLabels: Record<string, string>;
+  privacyPolicyHref: string;
 }
 
 export function OfferProcurementListRow({
@@ -31,6 +32,7 @@ export function OfferProcurementListRow({
   systemLabels,
   closeLabel,
   categoryLabels,
+  privacyPolicyHref,
 }: OfferProcurementListRowProps) {
   const categoryLabel = getLocalizedCategoryLabel(
     categoryLabels,
@@ -114,6 +116,7 @@ export function OfferProcurementListRow({
           systemLabels={systemLabels}
           closeLabel={closeLabel}
           externalOfferLabel={offerLabels.externalOffer}
+          privacyPolicyHref={privacyPolicyHref}
           variant="card"
         />
       </div>

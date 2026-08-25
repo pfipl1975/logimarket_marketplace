@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { after } from "next/server";
 import { db } from "@/lib/db";
 import { offers } from "@/lib/schema";
 import { eq } from "drizzle-orm";
@@ -8,12 +7,7 @@ import { isConversionAllowedStatus } from "@/lib/offers/status";
 import {
   parseOutboundOfferId,
   parseOutboundDestination,
-  extractClientIp,
-  hashClientIp,
-  recordOutboundClick,
-  isValidOutboundTrackingSecret
 } from "@/lib/outbound/outbound-core";
-import { getSessionHash } from "@/lib/session/session-hash";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -64,31 +58,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   const destinationUrl = parseOutboundDestination(offer.outboundUrl);
   if (!destinationUrl) {
     return createFallbackRedirect(request);
-  }
-
-  let sessionHash: string | null = null;
-  let ipHash: string | null = null;
-  
-  try {
-    const secret = process.env.OUTBOUND_TRACKING_HMAC_SECRET;
-    if (!isValidOutboundTrackingSecret(secret)) {
-      console.log("[outbound] stage=tracking_config result=skipped");
-    } else {
-      sessionHash = await getSessionHash();
-      const rawIp = extractClientIp(request.headers);
-      ipHash = hashClientIp(rawIp, secret);
-    }
-  } catch (error) {
-    console.error(`[outbound] stage=tracking_config errorName=${error instanceof Error ? error.name : "Unknown"}`);
-  }
-
-  if (sessionHash && ipHash) {
-    // We capture values in closure to avoid passing `request` or `db` context that might be invalid
-    const partnerId = offer.partnerId;
-    
-    after(async () => {
-      await recordOutboundClick(db, offerId, partnerId, sessionHash!, ipHash!);
-    });
   }
 
   const response = NextResponse.redirect(destinationUrl, 302);
