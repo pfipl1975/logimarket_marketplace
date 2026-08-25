@@ -86,13 +86,18 @@ test("Privacy Compliance - Session Hash Security Hardening Static Audit", () => 
   assert.ok(code.includes("httpOnly: true"), "Must specify httpOnly: true");
 });
 
-test("Privacy Compliance - Outbound Route Must NOT Create Cart Cookie", () => {
+test("Privacy Compliance - Outbound Route Must NOT Contain Session Or Attribution Machinery", () => {
   const outboundRouteFile = path.join(process.cwd(), "src/app/go/[id]/route.ts");
   const code = fs.readFileSync(outboundRouteFile, "utf8");
 
   assert.ok(!code.includes("getOrCreateSessionHash"), "Outbound route must NOT call getOrCreateSessionHash");
-  assert.ok(!code.includes("getSessionHash"), "Outbound route must NOT call deprecated getSessionHash");
-  assert.ok(code.includes("getExistingSessionHash"), "Outbound route must only use getExistingSessionHash");
+  assert.ok(!code.includes("getSessionHash"), "Outbound route must NOT call getSessionHash");
+  assert.ok(!code.includes("getExistingSessionHash"), "Outbound route must NOT call getExistingSessionHash");
+  assert.ok(!code.includes("recordOutboundClick"), "Outbound route must NOT call recordOutboundClick");
+  assert.ok(!code.includes("hashClientIp"), "Outbound route must NOT call hashClientIp");
+  assert.ok(!code.includes("extractClientIp"), "Outbound route must NOT call extractClientIp");
+  assert.ok(!code.includes("OUTBOUND_TRACKING_HMAC_SECRET"), "Outbound route must NOT reference OUTBOUND_TRACKING_HMAC_SECRET");
+  assert.ok(!code.includes("after("), "Outbound route must NOT invoke Next.js after()");
 });
 
 test("Privacy Compliance - Lazy Session Hash Action Usage Static Audit", () => {

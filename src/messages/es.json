@@ -915,7 +915,7 @@
         "rfq": "Gestión de solicitudes de cotización (RFQ) y elaboración de ofertas – base jurídica: art. 6(1)(b) RGPD (para autónomos que son parte de la solicitud) o art. 6(1)(f) RGPD (interés legítimo en la gestión de comunicaciones comerciales B2B para representantes/empleados);",
         "checkout": "Tramitación de pedidos B2B y verificación de disponibilidad – base jurídica: art. 6(1)(b) RGPD o art. 6(1)(f) RGPD ;",
         "auth": "Autenticación y control de acceso administrativo – base jurídica: art. 6(1)(f) RGPD (seguridad y control de acceso);",
-        "attribution": "Atribución de redirecciones externas y liquidación de comisiones con socios – base jurídica: art. 6(1)(f) RGPD (interés legítimo basado en identificadores seudonimizados);",
+        "attribution": "Redirección a ofertas externas – el servicio gestiona redirecciones técnicas seguras (/go/[id]); el seguimiento activo de atribución basado en sesiones está actualmente desactivado y no genera cookies ni realiza elaboración de perfiles;",
         "cart": "Mantenimiento de la sesión activa del carrito – base jurídica: art. 6(1)(b) y (f) RGPD y art. 399(3) de la Ley de Comunicaciones Electrónicas (cookies de sesión estrictamente necesarias);",
         "partners": "Gestión de relaciones comerciales B2B y verificación KYB – base jurídica: art. 6(1)(f) RGPD y art. 6(1)(b) RGPD."
       },
@@ -925,7 +925,7 @@
       },
       "legitimateInterests": {
         "title": "7. Intereses legítimos del Responsable",
-        "content": "Los intereses legítimos del Responsable (art. 6(1)(f) RGPD) incluyen: la gestión de comunicaciones comerciales B2B, la seguridad e integridad de la plataforma, la prevención del fraude, el seguimiento de la atribución con socios y la defensa de reclamaciones legales."
+        "content": "Los intereses legítimos perseguidos por el Responsable (art. 6, ap. 1, letra f del RGPD) incluyen: la gestión de la comunicación y consultas comerciales B2B habituales, garantizar la seguridad e integridad de la plataforma, la prevención de fraudes, la gestión de redirecciones técnicas seguras, así como el reconocimiento, ejercicio o defensa de reclamaciones legales."
       },
       "recipients": {
         "title": "8. Destinatarios de los datos",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Plazos de conservación de datos",
-        "content": "Los datos personales y los identificadores de sesión se rigen por principios de conservación diferenciados: (1) El identificador de sesión (cookie 'session_hash') se almacena estrictamente en el navegador durante la sesión activa y caduca al cerrarlo; (2) Los registros en los sistemas de backend se conservan conforme a criterios establecidos – solicitudes RFQ generalmente hasta 12 meses tras la última actividad, registros de pedidos (PII de plataforma) hasta 3 años para la defensa legal, registros de seguridad y atribución hasta 12 meses, y documentación contable durante los plazos fiscales obligatorios. La retención de datos en bases de datos se gestiona según nuestra política interna de conservación."
+        "content": "Los datos personales y los identificadores de sesión se rigen por principios de conservación diferenciados: (1) El identificador de sesión (cookie 'session_hash') se almacena estrictamente en el navegador durante la sesión activa y caduca al cerrarlo; (2) Los registros en los sistemas de backend se conservan conforme a criterios establecidos – solicitudes RFQ generalmente hasta 12 meses tras la última actividad, registros de pedidos (PII de plataforma) hasta 3 años para la defensa legal, registros técnicos y de seguridad históricos hasta 12 meses, y documentación contable durante los plazos fiscales obligatorios. La retención de datos en bases de datos se gestiona según nuestra política interna de conservación."
       },
       "rights": {
         "title": "11. Derechos de los interesados",

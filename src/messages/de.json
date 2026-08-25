@@ -915,7 +915,7 @@
         "rfq": "Bearbeitung von Preisanfragen (RFQ) und Angebotserstellung – Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (für Einzelunternehmer als Vertragspartei) oder Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse des Verantwortlichen und Partners an der B2B-Geschäftskommunikation für Mitarbeiter/Vertreter);",
         "checkout": "Bearbeitung von B2B-Bestellungen und Verfügbarkeitsprüfung – Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (vorvertragliche Maßnahmen für Einzelunternehmer) oder Art. 6 Abs. 1 lit. f DSGVO (Geschäftsabwicklung für Unternehmensvertreter);",
         "auth": "Authentifizierung und administrative Zugangskontrolle – Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Sicherheit und Zugriffskontrolle);",
-        "attribution": "Zuordnung externer Weiterleitungen und Provisionsabrechnung mit Partnern – Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an Abrechnung und Betrugsprävention auf Basis pseudonymisierter Sitzungs-IDs);",
+        "attribution": "Weiterleitung zu externen Angeboten – der Dienst führt sichere technische Weiterleitungen (/go/[id]) durch; eine aktive sitzungsbasierte Zuordnungsverfolgung ist derzeit deaktiviert und führt weder zur Erstellung von Cookies noch zum Profiling;",
         "cart": "Aufrechterhaltung der aktiven Warenkorbsitzung – Rechtsgrundlage: Art. 6 Abs. 1 lit. b und f DSGVO sowie Art. 399 Abs. 3 des Telekommunikationsgesetzes (unbedingt erforderliche Session-Cookies);",
         "partners": "Verwaltung von B2B-Partnerbeziehungen und KYB-Prüfung – Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO und Art. 6 Abs. 1 lit. b DSGVO (im Rahmen von Partnerverträgen)."
       },
@@ -925,7 +925,7 @@
       },
       "legitimateInterests": {
         "title": "7. Berechtigte Interessen des Verantwortlichen",
-        "content": "Die vom Verantwortlichen verfolgten berechtigten Interessen (Art. 6 Abs. 1 lit. f DSGVO) umfassen: die Durchführung laufender geschäftlicher B2B-Kommunikation und Anfragen, die Gewährleistung der Plattformsicherheit und -integrität, die Verhinderung von Missbrauch, die Provisionsabrechnung von Weiterleitungen mit Partnern sowie die Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen."
+        "content": "Die vom Verantwortlichen verfolgten berechtigten Interessen (Art. 6 Abs. 1 lit. f DSGVO) umfassen: Abwicklung der laufenden geschäftlichen B2B-Kommunikation und Anfragen, Gewährleistung der Sicherheit und Integrität der Plattform, Betrugsprävention, Bereitstellung sicherer technischer Weiterleitungen sowie Geltendmachung, Ausübung oder Verteidigung von Rechtsansprüchen."
       },
       "recipients": {
         "title": "8. Empfänger von Daten",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Speicherdauer (Aufbewahrung)",
-        "content": "Personenbezogene Daten und Sitzungskennungen unterliegen unterschiedlichen Aufbewahrungsregeln: (1) Die Sitzungskennung ('session_hash'-Cookie) wird ausschließlich lokal im Browser für die Dauer der Sitzung gespeichert und erlischt beim Schließen des Browsers; (2) Backend-Datensätze werden nach festgelegten Kriterien aufbewahrt – RFQ-Preisanfragen in der Regel bis zu 12 Monate nach der letzten Aktivität, Bestelldaten (Plattform-PII) bis zu 3 Jahre zur Rechtsverteidigung, Sicherheits- und Zuordnungsdaten bis zu 12 Monate und Buchhaltungsdaten gemäß gesetzlichen Aufbewahrungsfristen. Die Datenaufbewahrung in Datenbanken wird gemäß unserer internen Aufbewahrungsrichtlinie gesteuert."
+        "content": "Personenbezogene Daten und Sitzungskennungen unterliegen unterschiedlichen Aufbewahrungsregeln: (1) Die Sitzungskennung ('session_hash'-Cookie) wird ausschließlich lokal im Browser für die Dauer der Sitzung gespeichert und erlischt beim Schließen des Browsers; (2) Backend-Datensätze werden nach festgelegten Kriterien aufbewahrt – RFQ-Preisanfragen in der Regel bis zu 12 Monate nach der letzten Aktivität, Bestelldaten (Plattform-PII) bis zu 3 Jahre zur Rechtsverteidigung, historische technische und Sicherheitsprotokolle bis zu 12 Monate und Buchhaltungsdaten gemäß gesetzlichen Aufbewahrungsfristen. Die Datenaufbewahrung in Datenbanken wird gemäß unserer internen Aufbewahrungsrichtlinie gesteuert."
       },
       "rights": {
         "title": "11. Rechte der betroffenen Personen",

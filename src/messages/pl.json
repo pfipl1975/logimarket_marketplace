@@ -915,7 +915,7 @@
         "rfq": "Obsługa zapytań o wycenę (RFQ) oraz przygotowanie oferty handlowej – podstawa: art. 6 ust. 1 lit. b RODO (dla osób fizycznych prowadzących JDG będących stroną) lub art. 6 ust. 1 lit. f RODO (prawnie uzasadniony interes Administratora i partnera w obsłudze komunikacji handlowej B2B dla pracowników/reprezentantów);",
         "checkout": "Obsługa procesu zamówienia B2B i weryfikacja dostępności – podstawa: art. 6 ust. 1 lit. b RODO (kroki przed zawarciem umowy dla JDG) lub art. 6 ust. 1 lit. f RODO (obsługa relacji biznesowej dla reprezentantów);",
         "auth": "Uwierzytelnianie i zarządzanie dostępem administracyjnym – podstawa: art. 6 ust. 1 lit. f RODO (bezpieczeństwo i kontrola dostępu);",
-        "attribution": "Atrybucja przekierowań zewnętrznych i rozliczenia prowizyjne z partnerami – podstawa: art. 6 ust. 1 lit. f RODO (uzasadniony interes w rozliczeniach i przeciwdziałaniu nadużyciom, w oparciu o pseudonimizowane identyfikatory sesji);",
+        "attribution": "Przekierowania do ofert zewnętrznych – serwis obsługuje bezpieczne przekierowania techniczne (/go/[id]); bieżące śledzenie atrybucji w oparciu o identyfikatory sesyjne jest obecnie wyłączone i nie prowadzi do tworzenia cookies ani profilowania;",
         "cart": "Utrzymanie bieżącej sesji koszyka zakupowego – podstawa: art. 6 ust. 1 lit. b i lit. f RODO oraz art. 399 ust. 3 Prawa komunikacji elektronicznej (ściśle niezbędne cookies sesyjne);",
         "partners": "Zarządzanie relacjami partnerskimi B2B i weryfikacja KYB – podstawa: art. 6 ust. 1 lit. f RODO oraz art. 6 ust. 1 lit. b RODO (w zakresie umów partnerskich)."
       },
@@ -925,7 +925,7 @@
       },
       "legitimateInterests": {
         "title": "7. Prawnie uzasadnione interesy Administratora",
-        "content": "Prawnie uzasadnione interesy realizowane przez Administratora (art. 6 ust. 1 lit. f RODO) obejmują: obsługę bieżącej komunikacji i zapytań handlowych B2B, zapewnienie bezpieczeństwa i integralności platformy, przeciwdziałanie oszustwom i nadużyciom, rozliczanie atrybucji przekierowań z partnerami oraz ustalanie, dochodzenie lub obronę przed ewentualnymi roszczeniami prawnymi."
+        "content": "Prawnie uzasadnione interesy realizowane przez Administratora (art. 6 ust. 1 lit. f RODO) obejmują: obsługę bieżącej komunikacji i zapytań handlowych B2B, zapewnienie bezpieczeństwa i integralności platformy, przeciwdziałanie oszustwom i nadużyciom, obsługę bezpiecznych przekierowań technicznych oraz ustalanie, dochodzenie lub obronę przed ewentualnymi roszczeniami prawnymi."
       },
       "recipients": {
         "title": "8. Odbiorcy danych",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Okres przechowywania danych (retencja)",
-        "content": "Dane osobowe i identyfikatory sesyjne podlegają zróżnicowanym zasadom przechowywania: (1) Identyfikator sesji (plik cookie 'session_hash') przechowywany jest wyłącznie lokalnie w przeglądarce na czas trwania sesji i wygasa po jej zamknięciu; (2) Dane w systemach backendowych przetwarzane są zgodnie z ustalonymi kryteriami retencji – dane zapytań ofertowych (RFQ) są przechowywane co do zasady przez okres do 12 miesięcy od ostatniej aktywności, dane transakcyjne zamówień (PII platformowe) do 3 lat w celach obrony przed roszczeniami prawnymi, logi bezpieczeństwa i atrybucji do 12 miesięcy, a dokumentacja księgowa przez okres wymagany przepisami podatkowymi. Retencja danych bazodanowych jest zarządzana zgodnie z wewnętrzną polityką retencji."
+        "content": "Dane osobowe i identyfikatory sesyjne podlegają zróżnicowanym zasadom przechowywania: (1) Identyfikator sesji (plik cookie 'session_hash') przechowywany jest wyłącznie lokalnie w przeglądarce na czas trwania sesji i wygasa po jej zamknięciu; (2) Dane w systemach backendowych przetwarzane są zgodnie z ustalonymi kryteriami retencji – dane zapytań ofertowych (RFQ) są przechowywane co do zasady przez okres do 12 miesięcy od ostatniej aktywności, dane transakcyjne zamówień (PII platformowe) do 3 lat w celach obrony przed roszczeniami prawnymi, historyczne logi techniczne i bezpieczeństwa do 12 miesięcy, a dokumentacja księgowa przez okres wymagany przepisami podatkowymi. Retencja danych bazodanowych jest zarządzana zgodnie z wewnętrzną polityką retencji."
       },
       "rights": {
         "title": "11. Prawa osób, których dane dotyczą",

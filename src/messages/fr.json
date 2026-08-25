@@ -915,7 +915,7 @@
         "rfq": "Gestion des demandes de devis (RFQ) et préparation d'offres – base légale : art. 6(1)(b) RGPD (pour les entrepreneurs individuels parties à la demande) ou art. 6(1)(f) RGPD (intérêt légitime pour les représentants/salariés) ;",
         "checkout": "Traitement des commandes B2B et vérification des disponibilités – base légale : art. 6(1)(b) RGPD ou art. 6(1)(f) RGPD ;",
         "auth": "Authentification et gestion des accès administratifs – base légale : art. 6(1)(f) RGPD (sécurité et contrôle d'accès) ;",
-        "attribution": "Attribution des redirections externes et calcul des commissions partenaires – base légale : art. 6(1)(f) RGPD (intérêt légitime basé sur des identifiants pseudonymisés) ;",
+        "attribution": "Redirection vers les offres externes – le service assure des redirections techniques sécurisées (/go/[id]) ; le traçage actif de l'attribution basé sur la session est actuellement désactivé et ne génère aucun cookie ni profilage ;",
         "cart": "Maintien de la session active du panier – base légale : art. 6(1)(b) et (f) RGPD et art. 399(3) de la loi sur les communications électroniques (cookies de session strictement nécessaires) ;",
         "partners": "Gestion des relations partenaires B2B et vérification KYB – base légale : art. 6(1)(f) RGPD et art. 6(1)(b) RGPD."
       },
@@ -925,7 +925,7 @@
       },
       "legitimateInterests": {
         "title": "7. Intérêts légitimes du Responsable",
-        "content": "Les intérêts légitimes poursuivis par le Responsable (art. 6(1)(f) RGPD) comprennent : la gestion des échanges commerciaux B2B, la sécurité et l'intégrité de la plateforme, la prévention des fraudes, le suivi de l'attribution avec les partenaires et la défense de droits en justice."
+        "content": "Les intérêts légitimes poursuivis par le Responsable du traitement (art. 6, par. 1, point f du RGPD) comprennent : la gestion des communications et demandes commerciales B2B courantes, la garantie de la sécurité et de l'intégrité de la plateforme, la prévention des fraudes, la gestion des redirections techniques sécurisées ainsi que la constatation, l'exercice ou la défense de droits en justice."
       },
       "recipients": {
         "title": "8. Destinataires des données",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Durée de conservation des données",
-        "content": "Les données personnelles et identifiants de session sont soumis à des règles de conservation distinctes : (1) L'identifiant de session (cookie 'session_hash') est conservé uniquement dans le navigateur pendant la durée de la session et expire à sa fermeture ; (2) Les données des systèmes dorsaux (backend) sont conservées selon des critères établis – demandes RFQ généralement jusqu'à 12 mois après la dernière activité, données de commande (PII plateforme) jusqu'à 3 ans pour la défense des droits, journaux de sécurité et d'attribution jusqu'à 12 mois, et pièces comptables selon les durées légales obligatoires. La rétention des données en base est gérée selon notre politique interne de conservation."
+        "content": "Les données personnelles et identifiants de session sont soumis à des règles de conservation distinctes : (1) L'identifiant de session (cookie 'session_hash') est conservé uniquement dans le navigateur pendant la durée de la session et expire à sa fermeture ; (2) Les données des systèmes dorsaux (backend) sont conservées selon des critères établis – demandes RFQ généralement jusqu'à 12 mois après la dernière activité, données de commande (PII plateforme) jusqu'à 3 ans pour la défense des droits, journaux historiques techniques et de sécurité jusqu'à 12 mois, et pièces comptables selon les durées légales obligatoires. La rétention des données en base est gérée selon notre politique interne de conservation."
       },
       "rights": {
         "title": "11. Droits des personnes concernées",

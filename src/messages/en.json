@@ -915,7 +915,7 @@
         "rfq": "Handling requests for quote (RFQ) and preparing commercial offers – legal basis: Art. 6(1)(b) GDPR (for sole proprietorships who are party to the request) or Art. 6(1)(f) GDPR (legitimate interest of the Controller and partner in handling B2B commercial communication for employees/representatives);",
         "checkout": "Processing B2B orders and verifying availability – legal basis: Art. 6(1)(b) GDPR (pre-contractual steps for sole proprietors) or Art. 6(1)(f) GDPR (business transaction handling for representatives);",
         "auth": "Authentication and administrative access management – legal basis: Art. 6(1)(f) GDPR (security and access control);",
-        "attribution": "Outbound click attribution and partner commission settlement – legal basis: Art. 6(1)(f) GDPR (legitimate interest in commission tracking and fraud prevention, based on pseudonymized session identifiers);",
+        "attribution": "Outbound offer redirection – the service handles safe technical redirections (/go/[id]); active session-based attribution tracking is currently disabled and does not generate cookies or perform profiling;",
         "cart": "Maintaining the active shopping cart session – legal basis: Art. 6(1)(b) and (f) GDPR and Art. 399(3) of the Electronic Communications Law (strictly necessary session cookies);",
         "partners": "Managing B2B partner relationships and KYB verification – legal basis: Art. 6(1)(f) GDPR and Art. 6(1)(b) GDPR (in connection with partner agreements)."
       },
@@ -925,7 +925,7 @@
       },
       "legitimateInterests": {
         "title": "7. Legitimate Interests of the Controller",
-        "content": "The legitimate interests pursued by the Controller (Art. 6(1)(f) GDPR) include: managing ongoing B2B business communications and inquiries, ensuring platform security and integrity, preventing fraud and abuse, settling outbound referral attribution with partners, and establishing, pursuing, or defending legal claims."
+        "content": "Legitimate interests pursued by the Controller (Art. 6(1)(f) GDPR) include: handling ongoing B2B commercial communications and inquiries, ensuring platform security and integrity, fraud prevention, operating secure technical redirects, and establishing, exercising, or defending legal claims."
       },
       "recipients": {
         "title": "8. Data Recipients",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Data Retention Periods",
-        "content": "Personal data and session identifiers are subject to distinct retention principles: (1) The session identifier ('session_hash' cookie) is stored strictly in the browser for the duration of the active session and expires upon closing the browser; (2) Backend datasets are retained in accordance with established retention criteria – RFQ inquiries generally up to 12 months from last activity, order records (platform PII) up to 3 years for legal claim defense, security and attribution logs up to 12 months, and accounting records for statutory tax periods. Database data retention is managed under our internal data retention policy."
+        "content": "Personal data and session identifiers are subject to distinct retention principles: (1) The session identifier ('session_hash' cookie) is stored strictly in the browser for the duration of the active session and expires upon closing the browser; (2) Backend datasets are retained in accordance with established retention criteria – RFQ inquiries generally up to 12 months from last activity, order records (platform PII) up to 3 years for legal claim defense, historical technical and security logs up to 12 months, and accounting records for statutory tax periods. Database data retention is managed under our internal data retention policy."
       },
       "rights": {
         "title": "11. Data Subject Rights",
