@@ -66,6 +66,7 @@ test("Privacy Compliance - 7 Locales Dictionary Schema Parity & Art. 13 Keys", (
     assert.ok(content.form.messagePrivacyHint, "Locale " + loc + " missing form.messagePrivacyHint");
     assert.ok(content.footer.privacyPolicy, "Locale " + loc + " missing footer.privacyPolicy");
     assert.ok(content.privacy, "Locale " + loc + " missing privacy object");
+    assert.ok(content.privacy.tableOfContents, "Locale " + loc + " missing privacy.tableOfContents");
     assert.ok(content.privacy.sections, "Locale " + loc + " missing privacy.sections");
     assert.strictEqual(Object.keys(content.privacy.sections).length, 16, "Locale " + loc + " must have exactly 16 privacy sections");
   }
@@ -77,6 +78,7 @@ test("Privacy Compliance - Session Hash Security Hardening Static Audit", () => 
 
   assert.ok(code.includes("export async function getExistingSessionHash"), "Must export getExistingSessionHash");
   assert.ok(code.includes("export async function getOrCreateSessionHash"), "Must export getOrCreateSessionHash");
+  assert.ok(!code.includes("getSessionHash"), "Must not export or contain deprecated getSessionHash");
   assert.ok(!code.includes("maxAge"), "Must not specify maxAge for session cookie");
   assert.ok(!code.includes("expires"), "Must not specify expires for session cookie");
   assert.ok(code.includes("secure: true"), "Must specify secure: true");
@@ -84,18 +86,60 @@ test("Privacy Compliance - Session Hash Security Hardening Static Audit", () => 
   assert.ok(code.includes("httpOnly: true"), "Must specify httpOnly: true");
 });
 
-test("Privacy Compliance - Lazy Session Hash Usage Static Audit", () => {
+test("Privacy Compliance - Outbound Route Must NOT Create Cart Cookie", () => {
+  const outboundRouteFile = path.join(process.cwd(), "src/app/go/[id]/route.ts");
+  const code = fs.readFileSync(outboundRouteFile, "utf8");
+
+  assert.ok(!code.includes("getOrCreateSessionHash"), "Outbound route must NOT call getOrCreateSessionHash");
+  assert.ok(!code.includes("getSessionHash"), "Outbound route must NOT call deprecated getSessionHash");
+  assert.ok(code.includes("getExistingSessionHash"), "Outbound route must only use getExistingSessionHash");
+});
+
+test("Privacy Compliance - Lazy Session Hash Action Usage Static Audit", () => {
   const actionsFile = path.join(process.cwd(), "src/app/actions.ts");
   const code = fs.readFileSync(actionsFile, "utf8");
 
-  const getCartCountFn = code.substring(code.indexOf("export async function getCartCount"), code.indexOf("export async function getCartItems"));
-  assert.ok(getCartCountFn.includes("getExistingSessionHash()"), "getCartCount must use getExistingSessionHash");
-  assert.ok(!getCartCountFn.includes("getOrCreateSessionHash"), "getCartCount must NOT use getOrCreateSessionHash");
+  function extractFunctionBody(fnName: string): string {
+    const fnStart = code.indexOf(`export async function ${fnName}`);
+    assert.ok(fnStart !== -1, `Function ${fnName} must exist in src/app/actions.ts`);
+    const openBrace = code.indexOf("{", fnStart);
+    assert.ok(openBrace !== -1, `Opening brace for ${fnName} not found`);
 
-  const getCartItemsFn = code.substring(code.indexOf("export async function getCartItems"), code.indexOf("export async function addToCart"));
-  assert.ok(getCartItemsFn.includes("getExistingSessionHash()"), "getCartItems must use getExistingSessionHash");
-  assert.ok(!getCartItemsFn.includes("getOrCreateSessionHash"), "getCartItems must NOT use getOrCreateSessionHash");
+    // Find matching closing brace
+    let depth = 1;
+    let index = openBrace + 1;
+    while (depth > 0 && index < code.length) {
+      if (code[index] === "{") depth++;
+      else if (code[index] === "}") depth--;
+      index++;
+    }
+    return code.substring(openBrace, index);
+  }
 
-  const addToCartFn = code.substring(code.indexOf("export async function addToCart"), code.indexOf("export async function removeFromCart"));
-  assert.ok(addToCartFn.includes("getOrCreateSessionHash()"), "addToCart must use getOrCreateSessionHash");
+  const getCartCountBody = extractFunctionBody("getCartCount");
+  assert.ok(getCartCountBody.includes("getExistingSessionHash()"), "getCartCount must use getExistingSessionHash");
+  assert.ok(!getCartCountBody.includes("getOrCreateSessionHash"), "getCartCount must NOT use getOrCreateSessionHash");
+
+  const getCartItemsBody = extractFunctionBody("getCartItems");
+  assert.ok(getCartItemsBody.includes("getExistingSessionHash()"), "getCartItems must use getExistingSessionHash");
+  assert.ok(!getCartItemsBody.includes("getOrCreateSessionHash"), "getCartItems must NOT use getOrCreateSessionHash");
+
+  const addToCartBody = extractFunctionBody("addToCart");
+  assert.ok(addToCartBody.includes("getOrCreateSessionHash()"), "addToCart must use getOrCreateSessionHash");
+
+  const removeFromCartBody = extractFunctionBody("removeFromCart");
+  assert.ok(removeFromCartBody.includes("getExistingSessionHash()"), "removeFromCart must use getExistingSessionHash");
+  assert.ok(!removeFromCartBody.includes("getOrCreateSessionHash"), "removeFromCart must NOT use getOrCreateSessionHash");
+
+  const updateCartQuantityBody = extractFunctionBody("updateCartQuantity");
+  assert.ok(updateCartQuantityBody.includes("getExistingSessionHash()"), "updateCartQuantity must use getExistingSessionHash");
+  assert.ok(!updateCartQuantityBody.includes("getOrCreateSessionHash"), "updateCartQuantity must NOT use getOrCreateSessionHash");
+
+  const clearCartBody = extractFunctionBody("clearCart");
+  assert.ok(clearCartBody.includes("getExistingSessionHash()"), "clearCart must use getExistingSessionHash");
+  assert.ok(!clearCartBody.includes("getOrCreateSessionHash"), "clearCart must NOT use getOrCreateSessionHash");
+
+  const submitCheckoutBody = extractFunctionBody("submitCheckout");
+  assert.ok(submitCheckoutBody.includes("getExistingSessionHash()"), "submitCheckout must use getExistingSessionHash");
+  assert.ok(!submitCheckoutBody.includes("getOrCreateSessionHash"), "submitCheckout must NOT use getOrCreateSessionHash");
 });

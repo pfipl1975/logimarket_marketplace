@@ -13,7 +13,7 @@ import {
   recordOutboundClick,
   isValidOutboundTrackingSecret
 } from "@/lib/outbound/outbound-core";
-import { getSessionHash } from "@/lib/session/session-hash";
+import { getExistingSessionHash } from "@/lib/session/session-hash";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -74,7 +74,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!isValidOutboundTrackingSecret(secret)) {
       console.log("[outbound] stage=tracking_config result=skipped");
     } else {
-      sessionHash = await getSessionHash();
+      sessionHash = await getExistingSessionHash();
       const rawIp = extractClientIp(request.headers);
       ipHash = hashClientIp(rawIp, secret);
     }

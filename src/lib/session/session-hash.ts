@@ -22,10 +22,3 @@ export async function getOrCreateSessionHash(): Promise<string> {
 
   return hash;
 }
-
-/**
- * @deprecated Use getOrCreateSessionHash() for mutations or getExistingSessionHash() for reads.
- */
-export async function getSessionHash(): Promise<string> {
-  return getOrCreateSessionHash();
-}

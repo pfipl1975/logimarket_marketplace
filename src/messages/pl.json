@@ -305,8 +305,8 @@
   "rfq": {
     "title": "Zapytanie o wycenę (RFQ)",
     "successTitle": "Zapytanie wysłane pomyślnie!",
-    "successDescription": "Partner przygotuje wycenę B2B i skontaktuje się z Tobą.",
-    "descriptionSuffix": "Zapytanie trafi bezpośrednio do partnera.",
+    "successDescription": "Zapytanie zostało zarejestrowane. Po weryfikacji i przekazaniu do właściwego Partnera otrzymasz odpowiedź handlową.",
+    "descriptionSuffix": "Wycena i warunki handlowe B2B.",
     "pending": "Wysyłanie...",
     "messagePlaceholder": "Liczba sztuk, termin, dodatkowe wymagania...",
     "art13Notice": "Dane z formularza RFQ przetwarzamy w celu obsługi zapytania i – gdy funkcja przekazywania jest aktywna – przekazania ich wybranemu Partnerowi do przygotowania odpowiedzi handlowej. Szczegóły określa",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Okres przechowywania danych (retencja)",
-        "content": "Dane osobowe przechowywane są przez okresy uzasadnione celami przetwarzania: dane koszyka – wyłącznie na czas trwania sesji przeglądarki; dane zapytań RFQ – co do zasady przez okres do 12 miesięcy od ostatniej aktywności; dane zamówień (PII platformowe) – do 3 lat dla celów obsługi ewentualnych roszczeń cywilnoprawnych; logi bezpieczeństwa i dane atrybucji – do 12 miesięcy; dane księgowe i rozliczeniowe – przez okres wymagany powszechnie obowiązującymi przepisami prawa podatkowego i rachunkowego."
+        "content": "Dane osobowe i identyfikatory sesyjne podlegają zróżnicowanym zasadom przechowywania: (1) Identyfikator sesji (plik cookie 'session_hash') przechowywany jest wyłącznie lokalnie w przeglądarce na czas trwania sesji i wygasa po jej zamknięciu; (2) Dane w systemach backendowych przetwarzane są zgodnie z ustalonymi kryteriami retencji – dane zapytań ofertowych (RFQ) są przechowywane co do zasady przez okres do 12 miesięcy od ostatniej aktywności, dane transakcyjne zamówień (PII platformowe) do 3 lat w celach obrony przed roszczeniami prawnymi, logi bezpieczeństwa i atrybucji do 12 miesięcy, a dokumentacja księgowa przez okres wymagany przepisami podatkowymi. Retencja danych bazodanowych jest zarządzana zgodnie z wewnętrzną polityką retencji."
       },
       "rights": {
         "title": "11. Prawa osób, których dane dotyczą",
@@ -963,6 +963,7 @@
         "title": "16. Zmiany Polityki Prywatności",
         "content": "Administrator zastrzega sobie prawo do aktualizacji niniejszej Polityki Prywatności w przypadku zmian w prawie, architekturze technicznej platformy lub rozszerzenia zakresu świadczonych usług. Aktualna wersja dokumentu jest zawsze publikowana pod adresem /polityka-prywatnosci."
       }
-    }
+    },
+    "tableOfContents": "Spis treści"
   }
 }

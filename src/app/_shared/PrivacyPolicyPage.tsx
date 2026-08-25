@@ -5,8 +5,6 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomePath, getPrivacyPolicyLocaleLinks, getPrivacyPolicyPath } from "@/lib/i18n/paths";
-import { absoluteUrl } from "@/lib/seo/urls";
-import { JsonLdScript, createBreadcrumbListJsonLd } from "@/lib/seo/json-ld";
 import type { Locale } from "@/lib/i18n/types";
 
 interface PrivacyPolicyPageProps {
@@ -17,12 +15,6 @@ export async function PrivacyPolicyPage({ locale }: PrivacyPolicyPageProps) {
   const dict = await getDictionary(locale);
   const homePath = getHomePath(locale);
   const privacyPath = getPrivacyPolicyPath(locale);
-  const canonicalUrl = absoluteUrl(privacyPath);
-
-  const breadcrumbJsonLd = createBreadcrumbListJsonLd([
-    { name: "LogiMarket", url: absoluteUrl(homePath) },
-    { name: dict.privacy.breadcrumbs, url: canonicalUrl },
-  ]);
 
   const p = dict.privacy;
   const s = p.sections;
@@ -48,8 +40,6 @@ export async function PrivacyPolicyPage({ locale }: PrivacyPolicyPageProps) {
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
-      <JsonLdScript data={breadcrumbJsonLd} />
-
       <SiteHeader
         locale={locale}
         languageLinks={getPrivacyPolicyLocaleLinks()}
@@ -71,28 +61,28 @@ export async function PrivacyPolicyPage({ locale }: PrivacyPolicyPageProps) {
       <main className="flex-1 py-10">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           {/* Header Banner */}
-          <div className="rounded-xl border border-border bg-white p-8 shadow-sm">
-            <div className="flex items-center gap-3 text-brand-teal">
-              <Shield className="h-7 w-7" />
+          <div className="border border-[#d9dde2] bg-white p-6 md:p-8">
+            <div className="flex items-center gap-2.5 text-brand-teal">
+              <Shield className="h-6 w-6" />
               <span className="text-xs font-bold uppercase tracking-wider">{p.tagline}</span>
             </div>
-            <h1 className="mt-3 text-3xl font-extrabold tracking-tight text-brand-navy sm:text-4xl">
+            <h1 className="mt-3 text-2xl font-extrabold tracking-tight text-brand-navy sm:text-3xl">
               {p.title}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">{p.lastUpdated}</p>
+            <p className="mt-2 text-xs text-muted-foreground">{p.lastUpdated}</p>
           </div>
 
           {/* Quick Table of Contents */}
-          <div className="mt-8 rounded-xl border border-border bg-[#f8f9fa] p-6">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-brand-navy">
-              Spis treści / Table of contents
+          <div className="mt-6 border border-[#d9dde2] bg-[#f8f9fa] p-5">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-brand-navy">
+              {p.tableOfContents}
             </h2>
-            <nav className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 text-sm">
+            <nav className="mt-3 grid grid-cols-1 gap-1.5 sm:grid-cols-2 text-xs">
               {tocItems.map((item) => (
                 <a
                   key={item.id}
                   href={`#${item.id}`}
-                  className="text-brand-teal hover:text-brand-navy hover:underline transition-colors line-clamp-1"
+                  className="text-brand-teal hover:text-brand-navy hover:underline transition-colors line-clamp-1 py-0.5"
                 >
                   {item.label}
                 </a>
@@ -101,126 +91,126 @@ export async function PrivacyPolicyPage({ locale }: PrivacyPolicyPageProps) {
           </div>
 
           {/* Policy Sections */}
-          <div className="mt-8 space-y-8">
+          <div className="mt-6 space-y-6">
             {/* 1. Admin */}
-            <section id="admin" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.admin.title}</h2>
+            <section id="admin" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.admin.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.admin.content}</p>
             </section>
 
             {/* 2. Contact */}
-            <section id="contact" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.contact.title}</h2>
+            <section id="contact" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.contact.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.contact.content}</p>
             </section>
 
             {/* 3. Scope */}
-            <section id="scope" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.scope.title}</h2>
+            <section id="scope" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.scope.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.scope.content}</p>
             </section>
 
             {/* 4. Categories */}
-            <section id="categories" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.categories.title}</h2>
+            <section id="categories" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.categories.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.categories.content}</p>
             </section>
 
             {/* 5. Purposes */}
-            <section id="purposes" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.purposes.title}</h2>
+            <section id="purposes" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.purposes.title}</h2>
               <p className="mt-3 text-sm font-medium text-brand-navy">{s.purposes.intro}</p>
               <ul className="mt-3 space-y-2 text-sm leading-relaxed text-[#2c3e50]">
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
                   <span>{s.purposes.rfq}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
                   <span>{s.purposes.checkout}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
                   <span>{s.purposes.auth}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
                   <span>{s.purposes.attribution}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
                   <span>{s.purposes.cart}</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
+                  <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-brand-teal" />
                   <span>{s.purposes.partners}</span>
                 </li>
               </ul>
             </section>
 
             {/* 6. Legal Bases Split */}
-            <section id="legal-bases-split" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.legalBasesSplit.title}</h2>
+            <section id="legal-bases-split" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.legalBasesSplit.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.legalBasesSplit.content}</p>
             </section>
 
             {/* 7. Legitimate Interests */}
-            <section id="legitimate-interests" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.legitimateInterests.title}</h2>
+            <section id="legitimate-interests" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.legitimateInterests.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.legitimateInterests.content}</p>
             </section>
 
             {/* 8. Recipients */}
-            <section id="recipients" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.recipients.title}</h2>
+            <section id="recipients" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.recipients.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.recipients.content}</p>
             </section>
 
             {/* 9. Transfers */}
-            <section id="transfers" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.transfers.title}</h2>
+            <section id="transfers" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.transfers.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.transfers.content}</p>
             </section>
 
             {/* 10. Retention */}
-            <section id="retention" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.retention.title}</h2>
+            <section id="retention" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.retention.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.retention.content}</p>
             </section>
 
             {/* 11. Rights */}
-            <section id="rights" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.rights.title}</h2>
+            <section id="rights" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.rights.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.rights.content}</p>
             </section>
 
             {/* 12. Complaint */}
-            <section id="complaint" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.complaint.title}</h2>
+            <section id="complaint" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.complaint.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.complaint.content}</p>
             </section>
 
             {/* 13. Voluntary */}
-            <section id="voluntary" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.voluntary.title}</h2>
+            <section id="voluntary" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.voluntary.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.voluntary.content}</p>
             </section>
 
             {/* 14. Automated Decision */}
-            <section id="automated-decision" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.automatedDecision.title}</h2>
+            <section id="automated-decision" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.automatedDecision.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.automatedDecision.content}</p>
             </section>
 
             {/* 15. Cookies */}
-            <section id="cookies" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.cookies.title}</h2>
+            <section id="cookies" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.cookies.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.cookies.content}</p>
             </section>
 
             {/* 16. Updates */}
-            <section id="updates" className="scroll-mt-24 rounded-xl border border-border bg-white p-6 shadow-sm">
-              <h2 className="text-xl font-bold text-brand-navy">{s.updates.title}</h2>
+            <section id="updates" className="scroll-mt-24 border border-[#d9dde2] bg-white p-6">
+              <h2 className="text-lg font-bold text-brand-navy">{s.updates.title}</h2>
               <p className="mt-3 text-sm leading-relaxed text-[#2c3e50]">{s.updates.content}</p>
             </section>
           </div>

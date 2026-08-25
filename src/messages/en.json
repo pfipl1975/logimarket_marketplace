@@ -305,8 +305,8 @@
   "rfq": {
     "title": "Request for quote (RFQ)",
     "successTitle": "Inquiry sent successfully!",
-    "successDescription": "The partner will prepare a B2B quote and contact you.",
-    "descriptionSuffix": "The inquiry will go directly to the partner.",
+    "successDescription": "Your request has been registered. After verification and routing to the appropriate Partner, you will receive a commercial response.",
+    "descriptionSuffix": "B2B inquiry processing and quote preparation.",
     "pending": "Sending...",
     "messagePlaceholder": "Quantity, deadline, additional requirements...",
     "art13Notice": "We process RFQ form data to handle your inquiry and – when routing is active – transfer it to the selected Partner to prepare a commercial quote. Details are specified in our",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Data Retention Periods",
-        "content": "Personal data are retained for periods justified by the processing purposes: cart data – exclusively for the duration of the browser session; RFQ inquiries – generally up to 12 months from the last activity; order records (platform PII) – up to 3 years for handling potential civil claims; security logs and attribution data – up to 12 months; accounting and tax records – for the statutory periods required by applicable tax and accounting laws."
+        "content": "Personal data and session identifiers are subject to distinct retention principles: (1) The session identifier ('session_hash' cookie) is stored strictly in the browser for the duration of the active session and expires upon closing the browser; (2) Backend datasets are retained in accordance with established retention criteria – RFQ inquiries generally up to 12 months from last activity, order records (platform PII) up to 3 years for legal claim defense, security and attribution logs up to 12 months, and accounting records for statutory tax periods. Database data retention is managed under our internal data retention policy."
       },
       "rights": {
         "title": "11. Data Subject Rights",
@@ -963,6 +963,7 @@
         "title": "16. Updates to the Privacy Policy",
         "content": "The Controller reserves the right to update this Privacy Policy in the event of changes in legislation, technical architecture of the platform, or expansion of services. The current version of the document is always published at /polityka-prywatnosci."
       }
-    }
+    },
+    "tableOfContents": "Table of Contents"
   }
 }

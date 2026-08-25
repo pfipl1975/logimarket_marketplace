@@ -305,8 +305,8 @@
   "rfq": {
     "title": "Solicitud de presupuesto (RFQ)",
     "successTitle": "¡Solicitud enviada correctamente!",
-    "successDescription": "El socio preparará un presupuesto B2B y se pondrá en contacto con usted.",
-    "descriptionSuffix": "La solicitud se enviará directamente al socio.",
+    "successDescription": "Su solicitud ha sido registrada. Tras la verificación y transferencia al Socio correspondiente, recibirá una respuesta comercial.",
+    "descriptionSuffix": "Tramitación de consulta B2B y elaboración de presupuesto.",
     "pending": "Enviando...",
     "messagePlaceholder": "Cantidad, fecha de entrega, requisitos adicionales...",
     "art13Notice": "Tratamos los datos del formulario RFQ para gestionar su consulta y – cuando el enrutamiento esté activo – transferirlos al Socio seleccionado para preparar una cotización. Detalles en nuestra",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Plazos de conservación de datos",
-        "content": "Los datos se conservan durante los plazos justificados por las finalidades: carrito – duración de la sesión del navegador; solicitudes RFQ – generalmente hasta 12 meses tras la última actividad; pedidos (PII de plataforma) – hasta 3 años para la gestión de reclamaciones; registros de seguridad – hasta 12 meses; datos contables – según los plazos legales obligatorios."
+        "content": "Los datos personales y los identificadores de sesión se rigen por principios de conservación diferenciados: (1) El identificador de sesión (cookie 'session_hash') se almacena estrictamente en el navegador durante la sesión activa y caduca al cerrarlo; (2) Los registros en los sistemas de backend se conservan conforme a criterios establecidos – solicitudes RFQ generalmente hasta 12 meses tras la última actividad, registros de pedidos (PII de plataforma) hasta 3 años para la defensa legal, registros de seguridad y atribución hasta 12 meses, y documentación contable durante los plazos fiscales obligatorios. La retención de datos en bases de datos se gestiona según nuestra política interna de conservación."
       },
       "rights": {
         "title": "11. Derechos de los interesados",
@@ -963,6 +963,7 @@
         "title": "16. Modificaciones de la política de privacidad",
         "content": "El Responsable se reserva el derecho de actualizar esta política ante cambios legales o técnicos. La versión vigente está siempre disponible en /polityka-prywatnosci."
       }
-    }
+    },
+    "tableOfContents": "Índice de contenidos"
   }
 }

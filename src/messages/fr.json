@@ -305,8 +305,8 @@
   "rfq": {
     "title": "Demande de devis (RFQ)",
     "successTitle": "Demande envoyée avec succès !",
-    "successDescription": "Le partenaire préparera un devis B2B et vous contactera.",
-    "descriptionSuffix": "La demande sera envoyée directement au partenaire.",
+    "successDescription": "Votre demande a été enregistrée. Après vérification et transmission au Partenaire concerné, vous recevrez une réponse commerciale.",
+    "descriptionSuffix": "Traitement de la demande B2B et préparation du devis.",
     "pending": "Envoi en cours...",
     "messagePlaceholder": "Quantité, délai, exigences supplémentaires...",
     "art13Notice": "Nous traitons les données du formulaire RFQ pour gérer votre demande et – lorsque le routage est actif – les transmettre au Partenaire sélectionné pour préparer une offre. Détails dans notre",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Durée de conservation des données",
-        "content": "Les données sont conservées pour les durées justifiées par les finalités : panier – durée de la session de navigation ; demandes RFQ – généralement jusqu'à 12 mois après la dernière activité ; commandes (PII plateforme) – jusqu'à 3 ans pour la gestion des réclamations ; logs de sécurité – jusqu'à 12 mois ; données comptables – selon les délais légaux obligatoires."
+        "content": "Les données personnelles et identifiants de session sont soumis à des règles de conservation distinctes : (1) L'identifiant de session (cookie 'session_hash') est conservé uniquement dans le navigateur pendant la durée de la session et expire à sa fermeture ; (2) Les données des systèmes dorsaux (backend) sont conservées selon des critères établis – demandes RFQ généralement jusqu'à 12 mois après la dernière activité, données de commande (PII plateforme) jusqu'à 3 ans pour la défense des droits, journaux de sécurité et d'attribution jusqu'à 12 mois, et pièces comptables selon les durées légales obligatoires. La rétention des données en base est gérée selon notre politique interne de conservation."
       },
       "rights": {
         "title": "11. Droits des personnes concernées",
@@ -963,6 +963,7 @@
         "title": "16. Modifications de la politique de confidentialité",
         "content": "Le Responsable se réserve le droit de mettre à jour cette politique en cas d'évolutions légales ou techniques. La version en vigueur est toujours accessible sur /polityka-prywatnosci."
       }
-    }
+    },
+    "tableOfContents": "Table des matières"
   }
 }

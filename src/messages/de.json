@@ -305,8 +305,8 @@
   "rfq": {
     "title": "Angebotsanfrage (RFQ)",
     "successTitle": "Anfrage erfolgreich gesendet!",
-    "successDescription": "Der Partner bereitet ein B2B-Angebot vor und kontaktiert Sie.",
-    "descriptionSuffix": "Die Anfrage wird direkt an den Partner weitergeleitet.",
+    "successDescription": "Ihre Anfrage wurde registriert. Nach Prüfung und Weiterleitung an den entsprechenden Partner erhalten Sie ein Angebot.",
+    "descriptionSuffix": "B2B-Anfragebearbeitung und Angebotserstellung.",
     "pending": "Wird gesendet...",
     "messagePlaceholder": "Stückzahl, Liefertermin, zusätzliche Anforderungen...",
     "art13Notice": "Wir verarbeiten die Daten aus dem RFQ-Formular zur Bearbeitung Ihrer Anfrage und – sofern die Weiterleitung aktiv ist – zur Übermittlung an den ausgewählten Partner zur Angebotserstellung. Details finden Sie in unserer",
@@ -937,7 +937,7 @@
       },
       "retention": {
         "title": "10. Speicherdauer (Aufbewahrung)",
-        "content": "Personenbezogene Daten werden für die durch die Zwecke gerechtfertigte Dauer gespeichert: Warenkorbdaten – nur für die Dauer der Browsersitzung; RFQ-Anfragen – in der Regel bis zu 12 Monate nach der letzten Aktivität; Bestelldaten (Plattform-PII) – bis zu 3 Jahre für zivilrechtliche Ansprüche; Sicherheits- und Zuordnungsdaten – bis zu 12 Monate; Buchhaltungsdaten – gemäß den gesetzlichen Aufbewahrungsfristen."
+        "content": "Personenbezogene Daten und Sitzungskennungen unterliegen unterschiedlichen Aufbewahrungsregeln: (1) Die Sitzungskennung ('session_hash'-Cookie) wird ausschließlich lokal im Browser für die Dauer der Sitzung gespeichert und erlischt beim Schließen des Browsers; (2) Backend-Datensätze werden nach festgelegten Kriterien aufbewahrt – RFQ-Preisanfragen in der Regel bis zu 12 Monate nach der letzten Aktivität, Bestelldaten (Plattform-PII) bis zu 3 Jahre zur Rechtsverteidigung, Sicherheits- und Zuordnungsdaten bis zu 12 Monate und Buchhaltungsdaten gemäß gesetzlichen Aufbewahrungsfristen. Die Datenaufbewahrung in Datenbanken wird gemäß unserer internen Aufbewahrungsrichtlinie gesteuert."
       },
       "rights": {
         "title": "11. Rechte der betroffenen Personen",
@@ -963,6 +963,7 @@
         "title": "16. Änderungen der Datenschutzerklärung",
         "content": "Der Verantwortliche behält sich das Recht vor, diese Erklärung bei gesetzlichen oder technischen Änderungen zu aktualisieren. Die aktuelle Version ist stets unter /polityka-prywatnosci verfügbar."
       }
-    }
+    },
+    "tableOfContents": "Inhaltsverzeichnis"
   }
 }
