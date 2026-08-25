@@ -11,6 +11,7 @@ import {
   getHomeLocaleLinks,
   getHomePath,
   getOfferPath,
+  getPrivacyPolicyPath,
 } from "@/lib/i18n/paths";
 import { HomepageSolutionsDiscovery } from "@/components/home/HomepageSolutionsDiscovery";
 import { ProductGroupTiles } from "@/components/home/ProductGroupTiles";
@@ -107,6 +108,7 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
     : dict.hero.title;
 
   const homePath = getHomePath(locale);
+  const privacyPolicyHref = getPrivacyPolicyPath(locale);
   const gridHref = `${homePath}?view=grid`;
   const listHref = `${homePath}?view=list`;
   const catalogHref = locale === "pl" ? "/katalog" : `/${locale}/katalog`;
@@ -250,6 +252,7 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
                 systemLabels={dict.system}
                 closeLabel={dict.common.close}
                 categoryLabels={categoryLabels}
+                privacyPolicyHref={privacyPolicyHref}
               />
             ))}
           </div>
@@ -274,6 +277,7 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
         systemLabels={dict.system}
         offerLabels={dict.offers}
         closeLabel={dict.common.close}
+        privacyPolicyHref={privacyPolicyHref}
       />
     </div>
   );

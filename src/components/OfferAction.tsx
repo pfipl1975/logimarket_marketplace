@@ -21,6 +21,7 @@ interface OfferActionProps {
   systemLabels: Dictionary["system"];
   closeLabel: Dictionary["common"]["close"];
   externalOfferLabel: string;
+  privacyPolicyHref: string;
   variant?: "card" | "detail";
 }
 
@@ -32,6 +33,7 @@ export function OfferAction({
   systemLabels,
   closeLabel,
   externalOfferLabel,
+  privacyPolicyHref,
   variant = "card",
 }: OfferActionProps) {
   const { addToCart } = useCart();
@@ -66,6 +68,7 @@ export function OfferAction({
         systemLabels={systemLabels}
         ctaLabels={ctaLabels}
         closeLabel={closeLabel}
+        privacyPolicyHref={privacyPolicyHref}
       />
     );
   }

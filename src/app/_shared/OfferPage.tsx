@@ -12,7 +12,7 @@ import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "@/components/OfferAction";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getCategoryFilterPath, getOfferLocaleLinks } from "@/lib/i18n/paths";
+import { getCategoryFilterPath, getOfferLocaleLinks, getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import {
   JsonLdScript,
   createOfferJsonLd,
@@ -37,6 +37,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
 
   const isEcommerce = offer.offerModel === "ecommerce";
   const isRfq = offer.offerModel === "rfq";
+  const privacyPolicyHref = getPrivacyPolicyPath(locale);
 
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const categoryLabel = getLocalizedCategoryLabel(
@@ -176,6 +177,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                   systemLabels={dict.system}
                   closeLabel={dict.common.close}
                   externalOfferLabel={dict.offers.externalOffer}
+                  privacyPolicyHref={privacyPolicyHref}
                   variant="detail"
                 />
               )}
@@ -245,6 +247,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
         systemLabels={dict.system}
         offerLabels={dict.offers}
         closeLabel={dict.common.close}
+        privacyPolicyHref={privacyPolicyHref}
       />
     </div>
   );

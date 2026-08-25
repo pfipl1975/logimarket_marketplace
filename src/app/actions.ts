@@ -43,7 +43,10 @@ import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
-import { getSessionHash } from "@/lib/session/session-hash";
+import {
+  getExistingSessionHash,
+  getOrCreateSessionHash,
+} from "@/lib/session/session-hash";
 import { CheckoutContactSchema } from "@/lib/checkout/contact-schema";
 import { executeCheckout } from "@/lib/checkout/checkout-core";
 import {
@@ -299,7 +302,10 @@ export type RfqActionResult =
 import type { AdminRfqMutationResult } from "@/lib/rfq/admin-core";
 
 export async function getCartItems(): Promise<CartItemWithOffer[]> {
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) {
+    return [];
+  }
   const items = await db
     .select({
       cartItem: cartItems,
@@ -326,7 +332,10 @@ export async function getCartItems(): Promise<CartItemWithOffer[]> {
 }
 
 export async function getCartCount(): Promise<number> {
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) {
+    return 0;
+  }
   const items = await db
     .select()
     .from(cartItems)
@@ -381,7 +390,7 @@ export async function addToCart(offerId: number, quantity = 1) {
     throw new Error("Oferta nie ma prawidłowej ceny.");
   }
 
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getOrCreateSessionHash();
   const existing = await db
     .select()
     .from(cartItems)
@@ -409,7 +418,8 @@ export async function addToCart(offerId: number, quantity = 1) {
 
 export async function removeFromCart(cartItemId: number) {
   "use server";
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) return;
   await db
     .delete(cartItems)
     .where(
@@ -423,7 +433,8 @@ export async function updateCartQuantity(cartItemId: number, quantity: number) {
   if (!isValidCheckoutQuantity(quantity)) {
     throw new Error("Nieprawidłowa ilość");
   }
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) return;
   await db
     .update(cartItems)
     .set({ quantity })
@@ -435,7 +446,8 @@ export async function updateCartQuantity(cartItemId: number, quantity: number) {
 
 export async function clearCart() {
   "use server";
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) return;
   await db.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
   revalidatePath("/");
 }
@@ -450,7 +462,10 @@ export async function submitCheckout(
     return { ok: false, code: "CHECKOUT_VALIDATION_ERROR" };
   }
 
-  const sessionHash = await getSessionHash();
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) {
+    return { ok: false, code: "CHECKOUT_CART_EMPTY" };
+  }
   const result = await executeCheckout(db, sessionHash, parsed.data);
 
   if (result.ok) {

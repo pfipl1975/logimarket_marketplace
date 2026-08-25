@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getHomePath } from "@/lib/i18n/paths";
+import { getHomePath, getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { JsonLdScript, createBreadcrumbListJsonLd } from "@/lib/seo/json-ld";
 import { defaultLocale } from "@/lib/i18n/config";
@@ -174,6 +174,7 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
         systemLabels={dict.system}
         offerLabels={dict.offers}
         closeLabel={dict.common.close}
+        privacyPolicyHref={getPrivacyPolicyPath(locale)}
       />
     </div>
   );

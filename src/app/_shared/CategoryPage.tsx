@@ -19,7 +19,7 @@ import {
   resolveCategoryIntro,
 } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getHomePath, getOfferPath } from "@/lib/i18n/paths";
+import { getHomePath, getOfferPath, getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import { absoluteUrl } from "@/lib/seo/urls";
 import {
   buildCategoryOfferQueryHref,
@@ -418,6 +418,7 @@ export async function CategoryPage({
   });
 
   const headings = blockHeadings[locale] || blockHeadings.pl;
+  const privacyPolicyHref = getPrivacyPolicyPath(locale);
   const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
   const hasNestedSubcategories = subcategories.some(
     (sub) => sub.children.length > 0,
@@ -832,6 +833,7 @@ export async function CategoryPage({
                     systemLabels={dict.system}
                     closeLabel={dict.common.close}
                     categoryLabels={localeBySlug || {}}
+                    privacyPolicyHref={privacyPolicyHref}
                   />
                 ))}
               </div>
@@ -849,6 +851,7 @@ export async function CategoryPage({
                     systemLabels={dict.system}
                     closeLabel={dict.common.close}
                     categoryLabels={localeBySlug || {}}
+                    privacyPolicyHref={privacyPolicyHref}
                   />
                 ))}
               </div>
@@ -963,6 +966,7 @@ export async function CategoryPage({
         systemLabels={dict.system}
         offerLabels={dict.offers}
         closeLabel={dict.common.close}
+        privacyPolicyHref={privacyPolicyHref}
       />
     </div>
   );

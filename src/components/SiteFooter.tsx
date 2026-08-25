@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import type { Locale } from "@/lib/i18n/config";
-import { getHomePath, getGlossaryPath } from "@/lib/i18n/paths";
+import { getHomePath, getGlossaryPath, getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface SiteFooterProps {
@@ -17,6 +17,7 @@ export function SiteFooter({
 }: SiteFooterProps) {
   const homeHref = getHomePath(locale);
   const glossaryHref = getGlossaryPath(locale);
+  const privacyHref = getPrivacyPolicyPath(locale);
 
   return (
     <footer className="mt-auto bg-brand-navy text-white/70">
@@ -39,6 +40,11 @@ export function SiteFooter({
                 </Link>
               </li>
             )}
+            <li>
+              <Link className="hover:text-white transition-colors" href={privacyHref}>
+                {footerLabels.privacyPolicy}
+              </Link>
+            </li>
           </ul>
         </div>
         <div>
@@ -50,8 +56,18 @@ export function SiteFooter({
         </div>
       </div>
       <div className="border-t border-white/10">
-        <div className="mx-auto max-w-7xl px-4 py-5 text-xs md:px-6">
-          &copy; {new Date().getFullYear()} {navLabels.portal} — {footerLabels.copyrightSuffix}
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-5 text-xs md:px-6">
+          <div>
+            &copy; {new Date().getFullYear()} {navLabels.portal} — {footerLabels.copyrightSuffix}
+          </div>
+          <div>
+            <Link
+              href={privacyHref}
+              className="text-xs text-[#5a6472] transition-colors hover:text-white"
+            >
+              {footerLabels.privacyPolicy}
+            </Link>
+          </div>
         </div>
       </div>
     </footer>

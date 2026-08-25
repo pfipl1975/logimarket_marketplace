@@ -16,7 +16,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
-import { getHomePath } from "@/lib/i18n/paths";
+import { getHomePath, getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import { locales, type Locale } from "@/lib/i18n/config";
 
 // Deterministic B2B intent order
@@ -433,6 +433,7 @@ export async function SolutionsIndexPage({ locale }: SolutionsIndexPageProps) {
         systemLabels={dict.system}
         offerLabels={dict.offers}
         closeLabel={dict.common.close}
+        privacyPolicyHref={getPrivacyPolicyPath(locale as Locale)}
       />
     </div>
   );

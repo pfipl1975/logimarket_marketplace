@@ -308,8 +308,9 @@
     "successDescription": "The partner will prepare a B2B quote and contact you.",
     "descriptionSuffix": "The inquiry will go directly to the partner.",
     "pending": "Sending...",
-    "consent": "By submitting the form, you agree to share your data with the partner.",
-    "messagePlaceholder": "Quantity, deadline, additional requirements..."
+    "messagePlaceholder": "Quantity, deadline, additional requirements...",
+    "art13Notice": "We process RFQ form data to handle your inquiry and – when routing is active – transfer it to the selected Partner to prepare a commercial quote. Details are specified in our",
+    "privacyPolicyLink": "Privacy Policy"
   },
   "cart": {
     "title": "Your cart",
@@ -326,8 +327,9 @@
     "successDescription": "Your B2B order has been saved. Our team will contact you.",
     "description": "Complete the form to submit an order. This is not an online transaction - our team will verify availability.",
     "pending": "Processing...",
-    "legalNote": "Submitting an order is not an online transaction. Our team will verify availability and contact you.",
-    "orderNotesPlaceholder": "Delivery date, address, additional requirements..."
+    "legalNote": "The data controller is the entity operating LogiMarket indicated in the Privacy Policy. We process data to handle orders and ensure platform security, and when routing is active – transfer it to the Seller to fulfill the transaction. Details:",
+    "orderNotesPlaceholder": "Delivery date, address, additional requirements...",
+    "privacyPolicyLink": "Privacy Policy"
   },
   "form": {
     "companyName": "Company name *",
@@ -336,14 +338,16 @@
     "phone": "Phone",
     "message": "Message",
     "orderNotes": "Order notes",
-    "validationError": "Check the required form fields."
+    "validationError": "Check the required form fields.",
+    "messagePrivacyHint": "Do not include special categories of personal data or information not needed to process your inquiry/order."
   },
   "footer": {
     "portal": "Portal",
     "partners": "For partners",
     "description": "B2B marketplace for warehouse equipment and supplies. An offer catalog connecting buyers with verified partners.",
     "partnerPrompt": "Want to list your products? Contact us:",
-    "copyrightSuffix": "Sales are handled directly by partners."
+    "copyrightSuffix": "Sales are handled directly by partners.",
+    "privacyPolicy": "Privacy Policy"
   },
   "system": {
     "offerNotFound": "Offer does not exist",
@@ -879,6 +883,86 @@
     },
     "errors": {
       "unavailable": "Dashboard is currently unavailable."
+    }
+  },
+  "privacy": {
+    "metaTitle": "Privacy Policy | LogiMarket B2B",
+    "metaDescription": "Privacy principles and personal data processing rules on the LogiMarket B2B platform. Information about the controller, legal bases, cookies, and user rights.",
+    "title": "Privacy Policy",
+    "lastUpdated": "Last updated: August 25, 2026",
+    "breadcrumbs": "Privacy Policy",
+    "tagline": "Personal Data Protection and GDPR",
+    "sections": {
+      "admin": {
+        "title": "1. Personal Data Controller",
+        "content": "The controller of personal data collected through the LogiMarket B2B platform (logimarket.pl / logimarket.eu) is PF CONSULTING Piotr Fiszer with its registered office at ul. Promienista 114/2, 60-142 Poznań, Poland, Tax ID (NIP): 7792017326."
+      },
+      "contact": {
+        "title": "2. Privacy Contact",
+        "content": "For matters relating to personal data protection and the exercise of data subject rights, you may contact the Controller via email at: kontakt@logimarket.pl or by post to the Controller's registered address. The Controller has not appointed a formal Data Protection Officer (DPO)."
+      },
+      "scope": {
+        "title": "3. Scope of the Policy",
+        "content": "This Privacy Policy sets out the rules for processing personal data of users, business clients, contact persons, and representatives of commercial partners using the LogiMarket B2B marketplace platform."
+      },
+      "categories": {
+        "title": "4. Categories of Processed Data",
+        "content": "We process data necessary for B2B operations: company details (company name, tax ID), representative and contact person details (full name, business email address, phone number), data contained in requests for quotation (RFQ) and B2B orders, message and note contents, as well as technical session identifiers and telemetry data necessary for the operation of the service."
+      },
+      "purposes": {
+        "title": "5. Purposes and Legal Bases for Data Processing",
+        "intro": "Personal data are processed for the following purposes:",
+        "rfq": "Handling requests for quote (RFQ) and preparing commercial offers – legal basis: Art. 6(1)(b) GDPR (for sole proprietorships who are party to the request) or Art. 6(1)(f) GDPR (legitimate interest of the Controller and partner in handling B2B commercial communication for employees/representatives);",
+        "checkout": "Processing B2B orders and verifying availability – legal basis: Art. 6(1)(b) GDPR (pre-contractual steps for sole proprietors) or Art. 6(1)(f) GDPR (business transaction handling for representatives);",
+        "auth": "Authentication and administrative access management – legal basis: Art. 6(1)(f) GDPR (security and access control);",
+        "attribution": "Outbound click attribution and partner commission settlement – legal basis: Art. 6(1)(f) GDPR (legitimate interest in commission tracking and fraud prevention, based on pseudonymized session identifiers);",
+        "cart": "Maintaining the active shopping cart session – legal basis: Art. 6(1)(b) and (f) GDPR and Art. 399(3) of the Electronic Communications Law (strictly necessary session cookies);",
+        "partners": "Managing B2B partner relationships and KYB verification – legal basis: Art. 6(1)(f) GDPR and Art. 6(1)(b) GDPR (in connection with partner agreements)."
+      },
+      "legalBasesSplit": {
+        "title": "6. Distinction of Legal Bases for Businesses and Representatives",
+        "content": "For natural persons conducting business as sole proprietors who are themselves party to an inquiry or order, the legal basis is Art. 6(1)(b) GDPR (necessity for the performance of a contract or to take steps prior to entering into a contract). For individuals representing legal entities or employees of third parties, the legal basis is Art. 6(1)(f) GDPR (legitimate interest in conducting B2B transactions)."
+      },
+      "legitimateInterests": {
+        "title": "7. Legitimate Interests of the Controller",
+        "content": "The legitimate interests pursued by the Controller (Art. 6(1)(f) GDPR) include: managing ongoing B2B business communications and inquiries, ensuring platform security and integrity, preventing fraud and abuse, settling outbound referral attribution with partners, and establishing, pursuing, or defending legal claims."
+      },
+      "recipients": {
+        "title": "8. Data Recipients",
+        "content": "Data may be disclosed to: (1) authorized personnel and contractors of the Controller; (2) IT and technical infrastructure service providers acting as data processors, including Supabase (with its primary database region in West EU / Ireland); (3) selected Partners and Sellers registered on the platform – solely when a user submits an RFQ or order concerning that Partner's offer and routing is active to fulfill the transaction."
+      },
+      "transfers": {
+        "title": "9. Transfers of Data Outside the European Economic Area (EEA)",
+        "content": "The primary database infrastructure of the platform is located in the European Economic Area (Ireland). Within the IT infrastructure vendor chain (including Supabase and sub-processors), data may be processed in third countries outside the EEA. Data transfers rely on appropriate legal mechanisms under Chapter V GDPR, in particular European Commission Standard Contractual Clauses (SCC 2021/914) and adequacy decisions."
+      },
+      "retention": {
+        "title": "10. Data Retention Periods",
+        "content": "Personal data are retained for periods justified by the processing purposes: cart data – exclusively for the duration of the browser session; RFQ inquiries – generally up to 12 months from the last activity; order records (platform PII) – up to 3 years for handling potential civil claims; security logs and attribution data – up to 12 months; accounting and tax records – for the statutory periods required by applicable tax and accounting laws."
+      },
+      "rights": {
+        "title": "11. Data Subject Rights",
+        "content": "Each data subject has the right to: access their data (Art. 15 GDPR), rectification (Art. 16 GDPR), erasure ('right to be forgotten', Art. 17 GDPR), restriction of processing (Art. 18 GDPR), data portability (Art. 20 GDPR), and the right to object to processing based on legitimate interest (Art. 21 GDPR). To exercise these rights, please contact: kontakt@logimarket.pl."
+      },
+      "complaint": {
+        "title": "12. Right to Lodge a Complaint with a Supervisory Authority",
+        "content": "Data subjects have the right to lodge a complaint with the competent supervisory authority – in Poland, the President of the Personal Data Protection Office (PUODO), ul. Stawki 2, 00-193 Warsaw – if they believe that the processing of their personal data breaches the GDPR."
+      },
+      "voluntary": {
+        "title": "13. Voluntary Nature of Providing Data",
+        "content": "Providing personal data in RFQ and B2B order forms is voluntary, but necessary to transmit an inquiry to a Partner or initiate the order process. Failure to provide data prevents the provision of these services."
+      },
+      "automatedDecision": {
+        "title": "14. Automated Decision-Making and Profiling",
+        "content": "LogiMarket does not apply automated decision-making producing legal effects concerning natural persons or profiling within the meaning of Art. 22 GDPR."
+      },
+      "cookies": {
+        "title": "15. Cookies and Session Technologies",
+        "content": "The LogiMarket platform uses only strictly necessary session cookies (session-only cookie 'session_hash') to maintain shopping cart state and ensure user session security. The cookie is automatically deleted when the browser is closed and is secured with HttpOnly, Secure, and SameSite=Lax flags. We do not use third-party marketing or tracking cookies in the current version of the service."
+      },
+      "updates": {
+        "title": "16. Updates to the Privacy Policy",
+        "content": "The Controller reserves the right to update this Privacy Policy in the event of changes in legislation, technical architecture of the platform, or expansion of services. The current version of the document is always published at /polityka-prywatnosci."
+      }
     }
   }
 }
