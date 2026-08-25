@@ -957,7 +957,7 @@
       },
       "cookies": {
         "title": "15. Cookie与会话技术",
-        "content": "LogiMarket仅使用严格必需的会话Cookie（'session_hash'）来维护购物车状态并保障用户会话安全。该Cookie在关闭浏览器时自动删除，并受HttpOnly、Secure及SameSite=Lax标志保护。当前版本不使用任何第三方营销或追踪Cookie。"
+        "content": "LogiMarket平台仅使用严格必要（strictly necessary）的技术Cookie：(1) 对于公开购物车，仅在将第一件商品加入购物车时生成会话标识符（'session_hash'），并在关闭浏览器时删除；(2) 对于需要身份验证的功能及管理后台，使用技术性身份验证和会话Cookie以维持安全的用户会话。本服务不使用任何营销、广告或第三方画像追踪Cookie。"
       },
       "updates": {
         "title": "16. 隐私政策的更新",

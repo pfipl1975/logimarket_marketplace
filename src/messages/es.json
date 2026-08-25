@@ -957,7 +957,7 @@
       },
       "cookies": {
         "title": "15. Cookies y tecnologías de sesión",
-        "content": "LogiMarket utiliza exclusivamente una cookie de sesión estrictamente necesaria ('session_hash') para gestionar el carrito y proteger la sesión. La cookie se elimina al cerrar el navegador y está protegida con las etiquetas HttpOnly, Secure y SameSite=Lax. Actualmente no utilizamos cookies de marketing o seguimiento de terceros."
+        "content": "La plataforma LogiMarket utiliza exclusivamente cookies estrictamente necesarias: (1) para el carrito de compra público, se genera un identificador de sesión ('session_hash') únicamente al añadir el primer producto al carrito y se elimina al cerrar el navegador; (2) para las funciones autenticadas y el panel de administración, se utilizan cookies técnicas de autenticación y sesión indispensables para mantener una sesión de usuario segura. El servicio no utiliza cookies de marketing, publicidad ni rastreadores de terceros para elaboración de perfiles."
       },
       "updates": {
         "title": "16. Modificaciones de la política de privacidad",

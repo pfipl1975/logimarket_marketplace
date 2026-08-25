@@ -957,7 +957,7 @@
       },
       "cookies": {
         "title": "15. Pliki cookies i technologie sesyjne",
-        "content": "Platforma LogiMarket wykorzystuje wyłącznie ściśle niezbędne pliki cookies sesyjne (session-only cookie 'session_hash') w celu utrzymania koszyka zakupowego i zapewnienia bezpieczeństwa sesji użytkownika. Plik cookie jest usuwany automatycznie po zamknięciu przeglądarki i zabezpieczony flagami HttpOnly, Secure oraz SameSite=Lax. W obecnej wersji serwisu nie stosujemy marketingowych ani śledzących plików cookies podmiotów trzecich."
+        "content": "Platforma LogiMarket stosuje wyłącznie technicznie niezbędne pliki cookies (strictly necessary cookies): (1) dla anonimowego koszyka zakupowego generowany jest identyfikator sesyjny 'session_hash', tworzony dopiero w momencie dodania pierwszego produktu do koszyka i usuwany po zamknięciu przeglądarki; (2) dla funkcji wymagających logowania i panelu administracyjnego wykorzystywane są techniczne cookies uwierzytelniające i sesyjne, niezbędne do utrzymania bezpiecznej sesji użytkownika. Serwis nie stosuje cookies marketingowych, reklamowych ani profilujących trackerów podmiotów trzecich."
       },
       "updates": {
         "title": "16. Zmiany Polityki Prywatności",

@@ -957,7 +957,7 @@
       },
       "cookies": {
         "title": "15. Cookies and Session Technologies",
-        "content": "The LogiMarket platform uses only strictly necessary session cookies (session-only cookie 'session_hash') to maintain shopping cart state and ensure user session security. The cookie is automatically deleted when the browser is closed and is secured with HttpOnly, Secure, and SameSite=Lax flags. We do not use third-party marketing or tracking cookies in the current version of the service."
+        "content": "The LogiMarket platform uses strictly necessary cookies only: (1) for the public shopping cart, a session identifier ('session_hash') is generated only when adding the first product to the cart and is deleted upon closing the browser; (2) for authenticated features and administrative panels, technical authentication and session cookies are used strictly to maintain a secure user session. The service does not use marketing, advertising, or third-party profiling tracking cookies."
       },
       "updates": {
         "title": "16. Updates to the Privacy Policy",

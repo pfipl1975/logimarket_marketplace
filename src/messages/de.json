@@ -957,7 +957,7 @@
       },
       "cookies": {
         "title": "15. Cookies und Sitzungstechnologien",
-        "content": "LogiMarket verwendet ausschließlich unbedingt erforderliche Session-Cookies ('session_hash') zur Verwaltung des Warenkorbs und zur Sitzungssicherheit. Das Cookie wird nach dem Schließen des Browsers automatisch gelöscht und ist durch HttpOnly-, Secure- und SameSite=Lax-Flags geschützt. Wir verwenden derzeit keine Marketing- oder Tracking-Cookies von Drittanbietern."
+        "content": "Die LogiMarket-Plattform verwendet ausschließlich technisch notwendige Cookies (strictly necessary cookies): (1) für den öffentlichen Warenkorb wird eine Sitzungskennung ('session_hash') erst beim Hinzufügen des ersten Produkts zum Warenkorb erstellt und beim Schließen des Browsers gelöscht; (2) für authentifizierte Funktionen und Administrationsbereiche werden technische Authentifizierungs- und Sitzungscookies verwendet, die zur Aufrechterhaltung einer sicheren Benutzersitzung erforderlich sind. Der Dienst verwendet keine Marketing-, Werbe- oder Drittanbieter-Profiling-Cookies."
       },
       "updates": {
         "title": "16. Änderungen der Datenschutzerklärung",
