@@ -44,10 +44,10 @@ import {
 // ---------------------------------------------------------------------------
 
 const FAKE_HASH = crypto.createHash("sha256").update("SELECT 1;").digest("hex");
-const exactFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }];
-const exactFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }});
-const prevFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }];
-const prevFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }] }});
+const exactFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }, { folderMillis: 1785591500000, hash: FAKE_HASH }];
+const exactFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }, { tag: "fake_tag_0004", when: 1785591500000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }, { tag: "fake_tag_0004", when: 1785591500000 }] }});
+const prevFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }];
+const prevFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }});
 const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }});
 const FAKE_DEV_URL = "postgres://postgres.devref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 const FAKE_PROD_URL = "postgres://postgres.prodref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
@@ -203,9 +203,9 @@ function metadataRouter(options?: MetadataOptions): Router {
 
 /** metadataRouter extended with the grant-verifier queries (pg_roles + ACL). */
 function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PARTIAL", fp?: Record<string, TableContract>, journalRowsOverride?: { hash: string; created_at: string | number }[]): Router {
-  const base =
-    state === "EXACT"
-      ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride })
+    const base =
+      state === "EXACT"
+        ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride ?? [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }, { hash: FAKE_HASH, created_at: "1785591500000" }] })
       : state === "PREVIOUS"
         ? metadataRouter({
             fingerprint: fp,
@@ -214,10 +214,11 @@ function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PART
               { hash: FAKE_HASH, created_at: "1785589560000" },
               { hash: FAKE_HASH, created_at: "1785590000000" },
               { hash: FAKE_HASH, created_at: "1785590500000" },
+              { hash: FAKE_HASH, created_at: "1785591000000" },
             ],
           })
         : state === "BASELINE"
-          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride })
+          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride ?? [{ hash: FAKE_HASH, created_at: "1785589560000" }] })
         : state === "PARTIAL"
           ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
           : emptyRouter();
@@ -406,7 +407,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0003");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0004");
 });
 
 test("TARGET: PARTIAL_OR_DRIFTED when missing table", () => {
@@ -572,7 +573,7 @@ test("RUNNER_EXACT_TEST: runner completes full flow on EXACT_EXISTING schema", a
   const fakeMigrate = async () => {
     migrateCallCount++;
   };
-  const { q, state, factory } = fakeRunnerPool(runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]));
+  const { q, state, factory } = fakeRunnerPool(runnerRouter("EXACT"));
 
   // EXACT pre-check → migrate → EXACT post-check → grant post-check → success
   await runMigrations(emptyEnv(), factory as never, fakeMigrate as never, exactFakeRead as never, exactFakeReadFn as never, (() => Buffer.from("SELECT 1;")) as never);
@@ -595,7 +596,7 @@ test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS sc
   const fakeMigrate = async () => {
     migrateCallCount++;
     // Simulate migration side-effect by switching the router to EXACT
-    q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
+    q.router = runnerRouter("EXACT");
   };
 
   // Custom router switching

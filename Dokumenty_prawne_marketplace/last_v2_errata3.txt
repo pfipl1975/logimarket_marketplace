@@ -1,0 +1,56 @@
+**KANCELARIA PRAWNA**
+
+*Warszawa, 9 sierpnia 2026 r.*
+
+**Od:** Kancelaria Prawna
+
+**Do:** Piotr Fiszer | LogiMarket (`logimarket.eu`)
+
+**Dotyczy:** **Opiniowanie mechanizmu B2B Gatingu w świetle art. 7aa ust. 2 u.p.k. oraz art. 385⁵ §1¹ KC**
+
+Odpowiadając wprost na Panów pytanie: TAK, LogiMarket może technicznie i regulaminowo uzależnić dostęp do checkoutu od złożenia oświadczenia o zawodowym charakterze transakcji, ALE oświadczenie to NIE wyłącza z mocy prawa ochrony z art. 7aa u.p.k. ani art. 385⁵ KC, jeśli ze stanu faktycznego wynika co innego.
+
+Sam fakt złożenia oświadczenia przez kupującego nie tworzy bezwzględnej tarczy prawnej, ponieważ przepisy chroniące jednoosobowe działalności gospodarcze (JDG) mają charakter bezwzględnie wiążący (*ius cogens*).
+
+**1. Analiza prawna oświadczenia (art. 7aa ust. 2 u.p.k. i art. 385⁵ §1¹ KC)**
+
+* **Brak możliwości umownego wyłączenia ochrony:** Zgodnie z art. 7aa ust. 2 ustawy o prawach konsumenta w zw. z art. 385⁵ §1¹ Kodeksu cywilnego, ocena „zawodowego charakteru” transakcji ma charakter **obiektywny**, a nie wyłącznie deklaratywny. Przepis wprost nakazuje badanie przedmiotu działalności ujawnionego w CEIDG (kodów PKD).
+
+
+* **Skutek samowolnego oświadczenia:** Jeśli kupujący (JDG) zaznaczy oświadczenie o zawodowym charakterze zakupu, a zakupi towar obiektywnie niezwiązany z jego branżą, sąd lub UOKiK uzna jednostronne oświadczenie woli za bezskuteczną próbę obejścia przepisów chroniących kupującego.
+
+
+* **Rola oświadczenia w procesie:** Oświadczenie pełni rolę **filtru dostępowego do platformy** (na podstawie swobody umów z art. 353¹ KC), ale nie stanowi pełnej gwarancji procesowej w sporze prawnym.
+
+
+
+**2. Rekomendowany mechanizm B2B-only gatingu (bez uzależniania ważności umowy od oświadczenia)**
+
+Aby stworzyć mechanizm odporny na zarzuty prawne i nieuzależniający ważności umowy od deklaracji kupującego, rekomendujemy model 3-etapowej weryfikacji obiektywnej:
+
+**Weryfikacja Tożsamości i Danych Rejestrowych (Automatyczna)**
+
+* **Wymóg NIP / VAT UE:** Brak możliwości przejścia do checkoutu bez podania aktywnego numeru NIP (PL) lub VAT UE.
+
+
+* **Integracja API GUS / CEIDG / VIES:** System automatycznie odpytuje rejestry publiczne. W przypadku braku aktywnego wpisu transakcja jest blokowana na poziomie walidacji formularza.
+
+
+
+**Obiektywna Weryfikacja Branżowa (PKD vs Kategoria Produktu)**
+
+* Zamiast wymuszać oświadczenie woli, system podczas sprawdzania NIP w CEIDG pobiera ujawnione kody PKD firmy.
+
+
+* Jeśli kody PKD wykazują powiązanie z branżą przemysłową/logistyczną/budowlaną (lub zakup obejmuje sprzęt wybitnie przemysłowy), system automatycznie klasyfikuje transakcję jako **Kategorię C (Czyste B2B)**.
+
+**Konstrukcja Umowna "Order Intent" + Akceptacja Sprzedawcy (E2 $\rightarrow$ E7)**
+
+* **Checkout (E2) jako złożenie oferty:** Kupujący składa ofertę zakupu w kontekście firmowym.
+
+
+* **Weryfikacja po stronie Partnera (E6/E7):** Partner (Sprzedawca) przed akceptacją zamówienia ma wgląd w dane firmy kupującego. Jeżeli dostrzeże ryzyko zakupu niezawodowego, może odrzucić ofertę przed jej akceptacją (E7), uniemożliwiając zawarcie umowy.
+
+
+
+W ten sposób LogiMarket nie łamie przepisów o prawach konsumenta, a jednocześnie skutecznie chroni platformę przed niepożądanymi transakcjami okazjonalnymi.
