@@ -9,7 +9,15 @@ test("journal exists and is valid", () => {
   const journalPath = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "meta", "_journal.json");
   assert.ok(fs.existsSync(journalPath));
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
+
   assert.strictEqual(journal.entries.length, 5);
+  for (let i = 0; i < 5; i++) {
+    assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
+    if (i > 0) {
+      assert.ok(journal.entries[i].when > journal.entries[i - 1].when, "timestamps must be strictly increasing");
+    }
+  }
+
   assert.strictEqual(journal.entries[0].tag, "0000_production_runtime_baseline");
   assert.strictEqual(journal.entries[0].when, 1785589560000);
   assert.strictEqual(journal.entries[1].tag, "0001_rfq_workflow_hardening");

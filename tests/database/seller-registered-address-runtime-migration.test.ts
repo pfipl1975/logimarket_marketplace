@@ -20,6 +20,10 @@ describe("0004_seller_registered_address Runtime Migration", () => {
     const alterTables = [...sql.matchAll(/ALTER TABLE (.*?)\s/gi)];
     assert.strictEqual(alterTables.length, 1, "Only one ALTER TABLE allowed");
 
+
+    const addColMatches = [...sql.matchAll(/\bADD\s+COLUMN\b/gi)];
+    assert.strictEqual(addColMatches.length, 6, "Exactly 6 ADD COLUMN statements allowed");
+
     // Exact 6 columns
     assert.match(sql, /ADD COLUMN IF NOT EXISTS registered_address_line1 character varying\(255\)/i);
     assert.match(sql, /ADD COLUMN IF NOT EXISTS registered_address_line2 character varying\(255\)/i);

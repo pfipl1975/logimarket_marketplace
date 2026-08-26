@@ -115,6 +115,30 @@ test("TARGET_POST_0004_MINUS_COLUMN", () => {
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
+test("TARGET_POST_0004_WRONG_TYPE", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const colIdx = actual["seller_legal_identities"].columns.findIndex(c => c.name === "registered_address_line1");
+  actual["seller_legal_identities"].columns[colIdx].type = "character varying(254)";
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("TARGET_POST_0004_WRONG_NULLABILITY", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const colIdx = actual["seller_legal_identities"].columns.findIndex(c => c.name === "registered_address_line1");
+  actual["seller_legal_identities"].columns[colIdx].nullable = false;
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("TARGET_POST_0004_UNEXPECTED_DEFAULT", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const colIdx = actual["seller_legal_identities"].columns.findIndex(c => c.name === "registered_address_line1");
+  actual["seller_legal_identities"].columns[colIdx].defaultVal = "'x'::character varying";
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
 // ===========================================================================
 // 6. POST-0003 exact with PostgreSQL Canonical Strings
 // ===========================================================================

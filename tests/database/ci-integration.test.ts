@@ -146,7 +146,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> 0000 -> 0001 -> 0002 -> 0003",
+    "PATH A: EMPTY DATABASE -> 0000 -> 0001 -> 0002 -> 0003 -> 0004",
     async () => {
       await cleanDB();
 
@@ -163,7 +163,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       const stats = await getStats();
       assert.strictEqual(Number(stats.tables), 19, "tables count mismatch");
-      assert.strictEqual(Number(stats.columns), 155, "columns count mismatch");
+      assert.strictEqual(Number(stats.columns), 161, "columns count mismatch");
       assert.strictEqual(
         Number(stats.sequences),
         17,
@@ -185,13 +185,24 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(Number(stats.rls_tables), 19, "rls_tables mismatch");
       assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0003
+      // Post-migration classification must be EXACT_EXISTING_POST_0004
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0003");
+
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
+
+      // 0004 PROOF
+      const sellerCols = fingerprint["seller_legal_identities"].columns;
+      assert.ok(sellerCols["registered_address_line1"]);
+      assert.ok(sellerCols["registered_address_line2"]);
+      assert.ok(sellerCols["registered_postal_code"]);
+      assert.ok(sellerCols["registered_city"]);
+      assert.ok(sellerCols["registered_region"]);
+      assert.ok(sellerCols["registered_country_code"]);
+
 
       // Journal check: 4 rows
       const diskMigrations = readMigrationFiles({
@@ -211,12 +222,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length,
-        4,
-        "Journal should have exactly 4 rows",
+        journalRows.length, 5,
+        "Journal should have exactly 5 rows",
       );
 
-      for (let i = 0; i < 4; i++) {
+      for (let i = 0; i < 5; i++) {
         assert.strictEqual(
           journalRows[i].hash,
           diskMigrations[i].hash,
@@ -245,12 +255,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0003
+    // Post-migration classification must be EXACT_EXISTING_POST_0004
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0003");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
 
-    // Journal check: exactly 4 rows
+    // Journal check: exactly 5 rows
     const journalRes = await pool.query(
       `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
     );
@@ -259,9 +269,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       created_at: string | number;
     }[];
     assert.strictEqual(
-      journalRows.length,
-      4,
-      "Journal should have exactly 4 rows",
+      journalRows.length, 5,
+      "Journal should have exactly 5 rows",
     );
   });
 
@@ -421,13 +430,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0003
+      // Post-migration classification must be EXACT_EXISTING_POST_0004
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0003");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
 
       // Journal check: 4 rows
       const journalRes = await pool.query(
@@ -438,9 +447,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length,
-        4,
-        "Journal should have exactly 4 rows",
+        journalRows.length, 5,
+        "Journal should have exactly 5 rows",
       );
     },
   );

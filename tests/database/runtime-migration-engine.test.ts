@@ -647,7 +647,7 @@ test("RUNNER_BASELINE_TEST: runner completes full flow on MIGRATABLE_BASELINE sc
   const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
 
   let currentRouter = runnerRouter("BASELINE", BASELINE_PRODUCTION_FINGERPRINT);
-  
+
   const routerProxy = (t: string) => currentRouter(t);
   const state = { ended: false };
   const qObj = {
@@ -686,18 +686,18 @@ test("BASELINE_ABSENT_JOURNAL_TEST / JOURNAL_42P01_ALLOWED_TEST", async () => {
     query: async (text: string) => qObj.query(text),
     set router(newRouter: Router) { currentRouter = newRouter; }
   };
-  const fakeMigrate = async () => { 
-    migrateCallCount++; 
+  const fakeMigrate = async () => {
+    migrateCallCount++;
     q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
-  
+
   const routerProxy = (t: string) => {
     if (t.includes("drizzle_runtime") && t.includes("hash")) {
       throw Object.assign(new Error("relation does not exist"), { code: '42P01' });
     }
     return currentRouter(t);
   };
-  
+
   const qObj = new StrictFakeQueryable(routerProxy);
 
   const factory = () => ({
@@ -829,8 +829,8 @@ test("BASELINE_0000_ONLY_JOURNAL_TEST", async () => {
     query: async (text: string) => qObj.query(text),
     set router(newRouter: Router) { currentRouter = newRouter; }
   };
-  const fakeMigrate = async () => { 
-    migrateCallCount++; 
+  const fakeMigrate = async () => {
+    migrateCallCount++;
     q.router = runnerRouter("EXACT", undefined, [{ hash: FAKE_HASH, created_at: "1785589560000" }, { hash: FAKE_HASH, created_at: "1785590000000" }, { hash: FAKE_HASH, created_at: "1785590500000" }, { hash: FAKE_HASH, created_at: "1785591000000" }]);
   };
   const fakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }];
@@ -1102,6 +1102,51 @@ test("RUNNER_POSTCHECK_DRIFT_TEST: post-check drift causes error after migration
   );
   assert.ok(state.ended);
 });
+
+test("RUNNER_POST0003_STAYS_POST0003_BLOCK: post-check fails if POST_0003 migration doesn't reach POST_0004", async () => {
+  let migrateCallCount = 0;
+  const fakeMigrate = async () => { migrateCallCount++; }; // Does not change schema
+
+  // Use runnerRouter("PREVIOUS") which simulates MIGRATABLE_POST_0003
+  const { state, factory } = fakeRunnerPool(runnerRouter("PREVIOUS", PREVIOUS_PRODUCTION_FINGERPRINT));
+  const env = Object.assign(emptyEnv(), {
+    DB_WRITES_ALLOWED_TO_DEV: "YES",
+    ENVIRONMENT_OVERRIDE: "DEV"
+  });
+
+  await assert.rejects(
+    async () => runMigrations(
+      env,
+      factory,
+      fakeMigrate as never,
+      (() => [
+        { folderMillis: 1785589560000, hash: FAKE_HASH },
+        { folderMillis: 1785590000000, hash: FAKE_HASH },
+        { folderMillis: 1785590500000, hash: FAKE_HASH },
+        { folderMillis: 1785591000000, hash: FAKE_HASH },
+        { folderMillis: 1785591500000, hash: FAKE_HASH }
+      ]) as never,
+      (() => ({
+        text: "{}",
+        parsed: {
+          entries: [
+            { tag: "0000_production_runtime_baseline", when: 1785589560000 },
+            { tag: "0001_rfq_workflow_hardening", when: 1785590000000 },
+            { tag: "0002_seller_identity_56b1", when: 1785590500000 },
+            { tag: "0003_prod_legacy_offer_reconciliation", when: 1785591000000 },
+            { tag: "0004_seller_registered_address", when: 1785591500000 }
+          ]
+        }
+      })) as never,
+      (() => Buffer.from("SELECT 1;")) as never
+    ),
+    /post-check failed/
+  );
+
+  assert.strictEqual(migrateCallCount, 1, "migrateFn must be called exactly once");
+  assert.ok(state.ended, "pool must be closed");
+});
+
 
 test("RUNNER: error messages never contain DATABASE_URL or project refs", async () => {
   const fakeMigrate = async () => {};
