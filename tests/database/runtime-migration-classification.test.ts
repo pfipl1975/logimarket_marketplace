@@ -88,28 +88,69 @@ test("RFQ_DRIFT_CLASSIFICATION", () => {
 });
 
 // ===========================================================================
-// 5. POST-0003 exact — EXACT_EXISTING_POST_0003
+// 5. POST-0003 exact - MIGRATABLE_POST_0003
 // ===========================================================================
 test("TARGET_EXACT_19_TABLES", () => {
   const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0003");
+  assert.strictEqual(result.state, "MIGRATABLE_POST_0003");
+});
+
+// ===========================================================================
+// 5.5 POST-0004 exact - EXACT_EXISTING_POST_0004
+// ===========================================================================
+test("TARGET_EXACT_POST_0004", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT); // which is 0004 now
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0004");
+});
+
+// ===========================================================================
+// 5.6 POST-0004 minus column - PARTIAL_OR_DRIFTED
+// ===========================================================================
+test("TARGET_POST_0004_MINUS_COLUMN", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  actual["seller_legal_identities"].columns = actual["seller_legal_identities"].columns.filter(c => c.name !== "registered_address_line1");
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("TARGET_POST_0004_WRONG_TYPE", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const colIdx = actual["seller_legal_identities"].columns.findIndex(c => c.name === "registered_address_line1");
+  actual["seller_legal_identities"].columns[colIdx].type = "character varying(254)";
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("TARGET_POST_0004_WRONG_NULLABILITY", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const colIdx = actual["seller_legal_identities"].columns.findIndex(c => c.name === "registered_address_line1");
+  actual["seller_legal_identities"].columns[colIdx].nullable = false;
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
+});
+
+test("TARGET_POST_0004_UNEXPECTED_DEFAULT", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const colIdx = actual["seller_legal_identities"].columns.findIndex(c => c.name === "registered_address_line1");
+  actual["seller_legal_identities"].columns[colIdx].defaultVal = "'x'::character varying";
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
 // ===========================================================================
 // 6. POST-0003 exact with PostgreSQL Canonical Strings
 // ===========================================================================
-test("classifyRuntimeTarget - EXACT_EXISTING_POST_0003 (PostgreSQL Canonical Strings)", () => {
+test("classifyRuntimeTarget - MIGRATABLE_POST_0003 (PostgreSQL Canonical Strings)", () => {
   const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
 
-  const offerFkIndex = actual["rfq_leads"].constraints.findIndex(c => c.name === "rfq_leads_offer_id_fkey");
   const partnerFkIndex = actual["rfq_leads"].constraints.findIndex(c => c.name === "rfq_leads_partner_id_fkey");
 
-  actual["rfq_leads"].constraints[offerFkIndex].definition = "FOREIGN KEY (offer_id) REFERENCES offers(id)";
   actual["rfq_leads"].constraints[partnerFkIndex].definition = "FOREIGN KEY (partner_id) REFERENCES partners(id)";
 
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0003");
+  assert.strictEqual(result.state, "MIGRATABLE_POST_0003");
 });
 
 // ===========================================================================
