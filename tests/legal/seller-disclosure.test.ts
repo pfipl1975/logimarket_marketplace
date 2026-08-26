@@ -140,7 +140,23 @@ describe('Seller Disclosure Completeness Logic', () => {
     );
     assert.strictEqual(disclosure.completeness.complete, true);
     assert.strictEqual(disclosure.taxIdentifiers.length, 2);
-    assert.strictEqual(disclosure.taxIdentifiers[1].type, 'KRS');
+    // PL == PL, KRS < VAT
+    assert.strictEqual(disclosure.taxIdentifiers[0].type, 'KRS');
+    assert.strictEqual(disclosure.taxIdentifiers[1].type, 'VAT');
+    
+    // Reverse input order should yield identical output
+    const reversedTaxIds = [
+      { type: 'KRS', value: '0000123456', countryCode: 'PL' },
+      { type: 'VAT', value: 'PL1234567890', countryCode: 'PL' }
+    ];
+    const disclosureReversed = buildSellerDisclosure(
+      1,
+      'Company',
+      'a@b.com',
+      defaultRegisteredOffice,
+      reversedTaxIds
+    );
+    assert.deepStrictEqual(disclosure.taxIdentifiers, disclosureReversed.taxIdentifiers);
   });
 
   test('public DTO contains no verification metadata', () => {

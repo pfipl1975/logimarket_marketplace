@@ -1,0 +1,47 @@
+postgresql://postgres.tpjsiutclowwaxlopemn:Teverent1975!@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+
+$env:LM_STAGE_SHARE_URL = "https://logimarket-marketplace-ahq2gykuj-piotrfpns-projects.vercel.app"
+
+$env:LM_STAGE_SHARE_URL = "https://logimarket-marketplace-ahq2gykuj-piotrfpns-projects.vercel.app?_vercel_share=LUG3AeiXCbA983xHrFGy7pqZDuZ1KLfQ"
+
+postgresql://postgres.tpjsiutclowwaxlopemn:[YOUR-PASSWORD]@aws-0-eu-west-1.pooler.supabase.com:6543/postgres
+
+
+postgresql://postgres.wwyxoasupqyctxdoclwm:Teverent1975!@aws-0-eu-north-1.pooler.supabase.com:5432/postgres
+
+postgresql://postgres.tpjsiutclowwaxlopemn:Teverent1975!@aws-0-eu-west-1.pooler.supabase.com:5432/postgres
+
+_______________________________________________________________
+
+$secure = Read-Host "DATABASE_URL DEV" -AsSecureString
+$ptr = [Runtime.InteropServices.Marshal]::SecureStringToBSTR($secure)
+
+try {
+    $env:DATABASE_URL = [Runtime.InteropServices.Marshal]::PtrToStringBSTR($ptr)
+}
+finally {
+    [Runtime.InteropServices.Marshal]::ZeroFreeBSTR($ptr)
+    Remove-Variable secure, ptr -ErrorAction SilentlyContinue
+}
+
+if ([string]::IsNullOrWhiteSpace($env:DATABASE_URL)) {
+    "DATABASE_URL_STATUS=BLOCKED"
+} else {
+    "DATABASE_URL_STATUS=OK"
+}
+
+
+_________________________________________________________
+
+NEXT_PUBLIC_SUPABASE_URL dla preview
+https://wwyxoasupqyctxdoclwm.supabase.co/rest/v1/
+
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY - dla preview
+sb_publishable_P7cc-gCDYczcmu5AleMefw_r_nxADTK
+
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY - dla producion
+sb_publishable_VTu8yKsOBsICLJm0bxNb7w_YVlN2Mw_
+
+NEXT_PUBLIC_SUPABASE_URL dla production
+https://tpjsiutclowwaxlopemn.supabase.co/rest/v1/
+

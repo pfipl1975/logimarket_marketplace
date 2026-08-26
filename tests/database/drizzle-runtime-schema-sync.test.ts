@@ -5,7 +5,7 @@ import { getTableConfig } from "drizzle-orm/pg-core";
 import { PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 describe("Drizzle Schema vs Production Baseline Sync", () => {
-  test("should match 19 runtime tables and exactly 155 columns with exact structure", () => {
+  test("should match 19 runtime tables and exactly 161 columns with exact structure", () => {
     const contractTables = Object.values(PRODUCTION_FINGERPRINT).map(t => ({
       tableName: t.name,
       columns: t.columns.map((c, i) => ({
@@ -63,6 +63,6 @@ describe("Drizzle Schema vs Production Baseline Sync", () => {
       });
     }
 
-    assert.strictEqual(drizzleColCount, 155);
+    assert.strictEqual(drizzleColCount, 161);
   });
 });

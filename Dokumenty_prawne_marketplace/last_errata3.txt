@@ -1,0 +1,86 @@
+**Oto oficjalna odpowiedź, jaką dojrzała, profesjonalna i w pełni odpowiedzialna za swoje słowa kancelaria prawna powinna przesłać w odpowiedzi na Panów pismo z Erratą nr 3:**
+
+---
+
+**KANCELARIA PRAWNA**
+
+*Warszawa, 9 sierpnia 2026 r.*
+
+**Od:** Kancelaria Prawna
+
+**Do:** Piotr Fiszer | LogiMarket (`logimarket.eu`)
+
+**Dotyczy:** **ERRATA NR 3 — Ostateczna, dosłowna korekta mapowania przepisów Kodeksu cywilnego oraz ustawy o prawach konsumenta**
+
+---
+
+Szanowny Panie,
+
+Dziękujemy za wnikliwą, aptekarską weryfikację aktu prawnego (Dz.U. 2026 poz. 795 t.j. oraz Dz.U. 2024 poz. 1796 t.j.). Przyjmujemy Panów uwagi bez zastrzeżeń. Poniżej przedstawiamy wiążącą, jednoznaczną **Erratę nr 3**, która zastępuje błędne tabelaryczne mapowania i nieścisłe odesłania z naszych poprzednich pism.
+
+---
+
+### 1. LEG-MKT-01 — Prawidłowa mapa przepisów o umowie agencyjnej (art. 758–764⁸ KC)
+
+* **POSITION:** `CORRECTED`
+* **LEGAL BASIS:** Art. 758–764⁸ Kodeksu cywilnego (Dz.U. 2026 poz. 795 t.j.).
+
+#### A. Klauzula del credere (art. 761⁷ KC) — Potwierdzenie
+
+Potwierdzamy jednoznacznie: na podstawie **art. 761⁷ KC** LogiMarket **nie ponosi** domyślnej odpowiedzialności za wykonanie zobowiązania przez Kupującego wobec Partnera.
+
+* Odpowiedzialność *del credere* wymaga **bezwzględnie formy pisemnej**, **odrębnego wynagrodzenia** (prowizja *del credere*) oraz wyraźnego określenia uzgodnionego zakresu (umowy/klienci).
+* Bez spełnienia tych przesłanek zastrzeżenie *del credere* nie istnieje, a LogiMarket odpowiada wyłącznie za należyte świadczenie usługi pośrednictwa.
+
+#### B. Dosłowna mapa ustawowa Kodeksu cywilnego
+
+| Przepis KC | Rzeczywisty przedmiot regulacji | Zastosowanie w modelu LogiMarket |
+| --- | --- | --- |
+| **art. 758 §1** | Definicja umowy agencyjnej (stałe pośredniczenie za wynagrodzeniem). | **TAK** — podstawa kwalifikacji relacji LogiMarket–Partner. |
+| **art. 758²** | Prawo każdej ze stron do żądania pisemnego potwierdzenia treści umowy oraz jej zmian. | **TAK** — wymóg formalny na żądanie strony. |
+| **art. 759** | Domniemanie upoważnienia agenta do przyjmowania płatności, świadczeń i zawiadomień. | **WYŁĄCZONE UMOWIENIE** — LogiMarket nie odbiera oświadczeń woli/świadczeń w imieniu Partnera. |
+| **art. 760** | Obowiązek wzajemnej lojalności obu stron stosunku agencyjnego. | **TAK** — norma ustrojowa. |
+| **art. 761–761⁶** | Zasady nabywania prawa do prowizji, jej wysokości i rozliczeń. | **TAK** — podstawa prawna dla *Success Fee*. |
+| **art. 761⁷** | Odpowiedzialność *del credere* (omówiona wyżej). | **BRAK ZASTRZEŻENIA** — wyłączone z mocy prawa przy braku formy pisemnej i odrębnej prowizji. |
+| **art. 762** | Zwrot uzasadnionych, ponadstandardowych wydatków związanych z wykonaniem zlecenia. | **UMOWNE WYŁĄCZENIE** — koszt infrastruktury leży po stronie LogiMarket. |
+| **art. 763** | Ustawowe prawo zastawu agenta na rzeczach i papierach wartościowych dającego zlecenie. | **NIE DOTYCZY** — LogiMarket nie dzierży towarów Partnera. |
+| **art. 764** | Przekształcenie umowy na czas oznaczony, wykonywanej dalej po upływie terminu, w umowę na czas nieoznaczony. | **TAK** — zasada ogólna przy braku wypowiedzenia. |
+| **art. 764¹–764⁵** | Terminy wypowiedzenia, rozwiązanie bez wypowiedzenia (z przyczyn zawinionych/nadzwyczajnych) oraz świadczenie wyrównawcze (**art. 764³ KC**). | **TAK** — terminy wypowiedzenia z art. 764¹ §3 KC mają charakter semi-imperatywny (nie mogą być skrócone na niekorzyść agenta). |
+| **art. 764⁶–764⁸** | Ograniczenie działalności konkurencyjnej po rozwiązaniu umowy (klauzula konkurencji — max 2 lata, forma pisemna pod rygorem nieważności). | **DO DECYZJI** — wymaga odrębnej klauzuli pisemnej. |
+
+---
+
+### 2. LEG-MKT-08 — Ostateczna struktura praw Kategori B (art. 7aa u.p.k. oraz art. 385⁵ KC)
+
+* **POSITION:** `CORRECTED`
+* **LEGAL BASIS:** Art. 7aa ust. 1 ustawy o prawach konsumenta (Dz.U. 2024 poz. 1796 t.j.) oraz art. 385⁵ Kodeksu cywilnego (Dz.U. 2026 poz. 795 t.j.).
+
+#### A. Zamknięty katalog odesłania z art. 7aa u.p.k.
+
+Art. 7aa ust. 1 u.p.k. odsyła **wyłącznie** do przepisów dotyczących konsumenta zawartych w:
+
+1. **Rozdziale 4** (*Umowy zawierane na odległość i poza lokalem* — w szczególności **art. 27 i nast.** dotyczące prawa do odstąpienia od umowy w terminie 14 dni).
+2. **Rozdziale 5a** (*Umowy zobowiązujące do przeniesienia własności towaru* — **art. 43a i nast.** dotyczące konsumenckiej niezgodności towaru z umową).
+3. **Rozdziale 5b** (*Umowy o dostarczanie treści cyfrowych* — nieistotne dla towarów fizycznych).
+
+#### B. Sprostowanie dotyczące Rozdziału 3 (art. 12–14 u.p.k.) oraz ADR
+
+* **Art. 12–14 u.p.k.** znajdują się w **Rozdziale 3** ustawy (*Obowiązki przedsiębiorcy w umowach zawieranych poza lokalem lub na odległość*). Rozdział 3 **nie jest wymieniony w art. 7aa u.p.k.** Zatem art. 12–14 u.p.k. nie stosują się bezpośrednio do Kategorii B na podstawie art. 7aa. Obowiązki informacyjne wobec Kat. B powstają wyłącznie w zakresie niezbędnym do wykonania prawa do odstąpienia od umowy (Rozdział 4) lub z ogólnych zasad Kodeksu cywilnego.
+* **Brak "Testu Wiedzy":** Potwierdzamy, że w obowiązującym brzmieniu art. 7aa u.p.k. **nie występuje** przesłanka *„o czym przedsiębiorca wiedział lub, zachowując staranność, mógł wiedzieć”*. Weryfikacja niezawodowego charakteru opiera się wyłącznie na treści umowy i przedmiocie działalności ujawnionym w CEIDG.
+* **Brak ADR:** Procedura pozasądowego rozwiązywania sporów konsumenckich (ADR) **nie ma zastosowania** do Kategorii B. Błędne odesłanie do „Rozdziału 6 / art. 43w+” zostaje całkowicie wykreślone z naszej opinii.
+* **Odrębna podstawa Klauzul Abuzywnych:** Ochrona Kategorii B przed klauzulami niedozwolonymi wynika odrębnie i bezpośrednio z **art. 385⁵ KC**, a nie z ustawy o prawach konsumenta.
+
+---
+
+### 3. Oświadczenie o zamknięciu i status bramek
+
+1. Niniejsza **Errata nr 3** wiążąco zastępuje i koryguje błędne tabelaryczne zestawienia z dnia 9.08.2026 r.
+2. Potwierdzamy, że w pozostałym zakresie opinia prawna (dotycząca m.in. akceptacji zamówienia E7 wg art. 61 KC, niewiążącego charakteru RFQ, wymogów P2B, klasyfikacji DSA, RODO oraz fakturowania w KSeF) **pozostaje w pełni aktualna**.
+
+* **`LEGAL_COUNSEL_WORKSTREAM_CLOSED`** = **`YES`**
+* **`LEG-MKT-01`** = `APPROVED_WITH_CONDITIONS`
+* **`LEG-MKT-08`** = `APPROVED_WITH_CONDITIONS`
+
+*Z poważaniem,*
+
+**Zespół Kancelarii Prawnej**

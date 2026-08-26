@@ -109,7 +109,16 @@ export function buildSellerDisclosure(
     type: normalizeString(t.type) || '',
     value: normalizeString(t.value) || '',
     countryCode: normalizeString(t.countryCode) || ''
-  })).filter(t => t.type && t.value && t.countryCode);
+  })).filter(t => t.type && t.value && t.countryCode)
+  .sort((a, b) => {
+    if (a.countryCode < b.countryCode) return -1;
+    if (a.countryCode > b.countryCode) return 1;
+    if (a.type < b.type) return -1;
+    if (a.type > b.type) return 1;
+    if (a.value < b.value) return -1;
+    if (a.value > b.value) return 1;
+    return 0;
+  });
 
   return {
     partnerId,
