@@ -7,12 +7,12 @@ export type TaxIdentifierDto = {
 };
 
 export type RegisteredOfficeDto = {
-  country: string | null;
-  city: string | null;
+  addressLine1: string | null;
+  addressLine2: string | null;
   postalCode: string | null;
-  street: string | null;
-  building: string | null;
-  apartment: string | null;
+  city: string | null;
+  region: string | null;
+  countryCode: string | null;
 };
 
 export type ResponsibilitiesDto = {
@@ -22,14 +22,23 @@ export type ResponsibilitiesDto = {
   logiMarketRole: "intermediary";
 };
 
+export type SellerDisclosureMissingField =
+  | "legal_name"
+  | "business_email"
+  | "registered_address_line1"
+  | "registered_postal_code"
+  | "registered_city"
+  | "registered_country_code"
+  | "tax_identifier";
+
 export type CompletenessDiagnostic = {
   complete: boolean;
-  missing: string[];
+  missing: SellerDisclosureMissingField[];
 };
 
 export type SellerDisclosureDto = {
   partnerId: number;
-  legalName: string;
+  legalName: string | null;
   businessEmail: string | null;
   registeredOffice: RegisteredOfficeDto;
   taxIdentifiers: TaxIdentifierDto[];
@@ -37,30 +46,30 @@ export type SellerDisclosureDto = {
   completeness: CompletenessDiagnostic;
 };
 
+function normalizeString(val: string | null | undefined): string | null {
+  if (typeof val !== 'string') return null;
+  const trimmed = val.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export function evaluateCompleteness(
-  legalName: string,
+  legalName: string | null,
   businessEmail: string | null,
   registeredOffice: RegisteredOfficeDto,
   taxIdentifiers: TaxIdentifierDto[]
 ): CompletenessDiagnostic {
-  const missing: string[] = [];
+  const missing: SellerDisclosureMissingField[] = [];
 
-  if (!legalName || legalName.trim().length === 0) {
-    missing.push("legalName");
-  }
+  if (!legalName) missing.push("legal_name");
+  if (!businessEmail) missing.push("business_email");
 
-  if (!businessEmail || businessEmail.trim().length === 0) {
-    missing.push("businessEmail");
-  }
-
-  if (!registeredOffice.country) missing.push("registeredOffice.country");
-  if (!registeredOffice.city) missing.push("registeredOffice.city");
-  if (!registeredOffice.postalCode) missing.push("registeredOffice.postalCode");
-  if (!registeredOffice.street) missing.push("registeredOffice.street");
-  if (!registeredOffice.building) missing.push("registeredOffice.building");
+  if (!registeredOffice.addressLine1) missing.push("registered_address_line1");
+  if (!registeredOffice.postalCode) missing.push("registered_postal_code");
+  if (!registeredOffice.city) missing.push("registered_city");
+  if (!registeredOffice.countryCode) missing.push("registered_country_code");
 
   if (!taxIdentifiers || taxIdentifiers.length === 0) {
-    missing.push("taxIdentifiers");
+    missing.push("tax_identifier");
   }
 
   return {
@@ -71,11 +80,37 @@ export function evaluateCompleteness(
 
 export function buildSellerDisclosure(
   partnerId: number,
-  legalName: string,
-  businessEmail: string | null,
-  registeredOffice: RegisteredOfficeDto,
-  taxIdentifiers: TaxIdentifierDto[]
+  rawLegalName: string | null | undefined,
+  rawBusinessEmail: string | null | undefined,
+  rawRegisteredOffice: {
+    addressLine1?: string | null;
+    addressLine2?: string | null;
+    postalCode?: string | null;
+    city?: string | null;
+    region?: string | null;
+    countryCode?: string | null;
+  },
+  rawTaxIdentifiers: { type: string; value: string; countryCode: string }[]
 ): SellerDisclosureDto {
+
+  const legalName = normalizeString(rawLegalName);
+  const businessEmail = normalizeString(rawBusinessEmail);
+
+  const registeredOffice: RegisteredOfficeDto = {
+    addressLine1: normalizeString(rawRegisteredOffice.addressLine1),
+    addressLine2: normalizeString(rawRegisteredOffice.addressLine2),
+    postalCode: normalizeString(rawRegisteredOffice.postalCode),
+    city: normalizeString(rawRegisteredOffice.city),
+    region: normalizeString(rawRegisteredOffice.region),
+    countryCode: normalizeString(rawRegisteredOffice.countryCode),
+  };
+
+  const taxIdentifiers: TaxIdentifierDto[] = (rawTaxIdentifiers || []).map(t => ({
+    type: normalizeString(t.type) || '',
+    value: normalizeString(t.value) || '',
+    countryCode: normalizeString(t.countryCode) || ''
+  })).filter(t => t.type && t.value && t.countryCode);
+
   return {
     partnerId,
     legalName,

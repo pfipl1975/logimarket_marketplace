@@ -5,7 +5,10 @@ import { partners, sellerLegalIdentities, sellerTaxIdentifiers } from '../schema
 import { buildSellerDisclosure, SellerDisclosureDto } from './seller-disclosure';
 
 export async function getSellerDisclosure(partnerId: number): Promise<SellerDisclosureDto | null> {
-  const [partner] = await db.select()
+  const [partner] = await db.select({
+    id: partners.id,
+    contactEmail: partners.contactEmail,
+  })
     .from(partners)
     .where(eq(partners.id, partnerId))
     .limit(1);
@@ -14,16 +17,29 @@ export async function getSellerDisclosure(partnerId: number): Promise<SellerDisc
     return null;
   }
 
-  const [identity] = await db.select()
+  const [identity] = await db.select({
+    legalName: sellerLegalIdentities.legalName,
+    registeredAddressLine1: sellerLegalIdentities.registeredAddressLine1,
+    registeredAddressLine2: sellerLegalIdentities.registeredAddressLine2,
+    registeredPostalCode: sellerLegalIdentities.registeredPostalCode,
+    registeredCity: sellerLegalIdentities.registeredCity,
+    registeredRegion: sellerLegalIdentities.registeredRegion,
+    registeredCountryCode: sellerLegalIdentities.registeredCountryCode,
+  })
     .from(sellerLegalIdentities)
     .where(eq(sellerLegalIdentities.partnerId, partnerId))
     .limit(1);
 
-  const taxIds = await db.select()
+  const taxIds = await db.select({
+    identifierType: sellerTaxIdentifiers.identifierType,
+    identifierValue: sellerTaxIdentifiers.identifierValue,
+    countryCode: sellerTaxIdentifiers.countryCode,
+  })
     .from(sellerTaxIdentifiers)
     .where(eq(sellerTaxIdentifiers.partnerId, partnerId));
 
-  const legalName = identity?.legalName || partner.companyName;
+  // DO NOT fallback to partner.companyName for legalName!
+  const legalName = identity?.legalName || null;
   const businessEmail = partner.contactEmail;
 
   return buildSellerDisclosure(
@@ -31,12 +47,12 @@ export async function getSellerDisclosure(partnerId: number): Promise<SellerDisc
     legalName,
     businessEmail,
     {
-      country: identity?.registeredCountry || null,
-      city: identity?.registeredCity || null,
+      addressLine1: identity?.registeredAddressLine1 || null,
+      addressLine2: identity?.registeredAddressLine2 || null,
       postalCode: identity?.registeredPostalCode || null,
-      street: identity?.registeredStreet || null,
-      building: identity?.registeredBuilding || null,
-      apartment: identity?.registeredApartment || null,
+      city: identity?.registeredCity || null,
+      region: identity?.registeredRegion || null,
+      countryCode: identity?.registeredCountryCode || null,
     },
     taxIds.map(t => ({
       type: t.identifierType,
