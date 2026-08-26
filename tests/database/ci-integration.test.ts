@@ -195,23 +195,25 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
 
       // 0004 PROOF
-      const sellerCols = fingerprint["seller_legal_identities"].columns;
-      assert.ok(sellerCols["registered_address_line1"]);
-      assert.ok(sellerCols["registered_address_line2"]);
-      assert.ok(sellerCols["registered_postal_code"]);
-      assert.ok(sellerCols["registered_city"]);
-      assert.ok(sellerCols["registered_region"]);
-      assert.ok(sellerCols["registered_country_code"]);
+      const sellerColumnNames = new Set(
+        fingerprint["seller_legal_identities"].columns.map((column) => column.name),
+      );
+      assert.ok(sellerColumnNames.has("registered_address_line1"));
+      assert.ok(sellerColumnNames.has("registered_address_line2"));
+      assert.ok(sellerColumnNames.has("registered_postal_code"));
+      assert.ok(sellerColumnNames.has("registered_city"));
+      assert.ok(sellerColumnNames.has("registered_region"));
+      assert.ok(sellerColumnNames.has("registered_country_code"));
 
 
-      // Journal check: 4 rows
+      // Journal check: 5 rows
       const diskMigrations = readMigrationFiles({
         migrationsFolder: MIGRATIONS_DIR,
       });
       assert.strictEqual(
         diskMigrations.length,
-        4,
-        "Disk migrations should have 4 files",
+          5,
+          "Disk migrations should have 5 files",
       );
 
       const journalRes = await pool.query(
@@ -241,7 +243,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> 0003 ONLY", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> 0003 -> 0004", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -438,7 +440,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
 
-      // Journal check: 4 rows
+      // Journal check: 5 rows
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
       );
