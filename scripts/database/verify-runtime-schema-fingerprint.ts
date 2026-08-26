@@ -13,6 +13,7 @@ import {
   CANONICAL_0000_BASELINE_FINGERPRINT,
   PRE_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
+  PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
   IndexContract,
@@ -60,7 +61,8 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
-  | "EXACT_EXISTING_POST_0003"
+  | "EXACT_EXISTING_POST_0004"
+  | "MIGRATABLE_POST_0003"
   | "MIGRATABLE_POST_0002"
   | "MIGRATABLE_PROD_LEGACY"
   | "PARTIAL_OR_DRIFTED"
@@ -524,10 +526,16 @@ export function classifyRuntimeTarget(
     return { state: "EMPTY", publicTableCount, differences: [] };
   }
 
-  const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0003_PRODUCTION_FINGERPRINT);
+  const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
-    return { state: "EXACT_EXISTING_POST_0003", publicTableCount, differences: [] };
+    return { state: "EXACT_EXISTING_POST_0004", publicTableCount, differences: [] };
+  }
+
+  const matchPost0003 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0003_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0003.isExactMatch) {
+    return { state: "MIGRATABLE_POST_0003", publicTableCount, differences: [] };
   }
 
   const matchPre0003 = compareRuntimeFingerprint(actual, allPublicTables, PRE_0003_PRODUCTION_FINGERPRINT);

@@ -128,10 +128,10 @@ export async function verifyRollbackPreconditions(
     return { allowed: false, reason: "DATABASE_URL points to forbidden (production) ref" };
   }
 
-  // 5. Full fingerprint must be EXACT_EXISTING or EXACT_EXISTING_POST_0003
+  // 5. Full fingerprint must be EXACT_EXISTING or EXACT_EXISTING_POST_0004
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables);
-  if (classification.state !== "EXACT_EXISTING" && classification.state !== "EXACT_EXISTING_POST_0003") {
+  if (classification.state !== "EXACT_EXISTING" && classification.state !== "EXACT_EXISTING_POST_0004") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,

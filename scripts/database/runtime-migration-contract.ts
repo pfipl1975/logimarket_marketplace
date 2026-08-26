@@ -610,7 +610,7 @@ export const PRE_0003_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = PRE_0003_PRODUCTION_FINGERPRINT;
+
 
 // ---------------------------------------------------------------------------
 // 4. FINAL_POST_0003_PRODUCTION_FINGERPRINT
@@ -651,4 +651,25 @@ export const FINAL_POST_0003_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0003_PRODUCTION_FINGERPRINT;
+// ---------------------------------------------------------------------------
+// 5. FINAL_POST_0004_PRODUCTION_FINGERPRINT
+// Single exact final runtime schema after 0004 (19 tables, +6 address columns)
+// ---------------------------------------------------------------------------
+export const FINAL_POST_0004_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0003_PRODUCTION_FINGERPRINT,
+  "seller_legal_identities": {
+    ...FINAL_POST_0003_PRODUCTION_FINGERPRINT["seller_legal_identities"],
+    columns: [
+      ...FINAL_POST_0003_PRODUCTION_FINGERPRINT["seller_legal_identities"].columns,
+      { name: "registered_address_line1", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "registered_address_line2", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "registered_postal_code", type: "character varying(32)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "registered_city", type: "character varying(120)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "registered_region", type: "character varying(120)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "registered_country_code", type: "character varying(2)", nullable: true, defaultVal: null, sequenceName: null }
+    ]
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0003_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0004_PRODUCTION_FINGERPRINT;
