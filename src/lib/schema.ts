@@ -142,6 +142,12 @@ export const sellerLegalIdentities = pgTable("seller_legal_identities", {
   verificationReference: text("verification_reference"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
+  registeredCountry: varchar("registered_country", { length: 2 }),
+  registeredCity: varchar("registered_city", { length: 255 }),
+  registeredPostalCode: varchar("registered_postal_code", { length: 50 }),
+  registeredStreet: varchar("registered_street", { length: 255 }),
+  registeredBuilding: varchar("registered_building", { length: 100 }),
+  registeredApartment: varchar("registered_apartment", { length: 100 }),
 }, (t) => [
   foreignKey({
     name: "seller_legal_identities_partner_id_fkey",

@@ -36,6 +36,13 @@
       "when": 1784318271245,
       "tag": "0004_worried_masked_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787764811160,
+      "tag": "0005_seller_registered_address",
+      "breakpoints": true
     }
   ]
 }
