@@ -120,7 +120,18 @@ export async function AdminPartnerDetailPage({
               <p className="text-xs text-red-800">
                 <span className="font-medium">{dict.missingFields}</span>
                 {result.data.sellerDisclosureCompleteness.missing
-                  .map((key) => ((dict as unknown) as Record<string, string>)[`missing_${key}`] || key)
+                  .map((key) => {
+                    const missingFieldLabels: Record<string, string> = {
+                      legal_name: dict.missing_legal_name,
+                      business_email: dict.missing_business_email,
+                      registered_address_line1: dict.missing_registered_address_line1,
+                      registered_postal_code: dict.missing_registered_postal_code,
+                      registered_city: dict.missing_registered_city,
+                      registered_country_code: dict.missing_registered_country_code,
+                      tax_identifier: dict.missing_tax_identifier,
+                    };
+                    return missingFieldLabels[key] || key;
+                  })
                   .join(", ")}
               </p>
             </div>
@@ -151,10 +162,10 @@ export async function AdminPartnerDetailPage({
                 registeredRegionLabel: dict.registeredRegionLabel,
                 registeredCountryCodeLabel: dict.registeredCountryCodeLabel,
                 saveAction: dict.saveAction,
-                successSaved: dict.successSaved,
-                errorInvalidInput: dict.errorInvalidInput,
-                errorSystem: dict.errorSystem,
-                errorPartnerNotFound: dict.errorPartnerNotFound,
+                sellerLegalSuccessSaved: dict.sellerLegalSuccessSaved,
+                sellerLegalErrorInvalidInput: dict.sellerLegalErrorInvalidInput,
+                sellerLegalErrorSystem: dict.sellerLegalErrorSystem,
+                sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound,
                 registeredOfficeTitle: dict.registeredOfficeTitle,
                 placeholderCountry: dict.placeholderCountry,
               }}
@@ -209,18 +220,18 @@ export async function AdminPartnerDetailPage({
                 removeAction: dict.removeAction,
                 noTaxIdentifiers: dict.noTaxIdentifiers,
                 legalIdentityRequired: dict.legalIdentityRequired,
-                errorInvalidInput: dict.errorInvalidInput,
-                errorSystem: dict.errorSystem,
-                errorPartnerNotFound: dict.errorPartnerNotFound,
-                errorConflict: dict.errorConflict,
-                errorNotFound: dict.errorNotFound,
+                sellerLegalErrorInvalidInput: dict.sellerLegalErrorInvalidInput,
+                sellerLegalErrorSystem: dict.sellerLegalErrorSystem,
+                sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound,
+                taxIdentifierConflict: dict.taxIdentifierConflict,
+                taxIdentifierNotFound: dict.taxIdentifierNotFound,
                 addTaxIdentifierTitle: dict.addTaxIdentifierTitle,
                 confirmDelete: dict.confirmDelete,
                 placeholderVat: dict.placeholderVat,
                 placeholderCountry: dict.placeholderCountry,
               }}
-              renderFieldValue={renderFieldValue}
-              formatDate={formatDate}
+              emptyValue={dict.emptyValue}
+              locale={locale}
             />
           </div>
         </section>

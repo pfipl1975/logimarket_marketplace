@@ -121,7 +121,7 @@ export async function executeAdminSellerLegalDataSave(
       return { ok: true as const, code: "SAVED" as const };
     });
     return result;
-  } catch {
+  } catch (error: unknown) {
     console.error("[ADMIN_DB] executeAdminSellerLegalDataSave system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
@@ -200,7 +200,7 @@ export async function executeAdminSellerTaxIdentifierAdd(
 
       return { ok: true as const, code: "ADDED" as const };
     });
-  } catch {
+  } catch (error: unknown) {
     if (error && typeof error === "object" && "code" in error && error.code === "23505") {
       return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" };
     }
@@ -245,7 +245,7 @@ export async function executeAdminSellerTaxIdentifierDelete(
     }
 
     return { ok: true as const, code: "DELETED" };
-  } catch {
+  } catch (error: unknown) {
     console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }

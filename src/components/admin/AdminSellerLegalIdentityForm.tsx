@@ -29,10 +29,10 @@ export type AdminSellerLegalIdentityFormProps = {
     registeredRegionLabel: string;
     registeredCountryCodeLabel: string;
     saveAction: string;
-    successSaved: string;
-    errorInvalidInput: string;
-    errorSystem: string;
-    errorPartnerNotFound: string;
+    sellerLegalSuccessSaved: string;
+    sellerLegalErrorInvalidInput: string;
+    sellerLegalErrorSystem: string;
+    sellerLegalErrorPartnerNotFound: string;
     registeredOfficeTitle: string;
     placeholderCountry: string;
   };
@@ -89,15 +89,15 @@ export function AdminSellerLegalIdentityForm({
       });
 
       if (result.ok) {
-        setSuccess(dictionary.successSaved);
+        setSuccess(dictionary.sellerLegalSuccessSaved);
         router.refresh();
       } else {
         if (result.code === "INVALID_INPUT") {
-          setError(dictionary.errorInvalidInput);
+          setError(dictionary.sellerLegalErrorInvalidInput);
         } else if (result.code === "PARTNER_NOT_FOUND") {
-          setError(dictionary.errorPartnerNotFound);
+          setError(dictionary.sellerLegalErrorPartnerNotFound);
         } else {
-          setError(dictionary.errorSystem);
+          setError(dictionary.sellerLegalErrorSystem);
         }
       }
     });

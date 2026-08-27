@@ -30,18 +30,18 @@ export type AdminSellerTaxIdentifiersFormProps = {
     removeAction: string;
     noTaxIdentifiers: string;
     legalIdentityRequired: string;
-    errorInvalidInput: string;
-    errorSystem: string;
-    errorPartnerNotFound: string;
-    errorConflict: string;
-    errorNotFound: string;
+    sellerLegalErrorInvalidInput: string;
+    sellerLegalErrorSystem: string;
+    sellerLegalErrorPartnerNotFound: string;
+    taxIdentifierConflict: string;
+    taxIdentifierNotFound: string;
     addTaxIdentifierTitle: string;
     confirmDelete: string;
     placeholderVat: string;
     placeholderCountry: string;
   };
-  renderFieldValue: (val: string | null) => React.ReactNode;
-  formatDate: (val: string | null) => string;
+  emptyValue: string;
+  locale: string;
 };
 
 export function AdminSellerTaxIdentifiersForm({
@@ -49,10 +49,19 @@ export function AdminSellerTaxIdentifiersForm({
   hasLegalIdentity,
   taxIdentifiers,
   dictionary,
-  renderFieldValue,
-  formatDate,
+  emptyValue,
+  locale,
 }: AdminSellerTaxIdentifiersFormProps) {
   const router = useRouter();
+
+  const formatDate = (isoStr: string | null) => {
+    if (!isoStr) return emptyValue;
+    return new Date(isoStr).toLocaleString(locale);
+  };
+
+  const renderFieldValue = (val: string | null | undefined) => {
+    return val ? val : <span className="text-muted-foreground italic">{emptyValue}</span>;
+  };
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -85,11 +94,11 @@ export function AdminSellerTaxIdentifiersForm({
         setFormData({ identifierType: "", identifierValue: "", countryCode: "" });
         router.refresh();
       } else {
-        if (result.code === "INVALID_INPUT") setError(dictionary.errorInvalidInput);
-        else if (result.code === "PARTNER_NOT_FOUND") setError(dictionary.errorPartnerNotFound);
+        if (result.code === "INVALID_INPUT") setError(dictionary.sellerLegalErrorInvalidInput);
+        else if (result.code === "PARTNER_NOT_FOUND") setError(dictionary.sellerLegalErrorPartnerNotFound);
         else if (result.code === "LEGAL_IDENTITY_REQUIRED") setError(dictionary.legalIdentityRequired);
-        else if (result.code === "TAX_IDENTIFIER_CONFLICT") setError(dictionary.errorConflict);
-        else setError(dictionary.errorSystem);
+        else if (result.code === "TAX_IDENTIFIER_CONFLICT") setError(dictionary.taxIdentifierConflict);
+        else setError(dictionary.sellerLegalErrorSystem);
       }
     });
   };
@@ -108,8 +117,8 @@ export function AdminSellerTaxIdentifiersForm({
       if (result.ok) {
         router.refresh();
       } else {
-        if (result.code === "NOT_FOUND") setError(dictionary.errorNotFound);
-        else setError(dictionary.errorSystem);
+        if (result.code === "NOT_FOUND") setError(dictionary.taxIdentifierNotFound);
+        else setError(dictionary.sellerLegalErrorSystem);
       }
     });
   };
