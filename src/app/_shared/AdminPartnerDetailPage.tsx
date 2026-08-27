@@ -3,8 +3,11 @@ import type { Locale } from "@/lib/i18n/config";
 import { getAdminPartnerDetail } from "@/app/actions";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Building2, FileText, Landmark, ShieldCheck, FileKey } from "lucide-react";
+import { Landmark, ShieldCheck, Building2, FileText, FileKey, ArrowLeft } from "lucide-react";
 import { AdminSellerEligibilityControl } from "@/components/admin/AdminSellerEligibilityControl";
+import { AdminSellerLegalIdentityForm } from "@/components/admin/AdminSellerLegalIdentityForm";
+import { AdminSellerTaxIdentifiersForm } from "@/components/admin/AdminSellerTaxIdentifiersForm";
+
 
 export async function AdminPartnerDetailPage({
   locale,
@@ -32,6 +35,16 @@ export async function AdminPartnerDetailPage({
 
   const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility } = result.data;
   const backPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
+
+  const missingFieldLabels = {
+  legal_name: dict.missing_legal_name,
+  business_email: dict.missing_business_email,
+  registered_address_line1: dict.missing_registered_address_line1,
+  registered_postal_code: dict.missing_registered_postal_code,
+  registered_city: dict.missing_registered_city,
+  registered_country_code: dict.missing_registered_country_code,
+  tax_identifier: dict.missing_tax_identifier,
+};
 
   const formatDate = (isoStr: string | null) => {
     if (!isoStr) return dict.emptyValue;
@@ -91,24 +104,78 @@ export async function AdminPartnerDetailPage({
         </section>
 
         {/* Seller Legal Identity */}
-        <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
-          <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center gap-2">
-            <Landmark className="h-5 w-5 text-brand-teal" />
-            <h2 className="font-medium text-brand-navy">{dict.legalIdentitySection}</h2>
+        <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden h-fit">
+          <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <Landmark className="h-5 w-5 shrink-0 text-brand-teal" />
+              <h2 className="font-medium text-brand-navy">{dict.legalIdentitySection}</h2>
+            </div>
+            {result.data.sellerDisclosureCompleteness && (
+              <div className="flex flex-wrap items-center gap-2 text-sm">
+                <span className="font-medium text-muted-foreground">{dict.sellerDisclosureReadiness}:</span>
+                {result.data.sellerDisclosureCompleteness.complete ? (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    {dict.statusComplete}
+                  </span>
+                ) : (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    {dict.statusIncomplete}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
-          <div className="p-6">
-            {!legalIdentity ? (
-              <p className="text-sm text-muted-foreground italic">{dict.noLegalIdentity}</p>
-            ) : (
+
+          {result.data.sellerDisclosureCompleteness && !result.data.sellerDisclosureCompleteness.complete && (
+            <div className="bg-red-50 px-6 py-3 border-b border-red-100">
+              <p className="text-xs text-red-800">
+                <span className="font-medium">{dict.missingFields}</span>
+                {result.data.sellerDisclosureCompleteness.missing.map((key) => {
+                    return missingFieldLabels[key];
+                  }).join(", ")}
+              </p>
+            </div>
+          )}
+
+          <div className="p-0 border-b border-border-industrial/50">
+            <AdminSellerLegalIdentityForm
+              partnerId={partner.id}
+              initialData={{
+                legalName: legalIdentity?.legalName || "",
+                businessEmail: partner.contactEmail || "",
+                jurisdictionCountry: legalIdentity?.jurisdictionCountry || "",
+                registeredAddressLine1: legalIdentity?.registeredAddressLine1 || "",
+                registeredAddressLine2: legalIdentity?.registeredAddressLine2 || "",
+                registeredPostalCode: legalIdentity?.registeredPostalCode || "",
+                registeredCity: legalIdentity?.registeredCity || "",
+                registeredRegion: legalIdentity?.registeredRegion || "",
+                registeredCountryCode: legalIdentity?.registeredCountryCode || "",
+              }}
+              dictionary={{
+                legalNameLabel: dict.legalNameLabel,
+                businessEmailLabel: dict.businessEmailLabel,
+                jurisdictionCountryLabel: dict.jurisdictionLabel,
+                registeredAddressLine1Label: dict.registeredAddressLine1Label,
+                registeredAddressLine2Label: dict.registeredAddressLine2Label,
+                registeredPostalCodeLabel: dict.registeredPostalCodeLabel,
+                registeredCityLabel: dict.registeredCityLabel,
+                registeredRegionLabel: dict.registeredRegionLabel,
+                registeredCountryCodeLabel: dict.registeredCountryCodeLabel,
+                saveAction: dict.saveAction,
+                sellerLegalSuccessSaved: dict.sellerLegalSuccessSaved,
+                sellerLegalErrorInvalidInput: dict.sellerLegalErrorInvalidInput,
+                sellerLegalErrorSystem: dict.sellerLegalErrorSystem,
+                sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound,
+                registeredOfficeTitle: dict.registeredOfficeTitle,
+                placeholderCountry: dict.placeholderCountry,
+              }}
+            />
+          </div>
+
+          {legalIdentity && (
+            <div className="p-6 bg-brand-light-gray/10">
+              <h3 className="font-medium text-brand-navy mb-4">{dict.verificationMetadataTitle}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.legalNameLabel}</p>
-                  <p className="text-sm font-medium text-brand-navy">{renderFieldValue(legalIdentity.legalName)}</p>
-                </div>
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.jurisdictionLabel}</p>
-                  <p className="text-sm font-medium text-brand-navy">{renderFieldValue(legalIdentity.jurisdictionCountry)}</p>
-                </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.verificationStatusLabel}</p>
                   <p className="text-sm font-medium text-brand-navy">{renderFieldValue(legalIdentity.verificationStatus)}</p>
@@ -126,55 +193,46 @@ export async function AdminPartnerDetailPage({
                   <p className="text-sm font-medium text-brand-navy break-all font-mono text-xs">{renderFieldValue(legalIdentity.verificationReference)}</p>
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </section>
 
         {/* Tax Identifiers */}
-        <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
+        <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden h-fit">
           <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center gap-2">
             <FileText className="h-5 w-5 text-brand-teal" />
             <h2 className="font-medium text-brand-navy">{dict.taxIdentifiersSection}</h2>
           </div>
           <div className="p-0">
-            {taxIdentifiers.length === 0 ? (
-              <div className="p-6"><p className="text-sm text-muted-foreground italic">{dict.noTaxIdentifiers}</p></div>
-            ) : (
-              <div className="divide-y divide-border-industrial/50">
-                {taxIdentifiers.map((tax, idx) => (
-                  <div key={idx} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8 hover:bg-brand-light-gray/20 transition-colors">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.identifierTypeLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(tax.identifierType)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.identifierValueLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(tax.identifierValue)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.countryCodeLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(tax.countryCode)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.verificationStatusLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(tax.verificationStatus)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.verifiedAtLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{formatDate(tax.verifiedAt)}</p>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.verificationSourceLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(tax.verificationSource)}</p>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.verificationReferenceLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy break-all font-mono text-xs">{renderFieldValue(tax.verificationReference)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <AdminSellerTaxIdentifiersForm
+              partnerId={partner.id}
+              hasLegalIdentity={!!legalIdentity}
+              taxIdentifiers={taxIdentifiers}
+              dictionary={{
+                identifierTypeLabel: dict.identifierTypeLabel,
+                identifierValueLabel: dict.identifierValueLabel,
+                countryCodeLabel: dict.countryCodeLabel,
+                verificationStatusLabel: dict.verificationStatusLabel,
+                verifiedAtLabel: dict.verifiedAtLabel,
+                verificationSourceLabel: dict.verificationSourceLabel,
+                verificationReferenceLabel: dict.verificationReferenceLabel,
+                addAction: dict.addAction,
+                removeAction: dict.removeAction,
+                noTaxIdentifiers: dict.noTaxIdentifiers,
+                legalIdentityRequired: dict.legalIdentityRequired,
+                sellerLegalErrorInvalidInput: dict.sellerLegalErrorInvalidInput,
+                sellerLegalErrorSystem: dict.sellerLegalErrorSystem,
+                sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound,
+                taxIdentifierConflict: dict.taxIdentifierConflict,
+                taxIdentifierNotFound: dict.taxIdentifierNotFound,
+                addTaxIdentifierTitle: dict.addTaxIdentifierTitle,
+                confirmDelete: dict.confirmDelete,
+                placeholderVat: dict.placeholderVat,
+                placeholderCountry: dict.placeholderCountry,
+              }}
+              emptyValue={dict.emptyValue}
+              locale={locale}
+            />
           </div>
         </section>
 
@@ -235,7 +293,7 @@ export async function AdminPartnerDetailPage({
                 </div>
               </div>
             )}
-            
+
             <AdminSellerEligibilityControl
               partnerId={partner.id}
               eligibility={eligibility}

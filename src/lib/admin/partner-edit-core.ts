@@ -1,0 +1,252 @@
+import { z } from "zod";
+import { eq, and } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "@/lib/schema";
+import { partners, sellerLegalIdentities, sellerTaxIdentifiers } from "@/lib/schema";
+
+// ----------------------------------------------------------------------
+// 1. Seller Legal Data Save
+// ----------------------------------------------------------------------
+
+export const AdminSellerLegalDataSaveInputSchema = z.object({
+  partnerId: z.number().int().positive(),
+  businessEmail: z.string().trim().email().max(100),
+  legalName: z.string().trim().min(1).max(255),
+  jurisdictionCountry: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
+  registeredAddressLine1: z
+    .string()
+    .trim()
+    .max(255)
+    .transform((val) => (val === "" ? null : val))
+    .nullable(),
+  registeredAddressLine2: z
+    .string()
+    .trim()
+    .max(255)
+    .transform((val) => (val === "" ? null : val))
+    .nullable(),
+  registeredPostalCode: z
+    .string()
+    .trim()
+    .max(32)
+    .transform((val) => (val === "" ? null : val))
+    .nullable(),
+  registeredCity: z
+    .string()
+    .trim()
+    .max(120)
+    .transform((val) => (val === "" ? null : val))
+    .nullable(),
+  registeredRegion: z
+    .string()
+    .trim()
+    .max(120)
+    .transform((val) => (val === "" ? null : val))
+    .nullable(),
+  registeredCountryCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .transform((val) => (val === "" ? null : val))
+    .nullable()
+    .refine((val) => val === null || /^[A-Z]{2}$/.test(val), {
+      message: "Must be exactly 2 ASCII letters if present",
+    }),
+});
+
+export type AdminSellerLegalDataSaveInput = z.infer<typeof AdminSellerLegalDataSaveInputSchema>;
+
+export type AdminSellerLegalDataSaveResult =
+  | { ok: true; code: "SAVED" }
+  | { ok: false; code: "PARTNER_NOT_FOUND" }
+  | { ok: false; code: "SYSTEM_ERROR" };
+
+export async function executeAdminSellerLegalDataSave(
+  db: NodePgDatabase<typeof schema>,
+  input: AdminSellerLegalDataSaveInput
+): Promise<AdminSellerLegalDataSaveResult> {
+  try {
+    const result = await db.transaction(async (tx) => {
+      const partnerRows = await tx
+        .select({ id: partners.id })
+        .from(partners)
+        .where(eq(partners.id, input.partnerId))
+        .limit(1);
+
+      if (partnerRows.length === 0) {
+        return { ok: false as const, code: "PARTNER_NOT_FOUND" as const };
+      }
+
+      await tx
+        .update(partners)
+        .set({ contactEmail: input.businessEmail })
+        .where(eq(partners.id, input.partnerId));
+
+      const existingIdentity = await tx
+        .select({ partnerId: sellerLegalIdentities.partnerId })
+        .from(sellerLegalIdentities)
+        .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
+        .limit(1);
+
+      if (existingIdentity.length === 0) {
+        await tx.insert(sellerLegalIdentities).values({
+          partnerId: input.partnerId,
+          legalName: input.legalName,
+          jurisdictionCountry: input.jurisdictionCountry,
+          registeredAddressLine1: input.registeredAddressLine1,
+          registeredAddressLine2: input.registeredAddressLine2,
+          registeredPostalCode: input.registeredPostalCode,
+          registeredCity: input.registeredCity,
+          registeredRegion: input.registeredRegion,
+          registeredCountryCode: input.registeredCountryCode,
+          verificationStatus: "unverified",
+        });
+      } else {
+        await tx
+          .update(sellerLegalIdentities)
+          .set({
+            legalName: input.legalName,
+            jurisdictionCountry: input.jurisdictionCountry,
+            registeredAddressLine1: input.registeredAddressLine1,
+            registeredAddressLine2: input.registeredAddressLine2,
+            registeredPostalCode: input.registeredPostalCode,
+            registeredCity: input.registeredCity,
+            registeredRegion: input.registeredRegion,
+            registeredCountryCode: input.registeredCountryCode,
+            updatedAt: new Date(),
+          })
+          .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+      }
+
+      return { ok: true as const, code: "SAVED" as const };
+    });
+    return result;
+  } catch {
+      console.error("[ADMIN_DB] executeAdminSellerLegalDataSave system error");
+    return { ok: false as const, code: "SYSTEM_ERROR" };
+  }
+}
+
+// ----------------------------------------------------------------------
+// 2. Tax Identifier Add
+// ----------------------------------------------------------------------
+
+export const AdminSellerTaxIdentifierAddInputSchema = z.object({
+  partnerId: z.number().int().positive(),
+  identifierType: z.string().trim().min(1).max(50),
+  identifierValue: z.string().trim().min(1).max(100),
+  countryCode: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
+});
+
+export type AdminSellerTaxIdentifierAddInput = z.infer<typeof AdminSellerTaxIdentifierAddInputSchema>;
+
+export type AdminSellerTaxIdentifierAddResult =
+  | { ok: true; code: "ADDED" }
+  | { ok: false; code: "PARTNER_NOT_FOUND" }
+  | { ok: false; code: "LEGAL_IDENTITY_REQUIRED" }
+  | { ok: false; code: "TAX_IDENTIFIER_CONFLICT" }
+  | { ok: false; code: "SYSTEM_ERROR" };
+
+export async function executeAdminSellerTaxIdentifierAdd(
+  db: NodePgDatabase<typeof schema>,
+  input: AdminSellerTaxIdentifierAddInput
+): Promise<AdminSellerTaxIdentifierAddResult> {
+  try {
+    return await db.transaction(async (tx) => {
+      const partnerRows = await tx
+        .select({ id: partners.id })
+        .from(partners)
+        .where(eq(partners.id, input.partnerId))
+        .limit(1);
+
+      if (partnerRows.length === 0) {
+        return { ok: false as const, code: "PARTNER_NOT_FOUND" as const };
+      }
+
+      const identityRows = await tx
+        .select({ partnerId: sellerLegalIdentities.partnerId })
+        .from(sellerLegalIdentities)
+        .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
+        .limit(1);
+
+      if (identityRows.length === 0) {
+        return { ok: false as const, code: "LEGAL_IDENTITY_REQUIRED" as const };
+      }
+
+      const conflictRows = await tx
+        .select({ id: sellerTaxIdentifiers.id })
+        .from(sellerTaxIdentifiers)
+        .where(
+          and(
+            eq(sellerTaxIdentifiers.partnerId, input.partnerId),
+            eq(sellerTaxIdentifiers.identifierType, input.identifierType),
+            eq(sellerTaxIdentifiers.countryCode, input.countryCode),
+            eq(sellerTaxIdentifiers.identifierValue, input.identifierValue)
+          )
+        )
+        .limit(1);
+
+      if (conflictRows.length > 0) {
+        return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" as const };
+      }
+
+      await tx.insert(sellerTaxIdentifiers).values({
+        partnerId: input.partnerId,
+        identifierType: input.identifierType,
+        identifierValue: input.identifierValue,
+        countryCode: input.countryCode,
+        verificationStatus: "unverified",
+      });
+
+      return { ok: true as const, code: "ADDED" as const };
+    });
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "23505") {
+      return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" };
+    }
+    console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierAdd system error");
+    return { ok: false as const, code: "SYSTEM_ERROR" };
+  }
+}
+
+// ----------------------------------------------------------------------
+// 3. Tax Identifier Delete
+// ----------------------------------------------------------------------
+
+export const AdminSellerTaxIdentifierDeleteInputSchema = z.object({
+  partnerId: z.number().int().positive(),
+  taxIdentifierId: z.number().int().positive(),
+});
+
+export type AdminSellerTaxIdentifierDeleteInput = z.infer<typeof AdminSellerTaxIdentifierDeleteInputSchema>;
+
+export type AdminSellerTaxIdentifierDeleteResult =
+  | { ok: true; code: "DELETED" }
+  | { ok: false; code: "NOT_FOUND" }
+  | { ok: false; code: "SYSTEM_ERROR" };
+
+export async function executeAdminSellerTaxIdentifierDelete(
+  db: NodePgDatabase<typeof schema>,
+  input: AdminSellerTaxIdentifierDeleteInput
+): Promise<AdminSellerTaxIdentifierDeleteResult> {
+  try {
+    const deleted = await db
+      .delete(sellerTaxIdentifiers)
+      .where(
+        and(
+          eq(sellerTaxIdentifiers.id, input.taxIdentifierId),
+          eq(sellerTaxIdentifiers.partnerId, input.partnerId)
+        )
+      )
+      .returning({ id: sellerTaxIdentifiers.id });
+
+    if (deleted.length === 0) {
+      return { ok: false as const, code: "NOT_FOUND" };
+    }
+
+    return { ok: true as const, code: "DELETED" };
+  } catch {
+      console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
+    return { ok: false as const, code: "SYSTEM_ERROR" };
+  }
+}
