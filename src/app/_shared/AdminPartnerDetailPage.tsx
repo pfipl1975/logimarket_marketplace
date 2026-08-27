@@ -105,13 +105,13 @@ export async function AdminPartnerDetailPage({
 
         {/* Seller Legal Identity */}
         <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden h-fit">
-          <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Landmark className="h-5 w-5 text-brand-teal" />
+          <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-2 min-w-0">
+              <Landmark className="h-5 w-5 shrink-0 text-brand-teal" />
               <h2 className="font-medium text-brand-navy">{dict.legalIdentitySection}</h2>
             </div>
             {result.data.sellerDisclosureCompleteness && (
-              <div className="flex items-center gap-2 text-sm">
+              <div className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="font-medium text-muted-foreground">{dict.sellerDisclosureReadiness}:</span>
                 {result.data.sellerDisclosureCompleteness.complete ? (
                   <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
