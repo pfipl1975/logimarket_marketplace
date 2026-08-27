@@ -35,6 +35,10 @@ export type AdminSellerTaxIdentifiersFormProps = {
     errorPartnerNotFound: string;
     errorConflict: string;
     errorNotFound: string;
+    addTaxIdentifierTitle: string;
+    confirmDelete: string;
+    placeholderVat: string;
+    placeholderCountry: string;
   };
   renderFieldValue: (val: string | null) => React.ReactNode;
   formatDate: (val: string | null) => string;
@@ -92,7 +96,7 @@ export function AdminSellerTaxIdentifiersForm({
 
   const handleRemove = (taxId: number) => {
     if (isPending) return;
-    if (!confirm("Are you sure?")) return;
+    if (!confirm(dictionary.confirmDelete)) return;
 
     setError(null);
     startTransition(async () => {
@@ -179,7 +183,7 @@ export function AdminSellerTaxIdentifiersForm({
           </div>
         ) : (
           <form onSubmit={handleAdd} className="space-y-4">
-            <h3 className="text-sm font-medium text-brand-navy">Add New Tax Identifier</h3>
+            <h3 className="text-sm font-medium text-brand-navy">{dictionary.addTaxIdentifierTitle}</h3>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label htmlFor="identifierType" className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
@@ -191,7 +195,7 @@ export function AdminSellerTaxIdentifiersForm({
                   type="text"
                   required
                   maxLength={50}
-                  placeholder="e.g. VAT"
+                  placeholder={dictionary.placeholderVat}
                   value={formData.identifierType}
                   onChange={handleChange}
                   disabled={isPending}
@@ -224,7 +228,7 @@ export function AdminSellerTaxIdentifiersForm({
                   type="text"
                   required
                   maxLength={2}
-                  placeholder="e.g. PL"
+                  placeholder={dictionary.placeholderCountry}
                   value={formData.countryCode}
                   onChange={handleChange}
                   disabled={isPending}

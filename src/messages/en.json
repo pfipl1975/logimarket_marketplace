@@ -730,7 +730,20 @@
     "missingFields": "Missing fields: ",
     "statusComplete": "COMPLETE",
     "statusIncomplete": "INCOMPLETE",
-    "businessEmailLabel": "Business Email"
+    "businessEmailLabel": "Business Email",
+    "verificationMetadataTitle": "Verification Metadata (Read-Only)",
+    "registeredOfficeTitle": "Registered Office",
+    "placeholderCountry": "e.g. PL",
+    "placeholderVat": "e.g. VAT",
+    "addTaxIdentifierTitle": "Add New Tax Identifier",
+    "confirmDelete": "Are you sure?",
+    "missing_legal_name": "Legal Name",
+    "missing_business_email": "Business Email",
+    "missing_registered_address_line1": "Address Line 1",
+    "missing_registered_postal_code": "Postal Code",
+    "missing_registered_city": "City",
+    "missing_registered_country_code": "Country Code",
+    "missing_tax_identifier": "Tax Identifier"
   },
   "adminOfferDetail": {
     "errorTitle": "Error loading data",

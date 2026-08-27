@@ -730,7 +730,20 @@
     "missingFields": "Campos faltantes: ",
     "statusComplete": "COMPLETO",
     "statusIncomplete": "INCOMPLETO",
-    "businessEmailLabel": "Correo electrónico comercial"
+    "businessEmailLabel": "Correo electrónico comercial",
+    "verificationMetadataTitle": "Metadatos de verificación (Solo lectura)",
+    "registeredOfficeTitle": "Domicilio Social",
+    "placeholderCountry": "ej. PL",
+    "placeholderVat": "ej. IVA",
+    "addTaxIdentifierTitle": "Añadir nuevo identificador fiscal",
+    "confirmDelete": "¿Está seguro?",
+    "missing_legal_name": "Razón Social",
+    "missing_business_email": "Correo Comercial",
+    "missing_registered_address_line1": "Dirección (línea 1)",
+    "missing_registered_postal_code": "Código Postal",
+    "missing_registered_city": "Ciudad",
+    "missing_registered_country_code": "Código de país",
+    "missing_tax_identifier": "Identificador Fiscal"
   },
   "adminOfferDetail": {
     "errorTitle": "Error al cargar datos",

@@ -1134,7 +1134,7 @@ export async function saveAdminSellerLegalData(rawInput: unknown) {
 
   const result = await executeAdminSellerLegalDataSave(db, parsed.data);
   if (result.ok) {
-    revalidatePath(`/admin/partnerzy/${parsed.data.partnerId}`);
+    revalidatePath("/", "layout");
   }
   return result;
 }
@@ -1154,7 +1154,7 @@ export async function addAdminSellerTaxIdentifier(rawInput: unknown) {
 
   const result = await executeAdminSellerTaxIdentifierAdd(db, parsed.data);
   if (result.ok) {
-    revalidatePath(`/admin/partnerzy/${parsed.data.partnerId}`);
+    revalidatePath("/", "layout");
   }
   return result;
 }
@@ -1174,7 +1174,7 @@ export async function deleteAdminSellerTaxIdentifier(rawInput: unknown) {
 
   const result = await executeAdminSellerTaxIdentifierDelete(db, parsed.data);
   if (result.ok) {
-    revalidatePath(`/admin/partnerzy/${parsed.data.partnerId}`);
+    revalidatePath("/", "layout");
   }
   return result;
 }

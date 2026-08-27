@@ -10,7 +10,7 @@ import { partners, sellerLegalIdentities, sellerTaxIdentifiers } from "@/lib/sch
 
 export const AdminSellerLegalDataSaveInputSchema = z.object({
   partnerId: z.number().int().positive(),
-  businessEmail: z.string().trim().email(),
+  businessEmail: z.string().trim().email().max(100),
   legalName: z.string().trim().min(1).max(255),
   jurisdictionCountry: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
   registeredAddressLine1: z
@@ -121,8 +121,8 @@ export async function executeAdminSellerLegalDataSave(
       return { ok: true as const, code: "SAVED" as const };
     });
     return result;
-  } catch (error) {
-    console.error("executeAdminSellerLegalDataSave error:", error);
+  } catch {
+    console.error("[ADMIN_DB] executeAdminSellerLegalDataSave system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }
@@ -200,11 +200,11 @@ export async function executeAdminSellerTaxIdentifierAdd(
 
       return { ok: true as const, code: "ADDED" as const };
     });
-  } catch (error) {
+  } catch {
     if (error && typeof error === "object" && "code" in error && error.code === "23505") {
       return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" };
     }
-    console.error("executeAdminSellerTaxIdentifierAdd error:", error);
+    console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierAdd system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }
@@ -245,8 +245,8 @@ export async function executeAdminSellerTaxIdentifierDelete(
     }
 
     return { ok: true as const, code: "DELETED" };
-  } catch (error) {
-    console.error("executeAdminSellerTaxIdentifierDelete error:", error);
+  } catch {
+    console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }

@@ -33,6 +33,8 @@ export type AdminSellerLegalIdentityFormProps = {
     errorInvalidInput: string;
     errorSystem: string;
     errorPartnerNotFound: string;
+    registeredOfficeTitle: string;
+    placeholderCountry: string;
   };
 };
 
@@ -162,13 +164,13 @@ export function AdminSellerLegalIdentityForm({
             value={formData.jurisdictionCountry}
             onChange={handleChange}
             disabled={isPending}
-            placeholder="e.g. PL"
+            placeholder={dictionary.placeholderCountry}
             className="w-full sm:w-1/4 h-10 px-3 bg-white border border-border-industrial rounded-industrial text-sm text-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent disabled:opacity-50"
           />
         </div>
 
         <div className="sm:col-span-2 pt-4 border-t border-border-industrial/50">
-          <h3 className="font-medium text-brand-navy mb-4">Registered Office</h3>
+          <h3 className="font-medium text-brand-navy mb-4">{dictionary.registeredOfficeTitle}</h3>
         </div>
 
         <div>
@@ -261,7 +263,7 @@ export function AdminSellerLegalIdentityForm({
             type="text"
             maxLength={2}
             autoComplete="country"
-            placeholder="e.g. PL"
+            placeholder={dictionary.placeholderCountry}
             value={formData.registeredCountryCode}
             onChange={handleChange}
             disabled={isPending}

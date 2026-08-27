@@ -730,7 +730,20 @@
     "missingFields": "Fehlende Felder: ",
     "statusComplete": "VOLLSTÄNDIG",
     "statusIncomplete": "UNVOLLSTÄNDIG",
-    "businessEmailLabel": "Geschäfts-E-Mail"
+    "businessEmailLabel": "Geschäfts-E-Mail",
+    "verificationMetadataTitle": "Verifizierungs-Metadaten (Schreibgeschützt)",
+    "registeredOfficeTitle": "Eingetragener Sitz",
+    "placeholderCountry": "z.B. PL",
+    "placeholderVat": "z.B. VAT",
+    "addTaxIdentifierTitle": "Neues Steuerkennzeichen hinzufügen",
+    "confirmDelete": "Sind Sie sicher?",
+    "missing_legal_name": "Firmenname",
+    "missing_business_email": "Geschäftliche E-Mail",
+    "missing_registered_address_line1": "Adresszeile 1",
+    "missing_registered_postal_code": "Postleitzahl",
+    "missing_registered_city": "Stadt",
+    "missing_registered_country_code": "Ländercode",
+    "missing_tax_identifier": "Steuerkennzeichen"
   },
   "adminOfferDetail": {
     "errorTitle": "Fehler beim Laden der Daten",

@@ -730,7 +730,20 @@
     "missingFields": "Champs manquants : ",
     "statusComplete": "COMPLET",
     "statusIncomplete": "INCOMPLET",
-    "businessEmailLabel": "Email professionnel"
+    "businessEmailLabel": "Email professionnel",
+    "verificationMetadataTitle": "Métadonnées de vérification (Lecture seule)",
+    "registeredOfficeTitle": "Siège Social",
+    "placeholderCountry": "ex. PL",
+    "placeholderVat": "ex. TVA",
+    "addTaxIdentifierTitle": "Ajouter un nouvel identifiant fiscal",
+    "confirmDelete": "Êtes-vous sûr ?",
+    "missing_legal_name": "Nom légal",
+    "missing_business_email": "Email professionnel",
+    "missing_registered_address_line1": "Adresse Ligne 1",
+    "missing_registered_postal_code": "Code Postal",
+    "missing_registered_city": "Ville",
+    "missing_registered_country_code": "Code Pays",
+    "missing_tax_identifier": "Identifiant Fiscal"
   },
   "adminOfferDetail": {
     "errorTitle": "Erreur de chargement",

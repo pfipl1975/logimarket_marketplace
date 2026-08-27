@@ -119,7 +119,9 @@ export async function AdminPartnerDetailPage({
             <div className="bg-red-50 px-6 py-3 border-b border-red-100">
               <p className="text-xs text-red-800">
                 <span className="font-medium">{dict.missingFields}</span>
-                {result.data.sellerDisclosureCompleteness.missing.join(", ")}
+                {result.data.sellerDisclosureCompleteness.missing
+                  .map((key) => ((dict as unknown) as Record<string, string>)[`missing_${key}`] || key)
+                  .join(", ")}
               </p>
             </div>
           )}
@@ -153,13 +155,15 @@ export async function AdminPartnerDetailPage({
                 errorInvalidInput: dict.errorInvalidInput,
                 errorSystem: dict.errorSystem,
                 errorPartnerNotFound: dict.errorPartnerNotFound,
+                registeredOfficeTitle: dict.registeredOfficeTitle,
+                placeholderCountry: dict.placeholderCountry,
               }}
             />
           </div>
 
           {legalIdentity && (
             <div className="p-6 bg-brand-light-gray/10">
-              <h3 className="font-medium text-brand-navy mb-4">Verification Metadata (Read-Only)</h3>
+              <h3 className="font-medium text-brand-navy mb-4">{dict.verificationMetadataTitle}</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8">
                 <div>
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.verificationStatusLabel}</p>
@@ -210,6 +214,10 @@ export async function AdminPartnerDetailPage({
                 errorPartnerNotFound: dict.errorPartnerNotFound,
                 errorConflict: dict.errorConflict,
                 errorNotFound: dict.errorNotFound,
+                addTaxIdentifierTitle: dict.addTaxIdentifierTitle,
+                confirmDelete: dict.confirmDelete,
+                placeholderVat: dict.placeholderVat,
+                placeholderCountry: dict.placeholderCountry,
               }}
               renderFieldValue={renderFieldValue}
               formatDate={formatDate}

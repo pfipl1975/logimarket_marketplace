@@ -730,7 +730,20 @@
     "missingFields": "Brakujące pola: ",
     "statusComplete": "KOMPLETNE",
     "statusIncomplete": "NIEKOMPLETNE",
-    "businessEmailLabel": "Email biznesowy"
+    "businessEmailLabel": "Email biznesowy",
+    "verificationMetadataTitle": "Metadane Weryfikacji (Tylko do odczytu)",
+    "registeredOfficeTitle": "Siedziba Zarejestrowana",
+    "placeholderCountry": "np. PL",
+    "placeholderVat": "np. VAT",
+    "addTaxIdentifierTitle": "Dodaj Nowy Identyfikator Podatkowy",
+    "confirmDelete": "Czy na pewno?",
+    "missing_legal_name": "Nazwa prawna",
+    "missing_business_email": "Służbowy adres e-mail",
+    "missing_registered_address_line1": "Adres (linia 1)",
+    "missing_registered_postal_code": "Kod pocztowy",
+    "missing_registered_city": "Miasto",
+    "missing_registered_country_code": "Kod kraju",
+    "missing_tax_identifier": "Identyfikator podatkowy"
   },
   "adminOfferDetail": {
     "errorTitle": "Błąd pobierania danych",

@@ -730,7 +730,20 @@
     "missingFields": "Відсутні поля: ",
     "statusComplete": "ЗАВЕРШЕНО",
     "statusIncomplete": "НЕЗАВЕРШЕНО",
-    "businessEmailLabel": "Ділова електронна пошта"
+    "businessEmailLabel": "Ділова електронна пошта",
+    "verificationMetadataTitle": "Метадані перевірки (Тільки читання)",
+    "registeredOfficeTitle": "Зареєстрований офіс",
+    "placeholderCountry": "напр. PL",
+    "placeholderVat": "напр. ПДВ",
+    "addTaxIdentifierTitle": "Додати новий податковий номер",
+    "confirmDelete": "Ви впевнені?",
+    "missing_legal_name": "Юридична назва",
+    "missing_business_email": "Робоча електронна пошта",
+    "missing_registered_address_line1": "Рядок адреси 1",
+    "missing_registered_postal_code": "Поштовий індекс",
+    "missing_registered_city": "Місто",
+    "missing_registered_country_code": "Код країни",
+    "missing_tax_identifier": "Податковий номер"
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",

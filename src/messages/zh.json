@@ -730,7 +730,20 @@
     "missingFields": "缺失字段：",
     "statusComplete": "完整",
     "statusIncomplete": "不完整",
-    "businessEmailLabel": "企业电子邮箱"
+    "businessEmailLabel": "企业电子邮箱",
+    "verificationMetadataTitle": "验证元数据（只读）",
+    "registeredOfficeTitle": "注册办公地址",
+    "placeholderCountry": "例如 PL",
+    "placeholderVat": "例如 增值税",
+    "addTaxIdentifierTitle": "添加新税务标识符",
+    "confirmDelete": "你确定吗？",
+    "missing_legal_name": "法定名称",
+    "missing_business_email": "工作电子邮箱",
+    "missing_registered_address_line1": "地址 1",
+    "missing_registered_postal_code": "邮政编码",
+    "missing_registered_city": "城市",
+    "missing_registered_country_code": "国家代码",
+    "missing_tax_identifier": "税务标识符"
   },
   "adminOfferDetail": {
     "errorTitle": "加载数据出错",
