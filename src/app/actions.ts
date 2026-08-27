@@ -1117,3 +1117,65 @@ export async function getAdminOfferAttributesEdit(
     await import("@/lib/admin/offer-attributes-edit-read-model");
   return getAdminOfferAttributesEditModel(db, offerId, locale);
 }
+
+
+export async function saveAdminSellerLegalData(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerLegalDataSaveInputSchema,
+    executeAdminSellerLegalDataSave,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerLegalDataSaveInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await executeAdminSellerLegalDataSave(db, parsed.data);
+  if (result.ok) {
+    revalidatePath(`/admin/partnerzy/${parsed.data.partnerId}`);
+  }
+  return result;
+}
+
+export async function addAdminSellerTaxIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerTaxIdentifierAddInputSchema,
+    executeAdminSellerTaxIdentifierAdd,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerTaxIdentifierAddInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await executeAdminSellerTaxIdentifierAdd(db, parsed.data);
+  if (result.ok) {
+    revalidatePath(`/admin/partnerzy/${parsed.data.partnerId}`);
+  }
+  return result;
+}
+
+export async function deleteAdminSellerTaxIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerTaxIdentifierDeleteInputSchema,
+    executeAdminSellerTaxIdentifierDelete,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerTaxIdentifierDeleteInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await executeAdminSellerTaxIdentifierDelete(db, parsed.data);
+  if (result.ok) {
+    revalidatePath(`/admin/partnerzy/${parsed.data.partnerId}`);
+  }
+  return result;
+}
+

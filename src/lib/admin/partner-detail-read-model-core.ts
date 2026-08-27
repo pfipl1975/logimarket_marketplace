@@ -9,6 +9,7 @@ import {
   sellerEligibility,
 } from "@/lib/schema";
 import { isCanonicalPositiveInteger } from "./partners-query";
+import { buildSellerDisclosure } from "@/lib/legal/seller-disclosure";
 
 export interface AdminPartnerDetailDto {
   partner: {
@@ -22,12 +23,19 @@ export interface AdminPartnerDetailDto {
   legalIdentity: {
     legalName: string;
     jurisdictionCountry: string;
+    registeredAddressLine1: string | null;
+    registeredAddressLine2: string | null;
+    registeredPostalCode: string | null;
+    registeredCity: string | null;
+    registeredRegion: string | null;
+    registeredCountryCode: string | null;
     verificationStatus: string;
     verifiedAt: string | null;
     verificationSource: string | null;
     verificationReference: string | null;
   } | null;
   taxIdentifiers: Array<{
+    id: number;
     identifierType: string;
     identifierValue: string;
     countryCode: string;
@@ -46,6 +54,18 @@ export interface AdminPartnerDetailDto {
     reason: string | null;
     updatedAt: string | null;
   } | null;
+  sellerDisclosureCompleteness: {
+    complete: boolean;
+    missing: Array<
+      | "legal_name"
+      | "business_email"
+      | "registered_address_line1"
+      | "registered_postal_code"
+      | "registered_city"
+      | "registered_country_code"
+      | "tax_identifier"
+    >;
+  };
 }
 
 export type AdminPartnerDetailResult =
@@ -103,6 +123,25 @@ export async function getAdminPartnerDetailReadModel(
     .where(eq(sellerEligibility.partnerId, id))
     .limit(1);
 
+  const disclosure = buildSellerDisclosure(
+    partnerRow.id,
+    legalIdentityRows.length > 0 ? legalIdentityRows[0].legalName : null,
+    partnerRow.contactEmail,
+    {
+      addressLine1: legalIdentityRows.length > 0 ? legalIdentityRows[0].registeredAddressLine1 : null,
+      addressLine2: legalIdentityRows.length > 0 ? legalIdentityRows[0].registeredAddressLine2 : null,
+      postalCode: legalIdentityRows.length > 0 ? legalIdentityRows[0].registeredPostalCode : null,
+      city: legalIdentityRows.length > 0 ? legalIdentityRows[0].registeredCity : null,
+      region: legalIdentityRows.length > 0 ? legalIdentityRows[0].registeredRegion : null,
+      countryCode: legalIdentityRows.length > 0 ? legalIdentityRows[0].registeredCountryCode : null,
+    },
+    taxIdentifierRows.map(t => ({
+      type: t.identifierType,
+      value: t.identifierValue,
+      countryCode: t.countryCode
+    }))
+  );
+
   return {
     ok: true,
     data: {
@@ -117,12 +156,19 @@ export async function getAdminPartnerDetailReadModel(
       legalIdentity: legalIdentityRows.length > 0 ? {
         legalName: legalIdentityRows[0].legalName,
         jurisdictionCountry: legalIdentityRows[0].jurisdictionCountry,
+        registeredAddressLine1: legalIdentityRows[0].registeredAddressLine1,
+        registeredAddressLine2: legalIdentityRows[0].registeredAddressLine2,
+        registeredPostalCode: legalIdentityRows[0].registeredPostalCode,
+        registeredCity: legalIdentityRows[0].registeredCity,
+        registeredRegion: legalIdentityRows[0].registeredRegion,
+        registeredCountryCode: legalIdentityRows[0].registeredCountryCode,
         verificationStatus: legalIdentityRows[0].verificationStatus,
         verifiedAt: legalIdentityRows[0].verifiedAt?.toISOString() ?? null,
         verificationSource: legalIdentityRows[0].verificationSource,
         verificationReference: legalIdentityRows[0].verificationReference,
       } : null,
       taxIdentifiers: taxIdentifierRows.map(row => ({
+        id: row.id,
         identifierType: row.identifierType,
         identifierValue: row.identifierValue,
         countryCode: row.countryCode,
@@ -141,6 +187,7 @@ export async function getAdminPartnerDetailReadModel(
         reason: eligibilityRows[0].reason,
         updatedAt: eligibilityRows[0].updatedAt?.toISOString() ?? null,
       } : null,
+      sellerDisclosureCompleteness: disclosure.completeness,
     }
   };
 }
