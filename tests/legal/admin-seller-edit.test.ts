@@ -11,6 +11,25 @@ import {
 import { buildSellerDisclosure } from "../../src/lib/legal/seller-disclosure";
 
 describe("Admin Seller Legal Data Save Input Validation", () => {
+  test("businessEmail > 100 chars -> rejected", () => {
+    const input = { partnerId: 1, businessEmail: "a".repeat(101) + "@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" };
+    assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
+  });
+
+  test("legalName > 255 chars -> rejected", () => {
+    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "a".repeat(256), jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" };
+    assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
+  });
+
+  test("invalid jurisdictionCountry length -> rejected", () => {
+    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "POL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" };
+    assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
+  });
+
+  test("registered address max length -> rejected", () => {
+    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "a".repeat(256), registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" };
+    assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
+  });
   test("invalid partnerId rejected", () => {
     const input = { partnerId: -1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" };
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
@@ -51,7 +70,7 @@ describe("Admin Seller Legal Data Save Input Validation", () => {
 
 describe("Admin Seller Tax Identifier Add Input Validation", () => {
   test("invalid input rejected", () => {
-    const input = { partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "POL" };
+    const input = { partnerId: 1, type: "VAT", value: "PL123", countryCode: "POL" };
     assert.strictEqual(AdminSellerTaxIdentifierAddInputSchema.safeParse(input).success, false);
   });
 });
@@ -70,6 +89,7 @@ type FakeDbConfig = {
   identityExists?: boolean;
   deleteReturnsRow?: boolean;
   insertThrowsDuplicate?: boolean;
+  taxIdentifierConflictExists?: boolean;
 };
 
 class FakeDb {
@@ -98,6 +118,9 @@ class FakeDb {
             }
             if (this.selectCallIndex === 2) {
               return this.config.identityExists !== false ? [{ partnerId: 1 }] : [];
+            }
+            if (this.selectCallIndex === 3) {
+              return this.config.taxIdentifierConflictExists ? [{ id: 1 }] : [];
             }
             return [];
           }
@@ -148,7 +171,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
     const db = new FakeDb({ identityExists: true });
     const res = await executeAdminSellerLegalDataSave(db as never, {
       partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
-      registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
+      addressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     });
 
@@ -168,7 +191,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
     const db = new FakeDb({ identityExists: false });
     const res = await executeAdminSellerLegalDataSave(db as never, {
       partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
-      registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
+      addressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     });
 
@@ -186,10 +209,20 @@ describe("Execute Admin Seller Legal Data Save", () => {
 });
 
 describe("Execute Admin Seller Tax Identifier Add", () => {
-  test("duplicate -> TAX_IDENTIFIER_CONFLICT", async () => {
+  test("pre-existing exact duplicate -> TAX_IDENTIFIER_CONFLICT", async () => {
+    const db = new FakeDb({ taxIdentifierConflictExists: true });
+    const res = await executeAdminSellerTaxIdentifierAdd(db as never, {
+      partnerId: 1, type: "VAT", value: "PL123", countryCode: "PL"
+    });
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, "TAX_IDENTIFIER_CONFLICT");
+    assert.strictEqual(db.inserts.length, 0); // No INSERT occurred
+  });
+
+  test("INSERT throws PostgreSQL 23505 -> TAX_IDENTIFIER_CONFLICT", async () => {
     const db = new FakeDb({ insertThrowsDuplicate: true });
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, {
-      partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "PL"
+      partnerId: 1, type: "VAT", value: "PL123", countryCode: "PL"
     });
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "TAX_IDENTIFIER_CONFLICT");
@@ -227,5 +260,24 @@ describe("Seller Disclosure Completeness", () => {
     const disclosure = buildSellerDisclosure(1, "Company", null, {}, []);
     assert.strictEqual(disclosure.completeness.complete, false);
     assert.strictEqual(disclosure.completeness.missing.includes("business_email"), true);
+  });
+  test("complete data returns complete=true", () => {
+    const disclosure = buildSellerDisclosure(
+      1,
+      "Company",
+      "valid@ex.com",
+      {
+        legalName: "Valid Legal Name",
+        jurisdictionCountry: "PL",
+        addressLine1: "Line 1",
+        postalCode: "00-000",
+        city: "City",
+        countryCode: "PL"
+      },
+      [{ type: "VAT", value: "PL123", countryCode: "PL" }]
+    );
+
+    assert.strictEqual(disclosure.completeness.complete, true);
+    assert.strictEqual(disclosure.completeness.missing.length, 0);
   });
 });

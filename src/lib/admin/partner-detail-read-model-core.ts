@@ -9,7 +9,7 @@ import {
   sellerEligibility,
 } from "@/lib/schema";
 import { isCanonicalPositiveInteger } from "./partners-query";
-import { buildSellerDisclosure } from "@/lib/legal/seller-disclosure";
+import { buildSellerDisclosure, type SellerDisclosureMissingField } from "@/lib/legal/seller-disclosure";
 
 export interface AdminPartnerDetailDto {
   partner: {
@@ -56,15 +56,7 @@ export interface AdminPartnerDetailDto {
   } | null;
   sellerDisclosureCompleteness: {
     complete: boolean;
-    missing: Array<
-      | "legal_name"
-      | "business_email"
-      | "registered_address_line1"
-      | "registered_postal_code"
-      | "registered_city"
-      | "registered_country_code"
-      | "tax_identifier"
-    >;
+    missing: SellerDisclosureMissingField[];
   };
 }
 

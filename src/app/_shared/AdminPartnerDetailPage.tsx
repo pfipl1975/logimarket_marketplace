@@ -8,6 +8,7 @@ import { AdminSellerEligibilityControl } from "@/components/admin/AdminSellerEli
 import { AdminSellerLegalIdentityForm } from "@/components/admin/AdminSellerLegalIdentityForm";
 import { AdminSellerTaxIdentifiersForm } from "@/components/admin/AdminSellerTaxIdentifiersForm";
 
+
 export async function AdminPartnerDetailPage({
   locale,
   id,
@@ -34,6 +35,16 @@ export async function AdminPartnerDetailPage({
 
   const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility } = result.data;
   const backPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
+
+  const missingFieldLabels = {
+  legal_name: dict.missing_legal_name,
+  business_email: dict.missing_business_email,
+  registered_address_line1: dict.missing_registered_address_line1,
+  registered_postal_code: dict.missing_registered_postal_code,
+  registered_city: dict.missing_registered_city,
+  registered_country_code: dict.missing_registered_country_code,
+  tax_identifier: dict.missing_tax_identifier,
+};
 
   const formatDate = (isoStr: string | null) => {
     if (!isoStr) return dict.emptyValue;
@@ -119,20 +130,9 @@ export async function AdminPartnerDetailPage({
             <div className="bg-red-50 px-6 py-3 border-b border-red-100">
               <p className="text-xs text-red-800">
                 <span className="font-medium">{dict.missingFields}</span>
-                {result.data.sellerDisclosureCompleteness.missing
-                  .map((key) => {
-                    const missingFieldLabels: Record<string, string> = {
-                      legal_name: dict.missing_legal_name,
-                      business_email: dict.missing_business_email,
-                      registered_address_line1: dict.missing_registered_address_line1,
-                      registered_postal_code: dict.missing_registered_postal_code,
-                      registered_city: dict.missing_registered_city,
-                      registered_country_code: dict.missing_registered_country_code,
-                      tax_identifier: dict.missing_tax_identifier,
-                    };
-                    return missingFieldLabels[key] || key;
-                  })
-                  .join(", ")}
+                {result.data.sellerDisclosureCompleteness.missing.map((key) => {
+                    return missingFieldLabels[key];
+                  }).join(", ")}
               </p>
             </div>
           )}
