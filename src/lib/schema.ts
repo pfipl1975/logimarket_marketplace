@@ -818,7 +818,6 @@ export const marketplaceOrderSellerDisclosures = pgTable("marketplace_order_sell
 }, (t) => [
   unique("uq_mkt_order_disclosure_order_partner").on(t.marketplaceOrderId, t.partnerId),
   check("chk_disclosure_tax_pair", sql`((tax_identifier_type IS NULL AND tax_identifier_value IS NULL) OR (tax_identifier_type IS NOT NULL AND tax_identifier_value IS NOT NULL))`),
-  index("idx_mkt_order_disclosure_mkt_order").on(t.marketplaceOrderId),
 ]);
 
 export const sellerOrders = pgTable("seller_orders", {
@@ -833,7 +832,6 @@ export const sellerOrders = pgTable("seller_orders", {
   unique("uq_seller_orders_mkt_partner").on(t.marketplaceOrderId, t.partnerId),
   check("chk_seller_orders_status", sql`((status)::text = ANY ((ARRAY['submitted'::character varying, 'seller_accepted'::character varying, 'fulfillment_in_progress'::character varying, 'fulfilled'::character varying, 'seller_rejected'::character varying, 'cancelled'::character varying])::text[]))`),
   index("idx_seller_orders_partner").on(t.partnerId),
-  index("idx_seller_orders_mkt_order").on(t.marketplaceOrderId),
 ]);
 
 export const sellerOrderSellerSnapshots = pgTable("seller_order_seller_snapshots", {

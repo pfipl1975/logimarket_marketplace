@@ -485,10 +485,6 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS idx_marketplace_orders_session ON public.marketplace_orders USING btree (session_hash);
 --> statement-breakpoint
-CREATE INDEX IF NOT EXISTS idx_mkt_order_disclosure_mkt_order ON public.marketplace_order_seller_disclosures USING btree (marketplace_order_id);
---> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_seller_orders_partner ON public.seller_orders USING btree (partner_id);
---> statement-breakpoint
-CREATE INDEX IF NOT EXISTS idx_seller_orders_mkt_order ON public.seller_orders USING btree (marketplace_order_id);
 --> statement-breakpoint
 CREATE INDEX IF NOT EXISTS idx_seller_order_items_seller_order ON public.seller_order_items USING btree (seller_order_id);
