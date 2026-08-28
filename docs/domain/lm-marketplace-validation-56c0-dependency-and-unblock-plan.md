@@ -106,7 +106,7 @@ PREMATURE_SCHEMA_UNBLOCKS=0
 | LEG-MKT-05 | Workstream B         | Workstream C              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
 | LEG-MKT-06 | Workstream D         | Workstream B              | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
 | LEG-MKT-07 | Workstream C         | Workstream B              | Workstream A, Workstream B | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B3 |
-| LEG-MKT-08 | Workstream E         | Workstream A, Workstream B | Workstream A             | YES               | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B2 |
+| LEG-MKT-08 | Workstream E         | Workstream A, Workstream B | Workstream A             | NO                | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B2 |
 | LEG-MKT-09 | Workstream E         | Workstream A, Workstream B | Workstream A             | NO                | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B1 |
 | LEG-MKT-10 | Workstream F         | None                      | None                     | NO                | YES                  | FUTURE_EXTENSION_ONLY | FUTURE_RESELLER_ACTIVATION_SPRINT_NOT_SCHEDULED |
 | OMQ-MKT-01 | Workstream A         | Workstream E              | None                     | NO                | YES                  | CONDITIONAL_IF_LOGICAL_MODEL_INVALIDATED | LM-MARKETPLACE-SCHEMA-56B2 |

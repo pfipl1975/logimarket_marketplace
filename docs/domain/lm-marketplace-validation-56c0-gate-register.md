@@ -147,7 +147,7 @@ STATUS=OPEN
 - downstream artifacts affected: Physical schema, Application code
 
 ### LEG-MKT-08
-STATUS=OPEN
+STATUS=APPROVED_WITH_CONDITIONS
 - ID: LEG-MKT-08
 - exact canonical meaning: B2B and entrepreneur-with-consumer-rights analysis
 - exact current safe documentation default: DO_NOT_CLASSIFY_BUYER_STATUS_FROM_NIP_ONLY
@@ -156,12 +156,12 @@ STATUS=OPEN
 - affected aggregate boundaries: MARKETPLACE_ORDER_ORCHESTRATION; SELLER_ORDER; AFTER_SALES_AND_DISPUTES
 - affected model elements: BuyerIdentityReference; RfqBuyerLegalContextSnapshot; EcommerceBuyerLegalContextSnapshot; ReturnCase; RefundCase
 - affected lifecycles: LC-03; LC-04; LC-10; LC-12
-- initial-MVP physical-schema blocker: YES
+- initial-MVP physical-schema blocker: NO
 - initial-MVP application blocker: YES
 - future-reseller physical-schema blocker: YES
 - future-reseller application blocker: YES
-- evidence required: EXTERNAL_EVIDENCE_REQUIRED
-- acceptance criteria: Written methodology for classifying buyer status.
+- evidence required: IMPLEMENTATION_EVIDENCE_REQUIRED_IN_56B2
+- acceptance criteria: Written methodology for classifying buyer status. (Legal methodology is no longer pending counsel; 56B2 implementation remains).
 - decision options supported by source documents: EXPLICIT_BUYER_DECLARATION
 - explicitly prohibited assumptions: BUYER_STATUS_FROM_NIP_ONLY
 - downstream artifacts affected: Physical schema, Application code, Registration UX
