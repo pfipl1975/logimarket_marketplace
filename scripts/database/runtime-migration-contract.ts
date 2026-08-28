@@ -21,18 +21,25 @@ export const EXPECTED_BASELINE_TABLES = [
   "seller_eligibility",
   "seller_legal_identities",
   "seller_registry_identifiers",
-  "seller_tax_identifiers"
+  "seller_tax_identifiers",
+  "buyer_legal_context_snapshots",
+  "marketplace_orders",
+  "marketplace_order_seller_disclosures",
+  "seller_orders",
+  "seller_order_seller_snapshots",
+  "seller_order_items",
+  "seller_acceptance_decisions"
 ];
 
 export const EXPECTED_COUNTS = {
-  TABLES: 19,
+  TABLES: 26,
   get COLUMNS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.columns.length, 0); },
-  SEQUENCES: 17,
-  PRIMARY_KEYS: 19,
-  FOREIGN_KEYS: 24,
-  UNIQUE_CONSTRAINTS: 12,
-  CHECK_CONSTRAINTS: 11,
-  INDEXES: 41, // 19 PK + 12 UC + 10 explicit
+  SEQUENCES: 24,
+  PRIMARY_KEYS: 26,
+  FOREIGN_KEYS: 33,
+  UNIQUE_CONSTRAINTS: 17,
+  CHECK_CONSTRAINTS: 23,
+  INDEXES: 56, // 26 PK + 17 UC + 13 explicit
   RLS_ENABLED: 19,
   POLICIES: 0
 };
@@ -671,5 +678,199 @@ export const FINAL_POST_0004_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0003_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0004_PRODUCTION_FINGERPRINT;
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0004_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0005_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0005_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0004_PRODUCTION_FINGERPRINT,
+  "buyer_legal_context_snapshots": {
+    name: "buyer_legal_context_snapshots",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('buyer_legal_context_snapshots_id_seq'::regclass)", sequenceName: 'buyer_legal_context_snapshots_id_seq' },
+      { name: "business_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "country_code", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_identifier_type", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_identifier_value", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "registry_identifier_type", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "registry_identifier_value", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "business_verification_status", type: "character varying(50)", nullable: false, defaultVal: "'unknown'::character varying", sequenceName: 'null' },
+      { name: "business_verification_method", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "business_verification_source", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "business_verified_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "professional_purpose_evidence", type: "character varying(1000)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "category_b_status", type: "character varying(50)", nullable: false, defaultVal: "'unknown'::character varying", sequenceName: 'null' },
+      { name: "legal_context_review_state", type: "character varying(50)", nullable: false, defaultVal: "'no_review_needed'::character varying", sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "buyer_legal_context_snapshots_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "chk_buyer_identifiers_present", type: "CHECK", definition: "CHECK (((tax_identifier_type IS NOT NULL AND tax_identifier_value IS NOT NULL) OR (registry_identifier_type IS NOT NULL AND registry_identifier_value IS NOT NULL)))" },
+      { name: "chk_buyer_tax_pair", type: "CHECK", definition: "CHECK (((tax_identifier_type IS NULL AND tax_identifier_value IS NULL) OR (tax_identifier_type IS NOT NULL AND tax_identifier_value IS NOT NULL)))" },
+      { name: "chk_buyer_registry_pair", type: "CHECK", definition: "CHECK (((registry_identifier_type IS NULL AND registry_identifier_value IS NULL) OR (registry_identifier_type IS NOT NULL AND registry_identifier_value IS NOT NULL)))" },
+    ],
+    explicitIndexes: [
+    ],
+    rlsEnabled: false
+  },
+  "marketplace_orders": {
+    name: "marketplace_orders",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('marketplace_orders_id_seq'::regclass)", sequenceName: 'marketplace_orders_id_seq' },
+      { name: "session_hash", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "buyer_legal_context_snapshot_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "status", type: "character varying(50)", nullable: false, defaultVal: "'intent_created'::character varying", sequenceName: 'null' },
+      { name: "e2_buyer_intent_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+      { name: "e3_receipt_acknowledged_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "customer_po_number", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "marketplace_orders_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_marketplace_orders_snapshot", type: "UNIQUE", definition: "UNIQUE (buyer_legal_context_snapshot_id)" },
+      { name: "marketplace_orders_buyer_legal_context_snapshot_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (buyer_legal_context_snapshot_id) REFERENCES buyer_legal_context_snapshots(id)" },
+    ],
+    explicitIndexes: [
+      { name: "idx_marketplace_orders_session", method: "btree", expressions: "session_hash" },
+    ],
+    rlsEnabled: false
+  },
+  "marketplace_order_seller_disclosures": {
+    name: "marketplace_order_seller_disclosures",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('marketplace_order_seller_disclosures_id_seq'::regclass)", sequenceName: 'marketplace_order_seller_disclosures_id_seq' },
+      { name: "marketplace_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "seller_legal_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "registered_address", type: "character varying(1000)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "jurisdiction_country", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "firm_contact_email", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "seller_role", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "goods_invoice_issuer", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "delivery_responsible_party", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "complaint_responsible_party", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "return_responsible_party", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "logimarket_platform_role", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_identifier_type", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_identifier_value", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "marketplace_order_seller_disclosures_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_mkt_order_disclosure_order_partner", type: "UNIQUE", definition: "UNIQUE (marketplace_order_id, partner_id)" },
+      { name: "chk_disclosure_tax_pair", type: "CHECK", definition: "CHECK (((tax_identifier_type IS NULL AND tax_identifier_value IS NULL) OR (tax_identifier_type IS NOT NULL AND tax_identifier_value IS NOT NULL)))" },
+      { name: "marketplace_order_seller_disclosures_marketplace_order_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (marketplace_order_id) REFERENCES marketplace_orders(id)" },
+      { name: "marketplace_order_seller_disclosures_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" },
+    ],
+    explicitIndexes: [
+    ],
+    rlsEnabled: false
+  },
+  "seller_orders": {
+    name: "seller_orders",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_orders_id_seq'::regclass)", sequenceName: 'seller_orders_id_seq' },
+      { name: "marketplace_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "status", type: "character varying(50)", nullable: false, defaultVal: "'submitted'::character varying", sequenceName: 'null' },
+      { name: "e6_routed_to_seller_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "seller_orders_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_seller_orders_mkt_partner", type: "UNIQUE", definition: "UNIQUE (marketplace_order_id, partner_id)" },
+      { name: "chk_seller_orders_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['submitted'::character varying, 'seller_accepted'::character varying, 'fulfillment_in_progress'::character varying, 'fulfilled'::character varying, 'seller_rejected'::character varying, 'cancelled'::character varying])::text[])))" },
+      { name: "seller_orders_marketplace_order_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (marketplace_order_id) REFERENCES marketplace_orders(id)" },
+      { name: "seller_orders_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id)" },
+    ],
+    explicitIndexes: [
+      { name: "idx_seller_orders_partner", method: "btree", expressions: "partner_id" },
+    ],
+    rlsEnabled: false
+  },
+  "seller_order_seller_snapshots": {
+    name: "seller_order_seller_snapshots",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_order_seller_snapshots_id_seq'::regclass)", sequenceName: 'seller_order_seller_snapshots_id_seq' },
+      { name: "seller_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "seller_legal_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "seller_display_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "jurisdiction_country", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "registered_address", type: "character varying(1000)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "firm_contact_email", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_identifier_type", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_identifier_value", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "registry_identifier_type", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "registry_identifier_value", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "contract_model", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "seller_of_record_responsibility", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "goods_invoice_responsibility", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "delivery_responsibility", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "complaint_responsibility", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "return_responsibility", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "refund_financial_liability", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "seller_order_seller_snapshots_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_seller_order_seller_snapshots_seller_order", type: "UNIQUE", definition: "UNIQUE (seller_order_id)" },
+      { name: "chk_snapshot_tax_pair", type: "CHECK", definition: "CHECK (((tax_identifier_type IS NULL AND tax_identifier_value IS NULL) OR (tax_identifier_type IS NOT NULL AND tax_identifier_value IS NOT NULL)))" },
+      { name: "chk_snapshot_registry_pair", type: "CHECK", definition: "CHECK (((registry_identifier_type IS NULL AND registry_identifier_value IS NULL) OR (registry_identifier_type IS NOT NULL AND registry_identifier_value IS NOT NULL)))" },
+      { name: "chk_snapshot_contract_model", type: "CHECK", definition: "CHECK (((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[])))" },
+      { name: "seller_order_seller_snapshots_seller_order_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id)" },
+    ],
+    explicitIndexes: [
+    ],
+    rlsEnabled: false
+  },
+  "seller_order_items": {
+    name: "seller_order_items",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_order_items_id_seq'::regclass)", sequenceName: 'seller_order_items_id_seq' },
+      { name: "seller_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "offer_title", type: "character varying(500)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "manufacturer", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "model", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "technical_data_ref", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "content_language", type: "character varying(10)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "quantity", type: "integer", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "unit_price", type: "numeric", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "currency", type: "character varying(3)", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "tax_context", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "seller_order_items_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "chk_seller_order_items_qty", type: "CHECK", definition: "CHECK ((quantity > 0))" },
+      { name: "chk_seller_order_items_currency_shape", type: "CHECK", definition: "CHECK (((currency)::text ~ '^[A-Z]{3}$'::text))" },
+      { name: "seller_order_items_seller_order_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id)" },
+      { name: "seller_order_items_offer_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id)" },
+    ],
+    explicitIndexes: [
+      { name: "idx_seller_order_items_seller_order", method: "btree", expressions: "seller_order_id" },
+    ],
+    rlsEnabled: false
+  },
+  "seller_acceptance_decisions": {
+    name: "seller_acceptance_decisions",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_acceptance_decisions_id_seq'::regclass)", sequenceName: 'seller_acceptance_decisions_id_seq' },
+      { name: "seller_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: 'null' },
+      { name: "decision_status", type: "character varying(50)", nullable: false, defaultVal: "'pending_seller_review'::character varying", sequenceName: 'null' },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: 'null' },
+      { name: "resolved_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+      { name: "accepted_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: 'null' },
+    ],
+    constraints: [
+      { name: "seller_acceptance_decisions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_seller_acceptance_decisions_seller_order", type: "UNIQUE", definition: "UNIQUE (seller_order_id)" },
+      { name: "chk_seller_acc_dec_status", type: "CHECK", definition: "CHECK (((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[])))" },
+      { name: "chk_seller_acc_dec_consistency", type: "CHECK", definition: "CHECK (((((decision_status)::text = 'pending_seller_review'::text) AND (resolved_at IS NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'seller_accepted'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NOT NULL)) OR (((decision_status)::text = 'seller_rejected'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'expired'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL))))" },
+      { name: "seller_acceptance_decisions_seller_order_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id)" },
+    ],
+    explicitIndexes: [
+    ],
+    rlsEnabled: false
+  },
+};

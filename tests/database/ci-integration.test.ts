@@ -13,7 +13,7 @@ import {
   classifyRuntimeTarget,
   compareRuntimeFingerprint,
 } from "../../scripts/database/verify-runtime-schema-fingerprint";
-import { PROD_LEGACY_BASELINE_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
+import { PROD_LEGACY_BASELINE_FINGERPRINT, EXPECTED_COUNTS } from "../../scripts/database/runtime-migration-contract";
 
 const MIGRATIONS_DIR = "./drizzle-runtime";
 const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
@@ -146,7 +146,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> 0000 -> 0001 -> 0002 -> 0003 -> 0004",
+    "PATH A: EMPTY DATABASE -> 0000 -> 0001 -> 0002 -> 0003 -> 0004 -> 0005",
     async () => {
       await cleanDB();
 
@@ -162,37 +162,37 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       await runMigrations(process.env);
 
       const stats = await getStats();
-      assert.strictEqual(Number(stats.tables), 19, "tables count mismatch");
-      assert.strictEqual(Number(stats.columns), 161, "columns count mismatch");
+      assert.strictEqual(Number(stats.tables), EXPECTED_COUNTS.TABLES, "tables count mismatch");
+      assert.strictEqual(Number(stats.columns), EXPECTED_COUNTS.COLUMNS, "columns count mismatch");
       assert.strictEqual(
         Number(stats.sequences),
-        17,
+        EXPECTED_COUNTS.SEQUENCES,
         "sequences count mismatch",
       );
       assert.strictEqual(
         Number(stats.primary_keys),
-        19,
+        EXPECTED_COUNTS.PRIMARY_KEYS,
         "primary_keys mismatch",
       );
       assert.strictEqual(
         Number(stats.foreign_keys),
-        24,
+        EXPECTED_COUNTS.FOREIGN_KEYS,
         "foreign_keys mismatch",
       );
-      assert.strictEqual(Number(stats.uniques), 12, "uniques mismatch");
-      assert.strictEqual(Number(stats.checks), 11, "checks mismatch");
-      assert.strictEqual(Number(stats.indexes), 41, "indexes mismatch");
-      assert.strictEqual(Number(stats.rls_tables), 19, "rls_tables mismatch");
+      assert.strictEqual(Number(stats.uniques), EXPECTED_COUNTS.UNIQUE_CONSTRAINTS, "uniques mismatch");
+      assert.strictEqual(Number(stats.checks), EXPECTED_COUNTS.CHECK_CONSTRAINTS, "checks mismatch");
+      assert.strictEqual(Number(stats.indexes), EXPECTED_COUNTS.INDEXES, "indexes mismatch");
+      assert.strictEqual(Number(stats.rls_tables), EXPECTED_COUNTS.RLS_ENABLED, "rls_tables mismatch");
       assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0004
+      // Post-migration classification must be EXACT_EXISTING_POST_0005
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
 
       // 0004 PROOF
       const sellerColumnNames = new Set(
@@ -206,15 +206,200 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.ok(sellerColumnNames.has("registered_country_code"));
 
 
-      // Journal check: 5 rows
+      
+      // 0005 PROOF: Real DB constraints check
+      const tablesExist = await pool.query(`
+        SELECT count(*) as c FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name IN ('buyer_legal_context_snapshots', 'marketplace_orders', 'marketplace_order_seller_disclosures', 'seller_orders', 'seller_order_seller_snapshots', 'seller_order_items', 'seller_acceptance_decisions')
+      `);
+      assert.strictEqual(Number(tablesExist.rows[0].c), 7, "0005 tables must exist");
+
+      // Insert minimal valid buyer snapshot
+      const buyerSnapRes = await pool.query(`
+        INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state)
+        VALUES ('Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed')
+        RETURNING id
+      `);
+      const buyerSnapId = buyerSnapRes.rows[0].id;
+      assert.ok(buyerSnapId);
+
+      // Invalid buyer snapshot: missing both tax and registry
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO buyer_legal_context_snapshots (business_name, country_code)
+          VALUES ('Bad Buyer', 'PL')
+        `),
+        /chk_buyer_identifiers_present/,
+        "Must reject buyer snapshot without identifiers"
+      );
+
+      // Invalid buyer snapshot: partial tax pair
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, registry_identifier_type, registry_identifier_value)
+          VALUES ('Bad Buyer 2', 'PL', 'NIP', 'KRS', '000123')
+        `),
+        /chk_buyer_tax_pair/,
+        "Must reject partial tax pair"
+      );
+
+      // Marketplace order creation
+      const moRes = await pool.query(`
+        INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id)
+        VALUES ('session123', $1)
+        RETURNING id
+      `, [buyerSnapId]);
+      const moId = moRes.rows[0].id;
+      assert.ok(moId);
+
+      // Duplicate UNIQUE snapshot rejection
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id)
+          VALUES ('session999', $1)
+        `, [buyerSnapId]),
+        /uq_marketplace_orders_snapshot/,
+        "Must reject multiple orders for same snapshot"
+      );
+
+      // Insert partner for FKs
+      const partnerRes = await pool.query(`
+        INSERT INTO partners (company_name) VALUES ('Test Partner') RETURNING id
+      `);
+      const partnerId = partnerRes.rows[0].id;
+
+      // Disclosure insertion
+      const discRes = await pool.query(`
+        INSERT INTO marketplace_order_seller_disclosures (
+          marketplace_order_id, partner_id, seller_legal_name, registered_address, jurisdiction_country, firm_contact_email, seller_role, goods_invoice_issuer, delivery_responsible_party, complaint_responsible_party, return_responsible_party, logimarket_platform_role
+        ) VALUES (
+          $1, $2, 'Seller', 'Add', 'PL', 'a@a.com', 'a', 'a', 'a', 'a', 'a', 'a'
+        ) RETURNING id
+      `, [moId, partnerId]);
+      assert.ok(discRes.rows[0].id);
+
+      // Disclosure duplicate unique
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO marketplace_order_seller_disclosures (
+            marketplace_order_id, partner_id, seller_legal_name, registered_address, jurisdiction_country, firm_contact_email, seller_role, goods_invoice_issuer, delivery_responsible_party, complaint_responsible_party, return_responsible_party, logimarket_platform_role
+          ) VALUES (
+            $1, $2, 'Seller2', 'Add2', 'PL', 'b@b.com', 'b', 'b', 'b', 'b', 'b', 'b'
+          )
+        `, [moId, partnerId]),
+        /uq_mkt_order_disclosure_order_partner/,
+        "Must reject duplicate disclosure for same order/partner"
+      );
+
+      // Seller Order creation
+      const soRes = await pool.query(`
+        INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+        VALUES ($1, $2, 'submitted')
+        RETURNING id
+      `, [moId, partnerId]);
+      const soId = soRes.rows[0].id;
+      assert.ok(soId);
+
+      // Seller Order status enum constraint
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+          VALUES ($1, $2, 'invalid_status')
+        `, [moId, partnerId]),
+        /chk_seller_orders_status/,
+        "Must reject invalid seller order status"
+      );
+
+      // Seller Snapshot creation
+      const snapRes = await pool.query(`
+        INSERT INTO seller_order_seller_snapshots (
+          seller_order_id, seller_legal_name, seller_display_name, jurisdiction_country, registered_address, firm_contact_email, contract_model, seller_of_record_responsibility, goods_invoice_responsibility, delivery_responsibility, complaint_responsibility, return_responsibility, refund_financial_liability
+        ) VALUES (
+          $1, 'SN', 'SD', 'PL', 'Addr', 'a@a', 'partner_marketplace', 'a', 'a', 'a', 'a', 'a', 'a'
+        ) RETURNING id
+      `, [soId]);
+      assert.ok(snapRes.rows[0].id);
+
+      // Seller snapshot contract_model constraint
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_seller_snapshots (
+            seller_order_id, seller_legal_name, seller_display_name, jurisdiction_country, registered_address, firm_contact_email, contract_model, seller_of_record_responsibility, goods_invoice_responsibility, delivery_responsibility, complaint_responsibility, return_responsibility, refund_financial_liability
+          ) VALUES (
+            $1, 'SN', 'SD', 'PL', 'Addr', 'a@a', 'invalid_model', 'a', 'a', 'a', 'a', 'a', 'a'
+          )
+        `, [soId]),
+        /chk_snapshot_contract_model/,
+        "Must reject invalid contract model"
+      );
+
+      // Insert offer for items
+      const catRes = await pool.query("INSERT INTO categories (name, slug) VALUES ('C', 'c') RETURNING id");
+      const offerRes = await pool.query(`
+        INSERT INTO offers (partner_id, category_id, conversion_type, offer_model, publication_status, title, description, url_slug, price_net)
+        VALUES ($1, $2, 'inbound', 'marketplace', 'published', 'T', 'D', 'u', 10) RETURNING id
+      `, [partnerId, catRes.rows[0].id]);
+      const offerId = offerRes.rows[0].id;
+
+      // Valid order item
+      const itemRes = await pool.query(`
+        INSERT INTO seller_order_items (seller_order_id, offer_id, offer_title, quantity, unit_price, currency)
+        VALUES ($1, $2, 'T', 1, 10, 'PLN') RETURNING id
+      `, [soId, offerId]);
+      assert.ok(itemRes.rows[0].id);
+
+      // Invalid quantity
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_items (seller_order_id, offer_id, offer_title, quantity, unit_price, currency)
+          VALUES ($1, $2, 'T', 0, 10, 'PLN')
+        `, [soId, offerId]),
+        /chk_seller_order_items_qty/,
+        "Must reject non-positive quantity"
+      );
+
+      // Invalid currency shape
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_items (seller_order_id, offer_id, offer_title, quantity, unit_price, currency)
+          VALUES ($1, $2, 'T', 1, 10, 'pln')
+        `, [soId, offerId]),
+        /chk_seller_order_items_currency_shape/,
+        "Must reject lower-case currency"
+      );
+
+      // Seller acceptance decision enum
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
+          VALUES ($1, 'invalid_status')
+        `, [soId]),
+        /chk_seller_acc_dec_status/,
+        "Must reject invalid decision status"
+      );
+
+      // Seller acceptance consistency
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, resolved_at)
+          VALUES ($1, 'pending_seller_review', now())
+        `, [soId]),
+        /chk_seller_acc_dec_consistency/,
+        "Must reject pending with resolved_at"
+      );
+
+      const validDecRes = await pool.query(`
+        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
+        VALUES ($1, 'pending_seller_review') RETURNING id
+      `, [soId]);
+      assert.ok(validDecRes.rows[0].id);
+
+      // Journal check: exactly 6 rows
       const diskMigrations = readMigrationFiles({
         migrationsFolder: MIGRATIONS_DIR,
       });
-      assert.strictEqual(
-        diskMigrations.length,
-          5,
-          "Disk migrations should have 5 files",
-      );
+      assert.strictEqual(diskMigrations.length, 6, "Disk migrations should have 6 files");
 
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
@@ -243,7 +428,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> 0003 -> 0004", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> 0003 -> 0004 -> 0005", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -257,12 +442,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0004
+    // Post-migration classification must be EXACT_EXISTING_POST_0005
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
 
-    // Journal check: exactly 5 rows
+    // Journal check: exactly 6 rows
     const journalRes = await pool.query(
       `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
     );
@@ -432,15 +617,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0004
+      // Post-migration classification must be EXACT_EXISTING_POST_0005
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0004");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
 
-      // Journal check: 5 rows
+      // Journal check: exactly 6 rows
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
       );

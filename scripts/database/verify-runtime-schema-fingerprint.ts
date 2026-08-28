@@ -13,6 +13,7 @@ import {
   CANONICAL_0000_BASELINE_FINGERPRINT,
   PRE_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
+  PREVIOUS_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
@@ -529,7 +530,13 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
-    return { state: "EXACT_EXISTING_POST_0004", publicTableCount, differences: [] };
+    return { state: "EXACT_EXISTING_POST_0005", publicTableCount, differences: [] };
+  }
+
+  const matchPost0004 = compareRuntimeFingerprint(actual, allPublicTables, PREVIOUS_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0004.isExactMatch) {
+    return { state: "MIGRATABLE_POST_0004", publicTableCount, differences: [] };
   }
 
   const matchPost0003 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0003_PRODUCTION_FINGERPRINT);
