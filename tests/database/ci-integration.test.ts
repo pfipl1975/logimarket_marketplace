@@ -2509,7 +2509,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await cleanDB();
     await runMigrations(process.env);
 
-    const rawInput = {
+      const { drizzle } = await import("drizzle-orm/node-postgres");
+      const schemaModule = await import("@/lib/schema");
+      const db = drizzle(pool, { schema: schemaModule }) as any;
+
+      const rawInput = {
       companyName: '  New Corp  ',
       contactEmail: '  TEST@corP.com ',
       websiteUrl: '  https://new.test  '
