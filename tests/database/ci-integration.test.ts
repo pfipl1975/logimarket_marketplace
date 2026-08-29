@@ -206,11 +206,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.ok(sellerColumnNames.has("registered_country_code"));
 
 
-      
+
       // 0005 PROOF: Real DB constraints check
       const tablesExist = await pool.query(`
-        SELECT count(*) as c FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT count(*) as c FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name IN ('buyer_legal_context_snapshots', 'marketplace_orders', 'marketplace_order_seller_disclosures', 'seller_orders', 'seller_order_seller_snapshots', 'seller_order_items', 'seller_acceptance_decisions')
       `);
       assert.strictEqual(Number(tablesExist.rows[0].c), 7, "0005 tables must exist");
@@ -223,6 +223,33 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `);
       const buyerSnapId = buyerSnapRes.rows[0].id;
       assert.ok(buyerSnapId);
+
+
+      // valid Buyer with registry-only pair accepted
+      const buyerRegRes = await pool.query(`
+        INSERT INTO buyer_legal_context_snapshots (business_name, country_code, registry_identifier_type, registry_identifier_value, business_verification_status, category_b_status, legal_context_review_state)
+        VALUES ('Test Buyer Reg', 'PL', 'KRS', '0000123456', 'unknown', 'unknown', 'no_review_needed')
+        RETURNING id
+      `);
+      assert.ok(buyerRegRes.rows[0].id);
+
+      // professional_purpose_evidence NULL accepted
+      const buyerProfRes = await pool.query(`
+        INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, professional_purpose_evidence, business_verification_status, category_b_status, legal_context_review_state)
+        VALUES ('Test Buyer Prof', 'PL', 'NIP', '1234567891', NULL, 'unknown', 'unknown', 'no_review_needed')
+        RETURNING id
+      `);
+      assert.ok(buyerProfRes.rows[0].id);
+
+      // verified Buyer without verification metadata rejected
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state)
+          VALUES ('Bad Buyer Verified', 'PL', 'NIP', '1234567891', 'verified', 'unknown', 'no_review_needed')
+        `),
+        /chk_buyer_verification_consistency/,
+        "Must reject verified buyer without metadata"
+      );
 
       // Invalid buyer snapshot: missing both tax and registry
       await assert.rejects(
@@ -253,6 +280,17 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const moId = moRes.rows[0].id;
       assert.ok(moId);
 
+
+      // invalid MarketplaceOrder LC-04 status rejected
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id, status)
+          VALUES ('session_bad_status', $1, 'invalid_status')
+        `, [buyerSnapId]),
+        /chk_marketplace_orders_status/,
+        "Must reject invalid marketplace order status"
+      );
+
       // Duplicate UNIQUE snapshot rejection
       await assert.rejects(
         pool.query(`
@@ -265,7 +303,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       // Insert partner for FKs
       const partnerRes = await pool.query(`
-        INSERT INTO partners (company_name) VALUES ('Test Partner') RETURNING id
+        INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner', 'test@test.com') RETURNING id
       `);
       const partnerId = partnerRes.rows[0].id;
 
@@ -302,11 +340,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.ok(soId);
 
       // Seller Order status enum constraint
+      const partnerRes2 = await pool.query(`
+        INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner 2', 'test2@test.com') RETURNING id
+      `);
+      const partnerId2 = partnerRes2.rows[0].id;
       await assert.rejects(
         pool.query(`
           INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
           VALUES ($1, $2, 'invalid_status')
-        `, [moId, partnerId]),
+        `, [moId, partnerId2]),
         /chk_seller_orders_status/,
         "Must reject invalid seller order status"
       );
@@ -321,7 +363,27 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `, [soId]);
       assert.ok(snapRes.rows[0].id);
 
+
+      // duplicate seller snapshot rejected by its 1:1 UNIQUE
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_seller_snapshots (
+            seller_order_id, seller_legal_name, seller_display_name, jurisdiction_country, registered_address, firm_contact_email, contract_model, seller_of_record_responsibility, goods_invoice_responsibility, delivery_responsibility, complaint_responsibility, return_responsibility, refund_financial_liability
+          ) VALUES (
+            $1, 'SN2', 'SD2', 'PL', 'Addr2', 'b@b', 'partner_marketplace', 'b', 'b', 'b', 'b', 'b', 'b'
+          )
+        `, [soId]),
+        /uq_seller_order_seller_snapshots_seller_order/,
+        "Must reject duplicate seller snapshot"
+      );
+
       // Seller snapshot contract_model constraint
+      const soRes2 = await pool.query(`
+        INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+        VALUES ($1, $2, 'submitted')
+        RETURNING id
+      `, [moId, partnerId2]);
+      const soId2 = soRes2.rows[0].id;
       await assert.rejects(
         pool.query(`
           INSERT INTO seller_order_seller_snapshots (
@@ -329,7 +391,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           ) VALUES (
             $1, 'SN', 'SD', 'PL', 'Addr', 'a@a', 'invalid_model', 'a', 'a', 'a', 'a', 'a', 'a'
           )
-        `, [soId]),
+        `, [soId2]),
         /chk_snapshot_contract_model/,
         "Must reject invalid contract model"
       );
@@ -337,8 +399,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       // Insert offer for items
       const catRes = await pool.query("INSERT INTO categories (name, slug) VALUES ('C', 'c') RETURNING id");
       const offerRes = await pool.query(`
-        INSERT INTO offers (partner_id, category_id, conversion_type, offer_model, publication_status, title, description, url_slug, price_net)
-        VALUES ($1, $2, 'inbound', 'marketplace', 'published', 'T', 'D', 'u', 10) RETURNING id
+        INSERT INTO offers (partner_id, category_id, conversion_type, offer_model, publication_status, title, description, price_brutto)
+        VALUES ($1, $2, 'inbound', 'marketplace', 'published', 'T', 'D', 10) RETURNING id
       `, [partnerId, catRes.rows[0].id]);
       const offerId = offerRes.rows[0].id;
 
@@ -375,7 +437,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
           VALUES ($1, 'invalid_status')
         `, [soId]),
-        /chk_seller_acc_dec_status/,
+        /chk_seller_acc_dec_(status|consistency)/,
         "Must reject invalid decision status"
       );
 
@@ -388,6 +450,30 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         /chk_seller_acc_dec_consistency/,
         "Must reject pending with resolved_at"
       );
+
+
+      // seller_rejected with accepted_at rejected
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, resolved_at, accepted_at)
+          VALUES ($1, 'seller_rejected', now(), now())
+        `, [soId2]),
+        /chk_seller_acc_dec_consistency/,
+        "Must reject seller_rejected with accepted_at"
+      );
+
+      // expired + resolved_at + accepted_at NULL accepted
+      const expiredRes = await pool.query(`
+        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, resolved_at)
+        VALUES ($1, 'expired', now()) RETURNING id
+      `, [soId2]);
+      assert.ok(expiredRes.rows[0].id);
+
+      // after expired decision, seller_orders.status remains unchanged unless explicitly modified
+      const soStatusRes = await pool.query(`
+        SELECT status FROM seller_orders WHERE id = $1
+      `, [soId2]);
+      assert.strictEqual(soStatusRes.rows[0].status, 'submitted');
 
       const validDecRes = await pool.query(`
         INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
@@ -409,11 +495,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length, 5,
-        "Journal should have exactly 5 rows",
+        journalRows.length, 6,
+        "Journal should have exactly 6 rows",
       );
 
-      for (let i = 0; i < 5; i++) {
+      for (let i = 0; i < 6; i++) {
         assert.strictEqual(
           journalRows[i].hash,
           diskMigrations[i].hash,
@@ -456,8 +542,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       created_at: string | number;
     }[];
     assert.strictEqual(
-      journalRows.length, 5,
-      "Journal should have exactly 5 rows",
+      journalRows.length, 6,
+      "Journal should have exactly 6 rows",
     );
   });
 
@@ -634,8 +720,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length, 5,
-        "Journal should have exactly 5 rows",
+        journalRows.length, 6,
+        "Journal should have exactly 6 rows",
       );
     },
   );

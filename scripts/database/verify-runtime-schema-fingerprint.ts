@@ -62,7 +62,9 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0005"
   | "EXACT_EXISTING_POST_0004"
+  | "MIGRATABLE_POST_0004"
   | "MIGRATABLE_POST_0003"
   | "MIGRATABLE_POST_0002"
   | "MIGRATABLE_PROD_LEGACY"

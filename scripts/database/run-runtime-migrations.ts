@@ -114,7 +114,7 @@ export async function runMigrations(
 
     const { fingerprint: postFingerprint, publicTables: postTables } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables);
-    if (postClassification.state !== "EXACT_EXISTING_POST_0004" && postClassification.state !== "EXACT_EXISTING") {
+    if (postClassification.state !== "EXACT_EXISTING_POST_0005" && postClassification.state !== "EXACT_EXISTING_POST_0004" && postClassification.state !== "EXACT_EXISTING") {
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }
     console.log("RUNNER: post-check PASS");
