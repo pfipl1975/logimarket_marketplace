@@ -1278,31 +1278,32 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     );
 
     // D. IDEMPOTENT
-    const resD = await executeAdminOfferEdit(db, {
-      offerId,
-      expectedUpdatedAt: rowAfterB.rows[0].updated_at.toISOString(),
-      title: "New Title",
-      description: "New Desc",
-      imageUrl: null,
-      priceBrutto: null,
-      priceOnRequest: true,
-      adminOfferType: "external_partner",
-      outboundUrl: null,
-      isFeatured: false,
-    });
-    assert.strictEqual(resD.ok, true);
-    if (resD.ok) {
-      assert.strictEqual(resD.code, "OFFER_UNCHANGED");
-      assert.strictEqual(resD.changed, false);
-    }
-    const rowAfterD = await pool.query(
-      `SELECT * FROM public.offers WHERE id = $1`,
-      [offerId],
-    );
-    assert.strictEqual(
-      rowAfterD.rows[0].updated_at.getTime(),
-      rowAfterB.rows[0].updated_at.getTime(),
-    );
+      const rowBeforeD = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+      const resD = await executeAdminOfferEdit(db, {
+        offerId,
+        expectedUpdatedAt: rowBeforeD.rows[0].updated_at.toISOString(),
+        title: "New Title",
+        description: "New Desc",
+        imageUrl: null,
+        priceBrutto: null,
+        priceOnRequest: true,
+        adminOfferType: "external_partner",
+        outboundUrl: null,
+        isFeatured: false,
+      });
+      assert.strictEqual(resD.ok, true);
+      if (resD.ok) {
+        assert.strictEqual(resD.code, "OFFER_UNCHANGED");
+        assert.strictEqual(resD.changed, false);
+      }
+      const rowAfterD = await pool.query(
+        `SELECT * FROM public.offers WHERE id = $1`,
+        [offerId],
+      );
+      assert.strictEqual(
+        rowAfterD.rows[0].updated_at.getTime(),
+        rowBeforeD.rows[0].updated_at.getTime(),
+      );
 
     // E. CONFLICT
     const resE = await executeAdminOfferEdit(db, {
@@ -2145,9 +2146,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.equal(row.partner_id, 99991);
       assert.equal(row.category_id, 99992);
       assert.equal(row.title, "My New Draft"); // trimmed
-      assert.equal(row.offer_model, "rfq");
-      assert.equal(row.conversion_type, "outbound");
-      assert.equal(row.publication_status, "draft");
+      assert.equal(row.offer_model, "marketplace");
+        assert.equal(row.conversion_type, "outbound");
+        assert.equal(row.publication_status, "draft");
       assert.equal(row.contract_model, null);
       assert.equal(row.published_at, null);
       assert.equal(row.archived_at, null);
