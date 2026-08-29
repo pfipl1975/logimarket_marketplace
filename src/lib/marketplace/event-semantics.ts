@@ -5,14 +5,51 @@ export const MarketplaceEvents = {
   E7_SELLER_ACCEPTED: "e7_seller_accepted",
 } as const;
 
-export function isSellerAcceptanceEvent(event: string): boolean {
-  return event === MarketplaceEvents.E7_SELLER_ACCEPTED;
+export type SellerDecisionStatus =
+  | "pending_seller_review"
+  | "seller_accepted"
+  | "seller_rejected"
+  | "expired";
+
+export interface SellerAcceptanceDecision {
+  decisionStatus: SellerDecisionStatus;
+  resolvedAt: Date | null;
+  acceptedAt: Date | null;
 }
 
-export function isRejectionEvent(status: string): boolean {
-  return status === "seller_rejected" || status === "cancelled";
+/**
+ * Contract-formation acceptance (E7) requires ALL three conditions:
+ *   1. decisionStatus = "seller_accepted"
+ *   2. resolvedAt is not null
+ *   3. acceptedAt is not null
+ *
+ * Seller silence cannot produce E7.
+ * Timeout/expiry cannot produce E7.
+ * "expired" status does NOT mean seller_rejected.
+ * "cancelled" does NOT mean seller_rejected.
+ */
+export function isExplicitSellerAcceptance(decision: SellerAcceptanceDecision): boolean {
+  return (
+    decision.decisionStatus === "seller_accepted" &&
+    decision.resolvedAt !== null &&
+    decision.acceptedAt !== null
+  );
 }
 
-export function canSilenceBeAcceptance(): boolean {
+/** E3 (LogiMarket receipt acknowledgment) is NOT seller acceptance. */
+export function isReceiptAcknowledgment(event: string): boolean {
+  return event === MarketplaceEvents.E3_RECEIPT_ACKNOWLEDGED;
+}
+
+/** E6 (seller routing) is NOT seller acceptance. */
+export function isSellerRouting(event: string): boolean {
+  return event === MarketplaceEvents.E6_ROUTED_TO_SELLER;
+}
+
+/**
+ * Seller silence CANNOT constitute acceptance.
+ * Always returns false — this is a domain invariant.
+ */
+export function canSilenceBeAcceptance(): false {
   return false;
 }
