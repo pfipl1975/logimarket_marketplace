@@ -4,12 +4,18 @@ import {
   AdminSellerLegalDataSaveInputSchema,
   AdminSellerTaxIdentifierAddInputSchema,
   AdminSellerTaxIdentifierDeleteInputSchema,
+  AdminSellerRegistryIdentifierAddInputSchema,
+
   executeAdminSellerLegalDataSave,
   executeAdminSellerTaxIdentifierAdd,
   executeAdminSellerTaxIdentifierDelete,
+
+
   type AdminSellerLegalDataSaveInput,
   type AdminSellerTaxIdentifierAddInput,
   type AdminSellerTaxIdentifierDeleteInput,
+
+
 } from "../../src/lib/admin/partner-edit-core";
 import { buildSellerDisclosure } from "../../src/lib/legal/seller-disclosure";
 
@@ -117,7 +123,17 @@ class FakeDb {
               return this.config.partnerExists !== false ? [{ id: 1 }] : [];
             }
             if (this.selectCallIndex === 2) {
-              return this.config.identityExists !== false ? [{ partnerId: 1 }] : [];
+              return this.config.identityExists !== false ? [{
+                  partnerId: 1,
+                  legalName: "New Company",
+                  jurisdictionCountry: "PL",
+                  registeredAddressLine1: "Line 1",
+                  registeredAddressLine2: null,
+                  registeredPostalCode: null,
+                  registeredCity: null,
+                  registeredRegion: null,
+                  registeredCountryCode: null
+                }] : [];
             }
             if (this.selectCallIndex === 3) {
               return this.config.taxIdentifierConflictExists ? [{ id: 1 }] : [];
@@ -339,5 +355,47 @@ describe("Seller Disclosure Completeness", () => {
 
     assert.strictEqual(disclosure.completeness.complete, true);
     assert.strictEqual(disclosure.completeness.missing.length, 0);
+  });
+});
+
+
+describe("Admin Seller Registry Identifier Add Input Validation", () => {
+  test("invalid partnerId -> rejected", () => {
+    const input = { partnerId: -1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "PL" };
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+
+  test("empty registryType -> rejected", () => {
+    const input = { partnerId: 1, registryType: "   ", registryValue: "123", jurisdictionCountry: "PL" };
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+
+  test("empty registryValue -> rejected", () => {
+    const input = { partnerId: 1, registryType: "KRS", registryValue: "   ", jurisdictionCountry: "PL" };
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+
+  test("invalid jurisdictionCountry -> rejected", () => {
+    const input = { partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "POL" };
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+
+  test("lowercase country normalization", () => {
+    const input = { partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "pl" };
+    const parsed = AdminSellerRegistryIdentifierAddInputSchema.safeParse(input);
+    assert.strictEqual(parsed.success, true);
+    if (parsed.success) {
+      assert.strictEqual(parsed.data.jurisdictionCountry, "PL");
+    }
+  });
+
+  test("oversized registryType -> rejected", () => {
+    const input = { partnerId: 1, registryType: "a".repeat(51), registryValue: "123", jurisdictionCountry: "PL" };
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+
+  test("oversized registryValue -> rejected", () => {
+    const input = { partnerId: 1, registryType: "KRS", registryValue: "a".repeat(101), jurisdictionCountry: "PL" };
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 });

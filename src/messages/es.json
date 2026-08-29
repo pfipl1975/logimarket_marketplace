@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "Entrada no válida.",
     "sellerLegalErrorSystem": "Se ha producido un error del sistema.",
     "taxIdentifierConflict": "Este identificador fiscal ya existe.",
-    "taxIdentifierNotFound": "Identificador fiscal no encontrado."
+    "taxIdentifierNotFound": "Identificador fiscal no encontrado.",
+    "registryIdentifierConflict": "Esta entrada de registro ya existe.",
+    "registryIdentifierNotFound": "Entrada de registro no encontrada.",
+    "addRegistryIdentifierTitle": "Agregar nueva entrada de registro"
   },
   "adminOfferDetail": {
     "errorTitle": "Error al cargar datos",

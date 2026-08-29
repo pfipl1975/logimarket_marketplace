@@ -2,7 +2,7 @@ import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
-import { partners, sellerLegalIdentities, sellerTaxIdentifiers } from "@/lib/schema";
+import { partners, sellerLegalIdentities, sellerTaxIdentifiers, sellerRegistryIdentifiers } from "@/lib/schema";
 
 // ----------------------------------------------------------------------
 // 1. Seller Legal Data Save
@@ -83,7 +83,17 @@ export async function executeAdminSellerLegalDataSave(
         .where(eq(partners.id, input.partnerId));
 
       const existingIdentity = await tx
-        .select({ partnerId: sellerLegalIdentities.partnerId })
+        .select({
+          partnerId: sellerLegalIdentities.partnerId,
+          legalName: sellerLegalIdentities.legalName,
+          jurisdictionCountry: sellerLegalIdentities.jurisdictionCountry,
+          registeredAddressLine1: sellerLegalIdentities.registeredAddressLine1,
+          registeredAddressLine2: sellerLegalIdentities.registeredAddressLine2,
+          registeredPostalCode: sellerLegalIdentities.registeredPostalCode,
+          registeredCity: sellerLegalIdentities.registeredCity,
+          registeredRegion: sellerLegalIdentities.registeredRegion,
+          registeredCountryCode: sellerLegalIdentities.registeredCountryCode,
+        })
         .from(sellerLegalIdentities)
         .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
         .limit(1);
@@ -102,20 +112,52 @@ export async function executeAdminSellerLegalDataSave(
           verificationStatus: "unverified",
         });
       } else {
-        await tx
-          .update(sellerLegalIdentities)
-          .set({
-            legalName: input.legalName,
-            jurisdictionCountry: input.jurisdictionCountry,
-            registeredAddressLine1: input.registeredAddressLine1,
-            registeredAddressLine2: input.registeredAddressLine2,
-            registeredPostalCode: input.registeredPostalCode,
-            registeredCity: input.registeredCity,
-            registeredRegion: input.registeredRegion,
-            registeredCountryCode: input.registeredCountryCode,
-            updatedAt: new Date(),
-          })
-          .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+        const curr = existingIdentity[0];
+        const changed =
+          curr.legalName !== input.legalName ||
+          curr.jurisdictionCountry !== input.jurisdictionCountry ||
+          curr.registeredAddressLine1 !== input.registeredAddressLine1 ||
+          curr.registeredAddressLine2 !== input.registeredAddressLine2 ||
+          curr.registeredPostalCode !== input.registeredPostalCode ||
+          curr.registeredCity !== input.registeredCity ||
+          curr.registeredRegion !== input.registeredRegion ||
+          curr.registeredCountryCode !== input.registeredCountryCode;
+
+        if (changed) {
+          await tx
+            .update(sellerLegalIdentities)
+            .set({
+              legalName: input.legalName,
+              jurisdictionCountry: input.jurisdictionCountry,
+              registeredAddressLine1: input.registeredAddressLine1,
+              registeredAddressLine2: input.registeredAddressLine2,
+              registeredPostalCode: input.registeredPostalCode,
+              registeredCity: input.registeredCity,
+              registeredRegion: input.registeredRegion,
+              registeredCountryCode: input.registeredCountryCode,
+              verificationStatus: "unverified",
+              verifiedAt: null,
+              verificationSource: null,
+              verificationReference: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+        } else {
+          await tx
+            .update(sellerLegalIdentities)
+            .set({
+              legalName: input.legalName,
+              jurisdictionCountry: input.jurisdictionCountry,
+              registeredAddressLine1: input.registeredAddressLine1,
+              registeredAddressLine2: input.registeredAddressLine2,
+              registeredPostalCode: input.registeredPostalCode,
+              registeredCity: input.registeredCity,
+              registeredRegion: input.registeredRegion,
+              registeredCountryCode: input.registeredCountryCode,
+              updatedAt: new Date(),
+            })
+            .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+        }
       }
 
       return { ok: true as const, code: "SAVED" as const };
@@ -247,6 +289,130 @@ export async function executeAdminSellerTaxIdentifierDelete(
     return { ok: true as const, code: "DELETED" };
   } catch {
       console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
+    return { ok: false as const, code: "SYSTEM_ERROR" };
+  }
+}
+
+
+// ----------------------------------------------------------------------
+// 4. Registry Identifier Add
+// ----------------------------------------------------------------------
+
+export const AdminSellerRegistryIdentifierAddInputSchema = z.object({
+  partnerId: z.number().int().positive(),
+  registryType: z.string().trim().min(1).max(50),
+  registryValue: z.string().trim().min(1).max(100),
+  jurisdictionCountry: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
+});
+
+export type AdminSellerRegistryIdentifierAddInput = z.infer<typeof AdminSellerRegistryIdentifierAddInputSchema>;
+
+export type AdminSellerRegistryIdentifierAddResult =
+  | { ok: true; code: "ADDED" }
+  | { ok: false; code: "PARTNER_NOT_FOUND" }
+  | { ok: false; code: "LEGAL_IDENTITY_REQUIRED" }
+  | { ok: false; code: "REGISTRY_IDENTIFIER_CONFLICT" }
+  | { ok: false; code: "SYSTEM_ERROR" };
+
+export async function executeAdminSellerRegistryIdentifierAdd(
+  db: NodePgDatabase<typeof schema>,
+  input: AdminSellerRegistryIdentifierAddInput
+): Promise<AdminSellerRegistryIdentifierAddResult> {
+  try {
+    return await db.transaction(async (tx) => {
+      const partnerRows = await tx
+        .select({ id: partners.id })
+        .from(partners)
+        .where(eq(partners.id, input.partnerId))
+        .limit(1);
+
+      if (partnerRows.length === 0) {
+        return { ok: false as const, code: "PARTNER_NOT_FOUND" as const };
+      }
+
+      const identityRows = await tx
+        .select({ partnerId: sellerLegalIdentities.partnerId })
+        .from(sellerLegalIdentities)
+        .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
+        .limit(1);
+
+      if (identityRows.length === 0) {
+        return { ok: false as const, code: "LEGAL_IDENTITY_REQUIRED" as const };
+      }
+
+      const conflictRows = await tx
+        .select({ id: sellerRegistryIdentifiers.id })
+        .from(sellerRegistryIdentifiers)
+        .where(
+          and(
+            eq(sellerRegistryIdentifiers.partnerId, input.partnerId),
+            eq(sellerRegistryIdentifiers.registryType, input.registryType),
+            eq(sellerRegistryIdentifiers.jurisdictionCountry, input.jurisdictionCountry),
+            eq(sellerRegistryIdentifiers.registryValue, input.registryValue)
+          )
+        )
+        .limit(1);
+
+      if (conflictRows.length > 0) {
+        return { ok: false as const, code: "REGISTRY_IDENTIFIER_CONFLICT" as const };
+      }
+
+      await tx.insert(sellerRegistryIdentifiers).values({
+        partnerId: input.partnerId,
+        registryType: input.registryType,
+        jurisdictionCountry: input.jurisdictionCountry,
+        registryValue: input.registryValue,
+      });
+
+      return { ok: true as const, code: "ADDED" as const };
+    });
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "23505") {
+      return { ok: false as const, code: "REGISTRY_IDENTIFIER_CONFLICT" };
+    }
+    console.error("[ADMIN_DB] executeAdminSellerRegistryIdentifierAdd system error");
+    return { ok: false as const, code: "SYSTEM_ERROR" };
+  }
+}
+
+// ----------------------------------------------------------------------
+// 5. Registry Identifier Delete
+// ----------------------------------------------------------------------
+
+export const AdminSellerRegistryIdentifierDeleteInputSchema = z.object({
+  partnerId: z.number().int().positive(),
+  registryIdentifierId: z.number().int().positive(),
+});
+
+export type AdminSellerRegistryIdentifierDeleteInput = z.infer<typeof AdminSellerRegistryIdentifierDeleteInputSchema>;
+
+export type AdminSellerRegistryIdentifierDeleteResult =
+  | { ok: true; code: "DELETED" }
+  | { ok: false; code: "NOT_FOUND" }
+  | { ok: false; code: "SYSTEM_ERROR" };
+
+export async function executeAdminSellerRegistryIdentifierDelete(
+  db: NodePgDatabase<typeof schema>,
+  input: AdminSellerRegistryIdentifierDeleteInput
+): Promise<AdminSellerRegistryIdentifierDeleteResult> {
+  try {
+    const deleted = await db
+      .delete(sellerRegistryIdentifiers)
+      .where(
+        and(
+          eq(sellerRegistryIdentifiers.id, input.registryIdentifierId),
+          eq(sellerRegistryIdentifiers.partnerId, input.partnerId)
+        )
+      )
+      .returning({ id: sellerRegistryIdentifiers.id });
+
+    if (deleted.length === 0) {
+      return { ok: false as const, code: "NOT_FOUND" };
+    }
+
+    return { ok: true as const, code: "DELETED" };
+  } catch {
+    console.error("[ADMIN_DB] executeAdminSellerRegistryIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }

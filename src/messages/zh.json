@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "无效输入。",
     "sellerLegalErrorSystem": "发生系统错误。",
     "taxIdentifierConflict": "此税务标识符已存在。",
-    "taxIdentifierNotFound": "未找到税务标识符。"
+    "taxIdentifierNotFound": "未找到税务标识符。",
+    "registryIdentifierConflict": "该注册记录已存在。",
+    "registryIdentifierNotFound": "未找到注册记录。",
+    "addRegistryIdentifierTitle": "添加新注册记录"
   },
   "adminOfferDetail": {
     "errorTitle": "加载数据出错",

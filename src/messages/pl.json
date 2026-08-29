@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "Nieprawidłowe dane wejściowe.",
     "sellerLegalErrorSystem": "Wystąpił błąd systemowy.",
     "taxIdentifierConflict": "Taki identyfikator podatkowy już istnieje.",
-    "taxIdentifierNotFound": "Nie znaleziono identyfikatora podatkowego."
+    "taxIdentifierNotFound": "Nie znaleziono identyfikatora podatkowego.",
+    "registryIdentifierConflict": "Taki wpis do rejestru już istnieje.",
+    "registryIdentifierNotFound": "Nie znaleziono wpisu w rejestrze.",
+    "addRegistryIdentifierTitle": "Dodaj nowy wpis do rejestru"
   },
   "adminOfferDetail": {
     "errorTitle": "Błąd pobierania danych",
