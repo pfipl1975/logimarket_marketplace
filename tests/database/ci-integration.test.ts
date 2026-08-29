@@ -2507,8 +2507,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await t.test("ADMIN_PARTNER_CREATE_MUTATION_PROOF", async () => {
     const { createPartnerCore } = await import("@/lib/admin/partners-create");
     await cleanDB();
-    await applyAllSchema();
-    await pool.query(`INSERT INTO drizzle_migrations (hash, created_at) VALUES ('seed', NOW())`);
+    await runMigrations(process.env);
 
     const rawInput = {
       companyName: '  New Corp  ',
