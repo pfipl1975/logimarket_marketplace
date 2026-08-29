@@ -339,6 +339,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const soId = soRes.rows[0].id;
       assert.ok(soId);
 
+      // Seller Order duplicate uniqueness
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+          VALUES ($1, $2, 'submitted')
+        `, [moId, partnerId]),
+        /uq_seller_orders_mkt_partner/,
+        "Must reject duplicate seller order for same order and partner"
+      );
+
       // Seller Order status enum constraint
       const partnerRes2 = await pool.query(`
         INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner 2', 'test2@test.com') RETURNING id
@@ -431,6 +441,18 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "Must reject lower-case currency"
       );
 
+      // Prove chk_seller_acc_dec_status exists, is a CHECK constraint, and is validated
+      const statusConstraintRes = await pool.query(`
+        SELECT convalidated, contype
+        FROM pg_constraint
+        WHERE conname = 'chk_seller_acc_dec_status'
+          AND conrelid = 'public.seller_acceptance_decisions'::regclass
+      `);
+      assert.strictEqual(statusConstraintRes.rows.length, 1, "chk_seller_acc_dec_status must exist");
+      assert.strictEqual(statusConstraintRes.rows[0].convalidated, true, "chk_seller_acc_dec_status must be validated");
+      assert.strictEqual(statusConstraintRes.rows[0].contype, 'c', "chk_seller_acc_dec_status must be a check constraint");
+
+      // OVERLAPPING_CHECK_EVALUATION_ORDER=NON_DETERMINISTIC
       // Seller acceptance decision enum
       await assert.rejects(
         pool.query(`
@@ -439,6 +461,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         `, [soId]),
         /chk_seller_acc_dec_(status|consistency)/,
         "Must reject invalid decision status"
+      );
+
+      // seller_accepted without resolved_at / accepted_at consistency
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
+          VALUES ($1, 'seller_accepted')
+        `, [soId]),
+        /chk_seller_acc_dec_consistency/,
+        "Must reject seller_accepted without timestamps"
       );
 
       // Seller acceptance consistency
@@ -725,6 +757,26 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
     },
   );
+
+  await t.test("PATH D: CANONICAL POST-0004 MIGRATABLE PROOF", async () => {
+    await cleanDB();
+    const M0004_FILE = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+
+    // Apply 0000 to 0004 manually
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004_FILE, "utf-8"));
+
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables);
+    assert.strictEqual(
+      classification.state,
+      "MIGRATABLE_POST_0004",
+      "Exact post-0004 schema should classify as MIGRATABLE_POST_0004"
+    );
+  });
 
   await t.test("NEGATIVE PATH: 0001 FAILURE ROLLBACK", async () => {
     await setup0000();
