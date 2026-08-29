@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "发生系统错误。"
     },
     "createLoadErrorTitle": "错误",
-    "createLoadErrorDescription": "加载表单选项时发生系统错误。"
+    "createLoadErrorDescription": "加载表单选项时发生系统错误。",
+    "fieldOfferType": "报价类型",
+    "createSelectOfferType": "请选择报价类型...",
+    "offerTypeRfq": "询价（RFQ）",
+    "offerTypeMarketplace": "通过 LogiMarket 销售",
+    "offerTypeExternal": "合作伙伴外部报价",
+    "errorInvalidCurrentOfferType": "当前报价配置无效。请选择有效的报价类型以继续。"
   },
   "adminPartners": {
     "metaTitle": "合作伙伴",
@@ -877,7 +883,13 @@
       "title": "技术属性",
       "description": "编辑此报价的技术属性。",
       "provenanceLocked": "由于该属性与迁移数据关联，因此无法编辑。"
-    }
+    },
+    "fieldOfferType": "报价类型",
+    "createSelectOfferType": "请选择报价类型...",
+    "offerTypeRfq": "询价（RFQ）",
+    "offerTypeMarketplace": "通过 LogiMarket 销售",
+    "offerTypeExternal": "合作伙伴外部报价",
+    "errorInvalidCurrentOfferType": "当前报价配置无效。请选择有效的报价类型以继续。"
   },
   "adminDashboard": {
     "metaTitle": "LogiMarket管理仪表板",

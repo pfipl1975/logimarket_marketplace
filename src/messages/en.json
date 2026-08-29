@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "A system error occurred."
     },
     "createLoadErrorTitle": "Error",
-    "createLoadErrorDescription": "System error occurred while loading form options."
+    "createLoadErrorDescription": "System error occurred while loading form options.",
+    "fieldOfferType": "Offer type",
+    "createSelectOfferType": "Select offer type...",
+    "offerTypeRfq": "Request for quotation (RFQ)",
+    "offerTypeMarketplace": "Sale through LogiMarket",
+    "offerTypeExternal": "External Partner offer",
+    "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue."
   },
   "adminPartners": {
     "metaTitle": "Partners",
@@ -877,7 +883,13 @@
       "title": "Technical Attributes",
       "description": "Edit relational technical attributes for this offer.",
       "provenanceLocked": "Editing this attribute is blocked because it is linked to migration provenance."
-    }
+    },
+    "fieldOfferType": "Offer type",
+    "createSelectOfferType": "Select offer type...",
+    "offerTypeRfq": "Request for quotation (RFQ)",
+    "offerTypeMarketplace": "Sale through LogiMarket",
+    "offerTypeExternal": "External Partner offer",
+    "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue."
   },
   "adminDashboard": {
     "metaTitle": "LogiMarket Admin Dashboard",

@@ -39,8 +39,7 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
         partnerId: fd.get("partnerId")?.toString() || "",
         categoryId: fd.get("categoryId")?.toString() || "",
         title: fd.get("title")?.toString() || "",
-        offerModel: fd.get("offerModel")?.toString() || "",
-        conversionType: fd.get("conversionType")?.toString() || "",
+        adminOfferType: fd.get("adminOfferType")?.toString() || "",
       };
 
       const result = await createAdminOfferDraft(input);
@@ -120,36 +119,21 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
           />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label htmlFor="offerModel" className="block text-sm font-medium text-brand-navy mb-1">{dict.createModelLabel}</label>
+        <div>
+            <label htmlFor="adminOfferType" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldOfferType}</label>
             <select
-              id="offerModel"
-              name="offerModel"
+              id="adminOfferType"
+              name="adminOfferType"
               required
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
+              className="w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
             >
-              <option value="">{dict.createSelectModel}</option>
-              <option value="rfq">{dict.createModelRfq}</option>
-              <option value="marketplace">{dict.createModelMarketplace}</option>
-            </select>
-          </div>
-          
-          <div>
-            <label htmlFor="conversionType" className="block text-sm font-medium text-brand-navy mb-1">{dict.createConversionTypeLabel}</label>
-            <select
-              id="conversionType"
-              name="conversionType"
-              required
-              className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
-            >
-              <option value="">{dict.createSelectConversion}</option>
-              <option value="outbound">{dict.createConversionOutbound}</option>
-              <option value="inbound">{dict.createConversionInbound}</option>
+              <option value="">{dict.createSelectOfferType}</option>
+              <option value="rfq">{dict.offerTypeRfq}</option>
+              <option value="marketplace">{dict.offerTypeMarketplace}</option>
+              <option value="external_partner">{dict.offerTypeExternal}</option>
             </select>
           </div>
         </div>
-      </div>
 
       <div className="pt-6 border-t border-border-industrial flex flex-col sm:flex-row gap-3">
         <button

@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "Сталася системна помилка."
     },
     "createLoadErrorTitle": "Помилка",
-    "createLoadErrorDescription": "Системна помилка під час завантаження опцій форми."
+    "createLoadErrorDescription": "Системна помилка під час завантаження опцій форми.",
+    "fieldOfferType": "Тип пропозиції",
+    "createSelectOfferType": "Виберіть тип пропозиції...",
+    "offerTypeRfq": "Запит на комерційну пропозицію (RFQ)",
+    "offerTypeMarketplace": "Продаж через LogiMarket",
+    "offerTypeExternal": "Зовнішня пропозиція партнера",
+    "errorInvalidCurrentOfferType": "Поточна конфігурація пропозиції некоректна. Виберіть коректний тип пропозиції, щоб продовжити."
   },
   "adminPartners": {
     "metaTitle": "Партнери",
@@ -877,7 +883,13 @@
       "title": "Технічні атрибути",
       "description": "Редагувати технічні атрибути.",
       "provenanceLocked": "Редагування цього атрибута заблоковано через його зв’язок із даними міграції."
-    }
+    },
+    "fieldOfferType": "Тип пропозиції",
+    "createSelectOfferType": "Виберіть тип пропозиції...",
+    "offerTypeRfq": "Запит на комерційну пропозицію (RFQ)",
+    "offerTypeMarketplace": "Продаж через LogiMarket",
+    "offerTypeExternal": "Зовнішня пропозиція партнера",
+    "errorInvalidCurrentOfferType": "Поточна конфігурація пропозиції некоректна. Виберіть коректний тип пропозиції, щоб продовжити."
   },
   "adminDashboard": {
     "metaTitle": "Панель адміністратора LogiMarket",

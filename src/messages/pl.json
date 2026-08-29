@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "Wystąpił błąd systemowy."
     },
     "createLoadErrorTitle": "Błąd",
-    "createLoadErrorDescription": "Wystąpił błąd systemowy podczas ładowania opcji formularza."
+    "createLoadErrorDescription": "Wystąpił błąd systemowy podczas ładowania opcji formularza.",
+    "fieldOfferType": "Rodzaj oferty",
+    "createSelectOfferType": "Wybierz rodzaj oferty...",
+    "offerTypeRfq": "Zapytanie ofertowe RFQ",
+    "offerTypeMarketplace": "Sprzedaż przez LogiMarket",
+    "offerTypeExternal": "Oferta zewnętrzna Partnera",
+    "errorInvalidCurrentOfferType": "Bieżąca konfiguracja rodzaju oferty jest nieprawidłowa. Wybierz poprawny rodzaj oferty, aby kontynuować."
   },
   "adminPartners": {
     "metaTitle": "Partnerzy",
@@ -877,7 +883,13 @@
       "title": "Atrybuty techniczne",
       "description": "Edytuj relacyjne atrybuty techniczne dla tej oferty.",
       "provenanceLocked": "Edycja tego parametru jest zablokowana ze względu na powiązanie z danymi migracyjnymi."
-    }
+    },
+    "fieldOfferType": "Rodzaj oferty",
+    "createSelectOfferType": "Wybierz rodzaj oferty...",
+    "offerTypeRfq": "Zapytanie ofertowe RFQ",
+    "offerTypeMarketplace": "Sprzedaż przez LogiMarket",
+    "offerTypeExternal": "Oferta zewnętrzna Partnera",
+    "errorInvalidCurrentOfferType": "Bieżąca konfiguracja rodzaju oferty jest nieprawidłowa. Wybierz poprawny rodzaj oferty, aby kontynuować."
   },
   "adminDashboard": {
     "metaTitle": "Panel operacyjny LogiMarket",

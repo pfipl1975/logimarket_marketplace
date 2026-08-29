@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "Ein Systemfehler ist aufgetreten."
     },
     "createLoadErrorTitle": "Fehler",
-    "createLoadErrorDescription": "Systemfehler beim Laden der Formularoptionen."
+    "createLoadErrorDescription": "Systemfehler beim Laden der Formularoptionen.",
+    "fieldOfferType": "Angebotsart",
+    "createSelectOfferType": "Angebotsart auswählen...",
+    "offerTypeRfq": "Angebotsanfrage (RFQ)",
+    "offerTypeMarketplace": "Verkauf über LogiMarket",
+    "offerTypeExternal": "Externes Partnerangebot",
+    "errorInvalidCurrentOfferType": "Die aktuelle Angebotskonfiguration ist ungültig. Wählen Sie eine gültige Angebotsart aus, um fortzufahren."
   },
   "adminPartners": {
     "metaTitle": "Partner",
@@ -877,7 +883,13 @@
       "title": "Technische Attribute",
       "description": "Bearbeiten Sie die relationalen technischen Attribute.",
       "provenanceLocked": "Die Bearbeitung dieses Attributs ist aufgrund seiner Verknüpfung mit Migrationsdaten gesperrt."
-    }
+    },
+    "fieldOfferType": "Angebotsart",
+    "createSelectOfferType": "Angebotsart auswählen...",
+    "offerTypeRfq": "Angebotsanfrage (RFQ)",
+    "offerTypeMarketplace": "Verkauf über LogiMarket",
+    "offerTypeExternal": "Externes Partnerangebot",
+    "errorInvalidCurrentOfferType": "Die aktuelle Angebotskonfiguration ist ungültig. Wählen Sie eine gültige Angebotsart aus, um fortzufahren."
   },
   "adminDashboard": {
     "metaTitle": "LogiMarket Admin Dashboard",

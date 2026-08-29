@@ -1163,8 +1163,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1186,8 +1185,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1249,33 +1247,63 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       initialRow.rows[0].deleted_at,
     );
 
-    // D. IDEMPOTENT
-    const resD = await executeAdminOfferEdit(db, {
+    
+    // ADDED DB_TYPE_03_CHANGE_TO_EXTERNAL
+    await pool.query(
+      `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'inbound' WHERE id = $1`,
+      [offerId]
+    );
+    const rowBeforeC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    const resC3 = await executeAdminOfferEdit(db, {
       offerId,
-      expectedUpdatedAt: rowAfterB.rows[0].updated_at.toISOString(),
+      expectedUpdatedAt: rowBeforeC3.rows[0].updated_at.toISOString(),
       title: "New Title",
       description: "New Desc",
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
-    assert.strictEqual(resD.ok, true);
-    if (resD.ok) {
-      assert.strictEqual(resD.code, "OFFER_UNCHANGED");
-      assert.strictEqual(resD.changed, false);
-    }
-    const rowAfterD = await pool.query(
-      `SELECT * FROM public.offers WHERE id = $1`,
-      [offerId],
+    assert.strictEqual(resC3.ok, true);
+    const rowAfterC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assert.strictEqual(rowAfterC3.rows[0].offer_model, "marketplace");
+    assert.strictEqual(rowAfterC3.rows[0].conversion_type, "outbound");
+    
+    // revert back for the rest of tests
+    await pool.query(
+      `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'outbound' WHERE id = $1`,
+      [offerId]
     );
-    assert.strictEqual(
-      rowAfterD.rows[0].updated_at.getTime(),
-      rowAfterB.rows[0].updated_at.getTime(),
-    );
+
+    // D. IDEMPOTENT
+      const rowBeforeD = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+      const resD = await executeAdminOfferEdit(db, {
+        offerId,
+        expectedUpdatedAt: rowBeforeD.rows[0].updated_at.toISOString(),
+        title: "New Title",
+        description: "New Desc",
+        imageUrl: null,
+        priceBrutto: null,
+        priceOnRequest: true,
+        adminOfferType: "external_partner",
+        outboundUrl: null,
+        isFeatured: false,
+      });
+      assert.strictEqual(resD.ok, true);
+      if (resD.ok) {
+        assert.strictEqual(resD.code, "OFFER_UNCHANGED");
+        assert.strictEqual(resD.changed, false);
+      }
+      const rowAfterD = await pool.query(
+        `SELECT * FROM public.offers WHERE id = $1`,
+        [offerId],
+      );
+      assert.strictEqual(
+        rowAfterD.rows[0].updated_at.getTime(),
+        rowBeforeD.rows[0].updated_at.getTime(),
+      );
 
     // E. CONFLICT
     const resE = await executeAdminOfferEdit(db, {
@@ -1286,8 +1314,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1332,8 +1359,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1362,8 +1388,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1392,8 +1417,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: false,
-      offerModel: "marketplace",
-      conversionType: "inbound",
+      adminOfferType: "marketplace",
       outboundUrl: null,
       isFeatured: false, // ecommerce without price
     });
@@ -1422,8 +1446,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false, // outbound without url
     });
@@ -1453,8 +1476,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1467,8 +1489,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1519,8 +1540,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: "1.23",
       priceOnRequest: false,
-      offerModel: "marketplace",
-      conversionType: "inbound",
+      adminOfferType: "marketplace",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -2098,8 +2118,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99991",
       categoryId: "99992",
       title: "  My New Draft  ",
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
     };
 
     const parsed = parseOfferDraftCreateInput(input);
@@ -2127,9 +2146,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.equal(row.partner_id, 99991);
       assert.equal(row.category_id, 99992);
       assert.equal(row.title, "My New Draft"); // trimmed
-      assert.equal(row.offer_model, "rfq");
-      assert.equal(row.conversion_type, "outbound");
-      assert.equal(row.publication_status, "draft");
+      assert.equal(row.offer_model, "marketplace");
+        assert.equal(row.conversion_type, "outbound");
+        assert.equal(row.publication_status, "draft");
       assert.equal(row.contract_model, null);
       assert.equal(row.published_at, null);
       assert.equal(row.archived_at, null);
@@ -2141,8 +2160,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99999",
       categoryId: "99992",
       title: "T",
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
     });
     if (badPartnerInput.ok) {
       const res = await createOfferDraftCore(db, badPartnerInput.data);
@@ -2162,8 +2180,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99991",
       categoryId: "99999",
       title: "T",
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
     });
     if (badCatInput.ok) {
       const res = await createOfferDraftCore(db, badCatInput.data);
@@ -2183,8 +2200,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99991",
       categoryId: "99992",
       title: "T",
-      offerModel: "invalid_model",
-      conversionType: "outbound",
+      adminOfferType: "invalid",
     });
     assert.equal(
       badModelInput.ok,

@@ -3,6 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { offers } from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
+import { resolveAdminEditTargetStorage, isAdminOfferType } from "@/lib/admin/offer-type";
 import { parseDecimalToMinorUnits, minorUnitsToDecimalString } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
 
@@ -22,8 +23,7 @@ export interface AdminOfferEditInput {
   imageUrl: string | null;
   priceBrutto: string | null;
   priceOnRequest: boolean;
-  offerModel: "rfq" | "marketplace";
-  conversionType: "inbound" | "outbound";
+  adminOfferType: import("@/lib/admin/offer-type").AdminOfferType;
   outboundUrl: string | null;
   isFeatured: boolean;
 }
@@ -41,8 +41,7 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
     imageUrl,
     priceBrutto,
     priceOnRequest,
-    offerModel,
-    conversionType,
+    adminOfferType,
     outboundUrl,
     isFeatured,
   } = rawInput as Record<string, unknown>;
@@ -125,17 +124,12 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
-  // offerModel
-  if (offerModel !== "rfq" && offerModel !== "marketplace") {
-    return { ok: false, code: "OFFER_INVALID_INPUT" };
-  }
+  // adminOfferType
+    if (!isAdminOfferType(adminOfferType)) {
+      return { ok: false, code: "OFFER_INVALID_INPUT" };
+    }
 
-  // conversionType
-  if (conversionType !== "inbound" && conversionType !== "outbound") {
-    return { ok: false, code: "OFFER_INVALID_INPUT" };
-  }
-
-  // outboundUrl
+    // outboundUrl
   let normalizedOutboundUrl: string | null = null;
   if (outboundUrl !== null && outboundUrl !== undefined) {
     if (typeof outboundUrl !== "string") {
@@ -166,8 +160,7 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
       imageUrl: normalizedImageUrl,
       priceBrutto: normalizedPriceBrutto,
       priceOnRequest,
-      offerModel,
-      conversionType,
+      adminOfferType: adminOfferType as import("@/lib/admin/offer-type").AdminOfferType,
       outboundUrl: normalizedOutboundUrl,
       isFeatured,
     },
@@ -175,10 +168,12 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
 }
 
 export function validateOfferEditBusinessRules(
-  input: AdminOfferEditInput,
+  targetOfferModel: "rfq" | "marketplace",
+  targetConversionType: "inbound" | "outbound",
+  input: Omit<AdminOfferEditInput, "adminOfferType">,
   currentPublicationStatus: string
 ): { valid: true } | { valid: false; reason: EditTargetInvalidReason } {
-  const canonicalModel = resolveCanonicalOfferModel(input.offerModel, input.conversionType);
+  const canonicalModel = resolveCanonicalOfferModel(targetOfferModel, targetConversionType);
   if (canonicalModel === "unknown") {
     return { valid: false, reason: "MODEL_UNKNOWN" };
   }
@@ -245,7 +240,11 @@ export async function executeAdminOfferEdit(
         return { ok: false, code: "OFFER_CONFLICT" };
       }
 
-      const rulesCheck = validateOfferEditBusinessRules(input, current.publicationStatus as string);
+      const derived = resolveAdminEditTargetStorage(current.offerModel, current.conversionType, input.adminOfferType);
+      const targetOfferModel = derived.offerModel;
+      const targetConversionType = derived.conversionType;
+
+        const rulesCheck = validateOfferEditBusinessRules(targetOfferModel, targetConversionType, input, current.publicationStatus as string);
       if (!rulesCheck.valid) {
         return { ok: false, code: "OFFER_TARGET_INVALID", reason: rulesCheck.reason };
       }
@@ -265,8 +264,8 @@ export async function executeAdminOfferEdit(
         current.imageUrl === input.imageUrl &&
         currentNormalizedPrice === input.priceBrutto &&
         current.priceOnRequest === input.priceOnRequest &&
-        current.offerModel === input.offerModel &&
-        current.conversionType === input.conversionType &&
+        current.offerModel === targetOfferModel &&
+          current.conversionType === targetConversionType &&
         current.outboundUrl === input.outboundUrl &&
         current.isFeatured === input.isFeatured
       ) {
@@ -281,8 +280,8 @@ export async function executeAdminOfferEdit(
           imageUrl: input.imageUrl,
           priceBrutto: input.priceBrutto,
           priceOnRequest: input.priceOnRequest,
-          offerModel: input.offerModel,
-          conversionType: input.conversionType,
+          offerModel: targetOfferModel,
+          conversionType: targetConversionType,
           outboundUrl: input.outboundUrl,
           isFeatured: input.isFeatured,
           updatedAt: sql`CURRENT_TIMESTAMP`,

@@ -6,6 +6,7 @@ import {
   resolveCanonicalOfferModel,
   type CanonicalOfferModelResolution,
 } from "@/lib/offers/model";
+import { resolveTechnicalModelToAdminOfferType, type AdminOfferType } from "@/lib/admin/offer-type";
 import { isPublicOfferDetailStatus } from "@/lib/offers/status";
 import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model-core";
 import type { Locale } from "@/lib/i18n/config";
@@ -41,6 +42,7 @@ export interface AdminOfferDetailDto {
 
   rawOfferModel: string;
   rawConversionType: string;
+  adminOfferType: AdminOfferType | null;
   canonicalModel: CanonicalOfferModelResolution;
   contractModel: string | null;
 
@@ -205,6 +207,7 @@ export async function getAdminOfferDetailReadModel(
 
       rawOfferModel: offer.offerModel,
       rawConversionType: offer.conversionType,
+      adminOfferType: resolveTechnicalModelToAdminOfferType(offer.offerModel, offer.conversionType),
       canonicalModel: resolveCanonicalOfferModel(
         offer.offerModel,
         offer.conversionType,

@@ -11,8 +11,7 @@ test("parseAdminOfferEditInput - valid input", () => {
     imageUrl: "https://example.com/img.png",
     priceBrutto: "149.99",
     priceOnRequest: false,
-    offerModel: "marketplace",
-    conversionType: "inbound",
+    adminOfferType: "marketplace",
     outboundUrl: "",
     isFeatured: true,
   });
@@ -34,8 +33,7 @@ test("parseAdminOfferEditInput - null expectedUpdatedAt", () => {
     expectedUpdatedAt: null,
     title: "t",
     priceOnRequest: true,
-    offerModel: "rfq",
-    conversionType: "outbound",
+    adminOfferType: "external_partner",
     isFeatured: false,
   });
   assert.strictEqual(result.ok, true);
@@ -43,20 +41,19 @@ test("parseAdminOfferEditInput - null expectedUpdatedAt", () => {
 
 test("validateOfferEditBusinessRules - published ecommerce requires price", () => {
   const input = {
-    offerId: 1,
+    offerId: "1",
     expectedUpdatedAt: null,
     title: "t",
     description: null,
     imageUrl: null,
     priceBrutto: null,
     priceOnRequest: false,
-    offerModel: "marketplace" as const,
-    conversionType: "inbound" as const, // marketplace + inbound = ecommerce
+    adminOfferType: "marketplace" as const, // marketplace + inbound = ecommerce
     outboundUrl: null,
     isFeatured: false,
   };
 
-  const result = validateOfferEditBusinessRules(input, "published");
+  const result = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
   assert.strictEqual(result.valid, false);
   if (!result.valid) {
     assert.strictEqual(result.reason, "ECOMMERCE_PRICE_INVALID");
@@ -64,48 +61,47 @@ test("validateOfferEditBusinessRules - published ecommerce requires price", () =
 
   input.priceBrutto = "10.00";
   input.priceOnRequest = true;
-  const result2 = validateOfferEditBusinessRules(input, "published");
+  const result2 = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
   assert.strictEqual(result2.valid, false);
 
   input.priceOnRequest = false;
-  const result3 = validateOfferEditBusinessRules(input, "published");
+  const result3 = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
   assert.strictEqual(result3.valid, true);
 });
 
 test("validateOfferEditBusinessRules - draft ecommerce allows missing price", () => {
   const input = {
-    offerId: 1,
+    offerId: "1",
     expectedUpdatedAt: null,
     title: "t",
     description: null,
     imageUrl: null,
     priceBrutto: null,
     priceOnRequest: false,
-    offerModel: "marketplace" as const,
-    conversionType: "inbound" as const,
+    adminOfferType: "marketplace" as const,
     outboundUrl: null,
     isFeatured: false,
   };
 
-  const result = validateOfferEditBusinessRules(input, "draft");
+  const result = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "draft");
   assert.strictEqual(result.valid, true);
 });
 
 test("validateOfferEditBusinessRules - incomplete draft/archived allowed", () => {
   const input = {
     offerId: 1, expectedUpdatedAt: null, title: "t", description: null, imageUrl: null,
-    priceBrutto: null, priceOnRequest: false, offerModel: "marketplace" as const, conversionType: "outbound" as const, outboundUrl: null, isFeatured: false,
+    priceBrutto: null, priceOnRequest: false, adminOfferType: "external_partner" as const, outboundUrl: null, isFeatured: false,
   };
 
   // draft outbound with outboundUrl=null
-  assert.strictEqual(validateOfferEditBusinessRules(input, "draft").valid, true);
+  assert.strictEqual(validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "draft").valid, true);
 
   // archived ecommerce with priceBrutto=null, priceOnRequest=true
-  const ecommerceInput = { ...input, conversionType: "inbound" as const, priceBrutto: null, priceOnRequest: true };
-  assert.strictEqual(validateOfferEditBusinessRules(ecommerceInput, "archived").valid, true);
+  const ecommerceInput = { ...input, adminOfferType: "marketplace" as const, priceBrutto: null, priceOnRequest: true };
+  assert.strictEqual(validateOfferEditBusinessRules("marketplace", "inbound", ecommerceInput, "archived").valid, true);
 
   // archived outbound with outboundUrl=null
-  assert.strictEqual(validateOfferEditBusinessRules(input, "archived").valid, true);
+  assert.strictEqual(validateOfferEditBusinessRules("marketplace", "outbound", input, "archived").valid, true);
 });
 
 test("validateOfferEditBusinessRules - published outbound requires url", () => {
@@ -117,23 +113,22 @@ test("validateOfferEditBusinessRules - published outbound requires url", () => {
     imageUrl: null,
     priceBrutto: null,
     priceOnRequest: false,
-    offerModel: "marketplace" as const,
-    conversionType: "outbound" as const,
+    adminOfferType: "external_partner" as const,
     outboundUrl: null,
     isFeatured: false,
   };
 
-  const result = validateOfferEditBusinessRules(input, "published");
+  const result = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
   assert.strictEqual(result.valid, false);
 
   input.outboundUrl = "https://example.com";
-  const result2 = validateOfferEditBusinessRules(input, "published");
+  const result2 = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
   assert.strictEqual(result2.valid, true);
 });
 
 test("parseAdminOfferEditInput - validation edge cases", () => {
   const base = {
-    offerId: "123", expectedUpdatedAt: "2024-01-01T10:00:00.000Z", title: "T", priceOnRequest: false, offerModel: "marketplace", conversionType: "inbound", isFeatured: false
+    offerId: "123", expectedUpdatedAt: "2024-01-01T10:00:00.000Z", title: "T", priceOnRequest: false, adminOfferType: "marketplace", isFeatured: false
   };
 
   const t1 = parseAdminOfferEditInput({ ...base, title: "  " });
@@ -157,8 +152,7 @@ function validBase() {
     imageUrl: null,
     priceBrutto: "10.00",
     priceOnRequest: false,
-    offerModel: "marketplace",
-    conversionType: "inbound",
+    adminOfferType: "marketplace",
     outboundUrl: null,
     isFeatured: false,
   };
@@ -228,22 +222,18 @@ test("parseAdminOfferEditInput - boolean fields matrix", () => {
 });
 
 test("parseAdminOfferEditInput - model and conversionType matrix", () => {
-  const p1 = (v: unknown) => parseAdminOfferEditInput({ ...validBase(), offerModel: v });
+  const p1 = (v: unknown) => parseAdminOfferEditInput({ ...validBase(), adminOfferType: v });
   assert.strictEqual(p1("rfq").ok, true);
   assert.strictEqual(p1("marketplace").ok, true);
+  assert.strictEqual(p1("external_partner").ok, true);
   assert.strictEqual(p1("invalid").ok, false);
-
-  const p2 = (v: unknown) => parseAdminOfferEditInput({ ...validBase(), conversionType: v });
-  assert.strictEqual(p2("inbound").ok, true);
-  assert.strictEqual(p2("outbound").ok, true);
-  assert.strictEqual(p2("invalid").ok, false);
 });
 
 test("parseAdminOfferEditInput - price matrix", () => {
   const p = (v: unknown) => parseAdminOfferEditInput({ ...validBase(), priceBrutto: v });
   
   let res = p(null);
-  assert.strictEqual(res.ok, true);
+  if(!res.ok) throw new Error("FAIL: " + JSON.stringify(res));
   
   res = p("   ");
   assert.strictEqual(res.ok, true);
@@ -295,4 +285,23 @@ test("isAdminOfferEditableStatus helper", () => {
   assert.strictEqual(isAdminOfferEditableStatus("deleted"), false);
   assert.strictEqual(isAdminOfferEditableStatus("unexpected"), false);
   assert.strictEqual(isAdminOfferEditableStatus(""), false);
+});
+
+
+test("SERVER AUTHORITY: raw technical fields are ignored from edit payload", () => {
+  const res = parseAdminOfferEditInput({
+    offerId: "1",
+    expectedUpdatedAt: null,
+    title: "t",
+    priceOnRequest: false,
+    adminOfferType: "external_partner",
+    isFeatured: false,
+    offerModel: "rfq",
+    conversionType: "inbound"
+  });
+  
+  if (!res.ok) throw new Error("FAIL: " + JSON.stringify(res));
+  assert.strictEqual(res.data.adminOfferType, "external_partner");
+  assert.strictEqual("offerModel" in res.data, false);
+  assert.strictEqual("conversionType" in res.data, false);
 });
