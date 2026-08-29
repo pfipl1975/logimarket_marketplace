@@ -63,9 +63,17 @@ export interface SellerSourceInput {
   /**
    * Party who issues the goods invoice to Buyer. Approved value: "PARTNER".
    * LogiMarket does NOT issue the Buyer goods invoice.
-   * Disclosure schema field: goodsInvoiceIssuer.
+   * Disclosure schema field: marketplace_order_seller_disclosures.goods_invoice_issuer.
    */
   goodsInvoiceIssuer: "PARTNER" | null;
+
+  /**
+   * Party responsible for the goods invoice in the seller order context.
+   * Approved value: "PARTNER".
+   * Snapshot schema field: seller_order_seller_snapshots.goods_invoice_responsibility (NOT NULL).
+   * This is a distinct semantic field from goodsInvoiceIssuer and must NOT be derived from it.
+   */
+  goodsInvoiceResponsibility: "PARTNER" | null;
 
   // --- Unresolved policy inputs (REQUIRED_POLICY_INPUT) ---
   // Values below are NOT yet canonically defined by Owner/legal.
@@ -170,6 +178,11 @@ export function validateSellerSourceForSnapshot(input: SellerSourceInput): Selle
   // LogiMarket does NOT issue goods invoices. No other value is authorized.
   if (input.goodsInvoiceIssuer !== "PARTNER") {
     return { ok: false, reason: "INVALID_GOODS_INVOICE_ISSUER" };
+  }
+
+  // Goods invoice responsibility must be explicitly "PARTNER" (separate snapshot field).
+  if (input.goodsInvoiceResponsibility !== "PARTNER") {
+    return { ok: false, reason: "INVALID_GOODS_INVOICE_RESPONSIBILITY" };
   }
 
   // Unresolved policy inputs — fail closed when absent.

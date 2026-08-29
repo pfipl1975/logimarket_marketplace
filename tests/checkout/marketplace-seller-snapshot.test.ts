@@ -33,6 +33,7 @@ function validSeller(overrides?: Partial<SellerSourceInput>): SellerSourceInput 
     contractModel: "partner_marketplace",
     sellerOfRecord: "PARTNER",
     goodsInvoiceIssuer: "PARTNER",
+    goodsInvoiceResponsibility: "PARTNER",
     deliveryResponsibility: "POLICY_SUPPLIED_DELIVERY",
     complaintResponsibility: "POLICY_SUPPLIED_COMPLAINT",
     returnResponsibility: "POLICY_SUPPLIED_RETURN",
@@ -193,6 +194,21 @@ test("GOODS_INVOICE_ISSUER_MISSING_REJECTED", () => {
   const res = validateSellerSourceForSnapshot(validSeller({ goodsInvoiceIssuer: null }));
   assert.strictEqual(res.ok, false);
   if (!res.ok) assert.strictEqual(res.reason, "INVALID_GOODS_INVOICE_ISSUER");
+});
+
+// ─── Goods invoice responsibility (independent of issuer) ────────────────────
+
+test("GOODS_INVOICE_RESPONSIBILITY_PARTNER_ACCEPTED", () => {
+  // goodsInvoiceResponsibility="PARTNER" must not independently block an otherwise valid seller.
+  const res = validateSellerSourceForSnapshot(validSeller({ goodsInvoiceResponsibility: "PARTNER" }));
+  assert.strictEqual(res.ok, true);
+});
+
+test("GOODS_INVOICE_RESPONSIBILITY_MISSING_REJECTED", () => {
+  // Proves goodsInvoiceResponsibility is validated independently of goodsInvoiceIssuer.
+  const res = validateSellerSourceForSnapshot(validSeller({ goodsInvoiceResponsibility: null }));
+  assert.strictEqual(res.ok, false);
+  if (!res.ok) assert.strictEqual(res.reason, "INVALID_GOODS_INVOICE_RESPONSIBILITY");
 });
 
 // ─── Policy inputs: sellerRole / logimarketPlatformRole ──────────────────────
