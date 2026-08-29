@@ -29,6 +29,7 @@ export type AdminSellerRegistryIdentifiersFormProps = {
     registryIdentifierNotFound: string;
     addRegistryIdentifierTitle: string;
     confirmDelete: string;
+    verificationHistoryExists?: string;
     placeholderRegistry: string;
   };
 };

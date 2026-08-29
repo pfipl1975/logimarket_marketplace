@@ -1031,5 +1031,6 @@
     "errorDescription": "Error al crear socio.",
     "invalidEmail": "Correo electrónico inválido",
     "invalidWebsite": "URL inválida"
-  }
+  },
+  "verificationHistoryExists": "Cannot delete: verification history exists."
 }

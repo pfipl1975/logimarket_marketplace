@@ -1031,5 +1031,6 @@
     "errorDescription": "Не вдалося створити партнера.",
     "invalidEmail": "Некоректна адреса e-mail",
     "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
-  }
+  },
+  "verificationHistoryExists": "Cannot delete: verification history exists."
 }

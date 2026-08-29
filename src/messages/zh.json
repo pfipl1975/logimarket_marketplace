@@ -1031,5 +1031,6 @@
     "errorDescription": "无法创建合作伙伴。",
     "invalidEmail": "邮箱地址无效",
     "invalidWebsite": "URL 无效（必须以 http:// 或 https:// 开头）"
-  }
+  },
+  "verificationHistoryExists": "Cannot delete: verification history exists."
 }

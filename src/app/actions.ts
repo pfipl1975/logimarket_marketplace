@@ -1121,13 +1121,14 @@ export async function getAdminOfferAttributesEdit(
 
 export async function saveAdminSellerLegalData(rawInput: unknown) {
   const { requireAdmin } = await import("@/lib/auth/guards");
-  await requireAdmin();
+  const admin = await requireAdmin();
   const {
     AdminSellerLegalDataSaveInputSchema,
     executeAdminSellerLegalDataSave,
   } = await import("@/lib/admin/partner-edit-core");
 
-  const parsed = AdminSellerLegalDataSaveInputSchema.safeParse(rawInput);
+  const inputObj = typeof rawInput === "object" && rawInput !== null ? { ...rawInput, adminUserId: admin.id } : rawInput;
+  const parsed = AdminSellerLegalDataSaveInputSchema.safeParse(inputObj);
   if (!parsed.success) {
     return { ok: false, code: "INVALID_INPUT" } as const;
   }

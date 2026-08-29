@@ -1031,5 +1031,6 @@
     "errorDescription": "Échec de la création du partenaire.",
     "invalidEmail": "Adresse email invalide",
     "invalidWebsite": "URL invalide"
-  }
+  },
+  "verificationHistoryExists": "Cannot delete: verification history exists."
 }

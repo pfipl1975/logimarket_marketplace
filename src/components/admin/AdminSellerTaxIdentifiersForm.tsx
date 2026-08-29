@@ -37,6 +37,7 @@ export type AdminSellerTaxIdentifiersFormProps = {
     taxIdentifierNotFound: string;
     addTaxIdentifierTitle: string;
     confirmDelete: string;
+    verificationHistoryExists?: string;
     placeholderVat: string;
     placeholderCountry: string;
   };

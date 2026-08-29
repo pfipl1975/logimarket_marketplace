@@ -2520,6 +2520,54 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await pool.query(`DROP TABLE IF EXISTS public.migration_oaov_targets`);
   });
 
+  await t.test("SELLER_VERIFICATION_EVIDENCE_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+    
+    // Execute our generated migration
+    const m0005Sql = fs.readFileSync("drizzle/0005_hard_venom.sql", "utf-8");
+    await pool.query(m0005Sql);
+    
+    // 1. Verify schema existence and constraints
+    const tableRes = await pool.query(`SELECT to_regclass('public.seller_verification_events') AS exists`);
+    assert.notEqual(tableRes.rows[0].exists, null, "seller_verification_events must exist");
+
+    // 2. Test Append-Only Trigger
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+    
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Test', 'test@test.com') RETURNING id`);
+    const pid = pRes.rows[0].id;
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, jurisdiction_country) VALUES ($1, 'PL')`, [pid]);
+    
+    const insertRes = await pool.query(`
+      INSERT INTO seller_verification_events (
+        subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
+      ) VALUES (
+        'legal_identity', $1, 'verified', 'system', 'system_rule', '{}'::jsonb
+      ) RETURNING id
+    `, [pid]);
+    
+    const eventId = insertRes.rows[0].id;
+    
+    let updateFailed = false;
+    try {
+      await pool.query(`UPDATE seller_verification_events SET source_name = 'hacked' WHERE id = $1`, [eventId]);
+    } catch (err: any) {
+      if (err.code === '55000') updateFailed = true;
+    }
+    assert.ok(updateFailed, "Trigger must block UPDATE");
+    
+    let deleteFailed = false;
+    try {
+      await pool.query(`DELETE FROM seller_verification_events WHERE id = $1`, [eventId]);
+    } catch (err: any) {
+      if (err.code === '55000') deleteFailed = true;
+    }
+    assert.ok(deleteFailed, "Trigger must block DELETE");
+  });
+
   await t.test("ADMIN_PARTNER_CREATE_MUTATION_PROOF", async () => {
     const { createPartnerCore } = await import("@/lib/admin/partners-create");
     await cleanDB();

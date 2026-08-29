@@ -2,7 +2,8 @@ import { z } from "zod";
 import { eq, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
-import { partners, sellerLegalIdentities, sellerTaxIdentifiers, sellerRegistryIdentifiers } from "@/lib/schema";
+import { partners, sellerLegalIdentities, sellerTaxIdentifiers,
+  sellerVerificationEvents, sellerRegistryIdentifiers } from "@/lib/schema";
 
 // ----------------------------------------------------------------------
 // 1. Seller Legal Data Save
@@ -265,6 +266,7 @@ export type AdminSellerTaxIdentifierDeleteInput = z.infer<typeof AdminSellerTaxI
 export type AdminSellerTaxIdentifierDeleteResult =
   | { ok: true; code: "DELETED" }
   | { ok: false; code: "NOT_FOUND" }
+  | { ok: false; code: "VERIFICATION_HISTORY_EXISTS" }
   | { ok: false; code: "SYSTEM_ERROR" };
 
 export async function executeAdminSellerTaxIdentifierDelete(
@@ -287,8 +289,11 @@ export async function executeAdminSellerTaxIdentifierDelete(
     }
 
     return { ok: true as const, code: "DELETED" };
-  } catch {
-      console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
+  } catch (error: any) {
+    if (error && error.code === '23503') { // foreign_key_violation
+      return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
+    }
+    console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }
@@ -389,6 +394,7 @@ export type AdminSellerRegistryIdentifierDeleteInput = z.infer<typeof AdminSelle
 export type AdminSellerRegistryIdentifierDeleteResult =
   | { ok: true; code: "DELETED" }
   | { ok: false; code: "NOT_FOUND" }
+  | { ok: false; code: "VERIFICATION_HISTORY_EXISTS" }
   | { ok: false; code: "SYSTEM_ERROR" };
 
 export async function executeAdminSellerRegistryIdentifierDelete(
@@ -411,7 +417,10 @@ export async function executeAdminSellerRegistryIdentifierDelete(
     }
 
     return { ok: true as const, code: "DELETED" };
-  } catch {
+  } catch (error: any) {
+    if (error && error.code === '23503') { // foreign_key_violation
+      return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
+    }
     console.error("[ADMIN_DB] executeAdminSellerRegistryIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }

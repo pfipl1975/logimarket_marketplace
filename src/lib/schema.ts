@@ -1,4 +1,6 @@
 import {
+  index,
+  AnyPgColumn,
   bigserial,
   bigint,
   boolean,
@@ -148,6 +150,7 @@ export const sellerLegalIdentities = pgTable("seller_legal_identities", {
   registeredCity: varchar("registered_city", { length: 120 }),
   registeredRegion: varchar("registered_region", { length: 120 }),
   registeredCountryCode: varchar("registered_country_code", { length: 2 }),
+  currentVerificationEventId: bigint("current_verification_event_id", { mode: "number" }).references((): AnyPgColumn => sellerVerificationEvents.id),
 }, (t) => [
   foreignKey({
     name: "seller_legal_identities_partner_id_fkey",
@@ -168,6 +171,8 @@ export const sellerTaxIdentifiers = pgTable("seller_tax_identifiers", {
   verificationReference: text("verification_reference"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
+  currentVerificationEventId: bigint("current_verification_event_id", { mode: "number" }).references((): AnyPgColumn => sellerVerificationEvents.id),
+  retiredAt: timestamp("retired_at", { withTimezone: true }),
 }, (t) => [
   unique("uq_seller_tax_identifier_identity").on(t.partnerId, t.identifierType, t.countryCode, t.identifierValue),
   foreignKey({
@@ -185,6 +190,12 @@ export const sellerRegistryIdentifiers = pgTable("seller_registry_identifiers", 
   jurisdictionCountry: varchar("jurisdiction_country", { length: 2 }).notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
+  verificationStatus: varchar("verification_status", { length: 30 }).default("unverified"),
+  verifiedAt: timestamp("verified_at", { withTimezone: true }),
+  verificationSource: varchar("verification_source", { length: 100 }),
+  verificationReference: text("verification_reference"),
+  currentVerificationEventId: bigint("current_verification_event_id", { mode: "number" }).references((): AnyPgColumn => sellerVerificationEvents.id),
+  retiredAt: timestamp("retired_at", { withTimezone: true }),
 }, (t) => [
   unique("uq_seller_registry_identifier_identity").on(t.partnerId, t.registryType, t.jurisdictionCountry, t.registryValue),
   foreignKey({
@@ -208,6 +219,68 @@ export const sellerEligibility = pgTable("seller_eligibility", {
     foreignColumns: [partners.id]
   }).onDelete("no action").onUpdate("no action")
 ]);
+
+
+// -----------------------------------------------------------------------------
+// Seller Verification Events (Immutable History)
+// -----------------------------------------------------------------------------
+export const sellerVerificationEvents = pgTable("seller_verification_events", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  subjectType: varchar("subject_type", { length: 50 }).notNull(),
+  legalIdentityPartnerId: bigint("legal_identity_partner_id", { mode: "number" }),
+  taxIdentifierId: bigint("tax_identifier_id", { mode: "number" }),
+  registryIdentifierId: bigint("registry_identifier_id", { mode: "number" }),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  actorType: varchar("actor_type", { length: 50 }).notNull(),
+  actorUserId: varchar("actor_user_id", { length: 255 }),
+  sourceType: varchar("source_type", { length: 50 }).notNull(),
+  sourceName: varchar("source_name", { length: 100 }),
+  sourceReference: text("source_reference"),
+  reasonCode: varchar("reason_code", { length: 100 }),
+  subjectSnapshot: jsonb("subject_snapshot").notNull(),
+  previousVerificationStatus: varchar("previous_verification_status", { length: 30 }),
+  previousVerifiedAt: timestamp("previous_verified_at", { withTimezone: true }),
+  previousVerificationSource: varchar("previous_verification_source", { length: 100 }),
+  previousVerificationReference: text("previous_verification_reference"),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check("subject_matrix_check", sql`
+    (subject_type = 'legal_identity' AND legal_identity_partner_id IS NOT NULL AND tax_identifier_id IS NULL AND registry_identifier_id IS NULL)
+    OR
+    (subject_type = 'tax_identifier' AND legal_identity_partner_id IS NULL AND tax_identifier_id IS NOT NULL AND registry_identifier_id IS NULL)
+    OR
+    (subject_type = 'registry_identifier' AND legal_identity_partner_id IS NULL AND tax_identifier_id IS NULL AND registry_identifier_id IS NOT NULL)
+  `),
+  check("event_type_check", sql`event_type IN ('verified', 'rejected', 'invalidated')`),
+  check("actor_type_check", sql`actor_type IN ('admin', 'system', 'external_adapter')`),
+  check("actor_matrix_check", sql`
+    (actor_type = 'admin' AND actor_user_id IS NOT NULL)
+    OR
+    (actor_type = 'system' AND actor_user_id IS NULL)
+    OR
+    (actor_type = 'external_adapter' AND actor_user_id IS NULL)
+  `),
+  check("source_type_check", sql`source_type IN ('admin_manual', 'public_registry_manual', 'partner_document', 'external_adapter', 'system_rule')`),
+  foreignKey({
+    name: "seller_verification_events_legal_identity_fkey",
+    columns: [t.legalIdentityPartnerId],
+    foreignColumns: [sellerLegalIdentities.partnerId]
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "seller_verification_events_tax_identifier_fkey",
+    columns: [t.taxIdentifierId],
+    foreignColumns: [sellerTaxIdentifiers.id]
+  }).onDelete("restrict"),
+  foreignKey({
+    name: "seller_verification_events_registry_identifier_fkey",
+    columns: [t.registryIdentifierId],
+    foreignColumns: [sellerRegistryIdentifiers.id]
+  }).onDelete("restrict"),
+  index("idx_verification_events_legal_subject").on(t.legalIdentityPartnerId),
+  index("idx_verification_events_tax_subject").on(t.taxIdentifierId),
+  index("idx_verification_events_registry_subject").on(t.registryIdentifierId),
+]);
+
 
 // Faceted Filter & Relational Attribute Model
 

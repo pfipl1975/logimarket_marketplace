@@ -1031,5 +1031,6 @@
     "errorDescription": "Nie udało się utworzyć partnera.",
     "invalidEmail": "Nieprawidłowy adres e-mail",
     "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
-  }
+  },
+  "verificationHistoryExists": "Nie można usunąć: istnieje historia weryfikacji."
 }
