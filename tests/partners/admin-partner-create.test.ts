@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { adminPartnerCreateSchema, createPartnerCore } from '@/lib/admin/partners-create';
+import { adminPartnerCreateSchema, parseAdminPartnerCreateInput } from '@/lib/admin/partners-create';
 
 test('PARTNER_CREATE_01_VALID_REQUIRED_FIELDS', () => {
   const result = adminPartnerCreateSchema.safeParse({
@@ -134,24 +134,86 @@ test('PARTNER_CREATE_14_HTTP_WEBSITE_ACCEPTED', () => {
   assert.strictEqual(result.success, true);
 });
 
-
-
-test('VALIDATION_RESULT_01_INVALID_EMAIL', async () => {
-  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { companyName: 'Acme Corp', contactEmail: 'not-an-email' });
-  assert.deepStrictEqual(result, { ok: false, reason: 'PARTNER_INVALID_INPUT', code: 'INVALID_EMAIL' });
+test('PARTNER_VALIDATION_01', () => {
+  const result = parseAdminPartnerCreateInput({ contactEmail: 'admin@acme.test' });
+  assert.deepStrictEqual(result, { ok: false, code: 'MISSING_COMPANY_NAME' });
 });
 
-test('VALIDATION_RESULT_02_INVALID_WEBSITE', async () => {
-  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { companyName: 'Acme Corp', contactEmail: 'admin@acme.test', websiteUrl: 'not-a-url' });
-  assert.deepStrictEqual(result, { ok: false, reason: 'PARTNER_INVALID_INPUT', code: 'INVALID_WEBSITE' });
+test('PARTNER_VALIDATION_02', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: null, contactEmail: 'admin@acme.test' });
+  assert.deepStrictEqual(result, { ok: false, code: 'MISSING_COMPANY_NAME' });
 });
 
-test('VALIDATION_RESULT_03_MISSING_COMPANY', async () => {
-  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { contactEmail: 'admin@acme.test' });
-  assert.deepStrictEqual(result, { ok: false, reason: 'PARTNER_INVALID_INPUT', code: 'MISSING_COMPANY_NAME' });
+test('PARTNER_VALIDATION_03', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 123, contactEmail: 'admin@acme.test' });
+  assert.deepStrictEqual(result, { ok: false, code: 'MISSING_COMPANY_NAME' });
 });
 
-test('VALIDATION_RESULT_04_PLAIN_SERIALIZABLE_CONTRACT', async () => {
-  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { contactEmail: 'admin@acme.test' });
-  assert.strictEqual(JSON.stringify(result), '{"ok":false,"reason":"PARTNER_INVALID_INPUT","code":"MISSING_COMPANY_NAME"}');
+test('PARTNER_VALIDATION_04', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 'Acme Corp' });
+  assert.deepStrictEqual(result, { ok: false, code: 'MISSING_EMAIL' });
+});
+
+test('PARTNER_VALIDATION_05', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 'Acme Corp', contactEmail: null });
+  assert.deepStrictEqual(result, { ok: false, code: 'MISSING_EMAIL' });
+});
+
+test('PARTNER_VALIDATION_06', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 'Acme Corp', contactEmail: 'not-an-email' });
+  assert.deepStrictEqual(result, { ok: false, code: 'INVALID_EMAIL' });
+});
+
+test('PARTNER_VALIDATION_07', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 'a'.repeat(256), contactEmail: 'admin@acme.test' });
+  assert.deepStrictEqual(result, { ok: false, code: 'COMPANY_NAME_TOO_LONG' });
+});
+
+test('PARTNER_VALIDATION_08', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 'Acme Corp', contactEmail: 'a'.repeat(91) + '@acme.test' });
+  assert.deepStrictEqual(result, { ok: false, code: 'EMAIL_TOO_LONG' });
+});
+
+test('PARTNER_VALIDATION_09', () => {
+  const result = parseAdminPartnerCreateInput({ companyName: 'Acme Corp', contactEmail: 'admin@acme.test', websiteUrl: 'not-a-url' });
+  assert.deepStrictEqual(result, { ok: false, code: 'INVALID_WEBSITE' });
+});
+
+test('PARTNER_VALIDATION_10', () => {
+  const result = parseAdminPartnerCreateInput(null);
+  assert.deepStrictEqual(result, { ok: false, code: 'INVALID_INPUT' });
+});
+
+test('PARTNER_VALIDATION_11', () => {
+  const result = parseAdminPartnerCreateInput('primitive');
+  assert.deepStrictEqual(result, { ok: false, code: 'INVALID_INPUT' });
+});
+
+test('PARTNER_VALIDATION_12', () => {
+  const result = parseAdminPartnerCreateInput(null);
+  assert.strictEqual(JSON.stringify(result), '{"ok":false,"code":"INVALID_INPUT"}');
+});
+
+test('PARTNER_VALIDATION_13', () => {
+  const allowed = [
+    "INVALID_INPUT",
+    "MISSING_COMPANY_NAME",
+    "COMPANY_NAME_TOO_LONG",
+    "MISSING_EMAIL",
+    "EMAIL_TOO_LONG",
+    "INVALID_EMAIL",
+    "INVALID_WEBSITE"
+  ];
+  const r1 = parseAdminPartnerCreateInput(null);
+  const r2 = parseAdminPartnerCreateInput({ contactEmail: 'x' });
+  const r3 = parseAdminPartnerCreateInput({ companyName: 'x' });
+  const r4 = parseAdminPartnerCreateInput({ companyName: 'x', contactEmail: 'x' });
+  const r5 = parseAdminPartnerCreateInput({ companyName: 'a'.repeat(300), contactEmail: 'x@x.com' });
+  const r6 = parseAdminPartnerCreateInput({ companyName: 'x', contactEmail: 'x'.repeat(200) + '@x.com' });
+  const r7 = parseAdminPartnerCreateInput({ companyName: 'x', contactEmail: 'x@x.com', websiteUrl: 'x' });
+
+  [r1, r2, r3, r4, r5, r6, r7].forEach(res => {
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.ok(allowed.includes(res.code));
+  });
 });
