@@ -3,7 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { offers, partners, categories } from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
-import { AdminOfferType, deriveOfferStorageForCreate } from "@/lib/admin/offer-type";
+import { AdminOfferType, isAdminOfferType, deriveOfferStorageForCreate } from "@/lib/admin/offer-type";
 
 export type OfferDraftCreateResult =
   | { ok: true; code: "OFFER_DRAFT_CREATED"; offerId: number }
@@ -39,7 +39,7 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
   if (trimmedTitle.length === 0 || trimmedTitle.length > 255) return { ok: false, code: "OFFER_INVALID_INPUT" };
 
   // adminOfferType
-  if (adminOfferType !== "rfq" && adminOfferType !== "marketplace" && adminOfferType !== "external_partner") {
+  if (!isAdminOfferType(adminOfferType)) {
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
@@ -49,7 +49,7 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
       partnerId: pid,
       categoryId: cid,
       title: trimmedTitle,
-      adminOfferType: adminOfferType as AdminOfferType,
+      adminOfferType,
     },
   };
 }

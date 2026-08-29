@@ -1,7 +1,14 @@
-export type AdminOfferType =
-  | "rfq"
-  | "marketplace"
-  | "external_partner";
+export const ADMIN_OFFER_TYPES = [
+  "rfq",
+  "marketplace",
+  "external_partner"
+] as const;
+
+export type AdminOfferType = typeof ADMIN_OFFER_TYPES[number];
+
+export function isAdminOfferType(value: unknown): value is AdminOfferType {
+  return typeof value === "string" && (ADMIN_OFFER_TYPES as readonly string[]).includes(value);
+}
 
 export interface OfferStoragePair {
   offerModel: "rfq" | "marketplace";
@@ -16,8 +23,6 @@ export function deriveOfferStorageForCreate(adminOfferType: AdminOfferType): Off
       return { offerModel: "marketplace", conversionType: "inbound" };
     case "external_partner":
       return { offerModel: "marketplace", conversionType: "outbound" };
-    default:
-      return { offerModel: "unknown" as any, conversionType: "unknown" as any };
   }
 }
 
@@ -30,4 +35,20 @@ export function resolveTechnicalModelToAdminOfferType(
   if (offerModel === "rfq" && conversionType === "outbound") return "external_partner";
   if (offerModel === "marketplace" && conversionType === "outbound") return "external_partner";
   return null;
+}
+
+export function resolveAdminEditTargetStorage(
+  currentOfferModel: unknown,
+  currentConversionType: unknown,
+  submittedAdminOfferType: AdminOfferType
+): OfferStoragePair {
+  if (
+    currentOfferModel === "rfq" &&
+    currentConversionType === "outbound" &&
+    submittedAdminOfferType === "external_partner"
+  ) {
+    return { offerModel: "rfq", conversionType: "outbound" };
+  }
+
+  return deriveOfferStorageForCreate(submittedAdminOfferType);
 }

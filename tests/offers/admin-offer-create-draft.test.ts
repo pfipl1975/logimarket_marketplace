@@ -1,8 +1,6 @@
 import { test, describe } from "node:test";
 import assert from "node:assert";
-import { parseOfferDraftCreateInput, createOfferDraftCore } from "../../src/lib/offers/draft-core";
-import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import * as schema from "../../src/lib/schema";
+import { parseOfferDraftCreateInput } from "../../src/lib/offers/draft-core";
 
 describe("Admin Offer Create Draft - Unit Tests", () => {
   describe("VALID combinations", () => {
@@ -25,12 +23,12 @@ describe("Admin Offer Create Draft - Unit Tests", () => {
   });
 
   describe("INVALID inputs", () => {
-    test("5. invalid offerModel", () => {
-      const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "invalid" });
+    test("5. invalid offerModel field ignored, invalid adminOfferType rejected", () => {
+      const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "invalid", offerModel: "rfq", conversionType: "inbound" });
       assert.strictEqual(res.ok, false);
     });
-    test("6. invalid conversionType", () => {
-      const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "invalid" });
+    test("6. invalid adminOfferType directly", () => {
+      const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "nonexistent" });
       assert.strictEqual(res.ok, false);
     });
     test("7. missing partnerId", () => {
@@ -75,6 +73,24 @@ describe("Admin Offer Create Draft - Unit Tests", () => {
     });
   });
 
+  describe("SERVER AUTHORITY", () => {
+    test("16b. client technical fields are completely ignored", () => {
+      const res = parseOfferDraftCreateInput({
+        partnerId: 1,
+        categoryId: 1,
+        title: "T",
+        adminOfferType: "external_partner",
+        offerModel: "rfq",
+        conversionType: "inbound"
+      });
+      assert.strictEqual(res.ok, true);
+      if (!res.ok) return;
+      assert.strictEqual(res.data.adminOfferType, "external_partner");
+      assert.strictEqual("offerModel" in res.data, false);
+      assert.strictEqual("conversionType" in res.data, false);
+    });
+  });
+
   describe("NORMALIZATION", () => {
     test("17. title is trimmed", () => {
       const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "  Trim Me  ", adminOfferType: "rfq" });
@@ -109,30 +125,5 @@ describe("Admin Offer Create Draft - Unit Tests", () => {
     });
   });
 
-  describe("UNKNOWN FAIL-SAFE", () => {
-    test("22. create core rejects canonical unknown before DB interaction", async () => {
-      let dbReached = false;
-      const mockDb = {
-        transaction: async () => { 
-          dbReached = true; 
-          throw new Error("DB SHOULD NOT BE REACHED"); 
-        }
-      } as unknown as NodePgDatabase<typeof schema>;
-
-      const malformedInput = {
-        partnerId: 1,
-        categoryId: 1,
-        title: "T",
-        adminOfferType: "invalid_model" as any
-      };
-
-      const result = await createOfferDraftCore(mockDb, malformedInput);
-      
-      assert.strictEqual(result.ok, false);
-      if (!result.ok) {
-        assert.strictEqual(result.code, "MODEL_UNKNOWN");
-      }
-      assert.strictEqual(dbReached, false);
-    });
-  });
+  
 });

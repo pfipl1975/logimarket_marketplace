@@ -545,10 +545,10 @@
     "createLoadErrorDescription": "System error occurred while loading form options.",
     "fieldOfferType": "Offer type",
     "createSelectOfferType": "Select offer type...",
-    "offerTypeRfq": "RFQ",
-    "offerTypeMarketplace": "Marketplace",
-    "offerTypeExternal": "External Partner",
-    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
+    "offerTypeRfq": "Request for quotation (RFQ)",
+    "offerTypeMarketplace": "Sale through LogiMarket",
+    "offerTypeExternal": "External Partner offer",
+    "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue."
   },
   "adminPartners": {
     "metaTitle": "Partners",
@@ -886,10 +886,10 @@
     },
     "fieldOfferType": "Offer type",
     "createSelectOfferType": "Select offer type...",
-    "offerTypeRfq": "RFQ",
-    "offerTypeMarketplace": "Marketplace",
-    "offerTypeExternal": "External Partner",
-    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
+    "offerTypeRfq": "Request for quotation (RFQ)",
+    "offerTypeMarketplace": "Sale through LogiMarket",
+    "offerTypeExternal": "External Partner offer",
+    "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue."
   },
   "adminDashboard": {
     "metaTitle": "LogiMarket Admin Dashboard",

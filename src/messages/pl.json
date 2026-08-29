@@ -548,7 +548,7 @@
     "offerTypeRfq": "Zapytanie ofertowe RFQ",
     "offerTypeMarketplace": "Sprzedaż przez LogiMarket",
     "offerTypeExternal": "Oferta zewnętrzna Partnera",
-    "errorInvalidCurrentOfferType": "Bieżący rodzaj oferty jest nieprawidłowy. Wybierz poprawny rodzaj oferty biznesowej, aby kontynuować."
+    "errorInvalidCurrentOfferType": "Bieżąca konfiguracja rodzaju oferty jest nieprawidłowa. Wybierz poprawny rodzaj oferty, aby kontynuować."
   },
   "adminPartners": {
     "metaTitle": "Partnerzy",
@@ -889,7 +889,7 @@
     "offerTypeRfq": "Zapytanie ofertowe RFQ",
     "offerTypeMarketplace": "Sprzedaż przez LogiMarket",
     "offerTypeExternal": "Oferta zewnętrzna Partnera",
-    "errorInvalidCurrentOfferType": "Bieżący rodzaj oferty jest nieprawidłowy. Wybierz poprawny rodzaj oferty biznesowej, aby kontynuować."
+    "errorInvalidCurrentOfferType": "Bieżąca konfiguracja rodzaju oferty jest nieprawidłowa. Wybierz poprawny rodzaj oferty, aby kontynuować."
   },
   "adminDashboard": {
     "metaTitle": "Panel operacyjny LogiMarket",

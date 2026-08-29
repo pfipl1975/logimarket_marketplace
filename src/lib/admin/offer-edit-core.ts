@@ -3,7 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { offers } from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
-import { resolveTechnicalModelToAdminOfferType, deriveOfferStorageForCreate } from "@/lib/admin/offer-type";
+import { resolveAdminEditTargetStorage, isAdminOfferType } from "@/lib/admin/offer-type";
 import { parseDecimalToMinorUnits, minorUnitsToDecimalString } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
 
@@ -125,7 +125,7 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
   }
 
   // adminOfferType
-    if (adminOfferType !== "rfq" && adminOfferType !== "marketplace" && adminOfferType !== "external_partner") {
+    if (!isAdminOfferType(adminOfferType)) {
       return { ok: false, code: "OFFER_INVALID_INPUT" };
     }
 
@@ -240,16 +240,9 @@ export async function executeAdminOfferEdit(
         return { ok: false, code: "OFFER_CONFLICT" };
       }
 
-      const currentAdminType = resolveTechnicalModelToAdminOfferType(current.offerModel, current.conversionType);
-        
-        let targetOfferModel = current.offerModel as "rfq" | "marketplace";
-        let targetConversionType = current.conversionType as "inbound" | "outbound";
-        
-        if (currentAdminType !== input.adminOfferType) {
-          const derived = deriveOfferStorageForCreate(input.adminOfferType);
-          targetOfferModel = derived.offerModel;
-          targetConversionType = derived.conversionType;
-        }
+      const derived = resolveAdminEditTargetStorage(current.offerModel, current.conversionType, input.adminOfferType);
+      const targetOfferModel = derived.offerModel;
+      const targetConversionType = derived.conversionType;
 
         const rulesCheck = validateOfferEditBusinessRules(targetOfferModel, targetConversionType, input, current.publicationStatus as string);
       if (!rulesCheck.valid) {

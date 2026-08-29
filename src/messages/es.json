@@ -543,12 +543,12 @@
     },
     "createLoadErrorTitle": "Error",
     "createLoadErrorDescription": "Error del sistema al cargar las opciones del formulario.",
-    "fieldOfferType": "Offer type",
-    "createSelectOfferType": "Select offer type...",
-    "offerTypeRfq": "RFQ",
-    "offerTypeMarketplace": "Marketplace",
-    "offerTypeExternal": "External Partner",
-    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
+    "fieldOfferType": "Tipo de oferta",
+    "createSelectOfferType": "Selecciona el tipo de oferta...",
+    "offerTypeRfq": "Solicitud de presupuesto (RFQ)",
+    "offerTypeMarketplace": "Venta a través de LogiMarket",
+    "offerTypeExternal": "Oferta externa del socio",
+    "errorInvalidCurrentOfferType": "La configuración actual de la oferta no es válida. Selecciona un tipo de oferta válido para continuar."
   },
   "adminPartners": {
     "metaTitle": "Socios",
@@ -884,12 +884,12 @@
       "description": "Editar atributos técnicos.",
       "provenanceLocked": "La edición de este atributo está bloqueada debido a su vínculo con los datos de migración."
     },
-    "fieldOfferType": "Offer type",
-    "createSelectOfferType": "Select offer type...",
-    "offerTypeRfq": "RFQ",
-    "offerTypeMarketplace": "Marketplace",
-    "offerTypeExternal": "External Partner",
-    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
+    "fieldOfferType": "Tipo de oferta",
+    "createSelectOfferType": "Selecciona el tipo de oferta...",
+    "offerTypeRfq": "Solicitud de presupuesto (RFQ)",
+    "offerTypeMarketplace": "Venta a través de LogiMarket",
+    "offerTypeExternal": "Oferta externa del socio",
+    "errorInvalidCurrentOfferType": "La configuración actual de la oferta no es válida. Selecciona un tipo de oferta válido para continuar."
   },
   "adminDashboard": {
     "metaTitle": "Panel de control Admin LogiMarket",

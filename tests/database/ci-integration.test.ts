@@ -1163,8 +1163,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1186,8 +1185,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1249,6 +1247,36 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       initialRow.rows[0].deleted_at,
     );
 
+    
+    // ADDED DB_TYPE_03_CHANGE_TO_EXTERNAL
+    await pool.query(
+      `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'inbound' WHERE id = $1`,
+      [offerId]
+    );
+    const rowBeforeC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    const resC3 = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowBeforeC3.rows[0].updated_at.toISOString(),
+      title: "New Title",
+      description: "New Desc",
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resC3.ok, true);
+    const rowAfterC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assert.strictEqual(rowAfterC3.rows[0].offer_model, "marketplace");
+    assert.strictEqual(rowAfterC3.rows[0].conversion_type, "outbound");
+    
+    // revert back for the rest of tests
+    await pool.query(
+      `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'outbound' WHERE id = $1`,
+      [offerId]
+    );
+
     // D. IDEMPOTENT
     const resD = await executeAdminOfferEdit(db, {
       offerId,
@@ -1258,8 +1286,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1286,8 +1313,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1332,8 +1358,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1362,8 +1387,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1392,8 +1416,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: false,
-      offerModel: "marketplace",
-      conversionType: "inbound",
+      adminOfferType: "marketplace",
       outboundUrl: null,
       isFeatured: false, // ecommerce without price
     });
@@ -1422,8 +1445,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false, // outbound without url
     });
@@ -1453,8 +1475,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1467,8 +1488,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: null,
       priceOnRequest: true,
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -1519,8 +1539,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       imageUrl: null,
       priceBrutto: "1.23",
       priceOnRequest: false,
-      offerModel: "marketplace",
-      conversionType: "inbound",
+      adminOfferType: "marketplace",
       outboundUrl: null,
       isFeatured: false,
     });
@@ -2098,8 +2117,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99991",
       categoryId: "99992",
       title: "  My New Draft  ",
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
     };
 
     const parsed = parseOfferDraftCreateInput(input);
@@ -2141,8 +2159,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99999",
       categoryId: "99992",
       title: "T",
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
     });
     if (badPartnerInput.ok) {
       const res = await createOfferDraftCore(db, badPartnerInput.data);
@@ -2162,8 +2179,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99991",
       categoryId: "99999",
       title: "T",
-      offerModel: "rfq",
-      conversionType: "outbound",
+      adminOfferType: "external_partner",
     });
     if (badCatInput.ok) {
       const res = await createOfferDraftCore(db, badCatInput.data);
@@ -2183,8 +2199,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       partnerId: "99991",
       categoryId: "99992",
       title: "T",
-      offerModel: "invalid_model",
-      conversionType: "outbound",
+      adminOfferType: "invalid",
     });
     assert.equal(
       badModelInput.ok,

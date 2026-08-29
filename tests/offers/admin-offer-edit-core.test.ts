@@ -41,7 +41,7 @@ test("parseAdminOfferEditInput - null expectedUpdatedAt", () => {
 
 test("validateOfferEditBusinessRules - published ecommerce requires price", () => {
   const input = {
-    offerId: 1,
+    offerId: "1",
     expectedUpdatedAt: null,
     title: "t",
     description: null,
@@ -71,7 +71,7 @@ test("validateOfferEditBusinessRules - published ecommerce requires price", () =
 
 test("validateOfferEditBusinessRules - draft ecommerce allows missing price", () => {
   const input = {
-    offerId: 1,
+    offerId: "1",
     expectedUpdatedAt: null,
     title: "t",
     description: null,
@@ -233,7 +233,7 @@ test("parseAdminOfferEditInput - price matrix", () => {
   const p = (v: unknown) => parseAdminOfferEditInput({ ...validBase(), priceBrutto: v });
   
   let res = p(null);
-  assert.strictEqual(res.ok, true);
+  if(!res.ok) throw new Error("FAIL: " + JSON.stringify(res));
   
   res = p("   ");
   assert.strictEqual(res.ok, true);
@@ -285,4 +285,23 @@ test("isAdminOfferEditableStatus helper", () => {
   assert.strictEqual(isAdminOfferEditableStatus("deleted"), false);
   assert.strictEqual(isAdminOfferEditableStatus("unexpected"), false);
   assert.strictEqual(isAdminOfferEditableStatus(""), false);
+});
+
+
+test("SERVER AUTHORITY: raw technical fields are ignored from edit payload", () => {
+  const res = parseAdminOfferEditInput({
+    offerId: "1",
+    expectedUpdatedAt: null,
+    title: "t",
+    priceOnRequest: false,
+    adminOfferType: "external_partner",
+    isFeatured: false,
+    offerModel: "rfq",
+    conversionType: "inbound"
+  });
+  
+  if (!res.ok) throw new Error("FAIL: " + JSON.stringify(res));
+  assert.strictEqual(res.data.adminOfferType, "external_partner");
+  assert.strictEqual("offerModel" in res.data, false);
+  assert.strictEqual("conversionType" in res.data, false);
 });

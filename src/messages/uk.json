@@ -543,12 +543,12 @@
     },
     "createLoadErrorTitle": "Помилка",
     "createLoadErrorDescription": "Системна помилка під час завантаження опцій форми.",
-    "fieldOfferType": "Offer type",
-    "createSelectOfferType": "Select offer type...",
-    "offerTypeRfq": "RFQ",
-    "offerTypeMarketplace": "Marketplace",
-    "offerTypeExternal": "External Partner",
-    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
+    "fieldOfferType": "Тип пропозиції",
+    "createSelectOfferType": "Виберіть тип пропозиції...",
+    "offerTypeRfq": "Запит на комерційну пропозицію (RFQ)",
+    "offerTypeMarketplace": "Продаж через LogiMarket",
+    "offerTypeExternal": "Зовнішня пропозиція партнера",
+    "errorInvalidCurrentOfferType": "Поточна конфігурація пропозиції некоректна. Виберіть коректний тип пропозиції, щоб продовжити."
   },
   "adminPartners": {
     "metaTitle": "Партнери",
@@ -884,12 +884,12 @@
       "description": "Редагувати технічні атрибути.",
       "provenanceLocked": "Редагування цього атрибута заблоковано через його зв’язок із даними міграції."
     },
-    "fieldOfferType": "Offer type",
-    "createSelectOfferType": "Select offer type...",
-    "offerTypeRfq": "RFQ",
-    "offerTypeMarketplace": "Marketplace",
-    "offerTypeExternal": "External Partner",
-    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
+    "fieldOfferType": "Тип пропозиції",
+    "createSelectOfferType": "Виберіть тип пропозиції...",
+    "offerTypeRfq": "Запит на комерційну пропозицію (RFQ)",
+    "offerTypeMarketplace": "Продаж через LogiMarket",
+    "offerTypeExternal": "Зовнішня пропозиція партнера",
+    "errorInvalidCurrentOfferType": "Поточна конфігурація пропозиції некоректна. Виберіть коректний тип пропозиції, щоб продовжити."
   },
   "adminDashboard": {
     "metaTitle": "Панель адміністратора LogiMarket",
