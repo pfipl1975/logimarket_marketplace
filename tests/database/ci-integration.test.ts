@@ -2504,5 +2504,42 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await pool.query(`DROP TABLE IF EXISTS public.migration_oaov_targets`);
   });
 
+  await t.test("ADMIN_PARTNER_CREATE_MUTATION_PROOF", async () => {
+    const { createPartnerCore } = await import("@/lib/admin/partners-create");
+    await cleanDB();
+    await applyAllSchema();
+    await pool.query(`INSERT INTO drizzle_migrations (hash, created_at) VALUES ('seed', NOW())`);
+
+    const rawInput = {
+      companyName: '  New Corp  ',
+      contactEmail: '  TEST@corP.com ',
+      websiteUrl: '  https://new.test  '
+    };
+
+    const res = await createPartnerCore(db, rawInput);
+    assert.equal(res.ok, true);
+
+    if (res.ok) {
+      const partnerId = res.partnerId;
+      assert.ok(partnerId > 0);
+
+      // Verify db state
+      const pRows = await pool.query(`SELECT * FROM partners WHERE id = $1`, [partnerId]);
+      assert.equal(pRows.rows.length, 1);
+      assert.equal(pRows.rows[0].company_name, 'New Corp');
+      assert.equal(pRows.rows[0].contact_email, 'TEST@corP.com');
+      assert.equal(pRows.rows[0].website_url, 'https://new.test');
+      assert.ok(pRows.rows[0].created_at);
+
+      // Verify no seller legal identity created
+      const liRows = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [partnerId]);
+      assert.equal(liRows.rows.length, 0);
+
+      // Verify no seller eligibility created
+      const seRows = await pool.query(`SELECT * FROM seller_eligibility WHERE partner_id = $1`, [partnerId]);
+      assert.equal(seRows.rows.length, 0);
+    }
+  });
+
   await pool.end();
 });

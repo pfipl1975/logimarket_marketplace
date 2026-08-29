@@ -567,7 +567,8 @@
     "errorDescription": "Failed to load partners list.",
     "paginationPrevious": "Previous",
     "paginationNext": "Next",
-    "paginationSummary": "Page {current} of {total}"
+    "paginationSummary": "Page {current} of {total}",
+    "addPartner": "+ Add Partner"
   },
   "adminRfq": {
     "metaTitle": "RFQ Leads | LogiMarket Admin",
@@ -1001,5 +1002,19 @@
       }
     },
     "tableOfContents": "Table of Contents"
+  },
+  "adminPartnerCreate": {
+    "metaTitle": "Add Partner",
+    "title": "Add Partner",
+    "companyNameLabel": "Company Name *",
+    "contactEmailLabel": "Contact Email *",
+    "websiteUrlLabel": "Website (optional)",
+    "submitButton": "Create Partner",
+    "cancelButton": "Cancel",
+    "creating": "Creating...",
+    "errorTitle": "Error",
+    "errorDescription": "Failed to create partner.",
+    "invalidEmail": "Invalid email address",
+    "invalidWebsite": "Invalid URL (must start with http:// or https://)"
   }
 }

@@ -567,7 +567,8 @@
     "errorDescription": "Nie udało się wczytać listy partnerów.",
     "paginationPrevious": "Poprzednia",
     "paginationNext": "Następna",
-    "paginationSummary": "Strona {current} z {total}"
+    "paginationSummary": "Strona {current} z {total}",
+    "addPartner": "+ Dodaj partnera"
   },
   "adminRfq": {
     "metaTitle": "Zapytania RFQ | LogiMarket Admin",
@@ -1001,5 +1002,19 @@
       }
     },
     "tableOfContents": "Spis treści"
+  },
+  "adminPartnerCreate": {
+    "metaTitle": "Dodaj partnera",
+    "title": "Dodaj partnera",
+    "companyNameLabel": "Nazwa firmy *",
+    "contactEmailLabel": "E-mail kontaktowy *",
+    "websiteUrlLabel": "Strona WWW (opcjonalnie)",
+    "submitButton": "Utwórz partnera",
+    "cancelButton": "Anuluj",
+    "creating": "Tworzenie...",
+    "errorTitle": "Błąd",
+    "errorDescription": "Nie udało się utworzyć partnera.",
+    "invalidEmail": "Nieprawidłowy adres e-mail",
+    "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
   }
 }

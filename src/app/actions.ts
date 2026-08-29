@@ -1179,3 +1179,12 @@ export async function deleteAdminSellerTaxIdentifier(rawInput: unknown) {
   return result;
 }
 
+export async function createAdminPartner(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { createPartnerCore } = await import("@/lib/admin/partners-create");
+  const { db } = await import("@/lib/db");
+
+  return createPartnerCore(db, rawInput);
+}
