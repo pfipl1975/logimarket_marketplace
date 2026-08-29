@@ -123,7 +123,17 @@ class FakeDb {
               return this.config.partnerExists !== false ? [{ id: 1 }] : [];
             }
             if (this.selectCallIndex === 2) {
-              return this.config.identityExists !== false ? [{ partnerId: 1 }] : [];
+              return this.config.identityExists !== false ? [{
+                  partnerId: 1,
+                  legalName: "New Company",
+                  jurisdictionCountry: "PL",
+                  registeredAddressLine1: "Line 1",
+                  registeredAddressLine2: null,
+                  registeredPostalCode: null,
+                  registeredCity: null,
+                  registeredRegion: null,
+                  registeredCountryCode: null
+                }] : [];
             }
             if (this.selectCallIndex === 3) {
               return this.config.taxIdentifierConflictExists ? [{ id: 1 }] : [];
@@ -199,7 +209,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
     assert.strictEqual(db.updates.length, 2); // 1 for partner email, 1 for identity
 
     // Assert update payload DOES NOT contain verification fields
-    const updatePayload = db.updates[1].values;
+    const updatePayload = db.updates[1].values; console.log("UPDATE PAYLOAD:", updatePayload);
     assert.strictEqual("verificationStatus" in updatePayload, false);
     assert.strictEqual("verifiedAt" in updatePayload, false);
     assert.strictEqual("verificationSource" in updatePayload, false);

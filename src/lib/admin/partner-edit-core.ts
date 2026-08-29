@@ -83,7 +83,17 @@ export async function executeAdminSellerLegalDataSave(
         .where(eq(partners.id, input.partnerId));
 
       const existingIdentity = await tx
-        .select({ partnerId: sellerLegalIdentities.partnerId })
+        .select({
+          partnerId: sellerLegalIdentities.partnerId,
+          legalName: sellerLegalIdentities.legalName,
+          jurisdictionCountry: sellerLegalIdentities.jurisdictionCountry,
+          registeredAddressLine1: sellerLegalIdentities.registeredAddressLine1,
+          registeredAddressLine2: sellerLegalIdentities.registeredAddressLine2,
+          registeredPostalCode: sellerLegalIdentities.registeredPostalCode,
+          registeredCity: sellerLegalIdentities.registeredCity,
+          registeredRegion: sellerLegalIdentities.registeredRegion,
+          registeredCountryCode: sellerLegalIdentities.registeredCountryCode,
+        })
         .from(sellerLegalIdentities)
         .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
         .limit(1);
@@ -102,20 +112,52 @@ export async function executeAdminSellerLegalDataSave(
           verificationStatus: "unverified",
         });
       } else {
-        await tx
-          .update(sellerLegalIdentities)
-          .set({
-            legalName: input.legalName,
-            jurisdictionCountry: input.jurisdictionCountry,
-            registeredAddressLine1: input.registeredAddressLine1,
-            registeredAddressLine2: input.registeredAddressLine2,
-            registeredPostalCode: input.registeredPostalCode,
-            registeredCity: input.registeredCity,
-            registeredRegion: input.registeredRegion,
-            registeredCountryCode: input.registeredCountryCode,
-            updatedAt: new Date(),
-          })
-          .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+        const curr = existingIdentity[0];
+        const changed =
+          curr.legalName !== input.legalName ||
+          curr.jurisdictionCountry !== input.jurisdictionCountry ||
+          curr.registeredAddressLine1 !== input.registeredAddressLine1 ||
+          curr.registeredAddressLine2 !== input.registeredAddressLine2 ||
+          curr.registeredPostalCode !== input.registeredPostalCode ||
+          curr.registeredCity !== input.registeredCity ||
+          curr.registeredRegion !== input.registeredRegion ||
+          curr.registeredCountryCode !== input.registeredCountryCode;
+
+        if (changed) {
+          await tx
+            .update(sellerLegalIdentities)
+            .set({
+              legalName: input.legalName,
+              jurisdictionCountry: input.jurisdictionCountry,
+              registeredAddressLine1: input.registeredAddressLine1,
+              registeredAddressLine2: input.registeredAddressLine2,
+              registeredPostalCode: input.registeredPostalCode,
+              registeredCity: input.registeredCity,
+              registeredRegion: input.registeredRegion,
+              registeredCountryCode: input.registeredCountryCode,
+              verificationStatus: "unverified",
+              verifiedAt: null,
+              verificationSource: null,
+              verificationReference: null,
+              updatedAt: new Date(),
+            })
+            .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+        } else {
+          await tx
+            .update(sellerLegalIdentities)
+            .set({
+              legalName: input.legalName,
+              jurisdictionCountry: input.jurisdictionCountry,
+              registeredAddressLine1: input.registeredAddressLine1,
+              registeredAddressLine2: input.registeredAddressLine2,
+              registeredPostalCode: input.registeredPostalCode,
+              registeredCity: input.registeredCity,
+              registeredRegion: input.registeredRegion,
+              registeredCountryCode: input.registeredCountryCode,
+              updatedAt: new Date(),
+            })
+            .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
+        }
       }
 
       return { ok: true as const, code: "SAVED" as const };

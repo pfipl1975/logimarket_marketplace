@@ -2643,5 +2643,111 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(check2.rows.length, 0);
   });
 
+
+  await t.test("ADMIN_SELLER_LEGAL_IDENTITY_MUTATION_PROOF", async () => {
+    const { executeAdminSellerLegalDataSave } = await import("@/lib/admin/partner-edit-core");
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+
+    // CASE 4: New identity -> unverified
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('LegalCorp', 'legal@corp.com') RETURNING id`);
+    const pid = pRes.rows[0].id;
+
+    const res4 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "legal@corp.com",
+      legalName: "LegalCorp Sp.",
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Test 1",
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    });
+    assert.strictEqual(res4.ok, true);
+
+    const check4 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check4.rows.length, 1);
+    assert.strictEqual(check4.rows[0].verification_status, "unverified");
+
+    // Pre-seed verified evidence for CASE 1-3
+    await pool.query(`UPDATE seller_legal_identities SET verification_status = 'verified', verified_at = '2025-01-01 12:00:00Z', verification_source = 'KRS', verification_reference = '123' WHERE partner_id = $1`, [pid]);
+
+    // CASE 3: Only contactEmail changed -> evidence preserved
+    const res3 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "newemail@corp.com", // Changed
+      legalName: "LegalCorp Sp.", // Same
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Test 1",
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    });
+    assert.strictEqual(res3.ok, true);
+
+    const check3 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check3.rows[0].verification_status, "verified");
+    assert.notStrictEqual(check3.rows[0].verified_at, null);
+    assert.strictEqual(check3.rows[0].verification_source, "KRS");
+    assert.strictEqual(check3.rows[0].verification_reference, "123");
+
+    // Check partners email
+    const pCheck3 = await pool.query(`SELECT contact_email FROM partners WHERE id = $1`, [pid]);
+    assert.strictEqual(pCheck3.rows[0].contact_email, "newemail@corp.com");
+
+    // CASE 1: legalName changed -> evidence reset
+    const res1 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "newemail@corp.com",
+      legalName: "LegalCorp Sp. z o.o.", // Changed
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Test 1",
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    });
+    assert.strictEqual(res1.ok, true);
+
+    const check1 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check1.rows[0].verification_status, "unverified");
+    assert.strictEqual(check1.rows[0].verified_at, null);
+    assert.strictEqual(check1.rows[0].verification_source, null);
+    assert.strictEqual(check1.rows[0].verification_reference, null);
+
+    // Restore verified state for CASE 2
+    await pool.query(`UPDATE seller_legal_identities SET verification_status = 'verified', verified_at = '2025-01-01 12:00:00Z', verification_source = 'KRS', verification_reference = '123' WHERE partner_id = $1`, [pid]);
+
+    // CASE 2: registeredAddressLine1 changed -> evidence reset
+    const res2 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "newemail@corp.com",
+      legalName: "LegalCorp Sp. z o.o.",
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Nowa 2", // Changed
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    });
+    assert.strictEqual(res2.ok, true);
+
+    const check2 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check2.rows[0].verification_status, "unverified");
+    assert.strictEqual(check2.rows[0].verified_at, null);
+    assert.strictEqual(check2.rows[0].verification_source, null);
+    assert.strictEqual(check2.rows[0].verification_reference, null);
+  });
+
   await pool.end();
 });
