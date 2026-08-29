@@ -324,8 +324,11 @@ export async function executeAdminSellerRegistryIdentifierAdd(
 
       return { ok: true as const, code: "ADDED" as const };
     });
-  } catch (error) {
-    console.error("[ADMIN_DB] executeAdminSellerRegistryIdentifierAdd system error", error);
+  } catch (error: unknown) {
+    if (error && typeof error === "object" && "code" in error && error.code === "23505") {
+      return { ok: false as const, code: "REGISTRY_IDENTIFIER_CONFLICT" };
+    }
+    console.error("[ADMIN_DB] executeAdminSellerRegistryIdentifierAdd system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }

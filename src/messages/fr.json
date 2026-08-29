@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "Entrée invalide.",
     "sellerLegalErrorSystem": "Une erreur système s'est produite.",
     "taxIdentifierConflict": "Cet identifiant fiscal existe déjà.",
-    "taxIdentifierNotFound": "Identifiant fiscal introuvable."
+    "taxIdentifierNotFound": "Identifiant fiscal introuvable.",
+    "registryIdentifierConflict": "Cette entrée de registre existe déjà.",
+    "registryIdentifierNotFound": "Entrée de registre non trouvée.",
+    "addRegistryIdentifierTitle": "Ajouter une nouvelle entrée de registre"
   },
   "adminOfferDetail": {
     "errorTitle": "Erreur de chargement",

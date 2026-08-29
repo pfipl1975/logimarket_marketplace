@@ -1247,7 +1247,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       initialRow.rows[0].deleted_at,
     );
 
-    
+
     // ADDED DB_TYPE_03_CHANGE_TO_EXTERNAL
     await pool.query(
       `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'inbound' WHERE id = $1`,
@@ -1270,7 +1270,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const rowAfterC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
     assert.strictEqual(rowAfterC3.rows[0].offer_model, "marketplace");
     assert.strictEqual(rowAfterC3.rows[0].conversion_type, "outbound");
-    
+
     // revert back for the rest of tests
     await pool.query(
       `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'outbound' WHERE id = $1`,
@@ -2558,6 +2558,89 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const seRows = await pool.query(`SELECT * FROM seller_eligibility WHERE partner_id = $1`, [partnerId]);
       assert.equal(seRows.rows.length, 0);
     }
+  });
+
+
+  await t.test("ADMIN_SELLER_REGISTRY_IDENTIFIER_MUTATION_PROOF", async () => {
+    const {
+      executeAdminSellerRegistryIdentifierAdd,
+      executeAdminSellerRegistryIdentifierDelete
+    } = await import("@/lib/admin/partner-edit-core");
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+
+    // 1. partner missing
+    const res1 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: 99999,
+      registryType: "KRS",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res1.ok, false);
+    if (!res1.ok) assert.strictEqual(res1.code, "PARTNER_NOT_FOUND");
+
+    // Create partner
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('RegCorp', 'reg@corp.com') RETURNING id`);
+    const pid = pRes.rows[0].id;
+
+    // 2. legal identity missing
+    const res2 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: pid,
+      registryType: "KRS",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res2.ok, false);
+    if (!res2.ok) assert.strictEqual(res2.code, "LEGAL_IDENTITY_REQUIRED");
+
+    // Create legal identity
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'RegCorp Sp.', 'PL')`, [pid]);
+
+    // 3. successful add
+    const res3 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: pid,
+      registryType: "KRS",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res3.ok, true);
+
+    const check1 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check1.rows.length, 1);
+    assert.strictEqual(check1.rows[0].registry_value, "0000111222");
+    const regId = check1.rows[0].id;
+
+    // 4. duplicate add -> REGISTRY_IDENTIFIER_CONFLICT
+    const res4 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: pid,
+      registryType: "KRS",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res4.ok, false);
+    if (!res4.ok) assert.strictEqual(res4.code, "REGISTRY_IDENTIFIER_CONFLICT");
+
+    // 5. delete wrong partner/id -> NOT_FOUND
+    const res5 = await executeAdminSellerRegistryIdentifierDelete(db, {
+      partnerId: pid,
+      registryIdentifierId: 99999, // wrong id
+    });
+    assert.strictEqual(res5.ok, false);
+    if (!res5.ok) assert.strictEqual(res5.code, "NOT_FOUND");
+
+    // 6. delete correct partner/id -> DELETED
+    const res6 = await executeAdminSellerRegistryIdentifierDelete(db, {
+      partnerId: pid,
+      registryIdentifierId: regId,
+    });
+    assert.strictEqual(res6.ok, true);
+
+    const check2 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check2.rows.length, 0);
   });
 
   await pool.end();

@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "Недійсний ввід.",
     "sellerLegalErrorSystem": "Сталася системна помилка.",
     "taxIdentifierConflict": "Цей податковий ідентифікатор вже існує.",
-    "taxIdentifierNotFound": "Податковий ідентифікатор не знайдено."
+    "taxIdentifierNotFound": "Податковий ідентифікатор не знайдено.",
+    "registryIdentifierConflict": "Цей запис у реєстрі вже існує.",
+    "registryIdentifierNotFound": "Запис у реєстрі не знайдено.",
+    "addRegistryIdentifierTitle": "Додати новий запис до реєстру"
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",

@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "Ungültige Eingabe.",
     "sellerLegalErrorSystem": "Ein Systemfehler ist aufgetreten.",
     "taxIdentifierConflict": "Diese Steuernummer existiert bereits.",
-    "taxIdentifierNotFound": "Steuernummer nicht gefunden."
+    "taxIdentifierNotFound": "Steuernummer nicht gefunden.",
+    "registryIdentifierConflict": "Dieser Registereintrag existiert bereits.",
+    "registryIdentifierNotFound": "Registereintrag nicht gefunden.",
+    "addRegistryIdentifierTitle": "Neuen Registereintrag hinzufügen"
   },
   "adminOfferDetail": {
     "errorTitle": "Fehler beim Laden der Daten",

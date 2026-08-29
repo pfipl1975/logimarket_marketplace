@@ -756,7 +756,10 @@
     "sellerLegalErrorInvalidInput": "Invalid input.",
     "sellerLegalErrorSystem": "A system error occurred.",
     "taxIdentifierConflict": "This tax identifier already exists.",
-    "taxIdentifierNotFound": "Tax identifier not found."
+    "taxIdentifierNotFound": "Tax identifier not found.",
+    "registryIdentifierConflict": "This registry entry already exists.",
+    "registryIdentifierNotFound": "Registry entry not found.",
+    "addRegistryIdentifierTitle": "Add New Registry Entry"
   },
   "adminOfferDetail": {
     "errorTitle": "Error loading data",
