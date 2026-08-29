@@ -209,7 +209,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
     assert.strictEqual(db.updates.length, 2); // 1 for partner email, 1 for identity
 
     // Assert update payload DOES NOT contain verification fields
-    const updatePayload = db.updates[1].values; console.log("UPDATE PAYLOAD:", updatePayload);
+    const updatePayload = db.updates[1].values;
     assert.strictEqual("verificationStatus" in updatePayload, false);
     assert.strictEqual("verifiedAt" in updatePayload, false);
     assert.strictEqual("verificationSource" in updatePayload, false);
