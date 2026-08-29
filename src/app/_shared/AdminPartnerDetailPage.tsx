@@ -7,6 +7,7 @@ import { Landmark, ShieldCheck, Building2, FileText, FileKey, ArrowLeft } from "
 import { AdminSellerEligibilityControl } from "@/components/admin/AdminSellerEligibilityControl";
 import { AdminSellerLegalIdentityForm } from "@/components/admin/AdminSellerLegalIdentityForm";
 import { AdminSellerTaxIdentifiersForm } from "@/components/admin/AdminSellerTaxIdentifiersForm";
+import { AdminSellerRegistryIdentifiersForm } from "@/components/admin/AdminSellerRegistryIdentifiersForm";
 
 
 export async function AdminPartnerDetailPage({
@@ -243,28 +244,28 @@ export async function AdminPartnerDetailPage({
             <h2 className="font-medium text-brand-navy">{dict.registryIdentifiersSection}</h2>
           </div>
           <div className="p-0">
-            {registryIdentifiers.length === 0 ? (
-              <div className="p-6"><p className="text-sm text-muted-foreground italic">{dict.noRegistryIdentifiers}</p></div>
-            ) : (
-              <div className="divide-y divide-border-industrial/50">
-                {registryIdentifiers.map((reg, idx) => (
-                  <div key={idx} className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-y-6 gap-x-8 hover:bg-brand-light-gray/20 transition-colors">
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.registryTypeLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(reg.registryType)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.registryValueLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(reg.registryValue)}</p>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.jurisdictionLabel}</p>
-                      <p className="text-sm font-medium text-brand-navy">{renderFieldValue(reg.jurisdictionCountry)}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+            <AdminSellerRegistryIdentifiersForm
+              partnerId={partner.id}
+              hasLegalIdentity={!!legalIdentity}
+              registryIdentifiers={registryIdentifiers}
+              dictionary={{
+                registryTypeLabel: dict.registryTypeLabel,
+                registryValueLabel: dict.registryValueLabel,
+                jurisdictionLabel: dict.jurisdictionLabel,
+                addAction: dict.addAction || "Dodaj",
+                removeAction: dict.removeAction || "Usuń",
+                noRegistryIdentifiers: dict.noRegistryIdentifiers,
+                legalIdentityRequired: dict.legalIdentityRequired || "Wymagana jest tożsamość prawna.",
+                sellerLegalErrorInvalidInput: dict.sellerLegalErrorInvalidInput || "Nieprawidłowe dane.",
+                sellerLegalErrorSystem: dict.sellerLegalErrorSystem || "Błąd systemowy.",
+                sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound || "Nie znaleziono partnera.",
+                registryIdentifierConflict: dict.taxIdentifierConflict || "Konflikt identyfikatorów.",
+                registryIdentifierNotFound: dict.taxIdentifierNotFound || "Nie znaleziono wpisu.",
+                addRegistryIdentifierTitle: "Dodaj nowy wpis do rejestru",
+                confirmDelete: dict.confirmDelete || "Czy na pewno usunąć?",
+                placeholderRegistry: "123456"
+              }}
+            />
           </div>
         </section>
 

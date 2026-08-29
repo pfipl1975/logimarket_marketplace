@@ -45,6 +45,7 @@ export interface AdminPartnerDetailDto {
     verificationReference: string | null;
   }>;
   registryIdentifiers: Array<{
+    id: number;
     registryType: string;
     registryValue: string;
     jurisdictionCountry: string;
@@ -170,6 +171,7 @@ export async function getAdminPartnerDetailReadModel(
         verificationReference: row.verificationReference,
       })),
       registryIdentifiers: registryIdentifierRows.map(row => ({
+        id: row.id,
         registryType: row.registryType,
         registryValue: row.registryValue,
         jurisdictionCountry: row.jurisdictionCountry,

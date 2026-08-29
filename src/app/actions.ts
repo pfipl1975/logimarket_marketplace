@@ -1188,3 +1188,48 @@ export async function createAdminPartner(rawInput: unknown) {
 
   return createPartnerCore(db, rawInput);
 }
+
+
+export async function addAdminSellerRegistryIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerRegistryIdentifierAddInputSchema,
+    executeAdminSellerRegistryIdentifierAdd,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerRegistryIdentifierAddInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await executeAdminSellerRegistryIdentifierAdd(db, parsed.data);
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function deleteAdminSellerRegistryIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerRegistryIdentifierDeleteInputSchema,
+    executeAdminSellerRegistryIdentifierDelete,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerRegistryIdentifierDeleteInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await executeAdminSellerRegistryIdentifierDelete(db, parsed.data);
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
