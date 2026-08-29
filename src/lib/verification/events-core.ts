@@ -28,3 +28,16 @@ export const RegistryIdentifierSnapshotSchema = z.object({
 export type LegalIdentitySnapshot = z.infer<typeof LegalIdentitySnapshotSchema>;
 export type TaxIdentifierSnapshot = z.infer<typeof TaxIdentifierSnapshotSchema>;
 export type RegistryIdentifierSnapshot = z.infer<typeof RegistryIdentifierSnapshotSchema>;
+
+// Snapshot Builders
+export function buildLegalIdentitySnapshot(data: unknown): LegalIdentitySnapshot {
+  return LegalIdentitySnapshotSchema.parse(data);
+}
+
+export function buildTaxIdentifierSnapshot(data: unknown): TaxIdentifierSnapshot {
+  return TaxIdentifierSnapshotSchema.parse(data);
+}
+
+export function buildRegistryIdentifierSnapshot(data: unknown): RegistryIdentifierSnapshot {
+  return RegistryIdentifierSnapshotSchema.parse(data);
+}
