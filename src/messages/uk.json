@@ -1004,17 +1004,17 @@
     "tableOfContents": "Зміст"
   },
   "adminPartnerCreate": {
-    "metaTitle": "Dodaj partnera",
-    "title": "Dodaj partnera",
-    "companyNameLabel": "Nazwa firmy *",
-    "contactEmailLabel": "E-mail kontaktowy *",
-    "websiteUrlLabel": "Strona WWW (opcjonalnie)",
-    "submitButton": "Utwórz partnera",
-    "cancelButton": "Anuluj",
-    "creating": "Tworzenie...",
-    "errorTitle": "Błąd",
-    "errorDescription": "Nie udało się utworzyć partnera.",
-    "invalidEmail": "Nieprawidłowy adres e-mail",
-    "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
+    "metaTitle": "Додати партнера",
+    "title": "Додати партнера",
+    "companyNameLabel": "Назва компанії *",
+    "contactEmailLabel": "Контактний e-mail *",
+    "websiteUrlLabel": "Вебсайт (необов’язково)",
+    "submitButton": "Створити партнера",
+    "cancelButton": "Скасувати",
+    "creating": "Створення...",
+    "errorTitle": "Помилка",
+    "errorDescription": "Не вдалося створити партнера.",
+    "invalidEmail": "Некоректна адреса e-mail",
+    "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
   }
 }

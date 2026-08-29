@@ -8,7 +8,6 @@ export const adminPartnerCreateSchema = z.object({
   websiteUrl: z
     .string()
     .trim()
-    .max(512, 'WEBSITE_TOO_LONG')
     .optional()
     .transform((val) => (!val || val === '' ? null : val))
     .refine((val) => {
@@ -24,9 +23,17 @@ export const adminPartnerCreateSchema = z.object({
 
 export type AdminPartnerCreateInput = z.infer<typeof adminPartnerCreateSchema>;
 
+export type AdminPartnerCreateValidationCode =
+  | "MISSING_COMPANY_NAME"
+  | "COMPANY_NAME_TOO_LONG"
+  | "MISSING_EMAIL"
+  | "EMAIL_TOO_LONG"
+  | "INVALID_EMAIL"
+  | "INVALID_WEBSITE";
+
 export type AdminPartnerCreateResult =
   | { ok: true; partnerId: number }
-  | { ok: false; reason: 'PARTNER_INVALID_INPUT'; errors: z.ZodError<AdminPartnerCreateInput> }
+  | { ok: false; reason: 'PARTNER_INVALID_INPUT'; code: AdminPartnerCreateValidationCode }
   | { ok: false; reason: 'PARTNER_CREATE_FAILED' };
 
 export async function createPartnerCore(
@@ -35,19 +42,11 @@ export async function createPartnerCore(
 ): Promise<AdminPartnerCreateResult> {
   const parsed = adminPartnerCreateSchema.safeParse(rawInput);
   if (!parsed.success) {
-    return { ok: false, reason: 'PARTNER_INVALID_INPUT', errors: parsed.error };
+    const code = (parsed.error.issues[0]?.message as AdminPartnerCreateValidationCode) || "INVALID_WEBSITE";
+    return { ok: false, reason: 'PARTNER_INVALID_INPUT', code };
   }
 
   const { companyName, contactEmail, websiteUrl } = parsed.data;
-
-  // We are explicitly instructed NOT to assume unique constraints on companyName/contactEmail
-  // However, we MUST perform an application-level duplicate check for logical duplicates as per A0 finding?
-  // Wait. The requirement says:
-  // "Do NOT assume same companyName = same legal entity"
-  // "Do NOT assume same contactEmail = same legal entity"
-  // "A1_DUPLICATE_BLOCKING=NO"
-  // "Do not add duplicate-check queries."
-  // So we just INSERT directly.
 
   try {
     const [inserted] = await db
@@ -65,8 +64,7 @@ export async function createPartnerCore(
 
     return { ok: true, partnerId: Number(inserted.id) };
   } catch (error) {
-    console.error('[createPartnerCore] Failed:', error);
+    console.error(`[partner-create] stage=insert errorName=${error instanceof Error ? error.name : "Unknown"}`);
     return { ok: false, reason: 'PARTNER_CREATE_FAILED' };
   }
 }
-

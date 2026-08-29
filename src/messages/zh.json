@@ -1004,17 +1004,17 @@
     "tableOfContents": "目录"
   },
   "adminPartnerCreate": {
-    "metaTitle": "Dodaj partnera",
-    "title": "Dodaj partnera",
-    "companyNameLabel": "Nazwa firmy *",
-    "contactEmailLabel": "E-mail kontaktowy *",
-    "websiteUrlLabel": "Strona WWW (opcjonalnie)",
-    "submitButton": "Utwórz partnera",
-    "cancelButton": "Anuluj",
-    "creating": "Tworzenie...",
-    "errorTitle": "Błąd",
-    "errorDescription": "Nie udało się utworzyć partnera.",
-    "invalidEmail": "Nieprawidłowy adres e-mail",
-    "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
+    "metaTitle": "添加合作伙伴",
+    "title": "添加合作伙伴",
+    "companyNameLabel": "公司名称 *",
+    "contactEmailLabel": "联系邮箱 *",
+    "websiteUrlLabel": "网站（可选）",
+    "submitButton": "创建合作伙伴",
+    "cancelButton": "取消",
+    "creating": "正在创建...",
+    "errorTitle": "错误",
+    "errorDescription": "无法创建合作伙伴。",
+    "invalidEmail": "邮箱地址无效",
+    "invalidWebsite": "URL 无效（必须以 http:// 或 https:// 开头）"
   }
 }

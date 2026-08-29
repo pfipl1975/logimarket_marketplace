@@ -1,5 +1,5 @@
 "use client";
-import { useTransition, useState } from 'react';
+import { useTransition, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { createAdminPartner } from '@/app/actions';
 import type { Dictionary } from '@/lib/i18n/types';
@@ -18,10 +18,13 @@ export function AdminPartnerCreateForm({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const submitLock = useRef(false);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isPending) return;
+    if (isPending || submitLock.current) return;
+
+    submitLock.current = true;
     setErrorMsg(null);
 
     const formData = new FormData(e.currentTarget);
@@ -30,39 +33,44 @@ export function AdminPartnerCreateForm({
     const websiteUrl = formData.get('websiteUrl');
 
     startTransition(async () => {
-      const res = await createAdminPartner({
-        companyName,
-        contactEmail,
-        websiteUrl
-      });
+      try {
+        const res = await createAdminPartner({
+          companyName,
+          contactEmail,
+          websiteUrl
+        });
 
-      if (!res.ok) {
-        if (res.reason === 'PARTNER_INVALID_INPUT') {
-          const issue = res.errors.issues[0];
-          if (issue?.message === 'INVALID_EMAIL') {
-             setErrorMsg(dict.invalidEmail || dict.errorDescription);
-          } else if (issue?.message === 'INVALID_WEBSITE') {
-             setErrorMsg(dict.invalidWebsite || dict.errorDescription);
+        if (!res.ok) {
+          if (res.reason === 'PARTNER_INVALID_INPUT') {
+            if (res.code === 'INVALID_EMAIL') {
+               setErrorMsg(dict.invalidEmail || dict.errorDescription);
+            } else if (res.code === 'INVALID_WEBSITE') {
+               setErrorMsg(dict.invalidWebsite || dict.errorDescription);
+            } else {
+               setErrorMsg(dict.errorDescription);
+            }
           } else {
-             setErrorMsg(issue?.message || dict.errorDescription);
+            setErrorMsg(dict.errorDescription);
           }
-        } else {
-          setErrorMsg(dict.errorDescription);
+          submitLock.current = false;
+          return;
         }
-        return;
-      }
 
-      router.push(`${successRedirectBase}/${res.partnerId}`);
-      router.refresh();
+        router.push(`${successRedirectBase}/${res.partnerId}`);
+        router.refresh();
+      } catch {
+        setErrorMsg(dict.errorDescription);
+        submitLock.current = false;
+      }
     });
   };
 
   return (
     <div className="max-w-xl">
       <form onSubmit={handleSubmit} className="bg-white border border-border-industrial rounded-industrial shadow-soft p-6 space-y-6">
-        
+
         {errorMsg && (
-          <div className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-industrial text-sm">
+          <div role="alert" aria-live="polite" className="p-4 bg-red-50 border border-red-200 text-red-800 rounded-industrial text-sm">
             <p className="font-semibold mb-1">{dict.errorTitle}</p>
             <p>{errorMsg}</p>
           </div>
@@ -105,7 +113,6 @@ export function AdminPartnerCreateForm({
               type="url"
               id="websiteUrl"
               name="websiteUrl"
-              maxLength={512}
               className="w-full px-3 py-2 border border-border-industrial rounded-industrial text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent"
             />
           </div>
@@ -126,7 +133,7 @@ export function AdminPartnerCreateForm({
               dict.submitButton
             )}
           </button>
-          
+
           <Link
             href={cancelUrl}
             className="px-6 py-2 bg-white hover:bg-brand-light-gray text-brand-navy border border-border-industrial rounded-industrial text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-teal disabled:opacity-50"

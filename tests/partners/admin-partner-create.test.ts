@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert';
-import { adminPartnerCreateSchema } from '@/lib/admin/partners-create';
+import { adminPartnerCreateSchema, createPartnerCore } from '@/lib/admin/partners-create';
 
 test('PARTNER_CREATE_01_VALID_REQUIRED_FIELDS', () => {
   const result = adminPartnerCreateSchema.safeParse({
@@ -134,3 +134,24 @@ test('PARTNER_CREATE_14_HTTP_WEBSITE_ACCEPTED', () => {
   assert.strictEqual(result.success, true);
 });
 
+
+
+test('VALIDATION_RESULT_01_INVALID_EMAIL', async () => {
+  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { companyName: 'Acme Corp', contactEmail: 'not-an-email' });
+  assert.deepStrictEqual(result, { ok: false, reason: 'PARTNER_INVALID_INPUT', code: 'INVALID_EMAIL' });
+});
+
+test('VALIDATION_RESULT_02_INVALID_WEBSITE', async () => {
+  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { companyName: 'Acme Corp', contactEmail: 'admin@acme.test', websiteUrl: 'not-a-url' });
+  assert.deepStrictEqual(result, { ok: false, reason: 'PARTNER_INVALID_INPUT', code: 'INVALID_WEBSITE' });
+});
+
+test('VALIDATION_RESULT_03_MISSING_COMPANY', async () => {
+  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { contactEmail: 'admin@acme.test' });
+  assert.deepStrictEqual(result, { ok: false, reason: 'PARTNER_INVALID_INPUT', code: 'MISSING_COMPANY_NAME' });
+});
+
+test('VALIDATION_RESULT_04_PLAIN_SERIALIZABLE_CONTRACT', async () => {
+  const result = await createPartnerCore(null as unknown as Parameters<typeof createPartnerCore>[0], { contactEmail: 'admin@acme.test' });
+  assert.strictEqual(JSON.stringify(result), '{"ok":false,"reason":"PARTNER_INVALID_INPUT","code":"MISSING_COMPANY_NAME"}');
+});

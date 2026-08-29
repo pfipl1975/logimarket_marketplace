@@ -45,7 +45,7 @@ export async function AdminPartnersPage({
           href={`${basePath}${locale === 'pl' ? '/nowy' : '/new'}`}
           className="px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-teal whitespace-nowrap self-start"
         >
-          {dict.addPartner || '+ Dodaj partnera'}
+          {dict.addPartner}
         </Link>
       </div>
 

@@ -20,7 +20,7 @@ export async function generateMetadata({
   
   const dictionary = await getDictionary(locale as Locale);
   return {
-    title: dictionary.adminPartnerCreate?.metaTitle || 'Add Partner',
+    title: dictionary.adminPartnerCreate.metaTitle,
     robots: {
       index: false,
       follow: false,

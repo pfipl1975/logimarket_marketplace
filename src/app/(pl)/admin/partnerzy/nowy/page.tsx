@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function generateMetadata(): Promise<Metadata> {
   const dictionary = await getDictionary('pl');
   return {
-    title: dictionary.adminPartnerCreate?.metaTitle || 'Dodaj partnera',
+    title: dictionary.adminPartnerCreate.metaTitle,
     robots: {
       index: false,
       follow: false,

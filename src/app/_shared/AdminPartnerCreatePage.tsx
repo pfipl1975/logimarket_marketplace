@@ -10,9 +10,6 @@ export async function AdminPartnerCreatePage({
   const dictionary = await getDictionary(locale);
   const dict = dictionary.adminPartnerCreate;
 
-  if (!dict) {
-    return <div>Dictionary keys missing</div>;
-  }
 
   const cancelUrl = locale === 'pl' ? '/admin/partnerzy' : `/${locale}/admin/partners`;
   const successRedirectBase = locale === 'pl' ? '/admin/partnerzy' : `/${locale}/admin/partners`;
