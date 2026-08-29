@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "Se produjo un error del sistema."
     },
     "createLoadErrorTitle": "Error",
-    "createLoadErrorDescription": "Error del sistema al cargar las opciones del formulario."
+    "createLoadErrorDescription": "Error del sistema al cargar las opciones del formulario.",
+    "fieldOfferType": "Offer type",
+    "createSelectOfferType": "Select offer type...",
+    "offerTypeRfq": "RFQ",
+    "offerTypeMarketplace": "Marketplace",
+    "offerTypeExternal": "External Partner",
+    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
   },
   "adminPartners": {
     "metaTitle": "Socios",
@@ -877,7 +883,13 @@
       "title": "Atributos técnicos",
       "description": "Editar atributos técnicos.",
       "provenanceLocked": "La edición de este atributo está bloqueada debido a su vínculo con los datos de migración."
-    }
+    },
+    "fieldOfferType": "Offer type",
+    "createSelectOfferType": "Select offer type...",
+    "offerTypeRfq": "RFQ",
+    "offerTypeMarketplace": "Marketplace",
+    "offerTypeExternal": "External Partner",
+    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
   },
   "adminDashboard": {
     "metaTitle": "Panel de control Admin LogiMarket",

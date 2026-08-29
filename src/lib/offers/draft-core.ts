@@ -3,6 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { offers, partners, categories } from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
+import { AdminOfferType, deriveOfferStorageForCreate } from "@/lib/admin/offer-type";
 
 export type OfferDraftCreateResult =
   | { ok: true; code: "OFFER_DRAFT_CREATED"; offerId: number }
@@ -12,8 +13,7 @@ export interface OfferDraftCreateInput {
   partnerId: number;
   categoryId: number;
   title: string;
-  offerModel: "rfq" | "marketplace";
-  conversionType: "inbound" | "outbound";
+  adminOfferType: AdminOfferType;
 }
 
 export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data: OfferDraftCreateInput } | { ok: false; code: "OFFER_INVALID_INPUT" } {
@@ -21,7 +21,7 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
-  const { partnerId, categoryId, title, offerModel, conversionType } = rawInput as Record<string, unknown>;
+  const { partnerId, categoryId, title, adminOfferType } = rawInput as Record<string, unknown>;
 
   // partnerId
   if (typeof partnerId !== "string" && typeof partnerId !== "number") return { ok: false, code: "OFFER_INVALID_INPUT" };
@@ -38,11 +38,10 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
   const trimmedTitle = title.trim();
   if (trimmedTitle.length === 0 || trimmedTitle.length > 255) return { ok: false, code: "OFFER_INVALID_INPUT" };
 
-  // offerModel
-  if (offerModel !== "rfq" && offerModel !== "marketplace") return { ok: false, code: "OFFER_INVALID_INPUT" };
-
-  // conversionType
-  if (conversionType !== "inbound" && conversionType !== "outbound") return { ok: false, code: "OFFER_INVALID_INPUT" };
+  // adminOfferType
+  if (adminOfferType !== "rfq" && adminOfferType !== "marketplace" && adminOfferType !== "external_partner") {
+    return { ok: false, code: "OFFER_INVALID_INPUT" };
+  }
 
   return {
     ok: true,
@@ -50,8 +49,7 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
       partnerId: pid,
       categoryId: cid,
       title: trimmedTitle,
-      offerModel: offerModel as "rfq" | "marketplace",
-      conversionType: conversionType as "inbound" | "outbound",
+      adminOfferType: adminOfferType as AdminOfferType,
     },
   };
 }
@@ -60,7 +58,9 @@ export async function createOfferDraftCore(
   db: NodePgDatabase<typeof schema>,
   input: OfferDraftCreateInput
 ): Promise<OfferDraftCreateResult> {
-  const canonicalModel = resolveCanonicalOfferModel(input.offerModel, input.conversionType);
+  const { offerModel, conversionType } = deriveOfferStorageForCreate(input.adminOfferType);
+  const canonicalModel = resolveCanonicalOfferModel(offerModel, conversionType);
+  
   if (canonicalModel === "unknown") {
     return { ok: false, code: "MODEL_UNKNOWN" };
   }
@@ -81,8 +81,8 @@ export async function createOfferDraftCore(
         partnerId: input.partnerId,
         categoryId: input.categoryId,
         title: input.title,
-        offerModel: input.offerModel,
-        conversionType: input.conversionType,
+        offerModel,
+        conversionType,
         publicationStatus: "draft",
         contractModel: null,
       }).returning({ id: offers.id });

@@ -542,7 +542,13 @@
       "SYSTEM_ERROR": "Сталася системна помилка."
     },
     "createLoadErrorTitle": "Помилка",
-    "createLoadErrorDescription": "Системна помилка під час завантаження опцій форми."
+    "createLoadErrorDescription": "Системна помилка під час завантаження опцій форми.",
+    "fieldOfferType": "Offer type",
+    "createSelectOfferType": "Select offer type...",
+    "offerTypeRfq": "RFQ",
+    "offerTypeMarketplace": "Marketplace",
+    "offerTypeExternal": "External Partner",
+    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
   },
   "adminPartners": {
     "metaTitle": "Партнери",
@@ -877,7 +883,13 @@
       "title": "Технічні атрибути",
       "description": "Редагувати технічні атрибути.",
       "provenanceLocked": "Редагування цього атрибута заблоковано через його зв’язок із даними міграції."
-    }
+    },
+    "fieldOfferType": "Offer type",
+    "createSelectOfferType": "Select offer type...",
+    "offerTypeRfq": "RFQ",
+    "offerTypeMarketplace": "Marketplace",
+    "offerTypeExternal": "External Partner",
+    "errorInvalidCurrentOfferType": "The current offer type is invalid. Please select a valid business offer type to proceed."
   },
   "adminDashboard": {
     "metaTitle": "Панель адміністратора LogiMarket",

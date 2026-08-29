@@ -1,0 +1,21 @@
+- SECURITY CLEAN REBUILD from exact origin/main baseline
+- no cherry-pick from PR #75
+- only allowlisted source/runtime/test files
+- no Owner/private files
+- exact six SellerLegalIdentity registered address columns
+- controlled drizzle-runtime/0004
+- POST_0003 predecessor
+- POST_0004 final fingerprint
+- deterministic Seller Disclosure
+- DB_WRITES=0
+- DEV_DB_WRITES=0
+- PROD_DB_WRITES=0
+- MIGRATION_EXECUTED=NO
+- standard drizzle-kit migration not used
+- public UI unchanged
+- RFQ unchanged
+- checkout unchanged
+- outbound unchanged
+- canonical offer resolver unchanged
+- local quality gates
+- safe pure/mock DB test list
