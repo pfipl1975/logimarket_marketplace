@@ -567,7 +567,8 @@
     "errorDescription": "Échec du chargement de la liste des partenaires.",
     "paginationPrevious": "Précédent",
     "paginationNext": "Suivant",
-    "paginationSummary": "Page {current} sur {total}"
+    "paginationSummary": "Page {current} sur {total}",
+    "addPartner": "+ Ajouter un partenaire"
   },
   "adminRfq": {
     "metaTitle": "Demandes de devis | LogiMarket Admin",
@@ -1001,5 +1002,19 @@
       }
     },
     "tableOfContents": "Table des matières"
+  },
+  "adminPartnerCreate": {
+    "metaTitle": "Ajouter un partenaire",
+    "title": "Ajouter un partenaire",
+    "companyNameLabel": "Nom de l'entreprise *",
+    "contactEmailLabel": "Email de contact *",
+    "websiteUrlLabel": "Site web (optionnel)",
+    "submitButton": "Créer le partenaire",
+    "cancelButton": "Annuler",
+    "creating": "Création...",
+    "errorTitle": "Erreur",
+    "errorDescription": "Échec de la création du partenaire.",
+    "invalidEmail": "Adresse email invalide",
+    "invalidWebsite": "URL invalide"
   }
 }

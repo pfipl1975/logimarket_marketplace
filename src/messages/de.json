@@ -567,7 +567,8 @@
     "errorDescription": "Fehler beim Laden der Partnerliste.",
     "paginationPrevious": "Vorherige",
     "paginationNext": "Nächste",
-    "paginationSummary": "Seite {current} von {total}"
+    "paginationSummary": "Seite {current} von {total}",
+    "addPartner": "+ Partner hinzufügen"
   },
   "adminRfq": {
     "metaTitle": "Angebotsanfragen | LogiMarket Admin",
@@ -1001,5 +1002,19 @@
       }
     },
     "tableOfContents": "Inhaltsverzeichnis"
+  },
+  "adminPartnerCreate": {
+    "metaTitle": "Partner hinzufügen",
+    "title": "Partner hinzufügen",
+    "companyNameLabel": "Firmenname *",
+    "contactEmailLabel": "Kontakt-E-Mail *",
+    "websiteUrlLabel": "Website (optional)",
+    "submitButton": "Partner erstellen",
+    "cancelButton": "Abbrechen",
+    "creating": "Wird erstellt...",
+    "errorTitle": "Fehler",
+    "errorDescription": "Partner konnte nicht erstellt werden.",
+    "invalidEmail": "Ungültige E-Mail-Adresse",
+    "invalidWebsite": "Ungültige URL"
   }
 }

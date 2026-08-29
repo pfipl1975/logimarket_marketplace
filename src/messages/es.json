@@ -567,7 +567,8 @@
     "errorDescription": "Error al cargar la lista de socios.",
     "paginationPrevious": "Anterior",
     "paginationNext": "Siguiente",
-    "paginationSummary": "Página {current} de {total}"
+    "paginationSummary": "Página {current} de {total}",
+    "addPartner": "+ Añadir socio"
   },
   "adminRfq": {
     "metaTitle": "Solicitudes de presupuesto | LogiMarket Admin",
@@ -1001,5 +1002,19 @@
       }
     },
     "tableOfContents": "Índice de contenidos"
+  },
+  "adminPartnerCreate": {
+    "metaTitle": "Añadir socio",
+    "title": "Añadir socio",
+    "companyNameLabel": "Nombre de la empresa *",
+    "contactEmailLabel": "Correo electrónico de contacto *",
+    "websiteUrlLabel": "Sitio web (opcional)",
+    "submitButton": "Crear socio",
+    "cancelButton": "Cancelar",
+    "creating": "Creando...",
+    "errorTitle": "Error",
+    "errorDescription": "Error al crear socio.",
+    "invalidEmail": "Correo electrónico inválido",
+    "invalidWebsite": "URL inválida"
   }
 }

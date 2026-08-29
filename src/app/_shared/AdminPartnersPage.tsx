@@ -33,12 +33,20 @@ export async function AdminPartnersPage({
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto w-full">
-      <div>
-        <span className="text-brand-teal text-sm font-bold uppercase tracking-wider block mb-1">
-          {dict.eyebrow}
-        </span>
-        <h1 className="text-2xl md:text-3xl font-semibold text-brand-navy">{dict.title}</h1>
-        <p className="text-muted-foreground mt-2">{dict.description}</p>
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+        <div>
+          <span className="text-brand-teal text-sm font-bold uppercase tracking-wider block mb-1">
+            {dict.eyebrow}
+          </span>
+          <h1 className="text-2xl md:text-3xl font-semibold text-brand-navy">{dict.title}</h1>
+          <p className="text-muted-foreground mt-2">{dict.description}</p>
+        </div>
+        <Link 
+          href={`${basePath}${locale === 'pl' ? '/nowy' : '/new'}`}
+          className="px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-teal whitespace-nowrap self-start"
+        >
+          {dict.addPartner}
+        </Link>
       </div>
 
       <div className="bg-white p-4 rounded-industrial border border-border-industrial shadow-soft">

@@ -567,7 +567,8 @@
     "errorDescription": "加载合作伙伴列表失败。",
     "paginationPrevious": "上一页",
     "paginationNext": "下一页",
-    "paginationSummary": "第 {current} 页，共 {total} 页"
+    "paginationSummary": "第 {current} 页，共 {total} 页",
+    "addPartner": "+ 添加合作伙伴"
   },
   "adminRfq": {
     "metaTitle": "询价请求 | LogiMarket Admin",
@@ -1001,5 +1002,19 @@
       }
     },
     "tableOfContents": "目录"
+  },
+  "adminPartnerCreate": {
+    "metaTitle": "添加合作伙伴",
+    "title": "添加合作伙伴",
+    "companyNameLabel": "公司名称 *",
+    "contactEmailLabel": "联系邮箱 *",
+    "websiteUrlLabel": "网站（可选）",
+    "submitButton": "创建合作伙伴",
+    "cancelButton": "取消",
+    "creating": "正在创建...",
+    "errorTitle": "错误",
+    "errorDescription": "无法创建合作伙伴。",
+    "invalidEmail": "邮箱地址无效",
+    "invalidWebsite": "URL 无效（必须以 http:// 或 https:// 开头）"
   }
 }
