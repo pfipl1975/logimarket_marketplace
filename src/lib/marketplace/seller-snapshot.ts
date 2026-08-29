@@ -6,6 +6,12 @@ export type SellerEligibilityStatus = "pending" | "eligible" | "ineligible" | "s
  *   seller_registry_identifiers, seller_eligibility.
  *
  * Never accept any of these fields from client-controlled input.
+ *
+ * This type must carry enough verified information for a later orchestrator
+ * to construct BOTH:
+ *   A. marketplace_order_seller_disclosures
+ *   B. seller_order_seller_snapshots
+ * without accessing client-controlled data or inventing policy values.
  */
 export interface SellerSourceInput {
   /** Authoritative partner identifier. Must be a positive safe integer. */
@@ -17,7 +23,7 @@ export interface SellerSourceInput {
    */
   sellerDisplayName: string | null;
 
-  /** Firm contact email (from partners.contact_email or seller_legal_identities). */
+  /** Firm contact email (from partners.contact_email). */
   firmContactEmail: string | null;
 
   // --- Legal identity (from seller_legal_identities) ---
@@ -43,23 +49,50 @@ export interface SellerSourceInput {
   registryIdentifierType: string | null;
   registryIdentifierValue: string | null;
 
-  // --- Approved contract / responsibility fields ---
-  /** Must be "partner_marketplace" for B2B marketplace orders. */
+  // --- Approved contract fields (values defined by Owner/legal agreement) ---
+
+  /** Must be "partner_marketplace" for marketplace B2B orders. */
   contractModel: string | null;
-  /** Must be "PARTNER". */
-  sellerOfRecord: string | null;
-  /** Must be "PARTNER". */
-  goodsInvoiceResponsibility: string | null;
 
   /**
-   * Policy inputs — values not yet canonically defined by Owner/legal.
-   * Must NOT be null/absent for snapshot readiness; future policy will
-   * supply approved values.
+   * Seller-of-record identity. Approved value: "PARTNER".
+   * Goods sale is Partner → Buyer; LogiMarket is NOT seller of record.
    */
+  sellerOfRecord: string | null;
+
+  /**
+   * Party who issues the goods invoice to Buyer. Approved value: "PARTNER".
+   * LogiMarket does NOT issue the Buyer goods invoice.
+   * Disclosure schema field: goodsInvoiceIssuer.
+   */
+  goodsInvoiceIssuer: "PARTNER" | null;
+
+  // --- Unresolved policy inputs (REQUIRED_POLICY_INPUT) ---
+  // Values below are NOT yet canonically defined by Owner/legal.
+  // The domain fails closed when any is absent.
+  // Future Owner/legal-approved values will be supplied to populate these.
+  //
+  // SELLER_RESPONSIBILITY_POLICY_GAP:
+  //   DELIVERY_COMPLAINT_RETURN_REFUND_SELLER_ROLE_AND_PLATFORM_ROLE_POLICY_REQUIRED
+
   deliveryResponsibility: string | null;
   complaintResponsibility: string | null;
   returnResponsibility: string | null;
   refundFinancialLiability: string | null;
+
+  /**
+   * The legal/commercial role the Seller plays in this order.
+   * Required for marketplace_order_seller_disclosures.sellerRole.
+   * REQUIRED_POLICY_INPUT — exact canonical value not yet authorized.
+   */
+  sellerRole: string | null;
+
+  /**
+   * The role LogiMarket plays in facilitating this order.
+   * Required for marketplace_order_seller_disclosures.logimarketPlatformRole.
+   * REQUIRED_POLICY_INPUT — exact canonical value not yet authorized.
+   */
+  logimarketPlatformRole: string | null;
 }
 
 export type SellerSnapshotValidationResult =
@@ -92,7 +125,8 @@ export function validateSellerSourceForSnapshot(input: SellerSourceInput): Selle
     return { ok: false, reason: "MISSING_FIRM_EMAIL" };
   }
 
-  // Registered address snapshot readiness: require at minimum Line1, postal code, city, country.
+  // Registered address snapshot readiness: require Line1, postal code, city, country.
+  // Line2 and region remain optional.
   if (!isMeaningful(input.registeredAddressLine1)) {
     return { ok: false, reason: "MISSING_REGISTERED_ADDRESS_LINE1" };
   }
@@ -132,18 +166,22 @@ export function validateSellerSourceForSnapshot(input: SellerSourceInput): Selle
     return { ok: false, reason: "INVALID_SELLER_OF_RECORD" };
   }
 
-  if (input.goodsInvoiceResponsibility !== "PARTNER") {
-    return { ok: false, reason: "INVALID_GOODS_INVOICE_RESPONSIBILITY" };
+  // Goods invoice issuer must be explicitly "PARTNER".
+  // LogiMarket does NOT issue goods invoices. No other value is authorized.
+  if (input.goodsInvoiceIssuer !== "PARTNER") {
+    return { ok: false, reason: "INVALID_GOODS_INVOICE_ISSUER" };
   }
 
   // Unresolved policy inputs — fail closed when absent.
   // SELLER_RESPONSIBILITY_POLICY_GAP:
-  //   DELIVERY_COMPLAINT_RETURN_REFUND_AND_DISCLOSURE_ROLE_POLICY_REQUIRED
+  //   DELIVERY_COMPLAINT_RETURN_REFUND_SELLER_ROLE_AND_PLATFORM_ROLE_POLICY_REQUIRED
   if (
     !isMeaningful(input.deliveryResponsibility) ||
     !isMeaningful(input.complaintResponsibility) ||
     !isMeaningful(input.returnResponsibility) ||
-    !isMeaningful(input.refundFinancialLiability)
+    !isMeaningful(input.refundFinancialLiability) ||
+    !isMeaningful(input.sellerRole) ||
+    !isMeaningful(input.logimarketPlatformRole)
   ) {
     return { ok: false, reason: "MISSING_REQUIRED_POLICY_INPUT" };
   }
