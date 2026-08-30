@@ -2650,6 +2650,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const schemaModule = await import("@/lib/schema");
     const db = drizzle(pool, { schema: schemaModule }) as any;
+    const adminContext = { actorUserId: "ci-admin-seller-legal-proof" };
 
     // 1. partner missing
     const res1 = await executeAdminSellerRegistryIdentifierAdd(db, {
@@ -2657,7 +2658,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "KRS",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    });
+    }, adminContext);
     assert.strictEqual(res1.ok, false);
     if (!res1.ok) assert.strictEqual(res1.code, "PARTNER_NOT_FOUND");
 
@@ -2671,7 +2672,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "KRS",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    });
+    }, adminContext);
     assert.strictEqual(res2.ok, false);
     if (!res2.ok) assert.strictEqual(res2.code, "LEGAL_IDENTITY_REQUIRED");
 
@@ -2684,7 +2685,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "KRS",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    });
+    }, adminContext);
     assert.strictEqual(res3.ok, true);
 
     const check1 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
@@ -2730,6 +2731,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const schemaModule = await import("@/lib/schema");
     const db = drizzle(pool, { schema: schemaModule }) as any;
+    const adminContext = { actorUserId: "ci-admin-seller-legal-proof" };
 
     // CASE 4: New identity -> unverified
     const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('LegalCorp', 'legal@corp.com') RETURNING id`);
@@ -2746,7 +2748,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res4.ok, true);
 
     const check4 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
@@ -2768,7 +2770,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res3.ok, true);
 
     const check3 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
@@ -2793,7 +2795,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res1.ok, true);
 
     const check1 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
@@ -2801,6 +2803,18 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(check1.rows[0].verified_at, null);
     assert.strictEqual(check1.rows[0].verification_source, null);
     assert.strictEqual(check1.rows[0].verification_reference, null);
+
+    const eventCheck = await pool.query(
+      `SELECT actor_type, actor_user_id
+       FROM seller_verification_events
+       WHERE legal_identity_partner_id = $1
+       ORDER BY id DESC
+       LIMIT 1`,
+      [pid]
+    );
+    assert.strictEqual(eventCheck.rows.length, 1);
+    assert.strictEqual(eventCheck.rows[0].actor_type, "admin");
+    assert.strictEqual(eventCheck.rows[0].actor_user_id, adminContext.actorUserId);
 
     // Restore verified state for CASE 2
     await pool.query(`UPDATE seller_legal_identities SET verification_status = 'verified', verified_at = '2025-01-01 12:00:00Z', verification_source = 'KRS', verification_reference = '123' WHERE partner_id = $1`, [pid]);
@@ -2817,7 +2831,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res2.ok, true);
 
     const check2 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
