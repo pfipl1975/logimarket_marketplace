@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert";
-import { classifyRuntimeTarget, normalizeCheckConstraintDefinition } from "../../scripts/database/verify-runtime-schema-fingerprint";
+import {
+  classifyRuntimeTarget,
+  normalizeCheckConstraintDefinition,
+  normalizePostgresIdentifier,
+} from "../../scripts/database/verify-runtime-schema-fingerprint";
 import {
   EXPECTED_BASELINE_TABLES,
   PROD_LEGACY_BASELINE_FINGERPRINT,
@@ -29,6 +33,53 @@ function buildSide(fp: typeof PRODUCTION_FINGERPRINT): Record<string, TableFinge
   }
   return actual;
 }
+
+test("POSTGRES_IDENTIFIER_NORMALIZATION models physical 63-byte names exactly", () => {
+  assert.strictEqual(normalizePostgresIdentifier("short_constraint_name"), "short_constraint_name");
+  assert.strictEqual(
+    normalizePostgresIdentifier(
+      "seller_legal_identities_current_verification_event_id_seller_verification_events_id_fk"
+    ),
+    "seller_legal_identities_current_verification_event_id_seller_ve"
+  );
+  assert.notStrictEqual(
+    normalizePostgresIdentifier("distinct_constraint_alpha"),
+    normalizePostgresIdentifier("distinct_constraint_beta")
+  );
+});
+
+test("POST_0006_PHYSICAL_METADATA accepts truncation and NOT VALID text but keeps validation exact", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+
+  for (const table of Object.values(actual)) {
+    for (const constraint of table.constraints) {
+      constraint.name = normalizePostgresIdentifier(constraint.name);
+      if (constraint.isValidated === false) {
+        constraint.definition += " NOT VALID";
+      }
+    }
+  }
+
+  const exact = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
+  assert.strictEqual(exact.state, "EXACT_EXISTING_POST_0006");
+
+  const legalCheck = actual.seller_legal_identities.constraints.find(
+    (constraint) => constraint.name === "chk_legacy_legal_status"
+  );
+  assert.ok(legalCheck);
+
+  legalCheck.name = "chk_legacy_legal_state";
+  const identifierDrift = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
+  assert.strictEqual(identifierDrift.state, "PARTIAL_OR_DRIFTED");
+  assert.ok(identifierDrift.differences.some((difference) => difference.includes("constraint name mismatch")));
+  legalCheck.name = "chk_legacy_legal_status";
+
+  legalCheck.isValidated = true;
+
+  const validationDrift = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
+  assert.strictEqual(validationDrift.state, "PARTIAL_OR_DRIFTED");
+  assert.ok(validationDrift.differences.some((difference) => difference.includes("validation status mismatch")));
+});
 
 // ===========================================================================
 // 1. EMPTY
