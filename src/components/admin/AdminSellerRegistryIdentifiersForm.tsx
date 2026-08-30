@@ -119,6 +119,9 @@ export function AdminSellerRegistryIdentifiersForm({
           case "NOT_FOUND":
             setErrorMsg(dictionary.registryIdentifierNotFound);
             break;
+          case "VERIFICATION_HISTORY_EXISTS":
+            setErrorMsg(dictionary.verificationHistoryExists);
+            break;
           case "SYSTEM_ERROR":
           default:
             setErrorMsg(dictionary.sellerLegalErrorSystem);

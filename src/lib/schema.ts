@@ -16,6 +16,11 @@ import {
   foreignKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
+import type {
+  LegalIdentitySnapshot,
+  RegistryIdentifierSnapshot,
+  TaxIdentifierSnapshot,
+} from "./verification/events-core";
 
 
 export const partners = pgTable("partners", {

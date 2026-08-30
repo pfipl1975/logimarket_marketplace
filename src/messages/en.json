@@ -760,7 +760,7 @@
     "registryIdentifierConflict": "This registry entry already exists.",
     "registryIdentifierNotFound": "Registry entry not found.",
     "addRegistryIdentifierTitle": "Add New Registry Entry",
-    "verificationHistoryExists": "Cannot delete identifier with verification history"
+    "verificationHistoryExists": "Cannot delete identifier with verification history."
   },
   "adminOfferDetail": {
     "errorTitle": "Error loading data",
@@ -1032,6 +1032,5 @@
     "errorDescription": "Failed to create partner.",
     "invalidEmail": "Invalid email address",
     "invalidWebsite": "Invalid URL (must start with http:// or https://)"
-  },
-  "verificationHistoryExists": "Cannot delete: verification history exists."
-}\n
+  }
+}

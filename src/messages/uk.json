@@ -760,7 +760,7 @@
     "registryIdentifierConflict": "Цей запис у реєстрі вже існує.",
     "registryIdentifierNotFound": "Запис у реєстрі не знайдено.",
     "addRegistryIdentifierTitle": "Додати новий запис до реєстру",
-    "verificationHistoryExists": "Cannot delete identifier with verification history"
+    "verificationHistoryExists": "Неможливо видалити ідентифікатор з історією перевірки."
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",
@@ -1032,6 +1032,5 @@
     "errorDescription": "Не вдалося створити партнера.",
     "invalidEmail": "Некоректна адреса e-mail",
     "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
-  },
-  "verificationHistoryExists": "Cannot delete: verification history exists."
-}\n
+  }
+}

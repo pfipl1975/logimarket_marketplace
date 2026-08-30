@@ -760,7 +760,7 @@
     "registryIdentifierConflict": "该注册记录已存在。",
     "registryIdentifierNotFound": "未找到注册记录。",
     "addRegistryIdentifierTitle": "添加新注册记录",
-    "verificationHistoryExists": "Cannot delete identifier with verification history"
+    "verificationHistoryExists": "无法删除具有验证历史记录的标识符。"
   },
   "adminOfferDetail": {
     "errorTitle": "加载数据出错",
@@ -1032,6 +1032,5 @@
     "errorDescription": "无法创建合作伙伴。",
     "invalidEmail": "邮箱地址无效",
     "invalidWebsite": "URL 无效（必须以 http:// 或 https:// 开头）"
-  },
-  "verificationHistoryExists": "Cannot delete: verification history exists."
-}\n
+  }
+}

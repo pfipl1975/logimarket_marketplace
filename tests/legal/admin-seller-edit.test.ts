@@ -18,6 +18,7 @@ import {
 
 } from "../../src/lib/admin/partner-edit-core";
 import { buildSellerDisclosure } from "../../src/lib/legal/seller-disclosure";
+import { executeAdminSellerRegistryIdentifierAdd, executeAdminSellerRegistryIdentifierDelete, AdminSellerRegistryIdentifierAddInput, AdminSellerRegistryIdentifierDeleteInput } from "../../src/lib/admin/partner-edit-core";
 
 describe("Admin Seller Legal Data Save Input Validation", () => {
   test("businessEmail > 100 chars -> rejected", () => {
@@ -306,6 +307,23 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
 });
 
 describe("Execute Admin Seller Tax Identifier Delete", () => {
+  test('history exists -> blocked', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: true });
+    const input = { adminUserId: 'admin', partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
+  });
+
+  test('23503 -> VERIFICATION_HISTORY_EXISTS', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    db.delete = () => ({ where: () => { throw { code: '23503' }; } });
+    const input = { adminUserId: 'admin', partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
+  });
+
   test("no matching scoped row -> NOT_FOUND", async () => {
     const db = new FakeDb({ deleteReturnsRow: false, partnerExists: false });
     const input = { adminUserId: "admin", partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
@@ -315,7 +333,7 @@ describe("Execute Admin Seller Tax Identifier Delete", () => {
   });
 
   test("successful scoped delete -> DELETED and behavioral query proof contains BOTH taxIdentifierId and partnerId", async () => {
-    const db = new FakeDb({ deleteReturnsRow: true });
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
     const input = { adminUserId: "admin", partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
     const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
 
@@ -405,5 +423,55 @@ describe("Admin Seller Registry Identifier Add Input Validation", () => {
   test("oversized registryValue -> rejected", () => {
     const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "a".repeat(101), jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+});
+
+describe('Execute Admin Seller Registry Identifier Add', () => {
+  test('explicit create defaults', async () => {
+    const db = new FakeDb({});
+    const input = { adminUserId: 'admin', partnerId: 1, registryType: 'VAT', registryValue: '123', jurisdictionCountry: 'PL' } satisfies AdminSellerRegistryIdentifierAddInput;
+    const res = await executeAdminSellerRegistryIdentifierAdd(db as never, input);
+    assert.strictEqual(res.ok, true);
+    assert.strictEqual(db.inserts.length, 1);
+    assert.strictEqual(db.inserts[0].values.verificationStatus, 'unverified');
+    assert.strictEqual(db.inserts[0].values.currentVerificationEventId, null);
+    assert.strictEqual(db.inserts[0].values.retiredAt, null);
+  });
+});
+
+describe('Execute Admin Seller Registry Identifier Delete', () => {
+  test('legacy NULL no history -> deleted', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    const originalSelect = db.select.bind(db);
+    db.select = () => {
+      const chain = originalSelect();
+      const oldFor = chain.for;
+      chain.for = () => {
+         const res = oldFor();
+         if (res.length > 0) Object.defineProperty(res[0], 'verificationStatus', { value: null, writable: true });
+         return res;
+      };
+      return chain;
+    };
+    const input = { adminUserId: 'admin', partnerId: 1, registryIdentifierId: 2 } satisfies AdminSellerRegistryIdentifierDeleteInput;
+    const res = await executeAdminSellerRegistryIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, true);
+  });
+
+  test('history exists -> blocked', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: true });
+    const input = { adminUserId: 'admin', partnerId: 1, registryIdentifierId: 2 } satisfies AdminSellerRegistryIdentifierDeleteInput;
+    const res = await executeAdminSellerRegistryIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
+  });
+
+  test('23503 -> VERIFICATION_HISTORY_EXISTS', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    db.delete = () => ({ where: () => { throw { code: '23503' }; } });
+    const input = { adminUserId: 'admin', partnerId: 1, registryIdentifierId: 2 } satisfies AdminSellerRegistryIdentifierDeleteInput;
+    const res = await executeAdminSellerRegistryIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
   });
 });

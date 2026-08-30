@@ -760,7 +760,7 @@
     "registryIdentifierConflict": "Dieser Registereintrag existiert bereits.",
     "registryIdentifierNotFound": "Registereintrag nicht gefunden.",
     "addRegistryIdentifierTitle": "Neuen Registereintrag hinzufügen",
-    "verificationHistoryExists": "Cannot delete identifier with verification history"
+    "verificationHistoryExists": "Kennung mit Verifizierungsverlauf kann nicht gelöscht werden."
   },
   "adminOfferDetail": {
     "errorTitle": "Fehler beim Laden der Daten",
@@ -1032,6 +1032,5 @@
     "errorDescription": "Partner konnte nicht erstellt werden.",
     "invalidEmail": "Ungültige E-Mail-Adresse",
     "invalidWebsite": "Ungültige URL"
-  },
-  "verificationHistoryExists": "Cannot delete: verification history exists."
-}\n
+  }
+}

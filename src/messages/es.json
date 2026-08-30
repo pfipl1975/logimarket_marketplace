@@ -760,7 +760,7 @@
     "registryIdentifierConflict": "Esta entrada de registro ya existe.",
     "registryIdentifierNotFound": "Entrada de registro no encontrada.",
     "addRegistryIdentifierTitle": "Agregar nueva entrada de registro",
-    "verificationHistoryExists": "Cannot delete identifier with verification history"
+    "verificationHistoryExists": "No se puede eliminar un identificador con historial de verificación."
   },
   "adminOfferDetail": {
     "errorTitle": "Error al cargar datos",
@@ -1032,6 +1032,5 @@
     "errorDescription": "Error al crear socio.",
     "invalidEmail": "Correo electrónico inválido",
     "invalidWebsite": "URL inválida"
-  },
-  "verificationHistoryExists": "Cannot delete: verification history exists."
-}\n
+  }
+}

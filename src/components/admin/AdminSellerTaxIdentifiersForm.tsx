@@ -120,6 +120,7 @@ export function AdminSellerTaxIdentifiersForm({
         router.refresh();
       } else {
         if (result.code === "NOT_FOUND") setError(dictionary.taxIdentifierNotFound);
+        else if (result.code === "VERIFICATION_HISTORY_EXISTS") setError(dictionary.verificationHistoryExists);
         else setError(dictionary.sellerLegalErrorSystem);
       }
     });
