@@ -146,7 +146,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> 0000 -> 0001 -> 0002 -> 0003 -> 0004 -> 0005",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0006",
     async () => {
       await cleanDB();
 
@@ -185,14 +185,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(Number(stats.rls_tables), EXPECTED_COUNTS.RLS_ENABLED, "rls_tables mismatch");
       assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0005
+      // Post-migration classification must be the exact terminal runtime state.
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
 
       // 0004 PROOF
       const sellerColumnNames = new Set(
@@ -513,11 +513,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `, [soId]);
       assert.ok(validDecRes.rows[0].id);
 
-      // Journal check: exactly 6 rows
+      // Journal must match the complete disk migration chain.
       const diskMigrations = readMigrationFiles({
         migrationsFolder: MIGRATIONS_DIR,
       });
-      assert.strictEqual(diskMigrations.length, 6, "Disk migrations should have 6 files");
+      assert.ok(diskMigrations.length > 0, "Disk migration chain must not be empty");
 
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
@@ -527,11 +527,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length, 6,
-        "Journal should have exactly 6 rows",
+        journalRows.length, diskMigrations.length,
+        "Journal should match the complete disk migration chain",
       );
 
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
           journalRows[i].hash,
           diskMigrations[i].hash,
@@ -546,7 +546,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> 0003 -> 0004 -> 0005", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0006", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -560,12 +560,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0005
+    // Post-migration classification must be EXACT_EXISTING_POST_0006
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
 
-    // Journal check: exactly 6 rows
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
       `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
     );
@@ -574,8 +574,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       created_at: string | number;
     }[];
     assert.strictEqual(
-      journalRows.length, 6,
-      "Journal should have exactly 6 rows",
+      journalRows.length, diskMigrations.length,
+      "Journal should match the complete disk migration chain",
     );
   });
 
@@ -735,15 +735,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0005
+      // Post-migration classification must be EXACT_EXISTING_POST_0006
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
 
-      // Journal check: exactly 6 rows
+      const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
       );
@@ -752,8 +752,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length, 6,
-        "Journal should have exactly 6 rows",
+        journalRows.length, diskMigrations.length,
+        "Journal should match the complete disk migration chain",
       );
     },
   );
@@ -2523,20 +2523,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await t.test("SELLER_VERIFICATION_EVIDENCE_MUTATION_PROOF", async () => {
     await cleanDB();
     await runMigrations(process.env);
-    
-    // Execute our generated migration
-    const m0005Sql = fs.readFileSync("drizzle/0005_hard_venom.sql", "utf-8");
-    await pool.query(m0005Sql);
-    
+
+    // The feature schema must exist solely through the canonical runtime chain.
     // 1. Verify schema existence and constraints
     const tableRes = await pool.query(`SELECT to_regclass('public.seller_verification_events') AS exists`);
     assert.notEqual(tableRes.rows[0].exists, null, "seller_verification_events must exist");
 
     // 2. Test Append-Only Trigger
-    const { drizzle } = await import("drizzle-orm/node-postgres");
-    const schemaModule = await import("@/lib/schema");
-    const db = drizzle(pool, { schema: schemaModule }) as any;
-    
     const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Test', 'test@test.com') RETURNING id`);
     const pid = pRes.rows[0].id;
     await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'Legal Name', 'PL')`, [pid]);
@@ -2566,6 +2559,43 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       if (err.code === '55000') deleteFailed = true;
     }
     assert.ok(deleteFailed, "Trigger must block DELETE");
+
+    // The nullable current-event pointer accepts the matching event and rejects
+    // a nonexistent event through the canonical FK.
+    await pool.query(
+      `UPDATE seller_legal_identities SET current_verification_event_id = $1 WHERE partner_id = $2`,
+      [eventId, pid],
+    );
+    let currentEventFkFailed = false;
+    try {
+      await pool.query(
+        `UPDATE seller_legal_identities SET current_verification_event_id = $1 WHERE partner_id = $2`,
+        [eventId + 999999, pid],
+      );
+    } catch (err: any) {
+      if (err.code === "23503") currentEventFkFailed = true;
+    }
+    assert.ok(currentEventFkFailed, "Current verification event FK must reject a missing event");
+
+    let subjectMatrixFailed = false;
+    try {
+      await pool.query(`
+        INSERT INTO seller_verification_events (
+          subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
+        ) VALUES ('tax_identifier', $1, 'verified', 'system', 'system_rule', '{}'::jsonb)
+      `, [pid]);
+    } catch (err: any) {
+      if (err.code === "23514") subjectMatrixFailed = true;
+    }
+    assert.ok(subjectMatrixFailed, "Subject matrix must reject inconsistent ownership columns");
+
+    let historyProtectionFailed = false;
+    try {
+      await pool.query(`DELETE FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    } catch (err: any) {
+      if (err.code === "23503") historyProtectionFailed = true;
+    }
+    assert.ok(historyProtectionFailed, "Verification history FK must protect its subject from hard delete");
   });
 
   await t.test("ADMIN_PARTNER_CREATE_MUTATION_PROOF", async () => {

@@ -34,6 +34,14 @@ export function validateAppliedMigrationPrefix(
     if (appliedRows.length !== 5) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is EXACT_EXISTING but journal has ${appliedRows.length} rows)`);
     }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0005") {
+    if (appliedRows.length !== 6) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0005 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0006") {
+    if (appliedRows.length !== 7) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0006 but journal has ${appliedRows.length} rows)`);
+    }
   } else if (schemaClassificationState === "PARTIAL_OR_DRIFTED") {
     throw new Error(`RUNNER: BLOCKED. Schema is PARTIAL_OR_DRIFTED`);
   } else if (schemaClassificationState === "MIGRATABLE_PROD_LEGACY" || schemaClassificationState === "MIGRATABLE_BASELINE") {

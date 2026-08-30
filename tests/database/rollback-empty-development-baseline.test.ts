@@ -23,6 +23,7 @@ test("executeRollback drop order and statements", async () => {
   assert.strictEqual(queries[queries.length - 1], "COMMIT");
 
   const dropTables = queries.filter(q => q.startsWith("DROP TABLE IF EXISTS public."));
+  const cycleConstraintDrops = queries.filter(q => q.startsWith("ALTER TABLE public.") && q.includes("current_verification_event_id") && q.includes("DROP CONSTRAINT"));
 
   // No CASCADE
   for (const q of queries) {
@@ -30,6 +31,11 @@ test("executeRollback drop order and statements", async () => {
   }
 
   assert.strictEqual(dropTables.length, EXPECTED_COUNTS.TABLES);
+  assert.deepStrictEqual(cycleConstraintDrops, [
+    "ALTER TABLE public.seller_legal_identities DROP CONSTRAINT IF EXISTS seller_legal_identities_current_verification_event_id_seller_verification_events_id_fk",
+    "ALTER TABLE public.seller_tax_identifiers DROP CONSTRAINT IF EXISTS seller_tax_identifiers_current_verification_event_id_seller_verification_events_id_fk",
+    "ALTER TABLE public.seller_registry_identifiers DROP CONSTRAINT IF EXISTS seller_registry_identifiers_current_verification_event_id_seller_verification_events_id_fk",
+  ]);
 
   const dropSequences = queries.filter(q => q.startsWith("DROP SEQUENCE IF EXISTS public."));
   assert.strictEqual(dropSequences.length, EXPECTED_COUNTS.SEQUENCES);
@@ -86,6 +92,14 @@ test("executeRollback drop order and statements", async () => {
   assert.ok(indexOf("marketplace_order_seller_disclosures") < indexOf("marketplace_orders"));
   assert.ok(indexOf("marketplace_order_seller_disclosures") < indexOf("partners"));
   assert.ok(indexOf("marketplace_orders") < indexOf("buyer_legal_context_snapshots"));
+
+  // post-0006 verification history: explicit cycle-breaking FKs first, then
+  // the history child before each subject parent.
+  const firstTableDropIdx = queries.indexOf(dropTables[0]);
+  assert.ok(cycleConstraintDrops.every(q => queries.indexOf(q) < firstTableDropIdx));
+  assert.ok(indexOf("seller_verification_events") < indexOf("seller_legal_identities"));
+  assert.ok(indexOf("seller_verification_events") < indexOf("seller_tax_identifiers"));
+  assert.ok(indexOf("seller_verification_events") < indexOf("seller_registry_identifiers"));
 
   // journal usuwany przed schema
   const journalTableIdx = queries.findIndex(q => q === `DROP TABLE IF EXISTS drizzle_runtime."__drizzle_migrations"`);

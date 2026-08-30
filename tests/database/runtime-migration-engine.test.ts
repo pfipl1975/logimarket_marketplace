@@ -45,10 +45,22 @@ import {
 // ---------------------------------------------------------------------------
 
 const FAKE_HASH = crypto.createHash("sha256").update("SELECT 1;").digest("hex");
-const exactFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }, { folderMillis: 1785591500000, hash: FAKE_HASH }, { folderMillis: 1785592000000, hash: FAKE_HASH }];
-const exactFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }, { tag: "fake_tag_0004", when: 1785591500000 }, { tag: "fake_tag_0005", when: 1785592000000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }, { tag: "fake_tag_0004", when: 1785591500000 }, { tag: "fake_tag_0005", when: 1785592000000 }] }});
-const prevFakeRead = () => [{ folderMillis: 1785589560000, hash: FAKE_HASH }, { folderMillis: 1785590000000, hash: FAKE_HASH }, { folderMillis: 1785590500000, hash: FAKE_HASH }, { folderMillis: 1785591000000, hash: FAKE_HASH }];
-const prevFakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }, { tag: "fake_tag_0001", when: 1785590000000 }, { tag: "fake_tag_0002", when: 1785590500000 }, { tag: "fake_tag_0003", when: 1785591000000 }] }});
+const exactJournalEntries = [
+  { tag: "fake_tag_0000", when: 1785589560000 },
+  { tag: "fake_tag_0001", when: 1785590000000 },
+  { tag: "fake_tag_0002", when: 1785590500000 },
+  { tag: "fake_tag_0003", when: 1785591000000 },
+  { tag: "fake_tag_0004", when: 1785591500000 },
+  { tag: "fake_tag_0005", when: 1785592000000 },
+  { tag: "fake_tag_0006", when: 1785592500000 },
+];
+const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
+const exactFakeReadFn = () => ({
+  text: JSON.stringify({ entries: exactJournalEntries }),
+  parsed: { entries: exactJournalEntries },
+});
+const prevFakeRead = exactFakeRead;
+const prevFakeReadFn = exactFakeReadFn;
 const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }});
 const FAKE_DEV_URL = "postgres://postgres.devref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 const FAKE_PROD_URL = "postgres://postgres.prodref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
@@ -136,7 +148,10 @@ function metadataRouter(options?: MetadataOptions): Router {
     }
     if (t.includes("trigger_count")) {
       return {
-        rows: tables.map((n) => ({ table_name: n, trigger_count: asNum ? 0 : "0" })),
+        rows: tables.map((n) => ({
+          table_name: n,
+          trigger_count: asNum ? (fp[n].triggerCount ?? 0) : String(fp[n].triggerCount ?? 0),
+        })),
       };
     }
     // Indexes — must be checked before pg_attribute (index query joins it)
@@ -214,6 +229,8 @@ function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PART
               { hash: FAKE_HASH, created_at: "1785590000000" },
               { hash: FAKE_HASH, created_at: "1785590500000" },
               { hash: FAKE_HASH, created_at: "1785591000000" },
+              { hash: FAKE_HASH, created_at: "1785591500000" },
+              { hash: FAKE_HASH, created_at: "1785592000000" },
             ],
           })
         : state === "BASELINE"
@@ -406,7 +423,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0005");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0006");
 });
 
 test("TARGET: PARTIAL_OR_DRIFTED when missing table", () => {
@@ -1102,11 +1119,11 @@ test("RUNNER_POSTCHECK_DRIFT_TEST: post-check drift causes error after migration
   assert.ok(state.ended);
 });
 
-test("RUNNER_POST0003_STAYS_POST0003_BLOCK: post-check fails if POST_0003 migration doesn't reach POST_0004", async () => {
+test("RUNNER_POST0005_STAYS_POST0005_BLOCK: post-check fails if 0006 is not applied", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; }; // Does not change schema
 
-  // Use runnerRouter("PREVIOUS") which simulates MIGRATABLE_POST_0003
+  // PREVIOUS is the exact post-0005 predecessor state.
   const { state, factory } = fakeRunnerPool(runnerRouter("PREVIOUS", PREVIOUS_PRODUCTION_FINGERPRINT));
   const env = Object.assign(emptyEnv(), {
     DB_WRITES_ALLOWED_TO_DEV: "YES",
@@ -1123,7 +1140,9 @@ test("RUNNER_POST0003_STAYS_POST0003_BLOCK: post-check fails if POST_0003 migrat
         { folderMillis: 1785590000000, hash: FAKE_HASH },
         { folderMillis: 1785590500000, hash: FAKE_HASH },
         { folderMillis: 1785591000000, hash: FAKE_HASH },
-        { folderMillis: 1785591500000, hash: FAKE_HASH }
+        { folderMillis: 1785591500000, hash: FAKE_HASH },
+        { folderMillis: 1785592000000, hash: FAKE_HASH },
+        { folderMillis: 1785592500000, hash: FAKE_HASH }
       ]) as never,
       (() => ({
         text: "{}",
@@ -1133,7 +1152,9 @@ test("RUNNER_POST0003_STAYS_POST0003_BLOCK: post-check fails if POST_0003 migrat
             { tag: "0001_rfq_workflow_hardening", when: 1785590000000 },
             { tag: "0002_seller_identity_56b1", when: 1785590500000 },
             { tag: "0003_prod_legacy_offer_reconciliation", when: 1785591000000 },
-            { tag: "0004_seller_registered_address", when: 1785591500000 }
+            { tag: "0004_seller_registered_address", when: 1785591500000 },
+            { tag: "0005_marketplace_order_56b2a", when: 1785592000000 },
+            { tag: "0006_seller_verification_evidence", when: 1785592500000 }
           ]
         }
       })) as never,
@@ -1378,7 +1399,7 @@ test("ROLLBACK_LATER_MIGRATION_TEST: rejects a journal entry beyond the expected
   );
   const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
   assert.strictEqual(result.allowed, false);
-  assert.ok(result.reason?.includes("7 entries"));
+  assert.ok(result.reason?.includes(`${exactFakeRead().length + 1} entries`));
 });
 
 test("ROLLBACK_JOURNAL_ORDER_TEST: rejects a timestamp mismatch within the migration chain", async () => {
@@ -1431,7 +1452,7 @@ test("COUNT_NUMBER_HANDLING_TEST: numeric policy/trigger counts parse to numbers
   for (const t of EXPECTED_BASELINE_TABLES) {
     assert.strictEqual(typeof fingerprint[t].policyCount, "number");
     assert.strictEqual(fingerprint[t].policyCount, 0);
-    assert.strictEqual(fingerprint[t].triggerCount, 0);
+    assert.strictEqual(fingerprint[t].triggerCount, PRODUCTION_FINGERPRINT[t].triggerCount ?? 0);
   }
 });
 
@@ -1518,6 +1539,11 @@ test("ROLLBACK: journal table is dropped explicitly before DROP SCHEMA (no CASCA
 test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
   const { client, statements } = recordingClient();
   await executeRollback(client);
+  const cycleConstraintDrops = statements.filter(
+    (statement) => statement.startsWith("ALTER TABLE public.") &&
+      statement.includes("current_verification_event_id") &&
+      statement.includes("DROP CONSTRAINT")
+  );
   const droppedTables = statements
     .map((s) => s.match(/DROP TABLE IF EXISTS public\.(\w+)/)?.[1])
     .filter(Boolean);
@@ -1531,6 +1557,12 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
   assert.ok(indexOf("seller_orders") < indexOf("marketplace_orders"));
   assert.ok(indexOf("marketplace_order_seller_disclosures") < indexOf("marketplace_orders"));
   assert.ok(indexOf("marketplace_orders") < indexOf("buyer_legal_context_snapshots"));
+  assert.strictEqual(cycleConstraintDrops.length, 3);
+  const firstTableDropIndex = statements.findIndex((statement) => statement.startsWith("DROP TABLE IF EXISTS public."));
+  assert.ok(cycleConstraintDrops.every((statement) => statements.indexOf(statement) < firstTableDropIndex));
+  assert.ok(indexOf("seller_verification_events") < indexOf("seller_legal_identities"));
+  assert.ok(indexOf("seller_verification_events") < indexOf("seller_tax_identifiers"));
+  assert.ok(indexOf("seller_verification_events") < indexOf("seller_registry_identifiers"));
 });
 
 // ---------------------------------------------------------------------------

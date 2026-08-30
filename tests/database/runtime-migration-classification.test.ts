@@ -7,6 +7,7 @@ import {
   CANONICAL_0000_BASELINE_FINGERPRINT,
   PRE_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0005_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT
 } from "../../scripts/database/runtime-migration-contract";
 import type { TableFingerprintSide } from "../../scripts/database/verify-runtime-schema-fingerprint";
@@ -23,7 +24,7 @@ function buildSide(fp: typeof PRODUCTION_FINGERPRINT): Record<string, TableFinge
       ...JSON.parse(JSON.stringify(fp[table])),
       rlsForced: false,
       policyCount: 0,
-      triggerCount: 0,
+      triggerCount: fp[table].triggerCount ?? 0,
     };
   }
   return actual;
@@ -97,12 +98,18 @@ test("TARGET_EXACT_POST_0003", () => {
 });
 
 // ===========================================================================
-// 5.5 POST-0005 exact - EXACT_EXISTING_POST_0005
+// 5.5 POST-0005 exact predecessor
 // ===========================================================================
 test("TARGET_EXACT_POST_0005", () => {
+  const actual = buildSide(FINAL_POST_0005_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual));
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0005");
+});
+
+test("TARGET_EXACT_POST_0006", () => {
   const actual = buildSide(PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0005");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0006");
 });
 
 // ===========================================================================

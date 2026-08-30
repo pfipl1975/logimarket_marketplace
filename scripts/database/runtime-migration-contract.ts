@@ -22,6 +22,7 @@ export const EXPECTED_BASELINE_TABLES = [
   "seller_legal_identities",
   "seller_registry_identifiers",
   "seller_tax_identifiers",
+  "seller_verification_events",
   "buyer_legal_context_snapshots",
   "marketplace_orders",
   "marketplace_order_seller_disclosures",
@@ -32,16 +33,17 @@ export const EXPECTED_BASELINE_TABLES = [
 ];
 
 export const EXPECTED_COUNTS = {
-  TABLES: 26,
+  get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
   get COLUMNS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.columns.length, 0); },
-  SEQUENCES: 24,
-  PRIMARY_KEYS: 26,
-  FOREIGN_KEYS: 33,
-  UNIQUE_CONSTRAINTS: 17,
-  CHECK_CONSTRAINTS: 28,
-  INDEXES: 56, // 26 PK + 17 UC + 13 explicit
-  RLS_ENABLED: 19,
-  POLICIES: 0
+  get SEQUENCES() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.columns.filter((c) => c.sequenceName !== null).length, 0); },
+  get PRIMARY_KEYS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.constraints.filter((c) => c.type === "PRIMARY KEY").length, 0); },
+  get FOREIGN_KEYS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.constraints.filter((c) => c.type === "FOREIGN KEY").length, 0); },
+  get UNIQUE_CONSTRAINTS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.constraints.filter((c) => c.type === "UNIQUE").length, 0); },
+  get CHECK_CONSTRAINTS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.constraints.filter((c) => c.type === "CHECK").length, 0); },
+  get INDEXES() { return this.PRIMARY_KEYS + this.UNIQUE_CONSTRAINTS + Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + b.explicitIndexes.length, 0); },
+  get RLS_ENABLED() { return Object.values(PRODUCTION_FINGERPRINT).filter((table) => table.rlsEnabled).length; },
+  get POLICIES() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + (b.policyCount ?? 0), 0); },
+  get TRIGGERS() { return Object.values(PRODUCTION_FINGERPRINT).reduce((a, b) => a + (b.triggerCount ?? 0), 0); }
 };
 
 export const RUNTIME_ENV_VARS = [
@@ -112,6 +114,9 @@ export type TableContract = {
   constraints: ConstraintContract[];
   explicitIndexes: IndexContract[];
   rlsEnabled: boolean;
+  rlsForced?: boolean;
+  policyCount?: number;
+  triggerCount?: number;
 };
 
 // ---------------------------------------------------------------------------
@@ -879,5 +884,97 @@ export const FINAL_POST_0005_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0004_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0005_PRODUCTION_FINGERPRINT;
+// ---------------------------------------------------------------------------
+// 7. FINAL_POST_0006_PRODUCTION_FINGERPRINT
+// Seller Verification Evidence: immutable history plus nullable current links.
+// ---------------------------------------------------------------------------
+export const FINAL_POST_0006_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0005_PRODUCTION_FINGERPRINT,
+  "seller_legal_identities": {
+    ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_legal_identities"],
+    columns: [
+      ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_legal_identities"].columns,
+      { name: "current_verification_event_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_legal_identities"].constraints,
+      { name: "chk_legacy_legal_status", type: "CHECK", definition: "CHECK (((verification_status)::text = ANY ((ARRAY['unverified'::character varying, 'verified'::character varying, 'rejected'::character varying])::text[])))", isValidated: false },
+      { name: "seller_legal_identities_current_verification_event_id_seller_verification_events_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (current_verification_event_id) REFERENCES seller_verification_events(id)" }
+    ]
+  },
+  "seller_tax_identifiers": {
+    ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_tax_identifiers"],
+    columns: [
+      ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_tax_identifiers"].columns,
+      { name: "current_verification_event_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "retired_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_tax_identifiers"].constraints,
+      { name: "chk_legacy_tax_status", type: "CHECK", definition: "CHECK (((verification_status)::text = ANY ((ARRAY['unverified'::character varying, 'verified'::character varying, 'rejected'::character varying])::text[])))", isValidated: false },
+      { name: "seller_tax_identifiers_current_verification_event_id_seller_verification_events_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (current_verification_event_id) REFERENCES seller_verification_events(id)" }
+    ]
+  },
+  "seller_registry_identifiers": {
+    ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_registry_identifiers"],
+    columns: [
+      ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_registry_identifiers"].columns,
+      { name: "verification_status", type: "character varying(30)", nullable: true, defaultVal: "'unverified'::character varying", sequenceName: null },
+      { name: "verified_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "verification_source", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "verification_reference", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "current_verification_event_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "retired_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      ...FINAL_POST_0005_PRODUCTION_FINGERPRINT["seller_registry_identifiers"].constraints,
+      { name: "chk_legacy_registry_status", type: "CHECK", definition: "CHECK (((verification_status IS NULL) OR ((verification_status)::text = ANY ((ARRAY['unverified'::character varying, 'verified'::character varying, 'rejected'::character varying])::text[]))))", isValidated: false },
+      { name: "seller_registry_identifiers_current_verification_event_id_seller_verification_events_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (current_verification_event_id) REFERENCES seller_verification_events(id)" }
+    ]
+  },
+  "seller_verification_events": {
+    name: "seller_verification_events",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_verification_events_id_seq'::regclass)", sequenceName: "seller_verification_events_id_seq" },
+      { name: "subject_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "legal_identity_partner_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "tax_identifier_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "registry_identifier_id", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "event_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "actor_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "actor_user_id", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "source_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "source_name", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "source_reference", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "reason_code", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "subject_snapshot", type: "jsonb", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "previous_verification_status", type: "character varying(30)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "previous_verified_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "previous_verification_source", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "previous_verification_reference", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "occurred_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "seller_verification_events_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "subject_matrix_check", type: "CHECK", definition: "CHECK (((((subject_type)::text = 'legal_identity'::text) AND (legal_identity_partner_id IS NOT NULL) AND (tax_identifier_id IS NULL) AND (registry_identifier_id IS NULL)) OR (((subject_type)::text = 'tax_identifier'::text) AND (legal_identity_partner_id IS NULL) AND (tax_identifier_id IS NOT NULL) AND (registry_identifier_id IS NULL)) OR (((subject_type)::text = 'registry_identifier'::text) AND (legal_identity_partner_id IS NULL) AND (tax_identifier_id IS NULL) AND (registry_identifier_id IS NOT NULL))))" },
+      { name: "event_type_check", type: "CHECK", definition: "CHECK (((event_type)::text = ANY ((ARRAY['verified'::character varying, 'rejected'::character varying, 'invalidated'::character varying])::text[])))" },
+      { name: "actor_type_check", type: "CHECK", definition: "CHECK (((actor_type)::text = ANY ((ARRAY['admin'::character varying, 'system'::character varying, 'external_adapter'::character varying])::text[])))" },
+      { name: "actor_matrix_check", type: "CHECK", definition: "CHECK (((((actor_type)::text = 'admin'::text) AND (actor_user_id IS NOT NULL)) OR (((actor_type)::text = 'system'::text) AND (actor_user_id IS NULL)) OR (((actor_type)::text = 'external_adapter'::text) AND (actor_user_id IS NULL))))" },
+      { name: "source_type_check", type: "CHECK", definition: "CHECK (((source_type)::text = ANY ((ARRAY['admin_manual'::character varying, 'public_registry_manual'::character varying, 'partner_document'::character varying, 'external_adapter'::character varying, 'system_rule'::character varying])::text[])))" },
+      { name: "seller_verification_events_legal_identity_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (legal_identity_partner_id) REFERENCES seller_legal_identities(partner_id) ON DELETE RESTRICT" },
+      { name: "seller_verification_events_tax_identifier_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (tax_identifier_id) REFERENCES seller_tax_identifiers(id) ON DELETE RESTRICT" },
+      { name: "seller_verification_events_registry_identifier_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (registry_identifier_id) REFERENCES seller_registry_identifiers(id) ON DELETE RESTRICT" }
+    ],
+    explicitIndexes: [
+      { name: "idx_verification_events_legal_subject", method: "btree", expressions: "legal_identity_partner_id" },
+      { name: "idx_verification_events_tax_subject", method: "btree", expressions: "tax_identifier_id" },
+      { name: "idx_verification_events_registry_subject", method: "btree", expressions: "registry_identifier_id" }
+    ],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 1
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0005_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0006_PRODUCTION_FINGERPRINT;

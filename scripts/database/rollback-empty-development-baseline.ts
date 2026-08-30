@@ -52,6 +52,7 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "offer_attribute_values",
   "category_attribute_assignments",
   "offers",
+  "seller_verification_events",
   "seller_tax_identifiers",
   "seller_registry_identifiers",
   "seller_eligibility",
@@ -63,6 +64,21 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "attribute_definitions",
   "categories",
   "partners",
+] as const;
+
+const CYCLIC_CURRENT_EVENT_FOREIGN_KEYS = [
+  {
+    tableName: "seller_legal_identities",
+    constraintName: "seller_legal_identities_current_verification_event_id_seller_verification_events_id_fk",
+  },
+  {
+    tableName: "seller_tax_identifiers",
+    constraintName: "seller_tax_identifiers_current_verification_event_id_seller_verification_events_id_fk",
+  },
+  {
+    tableName: "seller_registry_identifiers",
+    constraintName: "seller_registry_identifiers_current_verification_event_id_seller_verification_events_id_fk",
+  },
 ] as const;
 
 const EXPECTED_SEQUENCES: readonly string[] = Array.from(
@@ -97,6 +113,24 @@ function validateRollbackContract(): RollbackPreflightResult {
     EXPECTED_SEQUENCES.length !== EXPECTED_COUNTS.SEQUENCES
   ) {
     return { allowed: false, reason: "Authoritative rollback contract has inconsistent counts" };
+  }
+
+  const expectedCurrentEventForeignKeys = EXPECTED_BASELINE_TABLES.flatMap((tableName) =>
+    PRODUCTION_FINGERPRINT[tableName].constraints
+      .filter((constraint) =>
+        constraint.type === "FOREIGN KEY" &&
+        constraint.definition.includes("REFERENCES seller_verification_events(id)")
+      )
+      .map((constraint) => `${tableName}.${constraint.name}`)
+  ).sort();
+  const rollbackCycleForeignKeys = CYCLIC_CURRENT_EVENT_FOREIGN_KEYS
+    .map(({ tableName, constraintName }) => `${tableName}.${constraintName}`)
+    .sort();
+  if (
+    expectedCurrentEventForeignKeys.length !== CYCLIC_CURRENT_EVENT_FOREIGN_KEYS.length ||
+    expectedCurrentEventForeignKeys.some((name, index) => name !== rollbackCycleForeignKeys[index])
+  ) {
+    return { allowed: false, reason: "Rollback cyclic FK allowlist does not match the authoritative baseline" };
   }
 
   return { allowed: true };
@@ -170,10 +204,10 @@ export async function verifyRollbackPreconditions(
     }
   }
 
-  // 5. Full fingerprint must be the authoritative post-0005 state
+  // 5. Full fingerprint must be the authoritative post-0006 state
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables);
-  if (classification.state !== "EXACT_EXISTING_POST_0005") {
+  if (classification.state !== "EXACT_EXISTING_POST_0006") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,
@@ -264,6 +298,14 @@ export async function executeRollback(client: Queryable): Promise<void> {
 
   await client.query("BEGIN");
   try {
+    // Break the three explicit current-event back-references before dropping
+    // the event table. Its subject FKs point the other way, forming a cycle.
+    for (const { tableName, constraintName } of CYCLIC_CURRENT_EVENT_FOREIGN_KEYS) {
+      await client.query(
+        `ALTER TABLE public.${tableName} DROP CONSTRAINT IF EXISTS ${constraintName}`
+      );
+    }
+
     // Drop tables in explicit reverse dependency order — NO CASCADE
     for (const tableName of REVERSE_DROP_ORDER) {
       await client.query(`DROP TABLE IF EXISTS public.${tableName}`);
