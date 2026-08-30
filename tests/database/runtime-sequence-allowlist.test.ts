@@ -20,6 +20,7 @@ import {
   EXPECTED_RUNTIME_SEQUENCES,
 } from "../../scripts/database/verify-runtime-data-api-grants";
 import {
+  EXPECTED_COUNTS,
   EXPECTED_BASELINE_TABLES,
   PRODUCTION_FINGERPRINT,
 } from "../../scripts/database/runtime-migration-contract";
@@ -131,9 +132,9 @@ function fakeDb(opts: { seqAclRows?: AclRow[]; tableAclRows?: AclRow[] }): {
 // 1-4. Allowlist parity with both authoritative sources
 // ---------------------------------------------------------------------------
 
-test("ALLOWLIST: exact runtime sequence allowlist contains 17 names", () => {
-  assert.strictEqual(EXPECTED_RUNTIME_SEQUENCES.length, 17);
-  assert.strictEqual(new Set(EXPECTED_RUNTIME_SEQUENCES).size, 17, "names must be unique");
+test("ALLOWLIST: exact runtime sequence allowlist matches the post-0005 contract", () => {
+  assert.strictEqual(EXPECTED_RUNTIME_SEQUENCES.length, EXPECTED_COUNTS.SEQUENCES);
+  assert.strictEqual(new Set(EXPECTED_RUNTIME_SEQUENCES).size, EXPECTED_COUNTS.SEQUENCES, "names must be unique");
 });
 
 test("ALLOWLIST_CONTRACT_TEST: allowlist is identical to the contract sequenceName data", () => {
@@ -146,7 +147,7 @@ test("ALLOWLIST_SQL_TEST: allowlist is identical to the baseline SQL sequences",
 
 test("SEQUENCE_OWNERSHIP_TEST: ownership matches contract and baseline SQL", () => {
   assert.deepStrictEqual(contractSequenceOwnership(), sqlSequenceOwnership());
-  assert.strictEqual(contractSequenceOwnership().length, 17);
+  assert.strictEqual(contractSequenceOwnership().length, EXPECTED_COUNTS.SEQUENCES);
   for (const pair of contractSequenceOwnership()) {
     const [seq] = pair.split(" -> ");
     assert.ok(
@@ -280,7 +281,7 @@ test("TABLE_ALLOWLIST_TEST: table grants remain scoped to the exact runtime tabl
   );
   assert.ok(tableQuery?.text.includes("any($1)"));
   assert.deepStrictEqual(tableQuery?.values?.[0], EXPECTED_BASELINE_TABLES);
-  assert.strictEqual((tableQuery?.values?.[0] as string[]).length, 19);
+  assert.strictEqual((tableQuery?.values?.[0] as string[]).length, EXPECTED_COUNTS.TABLES);
 });
 
 test("GRANT_NO_WRITE_SQL_TEST: verifier never issues write SQL", async () => {

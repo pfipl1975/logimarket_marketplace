@@ -1,6 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert";
 import { executeRollback } from "../../scripts/database/rollback-empty-development-baseline";
+import {
+  EXPECTED_BASELINE_TABLES,
+  EXPECTED_COUNTS,
+  PRODUCTION_FINGERPRINT,
+} from "../../scripts/database/runtime-migration-contract";
 
 test("executeRollback drop order and statements", async () => {
   const queries: string[] = [];
@@ -24,10 +29,29 @@ test("executeRollback drop order and statements", async () => {
     assert.ok(!q.includes("CASCADE"), `Query contains CASCADE: ${q}`);
   }
 
-  // Exact 15 tables dropped
-  assert.strictEqual(dropTables.length, 19);
+  assert.strictEqual(dropTables.length, EXPECTED_COUNTS.TABLES);
+
+  const dropSequences = queries.filter(q => q.startsWith("DROP SEQUENCE IF EXISTS public."));
+  assert.strictEqual(dropSequences.length, EXPECTED_COUNTS.SEQUENCES);
+  const expectedSequences = Array.from(new Set(
+    EXPECTED_BASELINE_TABLES.flatMap(tableName =>
+      PRODUCTION_FINGERPRINT[tableName].columns
+        .map(column => column.sequenceName)
+        .filter((sequenceName): sequenceName is string => sequenceName !== null)
+    )
+  ));
+  assert.deepStrictEqual(
+    dropSequences.map(q => q.replace("DROP SEQUENCE IF EXISTS public.", "")).sort(),
+    expectedSequences.sort(),
+    "rollback sequence membership must exactly match the authoritative fingerprint"
+  );
 
   const tableOrder = dropTables.map(q => q.replace("DROP TABLE IF EXISTS public.", ""));
+  assert.deepStrictEqual(
+    [...tableOrder].sort(),
+    [...EXPECTED_BASELINE_TABLES].sort(),
+    "rollback table membership must exactly match the authoritative baseline"
+  );
 
   // Helper to get index
   const indexOf = (t: string) => tableOrder.indexOf(t);
@@ -52,6 +76,17 @@ test("executeRollback drop order and statements", async () => {
   assert.ok(indexOf("category_attribute_assignments") < indexOf("categories"));
   assert.ok(indexOf("category_attribute_assignments") < indexOf("attribute_definitions"));
 
+  // post-0005 marketplace order domain: every FK child precedes its parent
+  assert.ok(indexOf("seller_acceptance_decisions") < indexOf("seller_orders"));
+  assert.ok(indexOf("seller_order_items") < indexOf("seller_orders"));
+  assert.ok(indexOf("seller_order_items") < indexOf("offers"));
+  assert.ok(indexOf("seller_order_seller_snapshots") < indexOf("seller_orders"));
+  assert.ok(indexOf("seller_orders") < indexOf("marketplace_orders"));
+  assert.ok(indexOf("seller_orders") < indexOf("partners"));
+  assert.ok(indexOf("marketplace_order_seller_disclosures") < indexOf("marketplace_orders"));
+  assert.ok(indexOf("marketplace_order_seller_disclosures") < indexOf("partners"));
+  assert.ok(indexOf("marketplace_orders") < indexOf("buyer_legal_context_snapshots"));
+
   // journal usuwany przed schema
   const journalTableIdx = queries.findIndex(q => q === `DROP TABLE IF EXISTS drizzle_runtime."__drizzle_migrations"`);
   const journalSchemaIdx = queries.findIndex(q => q === `DROP SCHEMA IF EXISTS drizzle_runtime`);
@@ -62,4 +97,22 @@ test("executeRollback drop order and statements", async () => {
   // journal usuwany po tabelach
   const lastTableDropIdx = queries.indexOf(dropTables[dropTables.length - 1]);
   assert.ok(lastTableDropIdx < journalTableIdx);
+});
+
+test("executeRollback rolls back and never commits after destructive DDL failure", async () => {
+  const queries: string[] = [];
+  const fakeClient = {
+    query: async (q: string) => {
+      queries.push(q);
+      if (q === "DROP TABLE IF EXISTS public.seller_orders") {
+        throw new Error("EXPECTED_DDL_FAILURE");
+      }
+      return { rows: [] };
+    }
+  };
+
+  await assert.rejects(() => executeRollback(fakeClient), /EXPECTED_DDL_FAILURE/);
+  assert.strictEqual(queries[0], "BEGIN");
+  assert.strictEqual(queries[queries.length - 1], "ROLLBACK");
+  assert.ok(!queries.includes("COMMIT"));
 });
