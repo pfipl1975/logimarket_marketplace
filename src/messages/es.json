@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Identificador fiscal no encontrado.",
     "registryIdentifierConflict": "Esta entrada de registro ya existe.",
     "registryIdentifierNotFound": "Entrada de registro no encontrada.",
-    "addRegistryIdentifierTitle": "Agregar nueva entrada de registro"
+    "addRegistryIdentifierTitle": "Agregar nueva entrada de registro",
+    "verificationHistoryExists": "No se puede eliminar un identificador con historial de verificación."
   },
   "adminOfferDetail": {
     "errorTitle": "Error al cargar datos",

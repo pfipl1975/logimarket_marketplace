@@ -1121,7 +1121,7 @@ export async function getAdminOfferAttributesEdit(
 
 export async function saveAdminSellerLegalData(rawInput: unknown) {
   const { requireAdmin } = await import("@/lib/auth/guards");
-  await requireAdmin();
+  const admin = await requireAdmin();
   const {
     AdminSellerLegalDataSaveInputSchema,
     executeAdminSellerLegalDataSave,
@@ -1132,7 +1132,7 @@ export async function saveAdminSellerLegalData(rawInput: unknown) {
     return { ok: false, code: "INVALID_INPUT" } as const;
   }
 
-  const result = await executeAdminSellerLegalDataSave(db, parsed.data);
+  const result = await executeAdminSellerLegalDataSave(db, parsed.data, { actorUserId: admin.id });
   if (result.ok) {
     revalidatePath("/", "layout");
   }

@@ -13,7 +13,8 @@ import {
   CANONICAL_0000_BASELINE_FINGERPRINT,
   PRE_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
-  PREVIOUS_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0004_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0005_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
@@ -62,6 +63,7 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0006"
   | "EXACT_EXISTING_POST_0005"
   | "EXACT_EXISTING_POST_0004"
   | "MIGRATABLE_POST_0004"
@@ -172,6 +174,27 @@ function transformNonLiterals(s: string, fn: (part: string) => string): string {
     .join("");
 }
 
+const POSTGRES_IDENTIFIER_MAX_BYTES = 63;
+
+/**
+ * PostgreSQL stores identifiers in at most NAMEDATALEN - 1 bytes (63 in the
+ * supported server builds). Truncate by UTF-8 code point so comparison models
+ * the physical catalog name without splitting a multibyte character.
+ */
+export function normalizePostgresIdentifier(identifier: string): string {
+  let normalized = "";
+  let byteLength = 0;
+
+  for (const character of identifier) {
+    const characterBytes = Buffer.byteLength(character, "utf8");
+    if (byteLength + characterBytes > POSTGRES_IDENTIFIER_MAX_BYTES) break;
+    normalized += character;
+    byteLength += characterBytes;
+  }
+
+  return normalized;
+}
+
 /**
  * normalizeCheckConstraintDefinition
  *
@@ -215,11 +238,9 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
   // Step 1: Lowercase SQL syntax only — literals are left unchanged.
   s = transformNonLiterals(s, (part) => part.toLowerCase());
 
-  // Check if constraint has trailing NOT VALID (preserve it in output)
-  const isNotValid = /\s+not valid$/i.test(s);
-  if (isNotValid) {
-    s = s.replace(/\s+not valid$/i, "");
-  }
+  // Validation state is compared independently through pg_constraint.convalidated.
+  // Keep definition equality focused on the logical CHECK expression.
+  s = s.replace(/\s+not valid$/i, "");
 
   // Step 2: Collapse runs of whitespace in non-literal parts.
   s = transformNonLiterals(s, (part) => part.replace(/\s+/g, " "));
@@ -268,11 +289,6 @@ export function normalizeCheckConstraintDefinition(def: string | null | undefine
     });
     return `num_nonnulls(${args.join(", ")})`;
   });
-
-  // Re-attach trailing NOT VALID if present — NOT VALID is semantic drift and must not be stripped
-  if (isNotValid) {
-    s = s + " not valid";
-  }
 
   return s.trim();
 }
@@ -394,12 +410,16 @@ function compareTableContract(
       `Table ${tableName} constraints count mismatch: expected ${expected.constraints.length}, got ${got.constraints.length}`
     );
   } else {
-    const sortedExpected = [...expected.constraints].sort((a, b) => a.name.localeCompare(b.name));
-    const sortedGot = [...got.constraints].sort((a, b) => a.name.localeCompare(b.name));
+    const sortedExpected = [...expected.constraints].sort((a, b) =>
+      normalizePostgresIdentifier(a.name).localeCompare(normalizePostgresIdentifier(b.name))
+    );
+    const sortedGot = [...got.constraints].sort((a, b) =>
+      normalizePostgresIdentifier(a.name).localeCompare(normalizePostgresIdentifier(b.name))
+    );
     for (let i = 0; i < sortedExpected.length; i++) {
       const ec = sortedExpected[i];
       const gc = sortedGot[i];
-      if (ec.name !== gc.name) {
+      if (normalizePostgresIdentifier(ec.name) !== normalizePostgresIdentifier(gc.name)) {
         reasons.push(
           `Table ${tableName} constraint name mismatch: expected ${ec.name}, got ${gc.name}`
         );
@@ -532,10 +552,16 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    return { state: "EXACT_EXISTING_POST_0006", publicTableCount, differences: [] };
+  }
+
+  const matchPost0005 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0005_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0005.isExactMatch) {
     return { state: "EXACT_EXISTING_POST_0005", publicTableCount, differences: [] };
   }
 
-  const matchPost0004 = compareRuntimeFingerprint(actual, allPublicTables, PREVIOUS_PRODUCTION_FINGERPRINT);
+  const matchPost0004 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0004_PRODUCTION_FINGERPRINT);
 
   if (matchPost0004.isExactMatch) {
     return { state: "MIGRATABLE_POST_0004", publicTableCount, differences: [] };

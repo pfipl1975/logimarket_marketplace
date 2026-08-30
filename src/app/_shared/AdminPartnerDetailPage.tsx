@@ -226,6 +226,7 @@ export async function AdminPartnerDetailPage({
                 sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound,
                 taxIdentifierConflict: dict.taxIdentifierConflict,
                 taxIdentifierNotFound: dict.taxIdentifierNotFound,
+            verificationHistoryExists: dict.verificationHistoryExists,
                 addTaxIdentifierTitle: dict.addTaxIdentifierTitle,
                 confirmDelete: dict.confirmDelete,
                 placeholderVat: dict.placeholderVat,
@@ -261,6 +262,7 @@ export async function AdminPartnerDetailPage({
                 sellerLegalErrorPartnerNotFound: dict.sellerLegalErrorPartnerNotFound,
                 registryIdentifierConflict: dict.registryIdentifierConflict,
                 registryIdentifierNotFound: dict.registryIdentifierNotFound,
+            verificationHistoryExists: dict.verificationHistoryExists,
                 addRegistryIdentifierTitle: dict.addRegistryIdentifierTitle,
                 confirmDelete: dict.confirmDelete,
                 placeholderRegistry: "123456"

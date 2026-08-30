@@ -132,7 +132,7 @@ function fakeDb(opts: { seqAclRows?: AclRow[]; tableAclRows?: AclRow[] }): {
 // 1-4. Allowlist parity with both authoritative sources
 // ---------------------------------------------------------------------------
 
-test("ALLOWLIST: exact runtime sequence allowlist matches the post-0005 contract", () => {
+test("ALLOWLIST: exact runtime sequence allowlist matches the post-0006 contract", () => {
   assert.strictEqual(EXPECTED_RUNTIME_SEQUENCES.length, EXPECTED_COUNTS.SEQUENCES);
   assert.strictEqual(new Set(EXPECTED_RUNTIME_SEQUENCES).size, EXPECTED_COUNTS.SEQUENCES, "names must be unique");
 });

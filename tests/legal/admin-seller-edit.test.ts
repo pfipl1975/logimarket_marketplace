@@ -18,40 +18,41 @@ import {
 
 } from "../../src/lib/admin/partner-edit-core";
 import { buildSellerDisclosure } from "../../src/lib/legal/seller-disclosure";
+import { executeAdminSellerRegistryIdentifierAdd, executeAdminSellerRegistryIdentifierDelete, AdminSellerRegistryIdentifierAddInput, AdminSellerRegistryIdentifierDeleteInput } from "../../src/lib/admin/partner-edit-core";
 
 describe("Admin Seller Legal Data Save Input Validation", () => {
   test("businessEmail > 100 chars -> rejected", () => {
-    const input = { partnerId: 1, businessEmail: "a".repeat(101) + "@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "a".repeat(101) + "@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 
   test("legalName > 255 chars -> rejected", () => {
-    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "a".repeat(256), jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "test@ex.com", legalName: "a".repeat(256), jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 
   test("legalName required + trim", () => {
-    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "   ", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "test@ex.com", legalName: "   ", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 
   test("invalid email -> rejected", () => {
-    const input = { partnerId: 1, businessEmail: "not-an-email", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "not-an-email", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 
   test("invalid partnerId -> rejected", () => {
-    const input = { partnerId: -1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: -1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 
   test("invalid jurisdiction length -> rejected", () => {
-    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "POL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "POL", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 
   test("jurisdiction normalization (lowercase to uppercase) accepted", () => {
-    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "pl", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "pl", registeredAddressLine1: "", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     const res = AdminSellerLegalDataSaveInputSchema.safeParse(input);
     assert.strictEqual(res.success, true);
     if (res.success) {
@@ -60,7 +61,7 @@ describe("Admin Seller Legal Data Save Input Validation", () => {
   });
 
   test("blank optional address -> null", () => {
-    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "   ", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "   ", registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     const res = AdminSellerLegalDataSaveInputSchema.safeParse(input);
     assert.strictEqual(res.success, true);
     if (res.success) {
@@ -69,21 +70,21 @@ describe("Admin Seller Legal Data Save Input Validation", () => {
   });
 
   test("address max length -> rejected", () => {
-    const input = { partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "a".repeat(256), registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
+    const input = { adminUserId: "admin", partnerId: 1, businessEmail: "test@ex.com", legalName: "Company", jurisdictionCountry: "PL", registeredAddressLine1: "a".repeat(256), registeredAddressLine2: "", registeredPostalCode: "", registeredCity: "", registeredRegion: "", registeredCountryCode: "" } satisfies AdminSellerLegalDataSaveInput;
     assert.strictEqual(AdminSellerLegalDataSaveInputSchema.safeParse(input).success, false);
   });
 });
 
 describe("Admin Seller Tax Identifier Add Input Validation", () => {
   test("invalid input rejected", () => {
-    const input = { partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "POL" } satisfies AdminSellerTaxIdentifierAddInput;
+    const input = { adminUserId: "admin", partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "POL" } satisfies AdminSellerTaxIdentifierAddInput;
     assert.strictEqual(AdminSellerTaxIdentifierAddInputSchema.safeParse(input).success, false);
   });
 });
 
 describe("Admin Seller Tax Identifier Delete Input Validation", () => {
   test("delete predicate contains BOTH taxIdentifierId and partnerId", () => {
-    const input = { partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const input = { adminUserId: "admin", partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
     assert.strictEqual(AdminSellerTaxIdentifierDeleteInputSchema.safeParse(input).success, true);
     // Invalid input (missing partnerId)
     assert.strictEqual(AdminSellerTaxIdentifierDeleteInputSchema.safeParse({ taxIdentifierId: 2 }).success, false);
@@ -114,35 +115,43 @@ class FakeDb {
   }
 
   select() {
-    return {
-      from: () => ({
-        where: () => ({
-          limit: () => {
-            this.selectCallIndex++;
-            if (this.selectCallIndex === 1) {
-              return this.config.partnerExists !== false ? [{ id: 1 }] : [];
-            }
-            if (this.selectCallIndex === 2) {
-              return this.config.identityExists !== false ? [{
-                  partnerId: 1,
-                  legalName: "New Company",
-                  jurisdictionCountry: "PL",
-                  registeredAddressLine1: "Line 1",
-                  registeredAddressLine2: null,
-                  registeredPostalCode: null,
-                  registeredCity: null,
-                  registeredRegion: null,
-                  registeredCountryCode: null
-                }] : [];
-            }
-            if (this.selectCallIndex === 3) {
-              return this.config.taxIdentifierConflictExists ? [{ id: 1 }] : [];
-            }
-            return [];
-          }
-        })
-      })
+    const createChain = (terminalFunc: Record<string, unknown>) => {
+      const chain: Record<string, unknown> = new Proxy({}, {
+        get: (target, prop) => {
+          if (prop === "limit") return () => terminalFunc();
+          if (prop === "for") return () => chain;
+          if (prop === "from") return () => chain;
+          if (prop === "where") return () => chain;
+          return undefined;
+        }
+      });
+      return chain;
     };
+
+    return createChain(() => {
+      this.selectCallIndex++;
+      let res: Record<string, unknown> = [];
+      if (this.selectCallIndex === 1) {
+        res = this.config.partnerExists !== false ? [{ id: 1, contactEmail: "test@example.com", verificationStatus: "unverified", currentVerificationEventId: null, retiredAt: null }] : [];
+      } else if (this.selectCallIndex === 2) {
+        res = this.config.identityExists !== false ? [{ currentVerificationEventId: null, retiredAt: null, 
+            partnerId: 1,
+            legalName: "New Company",
+            jurisdictionCountry: "PL",
+            registeredAddressLine1: "Line 1",
+            registeredAddressLine2: null,
+            registeredPostalCode: null,
+            registeredCity: null,
+            registeredRegion: null,
+            registeredCountryCode: null,
+            verificationStatus: "unverified"
+          }] : [];
+      } else if (this.selectCallIndex === 3) {
+        res = this.config.taxIdentifierConflictExists ? [{ id: 1 }] : [];
+      }
+      res.for = () => res;
+      return res;
+    });
   }
 
   update(table: unknown) {
@@ -163,9 +172,11 @@ class FakeDb {
           throw { code: "23505" };
         }
         this.inserts.push({ table, values });
-        return {
-          onConflictDoUpdate: () => ({})
+        const chain: Record<string, unknown> = {
+          onConflictDoUpdate: () => chain,
+          returning: () => [{ id: 999 }]
         };
+        return chain;
       }
     };
   }
@@ -186,11 +197,11 @@ describe("Execute Admin Seller Legal Data Save", () => {
   test("Partner missing -> PARTNER_NOT_FOUND", async () => {
     const db = new FakeDb({ partnerExists: false });
     const input = {
-      partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
+      adminUserId: "admin", partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
       registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     } satisfies AdminSellerLegalDataSaveInput;
-    const res = await executeAdminSellerLegalDataSave(db as never, input);
+    const res = await executeAdminSellerLegalDataSave(db as never, input, { actorUserId: "admin" });
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "PARTNER_NOT_FOUND");
   });
@@ -198,32 +209,30 @@ describe("Execute Admin Seller Legal Data Save", () => {
   test("legal identity save -> UPDATE path and same transaction used for partner email + identity", async () => {
     const db = new FakeDb({ identityExists: true });
     const input = {
-      partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
+      adminUserId: "admin", partnerId: 1, businessEmail: "new@ex.com", legalName: "Updated Company", jurisdictionCountry: "PL",
       registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     } satisfies AdminSellerLegalDataSaveInput;
-    const res = await executeAdminSellerLegalDataSave(db as never, input);
+    const res = await executeAdminSellerLegalDataSave(db as never, input, { actorUserId: "admin" });
 
     assert.strictEqual(res.ok, true);
     assert.strictEqual(db.transactionExecuted, true);
     assert.strictEqual(db.updates.length, 2); // 1 for partner email, 1 for identity
 
-    // Assert update payload DOES NOT contain verification fields
+    // Assert update payload DOES reset verification fields
     const updatePayload = db.updates[1].values;
-    assert.strictEqual("verificationStatus" in updatePayload, false);
-    assert.strictEqual("verifiedAt" in updatePayload, false);
-    assert.strictEqual("verificationSource" in updatePayload, false);
-    assert.strictEqual("verificationReference" in updatePayload, false);
+    assert.strictEqual(updatePayload.verificationStatus, "unverified");
+    assert.strictEqual("currentVerificationEventId" in updatePayload, true);
   });
 
   test("legal identity save -> INSERT path", async () => {
     const db = new FakeDb({ identityExists: false });
     const input = {
-      partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
+      adminUserId: "admin", partnerId: 1, businessEmail: "new@ex.com", legalName: "New Company", jurisdictionCountry: "PL",
       registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     } satisfies AdminSellerLegalDataSaveInput;
-    const res = await executeAdminSellerLegalDataSave(db as never, input);
+    const res = await executeAdminSellerLegalDataSave(db as never, input, { actorUserId: "admin" });
 
     assert.strictEqual(res.ok, true);
     assert.strictEqual(db.transactionExecuted, true);
@@ -298,17 +307,34 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
 });
 
 describe("Execute Admin Seller Tax Identifier Delete", () => {
+  test('history exists -> blocked', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: true });
+    const input = { adminUserId: 'admin', partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
+  });
+
+  test('23503 -> VERIFICATION_HISTORY_EXISTS', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    db.delete = () => ({ where: () => { throw { code: '23503' }; } });
+    const input = { adminUserId: 'admin', partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
+  });
+
   test("no matching scoped row -> NOT_FOUND", async () => {
-    const db = new FakeDb({ deleteReturnsRow: false });
-    const input = { partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const db = new FakeDb({ deleteReturnsRow: false, partnerExists: false });
+    const input = { adminUserId: "admin", partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
     const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "NOT_FOUND");
   });
 
   test("successful scoped delete -> DELETED and behavioral query proof contains BOTH taxIdentifierId and partnerId", async () => {
-    const db = new FakeDb({ deleteReturnsRow: true });
-    const input = { partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    const input = { adminUserId: "admin", partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
     const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
 
     assert.strictEqual(res.ok, true);
@@ -361,27 +387,27 @@ describe("Seller Disclosure Completeness", () => {
 
 describe("Admin Seller Registry Identifier Add Input Validation", () => {
   test("invalid partnerId -> rejected", () => {
-    const input = { partnerId: -1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: -1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("empty registryType -> rejected", () => {
-    const input = { partnerId: 1, registryType: "   ", registryValue: "123", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "   ", registryValue: "123", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("empty registryValue -> rejected", () => {
-    const input = { partnerId: 1, registryType: "KRS", registryValue: "   ", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "   ", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("invalid jurisdictionCountry -> rejected", () => {
-    const input = { partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "POL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "POL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("lowercase country normalization", () => {
-    const input = { partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "pl" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "pl" };
     const parsed = AdminSellerRegistryIdentifierAddInputSchema.safeParse(input);
     assert.strictEqual(parsed.success, true);
     if (parsed.success) {
@@ -390,12 +416,62 @@ describe("Admin Seller Registry Identifier Add Input Validation", () => {
   });
 
   test("oversized registryType -> rejected", () => {
-    const input = { partnerId: 1, registryType: "a".repeat(51), registryValue: "123", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "a".repeat(51), registryValue: "123", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("oversized registryValue -> rejected", () => {
-    const input = { partnerId: 1, registryType: "KRS", registryValue: "a".repeat(101), jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "a".repeat(101), jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
+  });
+});
+
+describe('Execute Admin Seller Registry Identifier Add', () => {
+  test('explicit create defaults', async () => {
+    const db = new FakeDb({});
+    const input = { adminUserId: 'admin', partnerId: 1, registryType: 'VAT', registryValue: '123', jurisdictionCountry: 'PL' } satisfies AdminSellerRegistryIdentifierAddInput;
+    const res = await executeAdminSellerRegistryIdentifierAdd(db as never, input);
+    assert.strictEqual(res.ok, true);
+    assert.strictEqual(db.inserts.length, 1);
+    assert.strictEqual(db.inserts[0].values.verificationStatus, 'unverified');
+    assert.strictEqual(db.inserts[0].values.currentVerificationEventId, null);
+    assert.strictEqual(db.inserts[0].values.retiredAt, null);
+  });
+});
+
+describe('Execute Admin Seller Registry Identifier Delete', () => {
+  test('legacy NULL no history -> deleted', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    const originalSelect = db.select.bind(db);
+    db.select = () => {
+      const chain = originalSelect();
+      const oldFor = chain.for;
+      chain.for = () => {
+         const res = oldFor();
+         if (res.length > 0) Object.defineProperty(res[0], 'verificationStatus', { value: null, writable: true });
+         return res;
+      };
+      return chain;
+    };
+    const input = { adminUserId: 'admin', partnerId: 1, registryIdentifierId: 2 } satisfies AdminSellerRegistryIdentifierDeleteInput;
+    const res = await executeAdminSellerRegistryIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, true);
+  });
+
+  test('history exists -> blocked', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: true });
+    const input = { adminUserId: 'admin', partnerId: 1, registryIdentifierId: 2 } satisfies AdminSellerRegistryIdentifierDeleteInput;
+    const res = await executeAdminSellerRegistryIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
+  });
+
+  test('23503 -> VERIFICATION_HISTORY_EXISTS', async () => {
+    const db = new FakeDb({ deleteReturnsRow: true, identityExists: false });
+    db.delete = () => ({ where: () => { throw { code: '23503' }; } });
+    const input = { adminUserId: 'admin', partnerId: 1, registryIdentifierId: 2 } satisfies AdminSellerRegistryIdentifierDeleteInput;
+    const res = await executeAdminSellerRegistryIdentifierDelete(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, 'VERIFICATION_HISTORY_EXISTS');
   });
 });

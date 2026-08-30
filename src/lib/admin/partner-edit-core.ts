@@ -1,16 +1,40 @@
 import { z } from "zod";
+import { buildLegalIdentitySnapshot, validateEventOwnership } from "../verification/events-core";
 import { eq, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
-import { partners, sellerLegalIdentities, sellerTaxIdentifiers, sellerRegistryIdentifiers } from "@/lib/schema";
+import { partners, sellerLegalIdentities, sellerTaxIdentifiers,
+  sellerVerificationEvents, sellerRegistryIdentifiers } from "@/lib/schema";
 
 // ----------------------------------------------------------------------
 // 1. Seller Legal Data Save
 // ----------------------------------------------------------------------
 
+async function assertEventOwnershipSafe(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  tx: any,
+  subjectType: "legal_identity" | "tax_identifier" | "registry_identifier",
+  targetId: number,
+  eventId: number | null
+): Promise<boolean> {
+  if (eventId === null) return true;
+  const evt = await tx
+    .select({
+      subjectType: sellerVerificationEvents.subjectType,
+      legalIdentityPartnerId: sellerVerificationEvents.legalIdentityPartnerId,
+      taxIdentifierId: sellerVerificationEvents.taxIdentifierId,
+      registryIdentifierId: sellerVerificationEvents.registryIdentifierId,
+    })
+    .from(sellerVerificationEvents)
+    .where(eq(sellerVerificationEvents.id, eventId))
+    .limit(1);
+  if (evt.length === 0) return false;
+  return validateEventOwnership(subjectType, targetId, evt[0]);
+}
+
 export const AdminSellerLegalDataSaveInputSchema = z.object({
   partnerId: z.number().int().positive(),
-  businessEmail: z.string().trim().email().max(100),
+    businessEmail: z.string().trim().email().max(100),
   legalName: z.string().trim().min(1).max(255),
   jurisdictionCountry: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
   registeredAddressLine1: z
@@ -61,14 +85,19 @@ export type AdminSellerLegalDataSaveResult =
   | { ok: false; code: "PARTNER_NOT_FOUND" }
   | { ok: false; code: "SYSTEM_ERROR" };
 
+export type AdminSellerLegalDataSaveContext = {
+  actorUserId: string;
+};
+
 export async function executeAdminSellerLegalDataSave(
   db: NodePgDatabase<typeof schema>,
-  input: AdminSellerLegalDataSaveInput
+  input: AdminSellerLegalDataSaveInput,
+  context: AdminSellerLegalDataSaveContext
 ): Promise<AdminSellerLegalDataSaveResult> {
   try {
-    const result = await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx): Promise<AdminSellerLegalDataSaveResult> => {
       const partnerRows = await tx
-        .select({ id: partners.id })
+        .select({ id: partners.id, contactEmail: partners.contactEmail })
         .from(partners)
         .where(eq(partners.id, input.partnerId))
         .limit(1);
@@ -77,10 +106,12 @@ export async function executeAdminSellerLegalDataSave(
         return { ok: false as const, code: "PARTNER_NOT_FOUND" as const };
       }
 
-      await tx
-        .update(partners)
-        .set({ contactEmail: input.businessEmail })
-        .where(eq(partners.id, input.partnerId));
+      if (partnerRows[0].contactEmail !== input.businessEmail) {
+        await tx
+          .update(partners)
+          .set({ contactEmail: input.businessEmail })
+          .where(eq(partners.id, input.partnerId));
+      }
 
       const existingIdentity = await tx
         .select({
@@ -93,10 +124,22 @@ export async function executeAdminSellerLegalDataSave(
           registeredCity: sellerLegalIdentities.registeredCity,
           registeredRegion: sellerLegalIdentities.registeredRegion,
           registeredCountryCode: sellerLegalIdentities.registeredCountryCode,
+          verificationStatus: sellerLegalIdentities.verificationStatus,
+          verifiedAt: sellerLegalIdentities.verifiedAt,
+          verificationSource: sellerLegalIdentities.verificationSource,
+          verificationReference: sellerLegalIdentities.verificationReference,
+          currentVerificationEventId: sellerLegalIdentities.currentVerificationEventId,
         })
         .from(sellerLegalIdentities)
         .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
+        .for("update")
         .limit(1);
+
+      if (existingIdentity.length > 0) {
+        const curr = existingIdentity[0];
+        const isOwnershipSafe = await assertEventOwnershipSafe(tx, "legal_identity", input.partnerId, curr.currentVerificationEventId);
+        if (!isOwnershipSafe) return { ok: false as const, code: "SYSTEM_ERROR" };
+      }
 
       if (existingIdentity.length === 0) {
         await tx.insert(sellerLegalIdentities).values({
@@ -124,6 +167,38 @@ export async function executeAdminSellerLegalDataSave(
           curr.registeredCountryCode !== input.registeredCountryCode;
 
         if (changed) {
+          const snapshot = buildLegalIdentitySnapshot({
+            legalName: curr.legalName,
+            jurisdictionCountry: curr.jurisdictionCountry,
+            registeredAddressLine1: curr.registeredAddressLine1,
+            registeredAddressLine2: curr.registeredAddressLine2,
+            registeredPostalCode: curr.registeredPostalCode,
+            registeredCity: curr.registeredCity,
+            registeredRegion: curr.registeredRegion,
+            registeredCountryCode: curr.registeredCountryCode,
+          });
+
+          let currentEventId = curr.currentVerificationEventId;
+          const needsInvalidation = curr.verificationStatus !== "unverified" || curr.verifiedAt !== null || curr.verificationSource !== null || curr.verificationReference !== null;
+          
+          if (needsInvalidation) {
+            const eventRes = await tx.insert(sellerVerificationEvents).values({
+              subjectType: "legal_identity",
+              legalIdentityPartnerId: input.partnerId,
+              eventType: "invalidated",
+              actorType: "admin",
+              actorUserId: context.actorUserId,
+              sourceType: "system_rule",
+              reasonCode: "legal_identity_changed",
+              subjectSnapshot: snapshot,
+              previousVerificationStatus: curr.verificationStatus,
+              previousVerifiedAt: curr.verifiedAt,
+              previousVerificationSource: curr.verificationSource,
+              previousVerificationReference: curr.verificationReference,
+            }).returning({ id: sellerVerificationEvents.id });
+            currentEventId = eventRes[0].id;
+          }
+
           await tx
             .update(sellerLegalIdentities)
             .set({
@@ -139,21 +214,7 @@ export async function executeAdminSellerLegalDataSave(
               verifiedAt: null,
               verificationSource: null,
               verificationReference: null,
-              updatedAt: new Date(),
-            })
-            .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
-        } else {
-          await tx
-            .update(sellerLegalIdentities)
-            .set({
-              legalName: input.legalName,
-              jurisdictionCountry: input.jurisdictionCountry,
-              registeredAddressLine1: input.registeredAddressLine1,
-              registeredAddressLine2: input.registeredAddressLine2,
-              registeredPostalCode: input.registeredPostalCode,
-              registeredCity: input.registeredCity,
-              registeredRegion: input.registeredRegion,
-              registeredCountryCode: input.registeredCountryCode,
+              currentVerificationEventId: currentEventId,
               updatedAt: new Date(),
             })
             .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
@@ -163,8 +224,8 @@ export async function executeAdminSellerLegalDataSave(
       return { ok: true as const, code: "SAVED" as const };
     });
     return result;
-  } catch {
-      console.error("[ADMIN_DB] executeAdminSellerLegalDataSave system error");
+  } catch (error: unknown) {
+    console.error("[ADMIN_DB] executeAdminSellerLegalDataSave system error", error);
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }
@@ -265,6 +326,7 @@ export type AdminSellerTaxIdentifierDeleteInput = z.infer<typeof AdminSellerTaxI
 export type AdminSellerTaxIdentifierDeleteResult =
   | { ok: true; code: "DELETED" }
   | { ok: false; code: "NOT_FOUND" }
+  | { ok: false; code: "VERIFICATION_HISTORY_EXISTS" }
   | { ok: false; code: "SYSTEM_ERROR" };
 
 export async function executeAdminSellerTaxIdentifierDelete(
@@ -272,32 +334,67 @@ export async function executeAdminSellerTaxIdentifierDelete(
   input: AdminSellerTaxIdentifierDeleteInput
 ): Promise<AdminSellerTaxIdentifierDeleteResult> {
   try {
-    const deleted = await db
-      .delete(sellerTaxIdentifiers)
-      .where(
-        and(
-          eq(sellerTaxIdentifiers.id, input.taxIdentifierId),
-          eq(sellerTaxIdentifiers.partnerId, input.partnerId)
+    return await db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ verificationStatus: sellerTaxIdentifiers.verificationStatus, currentVerificationEventId: sellerTaxIdentifiers.currentVerificationEventId, retiredAt: sellerTaxIdentifiers.retiredAt })
+        .from(sellerTaxIdentifiers)
+        .where(
+          and(
+            eq(sellerTaxIdentifiers.id, input.taxIdentifierId),
+            eq(sellerTaxIdentifiers.partnerId, input.partnerId)
+          )
         )
-      )
-      .returning({ id: sellerTaxIdentifiers.id });
+        .limit(1);
 
-    if (deleted.length === 0) {
-      return { ok: false as const, code: "NOT_FOUND" };
+      if (existing.length === 0) {
+        return { ok: false as const, code: "NOT_FOUND" };
+      }
+
+      const isOwnershipSafe = await assertEventOwnershipSafe(tx, "tax_identifier", input.taxIdentifierId, existing[0].currentVerificationEventId);
+      if (!isOwnershipSafe) return { ok: false as const, code: "SYSTEM_ERROR" };
+
+      const history = await tx
+        .select({ id: sellerVerificationEvents.id })
+        .from(sellerVerificationEvents)
+        .where(eq(sellerVerificationEvents.taxIdentifierId, input.taxIdentifierId))
+        .limit(1);
+
+      if (
+        existing[0].verificationStatus !== "unverified" ||
+        existing[0].currentVerificationEventId !== null ||
+        existing[0].retiredAt !== null ||
+        history.length > 0
+      ) {
+        return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
+      }
+
+      const deleted = await tx
+        .delete(sellerTaxIdentifiers)
+        .where(
+          and(
+            eq(sellerTaxIdentifiers.id, input.taxIdentifierId),
+            eq(sellerTaxIdentifiers.partnerId, input.partnerId)
+          )
+        )
+        .returning({ id: sellerTaxIdentifiers.id });
+
+      if (deleted.length === 0) {
+        return { ok: false as const, code: "NOT_FOUND" };
+      }
+
+      return { ok: true as const, code: "DELETED" };
+    });
+  } catch (error: unknown) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23503") {
+      return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
     }
-
-    return { ok: true as const, code: "DELETED" };
-  } catch {
-      console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
+    console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }
 }
-
-
 // ----------------------------------------------------------------------
 // 4. Registry Identifier Add
 // ----------------------------------------------------------------------
-
 export const AdminSellerRegistryIdentifierAddInputSchema = z.object({
   partnerId: z.number().int().positive(),
   registryType: z.string().trim().min(1).max(50),
@@ -362,6 +459,9 @@ export async function executeAdminSellerRegistryIdentifierAdd(
         registryType: input.registryType,
         jurisdictionCountry: input.jurisdictionCountry,
         registryValue: input.registryValue,
+        verificationStatus: "unverified",
+        currentVerificationEventId: null,
+        retiredAt: null,
       });
 
       return { ok: true as const, code: "ADDED" as const };
@@ -389,6 +489,7 @@ export type AdminSellerRegistryIdentifierDeleteInput = z.infer<typeof AdminSelle
 export type AdminSellerRegistryIdentifierDeleteResult =
   | { ok: true; code: "DELETED" }
   | { ok: false; code: "NOT_FOUND" }
+  | { ok: false; code: "VERIFICATION_HISTORY_EXISTS" }
   | { ok: false; code: "SYSTEM_ERROR" };
 
 export async function executeAdminSellerRegistryIdentifierDelete(
@@ -396,22 +497,61 @@ export async function executeAdminSellerRegistryIdentifierDelete(
   input: AdminSellerRegistryIdentifierDeleteInput
 ): Promise<AdminSellerRegistryIdentifierDeleteResult> {
   try {
-    const deleted = await db
-      .delete(sellerRegistryIdentifiers)
-      .where(
-        and(
-          eq(sellerRegistryIdentifiers.id, input.registryIdentifierId),
-          eq(sellerRegistryIdentifiers.partnerId, input.partnerId)
+    return await db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ verificationStatus: sellerRegistryIdentifiers.verificationStatus, currentVerificationEventId: sellerRegistryIdentifiers.currentVerificationEventId, retiredAt: sellerRegistryIdentifiers.retiredAt })
+        .from(sellerRegistryIdentifiers)
+        .where(
+          and(
+            eq(sellerRegistryIdentifiers.id, input.registryIdentifierId),
+            eq(sellerRegistryIdentifiers.partnerId, input.partnerId)
+          )
         )
-      )
-      .returning({ id: sellerRegistryIdentifiers.id });
+        .limit(1);
 
-    if (deleted.length === 0) {
-      return { ok: false as const, code: "NOT_FOUND" };
+      if (existing.length === 0) {
+        return { ok: false as const, code: "NOT_FOUND" };
+      }
+
+      const isOwnershipSafe = await assertEventOwnershipSafe(tx, "registry_identifier", input.registryIdentifierId, existing[0].currentVerificationEventId);
+      if (!isOwnershipSafe) return { ok: false as const, code: "SYSTEM_ERROR" };
+
+      const history = await tx
+        .select({ id: sellerVerificationEvents.id })
+        .from(sellerVerificationEvents)
+        .where(eq(sellerVerificationEvents.registryIdentifierId, input.registryIdentifierId))
+        .limit(1);
+
+      const status = existing[0].verificationStatus;
+      if (
+        (status !== null && status !== "unverified") ||
+        existing[0].currentVerificationEventId !== null ||
+        existing[0].retiredAt !== null ||
+        history.length > 0
+      ) {
+        return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
+      }
+
+      const deleted = await tx
+        .delete(sellerRegistryIdentifiers)
+        .where(
+          and(
+            eq(sellerRegistryIdentifiers.id, input.registryIdentifierId),
+            eq(sellerRegistryIdentifiers.partnerId, input.partnerId)
+          )
+        )
+        .returning({ id: sellerRegistryIdentifiers.id });
+
+      if (deleted.length === 0) {
+        return { ok: false as const, code: "NOT_FOUND" };
+      }
+
+      return { ok: true as const, code: "DELETED" };
+    });
+  } catch (error: unknown) {
+    if (typeof error === "object" && error !== null && "code" in error && error.code === "23503") {
+      return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
     }
-
-    return { ok: true as const, code: "DELETED" };
-  } catch {
     console.error("[ADMIN_DB] executeAdminSellerRegistryIdentifierDelete system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
   }

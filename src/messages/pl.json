@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Nie znaleziono identyfikatora podatkowego.",
     "registryIdentifierConflict": "Taki wpis do rejestru już istnieje.",
     "registryIdentifierNotFound": "Nie znaleziono wpisu w rejestrze.",
-    "addRegistryIdentifierTitle": "Dodaj nowy wpis do rejestru"
+    "addRegistryIdentifierTitle": "Dodaj nowy wpis do rejestru",
+    "verificationHistoryExists": "Nie można usunąć identyfikatora z historią weryfikacji."
   },
   "adminOfferDetail": {
     "errorTitle": "Błąd pobierania danych",

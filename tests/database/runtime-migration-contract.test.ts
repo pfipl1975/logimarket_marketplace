@@ -9,13 +9,13 @@ test("normalizeProjectRef extracts refs correctly", () => {
   assert.strictEqual(normalizeProjectRef("invalid"), null);
 });
 
-test("EXPECTED_BASELINE_TABLES has the exact post-0005 item count", () => {
+test("EXPECTED_BASELINE_TABLES has the exact post-0006 item count", () => {
   assert.strictEqual(EXPECTED_BASELINE_TABLES.length, EXPECTED_COUNTS.TABLES);
 });
 
-test("CONTRACT_SYNC: 1. Exactly 33 FK", () => {
+test("CONTRACT_SYNC: 1. Exact FK count", () => {
   const allFks = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "FOREIGN KEY"));
-  assert.strictEqual(allFks.length, 33);
+  assert.strictEqual(allFks.length, EXPECTED_COUNTS.FOREIGN_KEYS);
 });
 
 test("CONTRACT_SYNC: 2. No forbidden FKs", () => {
@@ -28,18 +28,18 @@ test("CONTRACT_SYNC: 2. No forbidden FKs", () => {
   assert.ok(!names.includes("fk_rfq_leads_partner")); // Old name
 });
 
-test("CONTRACT_SYNC: 3. Exactly 28 CHECK", () => {
+test("CONTRACT_SYNC: 3. Exact CHECK count", () => {
   const allChecks = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "CHECK"));
-  assert.strictEqual(allChecks.length, 28);
+  assert.strictEqual(allChecks.length, EXPECTED_COUNTS.CHECK_CONSTRAINTS);
   const names = allChecks.map(c => c.name);
   assert.ok(!names.includes("chk_cart_items_quantity"));
   assert.ok(!names.includes("chk_order_items_quantity"));
   assert.ok(!names.includes("chk_offers_price"));
 });
 
-test("CONTRACT_SYNC: 4. Exactly 17 UNIQUE", () => {
+test("CONTRACT_SYNC: 4. Exact UNIQUE count", () => {
   const allUqs = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "UNIQUE"));
-  assert.strictEqual(allUqs.length, 17);
+  assert.strictEqual(allUqs.length, EXPECTED_COUNTS.UNIQUE_CONSTRAINTS);
 });
 
 test("CONTRACT_SYNC: 5. Presence of uq_cov_attribute_id_pair", () => {
@@ -96,31 +96,51 @@ test("CONTRACT_SYNC: 11. Categories/partners timestamps", () => {
   assert.strictEqual(part.find(c => c.name === "created_at")?.nullable, false);
 });
 
-test("CONTRACT_SYNC: 12. Exactly 24 sequence ownerships", () => {
+test("CONTRACT_SYNC: 12. Exact sequence ownership count", () => {
   const allSeqCols = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].columns.filter(c => c.sequenceName !== null));
   assert.strictEqual(allSeqCols.length, EXPECTED_COUNTS.SEQUENCES);
 });
 
-test("CONTRACT_SYNC: 13. Exactly 13 explicit indexes", () => {
+test("CONTRACT_SYNC: 13. Exact total index count", () => {
   const allIdxs = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].explicitIndexes);
-  assert.strictEqual(allIdxs.length, 13);
+  assert.strictEqual(
+    EXPECTED_COUNTS.PRIMARY_KEYS + EXPECTED_COUNTS.UNIQUE_CONSTRAINTS + allIdxs.length,
+    EXPECTED_COUNTS.INDEXES,
+  );
 });
 
-test("CONTRACT_SYNC: 14. 19 RLS enabled", () => {
+test("CONTRACT_SYNC: 14. Exact RLS-enabled count", () => {
   const rlsCount = EXPECTED_BASELINE_TABLES.filter(t => PRODUCTION_FINGERPRINT[t].rlsEnabled).length;
-  assert.strictEqual(rlsCount, 19);
+  assert.strictEqual(rlsCount, EXPECTED_COUNTS.RLS_ENABLED);
 });
 
-test("CONTRACT_SYNC: 15. Zero policies and triggers", () => {
-  // The production fingerprint must not define any policy or trigger counts —
-  // the runtime contract requires RLS_POLICY_COUNT=0 and TRIGGER_COUNT=0.
+test("CONTRACT_SYNC: 15. Zero policies and the exact append-only trigger", () => {
+  let triggerCount = 0;
   for (const t of EXPECTED_BASELINE_TABLES) {
     const fp = PRODUCTION_FINGERPRINT[t] as unknown as {
       policyCount?: number;
       triggerCount?: number;
     };
     assert.strictEqual(fp.policyCount ?? 0, 0, `${t} must have 0 policies`);
-    assert.strictEqual(fp.triggerCount ?? 0, 0, `${t} must have 0 triggers`);
+    triggerCount += fp.triggerCount ?? 0;
+    if (t !== "seller_verification_events") {
+      assert.strictEqual(fp.triggerCount ?? 0, 0, `${t} must have 0 triggers`);
+    }
+  }
+  assert.strictEqual(PRODUCTION_FINGERPRINT.seller_verification_events.triggerCount, 1);
+  assert.strictEqual(triggerCount, EXPECTED_COUNTS.TRIGGERS);
+});
+
+test("CONTRACT_SYNC: seller verification evidence is exact and protected", () => {
+  const events = PRODUCTION_FINGERPRINT.seller_verification_events;
+  assert.ok(events);
+  assert.strictEqual(events.rlsEnabled, true);
+  assert.strictEqual(events.triggerCount, 1);
+  assert.ok(events.columns.some(c => c.sequenceName === "seller_verification_events_id_seq"));
+  assert.strictEqual(events.constraints.filter(c => c.type === "FOREIGN KEY").length, 3);
+  assert.strictEqual(events.constraints.filter(c => c.type === "CHECK").length, 5);
+  for (const tableName of ["seller_legal_identities", "seller_tax_identifiers", "seller_registry_identifiers"] as const) {
+    assert.ok(PRODUCTION_FINGERPRINT[tableName].constraints.some(c => c.isValidated === false));
   }
 });
 

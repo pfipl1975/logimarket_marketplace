@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Tax identifier not found.",
     "registryIdentifierConflict": "This registry entry already exists.",
     "registryIdentifierNotFound": "Registry entry not found.",
-    "addRegistryIdentifierTitle": "Add New Registry Entry"
+    "addRegistryIdentifierTitle": "Add New Registry Entry",
+    "verificationHistoryExists": "Cannot delete identifier with verification history."
   },
   "adminOfferDetail": {
     "errorTitle": "Error loading data",

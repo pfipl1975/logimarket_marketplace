@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Податковий ідентифікатор не знайдено.",
     "registryIdentifierConflict": "Цей запис у реєстрі вже існує.",
     "registryIdentifierNotFound": "Запис у реєстрі не знайдено.",
-    "addRegistryIdentifierTitle": "Додати новий запис до реєстру"
+    "addRegistryIdentifierTitle": "Додати новий запис до реєстру",
+    "verificationHistoryExists": "Неможливо видалити ідентифікатор з історією перевірки."
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",

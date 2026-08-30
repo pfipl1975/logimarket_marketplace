@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Steuernummer nicht gefunden.",
     "registryIdentifierConflict": "Dieser Registereintrag existiert bereits.",
     "registryIdentifierNotFound": "Registereintrag nicht gefunden.",
-    "addRegistryIdentifierTitle": "Neuen Registereintrag hinzufügen"
+    "addRegistryIdentifierTitle": "Neuen Registereintrag hinzufügen",
+    "verificationHistoryExists": "Kennung mit Verifizierungsverlauf kann nicht gelöscht werden."
   },
   "adminOfferDetail": {
     "errorTitle": "Fehler beim Laden der Daten",

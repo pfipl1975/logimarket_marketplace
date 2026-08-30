@@ -146,7 +146,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> 0000 -> 0001 -> 0002 -> 0003 -> 0004 -> 0005",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0006",
     async () => {
       await cleanDB();
 
@@ -185,14 +185,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(Number(stats.rls_tables), EXPECTED_COUNTS.RLS_ENABLED, "rls_tables mismatch");
       assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0005
+      // Post-migration classification must be the exact terminal runtime state.
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
 
       // 0004 PROOF
       const sellerColumnNames = new Set(
@@ -513,11 +513,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `, [soId]);
       assert.ok(validDecRes.rows[0].id);
 
-      // Journal check: exactly 6 rows
+      // Journal must match the complete disk migration chain.
       const diskMigrations = readMigrationFiles({
         migrationsFolder: MIGRATIONS_DIR,
       });
-      assert.strictEqual(diskMigrations.length, 6, "Disk migrations should have 6 files");
+      assert.ok(diskMigrations.length > 0, "Disk migration chain must not be empty");
 
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
@@ -527,11 +527,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length, 6,
-        "Journal should have exactly 6 rows",
+        journalRows.length, diskMigrations.length,
+        "Journal should match the complete disk migration chain",
       );
 
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
           journalRows[i].hash,
           diskMigrations[i].hash,
@@ -546,7 +546,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> 0003 -> 0004 -> 0005", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0006", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -560,12 +560,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0005
+    // Post-migration classification must be EXACT_EXISTING_POST_0006
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
 
-    // Journal check: exactly 6 rows
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
       `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
     );
@@ -574,8 +574,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       created_at: string | number;
     }[];
     assert.strictEqual(
-      journalRows.length, 6,
-      "Journal should have exactly 6 rows",
+      journalRows.length, diskMigrations.length,
+      "Journal should match the complete disk migration chain",
     );
   });
 
@@ -735,15 +735,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0005
+      // Post-migration classification must be EXACT_EXISTING_POST_0006
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0005");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
 
-      // Journal check: exactly 6 rows
+      const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
       );
@@ -752,8 +752,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at: string | number;
       }[];
       assert.strictEqual(
-        journalRows.length, 6,
-        "Journal should have exactly 6 rows",
+        journalRows.length, diskMigrations.length,
+        "Journal should match the complete disk migration chain",
       );
     },
   );
@@ -2520,6 +2520,84 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await pool.query(`DROP TABLE IF EXISTS public.migration_oaov_targets`);
   });
 
+  await t.test("SELLER_VERIFICATION_EVIDENCE_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    // The feature schema must exist solely through the canonical runtime chain.
+    // 1. Verify schema existence and constraints
+    const tableRes = await pool.query(`SELECT to_regclass('public.seller_verification_events') AS exists`);
+    assert.notEqual(tableRes.rows[0].exists, null, "seller_verification_events must exist");
+
+    // 2. Test Append-Only Trigger
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Test', 'test@test.com') RETURNING id`);
+    const pid = pRes.rows[0].id;
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'Legal Name', 'PL')`, [pid]);
+    
+    const insertRes = await pool.query(`
+      INSERT INTO seller_verification_events (
+        subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
+      ) VALUES (
+        'legal_identity', $1, 'verified', 'system', 'system_rule', '{}'::jsonb
+      ) RETURNING id
+    `, [pid]);
+    
+    const eventId = insertRes.rows[0].id;
+    
+    let updateFailed = false;
+    try {
+      await pool.query(`UPDATE seller_verification_events SET source_name = 'hacked' WHERE id = $1`, [eventId]);
+    } catch (err: any) {
+      if (err.code === '55000') updateFailed = true;
+    }
+    assert.ok(updateFailed, "Trigger must block UPDATE");
+    
+    let deleteFailed = false;
+    try {
+      await pool.query(`DELETE FROM seller_verification_events WHERE id = $1`, [eventId]);
+    } catch (err: any) {
+      if (err.code === '55000') deleteFailed = true;
+    }
+    assert.ok(deleteFailed, "Trigger must block DELETE");
+
+    // The nullable current-event pointer accepts the matching event and rejects
+    // a nonexistent event through the canonical FK.
+    await pool.query(
+      `UPDATE seller_legal_identities SET current_verification_event_id = $1 WHERE partner_id = $2`,
+      [eventId, pid],
+    );
+    let currentEventFkFailed = false;
+    try {
+      await pool.query(
+        `UPDATE seller_legal_identities SET current_verification_event_id = $1 WHERE partner_id = $2`,
+        [eventId + 999999, pid],
+      );
+    } catch (err: any) {
+      if (err.code === "23503") currentEventFkFailed = true;
+    }
+    assert.ok(currentEventFkFailed, "Current verification event FK must reject a missing event");
+
+    let subjectMatrixFailed = false;
+    try {
+      await pool.query(`
+        INSERT INTO seller_verification_events (
+          subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
+        ) VALUES ('tax_identifier', $1, 'verified', 'system', 'system_rule', '{}'::jsonb)
+      `, [pid]);
+    } catch (err: any) {
+      if (err.code === "23514") subjectMatrixFailed = true;
+    }
+    assert.ok(subjectMatrixFailed, "Subject matrix must reject inconsistent ownership columns");
+
+    let historyProtectionFailed = false;
+    try {
+      await pool.query(`DELETE FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    } catch (err: any) {
+      if (err.code === "23503") historyProtectionFailed = true;
+    }
+    assert.ok(historyProtectionFailed, "Verification history FK must protect its subject from hard delete");
+  });
+
   await t.test("ADMIN_PARTNER_CREATE_MUTATION_PROOF", async () => {
     const { createPartnerCore } = await import("@/lib/admin/partners-create");
     await cleanDB();
@@ -2572,6 +2650,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const schemaModule = await import("@/lib/schema");
     const db = drizzle(pool, { schema: schemaModule }) as any;
+    const adminContext = { actorUserId: "ci-admin-seller-legal-proof" };
 
     // 1. partner missing
     const res1 = await executeAdminSellerRegistryIdentifierAdd(db, {
@@ -2579,7 +2658,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "KRS",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    });
+    }, adminContext);
     assert.strictEqual(res1.ok, false);
     if (!res1.ok) assert.strictEqual(res1.code, "PARTNER_NOT_FOUND");
 
@@ -2593,7 +2672,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "KRS",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    });
+    }, adminContext);
     assert.strictEqual(res2.ok, false);
     if (!res2.ok) assert.strictEqual(res2.code, "LEGAL_IDENTITY_REQUIRED");
 
@@ -2606,7 +2685,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "KRS",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    });
+    }, adminContext);
     assert.strictEqual(res3.ok, true);
 
     const check1 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
@@ -2652,10 +2731,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const schemaModule = await import("@/lib/schema");
     const db = drizzle(pool, { schema: schemaModule }) as any;
+    const adminContext = { actorUserId: "ci-admin-seller-legal-proof" };
 
     // CASE 4: New identity -> unverified
     const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('LegalCorp', 'legal@corp.com') RETURNING id`);
-    const pid = pRes.rows[0].id;
+    const rawPid = pRes.rows[0].id;
+    const pid = Number(rawPid);
+    assert.ok(Number.isSafeInteger(pid));
+    assert.ok(pid > 0);
 
     const res4 = await executeAdminSellerLegalDataSave(db, {
       partnerId: pid,
@@ -2668,7 +2751,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res4.ok, true);
 
     const check4 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
@@ -2690,7 +2773,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res3.ok, true);
 
     const check3 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
@@ -2715,7 +2798,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res1.ok, true);
 
     const check1 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
@@ -2723,6 +2806,18 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(check1.rows[0].verified_at, null);
     assert.strictEqual(check1.rows[0].verification_source, null);
     assert.strictEqual(check1.rows[0].verification_reference, null);
+
+    const eventCheck = await pool.query(
+      `SELECT actor_type, actor_user_id
+       FROM seller_verification_events
+       WHERE legal_identity_partner_id = $1
+       ORDER BY id DESC
+       LIMIT 1`,
+      [pid]
+    );
+    assert.strictEqual(eventCheck.rows.length, 1);
+    assert.strictEqual(eventCheck.rows[0].actor_type, "admin");
+    assert.strictEqual(eventCheck.rows[0].actor_user_id, adminContext.actorUserId);
 
     // Restore verified state for CASE 2
     await pool.query(`UPDATE seller_legal_identities SET verification_status = 'verified', verified_at = '2025-01-01 12:00:00Z', verification_source = 'KRS', verification_reference = '123' WHERE partner_id = $1`, [pid]);
@@ -2739,7 +2834,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registeredCity: "Warsaw",
       registeredRegion: "Mazowieckie",
       registeredCountryCode: "PL"
-    });
+    }, adminContext);
     assert.strictEqual(res2.ok, true);
 
     const check2 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);

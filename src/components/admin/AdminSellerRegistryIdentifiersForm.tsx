@@ -27,10 +27,12 @@ export type AdminSellerRegistryIdentifiersFormProps = {
     sellerLegalErrorPartnerNotFound: string;
     registryIdentifierConflict: string;
     registryIdentifierNotFound: string;
+      verificationHistoryExists: string;
     addRegistryIdentifierTitle: string;
     confirmDelete: string;
-    placeholderRegistry: string;
-  };
+        placeholderRegistry: string;
+  
+          };
 };
 
 export function AdminSellerRegistryIdentifiersForm({
@@ -116,6 +118,9 @@ export function AdminSellerRegistryIdentifiersForm({
         switch (result.code) {
           case "NOT_FOUND":
             setErrorMsg(dictionary.registryIdentifierNotFound);
+            break;
+          case "VERIFICATION_HISTORY_EXISTS":
+            setErrorMsg(dictionary.verificationHistoryExists);
             break;
           case "SYSTEM_ERROR":
           default:
