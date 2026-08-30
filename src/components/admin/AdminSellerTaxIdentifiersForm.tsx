@@ -35,12 +35,13 @@ export type AdminSellerTaxIdentifiersFormProps = {
     sellerLegalErrorPartnerNotFound: string;
     taxIdentifierConflict: string;
     taxIdentifierNotFound: string;
+      verificationHistoryExists: string;
     addTaxIdentifierTitle: string;
     confirmDelete: string;
-    verificationHistoryExists?: string;
-    placeholderVat: string;
+        placeholderVat: string;
     placeholderCountry: string;
-  };
+  
+          };
   emptyValue: string;
   locale: string;
 };

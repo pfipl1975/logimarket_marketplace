@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Identificador fiscal no encontrado.",
     "registryIdentifierConflict": "Esta entrada de registro ya existe.",
     "registryIdentifierNotFound": "Entrada de registro no encontrada.",
-    "addRegistryIdentifierTitle": "Agregar nueva entrada de registro"
+    "addRegistryIdentifierTitle": "Agregar nueva entrada de registro",
+    "verificationHistoryExists": "Cannot delete identifier with verification history"
   },
   "adminOfferDetail": {
     "errorTitle": "Error al cargar datos",
@@ -1033,4 +1034,4 @@
     "invalidWebsite": "URL inválida"
   },
   "verificationHistoryExists": "Cannot delete: verification history exists."
-}
+}\n

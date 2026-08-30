@@ -27,11 +27,12 @@ export type AdminSellerRegistryIdentifiersFormProps = {
     sellerLegalErrorPartnerNotFound: string;
     registryIdentifierConflict: string;
     registryIdentifierNotFound: string;
+      verificationHistoryExists: string;
     addRegistryIdentifierTitle: string;
     confirmDelete: string;
-    verificationHistoryExists?: string;
-    placeholderRegistry: string;
-  };
+        placeholderRegistry: string;
+  
+          };
 };
 
 export function AdminSellerRegistryIdentifiersForm({

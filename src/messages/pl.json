@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Nie znaleziono identyfikatora podatkowego.",
     "registryIdentifierConflict": "Taki wpis do rejestru już istnieje.",
     "registryIdentifierNotFound": "Nie znaleziono wpisu w rejestrze.",
-    "addRegistryIdentifierTitle": "Dodaj nowy wpis do rejestru"
+    "addRegistryIdentifierTitle": "Dodaj nowy wpis do rejestru",
+    "verificationHistoryExists": "Cannot delete identifier with verification history"
   },
   "adminOfferDetail": {
     "errorTitle": "Błąd pobierania danych",
@@ -1033,4 +1034,4 @@
     "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
   },
   "verificationHistoryExists": "Nie można usunąć: istnieje historia weryfikacji."
-}
+}\n

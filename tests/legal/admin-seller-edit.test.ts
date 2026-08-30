@@ -114,8 +114,8 @@ class FakeDb {
   }
 
   select() {
-    const createChain = (terminalFunc: any) => {
-      const chain: any = new Proxy({}, {
+    const createChain = (terminalFunc: Record<string, unknown>) => {
+      const chain: Record<string, unknown> = new Proxy({}, {
         get: (target, prop) => {
           if (prop === "limit") return () => terminalFunc();
           if (prop === "for") return () => chain;
@@ -129,11 +129,11 @@ class FakeDb {
 
     return createChain(() => {
       this.selectCallIndex++;
-      let res: any = [];
+      let res: Record<string, unknown> = [];
       if (this.selectCallIndex === 1) {
-        res = this.config.partnerExists !== false ? [{ id: 1, contactEmail: "test@example.com", verificationStatus: "unverified" }] : [];
+        res = this.config.partnerExists !== false ? [{ id: 1, contactEmail: "test@example.com", verificationStatus: "unverified", currentVerificationEventId: null, retiredAt: null }] : [];
       } else if (this.selectCallIndex === 2) {
-        res = this.config.identityExists !== false ? [{
+        res = this.config.identityExists !== false ? [{ currentVerificationEventId: null, retiredAt: null, 
             partnerId: 1,
             legalName: "New Company",
             jurisdictionCountry: "PL",
@@ -171,7 +171,7 @@ class FakeDb {
           throw { code: "23505" };
         }
         this.inserts.push({ table, values });
-        const chain: any = {
+        const chain: Record<string, unknown> = {
           onConflictDoUpdate: () => chain,
           returning: () => [{ id: 999 }]
         };
@@ -200,7 +200,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
       registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     } satisfies AdminSellerLegalDataSaveInput;
-    const res = await executeAdminSellerLegalDataSave(db as never, input);
+    const res = await executeAdminSellerLegalDataSave(db as never, input, { actorUserId: "admin" });
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "PARTNER_NOT_FOUND");
   });
@@ -212,7 +212,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
       registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     } satisfies AdminSellerLegalDataSaveInput;
-    const res = await executeAdminSellerLegalDataSave(db as never, input);
+    const res = await executeAdminSellerLegalDataSave(db as never, input, { actorUserId: "admin" });
 
     assert.strictEqual(res.ok, true);
     assert.strictEqual(db.transactionExecuted, true);
@@ -231,7 +231,7 @@ describe("Execute Admin Seller Legal Data Save", () => {
       registeredAddressLine1: "Line 1", registeredAddressLine2: null, registeredPostalCode: null,
       registeredCity: null, registeredRegion: null, registeredCountryCode: null
     } satisfies AdminSellerLegalDataSaveInput;
-    const res = await executeAdminSellerLegalDataSave(db as never, input);
+    const res = await executeAdminSellerLegalDataSave(db as never, input, { actorUserId: "admin" });
 
     assert.strictEqual(res.ok, true);
     assert.strictEqual(db.transactionExecuted, true);
@@ -307,7 +307,7 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
 
 describe("Execute Admin Seller Tax Identifier Delete", () => {
   test("no matching scoped row -> NOT_FOUND", async () => {
-    const db = new FakeDb({ deleteReturnsRow: false });
+    const db = new FakeDb({ deleteReturnsRow: false, partnerExists: false });
     const input = { adminUserId: "admin", partnerId: 1, taxIdentifierId: 2 } satisfies AdminSellerTaxIdentifierDeleteInput;
     const res = await executeAdminSellerTaxIdentifierDelete(db as never, input);
     assert.strictEqual(res.ok, false);

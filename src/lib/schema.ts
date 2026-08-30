@@ -14,7 +14,6 @@ import {
   check,
   unique,
   foreignKey,
-  index,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -237,7 +236,7 @@ export const sellerVerificationEvents = pgTable("seller_verification_events", {
   sourceName: varchar("source_name", { length: 100 }),
   sourceReference: text("source_reference"),
   reasonCode: varchar("reason_code", { length: 100 }),
-  subjectSnapshot: jsonb("subject_snapshot").notNull(),
+  subjectSnapshot: jsonb("subject_snapshot").$type<LegalIdentitySnapshot | TaxIdentifierSnapshot | RegistryIdentifierSnapshot>().notNull(),
   previousVerificationStatus: varchar("previous_verification_status", { length: 30 }),
   previousVerifiedAt: timestamp("previous_verified_at", { withTimezone: true }),
   previousVerificationSource: varchar("previous_verification_source", { length: 100 }),

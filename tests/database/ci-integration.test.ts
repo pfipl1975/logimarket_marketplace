@@ -2539,7 +2539,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     
     const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Test', 'test@test.com') RETURNING id`);
     const pid = pRes.rows[0].id;
-    await pool.query(`INSERT INTO seller_legal_identities (partner_id, jurisdiction_country) VALUES ($1, 'PL')`, [pid]);
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'Legal Name', 'PL')`, [pid]);
     
     const insertRes = await pool.query(`
       INSERT INTO seller_verification_events (

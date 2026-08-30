@@ -759,7 +759,8 @@
     "taxIdentifierNotFound": "Податковий ідентифікатор не знайдено.",
     "registryIdentifierConflict": "Цей запис у реєстрі вже існує.",
     "registryIdentifierNotFound": "Запис у реєстрі не знайдено.",
-    "addRegistryIdentifierTitle": "Додати новий запис до реєстру"
+    "addRegistryIdentifierTitle": "Додати новий запис до реєстру",
+    "verificationHistoryExists": "Cannot delete identifier with verification history"
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",
@@ -1033,4 +1034,4 @@
     "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
   },
   "verificationHistoryExists": "Cannot delete: verification history exists."
-}
+}\n

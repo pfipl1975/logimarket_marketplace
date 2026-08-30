@@ -1127,13 +1127,12 @@ export async function saveAdminSellerLegalData(rawInput: unknown) {
     executeAdminSellerLegalDataSave,
   } = await import("@/lib/admin/partner-edit-core");
 
-  const inputObj = typeof rawInput === "object" && rawInput !== null ? { ...rawInput, adminUserId: admin.id } : rawInput;
-  const parsed = AdminSellerLegalDataSaveInputSchema.safeParse(inputObj);
+  const parsed = AdminSellerLegalDataSaveInputSchema.safeParse(rawInput);
   if (!parsed.success) {
     return { ok: false, code: "INVALID_INPUT" } as const;
   }
 
-  const result = await executeAdminSellerLegalDataSave(db, parsed.data);
+  const result = await executeAdminSellerLegalDataSave(db, parsed.data, { actorUserId: admin.id });
   if (result.ok) {
     revalidatePath("/", "layout");
   }

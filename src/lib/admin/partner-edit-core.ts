@@ -12,8 +12,7 @@ import { partners, sellerLegalIdentities, sellerTaxIdentifiers,
 
 export const AdminSellerLegalDataSaveInputSchema = z.object({
   partnerId: z.number().int().positive(),
-  adminUserId: z.string().min(1),
-  businessEmail: z.string().trim().email().max(100),
+    businessEmail: z.string().trim().email().max(100),
   legalName: z.string().trim().min(1).max(255),
   jurisdictionCountry: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
   registeredAddressLine1: z
@@ -64,9 +63,14 @@ export type AdminSellerLegalDataSaveResult =
   | { ok: false; code: "PARTNER_NOT_FOUND" }
   | { ok: false; code: "SYSTEM_ERROR" };
 
+export type AdminSellerLegalDataSaveContext = {
+  actorUserId: string;
+};
+
 export async function executeAdminSellerLegalDataSave(
   db: NodePgDatabase<typeof schema>,
-  input: AdminSellerLegalDataSaveInput
+  input: AdminSellerLegalDataSaveInput,
+  context: AdminSellerLegalDataSaveContext
 ): Promise<AdminSellerLegalDataSaveResult> {
   try {
     const result = await db.transaction(async (tx) => {
@@ -146,19 +150,26 @@ export async function executeAdminSellerLegalDataSave(
             registeredCountryCode: curr.registeredCountryCode,
           });
 
-          const eventRes = await tx.insert(sellerVerificationEvents).values({
-            subjectType: "legal_identity",
-            legalIdentityPartnerId: input.partnerId,
-            eventType: "invalidated",
-            actorType: "admin",
-            actorUserId: input.adminUserId,
-            sourceType: "admin_manual",
-            subjectSnapshot: snapshot,
-            previousVerificationStatus: curr.verificationStatus,
-            previousVerifiedAt: curr.verifiedAt,
-            previousVerificationSource: curr.verificationSource,
-            previousVerificationReference: curr.verificationReference,
-          }).returning({ id: sellerVerificationEvents.id });
+          let currentEventId = curr.currentVerificationEventId;
+          const needsInvalidation = curr.verificationStatus !== "unverified" || curr.verifiedAt !== null || curr.verificationSource !== null || curr.verificationReference !== null;
+          
+          if (needsInvalidation) {
+            const eventRes = await tx.insert(sellerVerificationEvents).values({
+              subjectType: "legal_identity",
+              legalIdentityPartnerId: input.partnerId,
+              eventType: "invalidated",
+              actorType: "admin",
+              actorUserId: context.actorUserId,
+              sourceType: "system_rule",
+              reasonCode: "legal_identity_changed",
+              subjectSnapshot: snapshot,
+              previousVerificationStatus: curr.verificationStatus,
+              previousVerifiedAt: curr.verifiedAt,
+              previousVerificationSource: curr.verificationSource,
+              previousVerificationReference: curr.verificationReference,
+            }).returning({ id: sellerVerificationEvents.id });
+            currentEventId = eventRes[0].id;
+          }
 
           await tx
             .update(sellerLegalIdentities)
@@ -175,7 +186,7 @@ export async function executeAdminSellerLegalDataSave(
               verifiedAt: null,
               verificationSource: null,
               verificationReference: null,
-              currentVerificationEventId: eventRes[0].id,
+              currentVerificationEventId: currentEventId,
               updatedAt: new Date(),
             })
             .where(eq(sellerLegalIdentities.partnerId, input.partnerId));
@@ -297,7 +308,7 @@ export async function executeAdminSellerTaxIdentifierDelete(
   try {
     return await db.transaction(async (tx) => {
       const existing = await tx
-        .select({ verificationStatus: sellerTaxIdentifiers.verificationStatus })
+        .select({ verificationStatus: sellerTaxIdentifiers.verificationStatus, currentVerificationEventId: sellerTaxIdentifiers.currentVerificationEventId, retiredAt: sellerTaxIdentifiers.retiredAt })
         .from(sellerTaxIdentifiers)
         .where(
           and(
@@ -311,9 +322,9 @@ export async function executeAdminSellerTaxIdentifierDelete(
         return { ok: false as const, code: "NOT_FOUND" };
       }
 
-      if (existing[0].verificationStatus !== "unverified") {
-        return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
-      }
+      if (existing[0].verificationStatus !== "unverified" || existing[0].currentVerificationEventId !== null || existing[0].retiredAt !== null) {
+          return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
+        }
 
       const deleted = await tx
         .delete(sellerTaxIdentifiers)
@@ -331,7 +342,7 @@ export async function executeAdminSellerTaxIdentifierDelete(
 
       return { ok: true as const, code: "DELETED" };
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && error.code === '23503') { // foreign_key_violation
       return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
     }
@@ -444,7 +455,7 @@ export async function executeAdminSellerRegistryIdentifierDelete(
   try {
     return await db.transaction(async (tx) => {
       const existing = await tx
-        .select({ verificationStatus: sellerRegistryIdentifiers.verificationStatus })
+        .select({ verificationStatus: sellerRegistryIdentifiers.verificationStatus, currentVerificationEventId: sellerRegistryIdentifiers.currentVerificationEventId, retiredAt: sellerRegistryIdentifiers.retiredAt })
         .from(sellerRegistryIdentifiers)
         .where(
           and(
@@ -458,9 +469,10 @@ export async function executeAdminSellerRegistryIdentifierDelete(
         return { ok: false as const, code: "NOT_FOUND" };
       }
 
-      if (existing[0].verificationStatus !== "unverified") {
-        return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
-      }
+      const status = existing[0].verificationStatus;
+        if ((status !== null && status !== "unverified") || existing[0].currentVerificationEventId !== null || existing[0].retiredAt !== null) {
+          return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
+        }
 
       const deleted = await tx
         .delete(sellerRegistryIdentifiers)
@@ -478,7 +490,7 @@ export async function executeAdminSellerRegistryIdentifierDelete(
 
       return { ok: true as const, code: "DELETED" };
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     if (error && error.code === '23503') { // foreign_key_violation
       return { ok: false as const, code: "VERIFICATION_HISTORY_EXISTS" };
     }
