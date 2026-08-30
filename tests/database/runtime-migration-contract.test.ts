@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT, BASELINE_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
+import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, EXPECTED_COUNTS, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT, BASELINE_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 test("normalizeProjectRef extracts refs correctly", () => {
   assert.strictEqual(normalizeProjectRef("postgres://postgres.abc@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"), "abc");
@@ -9,13 +9,13 @@ test("normalizeProjectRef extracts refs correctly", () => {
   assert.strictEqual(normalizeProjectRef("invalid"), null);
 });
 
-test("EXPECTED_BASELINE_TABLES has 19 items", () => {
-  assert.strictEqual(EXPECTED_BASELINE_TABLES.length, 19);
+test("EXPECTED_BASELINE_TABLES has the exact post-0005 item count", () => {
+  assert.strictEqual(EXPECTED_BASELINE_TABLES.length, EXPECTED_COUNTS.TABLES);
 });
 
-test("CONTRACT_SYNC: 1. Exactly 24 FK", () => {
+test("CONTRACT_SYNC: 1. Exactly 33 FK", () => {
   const allFks = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "FOREIGN KEY"));
-  assert.strictEqual(allFks.length, 24);
+  assert.strictEqual(allFks.length, 33);
 });
 
 test("CONTRACT_SYNC: 2. No forbidden FKs", () => {
@@ -28,18 +28,18 @@ test("CONTRACT_SYNC: 2. No forbidden FKs", () => {
   assert.ok(!names.includes("fk_rfq_leads_partner")); // Old name
 });
 
-test("CONTRACT_SYNC: 3. Exactly 11 CHECK", () => {
+test("CONTRACT_SYNC: 3. Exactly 28 CHECK", () => {
   const allChecks = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "CHECK"));
-  assert.strictEqual(allChecks.length, 11);
+  assert.strictEqual(allChecks.length, 28);
   const names = allChecks.map(c => c.name);
   assert.ok(!names.includes("chk_cart_items_quantity"));
   assert.ok(!names.includes("chk_order_items_quantity"));
   assert.ok(!names.includes("chk_offers_price"));
 });
 
-test("CONTRACT_SYNC: 4. Exactly 12 UNIQUE", () => {
+test("CONTRACT_SYNC: 4. Exactly 17 UNIQUE", () => {
   const allUqs = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].constraints.filter(c => c.type === "UNIQUE"));
-  assert.strictEqual(allUqs.length, 12);
+  assert.strictEqual(allUqs.length, 17);
 });
 
 test("CONTRACT_SYNC: 5. Presence of uq_cov_attribute_id_pair", () => {
@@ -96,14 +96,14 @@ test("CONTRACT_SYNC: 11. Categories/partners timestamps", () => {
   assert.strictEqual(part.find(c => c.name === "created_at")?.nullable, false);
 });
 
-test("CONTRACT_SYNC: 12. Exactly 17 sequence ownerships", () => {
+test("CONTRACT_SYNC: 12. Exactly 24 sequence ownerships", () => {
   const allSeqCols = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].columns.filter(c => c.sequenceName !== null));
-  assert.strictEqual(allSeqCols.length, 17);
+  assert.strictEqual(allSeqCols.length, EXPECTED_COUNTS.SEQUENCES);
 });
 
-test("CONTRACT_SYNC: 13. Exactly 10 explicit indexes", () => {
+test("CONTRACT_SYNC: 13. Exactly 13 explicit indexes", () => {
   const allIdxs = EXPECTED_BASELINE_TABLES.flatMap(t => PRODUCTION_FINGERPRINT[t].explicitIndexes);
-  assert.strictEqual(allIdxs.length, 10);
+  assert.strictEqual(allIdxs.length, 13);
 });
 
 test("CONTRACT_SYNC: 14. 19 RLS enabled", () => {

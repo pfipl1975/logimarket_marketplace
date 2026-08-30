@@ -90,19 +90,19 @@ test("RFQ_DRIFT_CLASSIFICATION", () => {
 // ===========================================================================
 // 5. POST-0003 exact - MIGRATABLE_POST_0003
 // ===========================================================================
-test("TARGET_EXACT_19_TABLES", () => {
+test("TARGET_EXACT_POST_0003", () => {
   const actual = buildSide(FINAL_POST_0003_PRODUCTION_FINGERPRINT);
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual));
   assert.strictEqual(result.state, "MIGRATABLE_POST_0003");
 });
 
 // ===========================================================================
-// 5.5 POST-0004 exact - EXACT_EXISTING_POST_0004
+// 5.5 POST-0005 exact - EXACT_EXISTING_POST_0005
 // ===========================================================================
-test("TARGET_EXACT_POST_0004", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT); // which is 0004 now
+test("TARGET_EXACT_POST_0005", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0004");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0005");
 });
 
 // ===========================================================================
@@ -111,7 +111,7 @@ test("TARGET_EXACT_POST_0004", () => {
 test("TARGET_POST_0004_MINUS_COLUMN", () => {
   const actual = buildSide(PRODUCTION_FINGERPRINT);
   actual["seller_legal_identities"].columns = actual["seller_legal_identities"].columns.filter(c => c.name !== "registered_address_line1");
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual));
   assert.strictEqual(result.state, "PARTIAL_OR_DRIFTED");
 });
 
@@ -149,7 +149,7 @@ test("classifyRuntimeTarget - MIGRATABLE_POST_0003 (PostgreSQL Canonical Strings
 
   actual["rfq_leads"].constraints[partnerFkIndex].definition = "FOREIGN KEY (partner_id) REFERENCES partners(id)";
 
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual));
   assert.strictEqual(result.state, "MIGRATABLE_POST_0003");
 });
 
