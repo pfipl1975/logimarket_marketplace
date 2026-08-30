@@ -2,10 +2,10 @@ import { test, describe } from "node:test";
 import assert from "node:assert";
 import * as schema from "../../src/lib/schema";
 import { getTableConfig } from "drizzle-orm/pg-core";
-import { PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
+import { EXPECTED_COUNTS, PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 describe("Drizzle Schema vs Production Baseline Sync", () => {
-  test("should match 19 runtime tables and exactly 161 columns with exact structure", () => {
+  test("should match the exact post-0005 runtime table and column contract", () => {
     const contractTables = Object.values(PRODUCTION_FINGERPRINT).map(t => ({
       tableName: t.name,
       columns: t.columns.map((c, i) => ({
@@ -23,8 +23,8 @@ describe("Drizzle Schema vs Production Baseline Sync", () => {
     const drizzleRuntimeTables = allExports.filter(t => !getTableConfig(t).name.startsWith("migration_"));
 
     // Expected numbers
-    assert.strictEqual(drizzleRuntimeTables.length, 19);
-    assert.strictEqual(contractTables.length, 19);
+    assert.strictEqual(drizzleRuntimeTables.length, EXPECTED_COUNTS.TABLES);
+    assert.strictEqual(contractTables.length, EXPECTED_COUNTS.TABLES);
 
     let drizzleColCount = 0;
 
@@ -63,6 +63,6 @@ describe("Drizzle Schema vs Production Baseline Sync", () => {
       });
     }
 
-    assert.strictEqual(drizzleColCount, 161);
+    assert.strictEqual(drizzleColCount, EXPECTED_COUNTS.COLUMNS);
   });
 });

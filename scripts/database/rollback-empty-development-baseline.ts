@@ -14,13 +14,15 @@
  *   RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION=AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
  *
  * This entrypoint MUST NOT be run against production.
- * It MUST NOT be run if any of the 15 runtime tables contains rows.
+ * It MUST NOT be run if any runtime baseline table contains rows.
  * It does NOT use CASCADE.
  */
 
 import {
   normalizeProjectRef,
   EXPECTED_BASELINE_TABLES,
+  EXPECTED_COUNTS,
+  PRODUCTION_FINGERPRINT,
   RUNTIME_JOURNAL_SCHEMA,
   RUNTIME_JOURNAL_TABLE,
 } from "./runtime-migration-contract";
@@ -35,6 +37,13 @@ import {
 // ---------------------------------------------------------------------------
 
 const REVERSE_DROP_ORDER: readonly string[] = [
+  "seller_acceptance_decisions",
+  "seller_order_items",
+  "seller_order_seller_snapshots",
+  "seller_orders",
+  "marketplace_order_seller_disclosures",
+  "marketplace_orders",
+  "buyer_legal_context_snapshots",
   "clicks",
   "order_items",
   "cart_items",
@@ -56,27 +65,42 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "partners",
 ] as const;
 
-const EXPECTED_SEQUENCES: readonly string[] = [
-  "attribute_definition_translations_id_seq",
-  "attribute_definitions_id_seq",
-  "cart_items_id_seq",
-  "categories_id_seq",
-  "category_attribute_assignments_id_seq",
-  "clicks_id_seq",
-  "controlled_option_value_translations_id_seq",
-  "controlled_option_values_id_seq",
-  "offer_attribute_option_values_id_seq",
-  "offer_attribute_values_id_seq",
-  "offers_id_seq",
-  "order_items_id_seq",
-  "orders_id_seq",
-  "partners_id_seq",
-  "rfq_leads_id_seq",
-  "seller_registry_identifiers_id_seq",
-  "seller_tax_identifiers_id_seq",
-] as const;
+const EXPECTED_SEQUENCES: readonly string[] = Array.from(
+  new Set(
+    EXPECTED_BASELINE_TABLES.flatMap((tableName) =>
+      PRODUCTION_FINGERPRINT[tableName].columns
+        .map((column) => column.sequenceName)
+        .filter((sequenceName): sequenceName is string => sequenceName !== null)
+    )
+  )
+);
 
-const BASELINE_CREATED_AT = 1785589560000;
+export type ExpectedRuntimeMigration = {
+  folderMillis: number;
+  hash: string;
+};
+
+function validateRollbackContract(): RollbackPreflightResult {
+  const expectedTables = new Set(EXPECTED_BASELINE_TABLES);
+  const dropTables = new Set(REVERSE_DROP_ORDER);
+
+  if (
+    REVERSE_DROP_ORDER.length !== EXPECTED_COUNTS.TABLES ||
+    dropTables.size !== EXPECTED_COUNTS.TABLES ||
+    !EXPECTED_BASELINE_TABLES.every((tableName) => dropTables.has(tableName))
+  ) {
+    return { allowed: false, reason: "Rollback table order does not match the authoritative baseline" };
+  }
+
+  if (
+    expectedTables.size !== EXPECTED_COUNTS.TABLES ||
+    EXPECTED_SEQUENCES.length !== EXPECTED_COUNTS.SEQUENCES
+  ) {
+    return { allowed: false, reason: "Authoritative rollback contract has inconsistent counts" };
+  }
+
+  return { allowed: true };
+}
 
 // ---------------------------------------------------------------------------
 // verifyRollbackPreconditions — pure guard, no DDL
@@ -90,7 +114,7 @@ export type RollbackPreflightResult = {
 export async function verifyRollbackPreconditions(
   q: Queryable,
   env: NodeJS.ProcessEnv,
-  expectedHash: string
+  expectedMigrations: readonly ExpectedRuntimeMigration[]
 ): Promise<RollbackPreflightResult> {
   // 1. Authorization token
   if (
@@ -128,18 +152,41 @@ export async function verifyRollbackPreconditions(
     return { allowed: false, reason: "DATABASE_URL points to forbidden (production) ref" };
   }
 
-  // 5. Full fingerprint must be EXACT_EXISTING or EXACT_EXISTING_POST_0004
+  const contractValidation = validateRollbackContract();
+  if (!contractValidation.allowed) return contractValidation;
+
+  if (expectedMigrations.length === 0) {
+    return { allowed: false, reason: "Expected migration chain is empty" };
+  }
+  for (let index = 0; index < expectedMigrations.length; index++) {
+    const migration = expectedMigrations[index];
+    const previous = expectedMigrations[index - 1];
+    if (
+      !migration.hash ||
+      !Number.isSafeInteger(migration.folderMillis) ||
+      (previous && migration.folderMillis <= previous.folderMillis)
+    ) {
+      return { allowed: false, reason: "Expected migration chain is invalid or out of order" };
+    }
+  }
+
+  // 5. Full fingerprint must be the authoritative post-0005 state
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables);
-  if (classification.state !== "EXACT_EXISTING" && classification.state !== "EXACT_EXISTING_POST_0004") {
+  if (classification.state !== "EXACT_EXISTING_POST_0005") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,
     };
   }
 
-  // 6. Exactly 19 tables, no extra public tables
-  if (publicTables.length !== EXPECTED_BASELINE_TABLES.length) {
+  // 6. Exact public-table allowlist, with no missing or extra tables
+  const publicTableSet = new Set(publicTables);
+  if (
+    publicTables.length !== EXPECTED_COUNTS.TABLES ||
+    publicTableSet.size !== EXPECTED_COUNTS.TABLES ||
+    !EXPECTED_BASELINE_TABLES.every((tableName) => publicTableSet.has(tableName))
+  ) {
     return {
       allowed: false,
       reason: `Expected exactly ${EXPECTED_BASELINE_TABLES.length} public tables, found ${publicTables.length}`,
@@ -156,41 +203,40 @@ export async function verifyRollbackPreconditions(
     }
   }
 
-  // 8. Journal must have exactly one baseline row with correct hash and created_at
+  // 8. Journal must exactly match the complete ordered migration chain
   const journalResult = await q.query(
     `SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}."${RUNTIME_JOURNAL_TABLE}" ORDER BY created_at ASC`
   );
   const journalRows = journalResult.rows as { hash: string; created_at: string }[];
 
   if (journalRows.length === 0) {
-    return { allowed: false, reason: "Journal is empty — no baseline entry found" };
+    return { allowed: false, reason: "Journal is empty — no migration chain found" };
   }
-  if (journalRows.length > 1) {
+  if (journalRows.length !== expectedMigrations.length) {
     return {
       allowed: false,
-      reason: `Journal has ${journalRows.length} entries — expected exactly 1`,
+      reason: `Journal has ${journalRows.length} entries — expected ${expectedMigrations.length}`,
     };
   }
 
-  const entry = journalRows[0];
-  if (entry.hash !== expectedHash) {
-    return {
-      allowed: false,
-      reason: `Journal hash mismatch — expected ${expectedHash.slice(0, 12)}..., got ${entry.hash.slice(0, 12)}...`,
-    };
+  for (let index = 0; index < expectedMigrations.length; index++) {
+    const expected = expectedMigrations[index];
+    const actual = journalRows[index];
+    if (actual.hash !== expected.hash) {
+      return {
+        allowed: false,
+        reason: `Journal hash mismatch at entry ${index + 1}`,
+      };
+    }
+    if (Number(actual.created_at) !== expected.folderMillis) {
+      return {
+        allowed: false,
+        reason: `Journal created_at mismatch at entry ${index + 1}`,
+      };
+    }
   }
 
-  const createdAt = Number(entry.created_at);
-  if (createdAt !== BASELINE_CREATED_AT) {
-    return {
-      allowed: false,
-      reason: `Journal created_at mismatch — expected ${BASELINE_CREATED_AT}, got ${createdAt}`,
-    };
-  }
-
-  // 9. No later runtime migration entries (already checked by length === 1 above)
-
-  // 10. All 15 approved tables must have 0 rows — derived from contract, not user input
+  // 9. All approved tables must have 0 rows — derived from contract, not user input
   for (const tableName of EXPECTED_BASELINE_TABLES) {
     const countResult = await q.query(
       `SELECT COUNT(*) AS n FROM public.${tableName}`
@@ -209,8 +255,8 @@ export async function verifyRollbackPreconditions(
 
 // ---------------------------------------------------------------------------
 // executeRollback — ALL destructive DDL on ONE client in ONE transaction.
-// No CASCADE anywhere. Touches only the 15 approved public tables, the 15
-// approved sequences, and the drizzle_runtime journal table + schema.
+// No CASCADE anywhere. Touches only the authoritative public-table and
+// sequence allowlists, plus the drizzle_runtime journal table + schema.
 // ---------------------------------------------------------------------------
 
 export async function executeRollback(client: Queryable): Promise<void> {
@@ -224,8 +270,7 @@ export async function executeRollback(client: Queryable): Promise<void> {
     }
 
     // Drop owned sequences explicitly (they may have already been dropped with
-    // tables, but we issue explicit DROP IF EXISTS for the exact 15 approved
-    // sequences)
+    // tables, but we issue explicit DROP IF EXISTS for the exact approved set)
     for (const seqName of EXPECTED_SEQUENCES) {
       await client.query(`DROP SEQUENCE IF EXISTS public.${seqName}`);
     }
@@ -265,7 +310,7 @@ export type PoolFactory = (connectionString: string) => RollbackPool;
 
 export async function rollbackEmptyDevBaseline(
   env: NodeJS.ProcessEnv,
-  expectedHash: string,
+  expectedMigrations: readonly ExpectedRuntimeMigration[],
   poolFactory?: PoolFactory
 ): Promise<void> {
   const url = env.DATABASE_URL;
@@ -284,7 +329,7 @@ export async function rollbackEmptyDevBaseline(
 
   const pool = factory(url);
   try {
-    const preflight = await verifyRollbackPreconditions(pool, env, expectedHash);
+    const preflight = await verifyRollbackPreconditions(pool, env, expectedMigrations);
     if (!preflight.allowed) {
       throw new Error(`ROLLBACK_ALLOWED=NO — ${preflight.reason}`);
     }
@@ -307,17 +352,12 @@ export async function rollbackEmptyDevBaseline(
 // ---------------------------------------------------------------------------
 
 async function main() {
-  // Hash must be loaded from migration files at runtime, not hard-coded
+  // The complete ordered hash/timestamp chain is loaded from migration files.
   const { readMigrationFiles } = await import("drizzle-orm/migrator");
   const { RUNTIME_MIGRATIONS_FOLDER } = await import("./runtime-migration-contract");
   const migrations = readMigrationFiles({ migrationsFolder: RUNTIME_MIGRATIONS_FOLDER });
 
-  if (migrations.length !== 1) {
-    throw new Error(`Expected exactly 1 migration, found ${migrations.length}`);
-  }
-  const expectedHash = migrations[0].hash;
-
-  await rollbackEmptyDevBaseline(process.env, expectedHash);
+  await rollbackEmptyDevBaseline(process.env, migrations);
 }
 
 if (require.main === module) {
