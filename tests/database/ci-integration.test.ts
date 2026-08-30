@@ -2735,7 +2735,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // CASE 4: New identity -> unverified
     const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('LegalCorp', 'legal@corp.com') RETURNING id`);
-    const pid = pRes.rows[0].id;
+    const rawPid = pRes.rows[0].id;
+    const pid = Number(rawPid);
+    assert.ok(Number.isSafeInteger(pid));
+    assert.ok(pid > 0);
 
     const res4 = await executeAdminSellerLegalDataSave(db, {
       partnerId: pid,
