@@ -5,6 +5,10 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { partners, sellerLegalIdentities, sellerTaxIdentifiers,
   sellerVerificationEvents, sellerRegistryIdentifiers } from "@/lib/schema";
+import {
+  canonicalRegistryIdentifierWriteSchema,
+  canonicalTaxIdentifierWriteSchema,
+} from "@/lib/admin/seller-identifier-contract";
 
 // ----------------------------------------------------------------------
 // 1. Seller Legal Data Save
@@ -234,12 +238,27 @@ export async function executeAdminSellerLegalDataSave(
 // 2. Tax Identifier Add
 // ----------------------------------------------------------------------
 
-export const AdminSellerTaxIdentifierAddInputSchema = z.object({
-  partnerId: z.number().int().positive(),
-  identifierType: z.string().trim().min(1).max(50),
-  identifierValue: z.string().trim().min(1).max(100),
-  countryCode: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
-});
+export const AdminSellerTaxIdentifierAddInputSchema = z
+  .object({
+    partnerId: z.number().int().positive(),
+    identifierType: z.unknown(),
+    identifierValue: z.unknown(),
+    countryCode: z.unknown(),
+  })
+  .transform((input, ctx) => {
+    const parsed = canonicalTaxIdentifierWriteSchema.safeParse(input);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({
+          code: "custom",
+          message: issue.message,
+          path: issue.path,
+        });
+      }
+      return z.NEVER;
+    }
+    return { partnerId: input.partnerId, ...parsed.data };
+  });
 
 export type AdminSellerTaxIdentifierAddInput = z.infer<typeof AdminSellerTaxIdentifierAddInputSchema>;
 
@@ -395,12 +414,27 @@ export async function executeAdminSellerTaxIdentifierDelete(
 // ----------------------------------------------------------------------
 // 4. Registry Identifier Add
 // ----------------------------------------------------------------------
-export const AdminSellerRegistryIdentifierAddInputSchema = z.object({
-  partnerId: z.number().int().positive(),
-  registryType: z.string().trim().min(1).max(50),
-  registryValue: z.string().trim().min(1).max(100),
-  jurisdictionCountry: z.string().trim().toUpperCase().length(2).regex(/^[A-Z]{2}$/, "Must be exactly 2 ASCII letters"),
-});
+export const AdminSellerRegistryIdentifierAddInputSchema = z
+  .object({
+    partnerId: z.number().int().positive(),
+    registryType: z.unknown(),
+    registryValue: z.unknown(),
+    jurisdictionCountry: z.unknown(),
+  })
+  .transform((input, ctx) => {
+    const parsed = canonicalRegistryIdentifierWriteSchema.safeParse(input);
+    if (!parsed.success) {
+      for (const issue of parsed.error.issues) {
+        ctx.addIssue({
+          code: "custom",
+          message: issue.message,
+          path: issue.path,
+        });
+      }
+      return z.NEVER;
+    }
+    return { partnerId: input.partnerId, ...parsed.data };
+  });
 
 export type AdminSellerRegistryIdentifierAddInput = z.infer<typeof AdminSellerRegistryIdentifierAddInputSchema>;
 

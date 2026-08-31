@@ -13,9 +13,11 @@ import { AdminSellerRegistryIdentifiersForm } from "@/components/admin/AdminSell
 export async function AdminPartnerDetailPage({
   locale,
   id,
+  created = false,
 }: {
   locale: Locale;
   id: string;
+  created?: boolean;
 }) {
   const dictionary = await getDictionary(locale);
   const dict = dictionary.adminPartnerDetail;
@@ -58,6 +60,12 @@ export async function AdminPartnerDetailPage({
 
   return (
     <div className="space-y-6 max-w-[1400px] mx-auto w-full pb-12">
+      {created && (
+        <div role="status" className="border border-brand-teal/30 bg-brand-teal/10 px-5 py-4 text-brand-navy">
+          <p className="font-semibold">{dict.createdSuccessTitle}</p>
+          <p className="mt-1 text-sm">{dict.createdSuccessDescription}</p>
+        </div>
+      )}
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border-industrial pb-6">
         <div>
@@ -211,6 +219,8 @@ export async function AdminPartnerDetailPage({
               taxIdentifiers={taxIdentifiers}
               dictionary={{
                 identifierTypeLabel: dict.identifierTypeLabel,
+                taxIdTypeOption: dict.taxIdTypeOption,
+                vatIdTypeOption: dict.vatIdTypeOption,
                 identifierValueLabel: dict.identifierValueLabel,
                 countryCodeLabel: dict.countryCodeLabel,
                 verificationStatusLabel: dict.verificationStatusLabel,
@@ -251,6 +261,8 @@ export async function AdminPartnerDetailPage({
               registryIdentifiers={registryIdentifiers}
               dictionary={{
                 registryTypeLabel: dict.registryTypeLabel,
+                commercialRegisterTypeOption: dict.commercialRegisterTypeOption,
+                statisticalIdTypeOption: dict.statisticalIdTypeOption,
                 registryValueLabel: dict.registryValueLabel,
                 jurisdictionLabel: dict.jurisdictionLabel,
                 addAction: dict.addAction,

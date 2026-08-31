@@ -2603,14 +2603,30 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await cleanDB();
     await runMigrations(process.env);
 
-      const { drizzle } = await import("drizzle-orm/node-postgres");
-      const schemaModule = await import("@/lib/schema");
-      const db = drizzle(pool, { schema: schemaModule }) as any;
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
 
-      const rawInput = {
+    const rawInput = {
       companyName: '  New Corp  ',
       contactEmail: '  TEST@corP.com ',
-      websiteUrl: '  https://new.test  '
+      websiteUrl: '  https://new.test  ',
+      legalName: '  New Corporation sp. z o.o.  ',
+      jurisdictionCountry: 'pl',
+      registeredAddressLine1: '  Testowa 1  ',
+      registeredAddressLine2: '',
+      registeredPostalCode: '00-001',
+      registeredCity: 'Warszawa',
+      registeredRegion: 'Mazowieckie',
+      registeredCountryCode: 'pl',
+      taxIdentifiers: [
+        { identifierType: 'tax_id', identifierValue: '123-456-78-90', countryCode: 'pl' },
+        { identifierType: 'vat_id', identifierValue: 'PL1234567890', countryCode: 'PL' },
+      ],
+      registryIdentifiers: [
+        { registryType: 'commercial_register', registryValue: '0000-123-456', jurisdictionCountry: 'pl' },
+        { registryType: 'statistical_id', registryValue: '123 456 785', jurisdictionCountry: 'PL' },
+      ],
     };
 
     const res = await createPartnerCore(db, rawInput);
@@ -2620,7 +2636,6 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const partnerId = res.partnerId;
       assert.ok(partnerId > 0);
 
-      // Verify db state
       const pRows = await pool.query(`SELECT * FROM partners WHERE id = $1`, [partnerId]);
       assert.equal(pRows.rows.length, 1);
       assert.equal(pRows.rows[0].company_name, 'New Corp');
@@ -2628,14 +2643,83 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.equal(pRows.rows[0].website_url, 'https://new.test');
       assert.ok(pRows.rows[0].created_at);
 
-      // Verify no seller legal identity created
       const liRows = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [partnerId]);
-      assert.equal(liRows.rows.length, 0);
+      assert.equal(liRows.rows.length, 1);
+      assert.equal(liRows.rows[0].legal_name, 'New Corporation sp. z o.o.');
+      assert.equal(liRows.rows[0].registered_address_line1, 'Testowa 1');
+      assert.equal(liRows.rows[0].registered_country_code, 'PL');
+      assert.equal(liRows.rows[0].verification_status, 'unverified');
+      assert.equal(liRows.rows[0].verified_at, null);
+      assert.equal(liRows.rows[0].current_verification_event_id, null);
 
-      // Verify no seller eligibility created
+      const taxRows = await pool.query(`SELECT * FROM seller_tax_identifiers WHERE partner_id = $1 ORDER BY identifier_type`, [partnerId]);
+      assert.equal(taxRows.rows.length, 2);
+      assert.deepEqual(taxRows.rows.map((row) => row.identifier_type), ['tax_id', 'vat_id']);
+      assert.ok(taxRows.rows.every((row) => row.identifier_value === '1234567890'));
+      assert.ok(taxRows.rows.every((row) => row.verification_status === 'unverified' && row.verified_at === null));
+
+      const registryRows = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1 ORDER BY registry_type`, [partnerId]);
+      assert.equal(registryRows.rows.length, 2);
+      assert.deepEqual(registryRows.rows.map((row) => row.registry_type), ['commercial_register', 'statistical_id']);
+      assert.deepEqual(registryRows.rows.map((row) => row.registry_value), ['0000123456', '123456785']);
+      assert.ok(registryRows.rows.every((row) => row.verification_status === 'unverified' && row.verified_at === null));
+
       const seRows = await pool.query(`SELECT * FROM seller_eligibility WHERE partner_id = $1`, [partnerId]);
       assert.equal(seRows.rows.length, 0);
+      const eventRows = await pool.query(`SELECT * FROM seller_verification_events WHERE legal_identity_partner_id = $1 OR tax_identifier_id = ANY($2::bigint[]) OR registry_identifier_id = ANY($3::bigint[])`, [partnerId, taxRows.rows.map((row) => row.id), registryRows.rows.map((row) => row.id)]);
+      assert.equal(eventRows.rows.length, 0);
     }
+
+    const rollbackInput = {
+      ...rawInput,
+      companyName: 'Rollback Corp',
+      contactEmail: 'rollback-onboarding@test.local',
+      legalName: 'Rollback Corporation',
+      taxIdentifiers: [{ identifierType: 'tax_id', identifierValue: '9876543210', countryCode: 'PL' }],
+      registryIdentifiers: [{ registryType: 'commercial_register', registryValue: '0000987654', jurisdictionCountry: 'PL' }],
+    };
+    const countRollbackRows = async () => {
+      const result = await pool.query(`
+        SELECT
+          (SELECT count(*)::int FROM partners WHERE contact_email = 'rollback-onboarding@test.local') AS partners,
+          (SELECT count(*)::int FROM seller_legal_identities WHERE legal_name = 'Rollback Corporation') AS legal,
+          (SELECT count(*)::int FROM seller_tax_identifiers WHERE identifier_value = '9876543210') AS tax,
+          (SELECT count(*)::int FROM seller_registry_identifiers WHERE registry_value = '0000987654') AS registry
+      `);
+      return result.rows[0];
+    };
+
+    const before = await countRollbackRows();
+    const failingDb = {
+      transaction: async (callback: (tx: any) => Promise<unknown>) => db.transaction(async (tx: any) => {
+        let insertNumber = 0;
+        const controlledTx = new Proxy(tx, {
+          get(target, property, receiver) {
+            if (property !== 'insert') return Reflect.get(target, property, receiver);
+            return (table: unknown) => {
+              insertNumber += 1;
+              const builder = target.insert(table);
+              if (insertNumber !== 4) return builder;
+              return {
+                values: async (values: unknown) => {
+                  await builder.values(values);
+                  throw new Error('CONTROLLED_ONBOARDING_FAILURE_AFTER_REGISTRY_INSERT');
+                },
+              };
+            };
+          },
+        });
+        return callback(controlledTx);
+      }),
+    };
+
+    const rollbackResult = await createPartnerCore(failingDb as any, rollbackInput);
+    assert.deepEqual(rollbackResult, { ok: false, reason: 'PARTNER_CREATE_FAILED' });
+    const after = await countRollbackRows();
+    assert.equal(after.partners - before.partners, 0, 'PARTNER_ROWS_DELTA=0');
+    assert.equal(after.legal - before.legal, 0, 'LEGAL_IDENTITY_ROWS_DELTA=0');
+    assert.equal(after.tax - before.tax, 0, 'TAX_IDENTIFIER_ROWS_DELTA=0');
+    assert.equal(after.registry - before.registry, 0, 'REGISTRY_IDENTIFIER_ROWS_DELTA=0');
   });
 
 
@@ -2655,7 +2739,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 1. partner missing
     const res1 = await executeAdminSellerRegistryIdentifierAdd(db, {
       partnerId: 99999,
-      registryType: "KRS",
+      registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
     }, adminContext);
@@ -2669,7 +2753,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 2. legal identity missing
     const res2 = await executeAdminSellerRegistryIdentifierAdd(db, {
       partnerId: pid,
-      registryType: "KRS",
+      registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
     }, adminContext);
@@ -2682,7 +2766,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 3. successful add
     const res3 = await executeAdminSellerRegistryIdentifierAdd(db, {
       partnerId: pid,
-      registryType: "KRS",
+      registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
     }, adminContext);
@@ -2696,7 +2780,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 4. duplicate add -> REGISTRY_IDENTIFIER_CONFLICT
     const res4 = await executeAdminSellerRegistryIdentifierAdd(db, {
       partnerId: pid,
-      registryType: "KRS",
+      registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
     });

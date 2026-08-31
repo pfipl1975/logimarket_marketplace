@@ -77,8 +77,12 @@ describe("Admin Seller Legal Data Save Input Validation", () => {
 
 describe("Admin Seller Tax Identifier Add Input Validation", () => {
   test("invalid input rejected", () => {
-    const input = { adminUserId: "admin", partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "POL" } satisfies AdminSellerTaxIdentifierAddInput;
-    assert.strictEqual(AdminSellerTaxIdentifierAddInputSchema.safeParse(input).success, false);
+    const input = { adminUserId: "admin", partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "POL" } satisfies AdminSellerTaxIdentifierAddInput;
+    const result = AdminSellerTaxIdentifierAddInputSchema.safeParse(input);
+    assert.strictEqual(result.success, false);
+    if (!result.success) {
+      assert.deepStrictEqual(result.error.issues[0]?.path, ["countryCode"]);
+    }
   });
 });
 
@@ -250,9 +254,9 @@ describe("Execute Admin Seller Legal Data Save", () => {
 describe("Execute Admin Seller Tax Identifier Add", () => {
   test("Partner missing -> PARTNER_NOT_FOUND", async () => {
     const db = new FakeDb({ partnerExists: false });
-    const input = {
-      partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "PL"
-    } satisfies AdminSellerTaxIdentifierAddInput;
+    const input = AdminSellerTaxIdentifierAddInputSchema.parse({
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
+    });
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "PARTNER_NOT_FOUND");
@@ -260,9 +264,9 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
 
   test("legal identity missing -> LEGAL_IDENTITY_REQUIRED", async () => {
     const db = new FakeDb({ identityExists: false });
-    const input = {
-      partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "PL"
-    } satisfies AdminSellerTaxIdentifierAddInput;
+    const input = AdminSellerTaxIdentifierAddInputSchema.parse({
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
+    });
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "LEGAL_IDENTITY_REQUIRED");
@@ -271,7 +275,7 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
   test("pre-existing exact duplicate SELECT -> TAX_IDENTIFIER_CONFLICT and NO INSERT", async () => {
     const db = new FakeDb({ taxIdentifierConflictExists: true });
     const input = {
-      partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "PL"
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
     } satisfies AdminSellerTaxIdentifierAddInput;
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, false);
@@ -282,7 +286,7 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
   test("INSERT throws PostgreSQL 23505 race -> TAX_IDENTIFIER_CONFLICT", async () => {
     const db = new FakeDb({ insertThrowsDuplicate: true });
     const input = {
-      partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "PL"
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
     } satisfies AdminSellerTaxIdentifierAddInput;
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, false);
@@ -291,16 +295,16 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
 
   test("successful insert uses expected fields and verificationStatus='unverified'", async () => {
     const db = new FakeDb({});
-    const input = {
-      partnerId: 1, identifierType: "VAT", identifierValue: "PL123", countryCode: "PL"
-    } satisfies AdminSellerTaxIdentifierAddInput;
+    const input = AdminSellerTaxIdentifierAddInputSchema.parse({
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
+    });
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, true);
 
     assert.strictEqual(db.inserts.length, 1);
     const insertPayload = db.inserts[0].values;
-    assert.strictEqual(insertPayload.identifierType, "VAT");
-    assert.strictEqual(insertPayload.identifierValue, "PL123");
+    assert.strictEqual(insertPayload.identifierType, "vat_id");
+    assert.strictEqual(insertPayload.identifierValue, "1234567890");
     assert.strictEqual(insertPayload.countryCode, "PL");
     assert.strictEqual(insertPayload.verificationStatus, "unverified");
   });
@@ -387,27 +391,27 @@ describe("Seller Disclosure Completeness", () => {
 
 describe("Admin Seller Registry Identifier Add Input Validation", () => {
   test("invalid partnerId -> rejected", () => {
-    const input = { adminUserId: "admin", partnerId: -1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: -1, registryType: "commercial_register", registryValue: "0000123456", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("empty registryType -> rejected", () => {
-    const input = { adminUserId: "admin", partnerId: 1, registryType: "   ", registryValue: "123", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "   ", registryValue: "0000123456", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("empty registryValue -> rejected", () => {
-    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "   ", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "commercial_register", registryValue: "   ", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("invalid jurisdictionCountry -> rejected", () => {
-    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "POL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "commercial_register", registryValue: "0000123456", jurisdictionCountry: "POL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("lowercase country normalization", () => {
-    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "123", jurisdictionCountry: "pl" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "commercial_register", registryValue: "0000-123-456", jurisdictionCountry: "pl" };
     const parsed = AdminSellerRegistryIdentifierAddInputSchema.safeParse(input);
     assert.strictEqual(parsed.success, true);
     if (parsed.success) {
@@ -416,12 +420,12 @@ describe("Admin Seller Registry Identifier Add Input Validation", () => {
   });
 
   test("oversized registryType -> rejected", () => {
-    const input = { adminUserId: "admin", partnerId: 1, registryType: "a".repeat(51), registryValue: "123", jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "a".repeat(51), registryValue: "0000123456", jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 
   test("oversized registryValue -> rejected", () => {
-    const input = { adminUserId: "admin", partnerId: 1, registryType: "KRS", registryValue: "a".repeat(101), jurisdictionCountry: "PL" };
+    const input = { adminUserId: "admin", partnerId: 1, registryType: "commercial_register", registryValue: "a".repeat(101), jurisdictionCountry: "PL" };
     assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse(input).success, false);
   });
 });
@@ -429,13 +433,18 @@ describe("Admin Seller Registry Identifier Add Input Validation", () => {
 describe('Execute Admin Seller Registry Identifier Add', () => {
   test('explicit create defaults', async () => {
     const db = new FakeDb({});
-    const input = { adminUserId: 'admin', partnerId: 1, registryType: 'VAT', registryValue: '123', jurisdictionCountry: 'PL' } satisfies AdminSellerRegistryIdentifierAddInput;
+    const input = { adminUserId: 'admin', partnerId: 1, registryType: 'commercial_register', registryValue: '0000123456', jurisdictionCountry: 'PL' } satisfies AdminSellerRegistryIdentifierAddInput;
     const res = await executeAdminSellerRegistryIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, true);
     assert.strictEqual(db.inserts.length, 1);
     assert.strictEqual(db.inserts[0].values.verificationStatus, 'unverified');
     assert.strictEqual(db.inserts[0].values.currentVerificationEventId, null);
     assert.strictEqual(db.inserts[0].values.retiredAt, null);
+  });
+
+  test('legacy labels cannot be used for new writes', () => {
+    assert.strictEqual(AdminSellerRegistryIdentifierAddInputSchema.safeParse({ partnerId: 1, registryType: 'VAT', registryValue: '0000123456', jurisdictionCountry: 'PL' }).success, false);
+    assert.strictEqual(AdminSellerTaxIdentifierAddInputSchema.safeParse({ partnerId: 1, identifierType: 'NIP', identifierValue: '1234567890', countryCode: 'PL' }).success, false);
   });
 });
 
