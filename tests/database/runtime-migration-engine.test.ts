@@ -53,14 +53,19 @@ const exactJournalEntries = [
   { tag: "fake_tag_0004", when: 1785591500000 },
   { tag: "fake_tag_0005", when: 1785592000000 },
   { tag: "fake_tag_0006", when: 1785592500000 },
+  { tag: "fake_tag_0007", when: 1785593000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const prevFakeRead = exactFakeRead;
-const prevFakeReadFn = exactFakeReadFn;
+const previousJournalEntries = exactJournalEntries.slice(0, 7);
+const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
+const prevFakeReadFn = () => ({
+  text: JSON.stringify({ entries: previousJournalEntries }),
+  parsed: { entries: previousJournalEntries },
+});
 const fakeReadFn = () => ({ text: JSON.stringify({ entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }), parsed: { entries: [{ tag: "fake_tag_0000", when: 1785589560000 }] }});
 const FAKE_DEV_URL = "postgres://postgres.devref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
 const FAKE_PROD_URL = "postgres://postgres.prodref@aws-0-eu-central-1.pooler.supabase.com:6543/postgres";
@@ -231,6 +236,7 @@ function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PART
               { hash: FAKE_HASH, created_at: "1785591000000" },
               { hash: FAKE_HASH, created_at: "1785591500000" },
               { hash: FAKE_HASH, created_at: "1785592000000" },
+              { hash: FAKE_HASH, created_at: "1785592500000" },
             ],
           })
         : state === "BASELINE"
@@ -423,7 +429,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0006");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0007");
 });
 
 test("TARGET: PARTIAL_OR_DRIFTED when missing table", () => {
@@ -1119,11 +1125,11 @@ test("RUNNER_POSTCHECK_DRIFT_TEST: post-check drift causes error after migration
   assert.ok(state.ended);
 });
 
-test("RUNNER_POST0005_STAYS_POST0005_BLOCK: post-check fails if 0006 is not applied", async () => {
+test("RUNNER_POST0006_STAYS_POST0006_BLOCK: post-check fails if 0007 is not applied", async () => {
   let migrateCallCount = 0;
   const fakeMigrate = async () => { migrateCallCount++; }; // Does not change schema
 
-  // PREVIOUS is the exact post-0005 predecessor state.
+  // PREVIOUS is the exact post-0006 predecessor state.
   const { state, factory } = fakeRunnerPool(runnerRouter("PREVIOUS", PREVIOUS_PRODUCTION_FINGERPRINT));
   const env = Object.assign(emptyEnv(), {
     DB_WRITES_ALLOWED_TO_DEV: "YES",

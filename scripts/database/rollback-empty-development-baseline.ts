@@ -204,10 +204,10 @@ export async function verifyRollbackPreconditions(
     }
   }
 
-  // 5. Full fingerprint must be the authoritative post-0006 state
+  // 5. Full fingerprint must be the authoritative post-0007 state
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables);
-  if (classification.state !== "EXACT_EXISTING_POST_0006") {
+  if (classification.state !== "EXACT_EXISTING_POST_0007") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,
