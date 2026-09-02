@@ -15,7 +15,10 @@ import { readMigrationFiles } from "drizzle-orm/migrator";
 import fs from "node:fs";
 import path from "node:path";
 import { createCanonicalRuntimeMigrationDirectory, cleanupCanonicalRuntimeMigrationDirectory } from "./runtime-migration-temp-dir";
-import { validateAppliedMigrationPrefix } from "./runtime-migration-journal";
+import {
+  POST_0007_RECONCILIATION_MODE,
+  validateAppliedMigrationPrefix,
+} from "./runtime-migration-journal";
 
 export type PoolFactory = (connectionString: string) => {
   query(text: string, values?: unknown[]): Promise<{ rows: unknown[] }>;
@@ -91,15 +94,25 @@ export async function runMigrations(
       return fs.readFileSync(path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, `${tag}.sql`));
     });
 
+    const reconciliationMode = env.RUNTIME_MIGRATION_RECONCILIATION;
+
     validateAppliedMigrationPrefix(
       env.RUNTIME_MIGRATION_TARGET || "production",
       classification.state,
       diskJournal.parsed,
       diskMigrations,
       rows,
-      getBuffer
+      getBuffer,
+      reconciliationMode,
     );
     console.log("RUNNER: Journal prefix validated successfully.");
+
+    if (
+      reconciliationMode === POST_0007_RECONCILIATION_MODE &&
+      rows.length === 8
+    ) {
+      throw new Error("RUNNER: ALREADY_RECONCILED. Canonical 0007 journal row already exists");
+    }
 
     tempDir = createCanonicalRuntimeMigrationDirectory(diskJournal.text, diskJournal.parsed, getBuffer);
 
@@ -118,6 +131,32 @@ export async function runMigrations(
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }
     console.log("RUNNER: post-check PASS");
+
+    if (reconciliationMode === POST_0007_RECONCILIATION_MODE) {
+      const postJournalResult = await pool.query(
+        `SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}.${RUNTIME_JOURNAL_TABLE} ORDER BY created_at ASC`,
+      );
+      const postRows = postJournalResult.rows as {
+        hash: string;
+        created_at: string | number;
+      }[];
+
+      validateAppliedMigrationPrefix(
+        env.RUNTIME_MIGRATION_TARGET || "production",
+        postClassification.state,
+        diskJournal.parsed,
+        diskMigrations,
+        postRows,
+        getBuffer,
+        reconciliationMode,
+      );
+      if (postRows.length !== 8) {
+        throw new Error(
+          "RUNNER: BLOCKED. Reconciliation did not produce exact canonical journal count 8",
+        );
+      }
+      console.log("RUNNER: reconciliation journal post-check PASS");
+    }
 
     const grants = await queryRuntimeGrants(pool);
     console.log(`RUNNER: ANON_TABLE_GRANT_COUNT=${grants.ANON_TABLE_GRANT_COUNT}`);

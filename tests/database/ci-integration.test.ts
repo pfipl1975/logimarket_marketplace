@@ -2,12 +2,22 @@ import { test } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
 import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { getDb } from "@/lib/db";
 import { executeOfferPublicationStateChange } from "@/lib/admin/offer-publication-core";
 import { mutateRfqStatusCore } from "@/lib/rfq/admin-core";
 import type { RfqStatus } from "@/lib/schema";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
+import {
+  POST_0007_RECONCILIATION_AUTHORIZATION,
+  POST_0007_RECONCILIATION_MODE,
+} from "../../scripts/database/runtime-migration-journal";
+import {
+  cleanupCanonicalRuntimeMigrationDirectory,
+  createCanonicalRuntimeMigrationDirectory,
+} from "../../scripts/database/runtime-migration-temp-dir";
 import {
   fetchLiveSchemaMetadata,
   classifyRuntimeTarget,
@@ -570,6 +580,125 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           `Row ${i} created_at mismatch`,
         );
       }
+    },
+  );
+
+  await t.test(
+    "PATH A2: exact physical POST-0007 plus journal 0000-0006 -> bounded canonical reconciliation",
+    async () => {
+      await cleanDB();
+
+      const journalPath = `${MIGRATIONS_DIR}/meta/_journal.json`;
+      const fullJournal = JSON.parse(
+        fs.readFileSync(journalPath, "utf8"),
+      ) as {
+        version: string;
+        dialect: string;
+        entries: { tag: string; when: number; breakpoints: boolean }[];
+      };
+      const prefixJournal = {
+        ...fullJournal,
+        entries: fullJournal.entries.slice(0, 7),
+      };
+      const getMigrationBuffer = (tag: string) =>
+        fs.readFileSync(`${MIGRATIONS_DIR}/${tag}.sql`);
+      const prefixDirectory = createCanonicalRuntimeMigrationDirectory(
+        JSON.stringify(prefixJournal),
+        prefixJournal,
+        getMigrationBuffer,
+      );
+
+      try {
+        await migrate(drizzle(pool), {
+          migrationsFolder: prefixDirectory,
+          migrationsSchema: "drizzle_runtime",
+          migrationsTable: "__drizzle_migrations",
+        });
+      } finally {
+        cleanupCanonicalRuntimeMigrationDirectory(prefixDirectory);
+      }
+
+      const preOwnerEffect = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          preOwnerEffect.fingerprint,
+          preOwnerEffect.publicTables,
+        ).state,
+        "EXACT_EXISTING_POST_0006",
+      );
+
+      const journalBeforeOwnerEffect = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(journalBeforeOwnerEffect.rows[0].count, 7);
+
+      await pool.query(
+        fs.readFileSync(
+          `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`,
+          "utf8",
+        ),
+      );
+
+      const driftMetadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          driftMetadata.fingerprint,
+          driftMetadata.publicTables,
+        ).state,
+        "EXACT_EXISTING_POST_0007",
+      );
+      const driftJournal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(driftJournal.rows[0].count, 7);
+
+      const driftRls = await getMarketplaceOrderRlsStats();
+      assert.strictEqual(Number(driftRls.target_tables), 7);
+      assert.strictEqual(Number(driftRls.rls_enabled), 7);
+      assert.strictEqual(Number(driftRls.policies), 0);
+
+      const reconciliationEnv = {
+        ...process.env,
+        RUNTIME_MIGRATION_TARGET: "production",
+        RUNTIME_MIGRATION_WRITE_AUTHORIZATION:
+          POST_0007_RECONCILIATION_AUTHORIZATION,
+        RUNTIME_MIGRATION_RECONCILIATION:
+          POST_0007_RECONCILIATION_MODE,
+      };
+      await runMigrations(reconciliationEnv);
+
+      const reconciledMetadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          reconciledMetadata.fingerprint,
+          reconciledMetadata.publicTables,
+        ).state,
+        "EXACT_EXISTING_POST_0007",
+      );
+      const reconciledJournal = await pool.query(
+        `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at`,
+      );
+      const diskMigrations = readMigrationFiles({
+        migrationsFolder: MIGRATIONS_DIR,
+      });
+      assert.strictEqual(reconciledJournal.rows.length, 8);
+      assert.strictEqual(
+        reconciledJournal.rows[7].hash,
+        diskMigrations[7].hash,
+      );
+      assert.strictEqual(
+        String(reconciledJournal.rows[7].created_at),
+        String(diskMigrations[7].folderMillis),
+      );
+
+      await assert.rejects(
+        () => runMigrations(reconciliationEnv),
+        /ALREADY_RECONCILED/,
+      );
+      const replayJournal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(replayJournal.rows[0].count, 8);
     },
   );
 

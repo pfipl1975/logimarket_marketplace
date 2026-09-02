@@ -1,5 +1,15 @@
 import { isPortableHashEquivalent, isLegacyDev0000Exception } from "./runtime-migration-hashing";
 
+export const POST_0007_RECONCILIATION_MODE =
+  "EXACT_POST_0007_JOURNAL_0000_TO_0006";
+export const POST_0007_RECONCILIATION_AUTHORIZATION =
+  "AUTHORIZED_PROD_POST_0007_JOURNAL_RECONCILIATION";
+
+const POST_0007_CANONICAL_TAG = "0007_marketplace_order_rls_hardening";
+const POST_0007_CANONICAL_WHEN = 1785593000000;
+const POST_0007_CANONICAL_HASH =
+  "be9934de38816ccf17dd9d5807d3b40d0fbd62fa14d6efcbeb6b0176c6f9c2b1";
+
 export interface MigrationFileMeta {
   folderMillis: number;
   hash: string;
@@ -11,8 +21,31 @@ export function validateAppliedMigrationPrefix(
   diskJournal: { entries: { tag: string; when: number }[] },
   diskMigrations: MigrationFileMeta[],
   appliedRows: { hash: string; created_at: string | number }[],
-  getMigrationBuffer: (tag: string) => Buffer
+  getMigrationBuffer: (tag: string) => Buffer,
+  reconciliationMode?: string,
 ): void {
+  if (
+    reconciliationMode !== undefined &&
+    reconciliationMode !== POST_0007_RECONCILIATION_MODE
+  ) {
+    throw new Error("RUNNER: BLOCKED. Unsupported reconciliation mode");
+  }
+
+  const isKnownPost0007Reconciliation =
+    reconciliationMode === POST_0007_RECONCILIATION_MODE &&
+    targetClassification === "production" &&
+    schemaClassificationState === "EXACT_EXISTING_POST_0007" &&
+    (appliedRows.length === 7 || appliedRows.length === 8);
+
+  if (
+    reconciliationMode === POST_0007_RECONCILIATION_MODE &&
+    !isKnownPost0007Reconciliation
+  ) {
+    throw new Error(
+      "RUNNER: BLOCKED. Reconciliation requires exact POST_0007 physical state and canonical journal 0000 through 0006",
+    );
+  }
+
   // Enforce state/journal cardinality constraints
   if (schemaClassificationState === "EMPTY") {
     if (appliedRows.length !== 0) {
@@ -43,7 +76,7 @@ export function validateAppliedMigrationPrefix(
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0006 but journal has ${appliedRows.length} rows)`);
     }
   } else if (schemaClassificationState === "EXACT_EXISTING_POST_0007") {
-    if (appliedRows.length !== 8) {
+    if (appliedRows.length !== 8 && !isKnownPost0007Reconciliation) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0007 but journal has ${appliedRows.length} rows)`);
     }
   } else if (schemaClassificationState === "PARTIAL_OR_DRIFTED") {
@@ -56,6 +89,40 @@ export function validateAppliedMigrationPrefix(
   
   if (appliedRows.length > diskJournal.entries.length) {
     throw new Error("RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (claimed: " + appliedRows.length + ")");
+  }
+
+  if (reconciliationMode === POST_0007_RECONCILIATION_MODE) {
+    if (diskJournal.entries.length !== 8 || diskMigrations.length !== 8) {
+      throw new Error(
+        "RUNNER: BLOCKED. Reconciliation requires canonical runtime head 0007",
+      );
+    }
+
+    const entry0007 = diskJournal.entries[7];
+    if (
+      entry0007?.tag !== POST_0007_CANONICAL_TAG ||
+      entry0007.when !== POST_0007_CANONICAL_WHEN
+    ) {
+      throw new Error(
+        "RUNNER: BLOCKED. Reconciliation requires exact canonical 0007 journal metadata",
+      );
+    }
+
+    const diskMigration0007 = diskMigrations.find(
+      (migration) => migration.folderMillis === POST_0007_CANONICAL_WHEN,
+    );
+    if (!diskMigration0007) {
+      throw new Error(
+        "RUNNER: BLOCKED. Reconciliation requires exact canonical 0007 migration",
+      );
+    }
+
+    const migration0007 = getMigrationBuffer(POST_0007_CANONICAL_TAG);
+    if (!isPortableHashEquivalent(POST_0007_CANONICAL_HASH, migration0007)) {
+      throw new Error(
+        "RUNNER: BLOCKED. Reconciliation requires exact canonical 0007 migration hash",
+      );
+    }
   }
 
   for (let i = 0; i < appliedRows.length; i++) {
