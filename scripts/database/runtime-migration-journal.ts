@@ -79,6 +79,10 @@ export function validateAppliedMigrationPrefix(
     if (appliedRows.length !== 8 && !isKnownPost0007Reconciliation) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0007 but journal has ${appliedRows.length} rows)`);
     }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0008") {
+    if (appliedRows.length !== 9) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0008 but journal has ${appliedRows.length} rows)`);
+    }
   } else if (schemaClassificationState === "PARTIAL_OR_DRIFTED") {
     throw new Error(`RUNNER: BLOCKED. Schema is PARTIAL_OR_DRIFTED`);
   } else if (schemaClassificationState === "MIGRATABLE_PROD_LEGACY" || schemaClassificationState === "MIGRATABLE_BASELINE") {
@@ -92,9 +96,9 @@ export function validateAppliedMigrationPrefix(
   }
 
   if (reconciliationMode === POST_0007_RECONCILIATION_MODE) {
-    if (diskJournal.entries.length !== 8 || diskMigrations.length !== 8) {
+    if (diskJournal.entries.length < 8 || diskMigrations.length < 8) {
       throw new Error(
-        "RUNNER: BLOCKED. Reconciliation requires canonical runtime head 0007",
+        "RUNNER: BLOCKED. Reconciliation requires canonical runtime head 0007 or later",
       );
     }
 

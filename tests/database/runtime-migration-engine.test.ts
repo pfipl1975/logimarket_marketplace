@@ -54,13 +54,14 @@ const exactJournalEntries = [
   { tag: "fake_tag_0005", when: 1785592000000 },
   { tag: "fake_tag_0006", when: 1785592500000 },
   { tag: "fake_tag_0007", when: 1785593000000 },
+  { tag: "fake_tag_0008", when: 1785593500000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const previousJournalEntries = exactJournalEntries.slice(0, 7);
+const previousJournalEntries = exactJournalEntries.slice(0, 8);
 const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const prevFakeReadFn = () => ({
   text: JSON.stringify({ entries: previousJournalEntries }),
@@ -120,6 +121,7 @@ type MetadataOptions = {
   tableCounts?: Record<string, number>;
   countsAsNumbers?: boolean;
   fingerprint?: Record<string, TableContract>;
+  proconfig?: string[] | null;
 };
 
 /** Routes the 6 metadata queries of fetchLiveSchemaMetadata plus journal and
@@ -131,6 +133,7 @@ function metadataRouter(options?: MetadataOptions): Router {
   const tableCounts = options?.tableCounts ?? {};
   const asNum = options?.countsAsNumbers ?? false;
   const fp = options?.fingerprint ?? PRODUCTION_FINGERPRINT;
+  const proconfig = options?.proconfig !== undefined ? options.proconfig : ['search_path=""'];
 
   return (t) => {
     // Tables list (checked first — other queries also join pg_class)
@@ -216,6 +219,9 @@ function metadataRouter(options?: MetadataOptions): Router {
       const n = tableCounts[tbl] ?? 0;
       return { rows: [{ n: asNum ? n : String(n) }] };
     }
+    if (t.includes("pg_proc")) {
+      return { rows: [{ proconfig }] };
+    }
     return null;
   };
 }
@@ -237,12 +243,14 @@ function runnerRouter(state: "EMPTY" | "EXACT" | "PREVIOUS" | "BASELINE" | "PART
               { hash: FAKE_HASH, created_at: "1785591500000" },
               { hash: FAKE_HASH, created_at: "1785592000000" },
               { hash: FAKE_HASH, created_at: "1785592500000" },
+              { hash: FAKE_HASH, created_at: "1785593000000" },
             ],
+            proconfig: null,
           })
         : state === "BASELINE"
-          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride ?? [{ hash: FAKE_HASH, created_at: "1785589560000" }] })
+          ? metadataRouter({ fingerprint: fp, tables: fp ? Object.keys(fp) : undefined, journalRows: journalRowsOverride ?? [{ hash: FAKE_HASH, created_at: "1785589560000" }], proconfig: null })
         : state === "PARTIAL"
-          ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
+          ? metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7), proconfig: null })
           : emptyRouter();
   return (t) => {
     if (t.includes("pg_roles")) {
@@ -270,7 +278,8 @@ function emptyRouter(): Router {
       t.includes("pg_constraint") ||
       t.includes("pg_index") ||
       t.includes("pg_roles") ||
-      t.includes("aclexplode")
+      t.includes("aclexplode") ||
+      t.includes("pg_proc")
     ) {
       return { rows: [] };
     }
@@ -1148,7 +1157,8 @@ test("RUNNER_POST0006_STAYS_POST0006_BLOCK: post-check fails if 0007 is not appl
         { folderMillis: 1785591000000, hash: FAKE_HASH },
         { folderMillis: 1785591500000, hash: FAKE_HASH },
         { folderMillis: 1785592000000, hash: FAKE_HASH },
-        { folderMillis: 1785592500000, hash: FAKE_HASH }
+        { folderMillis: 1785592500000, hash: FAKE_HASH },
+        { folderMillis: 1785593000000, hash: FAKE_HASH }
       ]) as never,
       (() => ({
         text: "{}",
@@ -1160,7 +1170,8 @@ test("RUNNER_POST0006_STAYS_POST0006_BLOCK: post-check fails if 0007 is not appl
             { tag: "0003_prod_legacy_offer_reconciliation", when: 1785591000000 },
             { tag: "0004_seller_registered_address", when: 1785591500000 },
             { tag: "0005_marketplace_order_56b2a", when: 1785592000000 },
-            { tag: "0006_seller_verification_evidence", when: 1785592500000 }
+            { tag: "0006_seller_verification_evidence", when: 1785592500000 },
+            { tag: "0007_marketplace_order_rls_hardening", when: 1785593000000 }
           ]
         }
       })) as never,

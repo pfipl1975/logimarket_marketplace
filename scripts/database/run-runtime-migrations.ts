@@ -52,8 +52,8 @@ export async function runMigrations(
 
   try {
     console.log("RUNNER: metadata preflight starting");
-    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
-    const classification = classifyRuntimeTarget(fingerprint, publicTables);
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
     console.log(`RUNNER: target classification = ${classification.state}`);
 
     if (classification.state === "PARTIAL_OR_DRIFTED") {
@@ -125,9 +125,9 @@ export async function runMigrations(
     });
     console.log("RUNNER: migrate completed");
 
-    const { fingerprint: postFingerprint, publicTables: postTables } = await fetchLiveSchemaMetadata(pool);
-    const postClassification = classifyRuntimeTarget(postFingerprint, postTables);
-    if (postClassification.state !== "EXACT_EXISTING_POST_0007") {
+    const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
+    if (postClassification.state !== "EXACT_EXISTING_POST_0008") {
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }
     console.log("RUNNER: post-check PASS");
