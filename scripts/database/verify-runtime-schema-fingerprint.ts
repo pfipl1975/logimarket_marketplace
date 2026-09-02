@@ -21,6 +21,9 @@ import {
   ConstraintContract,
   IndexContract,
   TableContract,
+  RuntimeSecurityContract,
+  PRE_0008_SECURITY_CONTRACT,
+  POST_0008_SECURITY_CONTRACT
 } from "./runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -64,6 +67,8 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0008"
+  | "MIGRATABLE_POST_0007"
   | "EXACT_EXISTING_POST_0007"
   | "EXACT_EXISTING_POST_0006"
   | "EXACT_EXISTING_POST_0005"
@@ -543,7 +548,8 @@ export function compareRuntimeFingerprint(
 
 export function classifyRuntimeTarget(
   actual: Record<string, TableFingerprintSide>,
-  allPublicTables: string[]
+  allPublicTables: string[],
+  security: RuntimeSecurityContract = PRE_0008_SECURITY_CONTRACT
 ): RuntimeTargetResult {
   const publicTableCount = allPublicTables.length;
 
@@ -554,7 +560,13 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
-    return { state: "EXACT_EXISTING_POST_0007", publicTableCount, differences: [] };
+    if (JSON.stringify(security) === JSON.stringify(POST_0008_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0008", publicTableCount, differences: [] };
+    }
+    if (JSON.stringify(security) === JSON.stringify(PRE_0008_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0007", publicTableCount, differences: [] };
+    }
+    return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
   }
 
   const matchPost0006 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0006_PRODUCTION_FINGERPRINT);
@@ -614,7 +626,7 @@ export function classifyRuntimeTarget(
 
 export async function fetchLiveSchemaMetadata(
   q: Queryable
-): Promise<{ fingerprint: Record<string, LiveTableFingerprint>; publicTables: string[] }> {
+): Promise<{ fingerprint: Record<string, LiveTableFingerprint>; publicTables: string[]; security: { preventVerificationEventsMutationSearchPath: string[] | null } }> {
   // 1. All user tables in public schema
   const tableResult = await q.query(`
     SELECT c.relname AS table_name,
@@ -808,13 +820,27 @@ export async function fetchLiveSchemaMetadata(
 
   for (const row of idxResult.rows as IdxRow[]) {
     if (!fingerprint[row.table_name]) continue;
-    const expressions = row.index_columns ?? row.index_expressions_expr ?? "";
     fingerprint[row.table_name].explicitIndexes.push({
       name: row.index_name,
       method: row.index_method,
-      expressions,
+      expressions: row.index_columns || row.index_expressions_expr || "",
     });
   }
 
-  return { fingerprint, publicTables };
+  // 7. Security configurations
+  const funcResult = await q.query(`
+    SELECT p.proconfig
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'prevent_verification_events_mutation'
+  `);
+  
+  let searchPath: string[] | null = null;
+  if (funcResult.rows.length === 1) {
+    searchPath = (funcResult.rows[0] as { proconfig: string[] | null }).proconfig;
+  } else {
+    searchPath = ['MISSING_FUNCTION'];
+  }
+
+  return { fingerprint, publicTables, security: { preventVerificationEventsMutationSearchPath: searchPath } };
 }

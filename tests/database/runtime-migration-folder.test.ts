@@ -10,7 +10,7 @@ test("journal exists and is valid", () => {
   assert.ok(fs.existsSync(journalPath));
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
-  assert.strictEqual(journal.entries.length, 8);
+  assert.strictEqual(journal.entries.length, 9);
   for (let i = 0; i < journal.entries.length; i++) {
     assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
     if (i > 0) {

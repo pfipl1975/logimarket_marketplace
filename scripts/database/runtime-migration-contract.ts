@@ -1029,5 +1029,19 @@ export const FINAL_POST_0007_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0006_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
+export type RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: string[] | null;
+};
+
+export const PRE_0008_SECURITY_CONTRACT: RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: null,
+};
+
+export const POST_0008_SECURITY_CONTRACT: RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: ['search_path=""'],
+};
+
+export const FINAL_POST_0008_PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0008_PRODUCTION_FINGERPRINT;

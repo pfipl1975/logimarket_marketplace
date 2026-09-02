@@ -52,8 +52,8 @@ export async function runMigrations(
 
   try {
     console.log("RUNNER: metadata preflight starting");
-    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
-    const classification = classifyRuntimeTarget(fingerprint, publicTables);
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
     console.log(`RUNNER: target classification = ${classification.state}`);
 
     if (classification.state === "PARTIAL_OR_DRIFTED") {
@@ -95,12 +95,24 @@ export async function runMigrations(
     });
 
     const reconciliationMode = env.RUNTIME_MIGRATION_RECONCILIATION;
+    const isReconciliation = reconciliationMode === POST_0007_RECONCILIATION_MODE;
+
+    // For POST_0007 reconciliation, the canonical prefix is strictly pinned to 0000..0007 (exactly 8 entries)
+    const effectiveJournalObj = isReconciliation
+      ? { entries: diskJournal.parsed.entries.slice(0, 8) }
+      : diskJournal.parsed;
+    const effectiveJournalText = isReconciliation
+      ? JSON.stringify(effectiveJournalObj)
+      : diskJournal.text;
+    const effectiveDiskMigrations = isReconciliation
+      ? diskMigrations.slice(0, 8)
+      : diskMigrations;
 
     validateAppliedMigrationPrefix(
       env.RUNTIME_MIGRATION_TARGET || "production",
       classification.state,
-      diskJournal.parsed,
-      diskMigrations,
+      effectiveJournalObj,
+      effectiveDiskMigrations,
       rows,
       getBuffer,
       reconciliationMode,
@@ -108,13 +120,13 @@ export async function runMigrations(
     console.log("RUNNER: Journal prefix validated successfully.");
 
     if (
-      reconciliationMode === POST_0007_RECONCILIATION_MODE &&
+      isReconciliation &&
       rows.length === 8
     ) {
       throw new Error("RUNNER: ALREADY_RECONCILED. Canonical 0007 journal row already exists");
     }
 
-    tempDir = createCanonicalRuntimeMigrationDirectory(diskJournal.text, diskJournal.parsed, getBuffer);
+    tempDir = createCanonicalRuntimeMigrationDirectory(effectiveJournalText, effectiveJournalObj, getBuffer);
 
     const actualMigrate = migrateFn ?? migrate;
     const db = drizzle(pool as never);
@@ -125,14 +137,17 @@ export async function runMigrations(
     });
     console.log("RUNNER: migrate completed");
 
-    const { fingerprint: postFingerprint, publicTables: postTables } = await fetchLiveSchemaMetadata(pool);
-    const postClassification = classifyRuntimeTarget(postFingerprint, postTables);
-    if (postClassification.state !== "EXACT_EXISTING_POST_0007") {
+    const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
+    const expectedPostState = isReconciliation
+      ? "EXACT_EXISTING_POST_0007"
+      : "EXACT_EXISTING_POST_0008";
+    if (postClassification.state !== expectedPostState) {
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }
     console.log("RUNNER: post-check PASS");
 
-    if (reconciliationMode === POST_0007_RECONCILIATION_MODE) {
+    if (isReconciliation) {
       const postJournalResult = await pool.query(
         `SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}.${RUNTIME_JOURNAL_TABLE} ORDER BY created_at ASC`,
       );
@@ -144,8 +159,8 @@ export async function runMigrations(
       validateAppliedMigrationPrefix(
         env.RUNTIME_MIGRATION_TARGET || "production",
         postClassification.state,
-        diskJournal.parsed,
-        diskMigrations,
+        effectiveJournalObj,
+        effectiveDiskMigrations,
         postRows,
         getBuffer,
         reconciliationMode,

@@ -178,7 +178,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0007",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0008",
     async () => {
       await cleanDB();
 
@@ -223,13 +223,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(Number(marketplaceOrderRls.policies), 0, "target policies mismatch");
 
       // Post-migration classification must be the exact terminal runtime state.
-      const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+      const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
+        security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0007");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
 
       // 0004 PROOF
       const sellerColumnNames = new Set(
@@ -567,6 +568,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
+      assert.strictEqual(journalRows.length, 9, "Journal count must be exactly 9");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -644,6 +646,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         classifyRuntimeTarget(
           driftMetadata.fingerprint,
           driftMetadata.publicTables,
+          driftMetadata.security,
         ).state,
         "EXACT_EXISTING_POST_0007",
       );
@@ -672,8 +675,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         classifyRuntimeTarget(
           reconciledMetadata.fingerprint,
           reconciledMetadata.publicTables,
+          reconciledMetadata.security,
         ).state,
         "EXACT_EXISTING_POST_0007",
+      );
+      assert.deepStrictEqual(
+        reconciledMetadata.security.preventVerificationEventsMutationSearchPath,
+        null,
+        "search_path must still be null (PRE_0008) after reconciliation",
       );
       const reconciledJournal = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at`,
@@ -691,6 +700,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         String(diskMigrations[7].folderMillis),
       );
 
+      // D. POST_0007 reconciliation mode on journal 8 -> ALREADY_RECONCILED -> no migration 0008 execution
       await assert.rejects(
         () => runMigrations(reconciliationEnv),
         /ALREADY_RECONCILED/,
@@ -699,10 +709,37 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
       assert.strictEqual(replayJournal.rows[0].count, 8);
+
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0008 + journal 9 -> search_path hardened
+      await runMigrations(process.env);
+      const post0008Metadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          post0008Metadata.fingerprint,
+          post0008Metadata.publicTables,
+          post0008Metadata.security,
+        ).state,
+        "EXACT_EXISTING_POST_0008",
+      );
+      assert.deepStrictEqual(
+        post0008Metadata.security.preventVerificationEventsMutationSearchPath,
+        ['search_path=""'],
+        "search_path must be hardened to the canonical empty search_path proconfig",
+      );
+      const post0008Journal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(post0008Journal.rows[0].count, 9);
+
+      // E. POST_0007 reconciliation authorization cannot apply 0008
+      await assert.rejects(
+        () => runMigrations(reconciliationEnv),
+        /Reconciliation requires exact POST_0007 physical state|ALREADY_RECONCILED/,
+      );
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0007", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0008", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -716,10 +753,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0007
-    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
-    const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0007");
+    // Post-migration classification must be EXACT_EXISTING_POST_0008
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -733,6 +770,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
+    assert.strictEqual(journalRows.length, 9);
   });
 
   await t.test(
@@ -891,13 +929,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0007
-      const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+      // Post-migration classification must be EXACT_EXISTING_POST_0008
+      const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
+        security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0007");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -911,6 +950,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
+      assert.strictEqual(journalRows.length, 9);
     },
   );
 
@@ -2998,6 +3038,73 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(check2.rows[0].verified_at, null);
     assert.strictEqual(check2.rows[0].verification_source, null);
     assert.strictEqual(check2.rows[0].verification_reference, null);
+  });
+
+  await t.test("PATH E: POST-0008 HARDENING AND FAIL-CLOSED PROOFS", async () => {
+    await cleanDB();
+    const M0004 = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+    const M0005 = `${MIGRATIONS_DIR}/0005_marketplace_order_56b2a.sql`;
+    const M0006 = `${MIGRATIONS_DIR}/0006_seller_verification_evidence.sql`;
+    const M0007 = `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`;
+    const M0008 = `${MIGRATIONS_DIR}/0008_verification_event_function_search_path_hardening.sql`;
+
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004, "utf-8"));
+    await pool.query(fs.readFileSync(M0005, "utf-8"));
+    await pool.query(fs.readFileSync(M0006, "utf-8"));
+    await pool.query(fs.readFileSync(M0007, "utf-8"));
+
+    const getRLSAndGrants = async () => {
+      const stats = await getStats();
+      const grantsRes = await pool.query(`SELECT table_name, privilege_type FROM information_schema.role_table_grants WHERE grantee = 'authenticated' ORDER BY table_name, privilege_type`);
+      return { stats, grants: grantsRes.rows };
+    };
+    const pre0008State = await getRLSAndGrants();
+
+    await pool.query(fs.readFileSync(M0008, "utf-8"));
+
+    const post0008 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(post0008.fingerprint, post0008.publicTables, post0008.security).state,
+      "EXACT_EXISTING_POST_0008",
+    );
+
+    const procRes = await pool.query(`SELECT proconfig FROM pg_proc WHERE proname = 'prevent_verification_events_mutation'`);
+    assert.deepStrictEqual(procRes.rows[0].proconfig, ['search_path=""']);
+
+    const post0008State = await getRLSAndGrants();
+    assert.strictEqual(post0008State.stats.rls_tables, pre0008State.stats.rls_tables);
+    assert.strictEqual(post0008State.stats.policies, pre0008State.stats.policies);
+    assert.deepStrictEqual(post0008State.grants, pre0008State.grants);
+
+    await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (999, 'Test', 't@t.com') ON CONFLICT DO NOTHING`);
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, registered_address_line1, registered_city, registered_postal_code, registered_country_code) VALUES (999, 'Test', 'PL', 'A', 'B', 'C', 'PL') ON CONFLICT DO NOTHING`);
+
+    const evRes = await pool.query(`INSERT INTO seller_verification_events (subject_type, legal_identity_partner_id, event_type, actor_type, actor_user_id, source_type, subject_snapshot, previous_verification_status) VALUES ('legal_identity', 999, 'verified', 'admin', 'user_123', 'admin_manual', '{"status":"verified"}', 'unverified') RETURNING id`);
+    const evId = evRes.rows[0].id;
+    assert.ok(evId);
+
+    await assert.rejects(pool.query(`UPDATE seller_verification_events SET previous_verification_status = 'verified' WHERE id = $1`, [evId]), /UPDATE not allowed/);
+    await assert.rejects(pool.query(`DELETE FROM seller_verification_events WHERE id = $1`, [evId]), /DELETE not allowed/);
+
+    await pool.query(`ALTER FUNCTION public.prevent_verification_events_mutation() SET search_path = 'public'`);
+    const drift0008 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(classifyRuntimeTarget(drift0008.fingerprint, drift0008.publicTables, drift0008.security).state, "PARTIAL_OR_DRIFTED");
+    await pool.query(`ALTER FUNCTION public.prevent_verification_events_mutation() SET search_path = ''`);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("DROP FUNCTION public.prevent_verification_events_mutation CASCADE");
+      const missing0008 = await fetchLiveSchemaMetadata(client);
+      assert.strictEqual(classifyRuntimeTarget(missing0008.fingerprint, missing0008.publicTables, missing0008.security).state, "PARTIAL_OR_DRIFTED");
+      await client.query("ROLLBACK");
+    } finally {
+      client.release();
+    }
   });
 
   await pool.end();

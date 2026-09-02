@@ -79,6 +79,10 @@ export function validateAppliedMigrationPrefix(
     if (appliedRows.length !== 8 && !isKnownPost0007Reconciliation) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0007 but journal has ${appliedRows.length} rows)`);
     }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0008") {
+    if (appliedRows.length !== 9) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0008 but journal has ${appliedRows.length} rows)`);
+    }
   } else if (schemaClassificationState === "PARTIAL_OR_DRIFTED") {
     throw new Error(`RUNNER: BLOCKED. Schema is PARTIAL_OR_DRIFTED`);
   } else if (schemaClassificationState === "MIGRATABLE_PROD_LEGACY" || schemaClassificationState === "MIGRATABLE_BASELINE") {
@@ -87,18 +91,26 @@ export function validateAppliedMigrationPrefix(
     }
   }
   
-  if (appliedRows.length > diskJournal.entries.length) {
+  const isReconciliation = reconciliationMode === POST_0007_RECONCILIATION_MODE;
+  const canonicalDiskEntries = isReconciliation
+    ? diskJournal.entries.slice(0, 8)
+    : diskJournal.entries;
+  const canonicalDiskMigrations = isReconciliation
+    ? diskMigrations.slice(0, 8)
+    : diskMigrations;
+
+  if (appliedRows.length > canonicalDiskEntries.length) {
     throw new Error("RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (claimed: " + appliedRows.length + ")");
   }
 
-  if (reconciliationMode === POST_0007_RECONCILIATION_MODE) {
-    if (diskJournal.entries.length !== 8 || diskMigrations.length !== 8) {
+  if (isReconciliation) {
+    if (canonicalDiskEntries.length !== 8 || canonicalDiskMigrations.length !== 8) {
       throw new Error(
         "RUNNER: BLOCKED. Reconciliation requires canonical runtime head 0007",
       );
     }
 
-    const entry0007 = diskJournal.entries[7];
+    const entry0007 = canonicalDiskEntries[7];
     if (
       entry0007?.tag !== POST_0007_CANONICAL_TAG ||
       entry0007.when !== POST_0007_CANONICAL_WHEN
@@ -108,7 +120,7 @@ export function validateAppliedMigrationPrefix(
       );
     }
 
-    const diskMigration0007 = diskMigrations.find(
+    const diskMigration0007 = canonicalDiskMigrations.find(
       (migration) => migration.folderMillis === POST_0007_CANONICAL_WHEN,
     );
     if (!diskMigration0007) {
@@ -127,13 +139,13 @@ export function validateAppliedMigrationPrefix(
 
   for (let i = 0; i < appliedRows.length; i++) {
     const row = appliedRows[i];
-    const diskEntry = diskJournal.entries[i];
+    const diskEntry = canonicalDiskEntries[i];
     
     if (!diskEntry) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (missing disk entry)`);
     }
 
-    const diskMig = diskMigrations.find(m => m.folderMillis === diskEntry.when);
+    const diskMig = canonicalDiskMigrations.find(m => m.folderMillis === diskEntry.when);
     if (!diskMig) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (missing disk migration)`);
     }

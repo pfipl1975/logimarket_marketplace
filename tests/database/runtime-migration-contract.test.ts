@@ -1,6 +1,15 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { normalizeProjectRef, EXPECTED_BASELINE_TABLES, EXPECTED_COUNTS, MARKETPLACE_ORDER_RLS_TARGET_TABLES, PRODUCTION_FINGERPRINT, PREVIOUS_PRODUCTION_FINGERPRINT, BASELINE_PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
+import {
+  FINAL_POST_0006_PRODUCTION_FINGERPRINT,
+  PRODUCTION_FINGERPRINT,
+  PREVIOUS_PRODUCTION_FINGERPRINT,
+  BASELINE_PRODUCTION_FINGERPRINT,
+  EXPECTED_COUNTS,
+  EXPECTED_BASELINE_TABLES,
+  MARKETPLACE_ORDER_RLS_TARGET_TABLES,
+  normalizeProjectRef,
+} from "../../scripts/database/runtime-migration-contract";
 
 test("normalizeProjectRef extracts refs correctly", () => {
   assert.strictEqual(normalizeProjectRef("postgres://postgres.abc@aws-0-eu-central-1.pooler.supabase.com:6543/postgres"), "abc");
@@ -136,7 +145,7 @@ test("MARKETPLACE_ORDER_RLS_HARDENING: exactly seven target tables are default-d
   for (const tableName of MARKETPLACE_ORDER_RLS_TARGET_TABLES) {
     assert.strictEqual(PRODUCTION_FINGERPRINT[tableName].rlsEnabled, true, `${tableName} must have RLS enabled`);
     assert.strictEqual(PRODUCTION_FINGERPRINT[tableName].policyCount ?? 0, 0, `${tableName} must have 0 policies`);
-    assert.strictEqual(PREVIOUS_PRODUCTION_FINGERPRINT[tableName].rlsEnabled, false, `${tableName} must be OFF at post-0006`);
+    assert.strictEqual(FINAL_POST_0006_PRODUCTION_FINGERPRINT[tableName].rlsEnabled, false, `${tableName} must be OFF at post-0006`);
   }
 });
 
