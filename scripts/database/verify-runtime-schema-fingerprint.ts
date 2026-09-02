@@ -15,6 +15,7 @@ import {
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0004_PRODUCTION_FINGERPRINT,
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0006_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
@@ -63,6 +64,7 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0007"
   | "EXACT_EXISTING_POST_0006"
   | "EXACT_EXISTING_POST_0005"
   | "EXACT_EXISTING_POST_0004"
@@ -552,6 +554,12 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    return { state: "EXACT_EXISTING_POST_0007", publicTableCount, differences: [] };
+  }
+
+  const matchPost0006 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0006_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0006.isExactMatch) {
     return { state: "EXACT_EXISTING_POST_0006", publicTableCount, differences: [] };
   }
 

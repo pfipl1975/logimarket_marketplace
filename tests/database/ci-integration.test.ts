@@ -13,7 +13,7 @@ import {
   classifyRuntimeTarget,
   compareRuntimeFingerprint,
 } from "../../scripts/database/verify-runtime-schema-fingerprint";
-import { PROD_LEGACY_BASELINE_FINGERPRINT, EXPECTED_COUNTS } from "../../scripts/database/runtime-migration-contract";
+import { PROD_LEGACY_BASELINE_FINGERPRINT, EXPECTED_COUNTS, MARKETPLACE_ORDER_RLS_TARGET_TABLES } from "../../scripts/database/runtime-migration-contract";
 
 const MIGRATIONS_DIR = "./drizzle-runtime";
 const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
@@ -145,8 +145,30 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     return res.rows[0];
   };
 
+  const getMarketplaceOrderRlsStats = async () => {
+    const res = await pool.query(`
+      SELECT
+        count(*)::int AS target_tables,
+        count(*) FILTER (WHERE c.relrowsecurity)::int AS rls_enabled,
+        (
+          SELECT count(*)::int
+          FROM pg_policy p
+          JOIN pg_class pc ON pc.oid = p.polrelid
+          JOIN pg_namespace pn ON pn.oid = pc.relnamespace
+          WHERE pn.nspname = 'public'
+            AND pc.relname = ANY($1::text[])
+        ) AS policies
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND c.relname = ANY($1::text[])
+    `, [[...MARKETPLACE_ORDER_RLS_TARGET_TABLES]]);
+    return res.rows[0];
+  };
+
   await t.test(
-    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0006",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0007",
     async () => {
       await cleanDB();
 
@@ -185,6 +207,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(Number(stats.rls_tables), EXPECTED_COUNTS.RLS_ENABLED, "rls_tables mismatch");
       assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
 
+      const marketplaceOrderRls = await getMarketplaceOrderRlsStats();
+      assert.strictEqual(Number(marketplaceOrderRls.target_tables), 7, "target table count mismatch");
+      assert.strictEqual(Number(marketplaceOrderRls.rls_enabled), 7, "target RLS enabled mismatch");
+      assert.strictEqual(Number(marketplaceOrderRls.policies), 0, "target policies mismatch");
+
       // Post-migration classification must be the exact terminal runtime state.
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
@@ -192,7 +219,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         publicTables,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0007");
 
       // 0004 PROOF
       const sellerColumnNames = new Set(
@@ -546,7 +573,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0006", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0007", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -560,10 +587,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0006
+    // Post-migration classification must be EXACT_EXISTING_POST_0007
     const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0007");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -735,13 +762,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0006
+      // Post-migration classification must be EXACT_EXISTING_POST_0007
       const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0006");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0007");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
