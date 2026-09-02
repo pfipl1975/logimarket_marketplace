@@ -679,8 +679,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         ).state,
         "EXACT_EXISTING_POST_0007",
       );
-      assert.strictEqual(
-        reconciledMetadata.security.functions["prevent_verification_events_mutation()"]?.search_path,
+      assert.deepStrictEqual(
+        reconciledMetadata.security.preventVerificationEventsMutationSearchPath,
         null,
         "search_path must still be null (PRE_0008) after reconciliation",
       );
@@ -721,10 +721,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         ).state,
         "EXACT_EXISTING_POST_0008",
       );
-      assert.strictEqual(
-        post0008Metadata.security.functions["prevent_verification_events_mutation()"]?.search_path,
-        "",
-        "search_path must be hardened to empty string",
+      assert.deepStrictEqual(
+        post0008Metadata.security.preventVerificationEventsMutationSearchPath,
+        ['search_path=""'],
+        "search_path must be hardened to the canonical empty search_path proconfig",
       );
       const post0008Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
