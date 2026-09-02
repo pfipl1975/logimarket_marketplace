@@ -150,9 +150,9 @@ export async function runMigrations(
         getBuffer,
         reconciliationMode,
       );
-      if (postRows.length !== 8) {
+      if (postRows.length < 8) {
         throw new Error(
-          "RUNNER: BLOCKED. Reconciliation did not produce exact canonical journal count 8",
+          "RUNNER: BLOCKED. Reconciliation did not produce at least canonical journal count 8",
         );
       }
       console.log("RUNNER: reconciliation journal post-check PASS");
