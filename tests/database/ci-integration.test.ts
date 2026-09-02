@@ -178,7 +178,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0007",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0008",
     async () => {
       await cleanDB();
 
@@ -223,10 +223,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(Number(marketplaceOrderRls.policies), 0, "target policies mismatch");
 
       // Post-migration classification must be the exact terminal runtime state.
-      const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+      const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
+        security,
       );
 
       assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
@@ -567,6 +568,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
+      assert.strictEqual(journalRows.length, 9, "Journal count must be exactly 9");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -644,8 +646,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         classifyRuntimeTarget(
           driftMetadata.fingerprint,
           driftMetadata.publicTables,
+          driftMetadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0008",
+        "EXACT_EXISTING_POST_0007",
       );
       const driftJournal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
@@ -672,8 +675,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         classifyRuntimeTarget(
           reconciledMetadata.fingerprint,
           reconciledMetadata.publicTables,
+          reconciledMetadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0008",
+        "EXACT_EXISTING_POST_0007",
+      );
+      assert.strictEqual(
+        reconciledMetadata.security.functions["prevent_verification_events_mutation()"]?.search_path,
+        null,
+        "search_path must still be null (PRE_0008) after reconciliation",
       );
       const reconciledJournal = await pool.query(
         `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at`,
@@ -691,6 +700,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         String(diskMigrations[7].folderMillis),
       );
 
+      // D. POST_0007 reconciliation mode on journal 8 -> ALREADY_RECONCILED -> no migration 0008 execution
       await assert.rejects(
         () => runMigrations(reconciliationEnv),
         /ALREADY_RECONCILED/,
@@ -699,10 +709,37 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
       assert.strictEqual(replayJournal.rows[0].count, 8);
+
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0008 + journal 9 -> search_path hardened
+      await runMigrations(process.env);
+      const post0008Metadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          post0008Metadata.fingerprint,
+          post0008Metadata.publicTables,
+          post0008Metadata.security,
+        ).state,
+        "EXACT_EXISTING_POST_0008",
+      );
+      assert.strictEqual(
+        post0008Metadata.security.functions["prevent_verification_events_mutation()"]?.search_path,
+        "",
+        "search_path must be hardened to empty string",
+      );
+      const post0008Journal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(post0008Journal.rows[0].count, 9);
+
+      // E. POST_0007 reconciliation authorization cannot apply 0008
+      await assert.rejects(
+        () => runMigrations(reconciliationEnv),
+        /Reconciliation requires exact POST_0007 physical state|ALREADY_RECONCILED/,
+      );
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0007", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0008", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -717,8 +754,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await runMigrations(process.env);
 
     // Post-migration classification must be EXACT_EXISTING_POST_0008
-    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
-    const postClassification = classifyRuntimeTarget(fingerprint, publicTables);
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
     assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
@@ -733,6 +770,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
+    assert.strictEqual(journalRows.length, 9);
   });
 
   await t.test(
@@ -892,10 +930,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
 
       // Post-migration classification must be EXACT_EXISTING_POST_0008
-      const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+      const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
+        security,
       );
       assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
 
@@ -911,6 +950,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
+      assert.strictEqual(journalRows.length, 9);
     },
   );
 
