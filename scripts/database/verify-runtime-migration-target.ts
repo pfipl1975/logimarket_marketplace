@@ -1,4 +1,8 @@
 import { normalizeProjectRef, RUNTIME_ENV_VARS } from "./runtime-migration-contract";
+import {
+  POST_0007_RECONCILIATION_AUTHORIZATION,
+  POST_0007_RECONCILIATION_MODE,
+} from "./runtime-migration-journal";
 
 export const DEV_WRITE_AUTHORIZATION = "AUTHORIZED_DEV_BASELINE_WRITE";
 export const PROD_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_RUNTIME_0000_TO_0003";
@@ -23,14 +27,25 @@ export function verifyTarget(env: NodeJS.ProcessEnv): void {
 
   const target = env.RUNTIME_MIGRATION_TARGET;
   const auth = env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION;
+  const reconciliationMode = env.RUNTIME_MIGRATION_RECONCILIATION;
   if (!auth) throw new Error("Missing exact write authorization");
 
   if (target === "development") {
+    if (reconciliationMode) {
+      throw new Error("Reconciliation mode is production-only");
+    }
     if (auth !== DEV_WRITE_AUTHORIZATION) {
       throw new Error("Invalid write authorization for development target");
     }
   } else if (target === "production") {
-    if (auth !== PROD_WRITE_AUTHORIZATION) {
+    if (reconciliationMode !== undefined) {
+      if (reconciliationMode !== POST_0007_RECONCILIATION_MODE) {
+        throw new Error("Invalid production reconciliation mode");
+      }
+      if (auth !== POST_0007_RECONCILIATION_AUTHORIZATION) {
+        throw new Error("Invalid write authorization for production reconciliation");
+      }
+    } else if (auth !== PROD_WRITE_AUTHORIZATION) {
       throw new Error("Invalid write authorization for production target");
     }
   } else {

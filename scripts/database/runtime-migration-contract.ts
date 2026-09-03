@@ -1,4 +1,14 @@
 export const RUNTIME_MIGRATIONS_FOLDER = "drizzle-runtime";
+
+export const MARKETPLACE_ORDER_RLS_TARGET_TABLES = [
+  "buyer_legal_context_snapshots",
+  "marketplace_orders",
+  "marketplace_order_seller_disclosures",
+  "seller_orders",
+  "seller_order_seller_snapshots",
+  "seller_order_items",
+  "seller_acceptance_decisions",
+] as const;
 export const RUNTIME_JOURNAL_SCHEMA = "drizzle_runtime";
 export const RUNTIME_JOURNAL_TABLE = "__drizzle_migrations";
 
@@ -976,5 +986,62 @@ export const FINAL_POST_0006_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0005_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0006_PRODUCTION_FINGERPRINT;
+// ---------------------------------------------------------------------------
+// 8. FINAL_POST_0007_PRODUCTION_FINGERPRINT
+// Marketplace order foundation: default-deny RLS, intentionally no policies.
+// ---------------------------------------------------------------------------
+export const FINAL_POST_0007_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0006_PRODUCTION_FINGERPRINT,
+  "buyer_legal_context_snapshots": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["buyer_legal_context_snapshots"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+  "marketplace_orders": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["marketplace_orders"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+  "marketplace_order_seller_disclosures": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["marketplace_order_seller_disclosures"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+  "seller_orders": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["seller_orders"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+  "seller_order_seller_snapshots": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["seller_order_seller_snapshots"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+  "seller_order_items": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["seller_order_items"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+  "seller_acceptance_decisions": {
+    ...FINAL_POST_0006_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"],
+    rlsEnabled: true,
+    policyCount: 0,
+  },
+};
+
+export type RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: string[] | null;
+};
+
+export const PRE_0008_SECURITY_CONTRACT: RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: null,
+};
+
+export const POST_0008_SECURITY_CONTRACT: RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: ['search_path=""'],
+};
+
+export const FINAL_POST_0008_PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0008_PRODUCTION_FINGERPRINT;

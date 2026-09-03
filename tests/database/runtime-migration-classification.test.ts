@@ -12,6 +12,7 @@ import {
   PRE_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0006_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT
 } from "../../scripts/database/runtime-migration-contract";
 import type { TableFingerprintSide } from "../../scripts/database/verify-runtime-schema-fingerprint";
@@ -48,7 +49,7 @@ test("POSTGRES_IDENTIFIER_NORMALIZATION models physical 63-byte names exactly", 
   );
 });
 
-test("POST_0006_PHYSICAL_METADATA accepts truncation and NOT VALID text but keeps validation exact", () => {
+test("POST_0007_PHYSICAL_METADATA accepts truncation and NOT VALID text but keeps validation exact", () => {
   const actual = buildSide(PRODUCTION_FINGERPRINT);
 
   for (const table of Object.values(actual)) {
@@ -61,7 +62,7 @@ test("POST_0006_PHYSICAL_METADATA accepts truncation and NOT VALID text but keep
   }
 
   const exact = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
-  assert.strictEqual(exact.state, "EXACT_EXISTING_POST_0006");
+  assert.strictEqual(exact.state, "EXACT_EXISTING_POST_0007");
 
   const legalCheck = actual.seller_legal_identities.constraints.find(
     (constraint) => constraint.name === "chk_legacy_legal_status"
@@ -158,9 +159,15 @@ test("TARGET_EXACT_POST_0005", () => {
 });
 
 test("TARGET_EXACT_POST_0006", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const actual = buildSide(FINAL_POST_0006_PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
   assert.strictEqual(result.state, "EXACT_EXISTING_POST_0006");
+});
+
+test("TARGET_EXACT_POST_0007", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0007");
 });
 
 // ===========================================================================

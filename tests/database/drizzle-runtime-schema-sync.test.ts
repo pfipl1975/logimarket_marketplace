@@ -5,7 +5,7 @@ import { getTableConfig } from "drizzle-orm/pg-core";
 import { EXPECTED_COUNTS, PRODUCTION_FINGERPRINT } from "../../scripts/database/runtime-migration-contract";
 
 describe("Drizzle Schema vs Production Baseline Sync", () => {
-  test("should match the exact post-0006 runtime table and column contract", () => {
+  test("should match the exact post-0007 runtime table and column contract", () => {
     const contractTables = Object.values(PRODUCTION_FINGERPRINT).map(t => ({
       tableName: t.name,
       columns: t.columns.map((c, i) => ({
