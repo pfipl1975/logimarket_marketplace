@@ -3314,11 +3314,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       INSERT INTO partner_agreement_execution_evidence (
         partner_id, agreement_version_id, execution_method,
         signed_at, signatory_name, signatory_role, signatory_email,
-        external_platform, external_transaction_id, recorded_by_admin_user_id
+        external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
       ) VALUES (
         888, $1, 'platform_documentary_electronic',
         NOW(), 'Signer Name', 'Director', 'signer@test.com',
-        'docusign', 'tx-ci-001', 'admin_ci'
+        'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
       ) RETURNING id
     `, [versionId]);
     const evidenceId = evRes.rows[0].id;
@@ -3342,11 +3342,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         INSERT INTO partner_agreement_execution_evidence (
           partner_id, agreement_version_id, execution_method,
           signed_at, signatory_name, signatory_role, signatory_email,
-          external_platform, external_transaction_id, recorded_by_admin_user_id
+          external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
         ) VALUES (
           888, $1, 'platform_documentary_electronic',
           NOW(), 'Another Signer', 'Officer', 'signer2@test.com',
-          'docusign', 'tx-ci-001', 'admin_ci'
+          'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
         )
       `, [versionId]),
       (err: any) => /Active partner agreement evidence already registered/i.test(err.message)
@@ -3380,11 +3380,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       INSERT INTO partner_agreement_execution_evidence (
         partner_id, agreement_version_id, execution_method,
         signed_at, signatory_name, signatory_role, signatory_email,
-        external_platform, external_transaction_id, recorded_by_admin_user_id
+        external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
       ) VALUES (
         888, $1, 'platform_documentary_electronic',
         NOW(), 'Corrected Signer', 'Director', 'signer_fixed@test.com',
-        'docusign', 'tx-ci-001', 'admin_ci'
+        'docusign', 'tx-ci-001', '2234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
       ) RETURNING id
     `, [versionId]);
     assert.ok(reRegRes.rows[0].id);
