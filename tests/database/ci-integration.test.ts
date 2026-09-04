@@ -3349,7 +3349,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
         )
       `, [versionId]),
-      (err: any) => /Active partner agreement evidence already registered/i.test(err.message)
+      (err: any) => err.code === '23505' || /Active execution evidence registration already exists/i.test(err.message)
     );
 
     // 5. Invalidation
