@@ -3301,9 +3301,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 3. Test insert & immutability on partner_agreement_execution_evidence
     await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (888, 'Partner 888', 'p888@test.com') ON CONFLICT DO NOTHING`);
     const vRes = await pool.query(`
-      INSERT INTO agreement_versions (version_tag, document_sha256, title, valid_from, is_active)
-      VALUES ('v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'Proof Agreement', NOW(), false)
-      RETURNING id
+      INSERT INTO agreement_versions (
+        agreement_type, version, canonical_template_hash_sha256, status
+      ) VALUES (
+        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+      ) RETURNING id
     `);
     const versionId = vRes.rows[0].id;
     assert.ok(versionId);
@@ -3311,10 +3313,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const evRes = await pool.query(`
       INSERT INTO partner_agreement_execution_evidence (
         partner_id, agreement_version_id, execution_method,
-        external_platform, external_transaction_id, signer_name,
-        signer_email, recorded_by_admin_user_id
+        signed_at, signatory_name, signatory_role, signatory_email,
+        external_platform, external_transaction_id, recorded_by_admin_user_id
       ) VALUES (
-        888, $1, 'docu_sign', 'docusign', 'tx-ci-001', 'Signer Name', 'signer@test.com', 'admin_ci'
+        888, $1, 'platform_documentary_electronic',
+        NOW(), 'Signer Name', 'Director', 'signer@test.com',
+        'docusign', 'tx-ci-001', 'admin_ci'
       ) RETURNING id
     `, [versionId]);
     const evidenceId = evRes.rows[0].id;
@@ -3322,7 +3326,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // Immutability: UPDATE rejected with 55000
     await assert.rejects(
-      pool.query(`UPDATE partner_agreement_execution_evidence SET signer_name = 'Hacked' WHERE id = $1`, [evidenceId]),
+      pool.query(`UPDATE partner_agreement_execution_evidence SET signatory_name = 'Hacked' WHERE id = $1`, [evidenceId]),
       (err: any) => err.code === '55000' || /UPDATE not allowed/i.test(err.message)
     );
 
@@ -3337,10 +3341,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       pool.query(`
         INSERT INTO partner_agreement_execution_evidence (
           partner_id, agreement_version_id, execution_method,
-          external_platform, external_transaction_id, signer_name,
-          signer_email, recorded_by_admin_user_id
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, recorded_by_admin_user_id
         ) VALUES (
-          888, $1, 'docu_sign', 'docusign', 'tx-ci-001', 'Another Signer', 'signer2@test.com', 'admin_ci'
+          888, $1, 'platform_documentary_electronic',
+          NOW(), 'Another Signer', 'Officer', 'signer2@test.com',
+          'docusign', 'tx-ci-001', 'admin_ci'
         )
       `, [versionId]),
       (err: any) => /Active partner agreement evidence already registered/i.test(err.message)
@@ -3349,7 +3355,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 5. Invalidation
     const invRes = await pool.query(`
       INSERT INTO partner_agreement_evidence_invalidations (
-        evidence_id, reason, invalidated_by_admin_user_id
+        execution_evidence_id, reason, invalidated_by_admin_user_id
       ) VALUES (
         $1, 'Testing invalidation workflow', 'admin_ci'
       ) RETURNING id
@@ -3373,10 +3379,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const reRegRes = await pool.query(`
       INSERT INTO partner_agreement_execution_evidence (
         partner_id, agreement_version_id, execution_method,
-        external_platform, external_transaction_id, signer_name,
-        signer_email, recorded_by_admin_user_id
+        signed_at, signatory_name, signatory_role, signatory_email,
+        external_platform, external_transaction_id, recorded_by_admin_user_id
       ) VALUES (
-        888, $1, 'docu_sign', 'docusign', 'tx-ci-001', 'Corrected Signer', 'signer_fixed@test.com', 'admin_ci'
+        888, $1, 'platform_documentary_electronic',
+        NOW(), 'Corrected Signer', 'Director', 'signer_fixed@test.com',
+        'docusign', 'tx-ci-001', 'admin_ci'
       ) RETURNING id
     `, [versionId]);
     assert.ok(reRegRes.rows[0].id);
