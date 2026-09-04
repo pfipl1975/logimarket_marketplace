@@ -125,5 +125,129 @@ describe("Admin Offer Create Draft - Unit Tests", () => {
     });
   });
 
-  
+  describe("SERVER-AUTHORITATIVE CATEGORY VALIDATION", () => {
+    test("CATEGORY_NOT_FOUND=PASS: nonexistent category rejected", async () => {
+      const { createOfferDraftCore } = await import("../../src/lib/offers/draft-core");
+      const schema = await import("../../src/lib/schema");
+
+      const fakeDb = {
+        transaction: async (cb: (tx: unknown) => Promise<unknown>) => {
+          const fakeTx = {
+            select: () => ({
+              from: (table: unknown) => ({
+                where: () => ({
+                  limit: async () => {
+                    if (table === schema.partners) return [{ id: 1 }];
+                    if (table === schema.categories) return []; // category not found
+                    return [];
+                  },
+                }),
+              }),
+            }),
+          };
+          return cb(fakeTx);
+        },
+      };
+
+      const res = await createOfferDraftCore(fakeDb as unknown as Parameters<typeof createOfferDraftCore>[0], {
+        partnerId: 1,
+        categoryId: 99999,
+        title: "Test Draft",
+        adminOfferType: "rfq",
+      });
+
+      assert.strictEqual(res.ok, false);
+      if (!res.ok) {
+        assert.strictEqual(res.code, "CATEGORY_NOT_FOUND");
+      }
+    });
+
+    test("CATEGORY_NOT_LEAF=PASS: parent category with children rejected", async () => {
+      const { createOfferDraftCore } = await import("../../src/lib/offers/draft-core");
+      const schema = await import("../../src/lib/schema");
+
+      let categoryQueryCount = 0;
+      const fakeDb = {
+        transaction: async (cb: (tx: unknown) => Promise<unknown>) => {
+          const fakeTx = {
+            select: () => ({
+              from: (table: unknown) => ({
+                where: () => ({
+                  limit: async () => {
+                    if (table === schema.partners) return [{ id: 1 }];
+                    if (table === schema.categories) {
+                      categoryQueryCount++;
+                      if (categoryQueryCount === 1) return [{ id: 10 }]; // category exists
+                      if (categoryQueryCount === 2) return [{ id: 100 }]; // child exists!
+                    }
+                    return [];
+                  },
+                }),
+              }),
+            }),
+          };
+          return cb(fakeTx);
+        },
+      };
+
+      const res = await createOfferDraftCore(fakeDb as unknown as Parameters<typeof createOfferDraftCore>[0], {
+        partnerId: 1,
+        categoryId: 10,
+        title: "Test Draft",
+        adminOfferType: "rfq",
+      });
+
+      assert.strictEqual(res.ok, false);
+      if (!res.ok) {
+        assert.strictEqual(res.code, "CATEGORY_NOT_LEAF");
+      }
+    });
+
+    test("VALID_LEAF_CREATE=PASS: terminal leaf category accepted and creates draft", async () => {
+      const { createOfferDraftCore } = await import("../../src/lib/offers/draft-core");
+      const schema = await import("../../src/lib/schema");
+
+      let categoryQueryCount = 0;
+      const fakeDb = {
+        transaction: async (cb: (tx: unknown) => Promise<unknown>) => {
+          const fakeTx = {
+            select: () => ({
+              from: (table: unknown) => ({
+                where: () => ({
+                  limit: async () => {
+                    if (table === schema.partners) return [{ id: 1 }];
+                    if (table === schema.categories) {
+                      categoryQueryCount++;
+                      if (categoryQueryCount === 1) return [{ id: 1000 }]; // category exists
+                      if (categoryQueryCount === 2) return []; // no children -> leaf!
+                    }
+                    return [];
+                  },
+                }),
+              }),
+            }),
+            insert: () => ({
+              values: () => ({
+                returning: async () => [{ id: 777 }],
+              }),
+            }),
+          };
+          return cb(fakeTx);
+        },
+      };
+
+      const res = await createOfferDraftCore(fakeDb as unknown as Parameters<typeof createOfferDraftCore>[0], {
+        partnerId: 1,
+        categoryId: 1000,
+        title: "Test Leaf Draft",
+        adminOfferType: "rfq",
+      });
+
+      assert.strictEqual(res.ok, true);
+      if (res.ok) {
+        assert.strictEqual(res.code, "OFFER_DRAFT_CREATED");
+        assert.strictEqual(res.offerId, 777);
+      }
+    });
+  });
 });

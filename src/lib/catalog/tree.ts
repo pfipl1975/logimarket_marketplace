@@ -6,6 +6,11 @@ export interface CatalogCategoryRow {
   createdAt: Date;
 }
 
+export type CatalogCategoryTreeRow = Pick<
+  CatalogCategoryRow,
+  "id" | "name" | "slug" | "parentId"
+>;
+
 export interface CatalogCategoryNode {
   id: number;
   name: string;
@@ -14,7 +19,7 @@ export interface CatalogCategoryNode {
   children: CatalogCategoryNode[];
 }
 
-export function buildCategoryTree(rows: CatalogCategoryRow[]): CatalogCategoryNode[] {
+export function buildCategoryTree(rows: CatalogCategoryTreeRow[]): CatalogCategoryNode[] {
   const nodesMap = new Map<number, CatalogCategoryNode>();
   const roots: CatalogCategoryNode[] = [];
 

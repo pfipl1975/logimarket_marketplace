@@ -8,6 +8,7 @@ import type { AdminCreateOptionsResult } from "@/lib/admin/create-options-read-m
 import { createAdminOfferDraft } from "@/app/actions";
 import { AlertTriangle } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
+import { AdminCategoryPicker } from "./AdminCategoryPicker";
 
 interface AdminOfferCreateFormProps {
   options: AdminCreateOptionsResult;
@@ -41,6 +42,13 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
         title: fd.get("title")?.toString() || "",
         adminOfferType: fd.get("adminOfferType")?.toString() || "",
       };
+
+      if (!input.categoryId) {
+        setError(dict.createErrors.CATEGORY_NOT_LEAF || dict.createErrors.OFFER_INVALID_INPUT);
+        setIsPending(false);
+        submitLockRef.current = false;
+        return;
+      }
 
       const result = await createAdminOfferDraft(input);
 
@@ -92,20 +100,7 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
           </select>
         </div>
 
-        <div>
-          <label htmlFor="categoryId" className="block text-sm font-medium text-brand-navy mb-1">{dict.createCategoryLabel}</label>
-          <select
-            id="categoryId"
-            name="categoryId"
-            required
-            className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
-          >
-            <option value="">{dict.createSelectCategory}</option>
-            {options.categories.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
+        <AdminCategoryPicker categories={options.categories} dict={dict} />
 
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-brand-navy mb-1">{dict.createTitleLabel}</label>

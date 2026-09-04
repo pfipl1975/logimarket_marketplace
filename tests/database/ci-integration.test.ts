@@ -2391,6 +2391,52 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
     }
 
+    // E2. parent category with children rejected (CATEGORY_NOT_LEAF)
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug, parent_id) VALUES (99993, 'Parent Category', 'parent-category', NULL) ON CONFLICT DO NOTHING;`,
+    );
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug, parent_id) VALUES (99994, 'Child Category', 'child-category', 99993) ON CONFLICT DO NOTHING;`,
+    );
+
+    const parentCatInput = parseOfferDraftCreateInput({
+      partnerId: "99991",
+      categoryId: "99993",
+      title: "Parent Cat Draft",
+      adminOfferType: "external_partner",
+    });
+    assert.equal(parentCatInput.ok, true);
+    if (parentCatInput.ok) {
+      const res = await createOfferDraftCore(db, parentCatInput.data);
+      assert.equal(res.ok, false);
+      assert.equal(res.code, "CATEGORY_NOT_LEAF");
+
+      const c5 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(
+        parseInt(c5.rows[0].c, 10),
+        initialOffers + 1,
+        "Count unchanged when category is not leaf",
+      );
+    }
+
+    // E3. child leaf category accepted
+    const childCatInput = parseOfferDraftCreateInput({
+      partnerId: "99991",
+      categoryId: "99994",
+      title: "Child Leaf Draft",
+      adminOfferType: "external_partner",
+    });
+    assert.equal(childCatInput.ok, true);
+    if (childCatInput.ok) {
+      const res = await createOfferDraftCore(db, childCatInput.data);
+      assert.equal(res.ok, true);
+      assert.equal(res.code, "OFFER_DRAFT_CREATED");
+      const rowRes = await pool.query(`SELECT * FROM offers WHERE id = $1;`, [
+        res.offerId,
+      ]);
+      assert.equal(rowRes.rows[0].category_id, 99994);
+    }
+
     // F. malformed model
     const badModelInput = parseOfferDraftCreateInput({
       partnerId: "99991",

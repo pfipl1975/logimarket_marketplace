@@ -7,7 +7,7 @@ import { AdminOfferType, isAdminOfferType, deriveOfferStorageForCreate } from "@
 
 export type OfferDraftCreateResult =
   | { ok: true; code: "OFFER_DRAFT_CREATED"; offerId: number }
-  | { ok: false; code: "OFFER_INVALID_INPUT" | "PARTNER_NOT_FOUND" | "CATEGORY_NOT_FOUND" | "MODEL_UNKNOWN" | "SYSTEM_ERROR" };
+  | { ok: false; code: "OFFER_INVALID_INPUT" | "PARTNER_NOT_FOUND" | "CATEGORY_NOT_FOUND" | "CATEGORY_NOT_LEAF" | "MODEL_UNKNOWN" | "SYSTEM_ERROR" };
 
 export interface OfferDraftCreateInput {
   partnerId: number;
@@ -75,6 +75,15 @@ export async function createOfferDraftCore(
       const categoryRows = await tx.select({ id: categories.id }).from(categories).where(eq(categories.id, input.categoryId)).limit(1);
       if (categoryRows.length === 0) {
         return { ok: false, code: "CATEGORY_NOT_FOUND" };
+      }
+
+      const childCategoryRows = await tx
+        .select({ id: categories.id })
+        .from(categories)
+        .where(eq(categories.parentId, input.categoryId))
+        .limit(1);
+      if (childCategoryRows.length > 0) {
+        return { ok: false, code: "CATEGORY_NOT_LEAF" };
       }
 
       const insertedRows = await tx.insert(offers).values({
