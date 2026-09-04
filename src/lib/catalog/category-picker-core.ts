@@ -250,6 +250,27 @@ export function drillDownSelectLeafDirect(
   };
 }
 
+/**
+ * Direct navigation into a parent category (e.g. from search results),
+ * reconstructing its full canonical ancestor path.
+ */
+export function drillDownNavigateDirect(
+  categories: CategoryItem[],
+  parentId: number
+): DrillDownState {
+  const fullPath = buildCategoryPath(categories, parentId);
+  const target = fullPath.length > 0 ? fullPath[fullPath.length - 1] : null;
+  if (!target) return initDrillDown(categories);
+
+  return {
+    currentParentId: target.id,
+    navigationPath: fullPath,
+    visibleItems: getDirectChildren(categories, target.id),
+    selectedLeaf: null,
+    selectedPath: [],
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Backward compatibility exports for existing cascading helpers
 // ---------------------------------------------------------------------------

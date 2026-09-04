@@ -1,5 +1,7 @@
 import { test, describe } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   type CategoryItem,
   initDrillDown,
@@ -8,6 +10,7 @@ import {
   drillDownJumpToAncestor,
   drillDownResetSelection,
   drillDownSelectLeafDirect,
+  drillDownNavigateDirect,
   searchCategories,
   getDirectChildren,
   isLeafCategory,
@@ -253,6 +256,80 @@ describe("Admin Category Picker - Drill-Down Navigation & Invariants", () => {
     assert.equal(directState.selectedLeaf?.id, 1000);
     assert.equal(directState.selectedPath.length, 4);
     assert.equal(directState.selectedPath[3].name, "Pojemniki EURO");
+  });
+
+  test("SEARCH_PARENT_FULL_ANCESTOR_PATH=PASS: navigating to searched non-leaf reconstructs full canonical ancestor path", () => {
+    // Search finds nested non-leaf "Pojemniki plastikowe" (ID 100) at depth 3
+    const results = searchCategories(taxonomyFixture, "plastikowe");
+    assert.equal(results.length, 1);
+    assert.equal(results[0].id, 100);
+    assert.equal(results[0].isLeaf, false);
+
+    // Navigate directly into this non-leaf parent
+    const state = drillDownNavigateDirect(taxonomyFixture, results[0].id);
+
+    // Full ancestor path MUST be reconstructed: [Root 1 -> Group 10 -> Subgroup 100]
+    assert.equal(state.navigationPath.length, 3);
+    assert.equal(state.navigationPath[0].id, 1);
+    assert.equal(state.navigationPath[0].name, "Wyposażenie magazynu");
+    assert.equal(state.navigationPath[1].id, 10);
+    assert.equal(state.navigationPath[1].name, "Pojemniki i kuwety");
+    assert.equal(state.navigationPath[2].id, 100);
+    assert.equal(state.navigationPath[2].name, "Pojemniki plastikowe");
+
+    assert.equal(state.currentParentId, 100);
+    assert.equal(state.selectedLeaf, null);
+  });
+
+  test("SEARCH_PARENT_DIRECT_CHILDREN=PASS: searched non-leaf displays only its direct children", () => {
+    const state = drillDownNavigateDirect(taxonomyFixture, 100);
+
+    // Direct children of category 100: 1000 ("Pojemniki EURO") and 1001 ("Pojemniki składane KLT")
+    assert.equal(state.visibleItems.length, 2);
+    assert.equal(state.visibleItems[0].id, 1000);
+    assert.equal(state.visibleItems[1].id, 1001);
+
+    const allDirect = state.visibleItems.every((item) => item.parentId === 100);
+    assert.equal(allDirect, true);
+  });
+
+  test("SEARCH_PARENT_UNRELATED_BRANCH_HIDDEN=PASS: unrelated branches remain hidden after search navigation", () => {
+    const state = drillDownNavigateDirect(taxonomyFixture, 100);
+
+    const visibleIds = state.visibleItems.map((item) => item.id);
+    assert.equal(visibleIds.includes(11), false, "Sibling branch Regały półkowe must not be visible");
+    assert.equal(visibleIds.includes(2), false, "Root 2 Wózki widłowe must not be visible");
+    assert.equal(visibleIds.includes(20), false, "Branch 2 Wózki elektryczne must not be visible");
+  });
+
+  test("I18N_PICKER_KEYS_7_LOCALES=PASS: all 7 locales define required picker and accessibility keys", () => {
+    const locales = ["pl", "en", "de", "fr", "uk", "es", "zh"];
+    const requiredKeys = [
+      "createCategoryLabel",
+      "createCategorySelectedPath",
+      "createCategoryChange",
+      "createCategoryBack",
+      "createCategorySearchPlaceholder",
+      "createCategorySearchAriaLabel",
+      "createCategoryClearSearch",
+      "createCategoryNavStart",
+      "createCategoryNoResults",
+      "createCategorySelectLeaf",
+      "createCategorySelectRoot",
+    ];
+
+    for (const loc of locales) {
+      const filePath = join(process.cwd(), `src/messages/${loc}.json`);
+      const fileData = JSON.parse(readFileSync(filePath, "utf-8"));
+      const dict = fileData.adminOffers;
+
+      for (const key of requiredKeys) {
+        assert.ok(
+          dict && typeof dict[key] === "string" && dict[key].trim().length > 0,
+          `Locale ${loc} is missing required picker key: ${key}`
+        );
+      }
+    }
   });
 
   test("PURE_HELPERS=PASS: getDirectChildren, isLeafCategory, and buildCategoryPath calculate correctly", () => {

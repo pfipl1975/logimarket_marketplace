@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useId } from "react";
 import type { Dictionary } from "@/lib/i18n/types";
 import {
   type CategoryItem,
@@ -11,6 +11,7 @@ import {
   drillDownJumpToAncestor,
   drillDownResetSelection,
   drillDownSelectLeafDirect,
+  drillDownNavigateDirect,
   searchCategories,
 } from "@/lib/catalog/category-picker-core";
 import { ChevronRight, ArrowLeft, Search, X, CheckCircle2, RotateCcw } from "lucide-react";
@@ -28,6 +29,7 @@ export function AdminCategoryPicker({
   name = "categoryId",
   onSelectionChange,
 }: AdminCategoryPickerProps) {
+  const searchInputId = useId();
   const [drillState, setDrillState] = useState(() => initDrillDown(categories));
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -54,8 +56,8 @@ export function AdminCategoryPicker({
         onSelectionChange(item.id, true);
       }
     } else {
-      // Non-leaf: navigate directly into this parent branch
-      const nextState = drillDownNavigate(categories, initDrillDown(categories), item.id);
+      // Non-leaf: navigate directly into this parent branch reconstructing full ancestor path
+      const nextState = drillDownNavigateDirect(categories, item.id);
       setDrillState(nextState);
       setSearchQuery("");
     }
@@ -90,7 +92,7 @@ export function AdminCategoryPicker({
   const isSearching = searchQuery.trim().length > 0;
 
   return (
-    <div className="space-y-2">
+    <fieldset className="space-y-2 border-0 p-0 m-0">
       {/* Hidden input for HTML form submission */}
       <input
         type="hidden"
@@ -99,10 +101,10 @@ export function AdminCategoryPicker({
         value={isLeafSelected && drillState.selectedLeaf ? String(drillState.selectedLeaf.id) : ""}
       />
 
-      {/* Label */}
-      <label className="block text-sm font-medium text-brand-navy">
+      {/* Semantic Legend / Label */}
+      <legend className="block text-sm font-medium text-brand-navy">
         {dict.createCategoryLabel}
-      </label>
+      </legend>
 
       {/* CASE A: Leaf is Selected — Show compact selected-state card */}
       {isLeafSelected && drillState.selectedLeaf && (
@@ -118,7 +120,7 @@ export function AdminCategoryPicker({
               className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:text-emerald-900 underline underline-offset-2 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-emerald-500 rounded px-1 py-0.5"
             >
               <RotateCcw className="h-3 w-3" />
-              <span>{dict.createCategoryChange || "Zmień kategorię"}</span>
+              <span>{dict.createCategoryChange}</span>
             </button>
           </div>
 
@@ -144,21 +146,23 @@ export function AdminCategoryPicker({
       {/* CASE B: Browsing / Drill-Down State */}
       {!isLeafSelected && (
         <div className="rounded-md border border-input bg-white p-3 space-y-3 shadow-xs">
-          {/* Optional Search Field */}
+          {/* Search Field with Explicit Accessible Name */}
           <div className="relative">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
             <input
+              id={searchInputId}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder={dict.createCategorySearchPlaceholder || "Szukaj kategorii..."}
+              aria-label={dict.createCategorySearchAriaLabel}
+              placeholder={dict.createCategorySearchPlaceholder}
               className="w-full pl-8 pr-8 py-1.5 text-sm rounded-md border border-input focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
             />
             {isSearching && (
               <button
                 type="button"
                 onClick={() => setSearchQuery("")}
-                aria-label="Clear search"
+                aria-label={dict.createCategoryClearSearch}
                 className="absolute right-2.5 top-2.5 text-muted-foreground hover:text-foreground text-xs"
               >
                 <X className="h-4 w-4" />
@@ -177,7 +181,7 @@ export function AdminCategoryPicker({
                     className="inline-flex items-center gap-1 font-semibold text-brand-navy hover:text-brand-teal focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal rounded px-1.5 py-0.5 -ml-1.5"
                   >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    <span>{dict.createCategoryBack || "Wstecz"}</span>
+                    <span>{dict.createCategoryBack}</span>
                   </button>
 
                   <span className="text-muted-foreground">|</span>
@@ -187,7 +191,7 @@ export function AdminCategoryPicker({
                     onClick={() => handleJumpToAncestor(-1)}
                     className="text-muted-foreground hover:text-brand-navy hover:underline"
                   >
-                    Start
+                    {dict.createCategoryNavStart}
                   </button>
 
                   {drillState.navigationPath.map((item, idx) => (
@@ -209,7 +213,7 @@ export function AdminCategoryPicker({
                 </div>
               ) : (
                 <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  {dict.createCategorySelectRoot || "Kategorie główne"}
+                  {dict.createCategorySelectRoot}
                 </div>
               )}
             </div>
@@ -237,14 +241,14 @@ export function AdminCategoryPicker({
                       <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                     ) : (
                       <span className="text-xs font-medium text-emerald-700 shrink-0 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                        {dict.createCategorySelectLeaf || "Wybierz"}
+                        {dict.createCategorySelectLeaf}
                       </span>
                     )}
                   </button>
                 ))
               ) : (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  {dict.createCategoryNoResults || "Nie znaleziono kategorii."}
+                  {dict.createCategoryNoResults}
                 </div>
               )
             ) : (
@@ -261,7 +265,7 @@ export function AdminCategoryPicker({
                     <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                   ) : (
                     <span className="text-xs font-medium text-brand-teal shrink-0 bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                      {dict.createCategorySelectLeaf || "Wybierz"}
+                      {dict.createCategorySelectLeaf}
                     </span>
                   )}
                 </button>
@@ -270,6 +274,6 @@ export function AdminCategoryPicker({
           </div>
         </div>
       )}
-    </div>
+    </fieldset>
   );
 }
