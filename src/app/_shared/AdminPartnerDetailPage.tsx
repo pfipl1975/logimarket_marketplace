@@ -8,6 +8,7 @@ import { AdminSellerEligibilityControl } from "@/components/admin/AdminSellerEli
 import { AdminSellerLegalIdentityForm } from "@/components/admin/AdminSellerLegalIdentityForm";
 import { AdminSellerTaxIdentifiersForm } from "@/components/admin/AdminSellerTaxIdentifiersForm";
 import { AdminSellerRegistryIdentifiersForm } from "@/components/admin/AdminSellerRegistryIdentifiersForm";
+import { AdminPartnerAgreementSection } from "@/components/admin/AdminPartnerAgreementSection";
 
 
 export async function AdminPartnerDetailPage({
@@ -36,7 +37,7 @@ export async function AdminPartnerDetailPage({
     );
   }
 
-  const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility } = result.data;
+  const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility, agreementEvidence } = result.data;
   const backPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
 
   const missingFieldLabels = {
@@ -341,6 +342,15 @@ export async function AdminPartnerDetailPage({
             />
           </div>
         </section>
+
+        {/* Partner Agreement Execution Evidence */}
+        <AdminPartnerAgreementSection
+          partnerId={partner.id}
+          agreementEvidence={agreementEvidence}
+          dictionary={dict}
+          locale={locale}
+          emptyValue={dict.emptyValue}
+        />
       </div>
     </div>
   );

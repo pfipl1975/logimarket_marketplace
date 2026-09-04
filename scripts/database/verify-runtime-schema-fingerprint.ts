@@ -23,7 +23,9 @@ import {
   TableContract,
   RuntimeSecurityContract,
   PRE_0008_SECURITY_CONTRACT,
-  POST_0008_SECURITY_CONTRACT
+  POST_0008_SECURITY_CONTRACT,
+  POST_0009_SECURITY_CONTRACT,
+  FINAL_POST_0008_PRODUCTION_FINGERPRINT
 } from "./runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -67,6 +69,8 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0009"
+  | "MIGRATABLE_POST_0008"
   | "EXACT_EXISTING_POST_0008"
   | "MIGRATABLE_POST_0007"
   | "EXACT_EXISTING_POST_0007"
@@ -549,7 +553,7 @@ export function compareRuntimeFingerprint(
 export function classifyRuntimeTarget(
   actual: Record<string, TableFingerprintSide>,
   allPublicTables: string[],
-  security: RuntimeSecurityContract = PRE_0008_SECURITY_CONTRACT
+  security: RuntimeSecurityContract = POST_0009_SECURITY_CONTRACT
 ): RuntimeTargetResult {
   const publicTableCount = allPublicTables.length;
 
@@ -560,6 +564,15 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0009", publicTableCount, differences: [] };
+    }
+    return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
+  }
+
+  const matchPost0008 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0008_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0008.isExactMatch) {
     if (JSON.stringify(security) === JSON.stringify(POST_0008_SECURITY_CONTRACT)) {
       return { state: "EXACT_EXISTING_POST_0008", publicTableCount, differences: [] };
     }
@@ -611,6 +624,14 @@ export function classifyRuntimeTarget(
     return { state: "MIGRATABLE_BASELINE", publicTableCount, differences: [] };
   }
 
+  if (matchPost0008.missingTables.length === 0 && matchPost0008.unexpectedTables.length === 0 && matchPost0008.driftReasons.length > 0) {
+    return {
+      state: "PARTIAL_OR_DRIFTED",
+      publicTableCount,
+      differences: matchPost0008.driftReasons,
+    };
+  }
+
   return {
     state: "PARTIAL_OR_DRIFTED",
     publicTableCount,
@@ -626,7 +647,7 @@ export function classifyRuntimeTarget(
 
 export async function fetchLiveSchemaMetadata(
   q: Queryable
-): Promise<{ fingerprint: Record<string, LiveTableFingerprint>; publicTables: string[]; security: { preventVerificationEventsMutationSearchPath: string[] | null } }> {
+): Promise<{ fingerprint: Record<string, LiveTableFingerprint>; publicTables: string[]; security: RuntimeSecurityContract }> {
   // 1. All user tables in public schema
   const tableResult = await q.query(`
     SELECT c.relname AS table_name,
@@ -838,9 +859,59 @@ export async function fetchLiveSchemaMetadata(
   let searchPath: string[] | null = null;
   if (funcResult.rows.length === 1) {
     searchPath = (funcResult.rows[0] as { proconfig: string[] | null }).proconfig;
+  } else if (funcResult.rows.length === 0) {
+    searchPath = null;
   } else {
     searchPath = ['MISSING_FUNCTION'];
   }
 
-  return { fingerprint, publicTables, security: { preventVerificationEventsMutationSearchPath: searchPath } };
+  const funcResultEvidence = await q.query(`
+    SELECT p.proconfig
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'prevent_partner_agreement_execution_evidence_mutation'
+  `);
+  let searchPathEvidence: string[] | null = null;
+  if (funcResultEvidence.rows.length === 1) {
+    searchPathEvidence = (funcResultEvidence.rows[0] as { proconfig: string[] | null }).proconfig;
+  } else if (funcResultEvidence.rows.length > 1) {
+    searchPathEvidence = ['DUPLICATE_FUNCTION'];
+  }
+
+  const funcResultInvalidations = await q.query(`
+    SELECT p.proconfig
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'prevent_partner_agreement_evidence_invalidations_mutation'
+  `);
+  let searchPathInvalidations: string[] | null = null;
+  if (funcResultInvalidations.rows.length === 1) {
+    searchPathInvalidations = (funcResultInvalidations.rows[0] as { proconfig: string[] | null }).proconfig;
+  } else if (funcResultInvalidations.rows.length > 1) {
+    searchPathInvalidations = ['DUPLICATE_FUNCTION'];
+  }
+
+  const funcResultActiveTx = await q.query(`
+    SELECT p.proconfig
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public' AND p.proname = 'check_partner_agreement_active_external_tx'
+  `);
+  let searchPathActiveTx: string[] | null = null;
+  if (funcResultActiveTx.rows.length === 1) {
+    searchPathActiveTx = (funcResultActiveTx.rows[0] as { proconfig: string[] | null }).proconfig;
+  } else if (funcResultActiveTx.rows.length > 1) {
+    searchPathActiveTx = ['DUPLICATE_FUNCTION'];
+  }
+
+  return {
+    fingerprint,
+    publicTables,
+    security: {
+      preventVerificationEventsMutationSearchPath: searchPath,
+      preventPartnerAgreementExecutionEvidenceMutationSearchPath: searchPathEvidence,
+      preventPartnerAgreementEvidenceInvalidationsMutationSearchPath: searchPathInvalidations,
+      checkPartnerAgreementActiveExternalTxSearchPath: searchPathActiveTx,
+    },
+  };
 }

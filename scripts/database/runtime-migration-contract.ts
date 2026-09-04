@@ -12,7 +12,7 @@ export const MARKETPLACE_ORDER_RLS_TARGET_TABLES = [
 export const RUNTIME_JOURNAL_SCHEMA = "drizzle_runtime";
 export const RUNTIME_JOURNAL_TABLE = "__drizzle_migrations";
 
-export const EXPECTED_BASELINE_TABLES = [
+export const EXPECTED_POST_0008_TABLES = [
   "attribute_definition_translations",
   "attribute_definitions",
   "cart_items",
@@ -41,6 +41,15 @@ export const EXPECTED_BASELINE_TABLES = [
   "seller_order_items",
   "seller_acceptance_decisions"
 ];
+
+export const EXPECTED_POST_0009_TABLES = [
+  ...EXPECTED_POST_0008_TABLES,
+  "agreement_versions",
+  "partner_agreement_execution_evidence",
+  "partner_agreement_evidence_invalidations"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0009_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1031,17 +1040,128 @@ export const FINAL_POST_0007_PRODUCTION_FINGERPRINT: Record<string, TableContrac
 
 export type RuntimeSecurityContract = {
   preventVerificationEventsMutationSearchPath: string[] | null;
+  preventPartnerAgreementExecutionEvidenceMutationSearchPath?: string[] | null;
+  preventPartnerAgreementEvidenceInvalidationsMutationSearchPath?: string[] | null;
+  checkPartnerAgreementActiveExternalTxSearchPath?: string[] | null;
 };
 
 export const PRE_0008_SECURITY_CONTRACT: RuntimeSecurityContract = {
   preventVerificationEventsMutationSearchPath: null,
+  preventPartnerAgreementExecutionEvidenceMutationSearchPath: null,
+  preventPartnerAgreementEvidenceInvalidationsMutationSearchPath: null,
+  checkPartnerAgreementActiveExternalTxSearchPath: null,
 };
 
 export const POST_0008_SECURITY_CONTRACT: RuntimeSecurityContract = {
   preventVerificationEventsMutationSearchPath: ['search_path=""'],
+  preventPartnerAgreementExecutionEvidenceMutationSearchPath: null,
+  preventPartnerAgreementEvidenceInvalidationsMutationSearchPath: null,
+  checkPartnerAgreementActiveExternalTxSearchPath: null,
+};
+
+export const POST_0009_SECURITY_CONTRACT: RuntimeSecurityContract = {
+  preventVerificationEventsMutationSearchPath: ['search_path=""'],
+  preventPartnerAgreementExecutionEvidenceMutationSearchPath: ['search_path=""'],
+  preventPartnerAgreementEvidenceInvalidationsMutationSearchPath: ['search_path=""'],
+  checkPartnerAgreementActiveExternalTxSearchPath: ['search_path=""'],
 };
 
 export const FINAL_POST_0008_PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0007_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0008_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0009_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0008_PRODUCTION_FINGERPRINT,
+  "agreement_versions": {
+    name: "agreement_versions",
+    columns: [
+      { name: "id", type: "integer", nullable: false, defaultVal: "nextval('agreement_versions_id_seq'::regclass)", sequenceName: "agreement_versions_id_seq" },
+      { name: "agreement_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "version", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "canonical_template_hash_sha256", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "status", type: "character varying(30)", nullable: false, defaultVal: "'draft'::character varying", sequenceName: null },
+      { name: "effective_from", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "effective_to", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "published_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "agreement_versions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "chk_agreement_versions_type", type: "CHECK", definition: "CHECK (((agreement_type)::text = ANY ((ARRAY['partner_agreement_b2b'::character varying, 'PARTNER_AGREEMENT_B2B'::character varying])::text[])))" },
+      { name: "chk_agreement_versions_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'superseded'::character varying, 'archived'::character varying])::text[])))" },
+      { name: "chk_agreement_versions_hash_format", type: "CHECK", definition: "CHECK (((canonical_template_hash_sha256)::text ~ '^[0-9a-f]{64}$'::text))" },
+      { name: "chk_agreement_versions_active_lifecycle", type: "CHECK", definition: "CHECK ((((status)::text <> 'active'::text) OR ((effective_from IS NOT NULL) AND (published_at IS NOT NULL))))" },
+      { name: "chk_agreement_versions_effective_dates", type: "CHECK", definition: "CHECK (((effective_to IS NULL) OR (effective_from IS NULL) OR (effective_to > effective_from)))" },
+      { name: "uq_agreement_versions_type_version", type: "UNIQUE", definition: "UNIQUE (agreement_type, version)" },
+      { name: "uq_agreement_versions_hash", type: "UNIQUE", definition: "UNIQUE (canonical_template_hash_sha256)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0
+  },
+  "partner_agreement_execution_evidence": {
+    name: "partner_agreement_execution_evidence",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('partner_agreement_execution_evidence_id_seq'::regclass)", sequenceName: "partner_agreement_execution_evidence_id_seq" },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "agreement_version_id", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "status", type: "character varying(30)", nullable: false, defaultVal: "'ACCEPTED'::character varying", sequenceName: null },
+      { name: "execution_method", type: "character varying(50)", nullable: false, defaultVal: "'platform_documentary_electronic'::character varying", sequenceName: null },
+      { name: "signed_at", type: "timestamp with time zone", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "signatory_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "signatory_role", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "signatory_email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "external_platform", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "external_transaction_id", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "signed_pdf_sha256", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "recorded_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "recorded_by_admin_user_id", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "partner_agreement_execution_evidence_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "chk_partner_agreement_evidence_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['accepted'::character varying, 'ACCEPTED'::character varying])::text[])))" },
+      { name: "chk_partner_agreement_evidence_method", type: "CHECK", definition: "CHECK (((execution_method)::text = ANY ((ARRAY['platform_documentary_electronic'::character varying, 'qualified_electronic_signature'::character varying, 'advanced_electronic_signature'::character varying])::text[])))" },
+      { name: "chk_partner_agreement_evidence_hash_format", type: "CHECK", definition: "CHECK (((signed_pdf_sha256)::text ~ '^[0-9a-f]{64}$'::text))" },
+      { name: "chk_partner_agreement_evidence_signatory_name", type: "CHECK", definition: "CHECK ((length(btrim((signatory_name)::text)) > 0))" },
+      { name: "chk_partner_agreement_evidence_signatory_role", type: "CHECK", definition: "CHECK ((length(btrim((signatory_role)::text)) > 0))" },
+      { name: "chk_partner_agreement_evidence_signatory_email", type: "CHECK", definition: "CHECK ((length(btrim((signatory_email)::text)) > 0))" },
+      { name: "chk_partner_agreement_evidence_external_platform", type: "CHECK", definition: "CHECK ((length(btrim((external_platform)::text)) > 0))" },
+      { name: "chk_partner_agreement_evidence_external_tx", type: "CHECK", definition: "CHECK ((length(btrim((external_transaction_id)::text)) > 0))" },
+      { name: "chk_partner_agreement_evidence_recorded_by", type: "CHECK", definition: "CHECK ((length(btrim((recorded_by_admin_user_id)::text)) > 0))" },
+      { name: "partner_agreement_execution_evidence_partner_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE RESTRICT" },
+      { name: "partner_agreement_execution_evidence_agreement_version_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (agreement_version_id) REFERENCES agreement_versions(id) ON DELETE RESTRICT" }
+    ],
+    explicitIndexes: [
+      { name: "idx_partner_agreement_evidence_partner_id", method: "btree", expressions: "partner_id" },
+      { name: "idx_partner_agreement_evidence_version_id", method: "btree", expressions: "agreement_version_id" }
+    ],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 2
+  },
+  "partner_agreement_evidence_invalidations": {
+    name: "partner_agreement_evidence_invalidations",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('partner_agreement_evidence_invalidations_id_seq'::regclass)", sequenceName: "partner_agreement_evidence_invalidations_id_seq" },
+      { name: "execution_evidence_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "reason", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "invalidated_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "invalidated_by_admin_user_id", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "partner_agreement_evidence_invalidations_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_partner_agreement_evidence_invalidations_evidence", type: "UNIQUE", definition: "UNIQUE (execution_evidence_id)" },
+      { name: "chk_partner_agreement_invalidation_reason", type: "CHECK", definition: "CHECK ((length(btrim(reason)) > 0))" },
+      { name: "chk_partner_agreement_invalidation_by", type: "CHECK", definition: "CHECK ((length(btrim((invalidated_by_admin_user_id)::text)) > 0))" },
+      { name: "partner_agreement_evidence_invalidations_execution_evidence_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (execution_evidence_id) REFERENCES partner_agreement_execution_evidence(id) ON DELETE RESTRICT" }
+    ],
+    explicitIndexes: [
+      { name: "idx_partner_agreement_invalidations_evidence_id", method: "btree", expressions: "execution_evidence_id" }
+    ],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 1
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0008_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0009_PRODUCTION_FINGERPRINT;

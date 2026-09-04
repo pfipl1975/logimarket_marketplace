@@ -11,6 +11,7 @@ import {
   timestamp,
   varchar,
   integer,
+  serial,
   check,
   unique,
   foreignKey,
@@ -967,4 +968,75 @@ export const sellerAcceptanceDecisions = pgTable("seller_acceptance_decisions", 
 }, () => [
   check("chk_seller_acc_dec_status", sql`((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[]))`),
   check("chk_seller_acc_dec_consistency", sql`(((decision_status)::text = 'pending_seller_review' AND resolved_at IS NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'seller_accepted' AND resolved_at IS NOT NULL AND accepted_at IS NOT NULL) OR ((decision_status)::text = 'seller_rejected' AND resolved_at IS NOT NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'expired' AND resolved_at IS NOT NULL AND accepted_at IS NULL))`),
+]);
+
+// -----------------------------------------------------------------------------
+// Agreement Versions (Canonical Template Registry)
+// -----------------------------------------------------------------------------
+export const agreementVersions = pgTable("agreement_versions", {
+  id: serial("id").primaryKey(),
+  agreementType: varchar("agreement_type", { length: 50 }).notNull(),
+  version: varchar("version", { length: 50 }).notNull(),
+  canonicalTemplateHashSha256: varchar("canonical_template_hash_sha256", { length: 64 }).notNull(),
+  status: varchar("status", { length: 30 }).notNull().default("draft"),
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }),
+  effectiveTo: timestamp("effective_to", { withTimezone: true }),
+  publishedAt: timestamp("published_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check("chk_agreement_versions_type", sql`agreement_type IN ('partner_agreement_b2b', 'PARTNER_AGREEMENT_B2B')`),
+  check("chk_agreement_versions_status", sql`status IN ('draft', 'active', 'superseded', 'archived')`),
+  check("chk_agreement_versions_hash_format", sql`canonical_template_hash_sha256 ~ '^[0-9a-f]{64}$'`),
+  check("chk_agreement_versions_active_lifecycle", sql`((status)::text <> 'active'::text) OR (effective_from IS NOT NULL AND published_at IS NOT NULL)`),
+  check("chk_agreement_versions_effective_dates", sql`effective_to IS NULL OR effective_from IS NULL OR effective_to > effective_from`),
+  unique("uq_agreement_versions_type_version").on(t.agreementType, t.version),
+  unique("uq_agreement_versions_hash").on(t.canonicalTemplateHashSha256),
+]);
+
+// -----------------------------------------------------------------------------
+// Partner Agreement Execution Evidence (Immutable)
+// -----------------------------------------------------------------------------
+export const partnerAgreementExecutionEvidence = pgTable("partner_agreement_execution_evidence", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  partnerId: bigint("partner_id", { mode: "number" }).notNull().references(() => partners.id, { onDelete: "restrict" }),
+  agreementVersionId: integer("agreement_version_id").notNull().references(() => agreementVersions.id, { onDelete: "restrict" }),
+  status: varchar("status", { length: 30 }).notNull().default("ACCEPTED"),
+  executionMethod: varchar("execution_method", { length: 50 }).notNull().default("platform_documentary_electronic"),
+  signedAt: timestamp("signed_at", { withTimezone: true }).notNull(),
+  signatoryName: varchar("signatory_name", { length: 255 }).notNull(),
+  signatoryRole: varchar("signatory_role", { length: 255 }).notNull(),
+  signatoryEmail: varchar("signatory_email", { length: 255 }).notNull(),
+  externalPlatform: varchar("external_platform", { length: 100 }).notNull(),
+  externalTransactionId: varchar("external_transaction_id", { length: 255 }).notNull(),
+  signedPdfSha256: varchar("signed_pdf_sha256", { length: 64 }).notNull(),
+  recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
+  recordedByAdminUserId: varchar("recorded_by_admin_user_id", { length: 255 }).notNull(),
+}, (t) => [
+  check("chk_partner_agreement_evidence_status", sql`status IN ('accepted', 'ACCEPTED')`),
+  check("chk_partner_agreement_evidence_method", sql`execution_method IN ('platform_documentary_electronic', 'qualified_electronic_signature', 'advanced_electronic_signature')`),
+  check("chk_partner_agreement_evidence_hash_format", sql`signed_pdf_sha256 ~ '^[0-9a-f]{64}$'`),
+  check("chk_partner_agreement_evidence_signatory_name", sql`length(btrim((signatory_name)::text)) > 0`),
+  check("chk_partner_agreement_evidence_signatory_role", sql`length(btrim((signatory_role)::text)) > 0`),
+  check("chk_partner_agreement_evidence_signatory_email", sql`length(btrim((signatory_email)::text)) > 0`),
+  check("chk_partner_agreement_evidence_external_platform", sql`length(btrim((external_platform)::text)) > 0`),
+  check("chk_partner_agreement_evidence_external_tx", sql`length(btrim((external_transaction_id)::text)) > 0`),
+  check("chk_partner_agreement_evidence_recorded_by", sql`length(btrim((recorded_by_admin_user_id)::text)) > 0`),
+  index("idx_partner_agreement_evidence_partner_id").on(t.partnerId),
+  index("idx_partner_agreement_evidence_version_id").on(t.agreementVersionId),
+]);
+
+// -----------------------------------------------------------------------------
+// Partner Agreement Evidence Invalidations (Immutable)
+// -----------------------------------------------------------------------------
+export const partnerAgreementEvidenceInvalidations = pgTable("partner_agreement_evidence_invalidations", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  executionEvidenceId: bigint("execution_evidence_id", { mode: "number" }).notNull().references(() => partnerAgreementExecutionEvidence.id, { onDelete: "restrict" }),
+  reason: text("reason").notNull(),
+  invalidatedAt: timestamp("invalidated_at", { withTimezone: true }).notNull().defaultNow(),
+  invalidatedByAdminUserId: varchar("invalidated_by_admin_user_id", { length: 255 }).notNull(),
+}, (t) => [
+  unique("uq_partner_agreement_evidence_invalidations_evidence").on(t.executionEvidenceId),
+  check("chk_partner_agreement_invalidation_reason", sql`length(btrim(reason)) > 0`),
+  check("chk_partner_agreement_invalidation_by", sql`length(btrim((invalidated_by_admin_user_id)::text)) > 0`),
+  index("idx_partner_agreement_invalidations_evidence_id").on(t.executionEvidenceId),
 ]);

@@ -13,6 +13,11 @@ import {
   FINAL_POST_0003_PRODUCTION_FINGERPRINT,
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
   FINAL_POST_0006_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0007_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0008_PRODUCTION_FINGERPRINT,
+  PRE_0008_SECURITY_CONTRACT,
+  POST_0008_SECURITY_CONTRACT,
+  POST_0009_SECURITY_CONTRACT,
   PRODUCTION_FINGERPRINT
 } from "../../scripts/database/runtime-migration-contract";
 import type { TableFingerprintSide } from "../../scripts/database/verify-runtime-schema-fingerprint";
@@ -50,7 +55,7 @@ test("POSTGRES_IDENTIFIER_NORMALIZATION models physical 63-byte names exactly", 
 });
 
 test("POST_0007_PHYSICAL_METADATA accepts truncation and NOT VALID text but keeps validation exact", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const actual = buildSide(FINAL_POST_0007_PRODUCTION_FINGERPRINT);
 
   for (const table of Object.values(actual)) {
     for (const constraint of table.constraints) {
@@ -61,7 +66,7 @@ test("POST_0007_PHYSICAL_METADATA accepts truncation and NOT VALID text but keep
     }
   }
 
-  const exact = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
+  const exact = classifyRuntimeTarget(actual, Object.keys(FINAL_POST_0007_PRODUCTION_FINGERPRINT), PRE_0008_SECURITY_CONTRACT);
   assert.strictEqual(exact.state, "EXACT_EXISTING_POST_0007");
 
   const legalCheck = actual.seller_legal_identities.constraints.find(
@@ -70,14 +75,14 @@ test("POST_0007_PHYSICAL_METADATA accepts truncation and NOT VALID text but keep
   assert.ok(legalCheck);
 
   legalCheck.name = "chk_legacy_legal_state";
-  const identifierDrift = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
+  const identifierDrift = classifyRuntimeTarget(actual, Object.keys(FINAL_POST_0007_PRODUCTION_FINGERPRINT), PRE_0008_SECURITY_CONTRACT);
   assert.strictEqual(identifierDrift.state, "PARTIAL_OR_DRIFTED");
   assert.ok(identifierDrift.differences.some((difference) => difference.includes("constraint name mismatch")));
   legalCheck.name = "chk_legacy_legal_status";
 
   legalCheck.isValidated = true;
 
-  const validationDrift = classifyRuntimeTarget(actual, Object.keys(PRODUCTION_FINGERPRINT));
+  const validationDrift = classifyRuntimeTarget(actual, Object.keys(FINAL_POST_0007_PRODUCTION_FINGERPRINT), PRE_0008_SECURITY_CONTRACT);
   assert.strictEqual(validationDrift.state, "PARTIAL_OR_DRIFTED");
   assert.ok(validationDrift.differences.some((difference) => difference.includes("validation status mismatch")));
 });
@@ -160,14 +165,26 @@ test("TARGET_EXACT_POST_0005", () => {
 
 test("TARGET_EXACT_POST_0006", () => {
   const actual = buildSide(FINAL_POST_0006_PRODUCTION_FINGERPRINT);
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual));
   assert.strictEqual(result.state, "EXACT_EXISTING_POST_0006");
 });
 
 test("TARGET_EXACT_POST_0007", () => {
-  const actual = buildSide(PRODUCTION_FINGERPRINT);
-  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES);
+  const actual = buildSide(FINAL_POST_0007_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), PRE_0008_SECURITY_CONTRACT);
   assert.strictEqual(result.state, "EXACT_EXISTING_POST_0007");
+});
+
+test("TARGET_EXACT_POST_0008", () => {
+  const actual = buildSide(FINAL_POST_0008_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0008_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0008");
+});
+
+test("TARGET_EXACT_POST_0009", () => {
+  const actual = buildSide(PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES, POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0009");
 });
 
 // ===========================================================================

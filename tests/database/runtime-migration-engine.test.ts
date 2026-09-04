@@ -55,13 +55,14 @@ const exactJournalEntries = [
   { tag: "fake_tag_0006", when: 1785592500000 },
   { tag: "fake_tag_0007", when: 1785593000000 },
   { tag: "fake_tag_0008", when: 1785593500000 },
+  { tag: "fake_tag_0009", when: 1785594000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const previousJournalEntries = exactJournalEntries.slice(0, 8);
+const previousJournalEntries = exactJournalEntries.slice(0, 9);
 const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const prevFakeReadFn = () => ({
   text: JSON.stringify({ entries: previousJournalEntries }),
@@ -438,7 +439,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0007");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0009");
 });
 
 test("TARGET: PARTIAL_OR_DRIFTED when missing table", () => {
@@ -1567,6 +1568,9 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
   assert.strictEqual(droppedTables.length, EXPECTED_COUNTS.TABLES);
   assert.deepStrictEqual([...droppedTables].sort(), [...EXPECTED_BASELINE_TABLES].sort());
   const indexOf = (tableName: string) => droppedTables.indexOf(tableName);
+  assert.ok(indexOf("partner_agreement_evidence_invalidations") < indexOf("partner_agreement_execution_evidence"));
+  assert.ok(indexOf("partner_agreement_execution_evidence") < indexOf("agreement_versions"));
+  assert.ok(indexOf("partner_agreement_execution_evidence") < indexOf("partners"));
   assert.ok(indexOf("seller_acceptance_decisions") < indexOf("seller_orders"));
   assert.ok(indexOf("seller_order_items") < indexOf("seller_orders"));
   assert.ok(indexOf("seller_order_items") < indexOf("offers"));

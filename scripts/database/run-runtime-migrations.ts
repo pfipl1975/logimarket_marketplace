@@ -141,7 +141,7 @@ export async function runMigrations(
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
     const expectedPostState = isReconciliation
       ? "EXACT_EXISTING_POST_0007"
-      : "EXACT_EXISTING_POST_0008";
+      : "EXACT_EXISTING_POST_0009";
     if (postClassification.state !== expectedPostState) {
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }

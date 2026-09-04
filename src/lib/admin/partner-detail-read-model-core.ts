@@ -1,6 +1,6 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import * as schema from "@/lib/schema";
+import type * as schema from "@/lib/schema";
 import {
   partners,
   sellerLegalIdentities,
@@ -10,6 +10,12 @@ import {
 } from "@/lib/schema";
 import { isCanonicalPositiveInteger } from "./partners-query";
 import { buildSellerDisclosure, type SellerDisclosureMissingField } from "@/lib/legal/seller-disclosure";
+import {
+  getActivePartnerAgreementVersion,
+  getPartnerAgreementExecutionEvidence,
+  hasRecordedPartnerAgreementExecutionEvidence,
+  type RecordedEvidenceDto,
+} from "@/lib/legal/partner-agreement-core";
 
 export interface AdminPartnerDetailDto {
   partner: {
@@ -59,14 +65,27 @@ export interface AdminPartnerDetailDto {
     complete: boolean;
     missing: SellerDisclosureMissingField[];
   };
+  agreementEvidence: {
+    hasActiveVersion: boolean;
+    activeVersion: {
+      id: number;
+      version: string;
+      agreementType: string;
+      canonicalTemplateHashSha256: string;
+      effectiveFrom: string | null;
+      publishedAt: string | null;
+    } | null;
+    hasRecordedEvidence: boolean;
+    evidence: RecordedEvidenceDto[];
+  };
 }
 
 export type AdminPartnerDetailResult =
   | { ok: true; data: AdminPartnerDetailDto }
   | { ok: false; code: "INVALID_ID" | "NOT_FOUND" };
 
-export async function getAdminPartnerDetailReadModel(
-  db: NodePgDatabase<typeof schema>,
+export async function getAdminPartnerDetailReadModel<TSchema extends Record<string, unknown>>(
+  db: NodePgDatabase<TSchema>,
   rawId: string
 ): Promise<AdminPartnerDetailResult> {
   if (!isCanonicalPositiveInteger(rawId)) {
@@ -115,6 +134,12 @@ export async function getAdminPartnerDetailReadModel(
     .from(sellerEligibility)
     .where(eq(sellerEligibility.partnerId, id))
     .limit(1);
+
+  const [activeVersion, evidenceList, hasRecorded] = await Promise.all([
+    getActivePartnerAgreementVersion(db),
+    getPartnerAgreementExecutionEvidence(db, id),
+    hasRecordedPartnerAgreementExecutionEvidence(db, id),
+  ]);
 
   const disclosure = buildSellerDisclosure(
     partnerRow.id,
@@ -182,6 +207,12 @@ export async function getAdminPartnerDetailReadModel(
         updatedAt: eligibilityRows[0].updatedAt?.toISOString() ?? null,
       } : null,
       sellerDisclosureCompleteness: disclosure.completeness,
+      agreementEvidence: {
+        hasActiveVersion: activeVersion !== null,
+        activeVersion,
+        hasRecordedEvidence: hasRecorded,
+        evidence: evidenceList,
+      },
     }
   };
 }
