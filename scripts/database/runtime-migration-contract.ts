@@ -1093,7 +1093,9 @@ export const FINAL_POST_0009_PRODUCTION_FINGERPRINT: Record<string, TableContrac
       { name: "uq_agreement_versions_type_version", type: "UNIQUE", definition: "UNIQUE (agreement_type, version)" },
       { name: "uq_agreement_versions_hash", type: "UNIQUE", definition: "UNIQUE (canonical_template_hash_sha256)" }
     ],
-    explicitIndexes: [],
+    explicitIndexes: [
+      { name: "idx_agreement_versions_single_active", method: "btree", expressions: "agreement_type" }
+    ],
     rlsEnabled: true,
     policyCount: 0,
     triggerCount: 0

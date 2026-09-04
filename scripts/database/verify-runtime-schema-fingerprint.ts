@@ -786,7 +786,6 @@ export async function fetchLiveSchemaMetadata(
     WHERE  n.nspname = 'public'
       AND  t.relkind = 'r'
       AND  NOT ix.indisprimary
-      AND  NOT ix.indisunique
       AND  NOT EXISTS (
              SELECT 1 FROM pg_constraint con
              WHERE con.conindid = ix.indexrelid
