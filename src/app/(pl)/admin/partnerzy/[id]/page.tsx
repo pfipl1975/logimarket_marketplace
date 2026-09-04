@@ -12,9 +12,12 @@ export const metadata: Metadata = {
 
 export default async function Page({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ created?: string }>;
 }) {
   const { id } = await params;
-  return <AdminPartnerDetailPage locale={defaultLocale} id={id} />;
+  const query = await searchParams;
+  return <AdminPartnerDetailPage locale={defaultLocale} id={id} created={query.created === "1"} />;
 }

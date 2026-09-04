@@ -20,6 +20,8 @@ export type AdminSellerTaxIdentifiersFormProps = {
   }>;
   dictionary: {
     identifierTypeLabel: string;
+    taxIdTypeOption: string;
+    vatIdTypeOption: string;
     identifierValueLabel: string;
     countryCodeLabel: string;
     verificationStatusLabel: string;
@@ -73,7 +75,7 @@ export function AdminSellerTaxIdentifiersForm({
     countryCode: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     setError(null);
@@ -201,18 +203,19 @@ export function AdminSellerTaxIdentifiersForm({
                 <label htmlFor="identifierType" className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
                   {dictionary.identifierTypeLabel} <span className="text-red-500">*</span>
                 </label>
-                <input
+                <select
                   id="identifierType"
                   name="identifierType"
-                  type="text"
                   required
-                  maxLength={50}
-                  placeholder={dictionary.placeholderVat}
                   value={formData.identifierType}
                   onChange={handleChange}
                   disabled={isPending}
                   className="w-full h-10 px-3 bg-white border border-border-industrial rounded-industrial text-sm text-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent disabled:opacity-50"
-                />
+                >
+                  <option value="">—</option>
+                  <option value="tax_id">{dictionary.taxIdTypeOption}</option>
+                  <option value="vat_id">{dictionary.vatIdTypeOption}</option>
+                </select>
               </div>
               <div>
                 <label htmlFor="identifierValue" className="block text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">

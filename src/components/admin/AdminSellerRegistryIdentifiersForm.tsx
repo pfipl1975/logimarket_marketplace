@@ -16,6 +16,8 @@ export type AdminSellerRegistryIdentifiersFormProps = {
   }>;
   dictionary: {
     registryTypeLabel: string;
+    commercialRegisterTypeOption: string;
+    statisticalIdTypeOption: string;
     registryValueLabel: string;
     jurisdictionLabel: string;
     addAction: string;
@@ -196,16 +198,17 @@ export function AdminSellerRegistryIdentifiersForm({
               <label htmlFor="registryType" className="block text-xs font-medium text-brand-navy mb-1">
                 {dictionary.registryTypeLabel}
               </label>
-              <input
+              <select
                 id="registryType"
                 name="registryType"
-                type="text"
                 required
-                maxLength={50}
-                placeholder="KRS"
                 disabled={isPending}
                 className="w-full px-3 py-2 border border-border-industrial rounded-industrial text-sm focus:outline-none focus:ring-2 focus:ring-brand-teal focus:border-transparent disabled:opacity-50"
-              />
+              >
+                <option value="">—</option>
+                <option value="commercial_register">{dictionary.commercialRegisterTypeOption}</option>
+                <option value="statistical_id">{dictionary.statisticalIdTypeOption}</option>
+              </select>
             </div>
             <div>
               <label htmlFor="jurisdictionCountry" className="block text-xs font-medium text-brand-navy mb-1">
