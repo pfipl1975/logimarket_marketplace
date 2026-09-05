@@ -9,6 +9,8 @@ import { createAdminOfferDraft } from "@/app/actions";
 import { AlertTriangle } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
 import { AdminCategoryPicker } from "./AdminCategoryPicker";
+import { AdminOfferTypeSelector } from "./AdminOfferTypeSelector";
+import type { AdminOfferType } from "@/lib/admin/offer-type";
 
 interface AdminOfferCreateFormProps {
   options: AdminCreateOptionsResult;
@@ -22,6 +24,7 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
   const [isPending, setIsPending] = useState(false);
   const submitLockRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [adminOfferType, setAdminOfferType] = useState<AdminOfferType | "">("");
 
   const backUrl = locale === "pl" ? `/admin/oferty` : `/${locale}/admin/offers`;
 
@@ -76,7 +79,10 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 max-w-2xl bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
+    <form
+      onSubmit={handleSubmit}
+      className="w-full space-y-8 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-8"
+    >
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-industrial text-sm font-medium flex items-center gap-2">
           <AlertTriangle className="h-4 w-4" />
@@ -84,7 +90,7 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="space-y-7">
         <div>
           <label htmlFor="partnerId" className="block text-sm font-medium text-brand-navy mb-1">{dict.createPartnerLabel}</label>
           <select
@@ -100,6 +106,12 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
           </select>
         </div>
 
+        <AdminOfferTypeSelector
+          value={adminOfferType}
+          onChange={setAdminOfferType}
+          dict={dict}
+        />
+
         <AdminCategoryPicker categories={options.categories} dict={dict} />
 
         <div>
@@ -114,23 +126,9 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
           />
         </div>
 
-        <div>
-            <label htmlFor="adminOfferType" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldOfferType}</label>
-            <select
-              id="adminOfferType"
-              name="adminOfferType"
-              required
-              className="w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
-            >
-              <option value="">{dict.createSelectOfferType}</option>
-              <option value="rfq">{dict.offerTypeRfq}</option>
-              <option value="marketplace">{dict.offerTypeMarketplace}</option>
-              <option value="external_partner">{dict.offerTypeExternal}</option>
-            </select>
-          </div>
-        </div>
+      </div>
 
-      <div className="pt-6 border-t border-border-industrial flex flex-col sm:flex-row gap-3">
+      <div className="flex flex-col gap-3 border-t border-border-industrial pt-6 sm:flex-row">
         <button
           type="submit"
           disabled={isPending}
