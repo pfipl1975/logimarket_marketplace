@@ -76,7 +76,7 @@ test("JOURNAL: missing disk entry throws", () => {
   );
 });
 
-test("JOURNAL: accepts legacy dev hash ONLY if state is MIGRATABLE_POST_0002", () => {
+test("JOURNAL: POST_0002 accepts legacy dev hash but rejects drift and production", () => {
   validateAppliedMigrationPrefix(
     "development",
     "MIGRATABLE_POST_0002",
@@ -328,17 +328,33 @@ test("HASH: dev exception rejects production", () => {
   );
 });
 
-test("HASH: dev exception rejects other states", () => {
-  assert.strictEqual(
-    isLegacyDev0000Exception(
-      0,
-      1785589560000,
-      KNOWN_LEGACY_DEVELOPMENT_BASELINE_HASH,
-      "development",
-      "EMPTY",
-    ),
-    false,
-  );
+test("HASH: dev exception rejects stale and non-descendant states", () => {
+  for (const state of [
+    "EXACT_EXISTING_POST_0002",
+    "EXACT_EXISTING_POST_0003",
+    "EXACT_EXISTING_POST_0004",
+    "MIGRATABLE_POST_0005",
+    "MIGRATABLE_POST_0006",
+    "MIGRATABLE_POST_0007",
+    "MIGRATABLE_POST_0008",
+    "MIGRATABLE_POST_0009",
+    "EMPTY",
+    "PARTIAL_OR_DRIFTED",
+    "MIGRATABLE_BASELINE",
+    "MIGRATABLE_PROD_LEGACY",
+  ]) {
+    assert.strictEqual(
+      isLegacyDev0000Exception(
+        0,
+        1785589560000,
+        KNOWN_LEGACY_DEVELOPMENT_BASELINE_HASH,
+        "development",
+        state,
+      ),
+      false,
+      state,
+    );
+  }
 });
 
 test("HASH: dev exception rejects other hashes", () => {
@@ -377,27 +393,42 @@ test("HASH: dev exception rejects wrong timestamp", () => {
   );
 });
 
-test("HASH: dev exception accepts POST_0002 and POST_0004", () => {
+test("HASH: dev exception rejects wrong migration index", () => {
   assert.strictEqual(
     isLegacyDev0000Exception(
-      0,
-      1785589560000,
-      KNOWN_LEGACY_DEVELOPMENT_BASELINE_HASH,
-      "development",
-      "MIGRATABLE_POST_0002",
-    ),
-    true,
-  );
-  assert.strictEqual(
-    isLegacyDev0000Exception(
-      0,
+      1,
       1785589560000,
       KNOWN_LEGACY_DEVELOPMENT_BASELINE_HASH,
       "development",
       "MIGRATABLE_POST_0004",
     ),
-    true,
+    false,
   );
+});
+
+test("HASH: dev exception accepts every canonical descendant state", () => {
+  for (const state of [
+    "MIGRATABLE_POST_0002",
+    "MIGRATABLE_POST_0003",
+    "MIGRATABLE_POST_0004",
+    "EXACT_EXISTING_POST_0005",
+    "EXACT_EXISTING_POST_0006",
+    "EXACT_EXISTING_POST_0007",
+    "EXACT_EXISTING_POST_0008",
+    "EXACT_EXISTING_POST_0009",
+  ]) {
+    assert.strictEqual(
+      isLegacyDev0000Exception(
+        0,
+        1785589560000,
+        KNOWN_LEGACY_DEVELOPMENT_BASELINE_HASH,
+        "development",
+        state,
+      ),
+      true,
+      state,
+    );
+  }
 });
 
 test("JOURNAL: development POST_0004 with legacy hash passes", () => {
