@@ -25,7 +25,8 @@ import {
   PRE_0008_SECURITY_CONTRACT,
   POST_0008_SECURITY_CONTRACT,
   POST_0009_SECURITY_CONTRACT,
-  FINAL_POST_0008_PRODUCTION_FINGERPRINT
+  FINAL_POST_0008_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0009_PRODUCTION_FINGERPRINT
 } from "./runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -69,6 +70,7 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0010"
   | "EXACT_EXISTING_POST_0009"
   | "MIGRATABLE_POST_0008"
   | "EXACT_EXISTING_POST_0008"
@@ -564,6 +566,15 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0010", publicTableCount, differences: [] };
+    }
+    return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
+  }
+
+  const matchPost0009 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0009_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0009.isExactMatch) {
     if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
       return { state: "EXACT_EXISTING_POST_0009", publicTableCount, differences: [] };
     }
