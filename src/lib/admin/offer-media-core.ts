@@ -16,7 +16,7 @@ export interface OfferMediaDependencies {
     offerId: number;
     storageBucket: string;
     objectPath: string;
-    sourceType: string;
+    sourceType: "upload" | "remote_import";
     mimeType: string;
     sizeBytes: number;
     checksumSha256: string;

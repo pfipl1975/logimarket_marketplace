@@ -1204,6 +1204,7 @@ export const FINAL_POST_0010_PRODUCTION_FINGERPRINT: Record<string, TableContrac
     ],
     explicitIndexes: [
       { name: "idx_offer_media_offer_id", method: "btree", expressions: "offer_id" },
+      { name: "uq_offer_media_checksum", method: "btree", expressions: "offer_id, checksum_sha256" },
       { name: "uq_offer_media_primary", method: "btree", expressions: "offer_id" }
     ],
     rlsEnabled: true,

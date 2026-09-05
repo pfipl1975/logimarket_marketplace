@@ -179,7 +179,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0009",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0010",
     async () => {
       await cleanDB();
 
@@ -760,26 +760,26 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       assert.strictEqual(replayJournal.rows[0].count, 8);
 
-      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0009 + journal 10 -> search_path hardened
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0010 + journal 11 -> search_path hardened
       await runMigrations(process.env);
-      const post0009Metadata = await fetchLiveSchemaMetadata(pool);
+      const post0010Metadata = await fetchLiveSchemaMetadata(pool);
       assert.strictEqual(
         classifyRuntimeTarget(
-          post0009Metadata.fingerprint,
-          post0009Metadata.publicTables,
-          post0009Metadata.security,
+          post0010Metadata.fingerprint,
+          post0010Metadata.publicTables,
+          post0010Metadata.security,
         ).state,
         "EXACT_EXISTING_POST_0010",
       );
       assert.deepStrictEqual(
-        post0009Metadata.security.preventVerificationEventsMutationSearchPath,
+        post0010Metadata.security.preventVerificationEventsMutationSearchPath,
         ['search_path=""'],
         "search_path must be hardened to the canonical empty search_path proconfig",
       );
-      const post0009Journal = await pool.query(
+      const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0009Journal.rows[0].count, 10);
+      assert.strictEqual(post0010Journal.rows[0].count, 11);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -789,7 +789,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0009", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0010", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -803,7 +803,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0009
+    // Post-migration classification must be EXACT_EXISTING_POST_0010
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
     assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
@@ -979,7 +979,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0009
+      // Post-migration classification must be EXACT_EXISTING_POST_0010
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
@@ -3318,7 +3318,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const post0009 = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(
       classifyRuntimeTarget(post0009.fingerprint, post0009.publicTables, post0009.security).state,
-      "EXACT_EXISTING_POST_0010",
+      "EXACT_EXISTING_POST_0009",
     );
 
     // 1. Verify RLS is enabled on all 3 new tables
