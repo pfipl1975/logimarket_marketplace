@@ -3304,9 +3304,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 3a. Single active version DB invariant & mixed-case rejection
     const vRes = await pool.query(`
       INSERT INTO agreement_versions (
-        agreement_type, version, canonical_template_hash_sha256, status
+        agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at
       ) VALUES (
-        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active'
+        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active', NOW(), NOW()
       ) RETURNING id
     `);
     const versionId = vRes.rows[0].id;
@@ -3316,9 +3316,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await assert.rejects(
       pool.query(`
         INSERT INTO agreement_versions (
-          agreement_type, version, canonical_template_hash_sha256, status
+          agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at
         ) VALUES (
-          'partner_agreement_b2b', 'v2.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active'
+          'partner_agreement_b2b', 'v2.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active', NOW(), NOW()
         )
       `),
       (err: any) => err.code === '23505',
