@@ -1000,7 +1000,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 10);
+      assert.strictEqual(journalRows.length, 11);
     },
   );
 
