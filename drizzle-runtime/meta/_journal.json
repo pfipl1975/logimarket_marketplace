@@ -71,6 +71,13 @@
       "when": 1785594000000,
       "tag": "0009_partner_agreement_evidence",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1785594500000,
+      "tag": "0010_offer_media_foundation",
+      "breakpoints": true
     }
   ]
 }

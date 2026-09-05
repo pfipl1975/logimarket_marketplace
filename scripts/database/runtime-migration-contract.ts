@@ -49,7 +49,12 @@ export const EXPECTED_POST_0009_TABLES = [
   "partner_agreement_evidence_invalidations"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0009_TABLES;
+export const EXPECTED_POST_0010_TABLES = [
+  ...EXPECTED_POST_0009_TABLES,
+  "offer_media"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0010_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1166,5 +1171,47 @@ export const FINAL_POST_0009_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0008_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0009_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0010_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0009_PRODUCTION_FINGERPRINT,
+  "offer_media": {
+    name: "offer_media",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('offer_media_id_seq'::regclass)", sequenceName: "offer_media_id_seq" },
+      { name: "offer_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "storage_bucket", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "object_path", type: "text", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "source_type", type: "character varying(30)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "source_url", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "mime_type", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "size_bytes", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "checksum_sha256", type: "character varying(64)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "width", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "height", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "sort_order", type: "integer", nullable: false, defaultVal: "0", sequenceName: null },
+      { name: "is_primary", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+      { name: "alt_text", type: "text", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "offer_media_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "offer_media_object_path_unique", type: "UNIQUE", definition: "UNIQUE (object_path)" },
+      { name: "offer_media_offer_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE" },
+      { name: "offer_media_source_type_check", type: "CHECK", definition: "CHECK (((source_type)::text = ANY ((ARRAY['upload'::character varying, 'remote_import'::character varying])::text[])))" },
+      { name: "offer_media_size_bytes_check", type: "CHECK", definition: "CHECK ((size_bytes > 0))" },
+      { name: "offer_media_sort_order_check", type: "CHECK", definition: "CHECK ((sort_order >= 0))" },
+      { name: "offer_media_checksum_format_check", type: "CHECK", definition: "CHECK (((checksum_sha256)::text ~ '^[0-9a-f]{64}$'::text))" }
+    ],
+    explicitIndexes: [
+      { name: "idx_offer_media_offer_id", method: "btree", expressions: "offer_id" },
+      { name: "uq_offer_media_checksum", method: "btree", expressions: "offer_id, checksum_sha256" },
+      { name: "uq_offer_media_primary", method: "btree", expressions: "offer_id" }
+    ],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0009_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0010_PRODUCTION_FINGERPRINT;
