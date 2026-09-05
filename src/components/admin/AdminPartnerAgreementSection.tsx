@@ -6,7 +6,10 @@ import {
   registerPartnerAgreementEvidenceAction,
   invalidatePartnerAgreementEvidenceAction,
 } from "@/app/actions";
-import type { RecordedEvidenceDto } from "@/lib/legal/partner-agreement-core";
+import {
+  parseLocalDatetimeToUtcIso,
+  type RecordedEvidenceDto,
+} from "@/lib/legal/partner-agreement-core";
 import {
   FileCheck,
   AlertCircle,
@@ -45,6 +48,24 @@ export type AdminPartnerAgreementSectionProps = {
     agreementEmailLabel: string;
     agreementExecutionMethodLabel: string;
     agreementExecutionMethodPlatform: string;
+    agreementExecutionMethodQualified: string;
+    agreementExecutionMethodAdvanced: string;
+    agreementAdminLabel: string;
+    agreementSha256FormatTitle: string;
+    agreementReasonRequired: string;
+    agreementRegisterErrorDefault: string;
+    agreementInvalidateErrorDefault: string;
+    agreementErrorUnauthorized?: string;
+    agreementErrorValidation?: string;
+    agreementErrorFutureDate?: string;
+    agreementErrorBeforeEffectiveFrom?: string;
+    agreementErrorBeforePublishedAt?: string;
+    agreementErrorAfterEffectiveTo?: string;
+    agreementErrorDuplicateTx?: string;
+    agreementErrorVersionNotActive?: string;
+    agreementErrorPartnerNotFound?: string;
+    agreementErrorAlreadyInvalidated?: string;
+    agreementErrorSystem?: string;
     agreementPlatformLabel: string;
     agreementExternalTxLabel: string;
     agreementSha256Label: string;
@@ -88,10 +109,11 @@ export function AdminPartnerAgreementSection({
   // Registration form state
   const [showRegisterForm, setShowRegisterForm] = useState(false);
   const [registerForm, setRegisterForm] = useState({
-    signedAt: new Date().toISOString().slice(0, 16),
+    signedAt: "",
     signatoryName: "",
     signatoryRole: "",
     signatoryEmail: "",
+    executionMethod: "platform_documentary_electronic",
     externalPlatform: "",
     externalTransactionId: "",
     signedPdfSha256: "",
@@ -110,7 +132,52 @@ export function AdminPartnerAgreementSection({
     return new Date(isoStr).toLocaleString(locale);
   };
 
-  const handleRegisterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const getErrorMessage = (code: string | undefined, fallback: string) => {
+    switch (code) {
+      case "UNAUTHORIZED_ADMIN":
+        return dictionary.agreementErrorUnauthorized || fallback;
+      case "VALIDATION_ERROR":
+        return dictionary.agreementErrorValidation || fallback;
+      case "INVALID_SIGNED_AT_FUTURE":
+        return dictionary.agreementErrorFutureDate || fallback;
+      case "SIGNED_AT_BEFORE_EFFECTIVE_FROM":
+        return dictionary.agreementErrorBeforeEffectiveFrom || fallback;
+      case "SIGNED_AT_BEFORE_PUBLISHED_AT":
+        return dictionary.agreementErrorBeforePublishedAt || fallback;
+      case "SIGNED_AT_AFTER_EFFECTIVE_TO":
+        return dictionary.agreementErrorAfterEffectiveTo || fallback;
+      case "DUPLICATE_EXTERNAL_TRANSACTION":
+        return dictionary.agreementErrorDuplicateTx || fallback;
+      case "AGREEMENT_VERSION_NOT_ACTIVE":
+      case "AGREEMENT_VERSION_NOT_FOUND":
+      case "INVALID_AGREEMENT_TYPE":
+        return dictionary.agreementErrorVersionNotActive || fallback;
+      case "PARTNER_NOT_FOUND":
+        return dictionary.agreementErrorPartnerNotFound || fallback;
+      case "ALREADY_INVALIDATED":
+        return dictionary.agreementErrorAlreadyInvalidated || fallback;
+      case "SYSTEM_ERROR":
+        return dictionary.agreementErrorSystem || fallback;
+      default:
+        return fallback;
+    }
+  };
+
+  const getExecutionMethodLabel = (method: string) => {
+    switch (method) {
+      case "qualified_electronic_signature":
+        return dictionary.agreementExecutionMethodQualified;
+      case "advanced_electronic_signature":
+        return dictionary.agreementExecutionMethodAdvanced;
+      case "platform_documentary_electronic":
+      default:
+        return dictionary.agreementExecutionMethodPlatform;
+    }
+  };
+
+  const handleRegisterChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setRegisterForm((prev) => ({ ...prev, [name]: value }));
     setRegisterError(null);
@@ -124,6 +191,12 @@ export function AdminPartnerAgreementSection({
       return;
     }
 
+    const signedAtUtc = parseLocalDatetimeToUtcIso(registerForm.signedAt);
+    if (!signedAtUtc) {
+      setRegisterError(dictionary.agreementErrorValidation || dictionary.agreementRegisterErrorDefault);
+      return;
+    }
+
     setRegisterError(null);
     setRegisterSuccess(null);
 
@@ -131,11 +204,14 @@ export function AdminPartnerAgreementSection({
       const payload = {
         partnerId,
         agreementVersionId: agreementEvidence.activeVersion!.id,
-        signedAt: new Date(registerForm.signedAt).toISOString(),
+        signedAt: signedAtUtc,
         signatoryName: registerForm.signatoryName.trim(),
         signatoryRole: registerForm.signatoryRole.trim(),
         signatoryEmail: registerForm.signatoryEmail.trim().toLowerCase(),
-        executionMethod: "platform_documentary_electronic" as const,
+        executionMethod: registerForm.executionMethod as
+          | "platform_documentary_electronic"
+          | "qualified_electronic_signature"
+          | "advanced_electronic_signature",
         externalPlatform: registerForm.externalPlatform.trim(),
         externalTransactionId: registerForm.externalTransactionId.trim(),
         signedPdfSha256: registerForm.signedPdfSha256.trim().toLowerCase(),
@@ -145,10 +221,11 @@ export function AdminPartnerAgreementSection({
       if (res.ok) {
         setRegisterSuccess(dictionary.agreementRegisterSuccess);
         setRegisterForm({
-          signedAt: new Date().toISOString().slice(0, 16),
+          signedAt: "",
           signatoryName: "",
           signatoryRole: "",
           signatoryEmail: "",
+          executionMethod: "platform_documentary_electronic",
           externalPlatform: "",
           externalTransactionId: "",
           signedPdfSha256: "",
@@ -156,7 +233,7 @@ export function AdminPartnerAgreementSection({
         setShowRegisterForm(false);
         router.refresh();
       } else {
-        setRegisterError(res.message || res.code || "Failed to register evidence");
+        setRegisterError(getErrorMessage(res.code, res.message || dictionary.agreementRegisterErrorDefault));
       }
     });
   };
@@ -164,7 +241,7 @@ export function AdminPartnerAgreementSection({
   const handleInvalidateSubmit = (evidenceId: number) => {
     if (isPending) return;
     if (!invalidationReason.trim()) {
-      setInvalidationError(dictionary.agreementInvalidationReasonLabel + " is required.");
+      setInvalidationError(dictionary.agreementReasonRequired);
       return;
     }
 
@@ -183,7 +260,7 @@ export function AdminPartnerAgreementSection({
         setInvalidationReason("");
         router.refresh();
       } else {
-        setInvalidationError(res.message || res.code || "Failed to invalidate evidence");
+        setInvalidationError(getErrorMessage(res.code, res.message || dictionary.agreementInvalidateErrorDefault));
       }
     });
   };
@@ -235,7 +312,7 @@ export function AdminPartnerAgreementSection({
                 {activeVersion.version}
               </span>
               <div className="text-xs text-muted-foreground mt-1 font-mono break-all">
-                SHA-256: {activeVersion.canonicalTemplateHashSha256}
+                {dictionary.agreementSha256Label}: {activeVersion.canonicalTemplateHashSha256}
               </div>
             </div>
             <div className="text-xs text-muted-foreground whitespace-nowrap">
@@ -288,6 +365,28 @@ export function AdminPartnerAgreementSection({
                   required
                   className="w-full text-xs px-3 py-2 border border-border-industrial rounded bg-white text-brand-navy focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
                 />
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-brand-navy mb-1">
+                  {dictionary.agreementExecutionMethodLabel} *
+                </label>
+                <select
+                  name="executionMethod"
+                  value={registerForm.executionMethod}
+                  onChange={handleRegisterChange}
+                  className="w-full text-xs px-3 py-2 border border-border-industrial rounded bg-white text-brand-navy focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
+                >
+                  <option value="platform_documentary_electronic">
+                    {dictionary.agreementExecutionMethodPlatform}
+                  </option>
+                  <option value="qualified_electronic_signature">
+                    {dictionary.agreementExecutionMethodQualified}
+                  </option>
+                  <option value="advanced_electronic_signature">
+                    {dictionary.agreementExecutionMethodAdvanced}
+                  </option>
+                </select>
               </div>
 
               <div>
@@ -377,7 +476,7 @@ export function AdminPartnerAgreementSection({
                   placeholder={dictionary.agreementSha256Placeholder}
                   required
                   pattern="^[a-fA-F0-9]{64}$"
-                  title="64-character lowercase hexadecimal string"
+                  title={dictionary.agreementSha256FormatTitle}
                   className="w-full font-mono text-xs px-3 py-2 border border-border-industrial rounded bg-white text-brand-navy focus:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
                 />
               </div>
@@ -499,7 +598,7 @@ export function AdminPartnerAgreementSection({
                           {dictionary.agreementExecutionMethodLabel}
                         </p>
                         <p className="font-medium text-brand-navy">
-                          {dictionary.agreementExecutionMethodPlatform}
+                          {getExecutionMethodLabel(ev.executionMethod)}
                         </p>
                       </div>
 
@@ -521,7 +620,7 @@ export function AdminPartnerAgreementSection({
                           {formatDate(ev.recordedAt)}
                         </p>
                         <p className="text-muted-foreground text-[11px] font-mono">
-                          Admin: {ev.recordedByAdminUserId}
+                          {dictionary.agreementAdminLabel}: {ev.recordedByAdminUserId}
                         </p>
                       </div>
 

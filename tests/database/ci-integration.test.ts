@@ -3300,15 +3300,55 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // 3. Test insert & immutability on partner_agreement_execution_evidence
     await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (888, 'Partner 888', 'p888@test.com') ON CONFLICT DO NOTHING`);
+
+    // 3a. Single active version DB invariant & mixed-case rejection
     const vRes = await pool.query(`
       INSERT INTO agreement_versions (
         agreement_type, version, canonical_template_hash_sha256, status
       ) VALUES (
-        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active'
       ) RETURNING id
     `);
     const versionId = vRes.rows[0].id;
     assert.ok(versionId);
+
+    // Assert SINGLE_ACTIVE_VERSION_DB_INVARIANT=PASS
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'partner_agreement_b2b', 'v2.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active'
+        )
+      `),
+      (err: any) => err.code === '23505',
+      "SINGLE_ACTIVE_VERSION_DB_INVARIANT=PASS"
+    );
+
+    // Assert MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'PARTNER_AGREEMENT_B2B', 'v_upper', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        )
+      `),
+      (err: any) => err.code === '23514',
+      "MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED (uppercase)"
+    );
+
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'Partner_Agreement_B2b', 'v_mixed', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        )
+      `),
+      (err: any) => err.code === '23514',
+      "MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED (mixed case)"
+    );
 
     const evRes = await pool.query(`
       INSERT INTO partner_agreement_execution_evidence (
@@ -3388,6 +3428,56 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       ) RETURNING id
     `, [versionId]);
     assert.ok(reRegRes.rows[0].id);
+
+    // 6b. REAL_TWO_CONNECTION_CONCURRENCY_PROOF:
+    // Two distinct pool clients executing simultaneous inserts for identical (external_platform, external_transaction_id).
+    // Advisory xact lock inside trigger serializes them; exactly 1 succeeds, 1 fails with 23505.
+    const client1 = await pool.connect();
+    const client2 = await pool.connect();
+    try {
+      const concurrentTxId = `tx-race-${Date.now()}`;
+      const insertSql = `
+        INSERT INTO partner_agreement_execution_evidence (
+          partner_id, agreement_version_id, execution_method,
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+        ) VALUES (
+          888, $1, 'platform_documentary_electronic',
+          NOW(), 'Concurrent Signer', 'Officer', 'race@test.com',
+          'autenti_concurrent', $2, '3234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+        ) RETURNING id
+      `;
+
+      const [outcome1, outcome2] = await Promise.allSettled([
+        client1.query(insertSql, [versionId, concurrentTxId]),
+        client2.query(insertSql, [versionId, concurrentTxId]),
+      ]);
+
+      const fulfilled = [outcome1, outcome2].filter((o) => o.status === 'fulfilled');
+      const rejected = [outcome1, outcome2].filter((o) => o.status === 'rejected');
+
+      assert.strictEqual(fulfilled.length, 1, 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Exactly 1 concurrent insert must succeed');
+      assert.strictEqual(rejected.length, 1, 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Exactly 1 concurrent insert must fail');
+
+      const rejectionReason = (rejected[0] as PromiseRejectedResult).reason;
+      assert.strictEqual(rejectionReason.code, '23505', 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Rejection must be PostgreSQL 23505');
+
+      // Invalidate winner and prove re-registration succeeds
+      const winnerId = (fulfilled[0] as PromiseFulfilledResult<any>).value.rows[0].id;
+      await pool.query(`
+        INSERT INTO partner_agreement_evidence_invalidations (
+          execution_evidence_id, reason, invalidated_by_admin_user_id
+        ) VALUES (
+          $1, 'Invalidation to allow re-registration proof', 'admin_ci'
+        )
+      `, [winnerId]);
+
+      const postInvalidationRes = await pool.query(insertSql, [versionId, concurrentTxId]);
+      assert.ok(postInvalidationRes.rows[0].id, 'Re-registration of external transaction succeeded after invalidation');
+    } finally {
+      client1.release();
+      client2.release();
+    }
 
     // 7. Test security drift fail-closed
     await pool.query(`ALTER FUNCTION public.prevent_partner_agreement_execution_evidence_mutation() SET search_path = 'public'`);

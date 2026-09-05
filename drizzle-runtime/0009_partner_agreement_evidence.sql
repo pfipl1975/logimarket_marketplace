@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "agreement_versions" (
 	"effective_to" timestamp with time zone,
 	"published_at" timestamp with time zone,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	CONSTRAINT "chk_agreement_versions_type" CHECK (agreement_type IN ('partner_agreement_b2b', 'PARTNER_AGREEMENT_B2B')),
+	CONSTRAINT "chk_agreement_versions_type" CHECK (agreement_type = 'partner_agreement_b2b'),
 	CONSTRAINT "chk_agreement_versions_status" CHECK (status IN ('draft', 'active', 'superseded', 'archived')),
 	CONSTRAINT "chk_agreement_versions_hash_format" CHECK (canonical_template_hash_sha256 ~ '^[0-9a-f]{64}$'),
 	CONSTRAINT "chk_agreement_versions_active_lifecycle" CHECK (((status)::text <> 'active'::text) OR (effective_from IS NOT NULL AND published_at IS NOT NULL)),
@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS "partner_agreement_execution_evidence" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"partner_id" bigint NOT NULL,
 	"agreement_version_id" integer NOT NULL,
-	"status" varchar(30) DEFAULT 'ACCEPTED' NOT NULL,
+	"status" varchar(30) DEFAULT 'accepted' NOT NULL,
 	"execution_method" varchar(50) DEFAULT 'platform_documentary_electronic' NOT NULL,
 	"signed_at" timestamp with time zone NOT NULL,
 	"signatory_name" varchar(255) NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS "partner_agreement_execution_evidence" (
 	"signed_pdf_sha256" varchar(64) NOT NULL,
 	"recorded_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"recorded_by_admin_user_id" varchar(255) NOT NULL,
-	CONSTRAINT "chk_partner_agreement_evidence_status" CHECK (status IN ('accepted', 'ACCEPTED')),
+	CONSTRAINT "chk_partner_agreement_evidence_status" CHECK (status = 'accepted'),
 	CONSTRAINT "chk_partner_agreement_evidence_method" CHECK (execution_method IN ('platform_documentary_electronic', 'qualified_electronic_signature', 'advanced_electronic_signature')),
 	CONSTRAINT "chk_partner_agreement_evidence_hash_format" CHECK (signed_pdf_sha256 ~ '^[0-9a-f]{64}$'),
 	CONSTRAINT "chk_partner_agreement_evidence_signatory_name" CHECK (length(btrim((signatory_name)::text)) > 0),
@@ -155,6 +155,12 @@ LANGUAGE plpgsql
 SET search_path = ''
 AS $$
 BEGIN
+	-- Deterministic transaction-scoped advisory lock serializes concurrent inserts for the same external transaction under MVCC
+	PERFORM pg_catalog.pg_advisory_xact_lock(
+		pg_catalog.hashtext(NEW.external_platform),
+		pg_catalog.hashtext(NEW.external_transaction_id)
+	);
+
 	IF EXISTS (
 		SELECT 1
 		FROM public.partner_agreement_execution_evidence e

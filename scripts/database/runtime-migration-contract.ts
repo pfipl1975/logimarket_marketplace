@@ -1085,7 +1085,7 @@ export const FINAL_POST_0009_PRODUCTION_FINGERPRINT: Record<string, TableContrac
     ],
     constraints: [
       { name: "agreement_versions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
-      { name: "chk_agreement_versions_type", type: "CHECK", definition: "CHECK (((agreement_type)::text = ANY ((ARRAY['partner_agreement_b2b'::character varying, 'PARTNER_AGREEMENT_B2B'::character varying])::text[])))" },
+      { name: "chk_agreement_versions_type", type: "CHECK", definition: "CHECK (((agreement_type)::text = 'partner_agreement_b2b'::text))" },
       { name: "chk_agreement_versions_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'superseded'::character varying, 'archived'::character varying])::text[])))" },
       { name: "chk_agreement_versions_hash_format", type: "CHECK", definition: "CHECK (((canonical_template_hash_sha256)::text ~ '^[0-9a-f]{64}$'::text))" },
       { name: "chk_agreement_versions_active_lifecycle", type: "CHECK", definition: "CHECK ((((status)::text <> 'active'::text) OR ((effective_from IS NOT NULL) AND (published_at IS NOT NULL))))" },
@@ -1106,7 +1106,7 @@ export const FINAL_POST_0009_PRODUCTION_FINGERPRINT: Record<string, TableContrac
       { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('partner_agreement_execution_evidence_id_seq'::regclass)", sequenceName: "partner_agreement_execution_evidence_id_seq" },
       { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "agreement_version_id", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
-      { name: "status", type: "character varying(30)", nullable: false, defaultVal: "'ACCEPTED'::character varying", sequenceName: null },
+      { name: "status", type: "character varying(30)", nullable: false, defaultVal: "'accepted'::character varying", sequenceName: null },
       { name: "execution_method", type: "character varying(50)", nullable: false, defaultVal: "'platform_documentary_electronic'::character varying", sequenceName: null },
       { name: "signed_at", type: "timestamp with time zone", nullable: false, defaultVal: null, sequenceName: null },
       { name: "signatory_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
@@ -1120,7 +1120,7 @@ export const FINAL_POST_0009_PRODUCTION_FINGERPRINT: Record<string, TableContrac
     ],
     constraints: [
       { name: "partner_agreement_execution_evidence_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
-      { name: "chk_partner_agreement_evidence_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['accepted'::character varying, 'ACCEPTED'::character varying])::text[])))" },
+      { name: "chk_partner_agreement_evidence_status", type: "CHECK", definition: "CHECK (((status)::text = 'accepted'::text))" },
       { name: "chk_partner_agreement_evidence_method", type: "CHECK", definition: "CHECK (((execution_method)::text = ANY ((ARRAY['platform_documentary_electronic'::character varying, 'qualified_electronic_signature'::character varying, 'advanced_electronic_signature'::character varying])::text[])))" },
       { name: "chk_partner_agreement_evidence_hash_format", type: "CHECK", definition: "CHECK (((signed_pdf_sha256)::text ~ '^[0-9a-f]{64}$'::text))" },
       { name: "chk_partner_agreement_evidence_signatory_name", type: "CHECK", definition: "CHECK ((length(btrim((signatory_name)::text)) > 0))" },

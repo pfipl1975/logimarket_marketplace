@@ -984,7 +984,7 @@ export const agreementVersions = pgTable("agreement_versions", {
   publishedAt: timestamp("published_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  check("chk_agreement_versions_type", sql`agreement_type IN ('partner_agreement_b2b', 'PARTNER_AGREEMENT_B2B')`),
+  check("chk_agreement_versions_type", sql`agreement_type = 'partner_agreement_b2b'`),
   check("chk_agreement_versions_status", sql`status IN ('draft', 'active', 'superseded', 'archived')`),
   check("chk_agreement_versions_hash_format", sql`canonical_template_hash_sha256 ~ '^[0-9a-f]{64}$'`),
   check("chk_agreement_versions_active_lifecycle", sql`((status)::text <> 'active'::text) OR (effective_from IS NOT NULL AND published_at IS NOT NULL)`),
@@ -1000,7 +1000,7 @@ export const partnerAgreementExecutionEvidence = pgTable("partner_agreement_exec
   id: bigserial("id", { mode: "number" }).primaryKey(),
   partnerId: bigint("partner_id", { mode: "number" }).notNull().references(() => partners.id, { onDelete: "restrict" }),
   agreementVersionId: integer("agreement_version_id").notNull().references(() => agreementVersions.id, { onDelete: "restrict" }),
-  status: varchar("status", { length: 30 }).notNull().default("ACCEPTED"),
+  status: varchar("status", { length: 30 }).notNull().default("accepted"),
   executionMethod: varchar("execution_method", { length: 50 }).notNull().default("platform_documentary_electronic"),
   signedAt: timestamp("signed_at", { withTimezone: true }).notNull(),
   signatoryName: varchar("signatory_name", { length: 255 }).notNull(),
@@ -1012,7 +1012,7 @@ export const partnerAgreementExecutionEvidence = pgTable("partner_agreement_exec
   recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
   recordedByAdminUserId: varchar("recorded_by_admin_user_id", { length: 255 }).notNull(),
 }, (t) => [
-  check("chk_partner_agreement_evidence_status", sql`status IN ('accepted', 'ACCEPTED')`),
+  check("chk_partner_agreement_evidence_status", sql`status = 'accepted'`),
   check("chk_partner_agreement_evidence_method", sql`execution_method IN ('platform_documentary_electronic', 'qualified_electronic_signature', 'advanced_electronic_signature')`),
   check("chk_partner_agreement_evidence_hash_format", sql`signed_pdf_sha256 ~ '^[0-9a-f]{64}$'`),
   check("chk_partner_agreement_evidence_signatory_name", sql`length(btrim((signatory_name)::text)) > 0`),

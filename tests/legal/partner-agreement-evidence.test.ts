@@ -8,6 +8,7 @@ import {
   invalidatePartnerAgreementExecutionEvidence,
   hasRecordedPartnerAgreementExecutionEvidence,
   getActivePartnerAgreementVersion,
+  parseLocalDatetimeToUtcIso,
 } from "../../src/lib/legal/partner-agreement-core";
 import {
   partners,
@@ -136,139 +137,144 @@ describe("Partner Agreement Evidence - Schema Validation", () => {
   });
 });
 
-describe("Partner Agreement Evidence - Business Invariants", () => {
-  const validSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+const validSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 
-  const createMockDb = (config: {
-    partnerExists?: boolean;
-    activeVersionExists?: boolean;
-    versionInactive?: boolean;
-    evidenceExists?: boolean;
-    evidenceAlreadyInvalidated?: boolean;
-    hasActiveEvidence?: boolean;
-    duplicateExternalTx?: boolean;
-    failOnInsert?: boolean;
-  } = {}) => {
-    const insertedEvidence: unknown[] = [];
-    const insertedInvalidations: unknown[] = [];
+const createMockDb = (config: {
+  partnerExists?: boolean;
+  activeVersionExists?: boolean;
+  versionInactive?: boolean;
+  agreementType?: string;
+  effectiveFrom?: Date | null;
+  publishedAt?: Date | null;
+  effectiveTo?: Date | null;
+  evidenceExists?: boolean;
+  evidenceAlreadyInvalidated?: boolean;
+  hasActiveEvidence?: boolean;
+  duplicateExternalTx?: boolean;
+  failOnInsert?: boolean;
+} = {}) => {
+  const insertedEvidence: unknown[] = [];
+  const insertedInvalidations: unknown[] = [];
 
-    const mockDb: any = {
-      select: () => {
-        const query: any = {
-          from: (table: unknown) => {
-            query._table = table;
-            return query;
-          },
-          innerJoin: () => query,
-          leftJoin: () => query,
-          where: () => query,
-          limit: () => query,
-          orderBy: () => query,
-          then: (resolve: (val: any) => void) => {
-            if (query._table === partners) {
-              resolve(config.partnerExists ? [{ id: 101, companyName: "Test Partner" }] : []);
-            } else if (query._table === agreementVersions) {
-              if (config.activeVersionExists) {
-                resolve([
-                  {
-                    id: 1,
-                    version: "v1.0",
-                    agreementType: "PARTNER_AGREEMENT_B2B",
-                    canonicalTemplateHashSha256: validSha256,
-                    status: config.versionInactive ? "draft" : "active",
-                    effectiveFrom: new Date(),
-                    publishedAt: new Date(),
-                  },
-                ]);
-              } else {
-                resolve([]);
-              }
-            } else if (query._table === partnerAgreementExecutionEvidence) {
-              if (config.duplicateExternalTx) {
-                resolve([{ id: 88 }]);
-              } else if (config.evidenceExists) {
-                resolve([
-                  {
-                    id: 1,
-                    partnerId: 101,
-                    agreementVersionId: 1,
-                    status: "recorded",
-                  },
-                ]);
-              } else if (config.hasActiveEvidence) {
-                resolve([{ id: 1 }]);
-              } else {
-                resolve([]);
-              }
-            } else if (query._table === partnerAgreementEvidenceInvalidations) {
-              resolve(
-                config.evidenceAlreadyInvalidated
-                  ? [
-                      {
-                        id: 1,
-                        executionEvidenceId: 1,
-                        reason: "Existing error",
-                        invalidatedAt: new Date(),
-                        invalidatedByAdminUserId: "admin-1",
-                      },
-                    ]
-                  : []
-              );
+  const mockDb: any = {
+    select: () => {
+      const query: any = {
+        from: (table: unknown) => {
+          query._table = table;
+          return query;
+        },
+        innerJoin: () => query,
+        leftJoin: () => query,
+        where: () => query,
+        limit: () => query,
+        orderBy: () => query,
+        then: (resolve: (val: any) => void) => {
+          if (query._table === partners) {
+            resolve(config.partnerExists ? [{ id: 101, companyName: "Test Partner" }] : []);
+          } else if (query._table === agreementVersions) {
+            if (config.activeVersionExists) {
+              resolve([
+                {
+                  id: 1,
+                  version: "v1.0",
+                  agreementType: config.agreementType !== undefined ? config.agreementType : "partner_agreement_b2b",
+                  canonicalTemplateHashSha256: validSha256,
+                  status: config.versionInactive ? "draft" : "active",
+                  effectiveFrom: config.effectiveFrom !== undefined ? config.effectiveFrom : new Date("2026-01-01T00:00:00Z"),
+                  publishedAt: config.publishedAt !== undefined ? config.publishedAt : new Date("2026-01-01T00:00:00Z"),
+                  effectiveTo: config.effectiveTo !== undefined ? config.effectiveTo : null,
+                },
+              ]);
             } else {
               resolve([]);
             }
-          },
-        };
-        return query;
-      },
-      insert: (table: unknown) => {
-        const insertQuery: any = {
-          values: (vals: any) => {
-            insertQuery._vals = vals;
-            return insertQuery;
-          },
-          returning: () => insertQuery,
-          then: (resolve: (val: any) => void, reject: (err: any) => void) => {
-            if (config.failOnInsert) {
-              const err: any = new Error("unique violation");
-              err.code = "23505";
-              reject(err);
-              return;
-            }
-            if (table === partnerAgreementExecutionEvidence) {
-              const record = {
-                id: 1,
-                partnerId: insertQuery._vals.partnerId,
-                agreementVersionId: insertQuery._vals.agreementVersionId,
-                status: "recorded",
-                recordedAt: new Date(),
-              };
-              insertedEvidence.push(record);
-              resolve([record]);
-            } else if (table === partnerAgreementEvidenceInvalidations) {
-              const record = {
-                id: 1,
-                executionEvidenceId: insertQuery._vals.executionEvidenceId,
-                reason: insertQuery._vals.reason,
-                invalidatedAt: new Date(),
-                invalidatedByAdminUserId: insertQuery._vals.invalidatedByAdminUserId,
-              };
-              insertedInvalidations.push(record);
-              resolve([record]);
+          } else if (query._table === partnerAgreementExecutionEvidence) {
+            if (config.duplicateExternalTx) {
+              resolve([{ id: 88 }]);
+            } else if (config.evidenceExists) {
+              resolve([
+                {
+                  id: 1,
+                  partnerId: 101,
+                  agreementVersionId: 1,
+                  status: "accepted",
+                },
+              ]);
+            } else if (config.hasActiveEvidence) {
+              resolve([{ id: 1 }]);
             } else {
               resolve([]);
             }
-          },
-        };
-        return insertQuery;
-      },
-      _insertedEvidence: insertedEvidence,
-      _insertedInvalidations: insertedInvalidations,
-    };
-
-    return mockDb;
+          } else if (query._table === partnerAgreementEvidenceInvalidations) {
+            resolve(
+              config.evidenceAlreadyInvalidated
+                ? [
+                    {
+                      id: 1,
+                      executionEvidenceId: 1,
+                      reason: "Existing error",
+                      invalidatedAt: new Date(),
+                      invalidatedByAdminUserId: "admin-1",
+                    },
+                  ]
+                : []
+            );
+          } else {
+            resolve([]);
+          }
+        },
+      };
+      return query;
+    },
+    insert: (table: unknown) => {
+      const insertQuery: any = {
+        values: (vals: any) => {
+          insertQuery._vals = vals;
+          return insertQuery;
+        },
+        returning: () => insertQuery,
+        then: (resolve: (val: any) => void, reject: (err: any) => void) => {
+          if (config.failOnInsert) {
+            const err: any = new Error("unique violation");
+            err.code = "23505";
+            reject(err);
+            return;
+          }
+          if (table === partnerAgreementExecutionEvidence) {
+            const record = {
+              id: 1,
+              partnerId: insertQuery._vals.partnerId,
+              agreementVersionId: insertQuery._vals.agreementVersionId,
+              status: "accepted",
+              recordedAt: new Date(),
+            };
+            insertedEvidence.push(record);
+            resolve([record]);
+          } else if (table === partnerAgreementEvidenceInvalidations) {
+            const record = {
+              id: 1,
+              executionEvidenceId: insertQuery._vals.executionEvidenceId,
+              reason: insertQuery._vals.reason,
+              invalidatedAt: new Date(),
+              invalidatedByAdminUserId: insertQuery._vals.invalidatedByAdminUserId,
+            };
+            insertedInvalidations.push(record);
+            resolve([record]);
+          } else {
+            resolve([]);
+          }
+        },
+      };
+      return insertQuery;
+    },
+    _insertedEvidence: insertedEvidence,
+    _insertedInvalidations: insertedInvalidations,
   };
 
+  return mockDb;
+};
+
+describe("Partner Agreement Evidence - Business Invariants", () => {
   test("rejects registration when admin user ID is empty", async () => {
     const db = createMockDb({ partnerExists: true, activeVersionExists: true });
     const res = await registerPartnerAgreementExecutionEvidence(
@@ -501,5 +507,173 @@ describe("Partner Agreement Evidence - Business Invariants", () => {
     const dbWithoutActive = createMockDb({ activeVersionExists: false });
     const none = await getActivePartnerAgreementVersion(dbWithoutActive as any);
     assert.strictEqual(none, null);
+  });
+});
+
+describe("Partner Agreement - Local Datetime to UTC Parser", () => {
+  test("parses ISO with timezone offset into UTC ISO string", () => {
+    const res = parseLocalDatetimeToUtcIso("2026-09-05T14:30:00+02:00");
+    assert.equal(res, "2026-09-05T12:30:00.000Z");
+  });
+
+  test("parses UTC ISO string ending in Z directly", () => {
+    const res = parseLocalDatetimeToUtcIso("2026-09-05T12:30:00Z");
+    assert.equal(res, "2026-09-05T12:30:00.000Z");
+  });
+
+  test("parses browser local datetime-local format without offset", () => {
+    const res = parseLocalDatetimeToUtcIso("2026-09-05T14:30");
+    assert.ok(res);
+    assert.match(res!, /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
+  });
+
+  test("returns null for empty or invalid input", () => {
+    assert.equal(parseLocalDatetimeToUtcIso(""), null);
+    assert.equal(parseLocalDatetimeToUtcIso("not-a-date"), null);
+  });
+});
+
+describe("Partner Agreement Evidence - Agreement Lifecycle Constraints", () => {
+  const validSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
+
+  test("rejects signedAt in the future", async () => {
+    const futureDate = new Date(Date.now() + 86400000).toISOString();
+    const db = createMockDb({ partnerExists: true, activeVersionExists: true });
+    const res = await registerPartnerAgreementExecutionEvidence(
+      db,
+      {
+        partnerId: 101,
+        agreementVersionId: 1,
+        signedAt: futureDate,
+        signatoryName: "Jan",
+        signatoryRole: "CEO",
+        signatoryEmail: "jan@co.pl",
+        executionMethod: "platform_documentary_electronic",
+        externalPlatform: "Autenti",
+        externalTransactionId: "tx-future",
+        signedPdfSha256: validSha256,
+      },
+      "admin-usr"
+    );
+    assert.equal(res.ok, false);
+    if (!res.ok) {
+      assert.equal(res.code, "INVALID_SIGNED_AT_FUTURE");
+    }
+  });
+
+  test("rejects signedAt before effectiveFrom", async () => {
+    const db = createMockDb({
+      partnerExists: true,
+      activeVersionExists: true,
+      effectiveFrom: new Date("2026-06-01T00:00:00Z"),
+      publishedAt: new Date("2026-01-01T00:00:00Z"),
+    });
+    const res = await registerPartnerAgreementExecutionEvidence(
+      db,
+      {
+        partnerId: 101,
+        agreementVersionId: 1,
+        signedAt: "2026-05-01T00:00:00Z",
+        signatoryName: "Jan",
+        signatoryRole: "CEO",
+        signatoryEmail: "jan@co.pl",
+        executionMethod: "platform_documentary_electronic",
+        externalPlatform: "Autenti",
+        externalTransactionId: "tx-before-eff",
+        signedPdfSha256: validSha256,
+      },
+      "admin-usr"
+    );
+    assert.equal(res.ok, false);
+    if (!res.ok) {
+      assert.equal(res.code, "SIGNED_AT_BEFORE_EFFECTIVE_FROM");
+    }
+  });
+
+  test("rejects signedAt before publishedAt", async () => {
+    const db = createMockDb({
+      partnerExists: true,
+      activeVersionExists: true,
+      effectiveFrom: new Date("2026-01-01T00:00:00Z"),
+      publishedAt: new Date("2026-06-01T00:00:00Z"),
+    });
+    const res = await registerPartnerAgreementExecutionEvidence(
+      db,
+      {
+        partnerId: 101,
+        agreementVersionId: 1,
+        signedAt: "2026-05-01T00:00:00Z",
+        signatoryName: "Jan",
+        signatoryRole: "CEO",
+        signatoryEmail: "jan@co.pl",
+        executionMethod: "platform_documentary_electronic",
+        externalPlatform: "Autenti",
+        externalTransactionId: "tx-before-pub",
+        signedPdfSha256: validSha256,
+      },
+      "admin-usr"
+    );
+    assert.equal(res.ok, false);
+    if (!res.ok) {
+      assert.equal(res.code, "SIGNED_AT_BEFORE_PUBLISHED_AT");
+    }
+  });
+
+  test("rejects signedAt on or after effectiveTo", async () => {
+    const db = createMockDb({
+      partnerExists: true,
+      activeVersionExists: true,
+      effectiveFrom: new Date("2026-01-01T00:00:00Z"),
+      publishedAt: new Date("2026-01-01T00:00:00Z"),
+      effectiveTo: new Date("2026-06-01T00:00:00Z"),
+    });
+    const res = await registerPartnerAgreementExecutionEvidence(
+      db,
+      {
+        partnerId: 101,
+        agreementVersionId: 1,
+        signedAt: "2026-06-01T00:00:00Z",
+        signatoryName: "Jan",
+        signatoryRole: "CEO",
+        signatoryEmail: "jan@co.pl",
+        executionMethod: "platform_documentary_electronic",
+        externalPlatform: "Autenti",
+        externalTransactionId: "tx-after-eff",
+        signedPdfSha256: validSha256,
+      },
+      "admin-usr"
+    );
+    assert.equal(res.ok, false);
+    if (!res.ok) {
+      assert.equal(res.code, "SIGNED_AT_AFTER_EFFECTIVE_TO");
+    }
+  });
+
+  test("rejects uppercase or invalid agreementType", async () => {
+    const db = createMockDb({
+      partnerExists: true,
+      activeVersionExists: true,
+      agreementType: "PARTNER_AGREEMENT_B2B",
+    });
+    const res = await registerPartnerAgreementExecutionEvidence(
+      db,
+      {
+        partnerId: 101,
+        agreementVersionId: 1,
+        signedAt: "2026-03-01T00:00:00Z",
+        signatoryName: "Jan",
+        signatoryRole: "CEO",
+        signatoryEmail: "jan@co.pl",
+        executionMethod: "platform_documentary_electronic",
+        externalPlatform: "Autenti",
+        externalTransactionId: "tx-type",
+        signedPdfSha256: validSha256,
+      },
+      "admin-usr"
+    );
+    assert.equal(res.ok, false);
+    if (!res.ok) {
+      assert.equal(res.code, "INVALID_AGREEMENT_TYPE");
+    }
   });
 });

@@ -1,7 +1,6 @@
 import { z } from "zod";
 import { eq, and, sql, desc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@/lib/schema";
 import {
   partners,
   agreementVersions,
@@ -53,6 +52,9 @@ export type RegisterEvidenceResult =
         | "UNAUTHORIZED_ADMIN"
         | "VALIDATION_ERROR"
         | "INVALID_SIGNED_AT_FUTURE"
+        | "SIGNED_AT_BEFORE_EFFECTIVE_FROM"
+        | "SIGNED_AT_BEFORE_PUBLISHED_AT"
+        | "SIGNED_AT_AFTER_EFFECTIVE_TO"
         | "PARTNER_NOT_FOUND"
         | "AGREEMENT_VERSION_NOT_FOUND"
         | "AGREEMENT_VERSION_NOT_ACTIVE"
@@ -167,6 +169,9 @@ export async function registerPartnerAgreementExecutionEvidence<TSchema extends 
       id: agreementVersions.id,
       agreementType: agreementVersions.agreementType,
       status: agreementVersions.status,
+      effectiveFrom: agreementVersions.effectiveFrom,
+      effectiveTo: agreementVersions.effectiveTo,
+      publishedAt: agreementVersions.publishedAt,
     })
     .from(agreementVersions)
     .where(eq(agreementVersions.id, input.agreementVersionId))
@@ -177,9 +182,8 @@ export async function registerPartnerAgreementExecutionEvidence<TSchema extends 
   }
 
   const version = versionRows[0];
-  const normalizedType = version.agreementType.toLowerCase();
-  if (normalizedType !== "partner_agreement_b2b") {
-    return { ok: false, code: "INVALID_AGREEMENT_TYPE", message: "Agreement version is not PARTNER_AGREEMENT_B2B" };
+  if (version.agreementType !== "partner_agreement_b2b") {
+    return { ok: false, code: "INVALID_AGREEMENT_TYPE", message: "Agreement version must be partner_agreement_b2b" };
   }
 
   if (version.status !== "active") {
@@ -187,6 +191,31 @@ export async function registerPartnerAgreementExecutionEvidence<TSchema extends 
       ok: false,
       code: "AGREEMENT_VERSION_NOT_ACTIVE",
       message: `Agreement version status is '${version.status}', must be 'active' to record execution evidence`,
+    };
+  }
+
+  // Lifecycle validation of signedAt against agreement version dates
+  if (version.effectiveFrom && signedAtDate.getTime() < new Date(version.effectiveFrom).getTime()) {
+    return {
+      ok: false,
+      code: "SIGNED_AT_BEFORE_EFFECTIVE_FROM",
+      message: "signedAt timestamp must be on or after the agreement effectiveFrom date",
+    };
+  }
+
+  if (version.publishedAt && signedAtDate.getTime() < new Date(version.publishedAt).getTime()) {
+    return {
+      ok: false,
+      code: "SIGNED_AT_BEFORE_PUBLISHED_AT",
+      message: "signedAt timestamp must be on or after the agreement publishedAt date",
+    };
+  }
+
+  if (version.effectiveTo && signedAtDate.getTime() >= new Date(version.effectiveTo).getTime()) {
+    return {
+      ok: false,
+      code: "SIGNED_AT_AFTER_EFFECTIVE_TO",
+      message: "signedAt timestamp must be strictly before the agreement effectiveTo date",
     };
   }
 
@@ -221,7 +250,7 @@ export async function registerPartnerAgreementExecutionEvidence<TSchema extends 
       .values({
         partnerId: input.partnerId,
         agreementVersionId: input.agreementVersionId,
-        status: "ACCEPTED",
+        status: "accepted",
         executionMethod: input.executionMethod,
         signedAt: signedAtDate,
         signatoryName: input.signatoryName,
@@ -482,7 +511,7 @@ export async function getActivePartnerAgreementVersion<TSchema extends Record<st
     .where(
       and(
         eq(agreementVersions.status, "active"),
-        sql`(${agreementVersions.agreementType} = 'partner_agreement_b2b' OR ${agreementVersions.agreementType} = 'PARTNER_AGREEMENT_B2B')`
+        eq(agreementVersions.agreementType, "partner_agreement_b2b")
       )
     )
     .limit(1);
@@ -498,4 +527,23 @@ export async function getActivePartnerAgreementVersion<TSchema extends Record<st
     effectiveFrom: row.effectiveFrom?.toISOString() ?? null,
     publishedAt: row.publishedAt?.toISOString() ?? null,
   };
+}
+
+/**
+ * Converts a browser local datetime string (e.g. from <input type="datetime-local"> like "2026-09-05T10:00")
+ * into an exact ISO-8601 UTC string without double-shifting.
+ */
+export function parseLocalDatetimeToUtcIso(localDatetime: string): string | null {
+  if (!localDatetime || typeof localDatetime !== "string") return null;
+  const trimmed = localDatetime.trim();
+  if (!trimmed) return null;
+  // If already has timezone offset or 'Z', parse directly
+  if (/[Z+-]\d{2}(:?\d{2})?$/i.test(trimmed)) {
+    const d = new Date(trimmed);
+    return isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  // For "YYYY-MM-DDTHH:mm" without offset, Date parse treats it as local time in the client
+  const d = new Date(trimmed);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
 }

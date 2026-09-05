@@ -1,6 +1,5 @@
 import { eq } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type * as schema from "@/lib/schema";
 import {
   partners,
   sellerLegalIdentities,
