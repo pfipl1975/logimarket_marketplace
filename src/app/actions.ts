@@ -817,11 +817,54 @@ export async function uploadAdminOfferMedia(
     return { ok: false as const, code: "VALIDATION_ERROR" };
   }
 
+  const { uploadOfferMediaCore, MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
+  type OfferMediaDependencies = Parameters<typeof uploadOfferMediaCore>[3];
+
+  if (file.size === 0) {
+    return { ok: false as const, code: "FILE_EMPTY" };
+  }
+
+  if (file.size > MAX_UPLOAD_SIZE) {
+    return { ok: false as const, code: "FILE_TOO_LARGE" };
+  }
+
   const arrayBuffer = await file.arrayBuffer();
   const buffer = Buffer.from(arrayBuffer);
 
-  const { uploadOfferMediaCore } = await import("@/lib/admin/offer-media-core");
-  const result = await uploadOfferMediaCore(offerId, file.name, buffer);
+  const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+
+  const deps: OfferMediaDependencies = {
+    checkOfferExists: async (id: number) => {
+      const { db } = await import("@/lib/db");
+      const { offers } = await import("@/lib/schema");
+      const { eq } = await import("drizzle-orm");
+      const res = await db.select({ id: offers.id }).from(offers).where(eq(offers.id, id)).limit(1);
+      return res.length > 0;
+    },
+    checkDuplicate: async (id: number, checksum: string) => {
+      const { db } = await import("@/lib/db");
+      const { offerMedia } = await import("@/lib/schema");
+      const { and, eq } = await import("drizzle-orm");
+      const res = await db.select({ id: offerMedia.id }).from(offerMedia).where(and(eq(offerMedia.offerId, id), eq(offerMedia.checksumSha256, checksum))).limit(1);
+      return res.length > 0;
+    },
+    getMediaCount: async (id: number) => {
+      const { db } = await import("@/lib/db");
+      const { offerMedia } = await import("@/lib/schema");
+      const { eq, sql } = await import("drizzle-orm");
+      const res = await db.select({ count: sql<number>`count(*)::int` }).from(offerMedia).where(eq(offerMedia.offerId, id));
+      return res[0]?.count || 0;
+    },
+    insertMedia: async (data: Parameters<OfferMediaDependencies["insertMedia"]>[0]) => {
+      const { db } = await import("@/lib/db");
+      const { offerMedia } = await import("@/lib/schema");
+      const res = await db.insert(offerMedia).values(data).returning({ id: offerMedia.id });
+      return res[0].id;
+    },
+    storage: new SupabaseOfferMediaStorage()
+  };
+
+  const result = await uploadOfferMediaCore(offerId, file.name, buffer, deps);
 
   if (result.ok) {
     revalidatePath("/admin/offers");
