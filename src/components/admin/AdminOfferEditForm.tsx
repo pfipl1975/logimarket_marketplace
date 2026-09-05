@@ -11,17 +11,21 @@ import { Check, AlertTriangle, Info } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
 import type { AdminOfferType } from "@/lib/admin/offer-type";
 import { AdminOfferTypeSelector } from "./AdminOfferTypeSelector";
+import { AdminOfferImageManager } from "./AdminOfferImageManager";
+import type { getAdminOfferMedia } from "@/app/actions";
 
 interface AdminOfferEditFormProps {
   offer: Extract<AdminOfferDetailResult, { ok: true }>["data"];
   locale: Locale;
   dict: Dictionary["adminOfferEdit"];
+  initialMedia: Awaited<ReturnType<typeof getAdminOfferMedia>>;
 }
 
-export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormProps) {
+export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminOfferEditFormProps) {
   const router = useRouter();
 
   const [isPending, setIsPending] = useState(false);
+  const [mediaPending, setMediaPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [success, setSuccess] = useState<"updated" | "unchanged" | null>(null);
@@ -48,7 +52,7 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (isPending) return;
+    if (isPending || mediaPending) return;
 
     setIsPending(true);
     setError(null);
@@ -285,10 +289,10 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
           <section className="space-y-5 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-6">
             <div className="border-b border-border-industrial pb-3">
               <h2 className="text-lg font-semibold text-brand-navy">
-                {dict.sectionImage}
+                {dict.media.legacy}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                {dict.sectionImageHelp}
+                {dict.media.legacyHelp}
               </p>
             </div>
             <div>
@@ -305,6 +309,7 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
               />
             </div>
           </section>
+          <AdminOfferImageManager offerId={offer.id} title={offer.title} initial={initialMedia} dict={dict.media} onBusyChange={setMediaPending} saving={isPending} />
         </div>
 
         <aside>
@@ -366,7 +371,7 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
             <div className="mt-8 flex flex-col gap-3 border-t border-border-industrial pt-6">
               <button
                 type="submit"
-                disabled={isPending}
+                disabled={isPending || mediaPending}
                 className="inline-flex w-full items-center justify-center rounded-industrial bg-brand-navy px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-navy/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending ? dict.actionSaving : dict.actionSave}

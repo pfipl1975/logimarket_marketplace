@@ -20,6 +20,14 @@ function createFakeDeps(overrides?: Partial<OfferMediaDependencies>): OfferMedia
 const VALID_JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
 
 describe("Offer Media Core (MEDIA-02)", () => {
+  test("accepts exactly 10 MiB of signature-validated staged bytes", async () => {
+    const bytes = Buffer.alloc(MAX_UPLOAD_SIZE);
+    VALID_JPEG.copy(bytes);
+    let size = 0;
+    const result = await uploadOfferMediaCore(1, "", bytes, createFakeDeps({ insertMedia: async (data) => { size = data.sizeBytes; return 100; } }));
+    assert.deepEqual(result, { ok: true, mediaId: 100 });
+    assert.equal(size, MAX_UPLOAD_SIZE);
+  });
   test("rejects empty file", async () => {
     const res = await uploadOfferMediaCore(1, "test.jpg", Buffer.alloc(0), createFakeDeps());
     assert.deepEqual(res, { ok: false, code: "FILE_EMPTY" });
