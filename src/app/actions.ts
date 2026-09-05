@@ -800,11 +800,34 @@ export async function getAdminPartnersPage(rawInput: unknown) {
     };
   } catch {
     console.error("Admin partners read query failed.");
-    return {
-      ok: false as const,
-      code: "ADMIN_PARTNERS_UNAVAILABLE",
-    };
+    return { ok: false as const, code: "ADMIN_PARTNERS_UNAVAILABLE" };
   }
+}
+
+export async function uploadAdminOfferMedia(
+  offerId: number,
+  formData: FormData
+) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const file = formData.get("file");
+  if (!file || !(file instanceof File)) {
+    return { ok: false as const, code: "VALIDATION_ERROR" };
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  const { uploadOfferMediaCore } = await import("@/lib/admin/offer-media-core");
+  const result = await uploadOfferMediaCore(offerId, file.name, buffer);
+
+  if (result.ok) {
+    revalidatePath("/admin/offers");
+  }
+
+  return result;
 }
 
 export async function getAdminRfqPage(rawInput: unknown) {

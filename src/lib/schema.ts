@@ -14,6 +14,7 @@ import {
   serial,
   check,
   unique,
+  uniqueIndex,
   foreignKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -67,6 +68,40 @@ export const offers = pgTable("offers", {
   contractModel: varchar("contract_model", { length: 30 }),
 }, () => [
   check("offers_contract_model_check", sql`((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[]))`)
+]);
+
+export type OfferMediaSourceType = "upload" | "remote_import";
+
+export const offerMedia = pgTable("offer_media", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  offerId: bigint("offer_id", { mode: "number" }).notNull(),
+  storageBucket: varchar("storage_bucket", { length: 100 }).notNull(),
+  objectPath: text("object_path").notNull().unique(),
+  sourceType: varchar("source_type", { length: 30 }).notNull().$type<OfferMediaSourceType>(),
+  sourceUrl: text("source_url"),
+  mimeType: varchar("mime_type", { length: 100 }).notNull(),
+  sizeBytes: bigint("size_bytes", { mode: "number" }).notNull(),
+  checksumSha256: varchar("checksum_sha256", { length: 64 }).notNull(),
+  width: integer("width"),
+  height: integer("height"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isPrimary: boolean("is_primary").notNull().default(false),
+  altText: text("alt_text"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  check("offer_media_source_type_check", sql`((source_type)::text = ANY ((ARRAY['upload'::character varying, 'remote_import'::character varying])::text[]))`),
+  check("offer_media_size_bytes_check", sql`size_bytes > 0`),
+  check("offer_media_sort_order_check", sql`sort_order >= 0`),
+  check("offer_media_checksum_format_check", sql`checksum_sha256 ~ '^[0-9a-f]{64}$'`),
+  foreignKey({
+    name: "offer_media_offer_id_fkey",
+    columns: [t.offerId],
+    foreignColumns: [offers.id]
+  }).onDelete("cascade").onUpdate("no action"),
+  index("idx_offer_media_offer_id").on(t.offerId),
+  uniqueIndex("uq_offer_media_primary").on(t.offerId).where(sql`is_primary = true`),
+  uniqueIndex("uq_offer_media_checksum").on(t.offerId, t.checksumSha256),
 ]);
 
 export const clicks = pgTable("clicks", {
@@ -730,6 +765,7 @@ export const controlledOptionValueTranslations = pgTable(
 export type Partner = typeof partners.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Offer = typeof offers.$inferSelect;
+export type OfferMedia = typeof offerMedia.$inferSelect;
 export type SellerLegalIdentity = typeof sellerLegalIdentities.$inferSelect;
 export type SellerTaxIdentifier = typeof sellerTaxIdentifiers.$inferSelect;
 export type SellerRegistryIdentifier = typeof sellerRegistryIdentifiers.$inferSelect;

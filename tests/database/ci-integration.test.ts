@@ -231,7 +231,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0009");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -465,6 +465,50 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `, [soId, offerId]);
       assert.ok(itemRes.rows[0].id);
 
+      // 0010 PROOF: offer_media constraints
+      const mediaRes = await pool.query(`
+        INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+        VALUES ($1, 'b', 'path1', 'upload', 'image/jpeg', 100, '6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72', true) RETURNING id
+      `, [offerId]);
+      assert.ok(mediaRes.rows[0].id);
+
+      // duplicate primary
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+          VALUES ($1, 'b', 'path2', 'upload', 'image/jpeg', 100, '1234567890123456789012345678901234567890123456789012345678901234', true)
+        `, [offerId]),
+        /uq_offer_media_primary/,
+        "Must reject multiple primary images for same offer"
+      );
+
+      // duplicate checksum for same offer
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+          VALUES ($1, 'b', 'path_dup_chk', 'upload', 'image/jpeg', 100, '6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72', false)
+        `, [offerId]),
+        /uq_offer_media_checksum/,
+        "Must reject duplicate checksum for same offer"
+      );
+
+      // size_bytes > 0
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256)
+          VALUES ($1, 'b', 'path3', 'upload', 'image/jpeg', 0, '1234567890123456789012345678901234567890123456789012345678901235')
+        `, [offerId]),
+        /offer_media_size_bytes_check/,
+        "Must reject 0 size bytes"
+      );
+
+      // valid non-primary
+      const mediaRes2 = await pool.query(`
+        INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+        VALUES ($1, 'b', 'path4', 'upload', 'image/jpeg', 100, '1234567890123456789012345678901234567890123456789012345678901235', false) RETURNING id
+      `, [offerId]);
+      assert.ok(mediaRes2.rows[0].id);
+
       // Invalid quantity
       await assert.rejects(
         pool.query(`
@@ -574,7 +618,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 10, "Journal count must be exactly 10");
+      assert.strictEqual(journalRows.length, 11, "Journal count must be exactly 11");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -725,7 +769,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0009Metadata.publicTables,
           post0009Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0009",
+        "EXACT_EXISTING_POST_0010",
       );
       assert.deepStrictEqual(
         post0009Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -762,7 +806,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Post-migration classification must be EXACT_EXISTING_POST_0009
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0009");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -776,7 +820,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 10);
+    assert.strictEqual(journalRows.length, 11);
   });
 
   await t.test(
@@ -942,7 +986,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0009");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -3274,7 +3318,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const post0009 = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(
       classifyRuntimeTarget(post0009.fingerprint, post0009.publicTables, post0009.security).state,
-      "EXACT_EXISTING_POST_0009",
+      "EXACT_EXISTING_POST_0010",
     );
 
     // 1. Verify RLS is enabled on all 3 new tables
