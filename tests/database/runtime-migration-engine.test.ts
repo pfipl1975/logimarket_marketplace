@@ -38,6 +38,8 @@ import {
   PRODUCTION_FINGERPRINT,
   PREVIOUS_PRODUCTION_FINGERPRINT,
   BASELINE_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0004_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0005_PRODUCTION_FINGERPRINT,
 } from "../../scripts/database/runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -55,13 +57,14 @@ const exactJournalEntries = [
   { tag: "fake_tag_0006", when: 1785592500000 },
   { tag: "fake_tag_0007", when: 1785593000000 },
   { tag: "fake_tag_0008", when: 1785593500000 },
+  { tag: "fake_tag_0009", when: 1785594000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const previousJournalEntries = exactJournalEntries.slice(0, 8);
+const previousJournalEntries = exactJournalEntries.slice(0, 9);
 const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const prevFakeReadFn = () => ({
   text: JSON.stringify({ entries: previousJournalEntries }),
@@ -438,7 +441,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0007");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0009");
 });
 
 test("TARGET: PARTIAL_OR_DRIFTED when missing table", () => {
@@ -616,6 +619,74 @@ test("RUNNER_EXACT_TEST: runner completes full flow on EXACT_EXISTING schema", a
     "grant post-check must run after migration"
   );
 });
+
+for (const expectedPreState of [undefined, "MIGRATABLE_POST_0004"]) {
+  test(`RUNNER_PRE_STATE: POST_0004 completes with expected state ${expectedPreState ?? "UNSET"}`, async () => {
+    const env = emptyEnv();
+    if (expectedPreState !== undefined) {
+      env.RUNTIME_MIGRATION_EXPECTED_PRE_STATE = expectedPreState;
+    }
+    const journalRows = exactFakeRead().slice(0, 5).map(({ hash, folderMillis }) => ({
+      hash,
+      created_at: String(folderMillis),
+    }));
+    let currentRouter = runnerRouter("EXACT", FINAL_POST_0004_PRODUCTION_FINGERPRINT, journalRows);
+    const { q, state, factory } = fakeRunnerPool((sql) => currentRouter(sql));
+    let migrateCallCount = 0;
+    const fakeMigrate = async () => {
+      migrateCallCount++;
+      currentRouter = runnerRouter("EXACT");
+    };
+
+    await runMigrations(env, factory, fakeMigrate as never, exactFakeRead as never, exactFakeReadFn, () => Buffer.from("SELECT 1;"));
+
+    assert.strictEqual(migrateCallCount, 1);
+    assert.ok(q.queries.some((sql) => sql.includes("drizzle_runtime")), "journal must be read on match or UNSET");
+    assert.ok(q.queries.some((sql) => sql.includes("aclexplode")), "post-check must complete");
+    assert.ok(state.ended, "pool must be closed");
+  });
+}
+
+for (const { expectedPreState, actualState, fingerprint } of [
+  { expectedPreState: "MIGRATABLE_POST_0004", actualState: "EXACT_EXISTING_POST_0005", fingerprint: FINAL_POST_0005_PRODUCTION_FINGERPRINT },
+  { expectedPreState: "MIGRATABLE_POST_0004", actualState: "EXACT_EXISTING_POST_0009", fingerprint: PRODUCTION_FINGERPRINT },
+  { expectedPreState: "", actualState: "MIGRATABLE_POST_0004", fingerprint: FINAL_POST_0004_PRODUCTION_FINGERPRINT },
+  { expectedPreState: " MIGRATABLE_POST_0004", actualState: "MIGRATABLE_POST_0004", fingerprint: FINAL_POST_0004_PRODUCTION_FINGERPRINT },
+]) {
+  test(`RUNNER_PRE_STATE: rejects ${JSON.stringify(expectedPreState)} vs ${actualState} before journal and migrate`, async () => {
+    const env = {
+      ...emptyEnv(),
+      DATABASE_URL: FAKE_DEV_URL.replace("postgres.devref@", "postgres.devref:synthetic-password@"),
+      RUNTIME_MIGRATION_EXPECTED_PRE_STATE: expectedPreState,
+    };
+    const { q, state, factory } = fakeRunnerPool(runnerRouter("EXACT", fingerprint));
+    let migrateCallCount = 0;
+    let diskReadCount = 0;
+
+    await assert.rejects(
+      () => runMigrations(
+        env,
+        factory,
+        (async () => { migrateCallCount++; }) as never,
+        (() => { diskReadCount++; return exactFakeRead(); }) as never,
+        () => { diskReadCount++; return exactFakeReadFn(); },
+        () => { diskReadCount++; return Buffer.from("SELECT 1;"); },
+      ),
+      (error: Error) => {
+        assert.strictEqual(error.message, `RUNNER: BLOCKED. Expected pre-migration state ${expectedPreState}, got ${actualState}`);
+        assert.ok(!error.message.includes(env.DATABASE_URL));
+        assert.ok(!error.message.includes("synthetic-password"));
+        assert.ok(!error.message.includes(DEV_REF));
+        return true;
+      },
+    );
+
+    assert.strictEqual(migrateCallCount, 0, "migrate must not run on mismatch");
+    assert.strictEqual(diskReadCount, 0, "migration files and temp directory inputs must not be read");
+    assert.ok(!q.queries.some((sql) => sql.includes("drizzle_runtime")), "journal must not be read on mismatch");
+    assert.ok(state.ended, "pool must be closed on mismatch");
+  });
+}
 
 test("RUNNER_PREVIOUS_TEST: runner completes full flow on MIGRATABLE_PREVIOUS schema", async () => {
   let migrateCallCount = 0;
@@ -1052,20 +1123,22 @@ test("BASELINE_UNKNOWN_JOURNAL_TEST", async () => {
   assert.strictEqual(migrateCallCount, 0);
 });
 
-test("RUNNER_DRIFT_TEST: runner throws and never calls migrate on PARTIAL_OR_DRIFTED", async () => {
-  let migrateCallCount = 0;
-  const fakeMigrate = async () => {
-    migrateCallCount++;
-  };
-  const { state, factory } = fakeRunnerPool(runnerRouter("PARTIAL"));
+for (const expectedPreState of [undefined, "MIGRATABLE_POST_0004", "PARTIAL_OR_DRIFTED"]) {
+  test(`RUNNER_DRIFT_TEST: PARTIAL_OR_DRIFTED rejects before expected pre-state ${expectedPreState ?? "UNSET"}`, async () => {
+    let migrateCallCount = 0;
+    const fakeMigrate = async () => {
+      migrateCallCount++;
+    };
+    const { state, factory } = fakeRunnerPool(runnerRouter("PARTIAL"));
 
-  await assert.rejects(
-    async () => runMigrations(emptyEnv(), factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
-    /PARTIAL_OR_DRIFTED/
-  );
-  assert.strictEqual(migrateCallCount, 0, "migrate must NOT be called on drift");
-  assert.ok(state.ended, "pool must be closed even on drift");
-});
+    await assert.rejects(
+      async () => runMigrations({ ...emptyEnv(), RUNTIME_MIGRATION_EXPECTED_PRE_STATE: expectedPreState }, factory as never, fakeMigrate as never, (() => []) as never, (() => ({ text: "{ \"entries\": [] }", parsed: { entries: [] } })) as never, (() => Buffer.from("SELECT 1;")) as never),
+      /RUNNER: schema is PARTIAL_OR_DRIFTED/
+    );
+    assert.strictEqual(migrateCallCount, 0, "migrate must NOT be called on drift");
+    assert.ok(state.ended, "pool must be closed even on drift");
+  });
+}
 
 test("NOT_VALID_RUNNER_ABORTS: runner rejects schema with NOT VALID constraint without calling migrate", async () => {
   let migrateCallCount = 0;
@@ -1567,6 +1640,9 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
   assert.strictEqual(droppedTables.length, EXPECTED_COUNTS.TABLES);
   assert.deepStrictEqual([...droppedTables].sort(), [...EXPECTED_BASELINE_TABLES].sort());
   const indexOf = (tableName: string) => droppedTables.indexOf(tableName);
+  assert.ok(indexOf("partner_agreement_evidence_invalidations") < indexOf("partner_agreement_execution_evidence"));
+  assert.ok(indexOf("partner_agreement_execution_evidence") < indexOf("agreement_versions"));
+  assert.ok(indexOf("partner_agreement_execution_evidence") < indexOf("partners"));
   assert.ok(indexOf("seller_acceptance_decisions") < indexOf("seller_orders"));
   assert.ok(indexOf("seller_order_items") < indexOf("seller_orders"));
   assert.ok(indexOf("seller_order_items") < indexOf("offers"));

@@ -64,6 +64,13 @@
       "when": 1785593500000,
       "tag": "0008_verification_event_function_search_path_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1785594000000,
+      "tag": "0009_partner_agreement_evidence",
+      "breakpoints": true
     }
   ]
 }

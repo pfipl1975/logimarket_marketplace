@@ -62,6 +62,13 @@ export async function runMigrations(
       );
     }
 
+    const expectedPreState = env.RUNTIME_MIGRATION_EXPECTED_PRE_STATE;
+    if (expectedPreState !== undefined && classification.state !== expectedPreState) {
+      throw new Error(
+        `RUNNER: BLOCKED. Expected pre-migration state ${expectedPreState}, got ${classification.state}`
+      );
+    }
+
     let rows: { hash: string; created_at: string | number }[] = [];
     try {
       const res = await pool.query(`SELECT hash, created_at FROM ${RUNTIME_JOURNAL_SCHEMA}.${RUNTIME_JOURNAL_TABLE} ORDER BY created_at ASC`);
@@ -141,7 +148,7 @@ export async function runMigrations(
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
     const expectedPostState = isReconciliation
       ? "EXACT_EXISTING_POST_0007"
-      : "EXACT_EXISTING_POST_0008";
+      : "EXACT_EXISTING_POST_0009";
     if (postClassification.state !== expectedPostState) {
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }

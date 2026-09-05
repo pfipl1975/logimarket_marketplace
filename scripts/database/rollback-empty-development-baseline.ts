@@ -37,6 +37,9 @@ import {
 // ---------------------------------------------------------------------------
 
 const REVERSE_DROP_ORDER: readonly string[] = [
+  "partner_agreement_evidence_invalidations",
+  "partner_agreement_execution_evidence",
+  "agreement_versions",
   "seller_acceptance_decisions",
   "seller_order_items",
   "seller_order_seller_snapshots",
@@ -204,10 +207,10 @@ export async function verifyRollbackPreconditions(
     }
   }
 
-  // 5. Full fingerprint must be the authoritative post-0007 state
-  const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
-  const classification = classifyRuntimeTarget(fingerprint, publicTables);
-  if (classification.state !== "EXACT_EXISTING_POST_0007") {
+  // 5. Full fingerprint must be the authoritative post-0009 state
+  const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(q);
+  const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
+  if (classification.state !== "EXACT_EXISTING_POST_0009") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,

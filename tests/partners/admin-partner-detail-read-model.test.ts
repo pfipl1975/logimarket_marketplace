@@ -3,31 +3,41 @@ import assert from "node:assert/strict";
 import { getAdminPartnerDetailReadModel } from "../../src/lib/admin/partner-detail-read-model-core";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
+import {
+  partners,
+  sellerLegalIdentities,
+  sellerTaxIdentifiers,
+  sellerRegistryIdentifiers,
+  sellerEligibility,
+  agreementVersions,
+  partnerAgreementExecutionEvidence,
+} from "../../src/lib/schema";
+
 // Simplified mock DB
 const createMockDb = (mockData: Record<string, unknown> = {}) => {
-  const chain: unknown = {
+  const chain: Record<string, unknown> = {
     select: () => chain,
     from: (table: unknown) => {
-      (chain as Record<string, unknown>)._currentTable = table;
+      chain._currentTable = table;
       return chain;
     },
+    innerJoin: () => chain,
+    leftJoin: () => chain,
     where: () => chain,
     limit: () => chain,
     orderBy: () => chain,
     then: (resolve: (value: unknown) => void) => {
-      // Return appropriate mock data based on current table
       let result: unknown[] = [];
-      const chainObj = chain as Record<string, unknown>;
-      
-      if (chainObj._queryIndex === undefined) chainObj._queryIndex = 0;
-      const index = (chainObj._queryIndex as number)++;
-      
-      if (index === 0) result = (mockData.partners as unknown[]) || [];
-      else if (index === 1) result = (mockData.legalIdentities as unknown[]) || [];
-      else if (index === 2) result = (mockData.taxIdentifiers as unknown[]) || [];
-      else if (index === 3) result = (mockData.registryIdentifiers as unknown[]) || [];
-      else if (index === 4) result = (mockData.eligibility as unknown[]) || [];
-      
+      const table = chain._currentTable;
+      if (table === partners) result = (mockData.partners as unknown[]) || [];
+      else if (table === sellerLegalIdentities) result = (mockData.legalIdentities as unknown[]) || [];
+      else if (table === sellerTaxIdentifiers) result = (mockData.taxIdentifiers as unknown[]) || [];
+      else if (table === sellerRegistryIdentifiers) result = (mockData.registryIdentifiers as unknown[]) || [];
+      else if (table === sellerEligibility) result = (mockData.eligibility as unknown[]) || [];
+      else if (table === agreementVersions) result = (mockData.agreementVersions as unknown[]) || [];
+      else if (table === partnerAgreementExecutionEvidence) result = (mockData.agreementEvidence as unknown[]) || [];
+      else result = [];
+
       resolve(result);
     }
   };

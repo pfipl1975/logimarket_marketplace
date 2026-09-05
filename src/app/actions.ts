@@ -934,6 +934,46 @@ export async function changeAdminSellerEligibility(rawInput: unknown) {
   }
 }
 
+export async function registerPartnerAgreementEvidenceAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const adminUser = await requireAdmin();
+
+  try {
+    const { registerPartnerAgreementExecutionEvidence } = await import("@/lib/legal/partner-agreement-core");
+    const { db } = await import("@/lib/db");
+
+    const result = await registerPartnerAgreementExecutionEvidence(db, rawInput, adminUser.id);
+    if (result.ok) {
+      revalidatePath("/admin/partners/[id]", "page");
+      revalidatePath("/admin/partnerzy/[id]", "page");
+    }
+    return result;
+  } catch (err) {
+    console.error("registerPartnerAgreementEvidenceAction execution failed:", err);
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+
+export async function invalidatePartnerAgreementEvidenceAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const adminUser = await requireAdmin();
+
+  try {
+    const { invalidatePartnerAgreementExecutionEvidence } = await import("@/lib/legal/partner-agreement-core");
+    const { db } = await import("@/lib/db");
+
+    const result = await invalidatePartnerAgreementExecutionEvidence(db, rawInput, adminUser.id);
+    if (result.ok) {
+      revalidatePath("/admin/partners/[id]", "page");
+      revalidatePath("/admin/partnerzy/[id]", "page");
+    }
+    return result;
+  } catch (err) {
+    console.error("invalidatePartnerAgreementEvidenceAction execution failed:", err);
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+
 import type { AdminOfferDetailResult } from "@/lib/admin/offer-detail-read-model-core";
 
 export async function getAdminOfferDetail(

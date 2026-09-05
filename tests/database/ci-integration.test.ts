@@ -30,6 +30,7 @@ const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
 const M0001_FILE = `${MIGRATIONS_DIR}/0001_rfq_workflow_hardening.sql`;
 const M0002_FILE = `${MIGRATIONS_DIR}/0002_seller_identity_56b1.sql`;
 const M0003_FILE = `${MIGRATIONS_DIR}/0003_prod_legacy_offer_reconciliation.sql`;
+const M0009_FILE = `${MIGRATIONS_DIR}/0009_partner_agreement_evidence.sql`;
 
 test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   if (!process.env.DATABASE_URL) {
@@ -178,7 +179,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0008",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0009",
     async () => {
       await cleanDB();
 
@@ -230,7 +231,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0009");
+
+      // 0009 PROOF: tables present
+      assert.ok(publicTables.includes("agreement_versions"));
+      assert.ok(publicTables.includes("partner_agreement_execution_evidence"));
+      assert.ok(publicTables.includes("partner_agreement_evidence_invalidations"));
 
       // 0004 PROOF
       const sellerColumnNames = new Set(
@@ -568,7 +574,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 9, "Journal count must be exactly 9");
+      assert.strictEqual(journalRows.length, 10, "Journal count must be exactly 10");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -710,26 +716,26 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       assert.strictEqual(replayJournal.rows[0].count, 8);
 
-      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0008 + journal 9 -> search_path hardened
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0009 + journal 10 -> search_path hardened
       await runMigrations(process.env);
-      const post0008Metadata = await fetchLiveSchemaMetadata(pool);
+      const post0009Metadata = await fetchLiveSchemaMetadata(pool);
       assert.strictEqual(
         classifyRuntimeTarget(
-          post0008Metadata.fingerprint,
-          post0008Metadata.publicTables,
-          post0008Metadata.security,
+          post0009Metadata.fingerprint,
+          post0009Metadata.publicTables,
+          post0009Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0008",
+        "EXACT_EXISTING_POST_0009",
       );
       assert.deepStrictEqual(
-        post0008Metadata.security.preventVerificationEventsMutationSearchPath,
+        post0009Metadata.security.preventVerificationEventsMutationSearchPath,
         ['search_path=""'],
         "search_path must be hardened to the canonical empty search_path proconfig",
       );
-      const post0008Journal = await pool.query(
+      const post0009Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0008Journal.rows[0].count, 9);
+      assert.strictEqual(post0009Journal.rows[0].count, 10);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -739,7 +745,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0008", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0009", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -753,10 +759,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0008
+    // Post-migration classification must be EXACT_EXISTING_POST_0009
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0009");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -770,7 +776,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 9);
+    assert.strictEqual(journalRows.length, 10);
   });
 
   await t.test(
@@ -929,14 +935,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0008
+      // Post-migration classification must be EXACT_EXISTING_POST_0009
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0008");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0009");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -950,7 +956,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 9);
+      assert.strictEqual(journalRows.length, 10);
     },
   );
 
@@ -3235,6 +3241,252 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     } finally {
       client.release();
     }
+  });
+
+  await t.test("PATH G: POST-0009 IMMUTABILITY, RLS, AND CONCURRENCY INTEGRATION PROOFS", async () => {
+    await cleanDB();
+    const M0004 = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+    const M0005 = `${MIGRATIONS_DIR}/0005_marketplace_order_56b2a.sql`;
+    const M0006 = `${MIGRATIONS_DIR}/0006_seller_verification_evidence.sql`;
+    const M0007 = `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`;
+    const M0008 = `${MIGRATIONS_DIR}/0008_verification_event_function_search_path_hardening.sql`;
+    const M0009 = M0009_FILE;
+
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004, "utf-8"));
+    await pool.query(fs.readFileSync(M0005, "utf-8"));
+    await pool.query(fs.readFileSync(M0006, "utf-8"));
+    await pool.query(fs.readFileSync(M0007, "utf-8"));
+    await pool.query(fs.readFileSync(M0008, "utf-8"));
+
+    const pre0009 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(pre0009.fingerprint, pre0009.publicTables, pre0009.security).state,
+      "EXACT_EXISTING_POST_0008",
+    );
+
+    // Apply 0009
+    await pool.query(fs.readFileSync(M0009, "utf-8"));
+
+    const post0009 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(post0009.fingerprint, post0009.publicTables, post0009.security).state,
+      "EXACT_EXISTING_POST_0009",
+    );
+
+    // 1. Verify RLS is enabled on all 3 new tables
+    assert.strictEqual(post0009.fingerprint["agreement_versions"].rlsEnabled, true);
+    assert.strictEqual(post0009.fingerprint["partner_agreement_execution_evidence"].rlsEnabled, true);
+    assert.strictEqual(post0009.fingerprint["partner_agreement_evidence_invalidations"].rlsEnabled, true);
+
+    // 2. Verify search_path="" on all 3 new trigger functions
+    const funcsRes = await pool.query(`
+      SELECT proname, proconfig
+      FROM pg_proc
+      WHERE proname IN (
+        'prevent_partner_agreement_execution_evidence_mutation',
+        'prevent_partner_agreement_evidence_invalidations_mutation',
+        'check_partner_agreement_active_external_tx'
+      )
+      ORDER BY proname
+    `);
+    assert.strictEqual(funcsRes.rows.length, 3);
+    for (const row of funcsRes.rows) {
+      assert.deepStrictEqual(row.proconfig, ['search_path=""'], `${row.proname} must have search_path=""`);
+    }
+
+    // 3. Test insert & immutability on partner_agreement_execution_evidence
+    await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (888, 'Partner 888', 'p888@test.com') ON CONFLICT DO NOTHING`);
+
+    // 3a. Single active version DB invariant & mixed-case rejection
+    const vRes = await pool.query(`
+      INSERT INTO agreement_versions (
+        agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at
+      ) VALUES (
+        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active', NOW(), NOW()
+      ) RETURNING id
+    `);
+    const versionId = vRes.rows[0].id;
+    assert.ok(versionId);
+
+    // Assert SINGLE_ACTIVE_VERSION_DB_INVARIANT=PASS
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at
+        ) VALUES (
+          'partner_agreement_b2b', 'v2.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active', NOW(), NOW()
+        )
+      `),
+      (err: any) => err.code === '23505',
+      "SINGLE_ACTIVE_VERSION_DB_INVARIANT=PASS"
+    );
+
+    // Assert MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'PARTNER_AGREEMENT_B2B', 'v_upper', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        )
+      `),
+      (err: any) => err.code === '23514',
+      "MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED (uppercase)"
+    );
+
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'Partner_Agreement_B2b', 'v_mixed', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        )
+      `),
+      (err: any) => err.code === '23514',
+      "MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED (mixed case)"
+    );
+
+    const evRes = await pool.query(`
+      INSERT INTO partner_agreement_execution_evidence (
+        partner_id, agreement_version_id, execution_method,
+        signed_at, signatory_name, signatory_role, signatory_email,
+        external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+      ) VALUES (
+        888, $1, 'platform_documentary_electronic',
+        NOW(), 'Signer Name', 'Director', 'signer@test.com',
+        'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+      ) RETURNING id
+    `, [versionId]);
+    const evidenceId = evRes.rows[0].id;
+    assert.ok(evidenceId);
+
+    // Immutability: UPDATE rejected with 55000
+    await assert.rejects(
+      pool.query(`UPDATE partner_agreement_execution_evidence SET signatory_name = 'Hacked' WHERE id = $1`, [evidenceId]),
+      (err: any) => err.code === '55000' || /UPDATE not allowed/i.test(err.message)
+    );
+
+    // Immutability: DELETE rejected with 55000
+    await assert.rejects(
+      pool.query(`DELETE FROM partner_agreement_execution_evidence WHERE id = $1`, [evidenceId]),
+      (err: any) => err.code === '55000' || /DELETE not allowed/i.test(err.message)
+    );
+
+    // 4. Test duplicate external_transaction_id rejected while active
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO partner_agreement_execution_evidence (
+          partner_id, agreement_version_id, execution_method,
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+        ) VALUES (
+          888, $1, 'platform_documentary_electronic',
+          NOW(), 'Another Signer', 'Officer', 'signer2@test.com',
+          'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+        )
+      `, [versionId]),
+      (err: any) => err.code === '23505' || /Active execution evidence registration already exists/i.test(err.message)
+    );
+
+    // 5. Invalidation
+    const invRes = await pool.query(`
+      INSERT INTO partner_agreement_evidence_invalidations (
+        execution_evidence_id, reason, invalidated_by_admin_user_id
+      ) VALUES (
+        $1, 'Testing invalidation workflow', 'admin_ci'
+      ) RETURNING id
+    `, [evidenceId]);
+    const invalidationId = invRes.rows[0].id;
+    assert.ok(invalidationId);
+
+    // Invalidation immutability: UPDATE rejected with 55000
+    await assert.rejects(
+      pool.query(`UPDATE partner_agreement_evidence_invalidations SET reason = 'Changed' WHERE id = $1`, [invalidationId]),
+      (err: any) => err.code === '55000' || /UPDATE not allowed/i.test(err.message)
+    );
+
+    // Invalidation immutability: DELETE rejected with 55000
+    await assert.rejects(
+      pool.query(`DELETE FROM partner_agreement_evidence_invalidations WHERE id = $1`, [invalidationId]),
+      (err: any) => err.code === '55000' || /DELETE not allowed/i.test(err.message)
+    );
+
+    // 6. After invalidation, the same external transaction CAN be re-registered
+    const reRegRes = await pool.query(`
+      INSERT INTO partner_agreement_execution_evidence (
+        partner_id, agreement_version_id, execution_method,
+        signed_at, signatory_name, signatory_role, signatory_email,
+        external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+      ) VALUES (
+        888, $1, 'platform_documentary_electronic',
+        NOW(), 'Corrected Signer', 'Director', 'signer_fixed@test.com',
+        'docusign', 'tx-ci-001', '2234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+      ) RETURNING id
+    `, [versionId]);
+    assert.ok(reRegRes.rows[0].id);
+
+    // 6b. REAL_TWO_CONNECTION_CONCURRENCY_PROOF:
+    // Two distinct pool clients executing simultaneous inserts for identical (external_platform, external_transaction_id).
+    // Advisory xact lock inside trigger serializes them; exactly 1 succeeds, 1 fails with 23505.
+    const client1 = await pool.connect();
+    const client2 = await pool.connect();
+    try {
+      const concurrentTxId = `tx-race-${Date.now()}`;
+      const insertSql = `
+        INSERT INTO partner_agreement_execution_evidence (
+          partner_id, agreement_version_id, execution_method,
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+        ) VALUES (
+          888, $1, 'platform_documentary_electronic',
+          NOW(), 'Concurrent Signer', 'Officer', 'race@test.com',
+          'autenti_concurrent', $2, '3234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+        ) RETURNING id
+      `;
+
+      const [outcome1, outcome2] = await Promise.allSettled([
+        client1.query(insertSql, [versionId, concurrentTxId]),
+        client2.query(insertSql, [versionId, concurrentTxId]),
+      ]);
+
+      const fulfilled = [outcome1, outcome2].filter((o) => o.status === 'fulfilled');
+      const rejected = [outcome1, outcome2].filter((o) => o.status === 'rejected');
+
+      assert.strictEqual(fulfilled.length, 1, 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Exactly 1 concurrent insert must succeed');
+      assert.strictEqual(rejected.length, 1, 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Exactly 1 concurrent insert must fail');
+
+      const rejectionReason = (rejected[0] as PromiseRejectedResult).reason;
+      assert.strictEqual(rejectionReason.code, '23505', 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Rejection must be PostgreSQL 23505');
+
+      // Invalidate winner and prove re-registration succeeds
+      const winnerId = (fulfilled[0] as PromiseFulfilledResult<any>).value.rows[0].id;
+      await pool.query(`
+        INSERT INTO partner_agreement_evidence_invalidations (
+          execution_evidence_id, reason, invalidated_by_admin_user_id
+        ) VALUES (
+          $1, 'Invalidation to allow re-registration proof', 'admin_ci'
+        )
+      `, [winnerId]);
+
+      const postInvalidationRes = await pool.query(insertSql, [versionId, concurrentTxId]);
+      assert.ok(postInvalidationRes.rows[0].id, 'Re-registration of external transaction succeeded after invalidation');
+    } finally {
+      client1.release();
+      client2.release();
+    }
+
+    // 7. Test security drift fail-closed
+    await pool.query(`ALTER FUNCTION public.prevent_partner_agreement_execution_evidence_mutation() SET search_path = 'public'`);
+    const drift0009 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(drift0009.fingerprint, drift0009.publicTables, drift0009.security).state,
+      "PARTIAL_OR_DRIFTED"
+    );
+    await pool.query(`ALTER FUNCTION public.prevent_partner_agreement_execution_evidence_mutation() SET search_path = ''`);
   });
 
   await pool.end();
