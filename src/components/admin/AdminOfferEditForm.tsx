@@ -9,6 +9,8 @@ import { updateAdminOffer } from "@/app/actions";
 import { Check, AlertTriangle, Info } from "lucide-react";
 
 import type { Dictionary } from "@/lib/i18n/types";
+import type { AdminOfferType } from "@/lib/admin/offer-type";
+import { AdminOfferTypeSelector } from "./AdminOfferTypeSelector";
 
 interface AdminOfferEditFormProps {
   offer: Extract<AdminOfferDetailResult, { ok: true }>["data"];
@@ -23,8 +25,26 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
   const [success, setSuccess] = useState<"updated" | "unchanged" | null>(null);
+  const [adminOfferType, setAdminOfferType] = useState<AdminOfferType | "">(
+    offer.adminOfferType ?? "",
+  );
 
   const backUrl = locale === "pl" ? `/admin/oferty/${offer.id}` : `/${locale}/admin/offers/${offer.id}`;
+
+  const offerTypeLabel = adminOfferType
+    ? {
+        rfq: dict.offerTypeRfq,
+        marketplace: dict.offerTypeMarketplace,
+        external_partner: dict.offerTypeExternal,
+      }[adminOfferType]
+    : dict.createSelectOfferType;
+
+  const publicationStatusLabel =
+    {
+      draft: dict.statusDraft,
+      published: dict.statusPublished,
+      archived: dict.statusArchived,
+    }[offer.publicationStatus] ?? offer.publicationStatus;
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -115,13 +135,22 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-6">
-          <section className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6 space-y-4">
-            <h2 className="text-lg font-medium text-brand-navy border-b border-border-industrial pb-2">{dict.sectionBasic}</h2>
-            
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(18rem,1fr)]">
+        <div className="space-y-6">
+          <section className="space-y-5 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-6">
+            <div className="border-b border-border-industrial pb-3">
+              <h2 className="text-lg font-semibold text-brand-navy">
+                {dict.sectionBasic}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dict.sectionBasicHelp}
+              </p>
+            </div>
+
             <div>
-              <label htmlFor="title" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldTitle}</label>
+              <label htmlFor="title" className="mb-1 block text-sm font-medium text-brand-navy">
+                {dict.fieldTitle}
+              </label>
               <input
                 id="title"
                 name="title"
@@ -134,18 +163,138 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldDescription}</label>
+              <label htmlFor="description" className="mb-1 block text-sm font-medium text-brand-navy">
+                {dict.fieldDescription}
+              </label>
               <textarea
                 id="description"
                 name="description"
                 defaultValue={offer.description || ""}
-                rows={5}
+                rows={7}
                 className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
               />
             </div>
+          </section>
 
+          <section className="space-y-5 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-6">
+            <div className="border-b border-border-industrial pb-3">
+              <h2 className="text-lg font-semibold text-brand-navy">
+                {dict.sectionBusiness}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dict.sectionBusinessHelp}
+              </p>
+            </div>
+
+            {!offer.adminOfferType && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">
+                {dict.errorInvalidCurrentOfferType}
+              </div>
+            )}
+
+            <AdminOfferTypeSelector
+              value={adminOfferType}
+              onChange={setAdminOfferType}
+              dict={dict}
+            />
+
+            <div
+              className={`rounded-industrial border p-4 transition-colors ${
+                adminOfferType === "marketplace"
+                  ? "border-brand-teal/50 bg-teal-50/50"
+                  : "border-border-industrial bg-brand-light-gray/20"
+              }`}
+            >
+              <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
+                <div>
+                  <label htmlFor="priceBrutto" className="mb-1 block text-sm font-medium text-brand-navy">
+                    {dict.fieldPrice}
+                  </label>
+                  <input
+                    id="priceBrutto"
+                    name="priceBrutto"
+                    type="text"
+                    inputMode="decimal"
+                    placeholder="149.99"
+                    defaultValue={offer.priceBrutto || ""}
+                    aria-describedby="priceBruttoHelp"
+                    className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
+                  />
+                </div>
+
+                <div className="md:pt-7">
+                  <label htmlFor="priceOnRequest" className="flex cursor-pointer items-center gap-2 text-sm font-medium text-brand-navy">
+                    <input
+                      id="priceOnRequest"
+                      type="checkbox"
+                      name="priceOnRequest"
+                      defaultChecked={offer.priceOnRequest}
+                      className="rounded border-input text-brand-teal focus:ring-brand-teal"
+                    />
+                    {dict.fieldPriceOnRequest}
+                  </label>
+                </div>
+              </div>
+              <p id="priceBruttoHelp" className="mt-3 text-xs leading-5 text-muted-foreground">
+                {adminOfferType === "marketplace"
+                  ? dict.marketplacePriceHelp
+                  : dict.optionalPriceHelp}
+              </p>
+            </div>
+
+            <div
+              className={`rounded-industrial border p-4 transition-colors ${
+                adminOfferType === "external_partner"
+                  ? "border-brand-teal/50 bg-teal-50/50"
+                  : "border-border-industrial bg-brand-light-gray/20"
+              }`}
+            >
+              <label htmlFor="outboundUrl" className="mb-1 block text-sm font-medium text-brand-navy">
+                {dict.fieldOutboundUrl}
+              </label>
+              <input
+                id="outboundUrl"
+                name="outboundUrl"
+                type="text"
+                defaultValue={offer.outboundUrl || ""}
+                placeholder="https://"
+                aria-describedby="outboundUrlHelp"
+                className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
+              />
+              <p id="outboundUrlHelp" className="mt-3 text-xs leading-5 text-muted-foreground">
+                {adminOfferType === "external_partner"
+                  ? dict.externalUrlHelp
+                  : adminOfferType === "rfq"
+                    ? dict.rfqOutboundHelp
+                    : dict.optionalOutboundHelp}
+              </p>
+            </div>
+
+            <label htmlFor="isFeatured" className="flex cursor-pointer items-center gap-2 text-sm font-medium text-brand-navy">
+              <input
+                id="isFeatured"
+                type="checkbox"
+                name="isFeatured"
+                defaultChecked={offer.isFeatured}
+                className="rounded border-input text-brand-teal focus:ring-brand-teal"
+              />
+              {dict.fieldIsFeatured}
+            </label>
+          </section>
+
+          <section className="space-y-5 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-6">
+            <div className="border-b border-border-industrial pb-3">
+              <h2 className="text-lg font-semibold text-brand-navy">
+                {dict.sectionImage}
+              </h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dict.sectionImageHelp}
+              </p>
+            </div>
             <div>
-              <label htmlFor="imageUrl" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldImageUrl}</label>
+              <label htmlFor="imageUrl" className="mb-1 block text-sm font-medium text-brand-navy">
+                {dict.fieldImageUrl}
+              </label>
               <input
                 id="imageUrl"
                 name="imageUrl"
@@ -156,151 +305,82 @@ export function AdminOfferEditForm({ offer, locale, dict }: AdminOfferEditFormPr
               />
             </div>
           </section>
-
-          <section className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6 space-y-4">
-            <h2 className="text-lg font-medium text-brand-navy border-b border-border-industrial pb-2">{dict.sectionBusiness}</h2>
-            
-            <div className="grid grid-cols-1 gap-4">
-              <div>
-                <label htmlFor="adminOfferType" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldOfferType}</label>
-                {offer.adminOfferType ? (
-                  <select
-                    id="adminOfferType"
-                    name="adminOfferType"
-                    defaultValue={offer.adminOfferType}
-                    className="w-full max-w-xs rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
-                  >
-                    <option value="rfq">{dict.offerTypeRfq}</option>
-                    <option value="marketplace">{dict.offerTypeMarketplace}</option>
-                    <option value="external_partner">{dict.offerTypeExternal}</option>
-                  </select>
-                ) : (
-                  <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                    <p className="text-sm font-medium">{dict.errorInvalidCurrentOfferType}</p>
-                    <div className="mt-3">
-                      <select
-                        id="adminOfferType"
-                        name="adminOfferType"
-                        required
-                        className="w-full max-w-xs rounded-md border border-red-300 bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-red-500"
-                      >
-                        <option value="">{dict.createSelectOfferType}</option>
-                        <option value="rfq">{dict.offerTypeRfq}</option>
-                        <option value="marketplace">{dict.offerTypeMarketplace}</option>
-                        <option value="external_partner">{dict.offerTypeExternal}</option>
-                      </select>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
-              <div>
-                <label htmlFor="priceBrutto" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldPrice}</label>
-                <input
-                  id="priceBrutto"
-                  name="priceBrutto"
-                  type="text"
-                  placeholder="149.99"
-                  defaultValue={offer.priceBrutto || ""}
-                  className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
-                />
-              </div>
-
-              <div className="pt-7">
-                <label className="flex items-center gap-2 text-sm font-medium text-brand-navy cursor-pointer">
-                  <input
-                    type="checkbox"
-                    name="priceOnRequest"
-                    defaultChecked={offer.priceOnRequest}
-                    className="rounded border-input text-brand-teal focus:ring-brand-teal"
-                  />
-                  {dict.fieldPriceOnRequest}
-                </label>
-              </div>
-            </div>
-
-            <div>
-              <label htmlFor="outboundUrl" className="block text-sm font-medium text-brand-navy mb-1">{dict.fieldOutboundUrl}</label>
-              <input
-                id="outboundUrl"
-                name="outboundUrl"
-                type="text"
-                defaultValue={offer.outboundUrl || ""}
-                placeholder="https://"
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
-              />
-            </div>
-            
-            <div className="pt-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-brand-navy cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="isFeatured"
-                  defaultChecked={offer.isFeatured}
-                  className="rounded border-input text-brand-teal focus:ring-brand-teal"
-                />
-                {dict.fieldIsFeatured}
-              </label>
-            </div>
-          </section>
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-brand-light-gray/50 rounded-industrial border border-border-industrial p-6 sticky top-6">
-            <h3 className="font-medium text-brand-navy flex items-center gap-2 mb-4">
+        <aside>
+          <div className="sticky top-6 rounded-industrial border border-border-industrial bg-brand-light-gray/50 p-5 sm:p-6">
+            <h3 className="mb-5 flex items-center gap-2 font-semibold text-brand-navy">
               <Info className="h-4 w-4 text-brand-teal" />
               {dict.contextTitle}
             </h3>
-            
-            <div className="space-y-4 text-sm">
-              <div>
-                <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider mb-1">{dict.contextStatus}</p>
-                <p className="font-medium text-brand-navy">{offer.publicationStatus}</p>
-              </div>
-              
-              <div>
-                <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider mb-1">{dict.contextIsActive}</p>
-                <p className="font-medium text-brand-navy">{offer.isActive ? dict.booleanYes : dict.booleanNo}</p>
-              </div>
 
+            <dl className="space-y-4 text-sm">
               <div>
-                <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider mb-1">{dict.contextPartner}</p>
-                <p className="font-medium text-brand-navy">{offer.partnerName}</p>
+                <dt className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {dict.contextStatus}
+                </dt>
+                <dd className="font-medium text-brand-navy">{publicationStatusLabel}</dd>
               </div>
+              <div>
+                <dt className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {dict.contextPartner}
+                </dt>
+                <dd className="font-medium text-brand-navy">{offer.partnerName}</dd>
+              </div>
+              <div>
+                <dt className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {dict.contextCategory}
+                </dt>
+                <dd className="font-medium text-brand-navy">{offer.categoryName}</dd>
+              </div>
+              <div>
+                <dt className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {dict.contextOfferType}
+                </dt>
+                <dd className="font-medium text-brand-navy">{offerTypeLabel}</dd>
+              </div>
+              <div>
+                <dt className="mb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {dict.contextIsActive}
+                </dt>
+                <dd className="font-medium text-brand-navy">
+                  {offer.isActive ? dict.booleanYes : dict.booleanNo}
+                </dd>
+              </div>
+            </dl>
 
-              <div>
-                <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider mb-1">{dict.contextCategory}</p>
-                <p className="font-medium text-brand-navy">{offer.categoryName}</p>
-              </div>
-              
-              <div>
-                <p className="text-muted-foreground uppercase text-[10px] font-bold tracking-wider mb-1">{dict.contextContract}</p>
-                <p className="font-mono bg-white px-1.5 py-0.5 rounded text-xs text-brand-navy border border-border-industrial inline-block">
+            <details className="mt-5 border-t border-border-industrial pt-4 text-xs text-muted-foreground">
+              <summary className="cursor-pointer font-medium text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal">
+                {dict.contextTechnicalDetails}
+              </summary>
+              <div className="mt-3">
+                <p className="mb-1 text-[10px] font-bold uppercase tracking-wider">
+                  {dict.contextContract}
+                </p>
+                <p className="inline-block rounded border border-border-industrial bg-white px-1.5 py-0.5 font-mono text-brand-navy">
                   {offer.contractModel || "-"}
                 </p>
               </div>
-            </div>
+            </details>
 
-            <div className="mt-8 pt-6 border-t border-border-industrial flex flex-col gap-3">
+            <div className="mt-8 flex flex-col gap-3 border-t border-border-industrial pt-6">
               <button
                 type="submit"
                 disabled={isPending}
-                className="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-industrial bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex w-full items-center justify-center rounded-industrial bg-brand-navy px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-brand-navy/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isPending ? dict.actionSaving : dict.actionSave}
               </button>
-              
+
               <Link
                 href={backUrl}
-                className="w-full inline-flex items-center justify-center px-4 py-2.5 text-sm font-medium rounded-industrial bg-white border border-border-industrial text-brand-navy hover:bg-brand-light-gray transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+                className="inline-flex w-full items-center justify-center rounded-industrial border border-border-industrial bg-white px-4 py-2.5 text-sm font-medium text-brand-navy transition-colors hover:bg-brand-light-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
               >
                 {dict.actionCancel}
               </Link>
             </div>
           </div>
-        </div>
+        </aside>
       </div>
     </form>
   );

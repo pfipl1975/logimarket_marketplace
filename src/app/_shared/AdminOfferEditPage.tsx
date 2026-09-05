@@ -63,7 +63,13 @@ export async function AdminOfferEditPage({
     >) || {};
 
   return (
-    <div className="space-y-6 pb-24">
+    <div className="mx-auto max-w-7xl space-y-6 pb-24">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold text-brand-navy">{dict.title}</h1>
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          {dict.description}
+        </p>
+      </div>
       <AdminOfferEditForm
         key={offer.updatedAt ?? "never-updated"}
         offer={offer}

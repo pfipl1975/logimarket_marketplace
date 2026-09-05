@@ -38,8 +38,13 @@ export async function AdminOfferCreatePage({ locale }: AdminOfferCreatePageProps
   };
 
   return (
-    <div className="max-w-4xl mx-auto pb-16">
-      <h1 className="text-2xl font-bold text-brand-navy mb-6">{dict.createTitle}</h1>
+    <div className="mx-auto max-w-5xl pb-16">
+      <div className="mb-6 space-y-2">
+        <h1 className="text-2xl font-bold text-brand-navy">{dict.createTitle}</h1>
+        <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
+          {dict.createDescription}
+        </p>
+      </div>
       <AdminOfferCreateForm options={mappedOptions} locale={locale} dict={dict} />
     </div>
   );
