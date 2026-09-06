@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAdminOfferDetail } from "@/app/actions";
+import { getAdminOfferDetail, getAdminOfferMedia } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { ArrowLeft, Box, Info, Settings, FileText, List, HardDrive, Eye } from "lucide-react";
 import { AdminOfferLifecycleAction } from "@/components/admin/AdminOfferLifecycleAction";
+import { AdminOfferDetailMediaGallery } from "@/components/admin/AdminOfferDetailMediaGallery";
 import { evaluateOfferPublishEligibility } from "@/lib/admin/offer-publication-core";
 
 interface AdminOfferDetailPageProps {
@@ -57,6 +58,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
   }
 
   const offer = result.data;
+  const mediaResult = await getAdminOfferMedia(offer.id);
   const backUrl = locale === "pl" ? "/admin/oferty" : `/${locale}/admin/offers`;
   const partnerUrl = locale === "pl"
     ? `/admin/partnerzy/${offer.partnerId}`
@@ -346,7 +348,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
           </div>
           <div className="p-6 space-y-6">
             <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldImageUrl}</p>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldLegacyImageUrl}</p>
               {offer.imageUrl ? (
                 <div className="mt-1 text-sm text-brand-navy bg-muted px-3 py-2 rounded-md font-mono break-all">
                   {offer.imageUrl}
@@ -368,7 +370,14 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
           </div>
         </section>
 
-        {/* SECTION 6 — Relational attributes */}
+        {/* SECTION 6 — Canonical Media Gallery */}
+        <AdminOfferDetailMediaGallery
+          mediaResult={mediaResult}
+          offerTitle={offer.title}
+          dict={dict}
+        />
+
+        {/* SECTION 7 — Relational attributes */}
         <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
           <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center gap-2">
             <List className="h-5 w-5 text-brand-teal" />
@@ -421,7 +430,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
           )}
         </section>
 
-        {/* SECTION 7 — Legacy technicalAttributes */}
+        {/* SECTION 8 — Legacy technicalAttributes */}
         <section className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
           <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center gap-2">
             <HardDrive className="h-5 w-5 text-brand-teal" />
