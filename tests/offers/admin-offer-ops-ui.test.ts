@@ -36,11 +36,16 @@ test("EDIT UX: operational sections, conditional guidance, and summary stay in o
   const source = readProjectFile("src/components/admin/AdminOfferEditForm.tsx");
   const contentIndex = source.indexOf("dict.sectionBasic");
   const commercialIndex = source.indexOf("dict.sectionBusiness");
-  const imageIndex = source.indexOf("dict.sectionImage");
+  const imageIndex = source.indexOf("dict.media.legacy");
+  const galleryIndex = source.indexOf("<AdminOfferImageManager");
 
   assert.ok(contentIndex > -1);
   assert.ok(commercialIndex > contentIndex);
   assert.ok(imageIndex > commercialIndex);
+  assert.ok(galleryIndex > imageIndex, "Canonical gallery follows the preserved legacy image field");
+  const gallery = readProjectFile("src/components/admin/AdminOfferImageManager.tsx");
+  assert.ok(!gallery.includes("<form"), "Media controls must not introduce a nested form");
+  assert.ok(gallery.includes('type="button"'));
   assert.ok(source.includes('adminOfferType === "marketplace"'));
   assert.ok(source.includes('adminOfferType === "external_partner"'));
   assert.ok(source.includes('adminOfferType === "rfq"'));

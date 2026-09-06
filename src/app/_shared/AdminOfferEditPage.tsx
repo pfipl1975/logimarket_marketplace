@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import {
   getAdminOfferDetail,
   getAdminOfferAttributesEdit,
+  getAdminOfferMedia,
 } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
@@ -56,6 +57,7 @@ export async function AdminOfferEditPage({
 
   const attrsRes = await getAdminOfferAttributesEdit(offer.id, locale);
   const attrsModel = attrsRes.ok ? attrsRes : null;
+  const media = await getAdminOfferMedia(offer.id);
   const attrDict =
     ((dict as Record<string, unknown>).technicalAttributesForm as Record<
       string,
@@ -75,6 +77,7 @@ export async function AdminOfferEditPage({
         offer={offer}
         locale={locale}
         dict={dict}
+        initialMedia={media}
       />
 
       {attrsModel && attrsModel.attributes.length > 0 && (

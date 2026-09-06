@@ -17,6 +17,7 @@ export interface OfferMediaDependencies {
     storageBucket: string;
     objectPath: string;
     sourceType: "upload" | "remote_import";
+    sourceUrl?: string;
     mimeType: string;
     sizeBytes: number;
     checksumSha256: string;
@@ -41,7 +42,8 @@ export async function uploadOfferMediaCore(
   offerId: number,
   fileName: string,
   buffer: Buffer,
-  deps: OfferMediaDependencies
+  deps: OfferMediaDependencies,
+  source?: { sourceType: "remote_import"; sourceUrl: string }
 ): Promise<UploadOfferMediaResult> {
   if (buffer.length === 0) {
     return { ok: false, code: "FILE_EMPTY" };
@@ -77,7 +79,6 @@ export async function uploadOfferMediaCore(
   const uploadResult = await deps.storage.put(MEDIA_BUCKET, objectPath, buffer, validMime);
 
   if (!uploadResult.ok) {
-    console.error(`[MEDIA-02] Storage upload failed for offerId ${offerId}: stage=STORAGE`, uploadResult.error);
     return { ok: false, code: "STORAGE_ERROR" };
   }
 
@@ -86,7 +87,8 @@ export async function uploadOfferMediaCore(
       offerId,
       storageBucket: MEDIA_BUCKET,
       objectPath,
-      sourceType: "upload",
+      sourceType: source?.sourceType ?? "upload",
+      ...(source ? { sourceUrl: source.sourceUrl } : {}),
       mimeType: validMime,
       sizeBytes: buffer.length,
       checksumSha256: checksum,
@@ -95,12 +97,10 @@ export async function uploadOfferMediaCore(
     });
 
     return { ok: true, mediaId };
-  } catch (error) {
-    console.error(`[MEDIA-02] DB persistence failed for offerId ${offerId}: stage=DB_PERSISTENCE`, error);
+  } catch {
 
     const delResult = await deps.storage.delete(MEDIA_BUCKET, objectPath);
     if (!delResult.ok) {
-      console.error(`[MEDIA-02] Compensating delete failed for offerId ${offerId}, objectPath ${objectPath}: stage=CLEANUP_FAILURE. ERROR:`, delResult.error);
       return { ok: false, code: "DB_ERROR_CLEANUP_FAILED" };
     }
 

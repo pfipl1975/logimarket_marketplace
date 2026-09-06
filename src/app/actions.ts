@@ -804,6 +804,11 @@ export async function getAdminPartnersPage(rawInput: unknown) {
   }
 }
 
+function revalidateAdminMediaPaths() {
+  revalidatePath("/admin/oferty/[id]/edytuj", "page");
+  revalidatePath("/[locale]/admin/offers/[id]/edit", "page");
+}
+
 export async function uploadAdminOfferMedia(
   offerId: number,
   formData: FormData
@@ -817,59 +822,127 @@ export async function uploadAdminOfferMedia(
     return { ok: false as const, code: "VALIDATION_ERROR" };
   }
 
-  const { uploadOfferMediaCore, MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
-  type OfferMediaDependencies = Parameters<typeof uploadOfferMediaCore>[3];
+  const { MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
+  if (!file.size) return { ok: false as const, code: "FILE_EMPTY" };
+  if (file.size > MAX_UPLOAD_SIZE) return { ok: false as const, code: "FILE_TOO_LARGE" };
+  const { persistOfferImage } = await import("@/lib/admin/offer-media-service");
+  const result = await persistOfferImage(offerId, Buffer.from(await file.arrayBuffer()));
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
 
-  if (file.size === 0) {
-    return { ok: false as const, code: "FILE_EMPTY" };
-  }
+export async function getAdminOfferMedia(offerId: number) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  try {
+    const { readOfferMedia } = await import("@/lib/admin/offer-media-service");
+    return { ok: true as const, media: await readOfferMedia(offerId) };
+  } catch { return { ok: false as const, code: "DB_ERROR" }; }
+}
 
-  if (file.size > MAX_UPLOAD_SIZE) {
-    return { ok: false as const, code: "FILE_TOO_LARGE" };
-  }
+export async function prepareAdminOfferMediaUpload(offerId: number, size: number, mime: string) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  const { MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
+  if (!Number.isSafeInteger(size) || size < 1) return { ok: false as const, code: "FILE_EMPTY" };
+  if (size > MAX_UPLOAD_SIZE) return { ok: false as const, code: "FILE_TOO_LARGE" };
+  if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(mime)) return { ok: false as const, code: "INVALID_MIME_TYPE" };
+  try {
+    const { assertMediaOffer } = await import("@/lib/admin/offer-media-service");
+    await assertMediaOffer(offerId);
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const { createStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { path, receipt } = createStagingReceipt(offerId, actor.id, key);
+      const uploadData = await new SupabaseOfferMediaStorage().createSignedUpload(path);
+      return { ok: true as const, receipt, signedUrl: uploadData.signedUrl, path: uploadData.path, token: uploadData.token };
+  } catch { return { ok: false as const, code: "STORAGE_ERROR" }; }
+}
 
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+export async function finalizeAdminOfferMediaUpload(offerId: number, receipt: string) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  try {
+    const { verifyStagingReceipt, STAGING_BUCKET } = await import("@/lib/storage/staging-receipt");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const path = verifyStagingReceipt(receipt, offerId, actor.id, key);
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { persistOfferImage } = await import("@/lib/admin/offer-media-service");
+    const { finalizeStagedImage } = await import("@/lib/admin/offer-media-staging-core");
+    const storage = new SupabaseOfferMediaStorage();
+    const result = await finalizeStagedImage(path, {
+      download: (p) => storage.download(STAGING_BUCKET, p),
+      persist: (bytes) => persistOfferImage(offerId, bytes),
+      remove: (p) => storage.delete(STAGING_BUCKET, p),
+    });
+    revalidateAdminMediaPaths();
+    return result;
+  } catch { return { ok: false as const, code: "STAGING_INVALID" }; }
+}
 
-  const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+export async function cancelAdminOfferMediaUpload(offerId: number, receipt: string) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  try {
+    const { verifyStagingReceipt, STAGING_BUCKET } = await import("@/lib/storage/staging-receipt");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const path = verifyStagingReceipt(receipt, offerId, actor.id, key, Date.now(), true);
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    if (!(await new SupabaseOfferMediaStorage().delete(STAGING_BUCKET, path)).ok) return { ok: false as const, code: "STAGING_CLEANUP_FAILED" };
+    return { ok: true as const };
+  } catch { return { ok: false as const, code: "STAGING_CLEANUP_FAILED" }; }
+}
 
-  const deps: OfferMediaDependencies = {
-    checkOfferExists: async (id: number) => {
-      const { db } = await import("@/lib/db");
-      const { offers } = await import("@/lib/schema");
-      const { eq } = await import("drizzle-orm");
-      const res = await db.select({ id: offers.id }).from(offers).where(eq(offers.id, id)).limit(1);
-      return res.length > 0;
-    },
-    checkDuplicate: async (id: number, checksum: string) => {
-      const { db } = await import("@/lib/db");
-      const { offerMedia } = await import("@/lib/schema");
-      const { and, eq } = await import("drizzle-orm");
-      const res = await db.select({ id: offerMedia.id }).from(offerMedia).where(and(eq(offerMedia.offerId, id), eq(offerMedia.checksumSha256, checksum))).limit(1);
-      return res.length > 0;
-    },
-    getMediaCount: async (id: number) => {
-      const { db } = await import("@/lib/db");
-      const { offerMedia } = await import("@/lib/schema");
-      const { eq, sql } = await import("drizzle-orm");
-      const res = await db.select({ count: sql<number>`count(*)::int` }).from(offerMedia).where(eq(offerMedia.offerId, id));
-      return res[0]?.count || 0;
-    },
-    insertMedia: async (data: Parameters<OfferMediaDependencies["insertMedia"]>[0]) => {
-      const { db } = await import("@/lib/db");
-      const { offerMedia } = await import("@/lib/schema");
-      const res = await db.insert(offerMedia).values(data).returning({ id: offerMedia.id });
-      return res[0].id;
-    },
-    storage: new SupabaseOfferMediaStorage()
-  };
+export async function importAdminOfferMedia(offerId: number, sourceUrl: string) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { fetchRemoteImage, RemoteImageError } = await import("@/lib/storage/remote-image");
+  try {
+    const { assertMediaOffer, persistOfferImage } = await import("@/lib/admin/offer-media-service");
+    await assertMediaOffer(offerId);
+    const bytes = await fetchRemoteImage(sourceUrl);
+    const result = await persistOfferImage(offerId, bytes, { sourceType: "remote_import", sourceUrl });
+    if (result.ok) revalidateAdminMediaPaths();
+    return result;
+  } catch (error) { return { ok: false as const, code: error instanceof RemoteImageError ? error.code : "DB_ERROR" }; }
+}
 
-  const result = await uploadOfferMediaCore(offerId, file.name, buffer, deps);
+export async function setAdminOfferPrimaryMedia(offerId: number, mediaId: number) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
+  const result = await changeOfferMedia(offerId, mediaId, "primary");
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
 
-  if (result.ok) {
-    revalidatePath("/admin/offers");
-  }
+export async function moveAdminOfferMedia(offerId: number, mediaId: number, direction: "previous" | "next") {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  if (direction !== "previous" && direction !== "next") return { ok: false as const, code: "VALIDATION_ERROR" };
+  const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
+  const result = await changeOfferMedia(offerId, mediaId, direction);
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
 
+export async function deleteAdminOfferMedia(offerId: number, mediaId: number) {
+  "use server";
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
+  const result = await changeOfferMedia(offerId, mediaId, "delete");
+  if (result.ok) revalidateAdminMediaPaths();
   return result;
 }
 
