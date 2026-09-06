@@ -7,6 +7,8 @@ import {
   cancelAdminOfferMediaUpload, importAdminOfferMedia, setAdminOfferPrimaryMedia,
   moveAdminOfferMedia, deleteAdminOfferMedia,
 } from "@/app/actions";
+import { createClient } from "@supabase/supabase-js";
+import { getSupabasePublicConfig } from "@/lib/supabase/env";
 import type { Dictionary } from "@/lib/i18n/types";
 
 type MediaResult = Awaited<ReturnType<typeof getAdminOfferMedia>>;
@@ -57,11 +59,16 @@ export function AdminOfferImageManager({ offerId, title, initial, dict, onBusyCh
     let finalized = false;
     let result: Result;
     try {
-      const response = await fetch(prepared.signedUrl, {
-        method: "PUT", body: file, credentials: "omit", redirect: "error",
-        headers: { "Content-Type": file.type }, signal: AbortSignal.timeout(120_000),
-      });
-      if (!response.ok) throw new Error();
+      const config = getSupabasePublicConfig();
+      if (!config || !prepared.path || !prepared.token) throw new Error();
+      const client = createClient(config.url, config.publishableKey);
+      const { error } = await client.storage.from("offer-media-staging").uploadToSignedUrl(
+        prepared.path,
+        prepared.token,
+        file,
+        { contentType: file.type }
+      );
+      if (error) throw new Error();
       result = await finalizeAdminOfferMediaUpload(offerId, prepared.receipt);
       finalized = result.ok || result.code !== "STAGING_INVALID";
       if (result.ok && fileInput.current) fileInput.current.value = "";

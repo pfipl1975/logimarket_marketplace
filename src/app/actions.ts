@@ -857,8 +857,8 @@ export async function prepareAdminOfferMediaUpload(offerId: number, size: number
     const { createStagingReceipt } = await import("@/lib/storage/staging-receipt");
     const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
     const { path, receipt } = createStagingReceipt(offerId, actor.id, key);
-    const signedUrl = await new SupabaseOfferMediaStorage().createSignedUpload(path);
-    return { ok: true as const, receipt, signedUrl };
+      const uploadData = await new SupabaseOfferMediaStorage().createSignedUpload(path);
+      return { ok: true as const, receipt, signedUrl: uploadData.signedUrl, path: uploadData.path, token: uploadData.token };
   } catch { return { ok: false as const, code: "STORAGE_ERROR" }; }
 }
 

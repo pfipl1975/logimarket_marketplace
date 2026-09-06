@@ -12,7 +12,7 @@ export class SupabaseOfferMediaStorage implements OfferMediaStorage {
   async createSignedUpload(path: string) {
     const { data, error } = await this.getClient().storage.from("offer-media-staging").createSignedUploadUrl(path, { upsert: false });
     if (error || !data) throw new Error("STORAGE_ERROR");
-    return data.signedUrl;
+    return data;
   }
 
   async download(bucket: string, path: string): Promise<Buffer> {
