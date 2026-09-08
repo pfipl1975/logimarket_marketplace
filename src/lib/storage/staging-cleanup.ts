@@ -1,8 +1,7 @@
-
 export type StagingObjectClassification = "eligible" | "too_fresh" | "malformed";
 
 export interface StagingObject {
-  path: string; // should be something like "offers/123/uuid" or "uuid" if prefixed. Let us assume it is the full path or relative path from the listing.
+  path: string;
   created_at: string;
 }
 
@@ -15,38 +14,49 @@ export interface CleanupPlan {
   newestEligibleTimestamp?: string;
 }
 
-export const STAGING_ORPHAN_MIN_AGE_MS = 24 * 60 * 60 * 1000;
+export const STAGING_ORPHAN_MIN_AGE_MS = 24 * 60 * 60 * 1000; // 24h
+export const MAX_STAGING_CLEANUP_OBJECTS_PER_RUN = 1000;
 
 export function classifyStagingObject(
-  obj: StagingObject, 
-  nowMs: number, 
+  obj: StagingObject,
+  nowMs: number,
   minAgeMs: number = STAGING_ORPHAN_MIN_AGE_MS
 ): StagingObjectClassification {
   const parts = obj.path.split("/");
-  // Depending on how we list, it might be "offers/123/uuid"
-  if (parts.length !== 3 || parts[0] !== "offers" || !/^\d+$/.test(parts[1]) || !/^[0-9a-f-]{36}$/i.test(parts[2])) {
-    return "malformed";
-  }
+
+  // Strict path validation: offers/<positive integer offerId>/<UUID>
+  if (parts.length !== 3) return "malformed";
+  if (parts[0] !== "offers") return "malformed";
+
+  const offerId = Number(parts[1]);
+  if (!Number.isInteger(offerId) || offerId <= 0) return "malformed";
+  if (!/^[1-9]\d*$/.test(parts[1])) return "malformed";
+
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  if (!uuidRegex.test(parts[2])) return "malformed";
 
   const createdAt = new Date(obj.created_at).getTime();
-  if (isNaN(createdAt)) {
-    return "malformed";
-  }
+  if (isNaN(createdAt)) return "malformed";
 
   const age = nowMs - createdAt;
-  if (age >= minAgeMs) {
-    return "eligible";
-  }
+  if (age >= minAgeMs) return "eligible";
 
   return "too_fresh";
 }
 
 export function planStagingCleanup(
-  objects: StagingObject[], 
-  nowMs: number, 
+  objects: StagingObject[],
+  nowMs: number,
   maxObjects: number,
   minAgeMs: number = STAGING_ORPHAN_MIN_AGE_MS
 ): CleanupPlan {
+  let sofdMaxObjects = maxObjects;
+  if (!sofdMaxObjects || sofdMaxObjects <= 0 || isNaN(sofdMaxObjects)) {
+    sofdMaxObjects = 0;
+  }
+
+  const actualMax = Math.min(sofdMaxObjects, MAX_STAGING_CLEANUP_OBJECTS_PER_RUN);
+
   let tooFresh = 0;
   const malformed: string[] = [];
   const eligibleObjects: StagingObject[] = [];
@@ -69,7 +79,7 @@ export function planStagingCleanup(
     return a.path.localeCompare(b.path);
   });
 
-  const boundedEligible = eligibleObjects.slice(0, maxObjects);
+  const boundedEligible = eligibleObjects.slice(0, actualMax);
 
   return {
     eligible: boundedEligible.map(o => o.path),
