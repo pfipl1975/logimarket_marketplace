@@ -10,8 +10,6 @@ import {
   categories,
   partners,
   cartItems,
-  orders,
-  orderItems,
   rfqLeads,
   offerMedia,
 } from "@/lib/schema";
@@ -91,7 +89,7 @@ export type FilterQueryResult =
     }
   | { ok: false; errors: FilterValidationError[] };
 
-import { getCanonicalOfferMediaPublicUrl } from "@/lib/storage/adapter";
+import { resolvePublicOfferImage } from "@/lib/offers/public-media-resolver";
 
 function rowToOffer(row: {
   offer: typeof offers.$inferSelect;
@@ -99,8 +97,11 @@ function rowToOffer(row: {
   partner: typeof partners.$inferSelect | null;
   primaryMedia?: typeof offerMedia.$inferSelect | null;
 }): CatalogOffer {
-  const canonicalUrl = row.primaryMedia ? getCanonicalOfferMediaPublicUrl(row.primaryMedia.storageBucket, row.primaryMedia.objectPath) : null;
-  const resolvedImageUrl = canonicalUrl || row.offer.imageUrl;
+  const resolvedImageUrl = resolvePublicOfferImage(
+    row.offer.imageUrl,
+    row.primaryMedia?.storageBucket,
+    row.primaryMedia?.objectPath
+  );
 
   return {
     id: row.offer.id,
@@ -331,8 +332,11 @@ export async function getCartItems(): Promise<CartItemWithOffer[]> {
     .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(eq(cartItems.sessionHash, sessionHash));
   return items.map((row) => {
-    const canonicalUrl = row.primaryMedia ? getCanonicalOfferMediaPublicUrl(row.primaryMedia.storageBucket, row.primaryMedia.objectPath) : null;
-    const resolvedImageUrl = canonicalUrl || row.offer?.imageUrl || null;
+    const resolvedImageUrl = resolvePublicOfferImage(
+      row.offer?.imageUrl ?? null,
+      row.primaryMedia?.storageBucket,
+      row.primaryMedia?.objectPath
+    );
 
     return {
       id: row.cartItem.id,
