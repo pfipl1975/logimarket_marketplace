@@ -160,5 +160,33 @@ test("Staging Orphan Cleanup Lifecycle", async (t) => {
     assert.equal(plan.eligible.length, 0);
     assert.equal(plan.malformed.length, invalidPaths.length);
   });
+
+  await t.test("N. below-floor requested minAgeMs -> safely ignored, hard floor enforced", () => {
+    const age1h = new Date(MOCK_NOW - 60 * 60 * 1000).toISOString();
+    const objs = [{ path: "offers/123/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0d", created_at: age1h }];
+
+    const planZero = planStagingCleanup(objs, MOCK_NOW, 100, 0);
+    assert.equal(planZero.eligible.length, 0);
+    assert.equal(planZero.tooFresh, 1);
+
+    const plan60m = planStagingCleanup(objs, MOCK_NOW, 100, 60 * 60 * 1000);
+    assert.equal(plan60m.eligible.length, 0);
+    assert.equal(plan60m.tooFresh, 1);
+  });
+
+  await t.test("O. caller can safely raise threshold conservatively", () => {
+    const age25h = new Date(MOCK_NOW - 25 * 60 * 60 * 1000).toISOString();
+    const age49h = new Date(MOCK_NOW - 49 * 60 * 60 * 1000).toISOString();
+
+    const objs = [
+      { path: "offers/123/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0d", created_at: age25h },
+      { path: "offers/123/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0e", created_at: age49h }
+    ];
+
+    const plan = planStagingCleanup(objs, MOCK_NOW, 100, 48 * 60 * 60 * 1000);
+    assert.equal(plan.eligible.length, 1);
+    assert.equal(plan.eligible[0], "offers/123/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0e");
+    assert.equal(plan.tooFresh, 1);
+  });
 });
 

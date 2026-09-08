@@ -51,12 +51,12 @@ export function planStagingCleanup(
   maxObjects: number,
   minAgeMs: number = STAGING_ORPHAN_MIN_AGE_MS
 ): CleanupPlan {
-  let sofdMaxObjects = maxObjects;
-  if (!sofdMaxObjects || sofdMaxObjects <= 0 || isNaN(sofdMaxObjects)) {
-    sofdMaxObjects = 0;
+  let safeMaxObjects = maxObjects;
+  if (!safeMaxObjects || safeMaxObjects <= 0 || isNaN(safeMaxObjects)) {
+    safeMaxObjects = 0;
   }
 
-  const actualMax = Math.min(sofdMaxObjects, MAX_STAGING_CLEANUP_OBJECTS_PER_RUN);
+  const actualMax = Math.min(safeMaxObjects, MAX_STAGING_CLEANUP_OBJECTS_PER_RUN);
 
   let tooFresh = 0;
   const malformed: string[] = [];
