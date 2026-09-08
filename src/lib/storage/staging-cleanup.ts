@@ -32,14 +32,15 @@ export function classifyStagingObject(
   if (!Number.isInteger(offerId) || offerId <= 0) return "malformed";
   if (!/^[1-9]\d*$/.test(parts[1])) return "malformed";
 
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
   if (!uuidRegex.test(parts[2])) return "malformed";
 
   const createdAt = new Date(obj.created_at).getTime();
   if (isNaN(createdAt)) return "malformed";
 
+  const safeMinAgeMs = Math.max(minAgeMs, STAGING_ORPHAN_MIN_AGE_MS);
   const age = nowMs - createdAt;
-  if (age >= minAgeMs) return "eligible";
+  if (age >= safeMinAgeMs) return "eligible";
 
   return "too_fresh";
 }

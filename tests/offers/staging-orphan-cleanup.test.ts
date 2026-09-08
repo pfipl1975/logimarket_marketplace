@@ -146,6 +146,8 @@ test("Staging Orphan Cleanup Lifecycle", async (t) => {
       "offers/123/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0dX0x", // wrong length
       "offers/123/1a2b3c4d-e0f1-4a3b-xxxx-5e6f7a8b9c0d",  // invalid hex
       "offers/123/1a2b3c4de0f1-4a3b-8c4d-5e6f7a8b9c0d",   // wrong hyphen positions
+      "offers/123/1a2b3c4d-e0f1-5a3b-8c4d-5e6f7a8b9c0d",   // invalid v4 (3rd group doesn't start with 4)
+      "offers/123/1a2b3c4d-e0f1-4a3b-7c4d-5e6f7a8b9c0d",   // invalid v4 (4th group doesn't start with 8,9,a,b)
       "offers/0/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0d",     // offerId 0
       "offers/-1/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0d",    // negative offerId
       "offers/abc/1a2b3c4d-e0f1-4a3b-8c4d-5e6f7a8b9c0d",   // non-numeric offerId
