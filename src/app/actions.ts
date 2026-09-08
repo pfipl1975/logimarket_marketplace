@@ -13,6 +13,7 @@ import {
   orders,
   orderItems,
   rfqLeads,
+  offerMedia,
 } from "@/lib/schema";
 import type { TechnicalAttributes, OfferPublicationStatus } from "@/lib/schema";
 import { getCategoryDescendantIds } from "@/lib/catalog/tree";
@@ -90,16 +91,25 @@ export type FilterQueryResult =
     }
   | { ok: false; errors: FilterValidationError[] };
 
+import { resolvePublicOfferImage } from "@/lib/offers/public-media-resolver";
+
 function rowToOffer(row: {
   offer: typeof offers.$inferSelect;
   category: typeof categories.$inferSelect | null;
   partner: typeof partners.$inferSelect | null;
+  primaryMedia?: typeof offerMedia.$inferSelect | null;
 }): CatalogOffer {
+  const resolvedImageUrl = resolvePublicOfferImage(
+    row.offer.imageUrl,
+    row.primaryMedia?.storageBucket,
+    row.primaryMedia?.objectPath
+  );
+
   return {
     id: row.offer.id,
     title: row.offer.title,
     description: row.offer.description,
-    imageUrl: row.offer.imageUrl,
+    imageUrl: resolvedImageUrl,
     priceBrutto: row.offer.priceBrutto,
     priceOnRequest: row.offer.priceOnRequest,
     conversionType: row.offer.conversionType,
@@ -165,10 +175,11 @@ export async function getCategoryOffers(
   const targetIds = [activeCat.id, ...descendantIds];
 
   const rows = await db
-    .select({ offer: offers, category: categories, partner: partners })
+    .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
     .from(offers)
     .leftJoin(categories, eq(offers.categoryId, categories.id))
     .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(
       and(
         eq(offers.isActive, true),
@@ -248,10 +259,11 @@ export async function getOffers(
   ];
   if (categorySlug) conditions.push(eq(categories.slug, categorySlug));
   const rows = await db
-    .select({ offer: offers, category: categories, partner: partners })
+    .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
     .from(offers)
     .leftJoin(categories, eq(offers.categoryId, categories.id))
     .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(and(...conditions))
     .orderBy(...catalogOfferOrder());
   return hydrateOffersWithAttributes(rows.map(rowToOffer), locale);
@@ -262,10 +274,11 @@ export async function getOfferById(
   locale: Locale = defaultLocale,
 ): Promise<CatalogOffer | null> {
   const rows = await db
-    .select({ offer: offers, category: categories, partner: partners })
+    .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
     .from(offers)
     .leftJoin(categories, eq(offers.categoryId, categories.id))
     .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(
       and(
         eq(offers.id, id),
@@ -312,23 +325,33 @@ export async function getCartItems(): Promise<CartItemWithOffer[]> {
       offer: offers,
       partner: partners,
       category: categories,
+      primaryMedia: offerMedia,
     })
     .from(cartItems)
     .leftJoin(offers, eq(cartItems.offerId, offers.id))
     .leftJoin(partners, eq(offers.partnerId, partners.id))
     .leftJoin(categories, eq(offers.categoryId, categories.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(eq(cartItems.sessionHash, sessionHash));
-  return items.map((row) => ({
-    id: row.cartItem.id,
-    offerId: row.offer?.id ?? 0,
-    title: row.offer?.title ?? "",
-    imageUrl: row.offer?.imageUrl ?? null,
-    priceBrutto: row.offer?.priceBrutto ?? null,
-    priceOnRequest: row.offer?.priceOnRequest ?? true,
-    quantity: row.cartItem.quantity,
-    partnerName: row.partner?.companyName ?? "",
-    categoryName: row.category?.name ?? "",
-  }));
+  return items.map((row) => {
+    const resolvedImageUrl = resolvePublicOfferImage(
+      row.offer?.imageUrl ?? null,
+      row.primaryMedia?.storageBucket,
+      row.primaryMedia?.objectPath
+    );
+
+    return {
+      id: row.cartItem.id,
+      offerId: row.offer?.id ?? 0,
+      title: row.offer?.title ?? "",
+      imageUrl: resolvedImageUrl,
+      priceBrutto: row.offer?.priceBrutto ?? null,
+      priceOnRequest: row.offer?.priceOnRequest ?? true,
+      quantity: row.cartItem.quantity,
+      partnerName: row.partner?.companyName ?? "",
+      categoryName: row.category?.name ?? "",
+    };
+  });
 }
 
 export async function getCartCount(): Promise<number> {

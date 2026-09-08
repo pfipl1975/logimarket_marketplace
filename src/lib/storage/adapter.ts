@@ -98,3 +98,9 @@ export class SupabaseOfferMediaStorage implements OfferMediaStorage {
     return data.publicUrl;
   }
 }
+
+export function getCanonicalOfferMediaPublicUrl(bucket: string, path: string): string {
+  const config = getSupabasePublicConfig();
+  if (!config) return "";
+  return `${config.url}/storage/v1/object/public/${bucket}/${path}`;
+}

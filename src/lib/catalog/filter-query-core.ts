@@ -10,6 +10,7 @@ type CatalogRow = {
   offer: typeof schema.offers.$inferSelect;
   category: typeof schema.categories.$inferSelect | null;
   partner: typeof schema.partners.$inferSelect | null;
+  primaryMedia: typeof schema.offerMedia.$inferSelect | null;
 };
 type AttributeConfig = { dataType: string; isActive: boolean; assigned: boolean; filterable: boolean };
 type OptionConfig = { attributeId: number; isActive: boolean };
@@ -127,9 +128,11 @@ export async function queryFilteredCategoryOffers(db: Db, input: NormalizedFilte
   const scope = [input.categoryId, ...getCategoryDescendantIds(categoryRows, input.categoryId)];
   const where = and(...buildFilterPredicates(db, input, scope, configuration.dataTypes));
   const countRows = await db.select({ total: count() }).from(schema.offers).where(where);
-  const itemBase = db.select({ offer: schema.offers, category: schema.categories, partner: schema.partners })
+  const itemBase = db.select({ offer: schema.offers, category: schema.categories, partner: schema.partners, primaryMedia: schema.offerMedia })
     .from(schema.offers).leftJoin(schema.categories, eq(schema.offers.categoryId, schema.categories.id))
-    .leftJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id)).where(where).orderBy(...catalogOfferOrder(input.sort));
+    .leftJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id))
+    .leftJoin(schema.offerMedia, and(eq(schema.offerMedia.offerId, schema.offers.id), eq(schema.offerMedia.isPrimary, true)))
+    .where(where).orderBy(...catalogOfferOrder(input.sort));
   const rows = input.page === undefined ? await itemBase : await itemBase.limit(input.pageSize!).offset((input.page - 1) * input.pageSize!);
   return { ok: true, total: Number(countRows[0]?.total ?? 0), rows };
 }

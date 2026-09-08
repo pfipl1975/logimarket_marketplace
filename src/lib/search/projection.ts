@@ -1,6 +1,7 @@
 import type { CatalogOfferSearchResult, NormalizedCatalogSearchQuery } from "./types";
 import { resolveCategoryName } from "@/lib/i18n/category-labels";
 import { getOfferPath } from "@/lib/i18n/paths";
+import { resolvePublicOfferImage } from "@/lib/offers/public-media-resolver";
 
 type DbOfferResult = {
   id: number;
@@ -14,6 +15,8 @@ type DbOfferResult = {
   categoryName: string;
   partnerName: string;
   score: number;
+  primaryMediaStorageBucket: string | null;
+  primaryMediaObjectPath: string | null;
 };
 
 export function projectCatalogOfferSearchResults(
@@ -23,6 +26,12 @@ export function projectCatalogOfferSearchResults(
   fallbackBySlug?: Record<string, string>
 ): CatalogOfferSearchResult[] {
   return dbOffers.map((offer) => {
+    const resolvedImageUrl = resolvePublicOfferImage(
+      offer.imageUrl,
+      offer.primaryMediaStorageBucket,
+      offer.primaryMediaObjectPath
+    );
+
     return {
       type: "offer",
       id: offer.id,
@@ -34,7 +43,7 @@ export function projectCatalogOfferSearchResults(
         fallbackBySlug,
       }),
       partnerName: offer.partnerName,
-      imageUrl: offer.imageUrl,
+      imageUrl: resolvedImageUrl,
       offerModel: offer.offerModel,
       href: getOfferPath(query.locale, String(offer.id)),
       score: offer.score,

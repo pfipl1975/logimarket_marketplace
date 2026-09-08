@@ -74,10 +74,13 @@ export function queryCatalogSearch(
       categoryName: schema.categories.name,
       partnerName: schema.partners.companyName,
       score: scoreField,
+      primaryMediaStorageBucket: schema.offerMedia.storageBucket,
+      primaryMediaObjectPath: schema.offerMedia.objectPath,
     })
     .from(schema.offers)
     .innerJoin(schema.categories, eq(schema.offers.categoryId, schema.categories.id))
     .innerJoin(schema.partners, eq(schema.offers.partnerId, schema.partners.id))
+    .leftJoin(schema.offerMedia, and(eq(schema.offerMedia.offerId, schema.offers.id), eq(schema.offerMedia.isPrimary, true)))
     .where(filterConditions)
     .orderBy(
       desc(scoreExpression),
