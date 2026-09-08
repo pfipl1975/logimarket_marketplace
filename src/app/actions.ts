@@ -10,6 +10,8 @@ import {
   categories,
   partners,
   cartItems,
+  orders,
+  orderItems,
   rfqLeads,
   offerMedia,
 } from "@/lib/schema";

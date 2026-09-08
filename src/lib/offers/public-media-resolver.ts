@@ -6,7 +6,10 @@ export function resolvePublicOfferImage(
   primaryMediaObjectPath?: string | null
 ): string | null {
   if (primaryMediaStorageBucket && primaryMediaObjectPath) {
-    return getCanonicalOfferMediaPublicUrl(primaryMediaStorageBucket, primaryMediaObjectPath);
+    const canonical = getCanonicalOfferMediaPublicUrl(primaryMediaStorageBucket, primaryMediaObjectPath);
+    if (canonical) {
+      return canonical;
+    }
   }
   return legacyImageUrl || null;
 }

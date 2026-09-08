@@ -14,16 +14,24 @@ test("Public Media Integration SPRINT MEDIA-06", async (t) => {
 
   await t.test("CASE A: canonical + legacy -> canonical", () => {
     const result = resolvePublicOfferImage("legacy.jpg", "bucket1", "path1");
-    // getCanonicalOfferMediaPublicUrl will prefix it based on SUPABASE env var,
-    // but we can just test that it doesn't return legacy.jpg. Since config isn't mocked,
-    // it will return something with "path1" inside.
-    assert.ok(result?.includes("path1"));
-    assert.ok(!result?.includes("legacy.jpg"));
+    assert.strictEqual(result, "https://test.supabase.co/storage/v1/object/public/bucket1/path1");
   });
 
   await t.test("CASE B: canonical + legacy NULL -> canonical", () => {
     const result = resolvePublicOfferImage(null, "bucket1", "path1");
-    assert.ok(result?.includes("path1"));
+    assert.strictEqual(result, "https://test.supabase.co/storage/v1/object/public/bucket1/path1");
+  });
+
+  await t.test("Supabase config unavailable + legacy -> legacy", () => {
+    // temporarily clear config
+    const urlBefore = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    process.env.NEXT_PUBLIC_SUPABASE_URL = "";
+    
+    const result = resolvePublicOfferImage("legacy.jpg", "bucket1", "path1");
+    assert.strictEqual(result, "legacy.jpg");
+    
+    // restore config
+    process.env.NEXT_PUBLIC_SUPABASE_URL = urlBefore;
   });
 
   await t.test("CASE C: canonical absent + legacy -> legacy", () => {
