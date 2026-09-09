@@ -921,7 +921,8 @@
     "eligibilityPriceInvalid": "电子商务价格缺失或无效",
     "eligibilityOutboundInvalid": "出站链接缺失或无效",
     "moderationStateReadOnly": "只读状态",
-    "moderationStateDescription": "对于此状态，发布和编辑操作不可用。"
+    "moderationStateDescription": "对于此状态，发布和编辑操作不可用。",
+    "eligibilitySellerNotReady": "卖家尚未准备好在市场上销售。"
   },
   "adminOfferEdit": {
     "media": {

@@ -921,7 +921,8 @@
     "eligibilityPriceInvalid": "Fehlender oder ungültiger Preis für E-Commerce",
     "eligibilityOutboundInvalid": "Fehlender oder ungültiger ausgehender Link",
     "moderationStateReadOnly": "Schreibgeschützter Zustand",
-    "moderationStateDescription": "Für diesen Status sind Veröffentlichungs- und Bearbeitungsaktionen nicht verfügbar."
+    "moderationStateDescription": "Für diesen Status sind Veröffentlichungs- und Bearbeitungsaktionen nicht verfügbar.",
+    "eligibilitySellerNotReady": "Der Verkäufer ist noch nicht bereit für den Verkauf auf dem Marktplatz."
   },
   "adminOfferEdit": {
     "media": {

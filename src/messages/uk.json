@@ -921,7 +921,8 @@
     "eligibilityPriceInvalid": "Відсутня або недійсна ціна для E-Commerce",
     "eligibilityOutboundInvalid": "Відсутнє або недійсне вихідне посилання",
     "moderationStateReadOnly": "Стан лише для читання",
-    "moderationStateDescription": "Для цього статусу дії публікації та редагування недоступні."
+    "moderationStateDescription": "Для цього статусу дії публікації та редагування недоступні.",
+    "eligibilitySellerNotReady": "Продавець ще не відповідає вимогам готовності до продажу на маркетплейсі."
   },
   "adminOfferEdit": {
     "media": {

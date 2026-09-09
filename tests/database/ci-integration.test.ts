@@ -5,7 +5,7 @@ import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { getDb } from "@/lib/db";
-import { executeOfferPublicationStateChange } from "@/lib/admin/offer-publication-core";
+import { executeOfferPublicationStateChange, PublicationSellerReadinessQuery } from "@/lib/admin/offer-publication-core";
 import { mutateRfqStatusCore } from "@/lib/rfq/admin-core";
 import type { RfqStatus } from "@/lib/schema";
 import { readMigrationFiles } from "drizzle-orm/migrator";
@@ -1835,6 +1835,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     };
 
     const db = getDb();
+    const sellerReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "ready" as const });
+    const sellerReadyDeps = { querySellerReadiness: sellerReadyQuery };
 
     // A. draft ecommerce, DB raw price = 1.234 -> ECOMMERCE_PRICE_INVALID
     await insertOffer(1001, "draft", "1.234");
@@ -1842,7 +1844,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1001,
       expectedStatus: "draft",
       targetStatus: "published",
-    });
+    }, sellerReadyDeps);
     assert.deepEqual(resA, {
       ok: false,
       code: "OFFER_PUBLISH_NOT_ELIGIBLE",
@@ -1865,7 +1867,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1002,
       expectedStatus: "draft",
       targetStatus: "published",
-    });
+    }, sellerReadyDeps);
     assert.equal(resB.ok, true);
     assert.equal(resB.code, "OFFER_PUBLISHED");
 
@@ -1885,7 +1887,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1003,
       expectedStatus: "published",
       targetStatus: "archived",
-    });
+    }, sellerReadyDeps);
     assert.equal(resC.ok, true);
     assert.equal(resC.code, "OFFER_ARCHIVED");
 
@@ -1905,7 +1907,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1004,
       expectedStatus: "published",
       targetStatus: "archived",
-    });
+    }, sellerReadyDeps);
     assert.deepEqual(resD, { ok: false, code: "OFFER_TRANSITION_CONFLICT" });
     const rowD = await pool.query(
       `SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1004`,
@@ -1925,7 +1927,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1005,
       expectedStatus: "hidden",
       targetStatus: "published",
-    });
+    }, sellerReadyDeps);
     assert.deepEqual(resE, { ok: false, code: "OFFER_INVALID_TRANSITION" });
     const rowE = await pool.query(
       `SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1005`,
@@ -1940,13 +1942,36 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(rowE.rows[0].deleted_at, null);
     assert.equal(rowE.rows[0].title, "Pub Title");
 
+        // I. ecommerce + Seller NOT READY -> fail closed without mutating
+    await insertOffer(1009, "draft", "1.23");
+    const sellerNotReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "not_ready" as const });
+    const resI = await executeOfferPublicationStateChange(db, {
+      offerId: 1009,
+      expectedStatus: "draft",
+      targetStatus: "published",
+    }, { querySellerReadiness: sellerNotReadyQuery });
+    assert.deepEqual(resI, {
+      ok: false,
+      code: "OFFER_PUBLISH_NOT_ELIGIBLE",
+      reason: "SELLER_NOT_READY",
+    });
+    const rowI = await pool.query(
+      `SELECT publication_status, updated_at, published_at FROM public.offers WHERE id = 1009`,
+    );
+    assert.equal(rowI.rows[0].publication_status, "draft");
+    assert.equal(rowI.rows[0].published_at, null);
+    assert.equal(
+      rowI.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+
     // F. current deleted -> attempt archived
     await insertOffer(1006, "deleted", "1.23");
     const resF = await executeOfferPublicationStateChange(db, {
       offerId: 1006,
       expectedStatus: "deleted",
       targetStatus: "archived",
-    });
+    }, sellerReadyDeps);
     assert.deepEqual(resF, { ok: false, code: "OFFER_INVALID_TRANSITION" });
     const rowF = await pool.query(
       `SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1006`,
@@ -1967,7 +1992,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1007,
       expectedStatus: "published",
       targetStatus: "published",
-    });
+    }, sellerReadyDeps);
     assert.deepEqual(resG, {
       ok: true,
       code: "OFFER_PUBLISHED",
@@ -1991,7 +2016,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1008,
       expectedStatus: "archived",
       targetStatus: "archived",
-    });
+    }, sellerReadyDeps);
     assert.deepEqual(resH, {
       ok: true,
       code: "OFFER_ARCHIVED",
@@ -2036,6 +2061,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     );
 
     const db = getDb();
+
+
+
 
     const PII = {
       company_name: "Test Corp",
@@ -2273,6 +2301,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     );
 
     const db = getDb();
+
+
+
     const { getAdminDashboardReadModel } =
       await import("../../src/lib/admin/dashboard-read-model-core.js");
 
@@ -2825,7 +2856,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Test', 'test@test.com') RETURNING id`);
     const pid = pRes.rows[0].id;
     await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'Legal Name', 'PL')`, [pid]);
-    
+
     const insertRes = await pool.query(`
       INSERT INTO seller_verification_events (
         subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
@@ -2833,9 +2864,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         'legal_identity', $1, 'verified', 'system', 'system_rule', '{}'::jsonb
       ) RETURNING id
     `, [pid]);
-    
+
     const eventId = insertRes.rows[0].id;
-    
+
     let updateFailed = false;
     try {
       await pool.query(`UPDATE seller_verification_events SET source_name = 'hacked' WHERE id = $1`, [eventId]);
@@ -2843,7 +2874,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       if (err.code === '55000') updateFailed = true;
     }
     assert.ok(updateFailed, "Trigger must block UPDATE");
-    
+
     let deleteFailed = false;
     try {
       await pool.query(`DELETE FROM seller_verification_events WHERE id = $1`, [eventId]);

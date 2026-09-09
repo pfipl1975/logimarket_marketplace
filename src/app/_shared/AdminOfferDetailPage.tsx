@@ -96,6 +96,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
       case "MODEL_UNKNOWN": return dict.eligibilityModelUnknown;
       case "ECOMMERCE_PRICE_INVALID": return dict.eligibilityPriceInvalid;
       case "OUTBOUND_URL_INVALID": return dict.eligibilityOutboundInvalid;
+      case "SELLER_NOT_READY": return dict.eligibilitySellerNotReady;
       default: return reason;
     }
   };

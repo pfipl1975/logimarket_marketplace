@@ -8,6 +8,10 @@ import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
 
 import type { OfferPublicationStatus } from "@/lib/schema";
 
+
+export type OfferPublicationTx = Parameters<Parameters<NodePgDatabase<typeof schema>["transaction"]>[0]>[0];
+export type PublicationSellerReadinessQuery = (tx: OfferPublicationTx, partnerId: number) => Promise<{ status: "ready" | "not_ready" }>;
+
 export type AdminOfferPublicationTarget = "published" | "archived";
 
 export type PublishEligibilityReason =
@@ -15,7 +19,8 @@ export type PublishEligibilityReason =
   | "TITLE_INVALID"
   | "MODEL_UNKNOWN"
   | "ECOMMERCE_PRICE_INVALID"
-  | "OUTBOUND_URL_INVALID";
+  | "OUTBOUND_URL_INVALID"
+  | "SELLER_NOT_READY";
 
 export type AdminOfferPublicationResult =
   | {
@@ -125,6 +130,7 @@ export function evaluateOfferPublishEligibility(input: {
   priceOnRequest: boolean;
   normalizedPrice: string | null;
   outboundUrl: string | null;
+  sellerReadiness?: "ready" | "not_ready" | "not_required";
 }): { eligible: true } | { eligible: false; reason: PublishEligibilityReason } {
   if (!input.isActive) return { eligible: false, reason: "OFFER_INACTIVE" };
   if (!input.title || input.title.trim().length === 0) return { eligible: false, reason: "TITLE_INVALID" };
@@ -133,6 +139,9 @@ export function evaluateOfferPublishEligibility(input: {
   if (canonicalModel === "unknown") return { eligible: false, reason: "MODEL_UNKNOWN" };
 
   if (canonicalModel === "ecommerce") {
+    if (input.sellerReadiness !== "ready") {
+      return { eligible: false, reason: "SELLER_NOT_READY" };
+    }
     if (input.priceOnRequest || !input.normalizedPrice) {
       return { eligible: false, reason: "ECOMMERCE_PRICE_INVALID" };
     }
@@ -155,7 +164,8 @@ export function evaluateOfferPublishEligibility(input: {
 
 export async function executeOfferPublicationStateChange(
   db: NodePgDatabase<typeof schema>,
-  input: AdminOfferPublicationInput
+  input: AdminOfferPublicationInput,
+  deps: { querySellerReadiness: PublicationSellerReadinessQuery }
 ): Promise<AdminOfferPublicationResult> {
   // Pre-DB transition check
   const preCheck = evaluateOfferPublicationTransition(
@@ -173,6 +183,7 @@ export async function executeOfferPublicationStateChange(
       const offerRows = await tx
         .select({
           id: offers.id,
+          partnerId: offers.partnerId,
           publicationStatus: offers.publicationStatus,
           isActive: offers.isActive,
           title: offers.title,
@@ -216,6 +227,19 @@ export async function executeOfferPublicationStateChange(
 
       // 3. Publish Eligibility Check (draft -> published)
       if (decision.kind === "PROCEED_PUBLISH") {
+        const canonicalModel = resolveCanonicalOfferModel(offer.offerModel, offer.conversionType);
+        let sellerReadiness: "ready" | "not_ready" | "not_required" = "not_required";
+
+        if (canonicalModel === "ecommerce") {
+          try {
+            // querySellerReadiness accepts our transaction object thanks to ReadinessDbExecutor
+            const readinessResult = await deps.querySellerReadiness(tx, offer.partnerId);
+            sellerReadiness = readinessResult.status === "ready" ? "ready" : "not_ready";
+          } catch {
+            sellerReadiness = "not_ready";
+          }
+        }
+
         const eligibility = evaluateOfferPublishEligibility({
           isActive: offer.isActive,
           title: offer.title,
@@ -224,6 +248,7 @@ export async function executeOfferPublicationStateChange(
           priceOnRequest: offer.priceOnRequest,
           normalizedPrice: offer.normalizedPrice,
           outboundUrl: offer.outboundUrl,
+          sellerReadiness,
         });
 
         if (!eligibility.eligible) {

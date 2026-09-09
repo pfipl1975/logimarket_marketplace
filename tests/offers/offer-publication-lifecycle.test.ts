@@ -133,8 +133,7 @@ describe("Offer Publication State Machine", () => {
 
 describe("Offer Publish Eligibility", () => {
   test("Ecommerce: valid marketplace + inbound, active, nonblank title, priceOnRequest=false, normalizedPrice=1.00 -> eligible", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "Test Offer",
       offerModel: "marketplace",
       conversionType: "inbound",
@@ -146,8 +145,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("Ecommerce: normalizedPrice=null -> ECOMMERCE_PRICE_INVALID", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "Test Offer",
       offerModel: "marketplace",
       conversionType: "inbound",
@@ -161,8 +159,7 @@ describe("Offer Publish Eligibility", () => {
   test("Ecommerce: price variants", () => {
     const cases = ["0", "-1", "abc", "1.234"];
     for (const val of cases) {
-      const res = evaluateOfferPublishEligibility({
-        isActive: true,
+      const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
         title: "Test Offer",
         offerModel: "marketplace",
         conversionType: "inbound",
@@ -175,8 +172,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("Ecommerce: priceOnRequest=true -> ECOMMERCE_PRICE_INVALID", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "Test Offer",
       offerModel: "marketplace",
       conversionType: "inbound",
@@ -188,8 +184,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("inactive -> OFFER_INACTIVE", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: false,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: false,
       title: "Test Offer",
       offerModel: "marketplace",
       conversionType: "inbound",
@@ -201,8 +196,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("blank title -> TITLE_INVALID", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "   ",
       offerModel: "marketplace",
       conversionType: "inbound",
@@ -214,8 +208,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("RFQ canonical resolves and permits publishing without price/outbound", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "RFQ Offer",
       offerModel: "rfq",
       conversionType: "inbound",
@@ -227,8 +220,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("RFQ canonical rejects inactive/blank title", () => {
-    assert.deepEqual(evaluateOfferPublishEligibility({
-      isActive: false,
+    assert.deepEqual(evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: false,
       title: "RFQ Offer",
       offerModel: "rfq",
       conversionType: "inbound",
@@ -237,8 +229,7 @@ describe("Offer Publish Eligibility", () => {
       outboundUrl: null,
     }), { eligible: false, reason: "OFFER_INACTIVE" });
 
-    assert.deepEqual(evaluateOfferPublishEligibility({
-      isActive: true,
+    assert.deepEqual(evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "",
       offerModel: "rfq",
       conversionType: "inbound",
@@ -249,8 +240,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("Outbound valid cases", () => {
-    const res1 = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res1 = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "Outbound",
       offerModel: "marketplace",
       conversionType: "outbound",
@@ -260,8 +250,7 @@ describe("Offer Publish Eligibility", () => {
     });
     assert.deepEqual(res1, { eligible: true });
 
-    const res2 = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res2 = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "Outbound",
       offerModel: "marketplace",
       conversionType: "outbound",
@@ -275,8 +264,7 @@ describe("Offer Publish Eligibility", () => {
   test("Outbound invalid urls", () => {
     const badUrls = [null, "/relative", "javascript:alert(1)", "data:text/plain,test", "file:///etc/passwd", "https://user:pass@example.com"];
     for (const url of badUrls) {
-      assert.deepEqual(evaluateOfferPublishEligibility({
-        isActive: true,
+      assert.deepEqual(evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
         title: "Outbound",
         offerModel: "marketplace",
         conversionType: "outbound",
@@ -288,8 +276,7 @@ describe("Offer Publish Eligibility", () => {
   });
 
   test("Unknown model -> MODEL_UNKNOWN", () => {
-    const res = evaluateOfferPublishEligibility({
-      isActive: true,
+    const res = evaluateOfferPublishEligibility({ sellerReadiness: "ready", isActive: true,
       title: "Unknown",
       offerModel: "unknown_model",
       conversionType: "outbound",
@@ -301,7 +288,81 @@ describe("Offer Publish Eligibility", () => {
   });
 });
 
-describe("DB Architecture Contract", () => {
+
+  describe("Seller Readiness Publish Gates", () => {
+    test("A. ecommerce + seller ready + otherwise valid -> eligible", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "marketplace", conversionType: "inbound",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: null,
+        sellerReadiness: "ready"
+      }), { eligible: true });
+    });
+
+    test("B. ecommerce + seller not_ready -> SELLER_NOT_READY", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "marketplace", conversionType: "inbound",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: null,
+        sellerReadiness: "not_ready"
+      }), { eligible: false, reason: "SELLER_NOT_READY" });
+    });
+
+    test("C. ecommerce + unknown/missing readiness state -> fail closed SELLER_NOT_READY", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "marketplace", conversionType: "inbound",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: null,
+      }), { eligible: false, reason: "SELLER_NOT_READY" });
+    });
+
+    test("D. rfq remains eligible without Seller Readiness gate if existing conditions pass", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "rfq", conversionType: "inbound",
+        priceOnRequest: true, normalizedPrice: null, outboundUrl: null,
+        sellerReadiness: "not_ready"
+      }), { eligible: true });
+    });
+
+    test("E. outbound remains governed by existing rules without Seller Readiness gate", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "marketplace", conversionType: "outbound",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: "https://example.com",
+        sellerReadiness: "not_ready"
+      }), { eligible: true });
+    });
+
+    test("F. unknown model remains MODEL_UNKNOWN", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "unknown", conversionType: "unknown",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: null,
+        sellerReadiness: "not_ready"
+      }), { eligible: false, reason: "MODEL_UNKNOWN" });
+    });
+
+    test("G. ecommerce seller ready but invalid price -> ECOMMERCE_PRICE_INVALID", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "Test", offerModel: "marketplace", conversionType: "inbound",
+        priceOnRequest: true, normalizedPrice: null, outboundUrl: null,
+        sellerReadiness: "ready"
+      }), { eligible: false, reason: "ECOMMERCE_PRICE_INVALID" });
+    });
+
+    test("H. seller readiness does not bypass: OFFER_INACTIVE", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: false, title: "Test", offerModel: "marketplace", conversionType: "inbound",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: null,
+        sellerReadiness: "ready"
+      }), { eligible: false, reason: "OFFER_INACTIVE" });
+    });
+
+    test("I. seller readiness does not bypass: TITLE_INVALID", () => {
+      assert.deepEqual(evaluateOfferPublishEligibility({
+        isActive: true, title: "", offerModel: "marketplace", conversionType: "inbound",
+        priceOnRequest: false, normalizedPrice: "10.00", outboundUrl: null,
+        sellerReadiness: "ready"
+      }), { eligible: false, reason: "TITLE_INVALID" });
+    });
+  });
+
+  describe("DB Architecture Contract", () => {
   test("REAL_DB_ROW_LOCK_INTEGRATION_TEST: NOT AVAILABLE IN CURRENT SAFE HARNESS", () => {
     const sourceCode = fs.readFileSync("src/lib/admin/offer-publication-core.ts", "utf8");
     assert.equal(sourceCode.includes("db.transaction"), true, "Missing transactional execution");
