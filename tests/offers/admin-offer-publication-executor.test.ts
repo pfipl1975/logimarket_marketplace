@@ -1,8 +1,8 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import test from "node:test";
 import assert from "node:assert/strict";
 import { executeOfferPublicationStateChange, OfferPublicationTx, PublicationSellerReadinessQuery } from "../../src/lib/admin/offer-publication-core";
-import { NodePgDatabase } from "drizzle-orm/node-postgres";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "../../src/lib/schema";
 
 test("Admin Offer Publication Executor (Mocked)", async (t) => {
   const defaultEcommerceOffer = {
@@ -49,7 +49,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       transaction: async (fn: (txArg: OfferPublicationTx) => Promise<unknown>) => fn(tx as unknown as OfferPublicationTx)
     };
 
-    return { db: db as unknown as NodePgDatabase<Record<string, never>>, tx };
+    return { db: db as unknown as NodePgDatabase<typeof schema>, tx: tx as unknown as OfferPublicationTx };
   };
 
   await t.test("J. draft ecommerce offer Partner Seller Ready -> publication UPDATE occurs", async () => {
@@ -63,7 +63,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
@@ -77,7 +77,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
   await t.test("T. exact transaction executor is passed to readiness dependency", async () => {
     const updates: Record<string, unknown>[] = [];
     const { db, tx } = createMockDb(defaultEcommerceOffer, updates);
-    let passedTx: any;
+    let passedTx: OfferPublicationTx | undefined;
     const deps = {
       querySellerReadiness: (async (txArg: OfferPublicationTx) => {
         passedTx = txArg;
@@ -85,7 +85,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       }) satisfies PublicationSellerReadinessQuery
     };
 
-    await executeOfferPublicationStateChange(db as any, { offerId: 1, expectedStatus: "draft", targetStatus: "published" }, deps);
+    await executeOfferPublicationStateChange(db, { offerId: 1, expectedStatus: "draft", targetStatus: "published" }, deps);
     assert.strictEqual(passedTx, tx);
   });
 
@@ -96,7 +96,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => { throw new Error("Dependency offline"); }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, { offerId: 1, expectedStatus: "draft", targetStatus: "published" }, badDeps);
+    const res = await executeOfferPublicationStateChange(db, { offerId: 1, expectedStatus: "draft", targetStatus: "published" }, badDeps);
     assert.equal(res.ok, false);
     if (!res.ok) assert.equal(res.reason, "SELLER_NOT_READY");
     assert.equal(updates.length, 0);
@@ -109,7 +109,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => ({ status: "not_ready" as const })) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
@@ -128,7 +128,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => { called = true; return { status: "not_ready" as const }; }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
@@ -146,7 +146,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => { called = true; return { status: "not_ready" as const }; }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
@@ -162,7 +162,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => { called = true; return { status: "ready" as const }; }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
@@ -178,7 +178,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => { throw new Error("DB Error"); }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
@@ -195,7 +195,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
       querySellerReadiness: (async () => { called = true; return { status: "not_ready" as const }; }) satisfies PublicationSellerReadinessQuery
     };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "published", targetStatus: "archived"
     }, deps);
 
@@ -209,12 +209,12 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
     let called = false;
     const deps = { querySellerReadiness: (async () => { called = true; return { status: "not_ready" as const }; }) satisfies PublicationSellerReadinessQuery };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "published", targetStatus: "published"
     }, deps);
 
     assert.equal(res.ok, true);
-    if (res.ok) assert.equal(res.code, "OFFER_PUBLISHED"); // Idempotent is still OK/OFFER_PUBLISHED code or ALREADY_PUBLISHED depending on implementation
+    if (res.ok) assert.equal(res.code, "OFFER_PUBLISHED");
     assert.equal(called, false);
   });
 
@@ -223,7 +223,7 @@ test("Admin Offer Publication Executor (Mocked)", async (t) => {
     const { db } = createMockDb({ ...defaultEcommerceOffer, publicationStatus: "archived" }, updates);
     const deps = { querySellerReadiness: (async () => ({ status: "ready" as const })) satisfies PublicationSellerReadinessQuery };
 
-    const res = await executeOfferPublicationStateChange(db as any, {
+    const res = await executeOfferPublicationStateChange(db, {
       offerId: 1, expectedStatus: "draft", targetStatus: "published"
     }, deps);
 
