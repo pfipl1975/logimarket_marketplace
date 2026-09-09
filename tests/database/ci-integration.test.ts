@@ -1835,9 +1835,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     };
 
     const db = getDb();
-
-
-
+    const sellerReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "ready" as const });
+    const sellerReadyDeps = { querySellerReadiness: sellerReadyQuery };
 
     // A. draft ecommerce, DB raw price = 1.234 -> ECOMMERCE_PRICE_INVALID
     await insertOffer(1001, "draft", "1.234");
@@ -1944,10 +1943,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(rowE.rows[0].title, "Pub Title");
 
         // I. ecommerce + Seller NOT READY -> fail closed without mutating
-    await insertOffer(1007, "draft", "1.23");
+    await insertOffer(1009, "draft", "1.23");
     const sellerNotReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "not_ready" as const });
     const resI = await executeOfferPublicationStateChange(db, {
-      offerId: 1007,
+      offerId: 1009,
       expectedStatus: "draft",
       targetStatus: "published",
     }, { querySellerReadiness: sellerNotReadyQuery });
@@ -1957,7 +1956,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       reason: "SELLER_NOT_READY",
     });
     const rowI = await pool.query(
-      `SELECT publication_status, updated_at, published_at FROM public.offers WHERE id = 1007`,
+      `SELECT publication_status, updated_at, published_at FROM public.offers WHERE id = 1009`,
     );
     assert.equal(rowI.rows[0].publication_status, "draft");
     assert.equal(rowI.rows[0].published_at, null);
