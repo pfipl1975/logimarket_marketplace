@@ -37,7 +37,7 @@ export async function AdminPartnerDetailPage({
     );
   }
 
-  const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility, agreementEvidence } = result.data;
+  const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility, agreementEvidence, readiness } = result.data;
   const backPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
 
   const missingFieldLabels = {
@@ -85,6 +85,33 @@ export async function AdminPartnerDetailPage({
           </div>
         </div>
       </div>
+
+      
+      {/* Seller Readiness Section */}
+      <section className={`bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden ${result.data.readiness.status === 'ready' ? 'border-green-500' : 'border-red-500'}`}>
+        <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className={`h-5 w-5 ${result.data.readiness.status === 'ready' ? 'text-green-600' : 'text-red-600'}`} />
+            <h2 className="font-medium text-brand-navy">Seller Readiness</h2>
+          </div>
+          <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider ${result.data.readiness.status === 'ready' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+            {result.data.readiness.status === 'ready' ? 'READY' : 'NOT READY'}
+          </span>
+        </div>
+        
+        {result.data.readiness.status !== 'ready' && (
+          <div className="p-6 bg-red-50/50">
+            <h3 className="text-sm font-semibold text-red-900 mb-3">Blockers:</h3>
+            <ul className="list-disc pl-5 space-y-1">
+              {result.data.readiness.blockers.map((blocker) => (
+                <li key={blocker} className="text-sm text-red-800 font-medium">
+                  {blocker}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
         {/* Partner Base Data */}

@@ -16,7 +16,10 @@ import {
   type RecordedEvidenceDto,
 } from "@/lib/legal/partner-agreement-core";
 
+import { type SellerReadinessResult, resolveSellerReadiness } from "./seller-readiness-core";
+
 export interface AdminPartnerDetailDto {
+  readiness: SellerReadinessResult;
   partner: {
     id: number;
     companyName: string;
@@ -205,6 +208,7 @@ export async function getAdminPartnerDetailReadModel<TSchema extends Record<stri
         reason: eligibilityRows[0].reason,
         updatedAt: eligibilityRows[0].updatedAt?.toISOString() ?? null,
       } : null,
+      readiness: await resolveSellerReadiness(db, id),
       sellerDisclosureCompleteness: disclosure.completeness,
       agreementEvidence: {
         hasActiveVersion: activeVersion !== null,
@@ -215,3 +219,6 @@ export async function getAdminPartnerDetailReadModel<TSchema extends Record<stri
     }
   };
 }
+
+
+
