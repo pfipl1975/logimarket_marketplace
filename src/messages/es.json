@@ -921,7 +921,8 @@
     "eligibilityPriceInvalid": "Precio faltante o inválido para E-Commerce",
     "eligibilityOutboundInvalid": "Enlace saliente faltante o inválido",
     "moderationStateReadOnly": "Estado de solo lectura",
-    "moderationStateDescription": "Para este estado, las acciones de publicación y edición no están disponibles."
+    "moderationStateDescription": "Para este estado, las acciones de publicación y edición no están disponibles.",
+    "eligibilitySellerNotReady": "El vendedor no está listo para vender en el Marketplace."
   },
   "adminOfferEdit": {
     "media": {

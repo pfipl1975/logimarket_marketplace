@@ -921,7 +921,8 @@
     "eligibilityPriceInvalid": "Missing or invalid price for E-Commerce",
     "eligibilityOutboundInvalid": "Missing or invalid outbound link",
     "moderationStateReadOnly": "Read-only state",
-    "moderationStateDescription": "For this status, publication and editing actions are unavailable."
+    "moderationStateDescription": "For this status, publication and editing actions are unavailable.",
+    "eligibilitySellerNotReady": "Seller is not ready to sell on Marketplace."
   },
   "adminOfferEdit": {
     "media": {

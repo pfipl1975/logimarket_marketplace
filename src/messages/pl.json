@@ -921,7 +921,8 @@
     "eligibilityPriceInvalid": "Brak lub nieprawidłowa cena dla E-Commerce",
     "eligibilityOutboundInvalid": "Brak lub nieprawidłowy link wychodzący",
     "moderationStateReadOnly": "Stan tylko do odczytu",
-    "moderationStateDescription": "Dla tego statusu akcje publikacji i edycji są niedostępne."
+    "moderationStateDescription": "Dla tego statusu akcje publikacji i edycji są niedostępne.",
+    "eligibilitySellerNotReady": "Sprzedawca nie spełnia jeszcze wymagań gotowości do sprzedaży w Marketplace."
   },
   "adminOfferEdit": {
     "media": {
