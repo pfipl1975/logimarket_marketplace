@@ -10,7 +10,7 @@ import {
   sellerRegistryIdentifiers,
   sellerEligibility,
   agreementVersions,
-  partnerAgreementExecutionEvidence,
+  partnerAgreementExecutionEvidence, partnerAgreementEvidenceInvalidations,
 } from "../../src/lib/schema";
 
 // Simplified mock DB
@@ -29,14 +29,8 @@ const createMockDb = (mockData: Record<string, unknown> = {}) => {
     then: (resolve: (value: unknown) => void) => {
       let result: unknown[] = [];
       const table = chain._currentTable;
-      if (table === partners) result = (mockData.partners as unknown[]) || [];
-      else if (table === sellerLegalIdentities) result = (mockData.legalIdentities as unknown[]) || [];
-      else if (table === sellerTaxIdentifiers) result = (mockData.taxIdentifiers as unknown[]) || [];
-      else if (table === sellerRegistryIdentifiers) result = (mockData.registryIdentifiers as unknown[]) || [];
-      else if (table === sellerEligibility) result = (mockData.eligibility as unknown[]) || [];
-      else if (table === agreementVersions) result = (mockData.agreementVersions as unknown[]) || [];
-      else if (table === partnerAgreementExecutionEvidence) result = (mockData.agreementEvidence as unknown[]) || [];
-      else result = [];
+      if (table === partners) result = (mockData.partners as unknown[]) || []; else if (table === sellerLegalIdentities) result = (mockData.legalIdentities as unknown[]) || []; else if (table === sellerTaxIdentifiers) result = (mockData.taxIdentifiers as unknown[]) || []; else if (table === sellerRegistryIdentifiers) result = (mockData.registryIdentifiers as unknown[]) || []; else if (table === sellerEligibility) result = (mockData.eligibility as unknown[]) || []; else if (table === agreementVersions) result = (mockData.agreementVersions as unknown[]) || []; else if (table === partnerAgreementExecutionEvidence) result = (mockData.agreementEvidence as unknown[]) || [];
+      else if (table === partnerAgreementEvidenceInvalidations) result = (mockData.agreementInvalidations as unknown[]) || []; else result = [];
 
       resolve(result);
     }
@@ -214,4 +208,93 @@ test("Admin Partner Detail Read Model", async (t) => {
       assert.equal(result.data.eligibility?.updatedAt, null);
     }
   });
+  await t.test("readiness derived state is exposed and mapped properly", async () => {
+    const db = createMockDb({
+      partners: [{ id: 123, companyName: "Readiness Test", contactEmail: "rt@test.com", websiteUrl: null, logoUrl: null, createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{ partnerId: 123, legalName: "Ready LLC", registeredCountryCode: "PL", businessEmail: "rt@test.com", registeredAddressLine1: "L1", registeredPostalCode: "00", registeredCity: "C", verificationStatus: "verified" }],
+      taxIdentifiers: [{ partnerId: 123, verificationStatus: "verified", type: "NIP", value: "123", countryCode: "PL" }],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 123, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 123, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date("2023-01-01"), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date("2023-01-01"), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "123");
+    if (!result.ok) throw new Error("result is not ok");
+    assert.equal(result.data.readiness.status, "ready");
+    assert.deepEqual(result.data.readiness.blockers, []);
+  });
+
+  await t.test("T1. Legal Identity complete, Tax empty -> missing_tax_identity only", async () => {
+    const db = createMockDb({
+      partners: [{ id: 1, contactEmail: "test@test.com", createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{
+        legalName: "Test",
+        registeredAddressLine1: "Line 1",
+        registeredAddressLine2: null,
+        registeredPostalCode: "00-000",
+        registeredCity: "City",
+        registeredRegion: null,
+        registeredCountryCode: "PL",
+        verificationStatus: "verified" }],
+      taxIdentifiers: [],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 1, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 1, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date(), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date(), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "1");
+    if (!result.ok) throw new Error("result not ok");
+    assert.equal(result.data.readiness.status, "not_ready");
+    assert.ok(result.data.readiness.blockers.includes("missing_tax_identity"));
+    assert.ok(!result.data.readiness.blockers.includes("incomplete_legal_identity"));
+  });
+
+  await t.test("T2. Legal Identity incomplete, Tax valid -> incomplete_legal_identity only", async () => {
+    const db = createMockDb({
+      partners: [{ id: 1, contactEmail: "test@test.com", createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{
+        legalName: "Test",
+        registeredAddressLine1: "Line 1",
+        registeredAddressLine2: null,
+        registeredPostalCode: "00-000",
+        registeredCity: null, // MISSING CITY
+        registeredRegion: null,
+        registeredCountryCode: "PL",
+        verificationStatus: "verified" }],
+      taxIdentifiers: [{ identifierType: "NIP", identifierValue: "123", countryCode: "PL", verificationStatus: "verified" }],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 1, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 1, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date(), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date(), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "1");
+    if (!result.ok) throw new Error("result not ok");
+    assert.ok(result.data.readiness.blockers.includes("incomplete_legal_identity"));
+    assert.ok(!result.data.readiness.blockers.includes("missing_tax_identity"));
+  });
+
+  await t.test("T3. Legal Identity complete, Tax valid -> neither blocker", async () => {
+    const db = createMockDb({
+      partners: [{ id: 1, contactEmail: "test@test.com", createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{
+        legalName: "Test",
+        registeredAddressLine1: "Line 1",
+        registeredAddressLine2: null,
+        registeredPostalCode: "00-000",
+        registeredCity: "City",
+        registeredRegion: null,
+        registeredCountryCode: "PL",
+        verificationStatus: "verified" }],
+      taxIdentifiers: [{ identifierType: "NIP", identifierValue: "123", countryCode: "PL", verificationStatus: "verified" }],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 1, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 1, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date(), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date(), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "1");
+    if (!result.ok) throw new Error("result not ok");
+    assert.ok(!result.data.readiness.blockers.includes("incomplete_legal_identity"));
+    assert.ok(!result.data.readiness.blockers.includes("missing_tax_identity"));
+  });
+
 });

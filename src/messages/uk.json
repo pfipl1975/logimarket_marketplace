@@ -839,7 +839,21 @@
     "agreementErrorVersionNotActive": "Вибрана версія угоди не є активною.",
     "agreementErrorPartnerNotFound": "Партнера не знайдено.",
     "agreementErrorAlreadyInvalidated": "Цей запис доказу вже було анульовано.",
-    "agreementErrorSystem": "Сталася системна помилка."
+    "agreementErrorSystem": "Сталася системна помилка.",
+    "sellerReadinessSection": "Готовність продавця",
+    "sellerReadinessReady": "ГОТОВИЙ",
+    "sellerReadinessNotReady": "НЕ ГОТОВИЙ",
+    "sellerReadinessBlockers": "Блокування:",
+    "blocker_missing_partner": "Обліковий запис партнера відсутній",
+    "blocker_missing_legal_identity": "Юридична ідентичність відсутня",
+    "blocker_incomplete_legal_identity": "Юридична ідентичність неповна",
+    "blocker_missing_tax_identity": "Податковий ідентифікатор відсутній",
+    "blocker_verification_not_valid": "Верифікація очікується або неуспішна",
+    "blocker_eligibility_not_eligible": "Допуск продавця не схвалено",
+    "blocker_active_agreement_missing": "Відсутня активна партнерська угода",
+    "blocker_active_agreement_ambiguous": "Виявлено кілька активних партнерських угод",
+    "blocker_agreement_execution_missing": "Відсутній доказ прийняття угоди",
+    "blocker_agreement_execution_invalidated": "Доказ прийняття угоди анульовано"
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",

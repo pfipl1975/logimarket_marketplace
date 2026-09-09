@@ -839,7 +839,21 @@
     "agreementErrorVersionNotActive": "La version de contrat sélectionnée n'est pas active.",
     "agreementErrorPartnerNotFound": "Partenaire introuvable.",
     "agreementErrorAlreadyInvalidated": "Cette preuve a déjà été invalidée.",
-    "agreementErrorSystem": "Une erreur système est survenue."
+    "agreementErrorSystem": "Une erreur système est survenue.",
+    "sellerReadinessSection": "Préparation du vendeur",
+    "sellerReadinessReady": "PRÊT",
+    "sellerReadinessNotReady": "NON PRÊT",
+    "sellerReadinessBlockers": "Blocages :",
+    "blocker_missing_partner": "Compte partenaire introuvable",
+    "blocker_missing_legal_identity": "Identité juridique manquante",
+    "blocker_incomplete_legal_identity": "Identité juridique incomplète",
+    "blocker_missing_tax_identity": "Identifiant fiscal manquant",
+    "blocker_verification_not_valid": "Vérification en attente ou échouée",
+    "blocker_eligibility_not_eligible": "Éligibilité du vendeur non approuvée",
+    "blocker_active_agreement_missing": "Accord partenaire actif manquant",
+    "blocker_active_agreement_ambiguous": "Plusieurs accords partenaires actifs détectés",
+    "blocker_agreement_execution_missing": "Preuve d’acceptation de l’accord manquante",
+    "blocker_agreement_execution_invalidated": "Preuve d’acceptation de l’accord invalidée"
   },
   "adminOfferDetail": {
     "errorTitle": "Erreur de chargement",
