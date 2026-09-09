@@ -5,9 +5,12 @@ import { offers } from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import { parseDecimalToMinorUnits } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
-import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
 
 import type { OfferPublicationStatus } from "@/lib/schema";
+
+
+export type OfferPublicationTx = Parameters<Parameters<NodePgDatabase<typeof schema>["transaction"]>[0]>[0];
+export type PublicationSellerReadinessQuery = (tx: OfferPublicationTx, partnerId: number) => Promise<{ status: "ready" | "not_ready" }>;
 
 export type AdminOfferPublicationTarget = "published" | "archived";
 
@@ -162,7 +165,7 @@ export function evaluateOfferPublishEligibility(input: {
 export async function executeOfferPublicationStateChange(
   db: NodePgDatabase<typeof schema>,
   input: AdminOfferPublicationInput,
-  deps = { querySellerReadiness }
+  deps: { querySellerReadiness: PublicationSellerReadinessQuery }
 ): Promise<AdminOfferPublicationResult> {
   // Pre-DB transition check
   const preCheck = evaluateOfferPublicationTransition(
@@ -230,11 +233,10 @@ export async function executeOfferPublicationStateChange(
         if (canonicalModel === "ecommerce") {
           try {
             // querySellerReadiness accepts our transaction object thanks to ReadinessDbExecutor
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const readinessResult = await deps.querySellerReadiness(tx as any, offer.partnerId);
+            const readinessResult = await deps.querySellerReadiness(tx, offer.partnerId);
             sellerReadiness = readinessResult.status === "ready" ? "ready" : "not_ready";
-          } catch { // fail closed on error
-            sellerReadiness = "not_ready"; // fail closed on error
+          } catch {
+            sellerReadiness = "not_ready";
           }
         }
 

@@ -1050,7 +1050,8 @@ export async function changeAdminOfferPublicationState(rawInput: unknown) {
   }
 
   const { db } = await import("@/lib/db");
-  const result = await executeOfferPublicationStateChange(db, input);
+  const { querySellerReadiness } = await import("@/lib/admin/seller-readiness-query");
+  const result = await executeOfferPublicationStateChange(db, input, { querySellerReadiness });
 
   if (result.ok && result.changed) {
     revalidatePath("/", "layout");
