@@ -1,5 +1,5 @@
 import { NodePgDatabase } from "drizzle-orm/node-postgres";
-import { eq, and, sql, isNull } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import {
   partners,
   sellerLegalIdentities,
@@ -200,3 +200,4 @@ export async function resolveSellerReadiness<TSchema extends Record<string, unkn
     checks,
   };
 }
+

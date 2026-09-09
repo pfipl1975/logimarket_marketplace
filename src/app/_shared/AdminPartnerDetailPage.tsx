@@ -37,7 +37,7 @@ export async function AdminPartnerDetailPage({
     );
   }
 
-  const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility, agreementEvidence, readiness } = result.data;
+  const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility, agreementEvidence } = result.data;
   const backPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
 
   const missingFieldLabels = {
@@ -382,3 +382,4 @@ export async function AdminPartnerDetailPage({
     </div>
   );
 }
+
