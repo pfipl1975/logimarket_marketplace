@@ -13,7 +13,7 @@ import {
 import { type SellerReadinessResult, evaluateSellerReadiness, type SellerReadinessSnapshot } from "../partners/seller-readiness-core";
 import { buildSellerDisclosure } from "@/lib/legal/seller-disclosure";
 
-export async function querySellerReadiness(db: NodePgDatabase<Record<string, never>>, partnerId: number): Promise<SellerReadinessResult> {
+export async function querySellerReadiness<TSchema extends Record<string, unknown>>(db: NodePgDatabase<TSchema>, partnerId: number): Promise<SellerReadinessResult> {
   // Partner exists
   const partnerRows = await db.select({ id: partners.id }).from(partners).where(eq(partners.id, partnerId)).limit(1);
   const partnerExists = partnerRows.length > 0;
