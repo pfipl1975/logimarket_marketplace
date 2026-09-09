@@ -172,4 +172,33 @@ describe("Canonical Seller Readiness Domain Evaluator", () => {
     const count = res.blockers.filter(b => b === "verification_not_valid").length;
     assert.equal(count, 1);
   });
+
+  test("T. complete legal identity + no active tax identifier -> missing_tax_identity only", () => {
+    const snap = getBaseSnapshot();
+    snap.legalIdentity.isComplete = true; // Legal is complete on its own
+    snap.activeTaxIdentifiers = []; // No tax
+    const res = evaluateSellerReadiness(snap);
+    assert.equal(res.status, "not_ready");
+    assert.ok(res.blockers.includes("missing_tax_identity"));
+    assert.ok(!res.blockers.includes("incomplete_legal_identity"));
+  });
+
+  test("U. incomplete legal identity + valid active tax identifier -> incomplete_legal_identity", () => {
+    const snap = getBaseSnapshot();
+    snap.legalIdentity.isComplete = false;
+    snap.activeTaxIdentifiers = [{ verificationStatus: "verified" }];
+    const res = evaluateSellerReadiness(snap);
+    assert.equal(res.status, "not_ready");
+    assert.ok(res.blockers.includes("incomplete_legal_identity"));
+  });
+
+  test("V. complete legal identity + valid tax -> no legal/tax completeness blockers", () => {
+    const snap = getBaseSnapshot();
+    snap.legalIdentity.isComplete = true;
+    snap.activeTaxIdentifiers = [{ verificationStatus: "verified" }];
+    const res = evaluateSellerReadiness(snap);
+    assert.ok(!res.blockers.includes("missing_tax_identity"));
+    assert.ok(!res.blockers.includes("incomplete_legal_identity"));
+  });
+
 });

@@ -13,7 +13,7 @@ import {
 import { type SellerReadinessResult, evaluateSellerReadiness, type SellerReadinessSnapshot } from "../partners/seller-readiness-core";
 import { buildSellerDisclosure } from "@/lib/legal/seller-disclosure";
 
-export async function querySellerReadiness(db: NodePgDatabase<any>, partnerId: number): Promise<SellerReadinessResult> {
+export async function querySellerReadiness(db: NodePgDatabase<Record<string, never>>, partnerId: number): Promise<SellerReadinessResult> {
   // Partner exists
   const partnerRows = await db.select({ id: partners.id }).from(partners).where(eq(partners.id, partnerId)).limit(1);
   const partnerExists = partnerRows.length > 0;
@@ -46,7 +46,8 @@ export async function querySellerReadiness(db: NodePgDatabase<any>, partnerId: n
       },
       taxRows.map(t => ({ type: t.type, value: t.value, countryCode: t.countryCode }))
     );
-    isComplete = disclosure.completeness.complete;
+    const legalMissingFields = disclosure.completeness.missing.filter(field => field !== "tax_identifier");
+    isComplete = legalMissingFields.length === 0;
     liVerificationStatus = legalIdentity.verificationStatus;
   }
 
