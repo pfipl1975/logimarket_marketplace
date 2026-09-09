@@ -218,16 +218,83 @@ test("Admin Partner Detail Read Model", async (t) => {
       agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
       agreementEvidence: [{ id: 99, partnerId: 123, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date("2023-01-01"), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date("2023-01-01"), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
     });
-    const result = await getAdminPartnerDetailReadModel(db, 123);
-    if (!result) throw new Error("result is null");
+    const result = await getAdminPartnerDetailReadModel(db, "123");
+    if (!result.ok) throw new Error("result is not ok");
     assert.equal(result.data.readiness.status, "ready");
     assert.deepEqual(result.data.readiness.blockers, []);
   });
 
+  await t.test("T1. Legal Identity complete, Tax empty -> missing_tax_identity only", async () => {
+    const db = createMockDb({
+      partners: [{ id: 1, contactEmail: "test@test.com", createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{
+        legalName: "Test",
+        registeredAddressLine1: "Line 1",
+        registeredAddressLine2: null,
+        registeredPostalCode: "00-000",
+        registeredCity: "City",
+        registeredRegion: null,
+        registeredCountryCode: "PL",
+        verificationStatus: "verified" }],
+      taxIdentifiers: [],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 1, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 1, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date(), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date(), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "1");
+    if (!result.ok) throw new Error("result not ok");
+    assert.equal(result.data.readiness.status, "not_ready");
+    assert.ok(result.data.readiness.blockers.includes("missing_tax_identity"));
+    assert.ok(!result.data.readiness.blockers.includes("incomplete_legal_identity"));
+  });
 
+  await t.test("T2. Legal Identity incomplete, Tax valid -> incomplete_legal_identity only", async () => {
+    const db = createMockDb({
+      partners: [{ id: 1, contactEmail: "test@test.com", createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{
+        legalName: "Test",
+        registeredAddressLine1: "Line 1",
+        registeredAddressLine2: null,
+        registeredPostalCode: "00-000",
+        registeredCity: null, // MISSING CITY
+        registeredRegion: null,
+        registeredCountryCode: "PL",
+        verificationStatus: "verified" }],
+      taxIdentifiers: [{ identifierType: "NIP", identifierValue: "123", countryCode: "PL", verificationStatus: "verified" }],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 1, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 1, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date(), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date(), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "1");
+    if (!result.ok) throw new Error("result not ok");
+    assert.ok(result.data.readiness.blockers.includes("incomplete_legal_identity"));
+    assert.ok(!result.data.readiness.blockers.includes("missing_tax_identity"));
+  });
+
+  await t.test("T3. Legal Identity complete, Tax valid -> neither blocker", async () => {
+    const db = createMockDb({
+      partners: [{ id: 1, contactEmail: "test@test.com", createdAt: new Date("2023-01-01") }],
+      legalIdentities: [{
+        legalName: "Test",
+        registeredAddressLine1: "Line 1",
+        registeredAddressLine2: null,
+        registeredPostalCode: "00-000",
+        registeredCity: "City",
+        registeredRegion: null,
+        registeredCountryCode: "PL",
+        verificationStatus: "verified" }],
+      taxIdentifiers: [{ identifierType: "NIP", identifierValue: "123", countryCode: "PL", verificationStatus: "verified" }],
+      registryIdentifiers: [],
+      eligibility: [{ partnerId: 1, eligibilityStatus: "eligible" }],
+      agreementVersions: [{ id: 1, agreementType: "partner_agreement_b2b", status: "active", versionString: "1.0.0" }],
+      agreementEvidence: [{ id: 99, partnerId: 1, agreementVersionId: 1, version: "1.0.0", agreementType: "partner_agreement_b2b", status: "active", executionMethod: "system", signedAt: new Date(), signatoryName: "Test", signatoryRole: "CEO", signatoryEmail: "test@test.com", externalPlatform: null, externalTransactionId: null, signedPdfSha256: null, recordedAt: new Date(), recordedByAdminUserId: null, invalidationId: null, invalidationReason: null, invalidatedAt: null, invalidatedByAdminUserId: null, invalidated: null }],
+    });
+    const result = await getAdminPartnerDetailReadModel(db, "1");
+    if (!result.ok) throw new Error("result not ok");
+    assert.ok(!result.data.readiness.blockers.includes("incomplete_legal_identity"));
+    assert.ok(!result.data.readiness.blockers.includes("missing_tax_identity"));
+  });
 
 });
-
-
-
-
