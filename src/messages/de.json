@@ -839,7 +839,21 @@
     "agreementErrorVersionNotActive": "Die ausgewählte Vertragsversion ist nicht aktiv.",
     "agreementErrorPartnerNotFound": "Partner nicht gefunden.",
     "agreementErrorAlreadyInvalidated": "Dieser Nachweis wurde bereits für ungültig erklärt.",
-    "agreementErrorSystem": "Ein Systemfehler ist aufgetreten."
+    "agreementErrorSystem": "Ein Systemfehler ist aufgetreten.",
+    "sellerReadinessSection": "Verkäuferbereitschaft",
+    "sellerReadinessReady": "BEREIT",
+    "sellerReadinessNotReady": "NICHT BEREIT",
+    "sellerReadinessBlockers": "Blocker:",
+    "blocker_missing_partner": "Partnerkonto fehlt",
+    "blocker_missing_legal_identity": "Rechtliche Identität fehlt",
+    "blocker_incomplete_legal_identity": "Rechtliche Identität unvollständig",
+    "blocker_missing_tax_identity": "Steueridentifikationsnummer fehlt",
+    "blocker_verification_not_valid": "Verifizierung ausstehend oder fehlgeschlagen",
+    "blocker_eligibility_not_eligible": "Verkäuferberechtigung nicht genehmigt",
+    "blocker_active_agreement_missing": "Aktive Partnervereinbarung fehlt",
+    "blocker_active_agreement_ambiguous": "Mehrere aktive Vereinbarungen gefunden",
+    "blocker_agreement_execution_missing": "Nachweis über den Abschluss der Vereinbarung fehlt",
+    "blocker_agreement_execution_invalidated": "Nachweis über den Abschluss der Vereinbarung ungültig"
   },
   "adminOfferDetail": {
     "errorTitle": "Fehler beim Laden der Daten",

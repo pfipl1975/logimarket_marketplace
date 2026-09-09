@@ -382,4 +382,3 @@ export async function AdminPartnerDetailPage({
     </div>
   );
 }
-

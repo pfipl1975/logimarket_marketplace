@@ -839,7 +839,21 @@
     "agreementErrorVersionNotActive": "La versión de acuerdo seleccionada no está activa.",
     "agreementErrorPartnerNotFound": "Socio no encontrado.",
     "agreementErrorAlreadyInvalidated": "Esta prueba ya ha sido invalidada.",
-    "agreementErrorSystem": "Se produjo un error del sistema."
+    "agreementErrorSystem": "Se produjo un error del sistema.",
+    "sellerReadinessSection": "Disposición del Vendedor",
+    "sellerReadinessReady": "LISTO",
+    "sellerReadinessNotReady": "NO LISTO",
+    "sellerReadinessBlockers": "Bloqueadores:",
+    "blocker_missing_partner": "Falta la cuenta de socio",
+    "blocker_missing_legal_identity": "Falta la identidad legal",
+    "blocker_incomplete_legal_identity": "Identidad legal incompleta",
+    "blocker_missing_tax_identity": "Falta el identificador fiscal",
+    "blocker_verification_not_valid": "Verificación pendiente o fallida",
+    "blocker_eligibility_not_eligible": "Elegibilidad del vendedor no aprobada",
+    "blocker_active_agreement_missing": "Falta el acuerdo de socio activo",
+    "blocker_active_agreement_ambiguous": "Se encontraron múltiples acuerdos activos",
+    "blocker_agreement_execution_missing": "Falta evidencia de ejecución del acuerdo",
+    "blocker_agreement_execution_invalidated": "Evidencia de ejecución del acuerdo invalidada"
   },
   "adminOfferDetail": {
     "errorTitle": "Error al cargar datos",

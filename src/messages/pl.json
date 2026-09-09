@@ -839,7 +839,21 @@
     "agreementErrorVersionNotActive": "Wskazana wersja umowy nie jest aktywna.",
     "agreementErrorPartnerNotFound": "Nie znaleziono partnera.",
     "agreementErrorAlreadyInvalidated": "Ten dowód został już unieważniony.",
-    "agreementErrorSystem": "Wystąpił błąd systemowy."
+    "agreementErrorSystem": "Wystąpił błąd systemowy.",
+    "sellerReadinessSection": "Gotowość Sprzedawcy",
+    "sellerReadinessReady": "GOTOWY",
+    "sellerReadinessNotReady": "NIE GOTOWY",
+    "sellerReadinessBlockers": "Blokady:",
+    "blocker_missing_partner": "Brak konta partnera",
+    "blocker_missing_legal_identity": "Brak tożsamości prawnej",
+    "blocker_incomplete_legal_identity": "Tożsamość prawna niekompletna",
+    "blocker_missing_tax_identity": "Brak identyfikatora podatkowego",
+    "blocker_verification_not_valid": "Weryfikacja w toku lub odrzucona",
+    "blocker_eligibility_not_eligible": "Kwalifikacja sprzedawcy niezatwierdzona",
+    "blocker_active_agreement_missing": "Brak aktywnego regulaminu partnera",
+    "blocker_active_agreement_ambiguous": "Znaleziono wiele aktywnych regulaminów",
+    "blocker_agreement_execution_missing": "Brak dowodu akceptacji regulaminu",
+    "blocker_agreement_execution_invalidated": "Dowód akceptacji regulaminu unieważniony"
   },
   "adminOfferDetail": {
     "errorTitle": "Błąd pobierania danych",

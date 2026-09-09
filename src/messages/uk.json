@@ -839,7 +839,21 @@
     "agreementErrorVersionNotActive": "Вибрана версія угоди не є активною.",
     "agreementErrorPartnerNotFound": "Партнера не знайдено.",
     "agreementErrorAlreadyInvalidated": "Цей запис доказу вже було анульовано.",
-    "agreementErrorSystem": "Сталася системна помилка."
+    "agreementErrorSystem": "Сталася системна помилка.",
+    "sellerReadinessSection": "Seller Readiness",
+    "sellerReadinessReady": "READY",
+    "sellerReadinessNotReady": "NOT READY",
+    "sellerReadinessBlockers": "Blockers:",
+    "blocker_missing_partner": "Partner account missing",
+    "blocker_missing_legal_identity": "Legal identity missing",
+    "blocker_incomplete_legal_identity": "Legal identity incomplete",
+    "blocker_missing_tax_identity": "Tax identifier missing",
+    "blocker_verification_not_valid": "Verification pending or failed",
+    "blocker_eligibility_not_eligible": "Seller eligibility not approved",
+    "blocker_active_agreement_missing": "Active partner agreement missing",
+    "blocker_active_agreement_ambiguous": "Multiple active agreements found",
+    "blocker_agreement_execution_missing": "Agreement execution evidence missing",
+    "blocker_agreement_execution_invalidated": "Agreement execution evidence invalidated"
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",
