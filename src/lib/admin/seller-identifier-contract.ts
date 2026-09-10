@@ -110,3 +110,27 @@ export function isRegistryIdentifierType(
 ): value is RegistryIdentifierType {
   return REGISTRY_IDENTIFIER_TYPES.includes(value as RegistryIdentifierType);
 }
+
+export function resolveCanonicalTaxIdentity(input: {
+  identifierType: string;
+  countryCode: string;
+  identifierValue: string;
+}) {
+  if (input.countryCode === "PL") {
+    let clean = removeSafeSeparators(input.identifierValue);
+    if (input.identifierType === "vat_id" && /^PL/i.test(clean)) {
+      clean = clean.slice(2);
+    }
+    return {
+      canonicalIdentityClass: "PL:NIP",
+      canonicalIdentifierValue: clean,
+    };
+  }
+  // For non-PL: canonical class is COUNTRY:TYPE; canonical value is the trimmed,
+  // uppercased identifier as stored by the schema — no additional separator stripping
+  // because no explicit international normalization rule is defined for other countries.
+  return {
+    canonicalIdentityClass: `${input.countryCode}:${input.identifierType}`.toUpperCase(),
+    canonicalIdentifierValue: input.identifierValue.trim().toUpperCase(),
+  };
+}

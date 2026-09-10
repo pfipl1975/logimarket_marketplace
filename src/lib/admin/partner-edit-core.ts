@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { buildLegalIdentitySnapshot, validateEventOwnership } from "../verification/events-core";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { partners, sellerLegalIdentities, sellerTaxIdentifiers,
@@ -8,6 +8,7 @@ import { partners, sellerLegalIdentities, sellerTaxIdentifiers,
 import {
   canonicalRegistryIdentifierWriteSchema,
   canonicalTaxIdentifierWriteSchema,
+  resolveCanonicalTaxIdentity,
 } from "@/lib/admin/seller-identifier-contract";
 
 // ----------------------------------------------------------------------
@@ -267,6 +268,7 @@ export type AdminSellerTaxIdentifierAddResult =
   | { ok: false; code: "PARTNER_NOT_FOUND" }
   | { ok: false; code: "LEGAL_IDENTITY_REQUIRED" }
   | { ok: false; code: "TAX_IDENTIFIER_CONFLICT" }
+  | { ok: false; code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED"; existingPartnerId?: number }
   | { ok: false; code: "SYSTEM_ERROR" };
 
 export async function executeAdminSellerTaxIdentifierAdd(
@@ -274,42 +276,51 @@ export async function executeAdminSellerTaxIdentifierAdd(
   input: AdminSellerTaxIdentifierAddInput
 ): Promise<AdminSellerTaxIdentifierAddResult> {
   try {
+    const canonical = resolveCanonicalTaxIdentity(input);
     return await db.transaction(async (tx) => {
       const partnerRows = await tx
         .select({ id: partners.id })
         .from(partners)
         .where(eq(partners.id, input.partnerId))
+        .for("update")
         .limit(1);
 
       if (partnerRows.length === 0) {
         return { ok: false as const, code: "PARTNER_NOT_FOUND" as const };
       }
 
-      const identityRows = await tx
+      const legalRows = await tx
         .select({ partnerId: sellerLegalIdentities.partnerId })
         .from(sellerLegalIdentities)
         .where(eq(sellerLegalIdentities.partnerId, input.partnerId))
         .limit(1);
 
-      if (identityRows.length === 0) {
+      if (legalRows.length === 0) {
         return { ok: false as const, code: "LEGAL_IDENTITY_REQUIRED" as const };
       }
 
       const conflictRows = await tx
-        .select({ id: sellerTaxIdentifiers.id })
+        .select({ partnerId: sellerTaxIdentifiers.partnerId, identifierType: sellerTaxIdentifiers.identifierType })
         .from(sellerTaxIdentifiers)
         .where(
           and(
-            eq(sellerTaxIdentifiers.partnerId, input.partnerId),
-            eq(sellerTaxIdentifiers.identifierType, input.identifierType),
-            eq(sellerTaxIdentifiers.countryCode, input.countryCode),
-            eq(sellerTaxIdentifiers.identifierValue, input.identifierValue)
+            eq(sellerTaxIdentifiers.canonicalIdentityClass, canonical.canonicalIdentityClass),
+            eq(sellerTaxIdentifiers.canonicalIdentifierValue, canonical.canonicalIdentifierValue),
+            isNull(sellerTaxIdentifiers.retiredAt)
           )
         )
-        .limit(1);
+        .limit(5);
 
       if (conflictRows.length > 0) {
-        return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" as const };
+        const differentPartner = conflictRows.find(r => r.partnerId !== input.partnerId);
+        if (differentPartner) {
+          return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: differentPartner.partnerId };
+        }
+
+        const sameType = conflictRows.find(r => r.identifierType === input.identifierType);
+        if (sameType) {
+          return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" as const };
+        }
       }
 
       await tx.insert(sellerTaxIdentifiers).values({
@@ -317,6 +328,8 @@ export async function executeAdminSellerTaxIdentifierAdd(
         identifierType: input.identifierType,
         identifierValue: input.identifierValue,
         countryCode: input.countryCode,
+        canonicalIdentityClass: canonical.canonicalIdentityClass,
+        canonicalIdentifierValue: canonical.canonicalIdentifierValue,
         verificationStatus: "unverified",
       });
 
@@ -324,7 +337,12 @@ export async function executeAdminSellerTaxIdentifierAdd(
     });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "code" in error && error.code === "23505") {
-      return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" };
+      // Narrow: only the canonical uniqueness index maps to the canonical identity conflict code.
+      // Any other 23505 (e.g. original identifier_value unique constraint) is a system error.
+      const constraint = "constraint" in error ? (error as { constraint?: string }).constraint : undefined;
+      if (constraint === "uq_seller_tax_canonical_active") {
+        return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const };
+      }
     }
     console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierAdd system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };
