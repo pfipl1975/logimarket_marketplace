@@ -2958,6 +2958,19 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     if (res.ok) {
       const partnerId = res.partnerId;
+
+      // Prove createPartnerCore cross-Partner duplicate preflight against real PostgreSQL
+      const duplicateInput = { ...rawInput, companyName: "Duplicate Corp", contactEmail: "dup@test.com" };
+      const dupRes = await createPartnerCore(db, duplicateInput);
+      assert.equal(dupRes.ok, false);
+      if (!dupRes.ok) {
+        assert.equal((dupRes as any).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+        assert.equal((dupRes as any).existingPartnerId, partnerId);
+      }
+
+      // Prove rejected Partner B was not persisted
+      const dupRows = await pool.query(`SELECT * FROM partners WHERE company_name = 'Duplicate Corp'`);
+      assert.equal(dupRows.rowCount, 0, "Rejected duplicate partner must not be persisted");
       assert.ok(partnerId > 0);
 
       const pRows = await pool.query(`SELECT * FROM partners WHERE id = $1`, [partnerId]);

@@ -200,9 +200,6 @@ function makeFakeCreateDb(opts: {
         return { returning: () => [] };
       },
     }),
-    rollback: () => {
-      // No-op in fake DB — real atomicity is proven by PATH H in ci-integration.test.ts
-    },
   };
   return db;
 }
@@ -228,7 +225,10 @@ describe("createPartnerCore — canonical uniqueness and 23505 domain mapping", 
     const db = makeFakeCreateDb({ conflictPartnerId: 999 });
     const res = await createPartnerCore(db as never, validParsedInput());
     assert.equal(res.ok, false);
-    if (!res.ok) assert.equal((res as { reason: string }).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+    if (!res.ok) {
+      assert.equal((res as { reason: string }).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+      assert.equal((res as { existingPartnerId?: number }).existingPartnerId, 999);
+    }
   });
 
   // §10 N for create: 23505 on canonical index during race → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
@@ -236,7 +236,10 @@ describe("createPartnerCore — canonical uniqueness and 23505 domain mapping", 
     const db = makeFakeCreateDb({ insertThrowsCanonical23505: true });
     const res = await createPartnerCore(db as never, validParsedInput());
     assert.equal(res.ok, false);
-    if (!res.ok) assert.equal((res as { reason: string }).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+    if (!res.ok) {
+      assert.equal((res as { reason: string }).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+      assert.equal((res as { existingPartnerId?: number }).existingPartnerId, undefined);
+    }
   });
 
   // §10 O for create: unrelated 23505 → PARTNER_CREATE_FAILED, NOT tax conflict

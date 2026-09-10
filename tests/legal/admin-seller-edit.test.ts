@@ -340,7 +340,10 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
     } satisfies AdminSellerTaxIdentifierAddInput;
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, false);
-    if (!res.ok) assert.strictEqual(res.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+    if (!res.ok) {
+      assert.strictEqual(res.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+      assert.strictEqual((res as { existingPartnerId?: number }).existingPartnerId, undefined);
+    }
   });
 
   // §10 O: unrelated 23505 (different constraint) → SYSTEM_ERROR, NOT falsely classified as tax duplicate

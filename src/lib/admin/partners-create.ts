@@ -85,7 +85,7 @@ export type AdminPartnerCreateValidationCode =
 export type AdminPartnerCreateResult =
   | { ok: true; partnerId: number }
   | { ok: false; reason: "PARTNER_INVALID_INPUT"; code: AdminPartnerCreateValidationCode; field: string | null }
-  | { ok: false; reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED"; existingPartnerId: number }
+  | { ok: false; reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED"; existingPartnerId?: number }
   | { ok: false; reason: "PARTNER_CREATE_FAILED" };
 
 const validationCodes = new Set<AdminPartnerCreateValidationCode>([
@@ -145,7 +145,6 @@ export async function createPartnerCore(
           )
           .limit(1);
         if (conflict.length > 0) {
-          tx.rollback();
           return { ok: false as const, reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: conflict[0].partnerId };
         }
       }
@@ -209,7 +208,7 @@ export async function createPartnerCore(
     if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "23505") {
       const constraint = "constraint" in error ? (error as { constraint?: string }).constraint : undefined;
       if (constraint === "uq_seller_tax_canonical_active") {
-        return { ok: false as const, reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: 0 };
+        return { ok: false as const, reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const };
       }
     }
     console.error(`[partner-create] stage=transaction errorName=${error instanceof Error ? error.name : "Unknown"}`);

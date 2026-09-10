@@ -268,7 +268,7 @@ export type AdminSellerTaxIdentifierAddResult =
   | { ok: false; code: "PARTNER_NOT_FOUND" }
   | { ok: false; code: "LEGAL_IDENTITY_REQUIRED" }
   | { ok: false; code: "TAX_IDENTIFIER_CONFLICT" }
-  | { ok: false; code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED"; existingPartnerId: number }
+  | { ok: false; code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED"; existingPartnerId?: number }
   | { ok: false; code: "SYSTEM_ERROR" };
 
 export async function executeAdminSellerTaxIdentifierAdd(
@@ -341,7 +341,7 @@ export async function executeAdminSellerTaxIdentifierAdd(
       // Any other 23505 (e.g. original identifier_value unique constraint) is a system error.
       const constraint = "constraint" in error ? (error as { constraint?: string }).constraint : undefined;
       if (constraint === "uq_seller_tax_canonical_active") {
-        return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: 0 };
+        return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const };
       }
     }
     console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierAdd system error");
