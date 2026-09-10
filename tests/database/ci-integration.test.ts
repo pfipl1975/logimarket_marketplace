@@ -180,7 +180,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   };
 
   await t.test(
-    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0010",
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0011",
     async () => {
       await cleanDB();
 
