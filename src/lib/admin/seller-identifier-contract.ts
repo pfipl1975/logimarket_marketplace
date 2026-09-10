@@ -126,8 +126,11 @@ export function resolveCanonicalTaxIdentity(input: {
       canonicalIdentifierValue: clean,
     };
   }
+  // For non-PL: canonical class is COUNTRY:TYPE; canonical value is the trimmed,
+  // uppercased identifier as stored by the schema — no additional separator stripping
+  // because no explicit international normalization rule is defined for other countries.
   return {
     canonicalIdentityClass: `${input.countryCode}:${input.identifierType}`.toUpperCase(),
-    canonicalIdentifierValue: removeSafeSeparators(input.identifierValue).toUpperCase(),
+    canonicalIdentifierValue: input.identifierValue.trim().toUpperCase(),
   };
 }

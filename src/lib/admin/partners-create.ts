@@ -206,6 +206,12 @@ export async function createPartnerCore(
       return { ok: true as const, partnerId: Number(partner.id) };
     });
   } catch (error) {
+    if (error && typeof error === "object" && "code" in error && (error as { code?: string }).code === "23505") {
+      const constraint = "constraint" in error ? (error as { constraint?: string }).constraint : undefined;
+      if (constraint === "uq_seller_tax_canonical_active") {
+        return { ok: false as const, reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: 0 };
+      }
+    }
     console.error(`[partner-create] stage=transaction errorName=${error instanceof Error ? error.name : "Unknown"}`);
     return { ok: false, reason: "PARTNER_CREATE_FAILED" };
   }

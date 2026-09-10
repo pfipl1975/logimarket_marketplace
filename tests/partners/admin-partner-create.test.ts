@@ -138,3 +138,112 @@ test("client payload cannot grant compliance state", () => {
     assert.equal(key in safe, false, key);
   }
 });
+
+// ---------------------------------------------------------------------------
+// §10 L, M + §11: createPartnerCore canonical uniqueness and atomicity
+// Unit-level (fake DB) proof — real DB atomicity is proven by PATH H in ci-integration.test.ts
+// ---------------------------------------------------------------------------
+
+import { describe } from "node:test";
+import { createPartnerCore } from "@/lib/admin/partners-create";
+
+/** Minimal fake DB for createPartnerCore. Supports:
+ * - conflictPartnerId: partner whose canonical identity conflicts (different partner)
+ * - insertThrowsCanonical23505: simulate race in tax identifier INSERT
+ * - insertThrowsUnrelated23505: simulate unrelated 23505 in some other INSERT
+ */
+function makeFakeCreateDb(opts: {
+  conflictPartnerId?: number;
+  insertThrowsCanonical23505?: boolean;
+  insertThrowsUnrelated23505?: boolean;
+} = {}) {
+  let selectCount = 0;
+  let partnerInserted = false;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const db: Record<string, any> = {
+    transaction: async (cb: (tx: unknown) => Promise<unknown>) => cb(db),
+    select: () => {
+      const self = {
+        from: () => self,
+        where: () => self,
+        limit: () => {
+          selectCount++;
+          // First select is the canonical conflict check
+          if (selectCount === 1 && opts.conflictPartnerId !== undefined) {
+            return [{ partnerId: opts.conflictPartnerId }];
+          }
+          return [];
+        },
+      };
+      return self;
+    },
+    insert: () => ({
+      values: () => {
+        if (!partnerInserted) {
+          partnerInserted = true;
+          // partners insert — succeeds, returns id
+          return {
+            returning: () => [{ id: 42 }],
+          };
+        }
+        // legal identities insert — succeeds
+        if (!opts.insertThrowsCanonical23505 && !opts.insertThrowsUnrelated23505) {
+          return { returning: () => [] };
+        }
+        // tax identifier insert — throws
+        if (opts.insertThrowsCanonical23505) {
+          throw { code: "23505", constraint: "uq_seller_tax_canonical_active" };
+        }
+        if (opts.insertThrowsUnrelated23505) {
+          throw { code: "23505", constraint: "some_other_constraint" };
+        }
+        return { returning: () => [] };
+      },
+    }),
+    rollback: () => {
+      // No-op in fake DB — real atomicity is proven by PATH H in ci-integration.test.ts
+    },
+  };
+  return db;
+}
+
+const validParsedInput = () => {
+  const parsed = adminPartnerCreateSchema.safeParse(validPlInput());
+  if (!parsed.success) throw new Error("fixture parse failed");
+  return parsed.data;
+};
+
+describe("createPartnerCore — canonical uniqueness and 23505 domain mapping", () => {
+
+  // §10 L: Different NIP → allowed (no pre-existing conflict)
+  test("L: no pre-existing conflict → createPartnerCore succeeds", async () => {
+    const db = makeFakeCreateDb();
+    const res = await createPartnerCore(db as never, validParsedInput());
+    assert.equal(res.ok, true);
+  });
+
+  // §11 / §10 J equivalent for create: cross-partner canonical conflict → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED, partner NOT persisted
+  test("§11: createPartnerCore with cross-partner canonical conflict → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED", async () => {
+    // The preflight SELECT finds a conflict on a different partner (id=999)
+    const db = makeFakeCreateDb({ conflictPartnerId: 999 });
+    const res = await createPartnerCore(db as never, validParsedInput());
+    assert.equal(res.ok, false);
+    if (!res.ok) assert.equal((res as { reason: string }).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+  });
+
+  // §10 N for create: 23505 on canonical index during race → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
+  test("N: createPartnerCore race 23505 on uq_seller_tax_canonical_active → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED", async () => {
+    const db = makeFakeCreateDb({ insertThrowsCanonical23505: true });
+    const res = await createPartnerCore(db as never, validParsedInput());
+    assert.equal(res.ok, false);
+    if (!res.ok) assert.equal((res as { reason: string }).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+  });
+
+  // §10 O for create: unrelated 23505 → PARTNER_CREATE_FAILED, NOT tax conflict
+  test("O: createPartnerCore race 23505 on unrelated constraint → PARTNER_CREATE_FAILED", async () => {
+    const db = makeFakeCreateDb({ insertThrowsUnrelated23505: true });
+    const res = await createPartnerCore(db as never, validParsedInput());
+    assert.equal(res.ok, false);
+    if (!res.ok) assert.equal((res as { reason: string }).reason, "PARTNER_CREATE_FAILED");
+  });
+});

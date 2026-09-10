@@ -20,7 +20,8 @@ BEGIN
             END,
             '[\s\-]', '', 'g'
           )
-        ELSE UPPER(REGEXP_REPLACE(identifier_value, '[\s\-]', '', 'g'))
+        -- Non-PL: trim and uppercase only; no separator stripping (no universal normalization rule defined)
+        ELSE UPPER(TRIM(identifier_value))
       END AS canonical_value
     FROM seller_tax_identifiers
     WHERE retired_at IS NULL
@@ -40,7 +41,9 @@ END $$;
 ALTER TABLE "seller_tax_identifiers" ADD COLUMN "canonical_identity_class" varchar(50);
 ALTER TABLE "seller_tax_identifiers" ADD COLUMN "canonical_identifier_value" varchar(100);
 
--- Backfill values
+-- Backfill values using the same normalization logic as resolveCanonicalTaxIdentity:
+-- PL: strip spaces/hyphens; strip 'PL' prefix from vat_id; class = PL:NIP
+-- Non-PL: trim + uppercase; no separator stripping (no universal rule defined)
 UPDATE "seller_tax_identifiers"
 SET
   "canonical_identity_class" = CASE
@@ -56,7 +59,8 @@ SET
         END,
         '[\s\-]', '', 'g'
       )
-    ELSE UPPER(REGEXP_REPLACE("identifier_value", '[\s\-]', '', 'g'))
+    -- Non-PL: trim and uppercase only
+    ELSE UPPER(TRIM("identifier_value"))
   END;
 
 ALTER TABLE "seller_tax_identifiers" ALTER COLUMN "canonical_identity_class" SET NOT NULL;

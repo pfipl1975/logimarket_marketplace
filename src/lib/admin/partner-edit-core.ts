@@ -333,7 +333,12 @@ export async function executeAdminSellerTaxIdentifierAdd(
     });
   } catch (error: unknown) {
     if (error && typeof error === "object" && "code" in error && error.code === "23505") {
-      return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" };
+      // Narrow: only the canonical uniqueness index maps to the canonical identity conflict code.
+      // Any other 23505 (e.g. original identifier_value unique constraint) is a system error.
+      const constraint = "constraint" in error ? (error as { constraint?: string }).constraint : undefined;
+      if (constraint === "uq_seller_tax_canonical_active") {
+        return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: 0 };
+      }
     }
     console.error("[ADMIN_DB] executeAdminSellerTaxIdentifierAdd system error");
     return { ok: false as const, code: "SYSTEM_ERROR" };

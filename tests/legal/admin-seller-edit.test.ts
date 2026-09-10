@@ -18,6 +18,7 @@ import {
 
 } from "../../src/lib/admin/partner-edit-core";
 import { buildSellerDisclosure } from "../../src/lib/legal/seller-disclosure";
+import { resolveCanonicalTaxIdentity } from "../../src/lib/admin/seller-identifier-contract";
 import { executeAdminSellerRegistryIdentifierAdd, executeAdminSellerRegistryIdentifierDelete, AdminSellerRegistryIdentifierAddInput, AdminSellerRegistryIdentifierDeleteInput } from "../../src/lib/admin/partner-edit-core";
 
 describe("Admin Seller Legal Data Save Input Validation", () => {
@@ -100,7 +101,9 @@ type FakeDbConfig = {
   identityExists?: boolean;
   deleteReturnsRow?: boolean;
   insertThrowsDuplicate?: boolean;
+  insertThrowsUnrelatedDuplicate?: boolean;
   taxIdentifierConflictExists?: boolean;
+  crossPartnerConflictExists?: boolean;
 };
 
 class FakeDb {
@@ -151,7 +154,11 @@ class FakeDb {
             verificationStatus: "unverified"
           }] : [];
       } else if (this.selectCallIndex === 3) {
-        res = this.config.taxIdentifierConflictExists ? [{ partnerId: 1 }] : [];
+        if (this.config.crossPartnerConflictExists) {
+          res = [{ partnerId: 999 }]; // different partner — cross-partner conflict
+        } else {
+          res = this.config.taxIdentifierConflictExists ? [{ partnerId: 1 }] : [];
+        }
       }
       res.for = () => res;
       return res;
@@ -173,7 +180,10 @@ class FakeDb {
     return {
       values: (values: Record<string, unknown>) => {
         if (this.config.insertThrowsDuplicate) {
-          throw { code: "23505" };
+          throw { code: "23505", constraint: "uq_seller_tax_canonical_active" };
+        }
+        if (this.config.insertThrowsUnrelatedDuplicate) {
+          throw { code: "23505", constraint: "some_other_unique_constraint" };
         }
         this.inserts.push({ table, values });
         const chain: Record<string, unknown> = {
@@ -272,7 +282,8 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
     if (!res.ok) assert.strictEqual(res.code, "LEGAL_IDENTITY_REQUIRED");
   });
 
-  test("pre-existing exact duplicate SELECT -> TAX_IDENTIFIER_CONFLICT and NO INSERT", async () => {
+  // §10 I: same partner, same canonical identity → TAX_IDENTIFIER_CONFLICT
+  test("I: pre-existing exact duplicate SELECT same partner -> TAX_IDENTIFIER_CONFLICT and NO INSERT", async () => {
     const db = new FakeDb({ taxIdentifierConflictExists: true });
     const input = {
       partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
@@ -283,14 +294,49 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
     assert.strictEqual(db.inserts.length, 0); // duplicate precheck performs NO INSERT
   });
 
-  test("INSERT throws PostgreSQL 23505 race -> TAX_IDENTIFIER_CONFLICT", async () => {
+  // §10 J: same canonical identity, different partner → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
+  test("J: cross-partner SELECT conflict -> SELLER_TAX_IDENTITY_ALREADY_ASSIGNED with existingPartnerId", async () => {
+    const db = new FakeDb({ crossPartnerConflictExists: true });
+    const input = {
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
+    } satisfies AdminSellerTaxIdentifierAddInput;
+    const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) {
+      assert.strictEqual(res.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+      assert.strictEqual((res as { existingPartnerId?: number }).existingPartnerId, 999);
+    }
+    assert.strictEqual(db.inserts.length, 0);
+  });
+
+  // §10 K: tax_id vs vat_id same PL NIP across partners → resolveCanonicalTaxIdentity produces same class/value
+  test("K: tax_id and vat_id with same PL NIP are equivalent canonical class for cross-partner detection", () => {
+    const fromTaxId = resolveCanonicalTaxIdentity({ identifierType: "tax_id", countryCode: "PL", identifierValue: "1234567890" });
+    const fromVatId = resolveCanonicalTaxIdentity({ identifierType: "vat_id", countryCode: "PL", identifierValue: "PL1234567890" });
+    assert.strictEqual(fromTaxId.canonicalIdentityClass, fromVatId.canonicalIdentityClass);
+    assert.strictEqual(fromTaxId.canonicalIdentifierValue, fromVatId.canonicalIdentifierValue);
+  });
+
+  // §10 N: canonical DB uniqueness 23505 with constraint name → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
+  test("N: INSERT throws 23505 on uq_seller_tax_canonical_active (race) -> SELLER_TAX_IDENTITY_ALREADY_ASSIGNED", async () => {
     const db = new FakeDb({ insertThrowsDuplicate: true });
     const input = {
       partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
     } satisfies AdminSellerTaxIdentifierAddInput;
     const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
     assert.strictEqual(res.ok, false);
-    if (!res.ok) assert.strictEqual(res.code, "TAX_IDENTIFIER_CONFLICT");
+    if (!res.ok) assert.strictEqual(res.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+  });
+
+  // §10 O: unrelated 23505 (different constraint) → SYSTEM_ERROR, NOT falsely classified as tax duplicate
+  test("O: INSERT throws 23505 on unrelated constraint -> SYSTEM_ERROR, not SELLER_TAX_IDENTITY_ALREADY_ASSIGNED", async () => {
+    const db = new FakeDb({ insertThrowsUnrelatedDuplicate: true });
+    const input = {
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
+    } satisfies AdminSellerTaxIdentifierAddInput;
+    const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
+    assert.strictEqual(res.ok, false);
+    if (!res.ok) assert.strictEqual(res.code, "SYSTEM_ERROR");
   });
 
   test("successful insert uses expected fields and verificationStatus='unverified'", async () => {
