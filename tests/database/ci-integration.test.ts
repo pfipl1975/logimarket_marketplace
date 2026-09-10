@@ -3612,15 +3612,18 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(r2.ok, false);
     if (!r2.ok) assert.strictEqual(r2.code, "TAX_IDENTIFIER_CONFLICT");
 
-    // 3. CROSS-TYPE: Partner A tries to add same NIP as vat_id -> should block (same PL:NIP class, same partner)
+    // 3. CROSS-TYPE: Partner A tries to add same NIP as vat_id -> ALLOWED
     const r3 = await executeAdminSellerTaxIdentifierAdd(db, {
       partnerId: pid1,
       identifierType: "vat_id",
       identifierValue: "PL1234567890", // PL prefix stripped to same NIP
       countryCode: "PL",
     });
-    assert.strictEqual(r3.ok, false, "PL vat_id with same NIP as existing tax_id on same partner should conflict");
-    if (!r3.ok) assert.strictEqual(r3.code, "TAX_IDENTIFIER_CONFLICT");
+    assert.strictEqual(r3.ok, true, "PL vat_id with same NIP as existing tax_id on same partner is allowed");
+    if (r3.ok) assert.strictEqual(r3.code, "ADDED");
+
+    const pid1Rows = await pool.query(`SELECT identifier_type FROM seller_tax_identifiers WHERE partner_id = $1 AND retired_at IS NULL`, [pid1]);
+    assert.strictEqual(pid1Rows.rowCount, 2, "Partner A should have exactly 2 active tax identifiers");
 
     // 4. CROSS-PARTNER: Partner B tries to add same NIP -> SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
     const r4 = await executeAdminSellerTaxIdentifierAdd(db, {
