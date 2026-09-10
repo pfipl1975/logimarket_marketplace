@@ -151,7 +151,7 @@ class FakeDb {
             verificationStatus: "unverified"
           }] : [];
       } else if (this.selectCallIndex === 3) {
-        res = this.config.taxIdentifierConflictExists ? [{ id: 1 }] : [];
+        res = this.config.taxIdentifierConflictExists ? [{ partnerId: 1 }] : [];
       }
       res.for = () => res;
       return res;

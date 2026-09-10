@@ -31,6 +31,7 @@ const M0001_FILE = `${MIGRATIONS_DIR}/0001_rfq_workflow_hardening.sql`;
 const M0002_FILE = `${MIGRATIONS_DIR}/0002_seller_identity_56b1.sql`;
 const M0003_FILE = `${MIGRATIONS_DIR}/0003_prod_legacy_offer_reconciliation.sql`;
 const M0009_FILE = `${MIGRATIONS_DIR}/0009_partner_agreement_evidence.sql`;
+const M0011_FILE = `${MIGRATIONS_DIR}/0011_partner_tax_canonical.sql`;
 
 test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   if (!process.env.DATABASE_URL) {
@@ -231,7 +232,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0011");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -618,7 +619,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 11, "Journal count must be exactly 11");
+      assert.strictEqual(journalRows.length, 12, "Journal count must be exactly 12");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -760,7 +761,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       assert.strictEqual(replayJournal.rows[0].count, 8);
 
-      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0010 + journal 11 -> search_path hardened
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0011 + journal 12 -> search_path hardened
       await runMigrations(process.env);
       const post0010Metadata = await fetchLiveSchemaMetadata(pool);
       assert.strictEqual(
@@ -769,7 +770,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0010",
+        "EXACT_EXISTING_POST_0011",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -779,7 +780,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 11);
+      assert.strictEqual(post0010Journal.rows[0].count, 12);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -789,7 +790,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0010", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0011", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -803,10 +804,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0010
+    // Post-migration classification must be EXACT_EXISTING_POST_0011
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0011");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -820,7 +821,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 11);
+    assert.strictEqual(journalRows.length, 12);
   });
 
   await t.test(
@@ -979,14 +980,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0010
+      // Post-migration classification must be EXACT_EXISTING_POST_0011
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0010");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0011");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1000,7 +1001,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 11);
+      assert.strictEqual(journalRows.length, 12);
     },
   );
 
@@ -3562,6 +3563,220 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       "PARTIAL_OR_DRIFTED"
     );
     await pool.query(`ALTER FUNCTION public.prevent_partner_agreement_execution_evidence_mutation() SET search_path = ''`);
+  });
+
+  // ---------------------------------------------------------------------------
+  // PATH H: CANONICAL TAX IDENTITY — CROSS-PARTNER UNIQUENESS & RACE SAFETY
+  // ---------------------------------------------------------------------------
+
+  await t.test("PATH H: CANONICAL_TAX_IDENTITY_CROSS_PARTNER_UNIQUENESS", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+
+    const { executeAdminSellerTaxIdentifierAdd } = await import("@/lib/admin/partner-edit-core");
+
+    // Setup: two distinct partners with legal identities
+    const pRes1 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('TaxCorp A', 'a@taxcorp.com') RETURNING id`);
+    const pid1 = Number(pRes1.rows[0].id);
+    const pRes2 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('TaxCorp B', 'b@taxcorp.com') RETURNING id`);
+    const pid2 = Number(pRes2.rows[0].id);
+
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'TaxCorp A Sp.', 'PL'), ($2, 'TaxCorp B Sp.', 'PL')`, [pid1, pid2]);
+
+    // 1. Partner A adds NIP 1234567890 as tax_id -> OK
+    const r1 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid1,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r1.ok, true, "Partner A should add NIP tax_id successfully");
+
+    // Verify canonical columns were populated
+    const check1 = await pool.query(`SELECT canonical_identity_class, canonical_identifier_value FROM seller_tax_identifiers WHERE partner_id = $1 AND retired_at IS NULL`, [pid1]);
+    assert.strictEqual(check1.rows.length, 1);
+    assert.strictEqual(check1.rows[0].canonical_identity_class, "PL:NIP");
+    assert.strictEqual(check1.rows[0].canonical_identifier_value, "1234567890");
+
+    // 2. SAME partner adds same NIP again -> TAX_IDENTIFIER_CONFLICT (same-partner deduplicate)
+    const r2 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid1,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r2.ok, false);
+    if (!r2.ok) assert.strictEqual(r2.code, "TAX_IDENTIFIER_CONFLICT");
+
+    // 3. CROSS-TYPE: Partner A tries to add same NIP as vat_id -> should block (same PL:NIP class, same partner)
+    const r3 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid1,
+      identifierType: "vat_id",
+      identifierValue: "PL1234567890", // PL prefix stripped to same NIP
+      countryCode: "PL",
+    });
+    assert.strictEqual(r3.ok, false, "PL vat_id with same NIP as existing tax_id on same partner should conflict");
+    if (!r3.ok) assert.strictEqual(r3.code, "TAX_IDENTIFIER_CONFLICT");
+
+    // 4. CROSS-PARTNER: Partner B tries to add same NIP -> SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
+    const r4 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid2,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r4.ok, false, "Cross-partner duplicate NIP must be rejected");
+    if (!r4.ok) {
+      assert.strictEqual(r4.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+      assert.strictEqual((r4 as any).existingPartnerId, pid1);
+    }
+
+    // 5. CROSS-PARTNER + CROSS-TYPE: Partner B tries vat_id with same NIP -> also blocked
+    const r5 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid2,
+      identifierType: "vat_id",
+      identifierValue: "PL1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r5.ok, false, "Cross-partner vat_id bypass must be rejected");
+    if (!r5.ok) assert.strictEqual(r5.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+
+    // 6. Retiring Partner A's tax identifier lifts the lock
+    await pool.query(`UPDATE seller_tax_identifiers SET retired_at = NOW() WHERE partner_id = $1 AND canonical_identifier_value = '1234567890'`, [pid1]);
+
+    const r6 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid2,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r6.ok, true, "After retiring Partner A's NIP, Partner B should be able to claim it");
+
+    // 7. DB-level uniqueness constraint enforced even if app check bypassed (23505)
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status)
+         VALUES ($1, 'tax_id', '9999999999', 'PL', 'PL:NIP', '1234567890', 'unverified')`,
+        [pid1] // pid1 has a retired row for this value — but pid2 has active
+      ),
+      (err: any) => err.code === "23505",
+      "DB-level unique index must catch bypassed app logic"
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // PATH H2: CANONICAL TAX IDENTITY — CONCURRENT RACE SAFETY
+  // ---------------------------------------------------------------------------
+
+  await t.test("PATH H2: CANONICAL_TAX_IDENTITY_RACE_CONDITION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const pRes1 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('RaceCorp A', 'race_a@test.com') RETURNING id`);
+    const pid1 = Number(pRes1.rows[0].id);
+    const pRes2 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('RaceCorp B', 'race_b@test.com') RETURNING id`);
+    const pid2 = Number(pRes2.rows[0].id);
+
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'RaceCorp A Sp.', 'PL'), ($2, 'RaceCorp B Sp.', 'PL')`, [pid1, pid2]);
+
+    const client1 = await pool.connect();
+    const client2 = await pool.connect();
+
+    try {
+      // Two simultaneous inserts for the same canonical identity PL:NIP/5555555555
+      const insertSql = (pid: number, idType: string, val: string) =>
+        client1.query(
+          `INSERT INTO seller_tax_identifiers
+             (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status)
+           VALUES ($1, $2, $3, 'PL', 'PL:NIP', '5555555555', 'unverified')`,
+          [pid, idType, val]
+        );
+
+      const insertSql2 = (pid: number, idType: string, val: string) =>
+        client2.query(
+          `INSERT INTO seller_tax_identifiers
+             (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status)
+           VALUES ($1, $2, $3, 'PL', 'PL:NIP', '5555555555', 'unverified')`,
+          [pid, idType, val]
+        );
+
+      const [outcome1, outcome2] = await Promise.allSettled([
+        insertSql(pid1, "tax_id", "5555555555"),
+        insertSql2(pid2, "tax_id", "5555555555"),
+      ]);
+
+      const fulfilled = [outcome1, outcome2].filter((o) => o.status === "fulfilled");
+      const rejected = [outcome1, outcome2].filter((o) => o.status === "rejected");
+
+      assert.strictEqual(fulfilled.length, 1, "RACE_PROOF: Exactly 1 concurrent insert must succeed");
+      assert.strictEqual(rejected.length, 1, "RACE_PROOF: Exactly 1 concurrent insert must fail");
+
+      const rejectionReason = (rejected[0] as PromiseRejectedResult).reason;
+      assert.strictEqual(rejectionReason.code, "23505", "RACE_PROOF: Rejection must be PostgreSQL 23505 (unique_violation)");
+    } finally {
+      client1.release();
+      client2.release();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // PATH H3: MIGRATION 0011 PRECHECK BLOCKS EXISTING DUPLICATES
+  // ---------------------------------------------------------------------------
+
+  await t.test("PATH H3: MIGRATION_0011_FAIL_CLOSED_PRECHECK", async () => {
+    await cleanDB();
+
+    // Apply migrations only through 0010 (NOT 0011)
+    const M0004 = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+    const M0005 = `${MIGRATIONS_DIR}/0005_marketplace_order_56b2a.sql`;
+    const M0006 = `${MIGRATIONS_DIR}/0006_seller_verification_evidence.sql`;
+    const M0007 = `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`;
+    const M0008 = `${MIGRATIONS_DIR}/0008_verification_event_function_search_path_hardening.sql`;
+    const M0009 = M0009_FILE;
+    const M0010 = `${MIGRATIONS_DIR}/0010_offer_media_foundation.sql`;
+
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004, "utf-8"));
+    await pool.query(fs.readFileSync(M0005, "utf-8"));
+    await pool.query(fs.readFileSync(M0006, "utf-8"));
+    await pool.query(fs.readFileSync(M0007, "utf-8"));
+    await pool.query(fs.readFileSync(M0008, "utf-8"));
+    await pool.query(fs.readFileSync(M0009, "utf-8"));
+    await pool.query(fs.readFileSync(M0010, "utf-8"));
+
+    // Insert two partners with the same NIP in different identifier types (simulating a pre-existing duplicate)
+    await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (7001, 'DupA', 'a@dup.com'), (7002, 'DupB', 'b@dup.com')`);
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES (7001, 'DupA Sp.', 'PL'), (7002, 'DupB Sp.', 'PL')`);
+
+    // Insert conflicting canonical tax identifiers without canonical columns (old schema)
+    await pool.query(`
+      INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, verification_status)
+      VALUES
+        (7001, 'tax_id',  '7777777777', 'PL', 'unverified'),
+        (7002, 'vat_id',  'PL7777777777', 'PL', 'unverified')
+    `);
+
+    // Attempt to apply 0011 — must fail with BLOCKED_EXISTING_TAX_IDENTITY_DUPLICATES
+    await assert.rejects(
+      pool.query(fs.readFileSync(M0011_FILE, "utf-8")),
+      (err: any) => /BLOCKED_EXISTING_TAX_IDENTITY_DUPLICATES/i.test(err.message),
+      "Migration 0011 precheck must abort when pre-existing cross-partner duplicates exist"
+    );
+
+    // Verify: schema is unchanged (no canonical columns added)
+    const colCheck = await pool.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'seller_tax_identifiers'
+        AND column_name IN ('canonical_identity_class', 'canonical_identifier_value')
+    `);
+    assert.strictEqual(colCheck.rows.length, 0, "Columns must NOT be present when precheck aborted the migration");
   });
 
   await pool.end();

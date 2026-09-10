@@ -1,9 +1,11 @@
 import { z } from "zod";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import { eq, and, isNull } from "drizzle-orm";
 import * as schema from "@/lib/schema";
 import {
   canonicalRegistryIdentifierWriteSchema,
   canonicalTaxIdentifierWriteSchema,
+  resolveCanonicalTaxIdentity,
 } from "@/lib/admin/seller-identifier-contract";
 
 const optionalTrimmedString = (max: number) =>
@@ -83,6 +85,7 @@ export type AdminPartnerCreateValidationCode =
 export type AdminPartnerCreateResult =
   | { ok: true; partnerId: number }
   | { ok: false; reason: "PARTNER_INVALID_INPUT"; code: AdminPartnerCreateValidationCode; field: string | null }
+  | { ok: false; reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED"; existingPartnerId: number }
   | { ok: false; reason: "PARTNER_CREATE_FAILED" };
 
 const validationCodes = new Set<AdminPartnerCreateValidationCode>([
@@ -123,8 +126,30 @@ export async function createPartnerCore(
   }
 
   const input = parsed.data;
+  const canonicalTaxes = input.taxIdentifiers.map(id => ({
+    identifier: id,
+    canonical: resolveCanonicalTaxIdentity(id)
+  }));
+
   try {
     return await db.transaction(async (tx) => {
+      for (const t of canonicalTaxes) {
+        const conflict = await tx.select({ partnerId: schema.sellerTaxIdentifiers.partnerId })
+          .from(schema.sellerTaxIdentifiers)
+          .where(
+            and(
+              eq(schema.sellerTaxIdentifiers.canonicalIdentityClass, t.canonical.canonicalIdentityClass),
+              eq(schema.sellerTaxIdentifiers.canonicalIdentifierValue, t.canonical.canonicalIdentifierValue),
+              isNull(schema.sellerTaxIdentifiers.retiredAt)
+            )
+          )
+          .limit(1);
+        if (conflict.length > 0) {
+          tx.rollback();
+          return { ok: false as const, reason: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: conflict[0].partnerId };
+        }
+      }
+
       const [partner] = await tx.insert(schema.partners).values({
         companyName: input.companyName,
         contactEmail: input.contactEmail,
@@ -150,10 +175,12 @@ export async function createPartnerCore(
         currentVerificationEventId: null,
       });
 
-      if (input.taxIdentifiers.length > 0) {
-        await tx.insert(schema.sellerTaxIdentifiers).values(input.taxIdentifiers.map((identifier) => ({
+      if (canonicalTaxes.length > 0) {
+        await tx.insert(schema.sellerTaxIdentifiers).values(canonicalTaxes.map(({ identifier, canonical }) => ({
           partnerId: partner.id,
           ...identifier,
+          canonicalIdentityClass: canonical.canonicalIdentityClass,
+          canonicalIdentifierValue: canonical.canonicalIdentifierValue,
           verificationStatus: "unverified",
           verifiedAt: null,
           verificationSource: null,

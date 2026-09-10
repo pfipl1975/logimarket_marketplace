@@ -110,3 +110,24 @@ export function isRegistryIdentifierType(
 ): value is RegistryIdentifierType {
   return REGISTRY_IDENTIFIER_TYPES.includes(value as RegistryIdentifierType);
 }
+
+export function resolveCanonicalTaxIdentity(input: {
+  identifierType: string;
+  countryCode: string;
+  identifierValue: string;
+}) {
+  if (input.countryCode === "PL") {
+    let clean = removeSafeSeparators(input.identifierValue);
+    if (input.identifierType === "vat_id" && /^PL/i.test(clean)) {
+      clean = clean.slice(2);
+    }
+    return {
+      canonicalIdentityClass: "PL:NIP",
+      canonicalIdentifierValue: clean,
+    };
+  }
+  return {
+    canonicalIdentityClass: `${input.countryCode}:${input.identifierType}`.toUpperCase(),
+    canonicalIdentifierValue: removeSafeSeparators(input.identifierValue).toUpperCase(),
+  };
+}
