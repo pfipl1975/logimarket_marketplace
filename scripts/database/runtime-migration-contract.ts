@@ -1224,8 +1224,9 @@ export const FINAL_POST_0011_PRODUCTION_FINGERPRINT: Record<string, TableContrac
     ],
     explicitIndexes: [
       ...(FINAL_POST_0010_PRODUCTION_FINGERPRINT["seller_tax_identifiers"].explicitIndexes || []),
-      { name: "uq_seller_tax_canonical_active", method: "btree", expressions: "canonical_identity_class, canonical_identifier_value" }
-    ]
+      { name: "idx_seller_tax_canonical_active", method: "btree", expressions: "canonical_identity_class, canonical_identifier_value" }
+    ],
+    triggerCount: 1
   }
 };
 

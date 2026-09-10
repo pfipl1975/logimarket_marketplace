@@ -104,6 +104,7 @@ type FakeDbConfig = {
   insertThrowsUnrelatedDuplicate?: boolean;
   taxIdentifierConflictExists?: boolean;
   crossPartnerConflictExists?: boolean;
+  samePartnerDifferentTypeExists?: boolean;
 };
 
 class FakeDb {
@@ -155,11 +156,15 @@ class FakeDb {
           }] : [];
       } else if (this.selectCallIndex === 3) {
         if (this.config.crossPartnerConflictExists) {
-          res = [{ partnerId: 999 }]; // different partner — cross-partner conflict
+          res = [{ partnerId: 999, identifierType: "tax_id" }]; // different partner — cross-partner conflict
+        } else if (this.config.samePartnerDifferentTypeExists) {
+          res = [{ partnerId: 1, identifierType: "tax_id" }]; // same partner but different type
         } else {
-          res = this.config.taxIdentifierConflictExists ? [{ partnerId: 1 }] : [];
+          // If taxIdentifierConflictExists, return the exact type that the test is inserting (vat_id) so it triggers the conflict
+          res = this.config.taxIdentifierConflictExists ? [{ partnerId: 1, identifierType: "vat_id" }] : [];
         }
       }
+      console.log(`FakeDb selectCallIndex ${this.selectCallIndex} returning:`, res);
       res.for = () => res;
       return res;
     });
@@ -292,6 +297,16 @@ describe("Execute Admin Seller Tax Identifier Add", () => {
     assert.strictEqual(res.ok, false);
     if (!res.ok) assert.strictEqual(res.code, "TAX_IDENTIFIER_CONFLICT");
     assert.strictEqual(db.inserts.length, 0); // duplicate precheck performs NO INSERT
+  });
+
+  // §10: same partner, same canonical identity, DIFFERENT type (tax_id vs vat_id) → ALLOWED
+  test("same partner same canonical identity different type -> ADDED", async () => {
+    const db = new FakeDb({ samePartnerDifferentTypeExists: true });
+    const input = {
+      partnerId: 1, identifierType: "vat_id", identifierValue: "PL1234567890", countryCode: "PL"
+    } satisfies AdminSellerTaxIdentifierAddInput;
+    const res = await executeAdminSellerTaxIdentifierAdd(db as never, input);
+    assert.strictEqual(res.ok, true);
   });
 
   // §10 J: same canonical identity, different partner → SELLER_TAX_IDENTITY_ALREADY_ASSIGNED

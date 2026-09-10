@@ -217,7 +217,7 @@ export const sellerTaxIdentifiers = pgTable("seller_tax_identifiers", {
   retiredAt: timestamp("retired_at", { withTimezone: true }),
 }, (t) => [
   unique("uq_seller_tax_identifier_identity").on(t.partnerId, t.identifierType, t.countryCode, t.identifierValue),
-  uniqueIndex("uq_seller_tax_canonical_active").on(t.canonicalIdentityClass, t.canonicalIdentifierValue).where(sql`retired_at IS NULL`),
+  index("idx_seller_tax_canonical_active").on(t.canonicalIdentityClass, t.canonicalIdentifierValue).where(sql`retired_at IS NULL`),
   foreignKey({
     name: "seller_tax_identifiers_partner_id_fkey",
     columns: [t.partnerId],

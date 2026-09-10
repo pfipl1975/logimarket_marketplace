@@ -300,7 +300,7 @@ export async function executeAdminSellerTaxIdentifierAdd(
       }
 
       const conflictRows = await tx
-        .select({ partnerId: sellerTaxIdentifiers.partnerId })
+        .select({ partnerId: sellerTaxIdentifiers.partnerId, identifierType: sellerTaxIdentifiers.identifierType })
         .from(sellerTaxIdentifiers)
         .where(
           and(
@@ -309,13 +309,17 @@ export async function executeAdminSellerTaxIdentifierAdd(
             isNull(sellerTaxIdentifiers.retiredAt)
           )
         )
-        .limit(1);
+        .limit(5);
 
       if (conflictRows.length > 0) {
-        if (conflictRows[0].partnerId === input.partnerId) {
+        const differentPartner = conflictRows.find(r => r.partnerId !== input.partnerId);
+        if (differentPartner) {
+          return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: differentPartner.partnerId };
+        }
+
+        const sameType = conflictRows.find(r => r.identifierType === input.identifierType);
+        if (sameType) {
           return { ok: false as const, code: "TAX_IDENTIFIER_CONFLICT" as const };
-        } else {
-          return { ok: false as const, code: "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED" as const, existingPartnerId: conflictRows[0].partnerId };
         }
       }
 
