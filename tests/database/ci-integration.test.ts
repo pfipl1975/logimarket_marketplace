@@ -2964,8 +2964,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const dupRes = await createPartnerCore(db, duplicateInput);
       assert.equal(dupRes.ok, false);
       if (!dupRes.ok) {
-        assert.equal((dupRes as any).reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
-        assert.equal((dupRes as any).existingPartnerId, partnerId);
+        assert.equal(dupRes.reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+        if (dupRes.reason === "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED") {
+          assert.equal(dupRes.existingPartnerId, partnerId);
+        }
       }
 
       // Prove rejected Partner B was not persisted
