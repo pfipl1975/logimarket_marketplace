@@ -54,8 +54,7 @@ export interface BuyerBusinessIdentityProvider {
 }
 
 export class UnavailableBuyerBusinessIdentityProvider implements BuyerBusinessIdentityProvider {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  async verifyByNip(_canonicalNip: string): Promise<BuyerIdentityVerificationResult> {
+  async verifyByNip(): Promise<BuyerIdentityVerificationResult> {
     return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
   }
 }
@@ -74,16 +73,30 @@ export async function verifyBuyerIdentity(
     return { status: "failed", reason: "INVALID_BUYER_IDENTITY" };
   }
   
-  const result = await provider.verifyByNip(normalized);
+  let result: BuyerIdentityVerificationResult;
+  try {
+    result = await provider.verifyByNip(normalized);
+  } catch {
+    return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
+  }
   
   if (result.status === "verified") {
-    // Fail closed if provider returns mismatched NIP
+    if (result.countryCode !== "PL") {
+      return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
+    }
     if (result.canonicalNip !== normalized) {
       return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
     }
-    
-    // Fail closed if business name is missing or whitespace
     if (!result.businessName || result.businessName.trim().length === 0) {
+      return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
+    }
+    if (!result.businessVerificationMethod || result.businessVerificationMethod.trim().length === 0) {
+      return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
+    }
+    if (!result.businessVerificationSource || result.businessVerificationSource.trim().length === 0) {
+      return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
+    }
+    if (!(result.businessVerifiedAt instanceof Date) || Number.isNaN(result.businessVerifiedAt.getTime())) {
       return { status: "failed", reason: "BUYER_IDENTITY_VERIFICATION_UNAVAILABLE" };
     }
   }
