@@ -3800,37 +3800,228 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await pool.end();
 
   await t.test("PATH COMMERCE: 56B2 MARKETPLACE CHECKOUT", async (tt) => {
-    // A - Single Seller
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { eq } = await import("drizzle-orm");
+    const schemaModule = await import("../../src/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+    const { executeMarketplaceCheckout } = await import("../../src/lib/checkout/marketplace-checkout-core");
+    const { randomUUID } = await import("crypto");
+
+    async function seedPartnerAndOffer(price = "10.00") {
+      const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Seller Corp', 'seller@corp.com') RETURNING id`);
+      const partnerId = pRes.rows[0].id;
+      
+      await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, verification_status, registered_address_line1, registered_postal_code, registered_city) VALUES ($1, 'Legal Seller Corp', 'PL', 'verified', 'Street 1', '00-001', 'City')`, [partnerId]);
+      
+      await pool.query(`INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status) VALUES ($1, 'tax_id', '1234567890', 'PL', 'NIP_PL', '1234567890', 'verified')`, [partnerId]);
+      
+      await pool.query(`INSERT INTO seller_registry_identifiers (partner_id, registry_type, registry_value, jurisdiction_country, verification_status) VALUES ($1, 'commercial_register', '0000000000', 'PL', 'verified')`, [partnerId]);
+      
+      await pool.query(`INSERT INTO seller_eligibility (partner_id, eligibility_status) VALUES ($1, 'eligible')`, [partnerId]);
+      
+      const vRes = await pool.query(`SELECT id FROM agreement_versions WHERE agreement_type = 'PARTNER_SLA' AND version_number = '1.0'`);
+      if (vRes.rows.length === 0) {
+        await pool.query(`INSERT INTO agreement_versions (agreement_type, version_number) VALUES ('PARTNER_SLA', '1.0')`);
+      }
+      const versionId = (await pool.query(`SELECT id FROM agreement_versions WHERE agreement_type = 'PARTNER_SLA' AND version_number = '1.0'`)).rows[0].id;
+      
+      await pool.query(`INSERT INTO partner_agreement_execution_evidence (partner_id, agreement_version_id, execution_method) VALUES ($1, $2, 'clickwrap')`, [partnerId, versionId]);
+      
+      const oRes = await pool.query(`INSERT INTO offers (title, offer_model, conversion_type, is_active, publication_status, partner_id, price_brutto, price_currency) VALUES ('Test Offer', 'marketplace', 'ecommerce', true, 'published', $1, $2, 'PLN') RETURNING id`, [partnerId, price]);
+      const offerId = oRes.rows[0].id;
+      
+      return { partnerId, offerId };
+    }
+
+    const defaultBuyerLegal = {
+      businessName: "Buyer Corp",
+      countryCode: "PL",
+      taxIdentifierType: "tax_id",
+      taxIdentifierValue: "0987654321",
+      businessVerificationStatus: "verified",
+      businessVerificationMethod: "registry_lookup",
+      businessVerificationSource: "manual",
+      businessVerifiedAt: new Date(),
+    };
+    
+    const defaultBuyerContact = {
+      contactName: "John Doe",
+      email: "john@buyer.com",
+    };
+
     await tt.test("PATH COMMERCE-A: Single Seller successful E2", async () => {
-      assert.ok(true);
+      const { partnerId, offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 2 });
+      
+      const legacyOrdersBefore = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
+      const legacyItemsBefore = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
+      
+      const res = await executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, defaultBuyerContact);
+      assert.strictEqual(res.ok, true);
+      
+      const mOrderId = res.marketplaceOrderId;
+      
+      const mOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.id, mOrderId));
+      assert.strictEqual(mOrders.length, 1);
+      assert.strictEqual(mOrders[0].status, "checkout_submitted");
+      assert.strictEqual(mOrders[0].e3ReceiptAcknowledgedAt, null);
+      
+      const blcSnaps = await db.select().from(schemaModule.buyerLegalContextSnapshots).where(eq(schemaModule.buyerLegalContextSnapshots.id, mOrders[0].buyerLegalContextSnapshotId));
+      assert.strictEqual(blcSnaps.length, 1);
+      
+      const bcSnaps = await db.select().from(schemaModule.marketplaceOrderBuyerContactSnapshots).where(eq(schemaModule.marketplaceOrderBuyerContactSnapshots.marketplaceOrderId, mOrderId));
+      assert.strictEqual(bcSnaps.length, 1);
+      
+      const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sOrders.length, 1);
+      assert.strictEqual(sOrders[0].partnerId, partnerId);
+      assert.strictEqual(sOrders[0].status, "submitted");
+      assert.strictEqual(sOrders[0].e6RoutedToSellerAt, null);
+      
+      const sItems = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, sOrders[0].id));
+      assert.strictEqual(sItems.length, 1);
+      assert.strictEqual(sItems[0].offerId, offerId);
+      assert.strictEqual(sItems[0].quantity, 2);
+      
+      const sDisclosures = await db.select().from(schemaModule.marketplaceOrderSellerDisclosures).where(eq(schemaModule.marketplaceOrderSellerDisclosures.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sDisclosures.length, 1);
+      assert.strictEqual(sDisclosures[0].partnerId, partnerId);
+      
+      const ssSnaps = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, sOrders[0].id));
+      assert.strictEqual(ssSnaps.length, 1);
+      
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 0);
+      
+      const legacyOrdersAfter = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
+      const legacyItemsAfter = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
+      
+      assert.strictEqual(legacyOrdersAfter, legacyOrdersBefore);
+      assert.strictEqual(legacyItemsAfter, legacyItemsBefore);
     });
-    // B - Multi Seller
+
     await tt.test("PATH COMMERCE-B: Multi-Seller cart", async () => {
-      assert.ok(true);
+      const { partnerId: p1, offerId: o1 } = await seedPartnerAndOffer();
+      const { partnerId: p2, offerId: o2 } = await seedPartnerAndOffer();
+      
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o1, quantity: 1 });
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o2, quantity: 1 });
+      
+      const res = await executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, defaultBuyerContact);
+      assert.strictEqual(res.ok, true);
+      
+      const mOrderId = res.marketplaceOrderId;
+      const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sOrders.length, 2);
+      
+      const pIds = sOrders.map(so => so.partnerId).sort();
+      assert.deepStrictEqual(pIds, [p1, p2].sort());
+      
+      const sDisclosures = await db.select().from(schemaModule.marketplaceOrderSellerDisclosures).where(eq(schemaModule.marketplaceOrderSellerDisclosures.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sDisclosures.length, 2);
+      
+      for (const so of sOrders) {
+        const ss = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, so.id));
+        assert.strictEqual(ss.length, 1);
+        
+        const si = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, so.id));
+        assert.strictEqual(si.length, 1);
+        const expectedOfferId = so.partnerId === p1 ? o1 : o2;
+        assert.strictEqual(si[0].offerId, expectedOfferId);
+      }
     });
-    // C - Buyer not ready
+
     await tt.test("PATH COMMERCE-C: Buyer not ready", async () => {
-      assert.ok(true);
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      
+      const badBuyer = { ...defaultBuyerLegal, businessName: undefined }; // invalid
+      
+      const res = await executeMarketplaceCheckout(db as any, sessionHash, badBuyer as any, defaultBuyerContact);
+      assert.strictEqual(res.ok, false);
+      assert.strictEqual(res.reason, "CHECKOUT_BUYER_NOT_READY");
+      
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
     });
-    // D - Seller not ready
+
     await tt.test("PATH COMMERCE-D: Seller not ready", async () => {
-      assert.ok(true);
+      const { partnerId, offerId } = await seedPartnerAndOffer();
+      await pool.query(`UPDATE seller_eligibility SET eligibility_status = 'suspended' WHERE partner_id = $1`, [partnerId]);
+      
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      
+      const res = await executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, defaultBuyerContact);
+      assert.strictEqual(res.ok, false);
+      assert.strictEqual(res.reason, "CHECKOUT_SELLER_NOT_READY");
+      
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
     });
-    // E - Non ecommerce
+
     await tt.test("PATH COMMERCE-E: Non-ecommerce/changed offer", async () => {
-      assert.ok(true);
+      const { offerId } = await seedPartnerAndOffer();
+      await pool.query(`UPDATE offers SET conversion_type = 'lead_gen' WHERE id = $1`, [offerId]);
+      
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      
+      const res = await executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, defaultBuyerContact);
+      assert.strictEqual(res.ok, false);
+      assert.strictEqual(res.reason, "CHECKOUT_CART_CHANGED");
+      
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
     });
-    // F - Rollback
+
     await tt.test("PATH COMMERCE-F: Atomic rollback", async () => {
-      assert.ok(true);
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      
+      const badContact = { ...defaultBuyerContact, email: "a".repeat(300) };
+      
+      const moBefore = (await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c;
+      
+      const res = await executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, badContact);
+      assert.strictEqual(res.ok, false);
+      assert.strictEqual(res.reason, "SYSTEM_ERROR");
+      
+      const moAfter = (await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c;
+      assert.strictEqual(moAfter, moBefore);
+      
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
     });
-    // G - Concurrent
+
     await tt.test("PATH COMMERCE-G: Concurrent double submit", async () => {
-      assert.ok(true);
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      
+      const moBefore = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
+      
+      const p1 = executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, defaultBuyerContact);
+      const p2 = executeMarketplaceCheckout(db as any, sessionHash, defaultBuyerLegal as any, defaultBuyerContact);
+      
+      const results = await Promise.all([p1, p2]);
+      
+      const successCount = results.filter(r => r.ok).length;
+      assert.strictEqual(successCount, 1);
+      
+      const failReason = results.find(r => !r.ok);
+      assert.strictEqual(failReason.reason, "CHECKOUT_CART_EMPTY");
+      
+      const moAfter = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
+      assert.strictEqual(moAfter, moBefore + 1);
     });
-    // H - Legacy isolation
+
     await tt.test("PATH COMMERCE-H: Legacy isolation", async () => {
-      assert.ok(true);
+      assert.ok(true); // Proven in A
     });
   });
 });

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 import { eq, isNull, and } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import {
@@ -14,7 +13,9 @@ import {
 import { type SellerReadinessResult, evaluateSellerReadiness, type SellerReadinessSnapshot } from "../partners/seller-readiness-core";
 import { buildSellerDisclosure } from "@/lib/legal/seller-disclosure";
 
-export async function querySellerReadiness(db: any, partnerId: number): Promise<SellerReadinessResult> {
+import type { PgTransaction } from "drizzle-orm/pg-core";
+
+export async function querySellerReadiness(db: NodePgDatabase<any> | PgTransaction<any, any, any>, partnerId: number): Promise<SellerReadinessResult> {
   // Partner exists
   const partnerRows = await db.select({ id: partners.id }).from(partners).where(eq(partners.id, partnerId)).limit(1);
   const partnerExists = partnerRows.length > 0;

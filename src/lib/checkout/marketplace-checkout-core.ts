@@ -1,7 +1,5 @@
-/* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
-import { sql, eq, inArray, isNull, and } from "drizzle-orm";
+import { sql, eq, inArray, isNull, and, asc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
-import type { PgTransaction } from "drizzle-orm/pg-core";
 import {
   buyerLegalContextSnapshots,
   marketplaceOrders,
@@ -24,16 +22,17 @@ import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
 import { validateSellerSourceForSnapshot } from "@/lib/marketplace/seller-snapshot";
 import type { SellerSourceInput } from "@/lib/marketplace/seller-snapshot";
 import { validateCheckoutLine } from "./eligibility";
-import type { CheckoutOfferRow, CheckoutCartRow } from "./eligibility";
 import { 
   CONTRACT_MODEL,
   SELLER_OF_RECORD,
   GOODS_INVOICE_ISSUER,
   GOODS_INVOICE_RESPONSIBILITY,
   SELLER_ROLE,
+  LOGIMARKET_PLATFORM_ROLE,
   DELIVERY_RESPONSIBILITY,
   COMPLAINT_RESPONSIBILITY,
   RETURN_RESPONSIBILITY,
+  REFUND_FINANCIAL_LIABILITY,
   ECOMMERCE_MVP_CURRENCY,
 } from "@/lib/marketplace/policy-constants";
 
@@ -53,7 +52,7 @@ export type MarketplaceCheckoutResult =
   | { ok: false; reason: "SYSTEM_ERROR" };
 
 export async function executeMarketplaceCheckout(
-  db: NodePgDatabase<any>,
+  db: NodePgDatabase<Record<string, unknown>>,
   sessionHash: string,
   buyerLegalContext: BuyerLegalContextInput,
   buyerContact: BuyerContactInput
@@ -88,16 +87,16 @@ export async function executeMarketplaceCheckout(
         .from(offers)
         .where(inArray(offers.id, offerIds));
 
-      const offerMap = new Map<number, any>();
+      const offerMap = new Map<number, typeof offerRows[0]>();
       for (const o of offerRows) offerMap.set(o.id, o);
 
-      const linesByPartner = new Map<number, any[]>();
+      const linesByPartner = new Map<number, Array<{ cartRow: typeof cartRows[0], offer: typeof offerRows[0] }>>();
       for (const row of cartRows) {
-        const lineResult = validateCheckoutLine(row, offerMap);
-        if (!lineResult.ok) return { ok: false, reason: "CHECKOUT_CART_CHANGED" };
-        
         const offer = offerMap.get(row.offerId);
         if (!offer || !offer.partnerId) return { ok: false, reason: "CHECKOUT_CART_CHANGED" };
+        
+        const lineResult = validateCheckoutLine(row, offerMap);
+        if (!lineResult.ok) return { ok: false, reason: "CHECKOUT_CART_CHANGED" };
         
         let lines = linesByPartner.get(offer.partnerId);
         if (!lines) {
@@ -112,8 +111,7 @@ export async function executeMarketplaceCheckout(
         return { ok: false, reason: "CHECKOUT_BUYER_NOT_READY" };
       }
 
-      const sellerDisclosures = new Map<number, any>();
-      const sellerSnapshots = new Map<number, any>();
+      const sellerDisclosures = new Map<number, SellerSourceInput>();
       
       for (const partnerId of linesByPartner.keys()) {
         const sellerReadiness = await querySellerReadiness(tx, partnerId);
@@ -121,47 +119,49 @@ export async function executeMarketplaceCheckout(
           return { ok: false, reason: "CHECKOUT_SELLER_NOT_READY" };
         }
 
-        const partnerRows = await tx.select().from(partners).where(eq(partners.id, partnerId));
+        const partnerRows = await tx.select().from(partners).where(eq(partners.id, partnerId)).limit(1);
         const p = partnerRows[0];
 
-        const legalRows = await tx.select().from(sellerLegalIdentities).where(eq(sellerLegalIdentities.partnerId, partnerId));
+        const legalRows = await tx.select().from(sellerLegalIdentities).where(eq(sellerLegalIdentities.partnerId, partnerId)).limit(1);
         const li = legalRows[0];
 
         const taxRows = await tx.select().from(sellerTaxIdentifiers)
-          .where(and(eq(sellerTaxIdentifiers.partnerId, partnerId), isNull(sellerTaxIdentifiers.retiredAt)));
+          .where(and(eq(sellerTaxIdentifiers.partnerId, partnerId), isNull(sellerTaxIdentifiers.retiredAt)))
+          .orderBy(asc(sellerTaxIdentifiers.id));
         const taxPref = taxRows.find(t => t.identifierType === "tax_id") || taxRows.find(t => t.identifierType === "vat_id") || taxRows[0];
 
         const regRows = await tx.select().from(sellerRegistryIdentifiers)
-          .where(and(eq(sellerRegistryIdentifiers.partnerId, partnerId), isNull(sellerRegistryIdentifiers.retiredAt)));
+          .where(and(eq(sellerRegistryIdentifiers.partnerId, partnerId), isNull(sellerRegistryIdentifiers.retiredAt)))
+          .orderBy(asc(sellerRegistryIdentifiers.id))
+          .limit(1);
         const regPref = regRows[0];
 
-        const eligRows = await tx.select().from(sellerEligibility).where(eq(sellerEligibility.partnerId, partnerId));
+        const eligRows = await tx.select().from(sellerEligibility).where(eq(sellerEligibility.partnerId, partnerId)).limit(1);
         const elig = eligRows[0];
 
         const input: SellerSourceInput = {
           partnerId,
-          sellerDisplayName: p?.companyName || null,
-          firmContactEmail: p?.contactEmail || null,
-          legalName: li?.legalName || null,
-          jurisdictionCountry: li?.jurisdictionCountry || null,
-          registeredAddressLine1: li?.registeredAddressLine1 || null,
-          registeredAddressLine2: li?.registeredAddressLine2 || null,
-          registeredPostalCode: li?.registeredPostalCode || null,
-          registeredCity: li?.registeredCity || null,
-          registeredRegion: li?.registeredRegion || null,
-          registeredCountryCode: li?.registeredCountryCode || null,
-          eligibilityStatus: elig ? (elig.eligibilityStatus as any) : null,
-          taxIdentifierType: taxPref ? taxPref.identifierType : null,
-          taxIdentifierValue: taxPref ? taxPref.identifierValue : null,
-          registryIdentifierType: regPref ? regPref.registryType : null,
-          registryIdentifierValue: regPref ? regPref.registryValue : null,
+          sellerDisplayName: p?.companyName ?? null,
+          firmContactEmail: p?.contactEmail ?? null,
+          legalName: li?.legalName ?? null,
+          jurisdictionCountry: li?.jurisdictionCountry ?? null,
+          registeredAddressLine1: li?.registeredAddressLine1 ?? null,
+          registeredAddressLine2: li?.registeredAddressLine2 ?? null,
+          registeredPostalCode: li?.registeredPostalCode ?? null,
+          registeredCity: li?.registeredCity ?? null,
+          registeredRegion: li?.registeredRegion ?? null,
+          registeredCountryCode: li?.registeredCountryCode ?? null,
+          eligibilityStatus: elig?.eligibilityStatus as any,
+          taxIdentifierType: taxPref?.identifierType ?? null,
+          taxIdentifierValue: taxPref?.identifierValue ?? null,
+          registryIdentifierType: regPref?.registryType ?? null,
+          registryIdentifierValue: regPref?.registryValue ?? null,
         };
 
         const val = validateSellerSourceForSnapshot(input);
         if (!val.ok) return { ok: false, reason: "CHECKOUT_SELLER_NOT_READY" };
         
-        sellerDisclosures.set(partnerId, { input, val: val.data });
-        sellerSnapshots.set(partnerId, { input, val: val.data });
+        sellerDisclosures.set(partnerId, val.data);
       }
 
       const [blcInsert] = await tx.insert(buyerLegalContextSnapshots).values({
@@ -191,31 +191,34 @@ export async function executeMarketplaceCheckout(
         marketplaceOrderId: mOrderId,
         contactName: buyerContact.contactName,
         email: buyerContact.email,
-        phone: buyerContact.phone,
-        message: buyerContact.message,
+        phone: buyerContact.phone ?? null,
+        message: buyerContact.message ?? null,
       });
 
       for (const [partnerId, lines] of linesByPartner.entries()) {
-        const sd = sellerDisclosures.get(partnerId);
+        const sd = sellerDisclosures.get(partnerId)!;
         
         const addrStr = [
-            sd.val.registeredAddressLine1,
-            sd.val.registeredAddressLine2,
-            `${sd.val.registeredPostalCode || ""} ${sd.val.registeredCity || ""}`.trim()
+            sd.registeredAddressLine1,
+            sd.registeredAddressLine2,
+            `${sd.registeredPostalCode || ""} ${sd.registeredCity || ""}`.trim()
         ].filter(Boolean).join(", ");
 
         await tx.insert(marketplaceOrderSellerDisclosures).values({
           marketplaceOrderId: mOrderId,
           partnerId,
-          sellerLegalName: sd.val.legalName,
+          sellerLegalName: sd.legalName as string,
           registeredAddress: addrStr,
-          jurisdictionCountry: sd.val.jurisdictionCountry,
-          firmContactEmail: sd.val.firmContactEmail,
+          jurisdictionCountry: sd.jurisdictionCountry as string,
+          firmContactEmail: sd.firmContactEmail as string,
           sellerRole: SELLER_ROLE,
           goodsInvoiceIssuer: GOODS_INVOICE_ISSUER,
           deliveryResponsibleParty: DELIVERY_RESPONSIBILITY,
           complaintResponsibleParty: COMPLAINT_RESPONSIBILITY,
           returnResponsibleParty: RETURN_RESPONSIBILITY,
+          logimarketPlatformRole: LOGIMARKET_PLATFORM_ROLE,
+          taxIdentifierType: sd.taxIdentifierType,
+          taxIdentifierValue: sd.taxIdentifierValue,
         });
 
         const [soInsert] = await tx.insert(sellerOrders).values({
@@ -227,19 +230,22 @@ export async function executeMarketplaceCheckout(
 
         await tx.insert(sellerOrderSellerSnapshots).values({
           sellerOrderId: sOrderId,
-          sellerLegalName: sd.val.legalName,
-          sellerDisplayName: sd.val.sellerDisplayName,
-          jurisdictionCountry: sd.val.jurisdictionCountry,
+          sellerLegalName: sd.legalName as string,
+          sellerDisplayName: sd.sellerDisplayName as string,
+          jurisdictionCountry: sd.jurisdictionCountry as string,
           registeredAddress: addrStr,
-          firmContactEmail: sd.val.firmContactEmail,
-          taxIdentifierType: sd.val.taxIdentifierType,
-          taxIdentifierValue: sd.val.taxIdentifierValue,
-          registryIdentifierType: sd.val.registryIdentifierType,
-          registryIdentifierValue: sd.val.registryIdentifierValue,
+          firmContactEmail: sd.firmContactEmail as string,
+          taxIdentifierType: sd.taxIdentifierType,
+          taxIdentifierValue: sd.taxIdentifierValue,
+          registryIdentifierType: sd.registryIdentifierType,
+          registryIdentifierValue: sd.registryIdentifierValue,
           contractModel: CONTRACT_MODEL,
           sellerOfRecordResponsibility: SELLER_OF_RECORD,
           goodsInvoiceResponsibility: GOODS_INVOICE_RESPONSIBILITY,
           deliveryResponsibility: DELIVERY_RESPONSIBILITY,
+          complaintResponsibility: COMPLAINT_RESPONSIBILITY,
+          returnResponsibility: RETURN_RESPONSIBILITY,
+          refundFinancialLiability: REFUND_FINANCIAL_LIABILITY,
         });
 
         for (const line of lines) {
@@ -259,7 +265,6 @@ export async function executeMarketplaceCheckout(
       return { ok: true, marketplaceOrderId: mOrderId };
     });
   } catch (err) {
-    console.error("Marketplace checkout failed:", err);
     return { ok: false, reason: "SYSTEM_ERROR" };
   }
 }
