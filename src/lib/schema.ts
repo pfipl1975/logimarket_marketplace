@@ -915,6 +915,16 @@ export const marketplaceOrders = pgTable("marketplace_orders", {
   index("idx_marketplace_orders_session").on(t.sessionHash),
 ]);
 
+export const marketplaceOrderBuyerContactSnapshots = pgTable("marketplace_order_buyer_contact_snapshots", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  marketplaceOrderId: bigint("marketplace_order_id", { mode: "number" }).notNull().unique().references(() => marketplaceOrders.id),
+  contactName: varchar("contact_name", { length: 255 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull(),
+  phone: varchar("phone", { length: 100 }),
+  message: varchar("message", { length: 5000 }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const marketplaceOrderSellerDisclosures = pgTable("marketplace_order_seller_disclosures", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   marketplaceOrderId: bigint("marketplace_order_id", { mode: "number" }).notNull().references(() => marketplaceOrders.id),

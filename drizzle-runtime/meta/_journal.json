@@ -85,6 +85,13 @@
       "when": 1785595000000,
       "tag": "0011_partner_tax_canonical",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1785596000000,
+      "tag": "0012_marketplace_order_buyer_contact_snapshot",
+      "breakpoints": true
     }
   ]
 }
