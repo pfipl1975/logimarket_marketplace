@@ -3821,6 +3821,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       ) RETURNING id
     `);
     const activeAgreementVersionId = agreementVersionResult.rows[0].id;
+    const categoryResult = await pool.query<{ id: number }>(
+      `INSERT INTO categories (name, slug) VALUES ('Commerce R2', 'commerce-r2') RETURNING id`,
+    );
+    const categoryId = Number(categoryResult.rows[0].id);
     let sellerFixtureNumber = 0;
 
     async function seedPartnerAndOffer(price = "10.00") {
@@ -3883,10 +3887,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       
       const oRes = await pool.query<{ id: number }>(
         `INSERT INTO offers (
-          title, offer_model, conversion_type, is_active,
+          title, category_id, offer_model, conversion_type, is_active,
           publication_status, partner_id, price_brutto
-        ) VALUES ($1, 'marketplace', 'inbound', true, 'published', $2, $3) RETURNING id`,
-        [`Test Offer ${fixtureSuffix}`, partnerId, price],
+        ) VALUES ($1, $2, 'marketplace', 'inbound', true, 'published', $3, $4) RETURNING id`,
+        [`Test Offer ${fixtureSuffix}`, categoryId, partnerId, price],
       );
       const offerId = Number(oRes.rows[0].id);
       
