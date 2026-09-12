@@ -233,7 +233,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0012");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -771,7 +771,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0012",
+        "EXACT_EXISTING_POST_0013",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -791,7 +791,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0012", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0013", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -805,10 +805,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0012
+    // Post-migration classification must be EXACT_EXISTING_POST_0013
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0012");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -981,14 +981,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0012
+      // Post-migration classification must be EXACT_EXISTING_POST_0013
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0012");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -4180,4 +4180,128 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   });
 
   await pool.end();
+
+  await t.test("L to P: PARTNER_USER_MEMBERSHIPS_CONSTRAINTS_PROOF", async () => {
+    // We already have some partners from previous tests, or we can create new ones
+    const fakePartnerRes1 = await pool.query<{ id: string }>(
+      `INSERT INTO partners (name, tax_id, partner_role, slug) VALUES ($1, $2, 'seller', $3) RETURNING id`,
+      ['Test Partner AuthZ A', 'PL999999999A', 'test-partner-authz-a']
+    );
+    const partnerId1 = fakePartnerRes1.rows[0].id;
+
+    const fakePartnerRes2 = await pool.query<{ id: string }>(
+      `INSERT INTO partners (name, tax_id, partner_role, slug) VALUES ($1, $2, 'seller', $3) RETURNING id`,
+      ['Test Partner AuthZ B', 'PL999999999B', 'test-partner-authz-b']
+    );
+    const partnerId2 = fakePartnerRes2.rows[0].id;
+
+    const userId1 = "00000000-0000-0000-0000-000000000010";
+    const userId2 = "00000000-0000-0000-0000-000000000011";
+
+    // FK constraint
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`, [userId1, '999999999']),
+      /violates foreign key constraint/
+    );
+
+    // UNIQUE constraint, default can_accept_orders = false
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`,
+      [userId1, partnerId1]
+    );
+
+    const memRes = await pool.query<{ can_accept_orders: boolean }>(`SELECT can_accept_orders FROM partner_user_memberships WHERE auth_user_id = $1 AND partner_id = $2`, [userId1, partnerId1]);
+    assert.strictEqual(memRes.rows[0].can_accept_orders, false);
+
+    // M. duplicate same user + Partner rejected
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`, [userId1, partnerId1]),
+      /violates unique constraint/
+    );
+
+    // N. same user may belong to Partner A and Partner B
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`,
+      [userId1, partnerId2]
+    );
+
+    // O. same Partner may have multiple distinct users
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`,
+      [userId2, partnerId1]
+    );
+
+    // P. revoked consistency enforced
+    // revoked without revoked_at
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'revoked')`, ['00000000-0000-0000-0000-000000000012', partnerId1]),
+      /violates check constraint "chk_partner_membership_consistency"/
+    );
+    // active with revoked_at
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, revoked_at) VALUES ($1, $2, 'active', now())`, ['00000000-0000-0000-0000-000000000013', partnerId1]),
+      /violates check constraint "chk_partner_membership_consistency"/
+    );
+    // valid revoked
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, revoked_at) VALUES ($1, $2, 'revoked', now())`,
+      ['00000000-0000-0000-0000-000000000014', partnerId1]
+    );
+  });
+
+  await t.test("Q to T: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
+    // Create an order for testing
+    const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (name, tax_id, partner_role, slug) VALUES ('Test Partner AuthZ C', 'PL999999999C', 'seller', 'test-partner-authz-c') RETURNING id`);
+    const pId = partnerRes.rows[0].id;
+
+    const catRes = await pool.query<{ id: string }>(`INSERT INTO categories (name, slug) VALUES ('Cat C', 'cat-c') RETURNING id`);
+    const cId = catRes.rows[0].id;
+
+    await pool.query<{ id: string }>(`INSERT INTO offers (title, category_id, offer_model, conversion_type, is_active, publication_status, partner_id, price_brutto, price_on_request) VALUES ('Offer C', $1, 'marketplace', 'inbound', true, 'published', $2, 100, false) RETURNING id`, [cId, pId]);
+    
+
+    const mktRes = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, buyer_auth_user_id, original_checkout_session_id) VALUES ('draft', '00000000-0000-0000-0000-000000000000', 'test-session-1') RETURNING id`);
+    const mktOrderId = mktRes.rows[0].id;
+
+    const soRes = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'e1_draft') RETURNING id`, [mktOrderId, pId]);
+    const sellerOrderId = soRes.rows[0].id;
+
+    const userId = "00000000-0000-0000-0000-000000000020";
+
+    // Q. Seller acceptance pending row permits NULL actor evidence
+    const decRes = await pool.query<{ id: string }>(
+      `INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status) VALUES ($1, 'pending_seller_review') RETURNING id`,
+      [sellerOrderId]
+    );
+    const decId = decRes.rows[0].id;
+
+    // R. seller_accepted row without actor evidence rejected
+    await assert.rejects(
+      pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_accepted', resolved_at = now(), accepted_at = now() WHERE id = $1`, [decId]),
+      /violates check constraint "chk_seller_acc_dec_consistency"/
+    );
+
+    // S. seller_accepted row with actor + partner_portal accepted
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'seller_accepted', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now(), accepted_at = now() WHERE id = $2`,
+      [userId, decId]
+    );
+
+    // Back to pending for T
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'pending_seller_review', decided_by_auth_user_id = NULL, decision_source = NULL, resolved_at = NULL, accepted_at = NULL WHERE id = $1`,
+      [decId]
+    );
+
+    // T. seller_rejected row requires actor but accepted_at remains NULL
+    await assert.rejects(
+      pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', resolved_at = now() WHERE id = $1`, [decId]),
+      /violates check constraint "chk_seller_acc_dec_consistency"/
+    );
+
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now() WHERE id = $2`,
+      [userId, decId]
+    );
+  });
 });

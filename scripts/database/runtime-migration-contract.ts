@@ -1260,5 +1260,54 @@ export const FINAL_POST_0012_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0011_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0012_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0013_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0012_PRODUCTION_FINGERPRINT,
+  "partner_user_memberships": {
+    name: "partner_user_memberships",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('partner_user_memberships_id_seq'::regclass)", sequenceName: "partner_user_memberships_id_seq" },
+      { name: "auth_user_id", type: "uuid", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "partner_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "membership_status", type: "character varying(20)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "can_accept_orders", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "revoked_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "partner_user_memberships_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_partner_user_membership", type: "UNIQUE", definition: "UNIQUE (auth_user_id, partner_id)" },
+      { name: "chk_partner_membership_status", type: "CHECK", definition: "CHECK (((membership_status)::text = ANY ((ARRAY['active'::character varying, 'revoked'::character varying])::text[])))" },
+      { name: "chk_partner_membership_consistency", type: "CHECK", definition: "CHECK ((((membership_status)::text = 'active'::text) AND (revoked_at IS NULL)) OR (((membership_status)::text = 'revoked'::text) AND (revoked_at IS NOT NULL)))" },
+      { name: "partner_user_memberships_partner_id_partners_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (partner_id) REFERENCES partners(id) ON UPDATE NO ACTION ON DELETE NO ACTION" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0
+  },
+  "seller_acceptance_decisions": {
+    ...FINAL_POST_0012_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"],
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_acceptance_decisions_id_seq'::regclass)", sequenceName: "seller_acceptance_decisions_id_seq" },
+      { name: "seller_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "decision_status", type: "character varying(50)", nullable: false, defaultVal: "'pending_seller_review'::character varying", sequenceName: null },
+      { name: "decided_by_auth_user_id", type: "uuid", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "decision_source", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "resolved_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "accepted_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "seller_acceptance_decisions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "seller_acceptance_decisions_seller_order_id_unique", type: "UNIQUE", definition: "UNIQUE (seller_order_id)" },
+      { name: "chk_seller_acc_dec_status", type: "CHECK", definition: "CHECK (((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[])))" },
+      { name: "chk_seller_acc_dec_consistency", type: "CHECK", definition: "CHECK (((((decision_status)::text = 'pending_seller_review'::text) AND (decided_by_auth_user_id IS NULL) AND (decision_source IS NULL) AND (resolved_at IS NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'seller_accepted'::text) AND (decided_by_auth_user_id IS NOT NULL) AND ((decision_source)::text = 'partner_portal'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NOT NULL)) OR (((decision_status)::text = 'seller_rejected'::text) AND (decided_by_auth_user_id IS NOT NULL) AND ((decision_source)::text = 'partner_portal'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'expired'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL))))" },
+      { name: "seller_acceptance_decisions_seller_order_id_seller_orders_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id) ON UPDATE NO ACTION ON DELETE NO ACTION" }
+    ]
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0012_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0013_PRODUCTION_FINGERPRINT;
+
