@@ -315,7 +315,7 @@ export async function executeMarketplaceCheckout(
 
       return { ok: true, marketplaceOrderId: mOrderId };
     });
-  } catch (err) {
+  } catch {
     return { ok: false, reason: "SYSTEM_ERROR" };
   }
 }
