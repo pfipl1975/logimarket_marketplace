@@ -17,7 +17,8 @@ import {
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
   FINAL_POST_0006_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT,
-  PREVIOUS_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0011_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0010_PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
   IndexContract,
@@ -71,6 +72,7 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0012"
   | "EXACT_EXISTING_POST_0011"
   | "EXACT_EXISTING_POST_0010"
   | "EXACT_EXISTING_POST_0009"
@@ -565,16 +567,26 @@ export function classifyRuntimeTarget(
     return { state: "EMPTY", publicTableCount, differences: [] };
   }
 
+  
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0012", publicTableCount, differences: [] };
+    }
+    return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
+  }
+
+  const matchPost0011 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0011_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0011.isExactMatch) {
     if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
       return { state: "EXACT_EXISTING_POST_0011", publicTableCount, differences: [] };
     }
     return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
   }
 
-  const matchPost0010 = compareRuntimeFingerprint(actual, allPublicTables, PREVIOUS_PRODUCTION_FINGERPRINT);
+  const matchPost0010 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0010_PRODUCTION_FINGERPRINT);
 
   if (matchPost0010.isExactMatch) {
     if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
@@ -582,6 +594,7 @@ export function classifyRuntimeTarget(
     }
     return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
   }
+
 
   const matchPost0009 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0009_PRODUCTION_FINGERPRINT);
 
