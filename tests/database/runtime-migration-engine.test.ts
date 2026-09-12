@@ -40,6 +40,7 @@ import {
   BASELINE_PRODUCTION_FINGERPRINT,
   FINAL_POST_0004_PRODUCTION_FINGERPRINT,
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
+  type TableContract,
 } from "../../scripts/database/runtime-migration-contract";
 
 // ---------------------------------------------------------------------------
@@ -78,6 +79,7 @@ const PROD_REF = "prodref";
 
 function emptyEnv(): NodeJS.ProcessEnv {
   return {
+    NODE_ENV: "test",
     DATABASE_URL: FAKE_DEV_URL,
     RUNTIME_MIGRATION_TARGET: "development",
     RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: DEV_REF,

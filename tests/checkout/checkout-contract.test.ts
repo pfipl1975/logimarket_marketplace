@@ -46,7 +46,7 @@ test("Checkout Core Transaction Contract", async (t) => {
   });
 
   await t.test("Reconstructs offers based on locked cart rows", () => {
-    assert.match(checkoutCoreSource, /SELECT.*FROM.*\$\{offers\}/s);
+    assert.match(checkoutCoreSource, /SELECT[\s\S]*FROM[\s\S]*\$\{offers\}/);
     assert.match(checkoutCoreSource, /WHERE\s*id\s*=\s*ANY/i);
   });
 
@@ -56,7 +56,7 @@ test("Checkout Core Transaction Contract", async (t) => {
   });
 
   await t.test("Deletes cart items inside transaction", () => {
-    assert.match(checkoutCoreSource, /DELETE\s+FROM.*\$\{cartItems\}/s);
+    assert.match(checkoutCoreSource, /DELETE\s+FROM[\s\S]*\$\{cartItems\}/);
   });
 
   await t.test("Logging Hygiene: no commercial values in failure logs", () => {

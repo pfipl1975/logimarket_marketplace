@@ -19,7 +19,6 @@ test("getDb configures pool with max 1 by default", async () => {
     // However, the drizzle instance contains the pg dialect which holds the client/pool.
     const db = dbModule.getDb();
     
-    // @ts-expect-error Accessing private instance for unit testing pool config
     const pool = db.session.client;
     
     assert.equal(pool.options.max, 1, "Default pool max should be 1");

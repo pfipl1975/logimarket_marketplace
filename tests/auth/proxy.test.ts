@@ -37,7 +37,9 @@ test("proxy auth redirect", async (t) => {
       assert.equal(cookie?.secure, true);
       assert.equal(cookie?.sameSite, "lax");
       assert.equal(cookie?.maxAge, 3600);
-      assert.equal(cookie?.expires?.toISOString(), expires.toISOString());
+      const cookieExpires = cookie?.expires;
+      assert.ok(cookieExpires instanceof Date);
+      assert.equal(cookieExpires.toISOString(), expires.toISOString());
       
       assert.equal(redirect.headers.get("Cache-Control"), "no-store");
       assert.equal(redirect.headers.get("Expires"), "0");

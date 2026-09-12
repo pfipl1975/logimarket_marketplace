@@ -118,9 +118,9 @@ test("requireAdminCore", async (t) => {
     for (const promise of cases) {
       const error = await promise.then(
         () => null,
-        (caught: unknown) => caught as Error
+        (caught: unknown) => caught
       );
-      assert.notEqual(error, null);
+      assert.ok(error instanceof Error);
       const exposed = `${error.name} ${error.message} ${String(error.stack)}`;
       for (const secret of secrets) {
         assert.equal(

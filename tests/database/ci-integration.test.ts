@@ -1256,7 +1256,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { executeSellerEligibilityChange } =
       await import("@/lib/admin/seller-eligibility-core");
-    const db = drizzle(pool);
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
 
     // A. none -> eligible
     const resA = await executeSellerEligibilityChange(db, {
@@ -1399,7 +1400,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const { executeAdminOfferEdit } =
       await import("@/lib/admin/offer-edit-core");
-    const db = drizzle(pool);
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
 
     // A. NOT FOUND
     const resA = await executeAdminOfferEdit(db, {
@@ -2513,6 +2515,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const res = await createOfferDraftCore(db, childCatInput.data);
       assert.equal(res.ok, true);
       assert.equal(res.code, "OFFER_DRAFT_CREATED");
+      if (!res.ok) assert.fail(`Expected offer draft creation, received ${res.code}`);
       const rowRes = await pool.query(`SELECT * FROM offers WHERE id = $1;`, [
         res.offerId,
       ]);
@@ -3073,15 +3076,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const schemaModule = await import("@/lib/schema");
     const db = drizzle(pool, { schema: schemaModule }) as any;
-    const adminContext = { actorUserId: "ci-admin-seller-legal-proof" };
-
     // 1. partner missing
     const res1 = await executeAdminSellerRegistryIdentifierAdd(db, {
       partnerId: 99999,
       registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    }, adminContext);
+    });
     assert.strictEqual(res1.ok, false);
     if (!res1.ok) assert.strictEqual(res1.code, "PARTNER_NOT_FOUND");
 
@@ -3095,7 +3096,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    }, adminContext);
+    });
     assert.strictEqual(res2.ok, false);
     if (!res2.ok) assert.strictEqual(res2.code, "LEGAL_IDENTITY_REQUIRED");
 
@@ -3108,7 +3109,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       registryType: "commercial_register",
       registryValue: "0000111222",
       jurisdictionCountry: "PL",
-    }, adminContext);
+    });
     assert.strictEqual(res3.ok, true);
 
     const check1 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
