@@ -1,5 +1,6 @@
 import { sql, eq, inArray, isNull, and, asc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "@/lib/schema";
 import {
   buyerLegalContextSnapshots,
   marketplaceOrders,
@@ -20,7 +21,7 @@ import { evaluateBuyerCheckoutReadiness } from "@/lib/marketplace/buyer-legal-co
 import type { BuyerLegalContextInput } from "@/lib/marketplace/buyer-legal-context";
 import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
 import { validateSellerSourceForSnapshot } from "@/lib/marketplace/seller-snapshot";
-import type { SellerSourceInput } from "@/lib/marketplace/seller-snapshot";
+import type { SellerEligibilityStatus, SellerSourceInput } from "@/lib/marketplace/seller-snapshot";
 import { validateCheckoutLine } from "./eligibility";
 import { 
   CONTRACT_MODEL,
@@ -51,8 +52,31 @@ export type MarketplaceCheckoutResult =
   | { ok: false; reason: "CHECKOUT_SELLER_NOT_READY" }
   | { ok: false; reason: "SYSTEM_ERROR" };
 
+type MarketplaceDatabase = NodePgDatabase<typeof schema>;
+
+function normalizeSellerEligibilityStatus(
+  value: string | null | undefined,
+): SellerEligibilityStatus | null {
+  if (
+    value === "pending" ||
+    value === "eligible" ||
+    value === "ineligible" ||
+    value === "suspended"
+  ) {
+    return value;
+  }
+  return null;
+}
+
+function requireValidatedString(value: string | null, field: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new Error(`Validated seller source is missing ${field}`);
+  }
+  return value;
+}
+
 export async function executeMarketplaceCheckout(
-  db: NodePgDatabase<Record<string, unknown>>,
+  db: MarketplaceDatabase,
   sessionHash: string,
   buyerLegalContext: BuyerLegalContextInput,
   buyerContact: BuyerContactInput
@@ -151,11 +175,21 @@ export async function executeMarketplaceCheckout(
           registeredCity: li?.registeredCity ?? null,
           registeredRegion: li?.registeredRegion ?? null,
           registeredCountryCode: li?.registeredCountryCode ?? null,
-          eligibilityStatus: elig?.eligibilityStatus as any,
+          eligibilityStatus: normalizeSellerEligibilityStatus(elig?.eligibilityStatus),
           taxIdentifierType: taxPref?.identifierType ?? null,
           taxIdentifierValue: taxPref?.identifierValue ?? null,
           registryIdentifierType: regPref?.registryType ?? null,
           registryIdentifierValue: regPref?.registryValue ?? null,
+          contractModel: CONTRACT_MODEL,
+          sellerOfRecord: SELLER_OF_RECORD,
+          goodsInvoiceIssuer: GOODS_INVOICE_ISSUER,
+          goodsInvoiceResponsibility: GOODS_INVOICE_RESPONSIBILITY,
+          deliveryResponsibility: DELIVERY_RESPONSIBILITY,
+          complaintResponsibility: COMPLAINT_RESPONSIBILITY,
+          returnResponsibility: RETURN_RESPONSIBILITY,
+          refundFinancialLiability: REFUND_FINANCIAL_LIABILITY,
+          sellerRole: SELLER_ROLE,
+          logimarketPlatformRole: LOGIMARKET_PLATFORM_ROLE,
         };
 
         const val = validateSellerSourceForSnapshot(input);
@@ -165,19 +199,19 @@ export async function executeMarketplaceCheckout(
       }
 
       const [blcInsert] = await tx.insert(buyerLegalContextSnapshots).values({
-        businessName: buyerLegalContext.businessName,
-        countryCode: buyerLegalContext.countryCode,
+        businessName: requireValidatedString(buyerLegalContext.businessName, "buyerBusinessName"),
+        countryCode: requireValidatedString(buyerLegalContext.countryCode, "buyerCountryCode"),
         taxIdentifierType: buyerLegalContext.taxIdentifierType,
         taxIdentifierValue: buyerLegalContext.taxIdentifierValue,
         registryIdentifierType: buyerLegalContext.registryIdentifierType,
         registryIdentifierValue: buyerLegalContext.registryIdentifierValue,
-        businessVerificationStatus: buyerLegalContext.businessVerificationStatus as any,
+        businessVerificationStatus: buyerLegalContext.businessVerificationStatus,
         businessVerificationMethod: buyerLegalContext.businessVerificationMethod,
         businessVerificationSource: buyerLegalContext.businessVerificationSource,
         businessVerifiedAt: buyerLegalContext.businessVerifiedAt,
         professionalPurposeEvidence: buyerLegalContext.professionalPurposeEvidence,
-        categoryBStatus: buyerLegalContext.categoryBStatus as any,
-        legalContextReviewState: buyerLegalContext.legalContextReviewState as any,
+        categoryBStatus: buyerLegalContext.categoryBStatus,
+        legalContextReviewState: buyerLegalContext.legalContextReviewState,
       }).returning({ id: buyerLegalContextSnapshots.id });
 
       const [moInsert] = await tx.insert(marketplaceOrders).values({
@@ -196,7 +230,24 @@ export async function executeMarketplaceCheckout(
       });
 
       for (const [partnerId, lines] of linesByPartner.entries()) {
-        const sd = sellerDisclosures.get(partnerId)!;
+        const sd = sellerDisclosures.get(partnerId);
+        if (!sd) {
+          throw new Error(`Validated seller source is missing for partner ${partnerId}`);
+        }
+        const sellerLegalName = requireValidatedString(sd.legalName, "legalName");
+        const sellerDisplayName = requireValidatedString(sd.sellerDisplayName, "sellerDisplayName");
+        const jurisdictionCountry = requireValidatedString(sd.jurisdictionCountry, "jurisdictionCountry");
+        const firmContactEmail = requireValidatedString(sd.firmContactEmail, "firmContactEmail");
+        const sellerRole = requireValidatedString(sd.sellerRole, "sellerRole");
+        const logimarketPlatformRole = requireValidatedString(sd.logimarketPlatformRole, "logimarketPlatformRole");
+        const goodsInvoiceIssuer = requireValidatedString(sd.goodsInvoiceIssuer, "goodsInvoiceIssuer");
+        const contractModel = requireValidatedString(sd.contractModel, "contractModel");
+        const sellerOfRecord = requireValidatedString(sd.sellerOfRecord, "sellerOfRecord");
+        const goodsInvoiceResponsibility = requireValidatedString(sd.goodsInvoiceResponsibility, "goodsInvoiceResponsibility");
+        const deliveryResponsibility = requireValidatedString(sd.deliveryResponsibility, "deliveryResponsibility");
+        const complaintResponsibility = requireValidatedString(sd.complaintResponsibility, "complaintResponsibility");
+        const returnResponsibility = requireValidatedString(sd.returnResponsibility, "returnResponsibility");
+        const refundFinancialLiability = requireValidatedString(sd.refundFinancialLiability, "refundFinancialLiability");
         
         const addrStr = [
             sd.registeredAddressLine1,
@@ -207,16 +258,16 @@ export async function executeMarketplaceCheckout(
         await tx.insert(marketplaceOrderSellerDisclosures).values({
           marketplaceOrderId: mOrderId,
           partnerId,
-          sellerLegalName: sd.legalName as string,
+          sellerLegalName,
           registeredAddress: addrStr,
-          jurisdictionCountry: sd.jurisdictionCountry as string,
-          firmContactEmail: sd.firmContactEmail as string,
-          sellerRole: SELLER_ROLE,
-          goodsInvoiceIssuer: GOODS_INVOICE_ISSUER,
-          deliveryResponsibleParty: DELIVERY_RESPONSIBILITY,
-          complaintResponsibleParty: COMPLAINT_RESPONSIBILITY,
-          returnResponsibleParty: RETURN_RESPONSIBILITY,
-          logimarketPlatformRole: LOGIMARKET_PLATFORM_ROLE,
+          jurisdictionCountry,
+          firmContactEmail,
+          sellerRole,
+          goodsInvoiceIssuer,
+          deliveryResponsibleParty: deliveryResponsibility,
+          complaintResponsibleParty: complaintResponsibility,
+          returnResponsibleParty: returnResponsibility,
+          logimarketPlatformRole,
           taxIdentifierType: sd.taxIdentifierType,
           taxIdentifierValue: sd.taxIdentifierValue,
         });
@@ -230,22 +281,22 @@ export async function executeMarketplaceCheckout(
 
         await tx.insert(sellerOrderSellerSnapshots).values({
           sellerOrderId: sOrderId,
-          sellerLegalName: sd.legalName as string,
-          sellerDisplayName: sd.sellerDisplayName as string,
-          jurisdictionCountry: sd.jurisdictionCountry as string,
+          sellerLegalName,
+          sellerDisplayName,
+          jurisdictionCountry,
           registeredAddress: addrStr,
-          firmContactEmail: sd.firmContactEmail as string,
+          firmContactEmail,
           taxIdentifierType: sd.taxIdentifierType,
           taxIdentifierValue: sd.taxIdentifierValue,
           registryIdentifierType: sd.registryIdentifierType,
           registryIdentifierValue: sd.registryIdentifierValue,
-          contractModel: CONTRACT_MODEL,
-          sellerOfRecordResponsibility: SELLER_OF_RECORD,
-          goodsInvoiceResponsibility: GOODS_INVOICE_RESPONSIBILITY,
-          deliveryResponsibility: DELIVERY_RESPONSIBILITY,
-          complaintResponsibility: COMPLAINT_RESPONSIBILITY,
-          returnResponsibility: RETURN_RESPONSIBILITY,
-          refundFinancialLiability: REFUND_FINANCIAL_LIABILITY,
+          contractModel,
+          sellerOfRecordResponsibility: sellerOfRecord,
+          goodsInvoiceResponsibility,
+          deliveryResponsibility,
+          complaintResponsibility,
+          returnResponsibility,
+          refundFinancialLiability,
         });
 
         for (const line of lines) {

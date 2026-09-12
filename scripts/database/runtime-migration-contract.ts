@@ -1238,8 +1238,9 @@ export const FINAL_POST_0011_PRODUCTION_FINGERPRINT: Record<string, TableContrac
 export const FINAL_POST_0012_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
   ...FINAL_POST_0011_PRODUCTION_FINGERPRINT,
   "marketplace_order_buyer_contact_snapshots": {
+    name: "marketplace_order_buyer_contact_snapshots",
     columns: [
-      { name: "id", type: "bigint", nullable: false, defaultVal: null, sequenceName: "marketplace_order_buyer_contact_snapshots_id_seq" },
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('marketplace_order_buyer_contact_snapshots_id_seq'::regclass)", sequenceName: "marketplace_order_buyer_contact_snapshots_id_seq" },
       { name: "marketplace_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "contact_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
       { name: "email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
@@ -1248,9 +1249,9 @@ export const FINAL_POST_0012_PRODUCTION_FINGERPRINT: Record<string, TableContrac
       { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
     ],
     constraints: [
-      { name: "marketplace_order_buyer_contact_snapshots_pkey", type: "PRIMARY KEY", details: "PRIMARY KEY (id)" },
-      { name: "marketplace_order_buyer_contact_snapshots_marketplace_order_i", type: "UNIQUE", details: "UNIQUE (marketplace_order_id)" },
-      { name: "marketplace_order_buyer_contact_snapshots_marketplace_order_1", type: "FOREIGN KEY", details: "FOREIGN KEY (marketplace_order_id) REFERENCES marketplace_orders(id)" }
+      { name: "marketplace_order_buyer_contact_snapshots_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_mkt_order_buyer_contact_order", type: "UNIQUE", definition: "UNIQUE (marketplace_order_id)" },
+      { name: "fk_mkt_order_buyer_contact_order", type: "FOREIGN KEY", definition: "FOREIGN KEY (marketplace_order_id) REFERENCES marketplace_orders(id)" }
     ],
     explicitIndexes: [],
     rlsEnabled: true,
