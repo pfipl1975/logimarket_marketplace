@@ -106,6 +106,7 @@ test("POST_0007_RECONCILIATION: canonical 0007 hash and timestamp are mandatory"
 
 test("POST_0007_RECONCILIATION: target verifier requires exact production-only authorization", () => {
   const env: NodeJS.ProcessEnv = {
+    NODE_ENV: "test",
     DATABASE_URL:
       "postgres://postgres.prodref@aws-0-eu-central-1.pooler.supabase.com:5432/postgres",
     RUNTIME_MIGRATION_TARGET: "production",

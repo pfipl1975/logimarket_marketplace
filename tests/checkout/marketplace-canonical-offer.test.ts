@@ -16,7 +16,7 @@ function baseLine(overrides?: Partial<AuthoritativeMarketplaceLine>): Authoritat
     publicationStatus: "published",
     isActive: true,
     priceOnRequest: false,
-    unitPriceMinor: 10000n,
+    unitPriceMinor: BigInt(10000),
     contractModel: "partner_marketplace",
     currency: "PLN",   // fixture-only — currency source is Owner-decided, not hardcoded globally
     ...overrides,

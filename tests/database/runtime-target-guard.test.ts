@@ -1,7 +1,11 @@
 import { test } from "node:test";
 import assert from "node:assert";
 import { normalizeProjectRef } from "../../scripts/database/runtime-migration-contract";
-import { verifyTarget } from "../../scripts/database/verify-runtime-migration-target";
+import { verifyTarget as verifyRuntimeTarget } from "../../scripts/database/verify-runtime-migration-target";
+
+function verifyTarget(env: Partial<NodeJS.ProcessEnv>) {
+  return verifyRuntimeTarget({ NODE_ENV: "test", ...env });
+}
 
 test("normalizeProjectRef: direct db host", () => {
   assert.strictEqual(normalizeProjectRef("postgresql://postgres:PASSWORD@db.abcdefgh.supabase.co:5432/postgres"), "abcdefgh");

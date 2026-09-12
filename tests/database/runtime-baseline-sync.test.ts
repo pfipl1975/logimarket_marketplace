@@ -19,7 +19,14 @@ function parseSqlBaseline() {
   const parser = new PostgresSqlParser(unwrappedSql);
   const parsedTables = parser.parse();
 
-  const tables: any = {};
+  type ParsedBaselineColumn = {
+    name: string;
+    rawType: string;
+    nullable: boolean;
+    hasDefault: boolean;
+    defaultVal: string | null;
+  };
+  const tables: Record<string, ParsedBaselineColumn[]> = {};
 
   // Parse only 0000 baseline tables (15 tables)
   const baselineTables = Object.keys(BASELINE_PRODUCTION_FINGERPRINT);
