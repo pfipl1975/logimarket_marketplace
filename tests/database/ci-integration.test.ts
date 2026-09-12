@@ -3888,8 +3888,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const oRes = await pool.query<{ id: number }>(
         `INSERT INTO offers (
           title, category_id, offer_model, conversion_type, is_active,
-          publication_status, partner_id, price_brutto
-        ) VALUES ($1, $2, 'marketplace', 'inbound', true, 'published', $3, $4) RETURNING id`,
+          publication_status, partner_id, price_brutto, price_on_request
+        ) VALUES ($1, $2, 'marketplace', 'inbound', true, 'published', $3, $4, false) RETURNING id`,
         [`Test Offer ${fixtureSuffix}`, categoryId, partnerId, price],
       );
       const offerId = Number(oRes.rows[0].id);
