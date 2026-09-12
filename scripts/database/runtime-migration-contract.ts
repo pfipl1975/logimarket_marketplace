@@ -54,7 +54,12 @@ export const EXPECTED_POST_0011_TABLES = [
   "offer_media"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0011_TABLES;
+export const EXPECTED_POST_0012_TABLES = [
+  ...EXPECTED_POST_0011_TABLES,
+  "marketplace_order_buyer_contact_snapshots"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0012_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1230,5 +1235,30 @@ export const FINAL_POST_0011_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0010_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0011_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0012_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0011_PRODUCTION_FINGERPRINT,
+  "marketplace_order_buyer_contact_snapshots": {
+    name: "marketplace_order_buyer_contact_snapshots",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('marketplace_order_buyer_contact_snapshots_id_seq'::regclass)", sequenceName: "marketplace_order_buyer_contact_snapshots_id_seq" },
+      { name: "marketplace_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "contact_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "email", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "phone", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "message", type: "character varying(5000)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "marketplace_order_buyer_contact_snapshots_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_mkt_order_buyer_contact_order", type: "UNIQUE", definition: "UNIQUE (marketplace_order_id)" },
+      { name: "fk_mkt_order_buyer_contact_order", type: "FOREIGN KEY", definition: "FOREIGN KEY (marketplace_order_id) REFERENCES marketplace_orders(id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0011_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0012_PRODUCTION_FINGERPRINT;

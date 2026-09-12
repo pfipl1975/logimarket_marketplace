@@ -11,11 +11,26 @@ import {
   partnerAgreementEvidenceInvalidations,
 } from "@/lib/schema";
 import { type SellerReadinessResult, evaluateSellerReadiness, type SellerReadinessSnapshot } from "../partners/seller-readiness-core";
-import { buildSellerDisclosure } from "@/lib/legal/seller-disclosure";
 
-export async function querySellerReadiness<TSchema extends Record<string, unknown>>(db: NodePgDatabase<TSchema>, partnerId: number): Promise<SellerReadinessResult> {
+type SellerReadinessDatabase<TSchema extends Record<string, unknown>> = NodePgDatabase<TSchema>;
+type SellerReadinessTransaction<TSchema extends Record<string, unknown>> =
+  Parameters<Parameters<SellerReadinessDatabase<TSchema>["transaction"]>[0]>[0];
+
+function isMeaningful(value: string | null | undefined): boolean {
+  return typeof value === "string" && value.trim().length > 0;
+}
+
+export async function querySellerReadiness<TSchema extends Record<string, unknown>>(
+  db: SellerReadinessDatabase<TSchema> | SellerReadinessTransaction<TSchema>,
+  partnerId: number,
+): Promise<SellerReadinessResult> {
   // Partner exists
-  const partnerRows = await db.select({ id: partners.id }).from(partners).where(eq(partners.id, partnerId)).limit(1);
+  const partnerRows = await db
+    .select({ id: partners.id, contactEmail: partners.contactEmail })
+    .from(partners)
+    .where(eq(partners.id, partnerId))
+    .limit(1);
+  const partner = partnerRows[0];
   const partnerExists = partnerRows.length > 0;
 
   // Legal Identity
@@ -30,24 +45,14 @@ export async function querySellerReadiness<TSchema extends Record<string, unknow
   let isComplete = false;
   let liVerificationStatus: string | null = null;
   if (legalIdentity) {
-    const pRows = await db.select({ contactEmail: partners.contactEmail }).from(partners).where(eq(partners.id, partnerId));
-    const p = pRows[0];
-    const disclosure = buildSellerDisclosure(
-      partnerId,
-      legalIdentity.legalName || "",
-      p?.contactEmail || "",
-      {
-        addressLine1: legalIdentity.registeredAddressLine1,
-        addressLine2: legalIdentity.registeredAddressLine2,
-        postalCode: legalIdentity.registeredPostalCode,
-        city: legalIdentity.registeredCity,
-        region: legalIdentity.registeredRegion,
-        countryCode: legalIdentity.registeredCountryCode,
-      },
-      taxRows.map(t => ({ type: t.type, value: t.value, countryCode: t.countryCode }))
-    );
-    const legalMissingFields = disclosure.completeness.missing.filter(field => field !== "tax_identifier");
-    isComplete = legalMissingFields.length === 0;
+    isComplete = [
+      legalIdentity.legalName,
+      partner?.contactEmail,
+      legalIdentity.registeredAddressLine1,
+      legalIdentity.registeredPostalCode,
+      legalIdentity.registeredCity,
+      legalIdentity.registeredCountryCode,
+    ].every(isMeaningful);
     liVerificationStatus = legalIdentity.verificationStatus;
   }
 
