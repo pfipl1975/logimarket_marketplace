@@ -111,17 +111,17 @@ describe("Admin Offer Create Draft - Unit Tests", () => {
     test("19. extra client publicationStatus field cannot enter normalized input", () => {
       const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "rfq", publicationStatus: "published" });
       assert.strictEqual(res.ok, true);
-      if (res.ok) assert.strictEqual((res.data as Record<string, unknown>).publicationStatus, undefined);
+      if (res.ok) assert.strictEqual("publicationStatus" in res.data, false);
     });
     test("20. extra client contractModel field cannot enter normalized input", () => {
       const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "rfq", contractModel: "logimarket_reseller" });
       assert.strictEqual(res.ok, true);
-      if (res.ok) assert.strictEqual((res.data as Record<string, unknown>).contractModel, undefined);
+      if (res.ok) assert.strictEqual("contractModel" in res.data, false);
     });
     test("21. extra client isActive field cannot enter normalized input", () => {
       const res = parseOfferDraftCreateInput({ partnerId: 1, categoryId: 1, title: "T", adminOfferType: "rfq", isActive: true });
       assert.strictEqual(res.ok, true);
-      if (res.ok) assert.strictEqual((res.data as Record<string, unknown>).isActive, undefined);
+      if (res.ok) assert.strictEqual("isActive" in res.data, false);
     });
   });
 

@@ -12,14 +12,14 @@ import type { RfqStatus } from "@/lib/schema";
 // Core Workflow Behavioral Tests
 // ---------------------------------------------------------------------------
 test("Admin RFQ Core Workflow Behavioral Tests", async (t) => {
-  const createMockTx = (initialRows: unknown[]) => {
+  const createMockTx = (initialRows: Record<string, unknown>[]) => {
     const executedQueries: string[] = [];
     const updates: unknown[] = [];
     const tx: RfqMutationTransaction = {
       execute: async (query: unknown) => {
         // Just extract the raw string representation for test assertion
         executedQueries.push(inspect(query, { depth: 10 }));
-        return { rows: initialRows } as { rows: unknown[] };
+        return { rows: initialRows };
       },
       update: () => ({
         set: (values: unknown) => {

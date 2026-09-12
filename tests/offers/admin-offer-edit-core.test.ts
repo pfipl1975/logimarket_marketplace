@@ -1,6 +1,11 @@
 import test from "node:test";
 import assert from "node:assert";
-import { parseAdminOfferEditInput, validateOfferEditBusinessRules, isAdminOfferEditableStatus } from "../../src/lib/admin/offer-edit-core";
+import {
+  parseAdminOfferEditInput,
+  validateOfferEditBusinessRules,
+  isAdminOfferEditableStatus,
+  type AdminOfferEditInput,
+} from "../../src/lib/admin/offer-edit-core";
 
 test("parseAdminOfferEditInput - valid input", () => {
   const result = parseAdminOfferEditInput({
@@ -40,8 +45,8 @@ test("parseAdminOfferEditInput - null expectedUpdatedAt", () => {
 });
 
 test("validateOfferEditBusinessRules - published ecommerce requires price", () => {
-  const input = {
-    offerId: "1",
+  const input: AdminOfferEditInput = {
+    offerId: 1,
     expectedUpdatedAt: null,
     title: "t",
     description: null,
@@ -53,7 +58,7 @@ test("validateOfferEditBusinessRules - published ecommerce requires price", () =
     isFeatured: false,
   };
 
-  const result = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
+  const result = validateOfferEditBusinessRules("marketplace", "inbound", input, "published");
   assert.strictEqual(result.valid, false);
   if (!result.valid) {
     assert.strictEqual(result.reason, "ECOMMERCE_PRICE_INVALID");
@@ -61,17 +66,17 @@ test("validateOfferEditBusinessRules - published ecommerce requires price", () =
 
   input.priceBrutto = "10.00";
   input.priceOnRequest = true;
-  const result2 = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
+  const result2 = validateOfferEditBusinessRules("marketplace", "inbound", input, "published");
   assert.strictEqual(result2.valid, false);
 
   input.priceOnRequest = false;
-  const result3 = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
+  const result3 = validateOfferEditBusinessRules("marketplace", "inbound", input, "published");
   assert.strictEqual(result3.valid, true);
 });
 
 test("validateOfferEditBusinessRules - draft ecommerce allows missing price", () => {
-  const input = {
-    offerId: "1",
+  const input: AdminOfferEditInput = {
+    offerId: 1,
     expectedUpdatedAt: null,
     title: "t",
     description: null,
@@ -83,7 +88,7 @@ test("validateOfferEditBusinessRules - draft ecommerce allows missing price", ()
     isFeatured: false,
   };
 
-  const result = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "draft");
+  const result = validateOfferEditBusinessRules("marketplace", "inbound", input, "draft");
   assert.strictEqual(result.valid, true);
 });
 
@@ -94,7 +99,7 @@ test("validateOfferEditBusinessRules - incomplete draft/archived allowed", () =>
   };
 
   // draft outbound with outboundUrl=null
-  assert.strictEqual(validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "draft").valid, true);
+  assert.strictEqual(validateOfferEditBusinessRules("rfq", "outbound", input, "draft").valid, true);
 
   // archived ecommerce with priceBrutto=null, priceOnRequest=true
   const ecommerceInput = { ...input, adminOfferType: "marketplace" as const, priceBrutto: null, priceOnRequest: true };
@@ -105,7 +110,7 @@ test("validateOfferEditBusinessRules - incomplete draft/archived allowed", () =>
 });
 
 test("validateOfferEditBusinessRules - published outbound requires url", () => {
-  const input = {
+  const input: AdminOfferEditInput = {
     offerId: 1,
     expectedUpdatedAt: null,
     title: "t",
@@ -118,11 +123,11 @@ test("validateOfferEditBusinessRules - published outbound requires url", () => {
     isFeatured: false,
   };
 
-  const result = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
+  const result = validateOfferEditBusinessRules("rfq", "outbound", input, "published");
   assert.strictEqual(result.valid, false);
 
   input.outboundUrl = "https://example.com";
-  const result2 = validateOfferEditBusinessRules(input.adminOfferType === "marketplace" ? "marketplace" : "rfq", input.adminOfferType === "external_partner" ? "outbound" : "inbound", input, "published");
+  const result2 = validateOfferEditBusinessRules("rfq", "outbound", input, "published");
   assert.strictEqual(result2.valid, true);
 });
 

@@ -14,7 +14,7 @@ function createLine(partnerId: number, offerId: number): AuthoritativeMarketplac
     publicationStatus: "published",
     isActive: true,
     priceOnRequest: false,
-    unitPriceMinor: 100n,
+    unitPriceMinor: BigInt(100),
     contractModel: "partner_marketplace",
     currency: "PLN",
   };

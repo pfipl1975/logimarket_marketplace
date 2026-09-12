@@ -145,22 +145,22 @@ test("Admin RFQ Query Parser", async (t) => {
   // PII fields must not be parsed into query
   await t.test("contactName ignored", () => {
     const query = parseAdminRfqQuery({ contactName: "john" });
-    assert.equal((query as Record<string, unknown>).contactName, undefined);
+    assert.equal("contactName" in query, false);
   });
 
   await t.test("email ignored", () => {
     const query = parseAdminRfqQuery({ email: "test@test.com" });
-    assert.equal((query as Record<string, unknown>).email, undefined);
+    assert.equal("email" in query, false);
   });
 
   await t.test("phone ignored", () => {
     const query = parseAdminRfqQuery({ phone: "+48123" });
-    assert.equal((query as Record<string, unknown>).phone, undefined);
+    assert.equal("phone" in query, false);
   });
 
   await t.test("message ignored", () => {
     const query = parseAdminRfqQuery({ message: "hello" });
-    assert.equal((query as Record<string, unknown>).message, undefined);
+    assert.equal("message" in query, false);
   });
 });
 

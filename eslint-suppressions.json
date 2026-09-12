@@ -156,10 +156,5 @@
     "@typescript-eslint/no-unused-vars": {
       "count": 1
     }
-  },
-  "tests/database/runtime-baseline-sync.test.ts": {
-    "@typescript-eslint/no-explicit-any": {
-      "count": 1
-    }
   }
 }
