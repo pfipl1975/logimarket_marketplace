@@ -4765,8 +4765,6 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const sellerOutboxCheck = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktD1.rows[0].id, pIdA]);
     const atomicityOrderId = parseInt(sellerOutboxCheck.rows[0].id);
 
-    const { expireDueSellerOrders } = await import("../../src/lib/seller-order/seller-order-workflow.js");
-
     // D1. Force routed_to_seller outbox INSERT failure
     await pool.query(`
       CREATE OR REPLACE FUNCTION trigger_fail_outbox() RETURNS TRIGGER AS $$
