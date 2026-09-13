@@ -6,12 +6,23 @@ import {
   evaluateSellerOrderExpirationState,
   isSellerOrderContractFormed,
   isSellerOrderFulfillmentEligible,
+  parseSellerAcceptanceClockRow,
   sellerAcceptanceDeadlineFromE6,
 } from "../../src/lib/seller-order/seller-order-workflow";
 
 const routedAt = new Date("2026-09-13T08:00:00.000Z");
 const expiresAt = sellerAcceptanceDeadlineFromE6(routedAt);
 const beforeDeadline = new Date(expiresAt.getTime() - 1);
+
+test("PostgreSQL clock strings produce the canonical E6 deadline", () => {
+  const clock = parseSellerAcceptanceClockRow({
+    routedAt: "2026-09-13 08:00:00+00",
+    expiresAt: "2026-09-14 08:00:00+00",
+  });
+  assert.equal(clock.routedAt.toISOString(), "2026-09-13T08:00:00.000Z");
+  assert.equal(clock.expiresAt.toISOString(), "2026-09-14T08:00:00.000Z");
+  assert.equal(clock.expiresAt.getTime() - clock.routedAt.getTime(), 24 * 60 * 60 * 1000);
+});
 
 test("A. route eligible (decision absent + timestamp null)", () => {
   const order = { status: "submitted", e6RoutedToSellerAt: null };

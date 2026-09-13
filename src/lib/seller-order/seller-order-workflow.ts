@@ -59,6 +59,29 @@ export function sellerAcceptanceDeadlineFromE6(e6At: Date): Date {
   return new Date(e6At.getTime() + SELLER_ACCEPTANCE_SLA_MS);
 }
 
+type SellerAcceptanceClockRow = {
+  routedAt: unknown;
+  expiresAt: unknown;
+};
+
+function parseDbTimestamp(value: unknown): Date {
+  if (typeof value !== "string") throw new Error("DB wall clock unavailable");
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) throw new Error("DB wall clock unavailable");
+  return parsed;
+}
+
+export function parseSellerAcceptanceClockRow(
+  row: SellerAcceptanceClockRow | undefined
+): { routedAt: Date; expiresAt: Date } {
+  const routedAt = parseDbTimestamp(row?.routedAt);
+  const expiresAt = parseDbTimestamp(row?.expiresAt);
+  if (expiresAt.getTime() - routedAt.getTime() !== SELLER_ACCEPTANCE_SLA_MS) {
+    throw new Error("DB seller acceptance clock invalid");
+  }
+  return { routedAt, expiresAt };
+}
+
 function hasCanonicalDeadline(e6At: Date, expiresAt: Date): boolean {
   return expiresAt.getTime() === sellerAcceptanceDeadlineFromE6(e6At).getTime();
 }
@@ -253,10 +276,20 @@ function canonicalExpirationDecisionUpdate(currentDbTime: Date) {
 type SellerOrderTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 async function readDbWallClock(tx: SellerOrderTransaction): Promise<Date> {
-  const result = await tx.execute<{ currentDbTime: Date }>(sql`SELECT clock_timestamp() AS "currentDbTime"`);
-  const currentDbTime = result.rows[0]?.currentDbTime;
-  if (!currentDbTime) throw new Error("DB wall clock unavailable");
-  return currentDbTime;
+  const result = await tx.execute<{ currentDbTime: string }>(sql`SELECT clock_timestamp() AS "currentDbTime"`);
+  return parseDbTimestamp(result.rows[0]?.currentDbTime);
+}
+
+async function readSellerAcceptanceClock(
+  tx: SellerOrderTransaction
+): Promise<{ routedAt: Date; expiresAt: Date }> {
+  const result = await tx.execute<{ routedAt: string; expiresAt: string }>(sql`
+    SELECT
+      routed_at AS "routedAt",
+      routed_at + interval '24 hours' AS "expiresAt"
+    FROM (SELECT clock_timestamp() AS routed_at) AS seller_acceptance_clock
+  `);
+  return parseSellerAcceptanceClockRow(result.rows[0]);
 }
 
 export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<RouteSellerOrderResult> {
@@ -270,11 +303,11 @@ export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<
       if (!stateResult.ok) return stateResult;
 
       if (!existingDecision && order.e6RoutedToSellerAt === null) {
-        const routedAt = await readDbWallClock(tx);
+        const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
         await tx.insert(sellerAcceptanceDecisions).values({
           sellerOrderId,
           decisionStatus: "pending_seller_review",
-          expiresAt: sellerAcceptanceDeadlineFromE6(routedAt),
+          expiresAt,
         });
         await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
       } else if (
@@ -283,9 +316,9 @@ export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<
         order.e6RoutedToSellerAt === null &&
         existingDecision.expiresAt === null
       ) {
-        const routedAt = await readDbWallClock(tx);
+        const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
         await tx.update(sellerAcceptanceDecisions).set({
-          expiresAt: sellerAcceptanceDeadlineFromE6(routedAt),
+          expiresAt,
         }).where(eq(sellerAcceptanceDecisions.id, existingDecision.id));
         await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
       }
