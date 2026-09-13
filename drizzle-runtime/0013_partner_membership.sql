@@ -1,4 +1,4 @@
-CREATE TABLE IF NOT EXISTS "partner_user_memberships" (
+CREATE TABLE "partner_user_memberships" (
 	"id" bigserial PRIMARY KEY NOT NULL,
 	"auth_user_id" uuid NOT NULL,
 	"partner_id" bigint NOT NULL,
