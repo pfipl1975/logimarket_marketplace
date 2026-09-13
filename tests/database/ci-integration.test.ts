@@ -4300,7 +4300,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     );
   });
 
-  await t.test("Q to T: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
+  await t.test("Q to U: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
     await cleanDB();
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
@@ -4362,5 +4362,27 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now() WHERE id = $2`,
       [userId, decId]
     );
+
+    const readbackRes = await pool.query<{ accepted_at: Date | null }>(
+      `SELECT accepted_at FROM seller_acceptance_decisions WHERE id = $1`,
+      [decId]
+    );
+    assert.strictEqual(readbackRes.rows[0].accepted_at, null);
+
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'pending_seller_review', decided_by_auth_user_id = NULL, decision_source = NULL, resolved_at = NULL, accepted_at = NULL WHERE id = $1`,
+      [decId]
+    );
+
+    // U. INVALID DECISION SOURCE MUST BE REJECTED BY chk_seller_acc_dec_source
+    await assert.rejects(
+      pool.query(
+        `UPDATE seller_acceptance_decisions SET decision_status = 'expired', decided_by_auth_user_id = NULL, decision_source = 'invalid_source', resolved_at = now(), accepted_at = NULL WHERE id = $1`,
+        [decId]
+      ),
+      /violates check constraint "chk_seller_acc_dec_source"/
+    );
   });
+
+  await pool.end();
 });
