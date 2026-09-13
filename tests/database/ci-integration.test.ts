@@ -4453,13 +4453,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       [decId]
     );
 
-    // U. INVALID DECISION SOURCE MUST BE REJECTED BY chk_seller_acc_dec_source
+    // U. INVALID DECISION SOURCE MUST BE REJECTED BY THE CANONICAL DECISION CONSTRAINTS
     await assert.rejects(
       pool.query(
         `UPDATE seller_acceptance_decisions SET decision_status = 'expired', decided_by_auth_user_id = NULL, decision_source = 'invalid_source', resolved_at = now(), accepted_at = NULL WHERE id = $1`,
         [decId]
       ),
-      /violates check constraint "chk_seller_acc_dec_source"/
+      /violates check constraint "chk_seller_acc_dec_(source|consistency)"/
     );
 
     await assert.rejects(

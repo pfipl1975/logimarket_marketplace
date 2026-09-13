@@ -274,7 +274,7 @@ export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<
         await tx.insert(sellerAcceptanceDecisions).values({
           sellerOrderId,
           decisionStatus: "pending_seller_review",
-          expiresAt: sql`${routedAt}::timestamptz + interval '24 hours'`,
+          expiresAt: sellerAcceptanceDeadlineFromE6(routedAt),
         });
         await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
       } else if (
@@ -285,7 +285,7 @@ export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<
       ) {
         const routedAt = await readDbWallClock(tx);
         await tx.update(sellerAcceptanceDecisions).set({
-          expiresAt: sql`${routedAt}::timestamptz + interval '24 hours'`,
+          expiresAt: sellerAcceptanceDeadlineFromE6(routedAt),
         }).where(eq(sellerAcceptanceDecisions.id, existingDecision.id));
         await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
       }
