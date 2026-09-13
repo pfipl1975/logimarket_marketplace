@@ -4219,16 +4219,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   });
 
   await t.test("L to P: PARTNER_USER_MEMBERSHIPS_CONSTRAINTS_PROOF", async () => {
-    // We already have some partners from previous tests, or we can create new ones
+    await cleanDB();
+    await runMigrations(process.env);
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0013");
+
     const fakePartnerRes1 = await pool.query<{ id: string }>(
-      `INSERT INTO partners (name, tax_id, partner_role, slug) VALUES ($1, $2, 'seller', $3) RETURNING id`,
-      ['Test Partner AuthZ A', 'PL999999999A', 'test-partner-authz-a']
+      \`INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id\`,
+      ['Test Partner AuthZ A', 'test-partner-authz-a@test.com']
     );
     const partnerId1 = fakePartnerRes1.rows[0].id;
 
     const fakePartnerRes2 = await pool.query<{ id: string }>(
-      `INSERT INTO partners (name, tax_id, partner_role, slug) VALUES ($1, $2, 'seller', $3) RETURNING id`,
-      ['Test Partner AuthZ B', 'PL999999999B', 'test-partner-authz-b']
+      \`INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id\`,
+      ['Test Partner AuthZ B', 'test-partner-authz-b@test.com']
     );
     const partnerId2 = fakePartnerRes2.rows[0].id;
 
@@ -4287,6 +4292,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   });
 
   await t.test("Q to T: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0013");
+
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
     const pId = partnerRes.rows[0].id;
