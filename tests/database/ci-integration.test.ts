@@ -4471,7 +4471,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal((rejAfterAccRes as any).code, "SELLER_ORDER_ALREADY_ACCEPTED");
 
     // Real Rejection Proof
-    const mktRes2 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash124', $1) RETURNING id`, [buyerCtxId]);
+    const buyerSnapRes2 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 2', 'PL', 'NIP', '1234567891', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId2 = buyerSnapRes2.rows[0].id;
+    const mktRes2 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash124', $1) RETURNING id`, [buyerCtxId2]);
     const mktId2 = mktRes2.rows[0].id;
     const orderRes2 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId2, pIdB]);
     const sOrderId2 = parseInt(orderRes2.rows[0].id);
@@ -4500,7 +4502,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal((accAfterRejRes as any).code, "SELLER_ORDER_ALREADY_REJECTED");
 
     // CONCURRENCY PROOF
-    const mktRes3 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash125', $1) RETURNING id`, [buyerCtxId]);
+    const buyerSnapRes3 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 3', 'PL', 'NIP', '1234567892', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId3 = buyerSnapRes3.rows[0].id;
+    const mktRes3 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash125', $1) RETURNING id`, [buyerCtxId3]);
     const mktId3 = mktRes3.rows[0].id;
     const orderRes3 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId3, pIdA]);
     const sOrderId3 = parseInt(orderRes3.rows[0].id);
