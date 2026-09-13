@@ -1109,3 +1109,13 @@ export const partnerUserMemberships = pgTable("partner_user_memberships", {
   check("chk_partner_membership_status", sql`((membership_status)::text = ANY ((ARRAY['active'::character varying, 'revoked'::character varying])::text[]))`),
   check("chk_partner_membership_consistency", sql`(((membership_status)::text = 'active' AND revoked_at IS NULL) OR ((membership_status)::text = 'revoked' AND revoked_at IS NOT NULL))`),
 ]);
+
+export const notificationOutboxEvents = pgTable("notification_outbox_events", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  sellerOrderId: bigint("seller_order_id", { mode: "number" }).notNull().references(() => sellerOrders.id),
+  eventType: varchar("event_type", { length: 50 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (t) => [
+  check("chk_outbox_event_type", sqlvent_type IN ('seller_order.routed_to_seller', 'seller_order.accepted_for_buyer', 'seller_order.rejected_for_buyer', 'seller_order.expired_for_seller', 'seller_order.expired_for_buyer')),
+  unique("uq_notification_outbox_event").on(t.sellerOrderId, t.eventType)
+]);
