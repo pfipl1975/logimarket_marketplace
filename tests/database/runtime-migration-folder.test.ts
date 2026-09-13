@@ -10,7 +10,7 @@ test("journal exists and is valid", () => {
   assert.ok(fs.existsSync(journalPath));
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
-  assert.strictEqual(journal.entries.length, 10);
+  assert.strictEqual(journal.entries.length, 15);
   for (let i = 0; i < journal.entries.length; i++) {
     assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
     if (i > 0) {
@@ -38,6 +38,8 @@ test("journal exists and is valid", () => {
   assert.strictEqual(journal.entries[8].when, 1785593500000);
   assert.strictEqual(journal.entries[9].tag, "0009_partner_agreement_evidence");
   assert.strictEqual(journal.entries[9].when, 1785594000000);
+  assert.strictEqual(journal.entries[14].tag, "0014_seller_acceptance_sla");
+  assert.strictEqual(journal.entries[14].when, 1789255000000);
 });
 
 test("the complete journaled SQL chain is loaded by migrator", () => {
@@ -51,4 +53,6 @@ test("the complete journaled SQL chain is loaded by migrator", () => {
   assert.ok(migrations[8].sql.some((s: string) => s.includes("prevent_verification_events_mutation")));
   assert.ok(migrations[9].sql.some((s: string) => s.includes("agreement_versions")));
   assert.ok(migrations[9].sql.some((s: string) => s.includes("partner_agreement_execution_evidence")));
+  assert.ok(migrations[14].sql.some((s: string) => s.includes("expires_at")));
+  assert.ok(migrations[14].sql.some((s: string) => s.includes("idx_seller_acceptance_decisions_pending_expires_at")));
 });

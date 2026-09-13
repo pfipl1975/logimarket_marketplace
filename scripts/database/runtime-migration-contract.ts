@@ -64,7 +64,9 @@ export const EXPECTED_POST_0013_TABLES = [
   "partner_user_memberships"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0013_TABLES;
+export const EXPECTED_POST_0014_TABLES = EXPECTED_POST_0013_TABLES;
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0014_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1314,5 +1316,33 @@ export const FINAL_POST_0013_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0012_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0013_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0014_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0013_PRODUCTION_FINGERPRINT,
+  "seller_orders": {
+    ...FINAL_POST_0013_PRODUCTION_FINGERPRINT["seller_orders"],
+    constraints: FINAL_POST_0013_PRODUCTION_FINGERPRINT["seller_orders"].constraints.map((constraint) =>
+      constraint.name === "chk_seller_orders_status"
+        ? { name: "chk_seller_orders_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['submitted'::character varying, 'seller_accepted'::character varying, 'fulfillment_in_progress'::character varying, 'fulfilled'::character varying, 'seller_rejected'::character varying, 'cancelled'::character varying, 'expired'::character varying])::text[])))" }
+        : constraint
+    ),
+  },
+  "seller_acceptance_decisions": {
+    ...FINAL_POST_0013_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"],
+    columns: [
+      ...FINAL_POST_0013_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"].columns,
+      { name: "expires_at", type: "timestamp with time zone", nullable: false, defaultVal: null, sequenceName: null },
+    ],
+    constraints: FINAL_POST_0013_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"].constraints.map((constraint) =>
+      constraint.name === "chk_seller_acc_dec_consistency"
+        ? { name: "chk_seller_acc_dec_consistency", type: "CHECK", definition: "CHECK (((((decision_status)::text = 'pending_seller_review'::text) AND (expires_at IS NOT NULL) AND (decided_by_auth_user_id IS NULL) AND (decision_source IS NULL) AND (resolved_at IS NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'seller_accepted'::text) AND (expires_at IS NOT NULL) AND (decided_by_auth_user_id IS NOT NULL) AND ((decision_source)::text = 'partner_portal'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NOT NULL)) OR (((decision_status)::text = 'seller_rejected'::text) AND (expires_at IS NOT NULL) AND (decided_by_auth_user_id IS NOT NULL) AND ((decision_source)::text = 'partner_portal'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'expired'::text) AND (expires_at IS NOT NULL) AND (decided_by_auth_user_id IS NULL) AND (decision_source IS NULL) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL))))" }
+        : constraint
+    ),
+    explicitIndexes: [
+      ...FINAL_POST_0013_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"].explicitIndexes,
+      { name: "idx_seller_acceptance_decisions_pending_expires_at", method: "btree", expressions: "expires_at" },
+    ],
+  },
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0013_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0014_PRODUCTION_FINGERPRINT;

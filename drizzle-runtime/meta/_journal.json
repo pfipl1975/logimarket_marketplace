@@ -99,6 +99,13 @@
       "when": 1789254426542,
       "tag": "0013_partner_membership",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1789255000000,
+      "tag": "0014_seller_acceptance_sla",
+      "breakpoints": true
     }
   ]
 }

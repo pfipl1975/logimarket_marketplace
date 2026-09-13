@@ -233,7 +233,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -546,8 +546,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       // Seller acceptance decision enum
       await assert.rejects(
         pool.query(`
-          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
-          VALUES ($1, 'invalid_status')
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+          VALUES ($1, 'invalid_status', now() + interval '24 hours')
         `, [soId]),
         /chk_seller_acc_dec_(status|consistency)/,
         "Must reject invalid decision status"
@@ -556,8 +556,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       // seller_accepted without resolved_at / accepted_at consistency
       await assert.rejects(
         pool.query(`
-          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
-          VALUES ($1, 'seller_accepted')
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+          VALUES ($1, 'seller_accepted', now() + interval '24 hours')
         `, [soId]),
         /chk_seller_acc_dec_consistency/,
         "Must reject seller_accepted without timestamps"
@@ -566,8 +566,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       // Seller acceptance consistency
       await assert.rejects(
         pool.query(`
-          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, resolved_at)
-          VALUES ($1, 'pending_seller_review', now())
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at, resolved_at)
+          VALUES ($1, 'pending_seller_review', now() + interval '24 hours', now())
         `, [soId]),
         /chk_seller_acc_dec_consistency/,
         "Must reject pending with resolved_at"
@@ -577,8 +577,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       // seller_rejected with accepted_at rejected
       await assert.rejects(
         pool.query(`
-          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, resolved_at, accepted_at)
-          VALUES ($1, 'seller_rejected', now(), now())
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at, resolved_at, accepted_at)
+          VALUES ($1, 'seller_rejected', now() + interval '24 hours', now(), now())
         `, [soId2]),
         /chk_seller_acc_dec_consistency/,
         "Must reject seller_rejected with accepted_at"
@@ -586,20 +586,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       // expired + resolved_at + accepted_at NULL accepted
       const expiredRes = await pool.query(`
-        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, resolved_at)
-        VALUES ($1, 'expired', now()) RETURNING id
+        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at, resolved_at)
+        VALUES ($1, 'expired', now() + interval '24 hours', now()) RETURNING id
       `, [soId2]);
       assert.ok(expiredRes.rows[0].id);
 
-      // after expired decision, seller_orders.status remains unchanged unless explicitly modified
+      // SellerOrder accepts the canonical explicit expired aggregate state.
+      await pool.query(`UPDATE seller_orders SET status = 'expired' WHERE id = $1`, [soId2]);
       const soStatusRes = await pool.query(`
         SELECT status FROM seller_orders WHERE id = $1
       `, [soId2]);
-      assert.strictEqual(soStatusRes.rows[0].status, 'submitted');
+      assert.strictEqual(soStatusRes.rows[0].status, 'expired');
 
       const validDecRes = await pool.query(`
-        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status)
-        VALUES ($1, 'pending_seller_review') RETURNING id
+        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+        VALUES ($1, 'pending_seller_review', now() + interval '24 hours') RETURNING id
       `, [soId]);
       assert.ok(validDecRes.rows[0].id);
 
@@ -620,7 +621,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 14, "Journal count must be exactly 14");
+      assert.strictEqual(journalRows.length, 15, "Journal count must be exactly 15");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -771,7 +772,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0013",
+        "EXACT_EXISTING_POST_0014",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -781,7 +782,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 14);
+      assert.strictEqual(post0010Journal.rows[0].count, 15);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -791,7 +792,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     },
   );
 
-  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0013", async () => {
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0014", async () => {
     await setupPost0002();
 
     // Classify pre-state
@@ -805,10 +806,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0013
+    // Post-migration classification must be EXACT_EXISTING_POST_0014
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -822,7 +823,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 14);
+    assert.strictEqual(journalRows.length, 15);
   });
 
   await t.test(
@@ -981,14 +982,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0013
+      // Post-migration classification must be EXACT_EXISTING_POST_0014
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1002,7 +1003,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 14);
+      assert.strictEqual(journalRows.length, 15);
     },
   );
 
@@ -4224,15 +4225,83 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013", "Must recognize POST_0013 after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014", "Must recognize POST_0014 after migration");
   });
 
-  await t.test("L to P: PARTNER_USER_MEMBERSHIPS_CONSTRAINTS_PROOF", async () => {
+  await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const post0013Migrations = diskMigrations.slice(0, 14);
+    assert.strictEqual(post0013Migrations.length, 14);
+
+    for (const migration of post0013Migrations) {
+      for (const statement of migration.sql) await pool.query(statement);
+    }
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    for (const migration of post0013Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis]
+      );
+    }
+
+    const before = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(classifyRuntimeTarget(before.fingerprint, before.publicTables, before.security).state, "EXACT_EXISTING_POST_0013");
+
+    await runMigrations(process.env);
+    const after = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0014");
+    const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfter.rows[0].count, 15);
+
+    await runMigrations(process.env);
+    const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 15);
+
+    await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
+    await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
+  });
+
+  await t.test("PATH M: POST_0013 decision without E6 fails 0014 closed", async () => {
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const post0013Migrations = diskMigrations.slice(0, 14);
+    for (const migration of post0013Migrations) {
+      for (const statement of migration.sql) await pool.query(statement);
+    }
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    for (const migration of post0013Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis]
+      );
+    }
+
+    const partner = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Historical Partner', 'historical@test.com') RETURNING id`);
+    const buyer = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Historical Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const marketplaceOrder = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id, status) VALUES ('historical', $1, 'checkout_submitted') RETURNING id`, [buyer.rows[0].id]);
+    const sellerOrder = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [marketplaceOrder.rows[0].id, partner.rows[0].id]);
+    await pool.query(`INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status) VALUES ($1, 'pending_seller_review')`, [sellerOrder.rows[0].id]);
+
+    await assert.rejects(
+      () => runMigrations(process.env),
+      /Cannot backfill seller acceptance deadline without E6 timestamp/
+    );
+    const unchanged = await pool.query(`SELECT so.e6_routed_to_seller_at, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [sellerOrder.rows[0].id]);
+    assert.strictEqual(unchanged.rows[0].e6_routed_to_seller_at, null);
+    assert.strictEqual(unchanged.rows[0].decision_status, "pending_seller_review");
+    const expiresColumn = await pool.query(`SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'seller_acceptance_decisions' AND column_name = 'expires_at'`);
+    assert.strictEqual(expiresColumn.rows.length, 0, "Failed migration must roll back expires_at addition");
+  });
+
+  await t.test("N to R: PARTNER_USER_MEMBERSHIPS_CONSTRAINTS_PROOF", async () => {
     await cleanDB();
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0013");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0014");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
       `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
@@ -4303,9 +4372,19 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await t.test("Q to U: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
     await cleanDB();
     await runMigrations(process.env);
+
+    const expiresColumn = await pool.query(`SELECT data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'seller_acceptance_decisions' AND column_name = 'expires_at'`);
+    assert.strictEqual(expiresColumn.rows.length, 1);
+    assert.strictEqual(expiresColumn.rows[0].data_type, "timestamp with time zone");
+    assert.strictEqual(expiresColumn.rows[0].is_nullable, "NO");
+    const pendingExpiryIndex = await pool.query(`SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'seller_acceptance_decisions' AND indexname = 'idx_seller_acceptance_decisions_pending_expires_at'`);
+    assert.strictEqual(pendingExpiryIndex.rows.length, 1);
+    assert.match(pendingExpiryIndex.rows[0].indexdef, /expires_at/);
+    assert.match(pendingExpiryIndex.rows[0].indexdef, /pending_seller_review/);
+
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0013");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0014");
 
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
@@ -4329,7 +4408,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // Q. Seller acceptance pending row permits NULL actor evidence
     const decRes = await pool.query<{ id: string }>(
-      `INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status) VALUES ($1, 'pending_seller_review') RETURNING id`,
+      `INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at) VALUES ($1, 'pending_seller_review', now() + interval '24 hours') RETURNING id`,
       [sellerOrderId]
     );
     const decId = decRes.rows[0].id;
@@ -4382,6 +4461,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       ),
       /violates check constraint "chk_seller_acc_dec_source"/
     );
+
+    await assert.rejects(
+      pool.query(
+        `UPDATE seller_acceptance_decisions SET decision_status = 'expired', decided_by_auth_user_id = $1, decision_source = NULL, resolved_at = now(), accepted_at = NULL WHERE id = $2`,
+        [userId, decId]
+      ),
+      /violates check constraint "chk_seller_acc_dec_consistency"/
+    );
   });
 
   await t.test("V to AD: E6 AND E7 WORKFLOW PROOF", async () => {
@@ -4390,13 +4477,37 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     
     // Import functions dynamically so they connect to test DB properly if needed, 
     // but they just use drizzle which is configured via DATABASE_URL
-    const { routeSellerOrderToPartner, acceptSellerOrderWithAuthority, rejectSellerOrderWithAuthority } = await import("../../src/lib/seller-order/seller-order-workflow");
+    const {
+      routeSellerOrderToPartner,
+      acceptSellerOrderWithAuthority,
+      rejectSellerOrderWithAuthority,
+      expireSellerOrder,
+      expireDueSellerOrders,
+    } = await import("../../src/lib/seller-order/seller-order-workflow");
 
     const partnerResA = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner A', 'a@test.com') RETURNING id`);
     const pIdA = parseInt(partnerResA.rows[0].id);
 
     const partnerResB = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner B', 'b@test.com') RETURNING id`);
     const pIdB = parseInt(partnerResB.rows[0].id);
+
+    const createRoutedSellerOrder = async (suffix: string, partnerId: number) => {
+      const buyer = await pool.query<{ id: string }>(
+        `INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ($1, 'PL', 'NIP', $2, 'unknown', 'unknown', 'no_review_needed') RETURNING id`,
+        [`SLA Buyer ${suffix}`, `sla-${suffix}`]
+      );
+      const marketplaceOrder = await pool.query<{ id: string }>(
+        `INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', $1, $2) RETURNING id`,
+        [`sla-${suffix}`, buyer.rows[0].id]
+      );
+      const sellerOrder = await pool.query<{ id: string }>(
+        `INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`,
+        [marketplaceOrder.rows[0].id, partnerId]
+      );
+      const sellerOrderId = parseInt(sellerOrder.rows[0].id);
+      assert.deepStrictEqual(await routeSellerOrderToPartner(sellerOrderId), { ok: true });
+      return { sellerOrderId, marketplaceOrderId: marketplaceOrder.rows[0].id };
+    };
 
     const buyerSnapRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
     const buyerCtxId = buyerSnapRes.rows[0].id;
@@ -4421,14 +4532,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const postRouteQuery = await pool.query(`SELECT status, e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
     assert.notEqual(postRouteQuery.rows[0].e6_routed_to_seller_at, null);
     
-    const postRouteDecQuery = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    const postRouteDecQuery = await pool.query(`SELECT decision_status, expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(postRouteDecQuery.rows[0].decision_status, 'pending_seller_review');
+    assert.strictEqual(
+      postRouteDecQuery.rows[0].expires_at.getTime() - postRouteQuery.rows[0].e6_routed_to_seller_at.getTime(),
+      24 * 60 * 60 * 1000,
+      "E6 deadline must be exactly 24 hours"
+    );
 
     // R. Call route again -> Idempotent
     const routeRes2 = await routeSellerOrderToPartner(sOrderId1);
     assert.equal(routeRes2.ok, true);
     const postRouteQuery2 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
     assert.equal(postRouteQuery2.rows[0].e6_routed_to_seller_at.getTime(), postRouteQuery.rows[0].e6_routed_to_seller_at.getTime());
+    const postRouteDecQuery2 = await pool.query(`SELECT expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(postRouteDecQuery2.rows[0].expires_at.getTime(), postRouteDecQuery.rows[0].expires_at.getTime());
     
     const decCountQuery = await pool.query(`SELECT COUNT(*) as c FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(parseInt(decCountQuery.rows[0].c), 1);
@@ -4537,6 +4655,91 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     
     assert.equal(finalState3.rows[0].status, finalDecState3.rows[0].decision_status);
     assert.ok(finalState3.rows[0].status === 'seller_accepted' || finalState3.rows[0].status === 'seller_rejected');
+
+    const acceptExpired = await createRoutedSellerOrder("accept-expired", pIdA);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [acceptExpired.sellerOrderId]);
+    const acceptExpiredResult = await acceptSellerOrderWithAuthority(acceptExpired.sellerOrderId, authorizePartnerValid1);
+    assert.deepStrictEqual(acceptExpiredResult, { ok: false, code: "SELLER_ORDER_EXPIRED" });
+    const acceptExpiredState = await pool.query(`SELECT so.status, decision.* FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [acceptExpired.sellerOrderId]);
+    assert.strictEqual(acceptExpiredState.rows[0].status, "expired");
+    assert.strictEqual(acceptExpiredState.rows[0].decision_status, "expired");
+    assert.strictEqual(acceptExpiredState.rows[0].decided_by_auth_user_id, null);
+    assert.strictEqual(acceptExpiredState.rows[0].decision_source, null);
+    assert.strictEqual(acceptExpiredState.rows[0].accepted_at, null);
+    assert.notStrictEqual(acceptExpiredState.rows[0].resolved_at, null);
+
+    const rejectExpired = await createRoutedSellerOrder("reject-expired", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [rejectExpired.sellerOrderId]);
+    const rejectExpiredResult = await rejectSellerOrderWithAuthority(rejectExpired.sellerOrderId, authorizePartnerValid1);
+    assert.deepStrictEqual(rejectExpiredResult, { ok: false, code: "SELLER_ORDER_EXPIRED" });
+    const rejectExpiredState = await pool.query(`SELECT so.status, decision.decision_status, decision.decided_by_auth_user_id, decision.decision_source FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [rejectExpired.sellerOrderId]);
+    assert.strictEqual(rejectExpiredState.rows[0].status, "expired");
+    assert.strictEqual(rejectExpiredState.rows[0].decision_status, "expired");
+    assert.strictEqual(rejectExpiredState.rows[0].decided_by_auth_user_id, null);
+    assert.strictEqual(rejectExpiredState.rows[0].decision_source, null);
+
+    const notDue = await createRoutedSellerOrder("not-due", pIdA);
+    assert.deepStrictEqual(await expireSellerOrder(notDue.sellerOrderId), { ok: false, code: "SELLER_ORDER_NOT_DUE" });
+    const notDueState = await pool.query(`SELECT so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [notDue.sellerOrderId]);
+    assert.strictEqual(notDueState.rows[0].status, "submitted");
+    assert.strictEqual(notDueState.rows[0].decision_status, "pending_seller_review");
+
+    const due = await createRoutedSellerOrder("due", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [due.sellerOrderId]);
+    assert.deepStrictEqual(await expireSellerOrder(due.sellerOrderId), { ok: true, changed: true });
+    const dueState = await pool.query(`SELECT so.status, decision.* FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [due.sellerOrderId]);
+    assert.strictEqual(dueState.rows[0].status, "expired");
+    assert.strictEqual(dueState.rows[0].decision_status, "expired");
+    assert.strictEqual(dueState.rows[0].decided_by_auth_user_id, null);
+    assert.strictEqual(dueState.rows[0].decision_source, null);
+    assert.strictEqual(dueState.rows[0].accepted_at, null);
+    const firstResolvedAt = dueState.rows[0].resolved_at.getTime();
+    const originalExpiresAt = dueState.rows[0].expires_at.getTime();
+    assert.deepStrictEqual(await expireSellerOrder(due.sellerOrderId), { ok: true, changed: false });
+    const dueRepeated = await pool.query(`SELECT resolved_at, expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [due.sellerOrderId]);
+    assert.strictEqual(dueRepeated.rows[0].resolved_at.getTime(), firstResolvedAt);
+    assert.strictEqual(dueRepeated.rows[0].expires_at.getTime(), originalExpiresAt);
+
+    assert.deepStrictEqual(await expireSellerOrder(sOrderId1), { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" });
+    assert.deepStrictEqual(await expireSellerOrder(sOrderId2), { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" });
+
+    const acceptRace = await createRoutedSellerOrder("accept-race", pIdA);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [acceptRace.sellerOrderId]);
+    await Promise.all([
+      acceptSellerOrderWithAuthority(acceptRace.sellerOrderId, authorizePartnerValid1),
+      expireSellerOrder(acceptRace.sellerOrderId),
+    ]);
+    const acceptRaceState = await pool.query(`SELECT so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [acceptRace.sellerOrderId]);
+    assert.strictEqual(acceptRaceState.rows[0].status, "expired");
+    assert.strictEqual(acceptRaceState.rows[0].decision_status, "expired");
+
+    const rejectRace = await createRoutedSellerOrder("reject-race", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [rejectRace.sellerOrderId]);
+    await Promise.all([
+      rejectSellerOrderWithAuthority(rejectRace.sellerOrderId, authorizePartnerValid1),
+      expireSellerOrder(rejectRace.sellerOrderId),
+    ]);
+    const rejectRaceState = await pool.query(`SELECT so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [rejectRace.sellerOrderId]);
+    assert.strictEqual(rejectRaceState.rows[0].status, "expired");
+    assert.strictEqual(rejectRaceState.rows[0].decision_status, "expired");
+
+    const batchDue = await createRoutedSellerOrder("batch-due", pIdA);
+    const batchFuture = await createRoutedSellerOrder("batch-future", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [batchDue.sellerOrderId]);
+    const batchResult = await expireDueSellerOrders(100);
+    assert.strictEqual(batchResult.ok, true);
+    const batchStates = await pool.query(`SELECT so.id, so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id IN ($1, $2)`, [batchDue.sellerOrderId, batchFuture.sellerOrderId]);
+    const batchDueState = batchStates.rows.find((row) => Number(row.id) === batchDue.sellerOrderId);
+    const batchFutureState = batchStates.rows.find((row) => Number(row.id) === batchFuture.sellerOrderId);
+    assert.strictEqual(batchDueState?.status, "expired");
+    assert.strictEqual(batchDueState?.decision_status, "expired");
+    assert.strictEqual(batchFutureState?.status, "submitted");
+    assert.strictEqual(batchFutureState?.decision_status, "pending_seller_review");
+
+    for (const marketplaceOrderId of [acceptExpired.marketplaceOrderId, rejectExpired.marketplaceOrderId, due.marketplaceOrderId, acceptRace.marketplaceOrderId, rejectRace.marketplaceOrderId, batchDue.marketplaceOrderId]) {
+      const marketplaceState = await pool.query(`SELECT status FROM marketplace_orders WHERE id = $1`, [marketplaceOrderId]);
+      assert.strictEqual(marketplaceState.rows[0].status, "checkout_submitted");
+    }
 
     // Verify Isolation
     const afterCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
