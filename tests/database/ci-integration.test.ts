@@ -4387,125 +4387,138 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await t.test("V to AD: E6 AND E7 WORKFLOW PROOF", async () => {
     await cleanDB();
     await runMigrations(process.env);
-    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
-    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0013");
+    
+    // Import functions dynamically so they connect to test DB properly if needed, 
+    // but they just use drizzle which is configured via DATABASE_URL
+    const { routeSellerOrderToPartner, acceptSellerOrderWithAuthority, rejectSellerOrderWithAuthority } = await import("../../src/lib/seller-order/seller-order-workflow");
 
-    // Create an order for testing
-    const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner V', 'v@test.com') RETURNING id`);
-    const pId = partnerRes.rows[0].id;
+    const partnerResA = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner A', 'a@test.com') RETURNING id`);
+    const pIdA = parseInt(partnerResA.rows[0].id);
 
-    const buyerCtxRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (
-      business_name, country_code, tax_identifier_type, tax_identifier_value,
-      business_verification_status, category_b_status, legal_context_review_state
-    ) VALUES (
-      'Buyer V', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed'
-    ) RETURNING id`);
-    const buyerCtxId = buyerCtxRes.rows[0].id;
+    const partnerResB = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner B', 'b@test.com') RETURNING id`);
+    const pIdB = parseInt(partnerResB.rows[0].id);
 
-    const mktRes = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hashV', $1) RETURNING id`, [buyerCtxId]);
-    const mktOrderId = mktRes.rows[0].id;
+    // Q. Create submitted SellerOrder
+    const orderRes1 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (status, partner_id, customer_email, currency_code, total_cents) VALUES ('submitted', $1, 'q@test.com', 'PLN', 100) RETURNING id`, [pIdA]);
+    const sOrderId1 = parseInt(orderRes1.rows[0].id);
 
-    const soRes = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktOrderId, pId]);
-    const sellerOrderId = soRes.rows[0].id;
+    // Snapshot legacy before execution
+    const beforeCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
+    const legacyOrdersBefore = parseInt(beforeCounts.rows[0].c);
 
-    const userId1 = "00000000-0000-0000-0000-0000000000V1";
-    const userId2 = "00000000-0000-0000-0000-0000000000V2";
+    // Route
+    const routeRes1 = await routeSellerOrderToPartner(sOrderId1);
+    assert.equal(routeRes1.ok, true);
 
-    // Q. E6 sets e6_routed_to_seller_at exactly once
-    await pool.query(`UPDATE seller_orders SET e6_routed_to_seller_at = now() WHERE id = $1`, [sellerOrderId]);
-    await pool.query(`INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status) VALUES ($1, 'pending_seller_review')`, [sellerOrderId]);
-    const e6Res1 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sellerOrderId]);
-    const t1 = e6Res1.rows[0].e6_routed_to_seller_at;
-    assert.ok(t1 !== null);
+    const postRouteQuery = await pool.query(`SELECT status, e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.notEqual(postRouteQuery.rows[0].e6_routed_to_seller_at, null);
+    
+    const postRouteDecQuery = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(postRouteDecQuery.rows[0].decision_status, 'pending_seller_review');
 
-    // R. repeat E6 preserves original timestamp
-    await pool.query(`UPDATE seller_orders SET e6_routed_to_seller_at = $2 WHERE id = $1 AND e6_routed_to_seller_at IS NULL`, [sellerOrderId, new Date()]);
-    const e6Res2 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sellerOrderId]);
-    const t2 = e6Res2.rows[0].e6_routed_to_seller_at;
-    assert.strictEqual(t1.getTime(), t2.getTime());
+    // R. Call route again -> Idempotent
+    const routeRes2 = await routeSellerOrderToPartner(sOrderId1);
+    assert.equal(routeRes2.ok, true);
+    const postRouteQuery2 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.equal(postRouteQuery2.rows[0].e6_routed_to_seller_at.getTime(), postRouteQuery.rows[0].e6_routed_to_seller_at.getTime());
+    
+    const decCountQuery = await pool.query(`SELECT COUNT(*) as c FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(parseInt(decCountQuery.rows[0].c), 1);
 
-    // S, T. E7 acceptance atomically updates seller_order + seller_acceptance_decision
-    await pool.query("BEGIN");
-    await pool.query(`SELECT id FROM seller_orders WHERE id = $1 FOR UPDATE`, [sellerOrderId]);
-    const decForUpdate = await pool.query(`SELECT id FROM seller_acceptance_decisions WHERE seller_order_id = $1 FOR UPDATE`, [sellerOrderId]);
-    const decId = decForUpdate.rows[0].id;
-    await pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_accepted', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now(), accepted_at = now() WHERE id = $2`, [userId1, decId]);
-    await pool.query(`UPDATE seller_orders SET status = 'seller_accepted' WHERE id = $1`, [sellerOrderId]);
-    await pool.query("COMMIT");
+    // Cross Partner Proof
+    const authorizePartnerCross = async (partnerId: number) => {
+      assert.equal(partnerId, pIdA);
+      throw new (await import("../../src/lib/auth/authorization-errors")).ForbiddenError();
+    };
+    const crossRes = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerCross);
+    assert.equal(crossRes.ok, false);
+    assert.equal((crossRes as any).code, "FORBIDDEN");
+    
+    // S/T. Accept Workflow
+    const user1Id = "00000000-0000-0000-0000-000000000021";
+    const authorizePartnerValid1 = async () => ({ id: user1Id });
+    const acceptRes1 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
+    assert.equal(acceptRes1.ok, true);
 
-    const sRes = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sellerOrderId]);
-    assert.strictEqual(sRes.rows[0].status, 'seller_accepted');
-    const decRes = await pool.query(`SELECT decision_status, decided_by_auth_user_id, accepted_at, resolved_at FROM seller_acceptance_decisions WHERE id = $1`, [decId]);
-    assert.strictEqual(decRes.rows[0].decision_status, 'seller_accepted');
-    assert.strictEqual(decRes.rows[0].decided_by_auth_user_id, userId1); // T
+    const accState = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.equal(accState.rows[0].status, 'seller_accepted');
 
-    // AC. idempotent second ACCEPT by another authorized user preserves ORIGINAL
-    await pool.query("BEGIN");
-    await pool.query(`SELECT id FROM seller_orders WHERE id = $1 FOR UPDATE`, [sellerOrderId]);
-    await pool.query(`SELECT id FROM seller_acceptance_decisions WHERE seller_order_id = $1 FOR UPDATE`, [sellerOrderId]);
-    // idempotent check inside transaction would see it's already accepted, so it does NOT UPDATE
-    await pool.query("COMMIT");
+    const accDecState = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(accDecState.rows[0].decision_status, 'seller_accepted');
+    assert.equal(accDecState.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState.rows[0].decision_source, 'partner_portal');
+    assert.notEqual(accDecState.rows[0].resolved_at, null);
+    assert.notEqual(accDecState.rows[0].accepted_at, null);
 
-    const decRes2 = await pool.query(`SELECT decided_by_auth_user_id, accepted_at, resolved_at FROM seller_acceptance_decisions WHERE id = $1`, [decId]);
-    assert.strictEqual(decRes2.rows[0].decided_by_auth_user_id, userId1);
-    assert.strictEqual(decRes2.rows[0].accepted_at.getTime(), decRes.rows[0].accepted_at.getTime());
-    assert.strictEqual(decRes2.rows[0].resolved_at.getTime(), decRes.rows[0].resolved_at.getTime());
+    // AC. Accept again User2 -> Idempotent
+    const user2Id = "00000000-0000-0000-0000-000000000022";
+    const authorizePartnerValid2 = async () => ({ id: user2Id });
+    const acceptRes2 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid2);
+    assert.equal(acceptRes2.ok, true);
+    
+    const accDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(accDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState2.rows[0].accepted_at.getTime(), accDecState.rows[0].accepted_at.getTime());
 
-    // X. reject after accept fails
-    await assert.rejects(
-      async () => {
-        // the domain logic throws or returns SELLER_ORDER_ALREADY_ACCEPTED
-        // to simulate DB constraint blocking it, we can try to update accepted_at to NULL which fails constraint
-        await pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now(), accepted_at = NULL WHERE id = $2`, [userId2, decId]);
-      }
-    );
+    // X. reject after accept -> Conflict
+    const rejAfterAccRes = await rejectSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
+    assert.equal(rejAfterAccRes.ok, false);
+    assert.equal((rejAfterAccRes as any).code, "SELLER_ORDER_ALREADY_ACCEPTED");
 
-    // Create another order for rejection
-    const soResR = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktOrderId, pId]);
-    const sIdR = soResR.rows[0].id;
-    await pool.query(`UPDATE seller_orders SET e6_routed_to_seller_at = now() WHERE id = $1`, [sIdR]);
-    const decRInsert = await pool.query<{ id: string }>(`INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status) VALUES ($1, 'pending_seller_review') RETURNING id`, [sIdR]);
-    const decIdR = decRInsert.rows[0].id;
+    // Real Rejection Proof
+    const orderRes2 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (status, partner_id, customer_email, currency_code, total_cents) VALUES ('submitted', $1, 'r@test.com', 'PLN', 100) RETURNING id`, [pIdB]);
+    const sOrderId2 = parseInt(orderRes2.rows[0].id);
+    await routeSellerOrderToPartner(sOrderId2);
 
-    // U, V. rejection atomically updates decision, accepted_at NULL
-    await pool.query("BEGIN");
-    await pool.query(`SELECT id FROM seller_orders WHERE id = $1 FOR UPDATE`, [sIdR]);
-    await pool.query(`SELECT id FROM seller_acceptance_decisions WHERE seller_order_id = $1 FOR UPDATE`, [sIdR]);
-    await pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now(), accepted_at = NULL WHERE id = $2`, [userId1, decIdR]);
-    await pool.query(`UPDATE seller_orders SET status = 'seller_rejected' WHERE id = $1`, [sIdR]);
-    await pool.query("COMMIT");
+    const rejRes1 = await rejectSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
+    assert.equal(rejRes1.ok, true);
 
-    const srResR = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sIdR]);
-    assert.strictEqual(srResR.rows[0].status, 'seller_rejected');
-    const decResR = await pool.query(`SELECT decision_status, decided_by_auth_user_id, accepted_at, resolved_at FROM seller_acceptance_decisions WHERE id = $1`, [decIdR]);
-    assert.strictEqual(decResR.rows[0].decision_status, 'seller_rejected');
-    assert.strictEqual(decResR.rows[0].accepted_at, null); // V
+    const rejState = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId2]);
+    assert.equal(rejState.rows[0].status, 'seller_rejected');
+    const rejDecState = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
+    assert.equal(rejDecState.rows[0].decision_status, 'seller_rejected');
+    assert.equal(rejDecState.rows[0].accepted_at, null);
+    assert.notEqual(rejDecState.rows[0].resolved_at, null);
+    assert.equal(rejDecState.rows[0].decided_by_auth_user_id, user1Id);
 
-    // AD. idempotent second REJECT preserves ORIGINAL actor
-    const decResR2 = await pool.query(`SELECT decided_by_auth_user_id, resolved_at FROM seller_acceptance_decisions WHERE id = $1`, [decIdR]);
-    assert.strictEqual(decResR2.rows[0].decided_by_auth_user_id, userId1);
-    assert.strictEqual(decResR2.rows[0].resolved_at.getTime(), decResR.rows[0].resolved_at.getTime());
+    // AD. Repeat Reject with User2
+    const rejRes2 = await rejectSellerOrderWithAuthority(sOrderId2, authorizePartnerValid2);
+    assert.equal(rejRes2.ok, true);
+    const rejDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
+    assert.equal(rejDecState2.rows[0].decided_by_auth_user_id, user1Id);
 
-    // W. accept after reject fails
-    await assert.rejects(
-      async () => {
-        await pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_accepted', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now(), accepted_at = now() WHERE id = $2`, [userId2, decIdR]);
-      }
-    );
+    // W. accept after reject -> Conflict
+    const accAfterRejRes = await acceptSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
+    assert.equal(accAfterRejRes.ok, false);
+    assert.equal((accAfterRejRes as any).code, "SELLER_ORDER_ALREADY_REJECTED");
 
-    // Y, Y2. concurrent execution deadlock proof
-    // Can be proven by establishing lock order
-    // In SQL:
-    // T1: BEGIN; SELECT seller_orders FOR UPDATE; SELECT seller_acceptance_decisions FOR UPDATE;
-    // T2: BEGIN; SELECT seller_orders FOR UPDATE; SELECT seller_acceptance_decisions FOR UPDATE;
-    // This lock order CANNOT deadlock.
+    // CONCURRENCY PROOF
+    const orderRes3 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (status, partner_id, customer_email, currency_code, total_cents) VALUES ('submitted', $1, 'c@test.com', 'PLN', 100) RETURNING id`, [pIdA]);
+    const sOrderId3 = parseInt(orderRes3.rows[0].id);
+    await routeSellerOrderToPartner(sOrderId3);
 
-    // Z. cross-partner covered by domain logic requiring partner match
-    // AB. marketplace order remains checkout_submitted
-    const mRes = await pool.query(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktOrderId]);
-    assert.strictEqual(mRes.rows[0].status, 'checkout_submitted');
+    const concRes = await Promise.all([
+      acceptSellerOrderWithAuthority(sOrderId3, authorizePartnerValid1),
+      rejectSellerOrderWithAuthority(sOrderId3, authorizePartnerValid2)
+    ]);
+    
+    // One should succeed, one should fail
+    const successes = concRes.filter(r => r.ok);
+    const failures = concRes.filter(r => !r.ok);
+    assert.equal(successes.length, 1);
+    assert.equal(failures.length, 1);
+
+    const finalState3 = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId3]);
+    const finalDecState3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId3]);
+    
+    assert.equal(finalState3.rows[0].status, finalDecState3.rows[0].decision_status);
+    assert.ok(finalState3.rows[0].status === 'seller_accepted' || finalState3.rows[0].status === 'seller_rejected');
+
+    // Verify Isolation
+    const afterCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
+    const legacyOrdersAfter = parseInt(afterCounts.rows[0].c);
+    assert.equal(legacyOrdersAfter, legacyOrdersBefore);
+
   });
 
-  await pool.end();
 });
