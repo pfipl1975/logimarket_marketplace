@@ -1436,3 +1436,34 @@ export async function deleteAdminSellerRegistryIdentifier(rawInput: unknown) {
   }
   return result;
 }
+import { acceptSellerOrder, rejectSellerOrder } from "@/lib/seller-order/seller-order-workflow";
+
+const SellerOrderIdInputSchema = z.number().int().positive();
+
+export async function acceptSellerOrderAction(sellerOrderId: unknown) {
+  const parsed = SellerOrderIdInputSchema.safeParse(sellerOrderId);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await acceptSellerOrder(parsed.data);
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function rejectSellerOrderAction(sellerOrderId: unknown) {
+  const parsed = SellerOrderIdInputSchema.safeParse(sellerOrderId);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await rejectSellerOrder(parsed.data);
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
