@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { sellerOrders, sellerAcceptanceDecisions } from "@/lib/schema";
 import { and, asc, eq, lte, sql } from "drizzle-orm";
 import { requirePartnerOrderDecisionAuthority } from "@/lib/auth/partner-membership";
+import { enqueueNotificationIntent } from "@/lib/notifications/outbox";
 import {
   UnauthorizedError,
   ForbiddenError,
@@ -310,6 +311,8 @@ export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<
           expiresAt,
         });
         await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
+        const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
+        if (!outbox.ok) throw new Error("OUTBOX_FAIL");
       } else if (
         existingDecision &&
         existingDecision.decisionStatus === "pending_seller_review" &&
@@ -321,6 +324,8 @@ export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<
           expiresAt,
         }).where(eq(sellerAcceptanceDecisions.id, existingDecision.id));
         await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
+        const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
+        if (!outbox.ok) throw new Error("OUTBOX_FAIL");
       }
       return { ok: true };
     });
@@ -361,6 +366,9 @@ async function decideSellerOrderWithAuthority(
         ) {
           await tx.update(sellerAcceptanceDecisions).set(canonicalExpirationDecisionUpdate(currentDbTime)).where(eq(sellerAcceptanceDecisions.id, decision.id));
           await tx.update(sellerOrders).set({ status: "expired", updatedAt: currentDbTime }).where(eq(sellerOrders.id, order.id));
+          const ob1 = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.expired_for_seller");
+          const ob2 = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.expired_for_buyer");
+          if (!ob1.ok || !ob2.ok) throw new Error("OUTBOX_FAIL");
         }
         return stateResult;
       }
@@ -376,6 +384,8 @@ async function decideSellerOrderWithAuthority(
           acceptedAt: currentDbTime,
         }).where(eq(sellerAcceptanceDecisions.id, decision!.id));
         await tx.update(sellerOrders).set({ status: "seller_accepted", updatedAt: currentDbTime }).where(eq(sellerOrders.id, order.id));
+        const ob = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.accepted_for_buyer");
+        if (!ob.ok) throw new Error("OUTBOX_FAIL");
       } else {
         await tx.update(sellerAcceptanceDecisions).set({
           decisionStatus: "seller_rejected",
@@ -385,6 +395,8 @@ async function decideSellerOrderWithAuthority(
           acceptedAt: null,
         }).where(eq(sellerAcceptanceDecisions.id, decision!.id));
         await tx.update(sellerOrders).set({ status: "seller_rejected", updatedAt: currentDbTime }).where(eq(sellerOrders.id, order.id));
+        const ob = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.rejected_for_buyer");
+        if (!ob.ok) throw new Error("OUTBOX_FAIL");
       }
       return { ok: true };
     });
@@ -415,6 +427,9 @@ export async function expireSellerOrder(sellerOrderId: number): Promise<ExpireSe
 
       await tx.update(sellerAcceptanceDecisions).set(canonicalExpirationDecisionUpdate(currentDbTime)).where(eq(sellerAcceptanceDecisions.id, decision!.id));
       await tx.update(sellerOrders).set({ status: "expired", updatedAt: currentDbTime }).where(eq(sellerOrders.id, order.id));
+      const ob1 = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.expired_for_seller");
+      const ob2 = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.expired_for_buyer");
+      if (!ob1.ok || !ob2.ok) throw new Error("OUTBOX_FAIL");
       return { ok: true, changed: true };
     });
   } catch {

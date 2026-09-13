@@ -1344,5 +1344,28 @@ export const FINAL_POST_0014_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0013_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0014_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0015_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0014_PRODUCTION_FINGERPRINT,
+  "notification_outbox_events": {
+    name: "notification_outbox_events",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('notification_outbox_events_id_seq'::regclass)", sequenceName: "notification_outbox_events_id_seq" },
+      { name: "seller_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "event_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null }
+    ],
+    constraints: [
+      { name: "notification_outbox_events_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_notification_outbox_event", type: "UNIQUE", definition: "UNIQUE (seller_order_id, event_type)" },
+      { name: "chk_outbox_event_type", type: "CHECK", definition: "CHECK (((event_type)::text = ANY ((ARRAY['seller_order.routed_to_seller'::character varying, 'seller_order.accepted_for_buyer'::character varying, 'seller_order.rejected_for_buyer'::character varying, 'seller_order.expired_for_seller'::character varying, 'seller_order.expired_for_buyer'::character varying])::text[])))" },
+      { name: "notification_outbox_events_seller_order_id_seller_orders_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id)" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0014_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0015_PRODUCTION_FINGERPRINT;

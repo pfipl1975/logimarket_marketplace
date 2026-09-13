@@ -40,6 +40,8 @@ test("journal exists and is valid", () => {
   assert.strictEqual(journal.entries[9].when, 1785594000000);
   assert.strictEqual(journal.entries[14].tag, "0014_seller_acceptance_sla");
   assert.strictEqual(journal.entries[14].when, 1789255000000);
+  assert.strictEqual(journal.entries[15].tag, "0015_notification_outbox");
+  assert.strictEqual(journal.entries[15].when, 1789320414668);
 });
 
 test("the complete journaled SQL chain is loaded by migrator", () => {

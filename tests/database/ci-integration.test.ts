@@ -233,7 +233,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -621,7 +621,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 15, "Journal count must be exactly 15");
+      assert.strictEqual(journalRows.length, 16, "Journal count must be exactly 16");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -772,7 +772,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0014",
+        "EXACT_EXISTING_POST_0015",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -782,7 +782,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 15);
+      assert.strictEqual(post0010Journal.rows[0].count, 16);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -806,10 +806,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0014
+    // Post-migration classification must be EXACT_EXISTING_POST_0015
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -823,7 +823,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 15);
+    assert.strictEqual(journalRows.length, 16);
   });
 
   await t.test(
@@ -982,14 +982,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0014
+      // Post-migration classification must be EXACT_EXISTING_POST_0015
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1003,7 +1003,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 15);
+      assert.strictEqual(journalRows.length, 16);
     },
   );
 
@@ -4225,7 +4225,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0014", "Must recognize POST_0014 after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015", "Must recognize POST_0014 after migration");
   });
 
   await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
@@ -4251,13 +4251,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     await runMigrations(process.env);
     const after = await fetchLiveSchemaMetadata(pool);
-    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0014");
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0015");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 15);
+    assert.strictEqual(journalAfter.rows[0].count, 16);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 15);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 16);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
@@ -4301,7 +4301,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0014");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0015");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
       `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
@@ -4384,7 +4384,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0014");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0015");
 
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
@@ -4474,8 +4474,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
   await t.test("V to AD: E6 AND E7 WORKFLOW PROOF", async () => {
     await cleanDB();
     await runMigrations(process.env);
-    
-    // Import functions dynamically so they connect to test DB properly if needed, 
+
+    // Import functions dynamically so they connect to test DB properly if needed,
     // but they just use drizzle which is configured via DATABASE_URL
     const {
       routeSellerOrderToPartner,
@@ -4531,7 +4531,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const postRouteQuery = await pool.query(`SELECT status, e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
     assert.notEqual(postRouteQuery.rows[0].e6_routed_to_seller_at, null);
-    
+
     const postRouteDecQuery = await pool.query(`SELECT decision_status, expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(postRouteDecQuery.rows[0].decision_status, 'pending_seller_review');
     assert.strictEqual(
@@ -4547,7 +4547,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(postRouteQuery2.rows[0].e6_routed_to_seller_at.getTime(), postRouteQuery.rows[0].e6_routed_to_seller_at.getTime());
     const postRouteDecQuery2 = await pool.query(`SELECT expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(postRouteDecQuery2.rows[0].expires_at.getTime(), postRouteDecQuery.rows[0].expires_at.getTime());
-    
+
     const decCountQuery = await pool.query(`SELECT COUNT(*) as c FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(parseInt(decCountQuery.rows[0].c), 1);
 
@@ -4560,7 +4560,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(crossRes.ok, false);
     if (crossRes.ok) { assert.fail("expected failure result"); }
     assert.equal(crossRes.code, "FORBIDDEN");
-    
+
     // S/T. Accept Workflow
     const user1Id = "00000000-0000-0000-0000-000000000021";
     const authorizePartnerValid1 = async () => ({ id: user1Id });
@@ -4582,7 +4582,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const authorizePartnerValid2 = async () => ({ id: user2Id });
     const acceptRes2 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid2);
     assert.equal(acceptRes2.ok, true);
-    
+
     const accDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(accDecState2.rows[0].decided_by_auth_user_id, user1Id);
     assert.equal(accDecState2.rows[0].decision_source, accDecState.rows[0].decision_source);
@@ -4643,7 +4643,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       acceptSellerOrderWithAuthority(sOrderId3, authorizePartnerValid1),
       rejectSellerOrderWithAuthority(sOrderId3, authorizePartnerValid2)
     ]);
-    
+
     // One should succeed, one should fail
     const successes = concRes.filter(r => r.ok);
     const failures = concRes.filter(r => !r.ok);
@@ -4652,7 +4652,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const finalState3 = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId3]);
     const finalDecState3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId3]);
-    
+
     assert.equal(finalState3.rows[0].status, finalDecState3.rows[0].decision_status);
     assert.ok(finalState3.rows[0].status === 'seller_accepted' || finalState3.rows[0].status === 'seller_rejected');
 
@@ -4756,6 +4756,170 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(mktStatus2.rows[0].status, 'checkout_submitted');
     const mktStatus3 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId3]);
     assert.equal(mktStatus3.rows[0].status, 'checkout_submitted');
+
+    // === 01C-B Outbox Integration & Atomicity Proofs ===
+
+    // Setup an order for Atomicity proofs
+    const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer D1', 'PL', 'NIP', '1234567895', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const mktD1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash-d1', $1) RETURNING id`, [buyerD1.rows[0].id]);
+    const sellerOutboxCheck = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktD1.rows[0].id, pIdA]);
+    const atomicityOrderId = parseInt(sellerOutboxCheck.rows[0].id);
+
+    // D1. Force routed_to_seller outbox INSERT failure
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION trigger_fail_outbox() RETURNS TRIGGER AS $$
+      BEGIN
+        RAISE EXCEPTION 'Forced outbox failure';
+      END;
+      $$ LANGUAGE plpgsql;
+      CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.routed_to_seller') EXECUTE FUNCTION trigger_fail_outbox();
+    `);
+
+    const d1Result = await routeSellerOrderToPartner(atomicityOrderId);
+    assert.strictEqual(d1Result.ok, false);
+    if (!d1Result.ok) assert.strictEqual(d1Result.code, "SYSTEM_ERROR");
+
+    // E6 not committed
+    let orderD1 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [atomicityOrderId]);
+    assert.strictEqual(orderD1.rows[0].e6_routed_to_seller_at, null);
+
+    let decisionD1 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
+    assert.strictEqual(decisionD1.rows.length, 0);
+
+    let outboxD1 = await pool.query(`SELECT * FROM notification_outbox_events WHERE seller_order_id = $1`, [atomicityOrderId]);
+    assert.strictEqual(outboxD1.rows.length, 0);
+
+    // E6 first successful route
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const e6Result = await routeSellerOrderToPartner(atomicityOrderId);
+    assert.strictEqual(e6Result.ok, true);
+
+    let outboxE6 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
+    assert.strictEqual(outboxE6.rows.length, 1);
+
+    // Repeat E6: still exactly one
+    await routeSellerOrderToPartner(atomicityOrderId);
+    let outboxE6_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
+    assert.strictEqual(outboxE6_repeat.rows.length, 1);
+
+    // D2. Force accepted_for_buyer outbox failure
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.accepted_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d2Result = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
+    assert.strictEqual(d2Result.ok, false);
+    if (!d2Result.ok) assert.strictEqual(d2Result.code, "SYSTEM_ERROR");
+
+    let decisionD2 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
+    assert.strictEqual(decisionD2.rows[0].decision_status, 'pending_seller_review');
+
+    let outboxD2 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    assert.strictEqual(outboxD2.rows.length, 0);
+
+    // Accept first successful E7
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const acceptResult = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
+    assert.strictEqual(acceptResult.ok, true);
+
+    let outboxAccept = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    assert.strictEqual(outboxAccept.rows.length, 1);
+
+    // Repeat Accept: still exactly one
+    await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
+    let outboxAccept_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    assert.strictEqual(outboxAccept_repeat.rows.length, 1);
+
+    // D3. Force rejected_for_buyer failure
+    const orderD3 = await createRoutedSellerOrder("atomicity-d3", pIdA);
+    const atomicityOrderId2 = orderD3.sellerOrderId;
+
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.rejected_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d3Result = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
+    assert.strictEqual(d3Result.ok, false);
+    if (!d3Result.ok) assert.strictEqual(d3Result.code, "SYSTEM_ERROR");
+
+    let decisionD3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId2]);
+    assert.strictEqual(decisionD3.rows[0].decision_status, 'pending_seller_review');
+
+    // Reject successful
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const rejectResult = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
+    assert.strictEqual(rejectResult.ok, true);
+
+    let outboxReject = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
+    assert.strictEqual(outboxReject.rows.length, 1);
+
+    // Repeat Reject: exactly one
+    await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
+    let outboxReject_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
+    assert.strictEqual(outboxReject_repeat.rows.length, 1);
+
+    // D4. Force expiry event persistence failure
+    const orderD4 = await createRoutedSellerOrder("atomicity-d4", pIdA);
+    const atomicityOrderId3 = orderD4.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [atomicityOrderId3]);
+
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.expired_for_seller') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d4Result = await expireSellerOrder(atomicityOrderId3);
+    assert.strictEqual(d4Result.ok, false);
+    if (!d4Result.ok) assert.strictEqual(d4Result.code, "SYSTEM_ERROR");
+
+    let decisionD4 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId3]);
+    assert.strictEqual(decisionD4.rows[0].decision_status, 'pending_seller_review');
+
+    // Canonical expiry successful
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const expireResult = await expireSellerOrder(atomicityOrderId3);
+    assert.strictEqual(expireResult.ok, true);
+
+    let outboxExpire = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
+    assert.strictEqual(outboxExpire.rows.length, 2);
+
+    // Repeat Expiry: still exactly two
+    await expireSellerOrder(atomicityOrderId3);
+    let outboxExpire_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
+    assert.strictEqual(outboxExpire_repeat.rows.length, 2);
+
+    // Expiry convergence proof: Lazy Accept, Lazy Reject, Batch Expire
+    // A. already proven (expireSellerOrder)
+
+    // B. Lazy Accept Expire
+    const soB = await createRoutedSellerOrder("cb-b", pIdA);
+    const idB = soB.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idB]);
+    const bResult = await acceptSellerOrderWithAuthority(idB, authorizePartnerValid1);
+    assert.strictEqual(bResult.ok, false);
+    if (!bResult.ok) assert.strictEqual(bResult.code, "SELLER_ORDER_EXPIRED");
+    let outboxB = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idB]);
+    assert.strictEqual(outboxB.rows.length, 2);
+
+    // C. Lazy Reject Expire
+    const soC = await createRoutedSellerOrder("cb-c", pIdA);
+    const idC = soC.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idC]);
+    const cResult = await rejectSellerOrderWithAuthority(idC, authorizePartnerValid1);
+    assert.strictEqual(cResult.ok, false);
+    if (!cResult.ok) assert.strictEqual(cResult.code, "SELLER_ORDER_EXPIRED");
+    let outboxC = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idC]);
+    assert.strictEqual(outboxC.rows.length, 2);
+
+    // D. Batch Expire
+    const soD = await createRoutedSellerOrder("cb-d", pIdA);
+    const idD = soD.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idD]);
+
+    // Check outbox count before
+    let countBefore = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
+    const expiredCountBefore = parseInt(countBefore.rows[0].c);
+
+    const dResult = await expireDueSellerOrders(100);
+    assert.strictEqual(dResult.ok, true);
+
+    let countAfter = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
+    const expiredCountAfter = parseInt(countAfter.rows[0].c);
+    assert.strictEqual(expiredCountAfter, expiredCountBefore + 2);
+
 
   });
 
