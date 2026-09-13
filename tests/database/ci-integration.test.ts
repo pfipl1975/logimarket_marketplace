@@ -4291,7 +4291,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
     const pId = partnerRes.rows[0].id;
 
-    const buyerCtxRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (buyer_country_code, is_b2b) VALUES ('PL', false) RETURNING id`);
+    const buyerCtxRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (
+      business_name, country_code, tax_identifier_type, tax_identifier_value,
+      business_verification_status, category_b_status, legal_context_review_state
+    ) VALUES (
+      'AuthZ Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed'
+    ) RETURNING id`);
     const buyerCtxId = buyerCtxRes.rows[0].id;
 
     const mktRes = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash123', $1) RETURNING id`, [buyerCtxId]);
