@@ -957,7 +957,7 @@ export const sellerOrders = pgTable("seller_orders", {
   updatedAt: timestamp("updated_at", { withTimezone: true }),
 }, (t) => [
   unique("uq_seller_orders_mkt_partner").on(t.marketplaceOrderId, t.partnerId),
-  check("chk_seller_orders_status", sql`((status)::text = ANY ((ARRAY['submitted'::character varying, 'seller_accepted'::character varying, 'fulfillment_in_progress'::character varying, 'fulfilled'::character varying, 'seller_rejected'::character varying, 'cancelled'::character varying])::text[]))`),
+  check("chk_seller_orders_status", sql`((status)::text = ANY ((ARRAY['submitted'::character varying, 'seller_accepted'::character varying, 'fulfillment_in_progress'::character varying, 'fulfilled'::character varying, 'seller_rejected'::character varying, 'cancelled'::character varying, 'expired'::character varying])::text[]))`),
   index("idx_seller_orders_partner").on(t.partnerId),
 ]);
 
@@ -1016,10 +1016,12 @@ export const sellerAcceptanceDecisions = pgTable("seller_acceptance_decisions", 
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
-}, () => [
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}, (t) => [
   check("chk_seller_acc_dec_status", sql`((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[]))`),
-  check("chk_seller_acc_dec_consistency", sql`(((decision_status)::text = 'pending_seller_review' AND decided_by_auth_user_id IS NULL AND decision_source IS NULL AND resolved_at IS NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'seller_accepted' AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NOT NULL) OR ((decision_status)::text = 'seller_rejected' AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'expired' AND resolved_at IS NOT NULL AND accepted_at IS NULL))`),
-check("chk_seller_acc_dec_source", sql`(decision_source IS NULL OR (decision_source)::text = 'partner_portal')`),
+  check("chk_seller_acc_dec_consistency", sql`(((decision_status)::text = 'pending_seller_review' AND expires_at IS NOT NULL AND decided_by_auth_user_id IS NULL AND decision_source IS NULL AND resolved_at IS NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'seller_accepted' AND expires_at IS NOT NULL AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NOT NULL) OR ((decision_status)::text = 'seller_rejected' AND expires_at IS NOT NULL AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'expired' AND expires_at IS NOT NULL AND decided_by_auth_user_id IS NULL AND decision_source IS NULL AND resolved_at IS NOT NULL AND accepted_at IS NULL))`),
+  check("chk_seller_acc_dec_source", sql`(decision_source IS NULL OR (decision_source)::text = 'partner_portal')`),
+  index("idx_seller_acceptance_decisions_pending_expires_at").on(t.expiresAt).where(sql`decision_status = 'pending_seller_review'`),
 ]);
 
 // -----------------------------------------------------------------------------

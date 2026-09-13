@@ -21,6 +21,7 @@ import {
   FINAL_POST_0010_PRODUCTION_FINGERPRINT,
   FINAL_POST_0011_PRODUCTION_FINGERPRINT,
   FINAL_POST_0012_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0013_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
@@ -73,6 +74,7 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0014"
   | "EXACT_EXISTING_POST_0013"
   | "EXACT_EXISTING_POST_0012"
   | "EXACT_EXISTING_POST_0011"
@@ -573,6 +575,15 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0014", publicTableCount, differences: [] };
+    }
+    return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
+  }
+
+  const matchPost0013 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0013_PRODUCTION_FINGERPRINT);
+
+  if (matchPost0013.isExactMatch) {
     if (JSON.stringify(security) === JSON.stringify(POST_0009_SECURITY_CONTRACT)) {
       return { state: "EXACT_EXISTING_POST_0013", publicTableCount, differences: [] };
     }
