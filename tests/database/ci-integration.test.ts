@@ -621,7 +621,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 15, "Journal count must be exactly 15");
+      assert.strictEqual(journalRows.length, 16, "Journal count must be exactly 16");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -782,7 +782,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 15);
+      assert.strictEqual(post0010Journal.rows[0].count, 16);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -823,7 +823,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 15);
+    assert.strictEqual(journalRows.length, 16);
   });
 
   await t.test(
@@ -1003,7 +1003,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 15);
+      assert.strictEqual(journalRows.length, 16);
     },
   );
 
@@ -4253,11 +4253,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const after = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0015");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 15);
+    assert.strictEqual(journalAfter.rows[0].count, 16);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 15);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 16);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
