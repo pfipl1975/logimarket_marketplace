@@ -620,7 +620,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 13, "Journal count must be exactly 13");
+      assert.strictEqual(journalRows.length, 14, "Journal count must be exactly 14");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -781,7 +781,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 13);
+      assert.strictEqual(post0010Journal.rows[0].count, 14);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -822,7 +822,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 13);
+    assert.strictEqual(journalRows.length, 14);
   });
 
   await t.test(
@@ -1002,7 +1002,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 13);
+      assert.strictEqual(journalRows.length, 14);
     },
   );
 
