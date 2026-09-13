@@ -8,7 +8,7 @@ import {
   numeric,
   pgTable,
   text,
-  timestamp,
+  timestamp, uuid,
   varchar,
   integer,
   serial,
@@ -1011,12 +1011,15 @@ export const sellerAcceptanceDecisions = pgTable("seller_acceptance_decisions", 
   id: bigserial("id", { mode: "number" }).primaryKey(),
   sellerOrderId: bigint("seller_order_id", { mode: "number" }).notNull().unique().references(() => sellerOrders.id),
   decisionStatus: varchar("decision_status", { length: 50 }).notNull().default("pending_seller_review"),
+  decidedByAuthUserId: uuid("decided_by_auth_user_id"),
+  decisionSource: varchar("decision_source", { length: 50 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   resolvedAt: timestamp("resolved_at", { withTimezone: true }),
   acceptedAt: timestamp("accepted_at", { withTimezone: true }),
 }, () => [
   check("chk_seller_acc_dec_status", sql`((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[]))`),
-  check("chk_seller_acc_dec_consistency", sql`(((decision_status)::text = 'pending_seller_review' AND resolved_at IS NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'seller_accepted' AND resolved_at IS NOT NULL AND accepted_at IS NOT NULL) OR ((decision_status)::text = 'seller_rejected' AND resolved_at IS NOT NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'expired' AND resolved_at IS NOT NULL AND accepted_at IS NULL))`),
+  check("chk_seller_acc_dec_consistency", sql`(((decision_status)::text = 'pending_seller_review' AND decided_by_auth_user_id IS NULL AND decision_source IS NULL AND resolved_at IS NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'seller_accepted' AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NOT NULL) OR ((decision_status)::text = 'seller_rejected' AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'expired' AND resolved_at IS NOT NULL AND accepted_at IS NULL))`),
+check("chk_seller_acc_dec_source", sql`(decision_source IS NULL OR (decision_source)::text = 'partner_portal')`),
 ]);
 
 // -----------------------------------------------------------------------------
@@ -1088,4 +1091,19 @@ export const partnerAgreementEvidenceInvalidations = pgTable("partner_agreement_
   check("chk_partner_agreement_invalidation_reason", sql`length(btrim(reason)) > 0`),
   check("chk_partner_agreement_invalidation_by", sql`length(btrim((invalidated_by_admin_user_id)::text)) > 0`),
   index("idx_partner_agreement_invalidations_evidence_id").on(t.executionEvidenceId),
+]);
+
+export const partnerUserMemberships = pgTable("partner_user_memberships", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  authUserId: uuid("auth_user_id").notNull(),
+  partnerId: bigint("partner_id", { mode: "number" }).notNull().references(() => partners.id),
+  membershipStatus: varchar("membership_status", { length: 20 }).notNull(),
+  canAcceptOrders: boolean("can_accept_orders").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+  revokedAt: timestamp("revoked_at", { withTimezone: true }),
+}, (t) => [
+  unique("uq_partner_user_membership").on(t.authUserId, t.partnerId),
+  check("chk_partner_membership_status", sql`((membership_status)::text = ANY ((ARRAY['active'::character varying, 'revoked'::character varying])::text[]))`),
+  check("chk_partner_membership_consistency", sql`(((membership_status)::text = 'active' AND revoked_at IS NULL) OR ((membership_status)::text = 'revoked' AND revoked_at IS NOT NULL))`),
 ]);
