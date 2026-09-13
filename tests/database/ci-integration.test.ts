@@ -4384,5 +4384,177 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     );
   });
 
+  await t.test("V to AD: E6 AND E7 WORKFLOW PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+    
+    // Import functions dynamically so they connect to test DB properly if needed, 
+    // but they just use drizzle which is configured via DATABASE_URL
+    const { routeSellerOrderToPartner, acceptSellerOrderWithAuthority, rejectSellerOrderWithAuthority } = await import("../../src/lib/seller-order/seller-order-workflow");
+
+    const partnerResA = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner A', 'a@test.com') RETURNING id`);
+    const pIdA = parseInt(partnerResA.rows[0].id);
+
+    const partnerResB = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner B', 'b@test.com') RETURNING id`);
+    const pIdB = parseInt(partnerResB.rows[0].id);
+
+    const buyerSnapRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId = buyerSnapRes.rows[0].id;
+
+    // Q. Create submitted SellerOrder
+    const mktRes1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash123', $1) RETURNING id`, [buyerCtxId]);
+    const mktId1 = mktRes1.rows[0].id;
+    const orderRes1 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId1, pIdA]);
+    const sOrderId1 = parseInt(orderRes1.rows[0].id);
+
+    // Snapshot legacy before execution
+    const beforeCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
+    const legacyOrdersBefore = parseInt(beforeCounts.rows[0].c);
+
+    const beforeItemCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM order_items`);
+    const legacyOrderItemsBefore = parseInt(beforeItemCounts.rows[0].c);
+
+    // Route
+    const routeRes1 = await routeSellerOrderToPartner(sOrderId1);
+    assert.equal(routeRes1.ok, true);
+
+    const postRouteQuery = await pool.query(`SELECT status, e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.notEqual(postRouteQuery.rows[0].e6_routed_to_seller_at, null);
+    
+    const postRouteDecQuery = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(postRouteDecQuery.rows[0].decision_status, 'pending_seller_review');
+
+    // R. Call route again -> Idempotent
+    const routeRes2 = await routeSellerOrderToPartner(sOrderId1);
+    assert.equal(routeRes2.ok, true);
+    const postRouteQuery2 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.equal(postRouteQuery2.rows[0].e6_routed_to_seller_at.getTime(), postRouteQuery.rows[0].e6_routed_to_seller_at.getTime());
+    
+    const decCountQuery = await pool.query(`SELECT COUNT(*) as c FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(parseInt(decCountQuery.rows[0].c), 1);
+
+    // Cross Partner Proof
+    const authorizePartnerCross = async (partnerId: number) => {
+      assert.equal(partnerId, pIdA);
+      throw new (await import("../../src/lib/auth/authorization-errors")).ForbiddenError();
+    };
+    const crossRes = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerCross);
+    assert.equal(crossRes.ok, false);
+    if (crossRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(crossRes.code, "FORBIDDEN");
+    
+    // S/T. Accept Workflow
+    const user1Id = "00000000-0000-0000-0000-000000000021";
+    const authorizePartnerValid1 = async () => ({ id: user1Id });
+    const acceptRes1 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
+    assert.equal(acceptRes1.ok, true);
+
+    const accState = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.equal(accState.rows[0].status, 'seller_accepted');
+
+    const accDecState = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(accDecState.rows[0].decision_status, 'seller_accepted');
+    assert.equal(accDecState.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState.rows[0].decision_source, 'partner_portal');
+    assert.notEqual(accDecState.rows[0].resolved_at, null);
+    assert.notEqual(accDecState.rows[0].accepted_at, null);
+
+    // AC. Accept again User2 -> Idempotent
+    const user2Id = "00000000-0000-0000-0000-000000000022";
+    const authorizePartnerValid2 = async () => ({ id: user2Id });
+    const acceptRes2 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid2);
+    assert.equal(acceptRes2.ok, true);
+    
+    const accDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(accDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState2.rows[0].decision_source, accDecState.rows[0].decision_source);
+    assert.equal(accDecState2.rows[0].accepted_at.getTime(), accDecState.rows[0].accepted_at.getTime());
+    assert.equal(accDecState2.rows[0].resolved_at.getTime(), accDecState.rows[0].resolved_at.getTime());
+
+    // X. reject after accept -> Conflict
+    const rejAfterAccRes = await rejectSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
+    assert.equal(rejAfterAccRes.ok, false);
+    if (rejAfterAccRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(rejAfterAccRes.code, "SELLER_ORDER_ALREADY_ACCEPTED");
+
+    // Real Rejection Proof
+    const buyerSnapRes2 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 2', 'PL', 'NIP', '1234567891', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId2 = buyerSnapRes2.rows[0].id;
+    const mktRes2 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash124', $1) RETURNING id`, [buyerCtxId2]);
+    const mktId2 = mktRes2.rows[0].id;
+    const orderRes2 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId2, pIdB]);
+    const sOrderId2 = parseInt(orderRes2.rows[0].id);
+    await routeSellerOrderToPartner(sOrderId2);
+
+    const rejRes1 = await rejectSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
+    assert.equal(rejRes1.ok, true);
+
+    const rejState = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId2]);
+    assert.equal(rejState.rows[0].status, 'seller_rejected');
+    const rejDecState = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
+    assert.equal(rejDecState.rows[0].decision_status, 'seller_rejected');
+    assert.equal(rejDecState.rows[0].accepted_at, null);
+    assert.notEqual(rejDecState.rows[0].resolved_at, null);
+    assert.equal(rejDecState.rows[0].decided_by_auth_user_id, user1Id);
+
+    // AD. Repeat Reject with User2
+    const rejRes2 = await rejectSellerOrderWithAuthority(sOrderId2, authorizePartnerValid2);
+    assert.equal(rejRes2.ok, true);
+    const rejDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
+    assert.equal(rejDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(rejDecState2.rows[0].decision_source, rejDecState.rows[0].decision_source);
+    assert.equal(rejDecState2.rows[0].resolved_at.getTime(), rejDecState.rows[0].resolved_at.getTime());
+    assert.equal(rejDecState2.rows[0].accepted_at, null);
+
+    // W. accept after reject -> Conflict
+    const accAfterRejRes = await acceptSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
+    assert.equal(accAfterRejRes.ok, false);
+    if (accAfterRejRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(accAfterRejRes.code, "SELLER_ORDER_ALREADY_REJECTED");
+
+    // CONCURRENCY PROOF
+    const buyerSnapRes3 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 3', 'PL', 'NIP', '1234567892', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId3 = buyerSnapRes3.rows[0].id;
+    const mktRes3 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash125', $1) RETURNING id`, [buyerCtxId3]);
+    const mktId3 = mktRes3.rows[0].id;
+    const orderRes3 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId3, pIdA]);
+    const sOrderId3 = parseInt(orderRes3.rows[0].id);
+    await routeSellerOrderToPartner(sOrderId3);
+
+    const concRes = await Promise.all([
+      acceptSellerOrderWithAuthority(sOrderId3, authorizePartnerValid1),
+      rejectSellerOrderWithAuthority(sOrderId3, authorizePartnerValid2)
+    ]);
+    
+    // One should succeed, one should fail
+    const successes = concRes.filter(r => r.ok);
+    const failures = concRes.filter(r => !r.ok);
+    assert.equal(successes.length, 1);
+    assert.equal(failures.length, 1);
+
+    const finalState3 = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId3]);
+    const finalDecState3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId3]);
+    
+    assert.equal(finalState3.rows[0].status, finalDecState3.rows[0].decision_status);
+    assert.ok(finalState3.rows[0].status === 'seller_accepted' || finalState3.rows[0].status === 'seller_rejected');
+
+    // Verify Isolation
+    const afterCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
+    const legacyOrdersAfter = parseInt(afterCounts.rows[0].c);
+    assert.equal(legacyOrdersAfter, legacyOrdersBefore);
+
+    const afterItemCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM order_items`);
+    const legacyOrderItemsAfter = parseInt(afterItemCounts.rows[0].c);
+    assert.equal(legacyOrderItemsAfter, legacyOrderItemsBefore);
+
+    const mktStatus1 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId1]);
+    assert.equal(mktStatus1.rows[0].status, 'checkout_submitted');
+    const mktStatus2 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId2]);
+    assert.equal(mktStatus2.rows[0].status, 'checkout_submitted');
+    const mktStatus3 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId3]);
+    assert.equal(mktStatus3.rows[0].status, 'checkout_submitted');
+
+  });
+
   await pool.end();
 });

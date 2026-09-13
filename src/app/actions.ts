@@ -1,4 +1,5 @@
 "use server";
+import { acceptSellerOrder, rejectSellerOrder } from "@/lib/seller-order/seller-order-workflow";
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -367,7 +368,6 @@ export async function getCartCount(): Promise<number> {
 }
 
 export async function addToCart(offerId: number, quantity = 1) {
-  "use server";
   if (!isValidCheckoutQuantity(quantity)) {
     throw new Error("Nieprawidłowa ilość");
   }
@@ -440,7 +440,6 @@ export async function addToCart(offerId: number, quantity = 1) {
 }
 
 export async function removeFromCart(cartItemId: number) {
-  "use server";
   const sessionHash = await getExistingSessionHash();
   if (!sessionHash) return;
   await db
@@ -452,7 +451,6 @@ export async function removeFromCart(cartItemId: number) {
 }
 
 export async function updateCartQuantity(cartItemId: number, quantity: number) {
-  "use server";
   if (!isValidCheckoutQuantity(quantity)) {
     throw new Error("Nieprawidłowa ilość");
   }
@@ -468,7 +466,6 @@ export async function updateCartQuantity(cartItemId: number, quantity: number) {
 }
 
 export async function clearCart() {
-  "use server";
   const sessionHash = await getExistingSessionHash();
   if (!sessionHash) return;
   await db.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
@@ -478,7 +475,6 @@ export async function clearCart() {
 export async function submitCheckout(
   rawInput: unknown,
 ): Promise<CheckoutActionResult> {
-  "use server";
 
   const parsed = CheckoutContactSchema.safeParse(rawInput);
   if (!parsed.success) {
@@ -504,7 +500,6 @@ import {
 import { validatePublicRfqEligibility } from "@/lib/rfq/eligibility";
 
 export async function submitRfq(rawInput: unknown): Promise<RfqActionResult> {
-  "use server";
   try {
     const parsed = PublicRfqInputSchema.safeParse(rawInput);
     if (!parsed.success) {
@@ -552,7 +547,6 @@ export async function submitRfq(rawInput: unknown): Promise<RfqActionResult> {
 export async function mutateRfqStatus(
   rawInput: unknown,
 ): Promise<AdminRfqMutationResult> {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
 
@@ -836,7 +830,6 @@ export async function uploadAdminOfferMedia(
   offerId: number,
   formData: FormData
 ) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
 
@@ -855,7 +848,6 @@ export async function uploadAdminOfferMedia(
 }
 
 export async function getAdminOfferMedia(offerId: number) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
   try {
@@ -865,7 +857,6 @@ export async function getAdminOfferMedia(offerId: number) {
 }
 
 export async function prepareAdminOfferMediaUpload(offerId: number, size: number, mime: string) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   const actor = await requireAdmin();
   const { MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
@@ -886,7 +877,6 @@ export async function prepareAdminOfferMediaUpload(offerId: number, size: number
 }
 
 export async function finalizeAdminOfferMediaUpload(offerId: number, receipt: string) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   const actor = await requireAdmin();
   try {
@@ -909,7 +899,6 @@ export async function finalizeAdminOfferMediaUpload(offerId: number, receipt: st
 }
 
 export async function cancelAdminOfferMediaUpload(offerId: number, receipt: string) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   const actor = await requireAdmin();
   try {
@@ -924,7 +913,6 @@ export async function cancelAdminOfferMediaUpload(offerId: number, receipt: stri
 }
 
 export async function importAdminOfferMedia(offerId: number, sourceUrl: string) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
   const { fetchRemoteImage, RemoteImageError } = await import("@/lib/storage/remote-image");
@@ -939,7 +927,6 @@ export async function importAdminOfferMedia(offerId: number, sourceUrl: string) 
 }
 
 export async function setAdminOfferPrimaryMedia(offerId: number, mediaId: number) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
   const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
@@ -949,7 +936,6 @@ export async function setAdminOfferPrimaryMedia(offerId: number, mediaId: number
 }
 
 export async function moveAdminOfferMedia(offerId: number, mediaId: number, direction: "previous" | "next") {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
   if (direction !== "previous" && direction !== "next") return { ok: false as const, code: "VALIDATION_ERROR" };
@@ -960,7 +946,6 @@ export async function moveAdminOfferMedia(offerId: number, mediaId: number, dire
 }
 
 export async function deleteAdminOfferMedia(offerId: number, mediaId: number) {
-  "use server";
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();
   const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
@@ -1435,4 +1420,23 @@ export async function deleteAdminSellerRegistryIdentifier(rawInput: unknown) {
     revalidatePath("/", "layout");
   }
   return result;
+}
+
+
+const SellerOrderIdInputSchema = z.number().int().positive();
+
+export async function acceptSellerOrderAction(sellerOrderId: unknown) {
+  const parsed = SellerOrderIdInputSchema.safeParse(sellerOrderId);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+  return acceptSellerOrder(parsed.data);
+}
+
+export async function rejectSellerOrderAction(sellerOrderId: unknown) {
+  const parsed = SellerOrderIdInputSchema.safeParse(sellerOrderId);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+  return rejectSellerOrder(parsed.data);
 }
