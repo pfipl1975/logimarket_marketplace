@@ -15,8 +15,10 @@ CREATE TABLE IF NOT EXISTS "notification_outbox_events" (
 
 ALTER TABLE "notification_outbox_events" ENABLE ROW LEVEL SECURITY;
 
-DO  BEGIN
+DO $$
+BEGIN
   ALTER TABLE "notification_outbox_events" ADD CONSTRAINT "notification_outbox_events_seller_order_id_seller_orders_id_fk" FOREIGN KEY ("seller_order_id") REFERENCES "seller_orders"("id") ON DELETE no action ON UPDATE no action;
 EXCEPTION
   WHEN duplicate_object THEN null;
-END ;
+END
+$$;
