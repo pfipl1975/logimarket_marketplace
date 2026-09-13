@@ -4556,4 +4556,5 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
   });
 
+  await pool.end();
 });
