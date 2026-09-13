@@ -4398,8 +4398,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const partnerResB = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner B', 'b@test.com') RETURNING id`);
     const pIdB = parseInt(partnerResB.rows[0].id);
 
+    const buyerSnapRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId = buyerSnapRes.rows[0].id;
+
     // Q. Create submitted SellerOrder
-    const orderRes1 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (status, partner_id, customer_email, currency_code, total_cents) VALUES ('submitted', $1, 'q@test.com', 'PLN', 100) RETURNING id`, [pIdA]);
+    const mktRes1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash123', $1) RETURNING id`, [buyerCtxId]);
+    const mktId1 = mktRes1.rows[0].id;
+    const orderRes1 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId1, pIdA]);
     const sOrderId1 = parseInt(orderRes1.rows[0].id);
 
     // Snapshot legacy before execution
@@ -4466,7 +4471,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal((rejAfterAccRes as any).code, "SELLER_ORDER_ALREADY_ACCEPTED");
 
     // Real Rejection Proof
-    const orderRes2 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (status, partner_id, customer_email, currency_code, total_cents) VALUES ('submitted', $1, 'r@test.com', 'PLN', 100) RETURNING id`, [pIdB]);
+    const mktRes2 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash124', $1) RETURNING id`, [buyerCtxId]);
+    const mktId2 = mktRes2.rows[0].id;
+    const orderRes2 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId2, pIdB]);
     const sOrderId2 = parseInt(orderRes2.rows[0].id);
     await routeSellerOrderToPartner(sOrderId2);
 
@@ -4493,7 +4500,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal((accAfterRejRes as any).code, "SELLER_ORDER_ALREADY_REJECTED");
 
     // CONCURRENCY PROOF
-    const orderRes3 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (status, partner_id, customer_email, currency_code, total_cents) VALUES ('submitted', $1, 'c@test.com', 'PLN', 100) RETURNING id`, [pIdA]);
+    const mktRes3 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash125', $1) RETURNING id`, [buyerCtxId]);
+    const mktId3 = mktRes3.rows[0].id;
+    const orderRes3 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId3, pIdA]);
     const sOrderId3 = parseInt(orderRes3.rows[0].id);
     await routeSellerOrderToPartner(sOrderId3);
 
