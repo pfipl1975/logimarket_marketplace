@@ -4760,22 +4760,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // === 01C-B Outbox Integration & Atomicity Proofs ===
 
     // Setup an order for Atomicity proofs
-    const sellerOutboxCheck = await pool.query<{id: string}>(`INSERT INTO seller_orders (seller_id, snapshot_seller_contact_email, status, checkout_token) VALUES ($1, 'test@example.com', 'submitted', 'atomicity-token') RETURNING id`, [sellerId1]);
+    const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (buyer_id, buyer_email, buyer_ip, acceptance_status) VALUES ('00000000-0000-0000-0000-000000000030', 'd1@test', 'unknown', 'no_review_needed') RETURNING id`);
+    const mktD1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash-d1', $1) RETURNING id`, [buyerD1.rows[0].id]);
+    const sellerOutboxCheck = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktD1.rows[0].id, pIdA]);
     const atomicityOrderId = parseInt(sellerOutboxCheck.rows[0].id);
 
-    const { routeSellerOrderToPartner, acceptSellerOrderWithAuthority, rejectSellerOrderWithAuthority, expireSellerOrder, expireDueSellerOrders } = await import("../../src/lib/seller-order/seller-order-workflow.js");
+    const { expireDueSellerOrders } = await import("../../src/lib/seller-order/seller-order-workflow.js");
 
     // D1. Force routed_to_seller outbox INSERT failure
     await pool.query(`
       CREATE OR REPLACE FUNCTION trigger_fail_outbox() RETURNS TRIGGER AS $$
       BEGIN
-        IF NEW.event_type = 'seller_order.routed_to_seller' THEN
-          RAISE EXCEPTION 'Forced outbox failure';
-        END IF;
-        RETURN NEW;
+        RAISE EXCEPTION 'Forced outbox failure';
       END;
       $$ LANGUAGE plpgsql;
-      CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW EXECUTE FUNCTION trigger_fail_outbox();
+      CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.routed_to_seller') EXECUTE FUNCTION trigger_fail_outbox();
     `);
 
     const d1Result = await routeSellerOrderToPartner(atomicityOrderId);
@@ -4806,12 +4805,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(outboxE6_repeat.rows.length, 1);
 
     // D2. Force accepted_for_buyer outbox failure
-    await pool.query(`
-      CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.accepted_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();
-    `);
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.accepted_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();`);
 
-    const partnerIdAuth = { id: 'admin1', sessionClaims: { custom: { partner_id: partnerId1, membership_status: 'active' } } } as any;
-    const d2Result = await acceptSellerOrderWithAuthority(atomicityOrderId, partnerIdAuth);
+    const d2Result = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
     assert.strictEqual(d2Result.ok, false);
     if (!d2Result.ok) assert.strictEqual(d2Result.code, "SYSTEM_ERROR");
 
@@ -4823,29 +4819,24 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // Accept first successful E7
     await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
-    const acceptResult = await acceptSellerOrderWithAuthority(atomicityOrderId, partnerIdAuth);
+    const acceptResult = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
     assert.strictEqual(acceptResult.ok, true);
 
     let outboxAccept = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
     assert.strictEqual(outboxAccept.rows.length, 1);
 
     // Repeat Accept: still exactly one
-    await acceptSellerOrderWithAuthority(atomicityOrderId, partnerIdAuth);
+    await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
     let outboxAccept_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
     assert.strictEqual(outboxAccept_repeat.rows.length, 1);
 
-    // Prepare another order for Reject and Expiry atomicity proofs
-    const sellerOutboxCheck2 = await pool.query<{id: string}>(`INSERT INTO seller_orders (seller_id, snapshot_seller_contact_email, status, checkout_token) VALUES ($1, 'test@example.com', 'submitted', 'atomicity-token2') RETURNING id`, [sellerId1]);
-    const atomicityOrderId2 = parseInt(sellerOutboxCheck2.rows[0].id);
-    await routeSellerOrderToPartner(atomicityOrderId2);
-
     // D3. Force rejected_for_buyer failure
-    await pool.query(`
-      CREATE OR REPLACE FUNCTION trigger_fail_reject() RETURNS TRIGGER AS $$ BEGIN IF NEW.event_type = 'seller_order.rejected_for_buyer' THEN RAISE EXCEPTION 'Forced outbox failure'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
-      CREATE TRIGGER force_outbox_reject BEFORE INSERT ON notification_outbox_events FOR EACH ROW EXECUTE FUNCTION trigger_fail_reject();
-    `);
+    const orderD3 = await createRoutedSellerOrder("atomicity-d3", pIdA);
+    const atomicityOrderId2 = orderD3.sellerOrderId;
 
-    const d3Result = await rejectSellerOrderWithAuthority(atomicityOrderId2, partnerIdAuth);
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.rejected_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d3Result = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
     assert.strictEqual(d3Result.ok, false);
     if (!d3Result.ok) assert.strictEqual(d3Result.code, "SYSTEM_ERROR");
 
@@ -4853,30 +4844,24 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(decisionD3.rows[0].decision_status, 'pending_seller_review');
 
     // Reject successful
-    await pool.query(`DROP TRIGGER force_outbox_reject ON notification_outbox_events`);
-    const rejectResult = await rejectSellerOrderWithAuthority(atomicityOrderId2, partnerIdAuth);
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const rejectResult = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
     assert.strictEqual(rejectResult.ok, true);
 
     let outboxReject = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
     assert.strictEqual(outboxReject.rows.length, 1);
 
     // Repeat Reject: exactly one
-    await rejectSellerOrderWithAuthority(atomicityOrderId2, partnerIdAuth);
+    await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
     let outboxReject_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
     assert.strictEqual(outboxReject_repeat.rows.length, 1);
 
-    // Prepare for Expiry
-    const sellerOutboxCheck3 = await pool.query<{id: string}>(`INSERT INTO seller_orders (seller_id, snapshot_seller_contact_email, status, checkout_token) VALUES ($1, 'test@example.com', 'submitted', 'atomicity-token3') RETURNING id`, [sellerId1]);
-    const atomicityOrderId3 = parseInt(sellerOutboxCheck3.rows[0].id);
-    await routeSellerOrderToPartner(atomicityOrderId3);
-
     // D4. Force expiry event persistence failure
+    const orderD4 = await createRoutedSellerOrder("atomicity-d4", pIdA);
+    const atomicityOrderId3 = orderD4.sellerOrderId;
     await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [atomicityOrderId3]);
 
-    await pool.query(`
-      CREATE OR REPLACE FUNCTION trigger_fail_expire() RETURNS TRIGGER AS $$ BEGIN IF NEW.event_type = 'seller_order.expired_for_seller' THEN RAISE EXCEPTION 'Forced outbox failure'; END IF; RETURN NEW; END; $$ LANGUAGE plpgsql;
-      CREATE TRIGGER force_outbox_expire BEFORE INSERT ON notification_outbox_events FOR EACH ROW EXECUTE FUNCTION trigger_fail_expire();
-    `);
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.expired_for_seller') EXECUTE FUNCTION trigger_fail_outbox();`);
 
     const d4Result = await expireSellerOrder(atomicityOrderId3);
     assert.strictEqual(d4Result.ok, false);
@@ -4886,7 +4871,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(decisionD4.rows[0].decision_status, 'pending_seller_review');
 
     // Canonical expiry successful
-    await pool.query(`DROP TRIGGER force_outbox_expire ON notification_outbox_events`);
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
     const expireResult = await expireSellerOrder(atomicityOrderId3);
     assert.strictEqual(expireResult.ok, true);
 
@@ -4902,31 +4887,28 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // A. already proven (expireSellerOrder)
 
     // B. Lazy Accept Expire
-    const soB = await pool.query<{id: string}>(`INSERT INTO seller_orders (seller_id, snapshot_seller_contact_email, status, checkout_token) VALUES ($1, 'test@example.com', 'submitted', 'c-b-b') RETURNING id`, [sellerId1]);
-    const idB = parseInt(soB.rows[0].id);
-    await routeSellerOrderToPartner(idB);
+    const soB = await createRoutedSellerOrder("cb-b", pIdA);
+    const idB = soB.sellerOrderId;
     await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idB]);
-    const bResult = await acceptSellerOrderWithAuthority(idB, partnerIdAuth);
+    const bResult = await acceptSellerOrderWithAuthority(idB, authorizePartnerValid1);
     assert.strictEqual(bResult.ok, false);
     if (!bResult.ok) assert.strictEqual(bResult.code, "SELLER_ORDER_EXPIRED");
     let outboxB = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idB]);
     assert.strictEqual(outboxB.rows.length, 2);
 
     // C. Lazy Reject Expire
-    const soC = await pool.query<{id: string}>(`INSERT INTO seller_orders (seller_id, snapshot_seller_contact_email, status, checkout_token) VALUES ($1, 'test@example.com', 'submitted', 'c-b-c') RETURNING id`, [sellerId1]);
-    const idC = parseInt(soC.rows[0].id);
-    await routeSellerOrderToPartner(idC);
+    const soC = await createRoutedSellerOrder("cb-c", pIdA);
+    const idC = soC.sellerOrderId;
     await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idC]);
-    const cResult = await rejectSellerOrderWithAuthority(idC, partnerIdAuth);
+    const cResult = await rejectSellerOrderWithAuthority(idC, authorizePartnerValid1);
     assert.strictEqual(cResult.ok, false);
     if (!cResult.ok) assert.strictEqual(cResult.code, "SELLER_ORDER_EXPIRED");
     let outboxC = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idC]);
     assert.strictEqual(outboxC.rows.length, 2);
 
     // D. Batch Expire
-    const soD = await pool.query<{id: string}>(`INSERT INTO seller_orders (seller_id, snapshot_seller_contact_email, status, checkout_token) VALUES ($1, 'test@example.com', 'submitted', 'c-b-d') RETURNING id`, [sellerId1]);
-    const idD = parseInt(soD.rows[0].id);
-    await routeSellerOrderToPartner(idD);
+    const soD = await createRoutedSellerOrder("cb-d", pIdA);
+    const idD = soD.sellerOrderId;
     await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idD]);
 
     // Check outbox count before

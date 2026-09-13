@@ -70,8 +70,7 @@ test("cron route authentication and gating", async () => {
     assert.equal(batchArg, 100);
 
     // Proving request cannot override limits or ids
-    // Passing query params shouldn't change the limit 100.
-    req = new Request("https://example.com?limit=500&sellerOrderId=123", { headers: { "Authorization": "Bearer valid_secret" } });
+    req = new Request("https://example.com?limit=500&sellerOrderId=123&partnerId=456&marketplaceOrderId=789", { headers: { "Authorization": "Bearer valid_secret" } });
     await handler(req);
     assert.equal(batchCalls, 2);
     assert.equal(batchArg, 100);
