@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { test } from "node:test";
 import assert from "node:assert";
 import fs from "node:fs";
@@ -3837,7 +3838,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         [`Seller Corp ${fixtureSuffix}`, `seller-${fixtureSuffix}@corp.com`],
       );
       const partnerId = Number(pRes.rows[0].id);
-      
+
       await pool.query(
         `INSERT INTO seller_legal_identities (
           partner_id, legal_name, jurisdiction_country, verification_status,
@@ -3845,7 +3846,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         ) VALUES ($1, $2, 'PL', 'verified', 'Street 1', '00-001', 'City', 'PL')`,
         [partnerId, `Legal Seller Corp ${fixtureSuffix}`],
       );
-      
+
       await pool.query(
         `INSERT INTO seller_tax_identifiers (
           partner_id, identifier_type, identifier_value, country_code,
@@ -3853,16 +3854,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         ) VALUES ($1, 'tax_id', $2, 'PL', 'PL:NIP', $2, 'verified')`,
         [partnerId, nip],
       );
-      
+
       await pool.query(
         `INSERT INTO seller_registry_identifiers (
           partner_id, registry_type, registry_value, jurisdiction_country, verification_status
         ) VALUES ($1, 'commercial_register', $2, 'PL', 'verified')`,
         [partnerId, registryValue],
       );
-      
+
       await pool.query(`INSERT INTO seller_eligibility (partner_id, eligibility_status) VALUES ($1, 'eligible')`, [partnerId]);
-      
+
       await pool.query(
         `INSERT INTO partner_agreement_execution_evidence (
           partner_id, agreement_version_id, execution_method,
@@ -3884,7 +3885,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           `commerce-r2-${fixtureSuffix}`,
         ],
       );
-      
+
       const oRes = await pool.query<{ id: number }>(
         `INSERT INTO offers (
           title, category_id, offer_model, conversion_type, is_active,
@@ -3893,7 +3894,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         [`Test Offer ${fixtureSuffix}`, categoryId, partnerId, price],
       );
       const offerId = Number(oRes.rows[0].id);
-      
+
       return { partnerId, offerId, nip };
     }
 
@@ -3912,7 +3913,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       categoryBStatus: "not_applicable",
       legalContextReviewState: "no_review_needed",
     };
-    
+
     const defaultBuyerContact = {
       contactName: "John Doe",
       email: "john@buyer.com",
@@ -3940,36 +3941,36 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const { partnerId, offerId } = await seedPartnerAndOffer();
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 2 });
-      
+
       const legacyOrdersBefore = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
       const legacyItemsBefore = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
-      
+
       const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
       if (!res.ok) assert.fail(`Expected checkout success, got ${res.reason}`);
-      
+
       const mOrderId = res.marketplaceOrderId;
-      
+
       const mOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.id, mOrderId));
       assert.strictEqual(mOrders.length, 1);
       assert.strictEqual(mOrders[0].status, "checkout_submitted");
       assert.strictEqual(mOrders[0].e3ReceiptAcknowledgedAt, null);
-      
+
       const blcSnaps = await db.select().from(schemaModule.buyerLegalContextSnapshots).where(eq(schemaModule.buyerLegalContextSnapshots.id, mOrders[0].buyerLegalContextSnapshotId));
       assert.strictEqual(blcSnaps.length, 1);
       assert.strictEqual(blcSnaps[0].businessName, defaultBuyerLegal.businessName);
       assert.strictEqual(blcSnaps[0].businessVerificationStatus, "verified");
-      
+
       const bcSnaps = await db.select().from(schemaModule.marketplaceOrderBuyerContactSnapshots).where(eq(schemaModule.marketplaceOrderBuyerContactSnapshots.marketplaceOrderId, mOrderId));
       assert.strictEqual(bcSnaps.length, 1);
       assert.strictEqual(bcSnaps[0].contactName, defaultBuyerContact.contactName);
       assert.strictEqual(bcSnaps[0].email, defaultBuyerContact.email);
-      
+
       const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
       assert.strictEqual(sOrders.length, 1);
       assert.strictEqual(sOrders[0].partnerId, partnerId);
       assert.strictEqual(sOrders[0].status, "submitted");
       assert.strictEqual(sOrders[0].e6RoutedToSellerAt, null);
-      
+
       const sItems = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, sOrders[0].id));
       assert.strictEqual(sItems.length, 1);
       assert.strictEqual(sItems[0].offerId, offerId);
@@ -3977,26 +3978,26 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(sItems[0].offerTitle.startsWith("Test Offer"), true);
       assert.strictEqual(sItems[0].unitPrice, "10.00");
       assert.strictEqual(sItems[0].currency, "PLN");
-      
+
       const sDisclosures = await db.select().from(schemaModule.marketplaceOrderSellerDisclosures).where(eq(schemaModule.marketplaceOrderSellerDisclosures.marketplaceOrderId, mOrderId));
       assert.strictEqual(sDisclosures.length, 1);
       assert.strictEqual(sDisclosures[0].partnerId, partnerId);
       assert.strictEqual(sDisclosures[0].sellerRole, "PRINCIPAL_SELLER");
       assert.strictEqual(sDisclosures[0].goodsInvoiceIssuer, "PARTNER");
       assert.strictEqual(sDisclosures[0].logimarketPlatformRole, "INTERMEDIARY_PLATFORM");
-      
+
       const ssSnaps = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, sOrders[0].id));
       assert.strictEqual(ssSnaps.length, 1);
       assert.strictEqual(ssSnaps[0].contractModel, "partner_marketplace");
       assert.strictEqual(ssSnaps[0].sellerOfRecordResponsibility, "PARTNER");
       assert.strictEqual(ssSnaps[0].goodsInvoiceResponsibility, "PARTNER");
-      
+
       const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
       assert.strictEqual(cItems.length, 0);
-      
+
       const legacyOrdersAfter = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
       const legacyItemsAfter = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
-      
+
       assert.strictEqual(legacyOrdersAfter, legacyOrdersBefore);
       assert.strictEqual(legacyItemsAfter, legacyItemsBefore);
     });
@@ -4005,23 +4006,23 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const { partnerId: p1, offerId: o1, nip: nip1 } = await seedPartnerAndOffer();
       const { partnerId: p2, offerId: o2, nip: nip2 } = await seedPartnerAndOffer();
       assert.notStrictEqual(nip1, nip2);
-      
+
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o1, quantity: 2 });
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o2, quantity: 3 });
-      
+
       const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
       if (!res.ok) assert.fail(`Expected multi-seller checkout success, got ${res.reason}`);
-      
+
       const mOrderId = res.marketplaceOrderId;
       const mOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.id, mOrderId));
       assert.strictEqual(mOrders.length, 1);
       const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
       assert.strictEqual(sOrders.length, 2);
-      
+
       const pIds = sOrders.map(so => so.partnerId).sort();
       assert.deepStrictEqual(pIds, [p1, p2].sort());
-      
+
       const sDisclosures = await db.select().from(schemaModule.marketplaceOrderSellerDisclosures).where(eq(schemaModule.marketplaceOrderSellerDisclosures.marketplaceOrderId, mOrderId));
       assert.strictEqual(sDisclosures.length, 2);
       assert.deepStrictEqual(sDisclosures.map((row) => row.partnerId).sort(), [p1, p2].sort());
@@ -4045,11 +4046,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         new Set(taxRows.rows.map((row) => row.canonicalIdentifierValue)).size,
         2,
       );
-      
+
       for (const so of sOrders) {
         const ss = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, so.id));
         assert.strictEqual(ss.length, 1);
-        
+
         const si = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, so.id));
         assert.strictEqual(si.length, 1);
         const expectedOfferId = so.partnerId === p1 ? o1 : o2;
@@ -4067,14 +4068,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
       const countsBefore = await getCommerceCounts();
-      
+
       const badBuyer: BuyerLegalContextInput = { ...defaultBuyerLegal, businessName: null };
-      
+
       const res = await executeMarketplaceCheckout(db, sessionHash, badBuyer, defaultBuyerContact);
       if (res.ok) assert.fail("Buyer-not-ready checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "CHECKOUT_BUYER_NOT_READY");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
-      
+
       const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
       assert.strictEqual(cItems.length, 1);
       assert.strictEqual(cItems[0].quantity, 1);
@@ -4083,16 +4084,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await tt.test("PATH COMMERCE-D: Seller not ready", async () => {
       const { partnerId, offerId } = await seedPartnerAndOffer();
       await pool.query(`UPDATE seller_eligibility SET eligibility_status = 'suspended' WHERE partner_id = $1`, [partnerId]);
-      
+
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
       const countsBefore = await getCommerceCounts();
-      
+
       const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
       if (res.ok) assert.fail("Seller-not-ready checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "CHECKOUT_SELLER_NOT_READY");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
-      
+
       const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
       assert.strictEqual(cItems.length, 1);
       assert.strictEqual(cItems[0].quantity, 1);
@@ -4101,16 +4102,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await tt.test("PATH COMMERCE-E: Non-ecommerce/changed offer", async () => {
       const { offerId } = await seedPartnerAndOffer();
       await pool.query(`UPDATE offers SET offer_model = 'rfq', conversion_type = 'inbound' WHERE id = $1`, [offerId]);
-      
+
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
       const countsBefore = await getCommerceCounts();
-      
+
       const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
       if (res.ok) assert.fail("Changed-offer checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "CHECKOUT_CART_CHANGED");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
-      
+
       const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
       assert.strictEqual(cItems.length, 1);
       assert.strictEqual(cItems[0].quantity, 1);
@@ -4120,15 +4121,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const { offerId } = await seedPartnerAndOffer();
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
-      
+
       const badContact = { ...defaultBuyerContact, email: "a".repeat(300) };
       const countsBefore = await getCommerceCounts();
-      
+
       const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, badContact);
       if (res.ok) assert.fail("Rollback checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "SYSTEM_ERROR");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
-      
+
       const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
       assert.strictEqual(cItems.length, 1);
       assert.strictEqual(cItems[0].quantity, 1);
@@ -4138,21 +4139,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const { offerId } = await seedPartnerAndOffer();
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
-      
+
       const moBefore = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
-      
+
       const p1 = executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
       const p2 = executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
-      
+
       const results = await Promise.all([p1, p2]);
-      
+
       const successCount = results.filter(r => r.ok).length;
       assert.strictEqual(successCount, 1);
-      
+
       const failedResult = results.find((result) => !result.ok);
       assert.ok(failedResult && !failedResult.ok);
       assert.strictEqual(failedResult.reason, "CHECKOUT_CART_EMPTY");
-      
+
       const moAfter = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
       assert.strictEqual(moAfter, moBefore + 1);
 
@@ -4179,7 +4180,44 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     });
   });
 
-  await pool.end();
+
+  await t.test("PATH K: POST_0012 -> terminal POST_0013", async () => {
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({
+      migrationsFolder: MIGRATIONS_DIR,
+    });
+    // Run up to 0012
+    for (let i = 0; i <= 12; i++) {
+      const sql = fs.readFileSync(`${MIGRATIONS_DIR}/${diskMigrations[i].migration}`, "utf-8");
+      await pool.query(sql);
+    }
+
+    // Create journal with 0000..0012
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS drizzle_runtime;`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS drizzle_runtime.__drizzle_migrations (
+        id SERIAL PRIMARY KEY,
+        hash text NOT NULL,
+        created_at bigint
+      );
+    `);
+    for (let i = 0; i <= 12; i++) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [diskMigrations[i].hash, Date.now()]
+      );
+    }
+
+    const { fingerprint: preFingerprint, publicTables: preTables, security: preSecurity } = await fetchLiveSchemaMetadata(pool);
+    const preClassification = classifyRuntimeTarget(preFingerprint, preTables, preSecurity);
+    assert.strictEqual(preClassification.state, "EXACT_EXISTING_POST_0012", "Must recognize POST_0012 before migration");
+
+    await runMigrations(process.env);
+
+    const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0013", "Must recognize POST_0013 after migration");
+  });
 
   await t.test("L to P: PARTNER_USER_MEMBERSHIPS_CONSTRAINTS_PROOF", async () => {
     // We already have some partners from previous tests, or we can create new ones
@@ -4251,19 +4289,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
   await t.test("Q to T: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
     // Create an order for testing
-    const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (name, tax_id, partner_role, slug) VALUES ('Test Partner AuthZ C', 'PL999999999C', 'seller', 'test-partner-authz-c') RETURNING id`);
+    const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
     const pId = partnerRes.rows[0].id;
 
-    const catRes = await pool.query<{ id: string }>(`INSERT INTO categories (name, slug) VALUES ('Cat C', 'cat-c') RETURNING id`);
-    const cId = catRes.rows[0].id;
+    const buyerCtxRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (buyer_country_code, is_b2b) VALUES ('PL', false) RETURNING id`);
+    const buyerCtxId = buyerCtxRes.rows[0].id;
 
-    await pool.query<{ id: string }>(`INSERT INTO offers (title, category_id, offer_model, conversion_type, is_active, publication_status, partner_id, price_brutto, price_on_request) VALUES ('Offer C', $1, 'marketplace', 'inbound', true, 'published', $2, 100, false) RETURNING id`, [cId, pId]);
-    
-
-    const mktRes = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, buyer_auth_user_id, original_checkout_session_id) VALUES ('draft', '00000000-0000-0000-0000-000000000000', 'test-session-1') RETURNING id`);
+    const mktRes = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash123', $1) RETURNING id`, [buyerCtxId]);
     const mktOrderId = mktRes.rows[0].id;
 
-    const soRes = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'e1_draft') RETURNING id`, [mktOrderId, pId]);
+    const soRes = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktOrderId, pId]);
     const sellerOrderId = soRes.rows[0].id;
 
     const userId = "00000000-0000-0000-0000-000000000020";

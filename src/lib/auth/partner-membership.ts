@@ -6,9 +6,9 @@ import { partnerUserMemberships } from "../schema";
 import { eq, and } from "drizzle-orm";
 
 type GetCurrentUserFn = () => Promise<CurrentUserResult>;
-type GetMembershipFn = (userId: string, partnerId: number) => Promise<{ membershipStatus: string, canAcceptOrders: boolean } | undefined>;
+type GetMembershipFn = (userId: string, partnerId: number) => Promise<{ membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined>;
 
-export async function getDbMembership(userId: string, partnerId: number) {
+export async function getDbMembership(userId: string, partnerId: number): Promise<{ membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined> {
   try {
     return await db
       .select({ membershipStatus: partnerUserMemberships.membershipStatus, canAcceptOrders: partnerUserMemberships.canAcceptOrders })
@@ -21,7 +21,7 @@ export async function getDbMembership(userId: string, partnerId: number) {
         )
       )
       .limit(1)
-      .then(res => res[0]);
+      .then(res => res[0] as { membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined);
   } catch {
     throw new AuthInfrastructureError();
   }
@@ -53,7 +53,7 @@ export async function requirePartnerMembershipCore(
     throw new AuthInfrastructureError();
   }
 
-  if (!membership) {
+  if (!membership || membership.membershipStatus !== "active") {
     throw new ForbiddenError();
   }
 
@@ -90,7 +90,7 @@ export async function requirePartnerOrderDecisionAuthorityCore(
     throw new AuthInfrastructureError();
   }
 
-  if (!membership || !membership.canAcceptOrders) {
+  if (!membership || membership.membershipStatus !== "active" || !membership.canAcceptOrders) {
     throw new ForbiddenError();
   }
 

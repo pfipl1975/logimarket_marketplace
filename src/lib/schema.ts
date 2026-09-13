@@ -1019,6 +1019,7 @@ export const sellerAcceptanceDecisions = pgTable("seller_acceptance_decisions", 
 }, () => [
   check("chk_seller_acc_dec_status", sql`((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[]))`),
   check("chk_seller_acc_dec_consistency", sql`(((decision_status)::text = 'pending_seller_review' AND decided_by_auth_user_id IS NULL AND decision_source IS NULL AND resolved_at IS NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'seller_accepted' AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NOT NULL) OR ((decision_status)::text = 'seller_rejected' AND decided_by_auth_user_id IS NOT NULL AND (decision_source)::text = 'partner_portal' AND resolved_at IS NOT NULL AND accepted_at IS NULL) OR ((decision_status)::text = 'expired' AND resolved_at IS NOT NULL AND accepted_at IS NULL))`),
+check("chk_seller_acc_dec_source", sql`(decision_source IS NULL OR (decision_source)::text = 'partner_portal')`),
 ]);
 
 // -----------------------------------------------------------------------------

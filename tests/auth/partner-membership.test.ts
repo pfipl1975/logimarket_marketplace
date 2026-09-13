@@ -9,10 +9,10 @@ test("Partner Membership Authorization Foundation", async (t) => {
   const partnerA = 100;
   const partnerB = 200;
 
-  const mockGetMembership = async (userId: string, partnerId: number) => {
+  const mockGetMembership = async (userId: string, partnerId: number): Promise<{ membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined> => {
     if (userId === fakeUserId && partnerId === partnerA) return { membershipStatus: "active", canAcceptOrders: false };
     if (userId === fakeUserId && partnerId === partnerB) return { membershipStatus: "active", canAcceptOrders: true };
-    if (userId === fakeAdminId && partnerId === partnerA) return undefined; // revoked is filtered out in getDbMembership, but here we can just return undefined to simulate it
+    if (userId === fakeAdminId && partnerId === partnerA) return { membershipStatus: "revoked", canAcceptOrders: true };
     return undefined;
   };
 
@@ -25,7 +25,7 @@ test("Partner Membership Authorization Foundation", async (t) => {
 
   await t.test("authenticated user with no membership denied", async () => {
     await assert.rejects(
-      requirePartnerMembershipCore(async () => ({ status: "authenticated", user: { id: "unknown", email: "test@test.com" } }), mockGetMembership, partnerA),
+      requirePartnerMembershipCore(async () => ({ status: "authenticated", user: { id: "00000000-0000-0000-0000-000000000009", email: "test@test.com" } }), mockGetMembership, partnerA),
       ForbiddenError
     );
   });
@@ -58,7 +58,7 @@ test("Partner Membership Authorization Foundation", async (t) => {
 
   await t.test("admin identity alone does NOT imply Seller decision authority", async () => {
     await assert.rejects(
-      requirePartnerOrderDecisionAuthorityCore(async () => ({ status: "authenticated", user: { id: "admin-no-membership", email: "admin@test.com" } }), mockGetMembership, partnerA),
+      requirePartnerOrderDecisionAuthorityCore(async () => ({ status: "authenticated", user: { id: "00000000-0000-0000-0000-000000000003", email: "admin@test.com" } }), mockGetMembership, partnerA),
       ForbiddenError
     );
   });

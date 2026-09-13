@@ -59,7 +59,12 @@ export const EXPECTED_POST_0012_TABLES = [
   "marketplace_order_buyer_contact_snapshots"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0012_TABLES;
+export const EXPECTED_POST_0013_TABLES = [
+  ...EXPECTED_POST_0012_TABLES,
+  "partner_user_memberships"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0013_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1286,24 +1291,25 @@ export const FINAL_POST_0013_PRODUCTION_FINGERPRINT: Record<string, TableContrac
     policyCount: 0,
     triggerCount: 0
   },
-  "seller_acceptance_decisions": {
+    "seller_acceptance_decisions": {
     ...FINAL_POST_0012_PRODUCTION_FINGERPRINT["seller_acceptance_decisions"],
     columns: [
-      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_acceptance_decisions_id_seq'::regclass)", sequenceName: "seller_acceptance_decisions_id_seq" },
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('seller_acceptance_decisions_id_seq'::regclass)", sequenceName: 'seller_acceptance_decisions_id_seq' },
       { name: "seller_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
       { name: "decision_status", type: "character varying(50)", nullable: false, defaultVal: "'pending_seller_review'::character varying", sequenceName: null },
-      { name: "decided_by_auth_user_id", type: "uuid", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "decision_source", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: 'now()', sequenceName: null },
       { name: "resolved_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
-      { name: "accepted_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+      { name: "accepted_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "decided_by_auth_user_id", type: "uuid", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "decision_source", type: "character varying(50)", nullable: true, defaultVal: null, sequenceName: null }
     ],
     constraints: [
       { name: "seller_acceptance_decisions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
-      { name: "seller_acceptance_decisions_seller_order_id_unique", type: "UNIQUE", definition: "UNIQUE (seller_order_id)" },
+      { name: "uq_seller_acceptance_decisions_seller_order", type: "UNIQUE", definition: "UNIQUE (seller_order_id)" },
       { name: "chk_seller_acc_dec_status", type: "CHECK", definition: "CHECK (((decision_status)::text = ANY ((ARRAY['pending_seller_review'::character varying, 'seller_accepted'::character varying, 'seller_rejected'::character varying, 'expired'::character varying])::text[])))" },
       { name: "chk_seller_acc_dec_consistency", type: "CHECK", definition: "CHECK (((((decision_status)::text = 'pending_seller_review'::text) AND (decided_by_auth_user_id IS NULL) AND (decision_source IS NULL) AND (resolved_at IS NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'seller_accepted'::text) AND (decided_by_auth_user_id IS NOT NULL) AND ((decision_source)::text = 'partner_portal'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NOT NULL)) OR (((decision_status)::text = 'seller_rejected'::text) AND (decided_by_auth_user_id IS NOT NULL) AND ((decision_source)::text = 'partner_portal'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL)) OR (((decision_status)::text = 'expired'::text) AND (resolved_at IS NOT NULL) AND (accepted_at IS NULL))))" },
-      { name: "seller_acceptance_decisions_seller_order_id_seller_orders_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id) ON UPDATE NO ACTION ON DELETE NO ACTION" }
+      { name: "chk_seller_acc_dec_source", type: "CHECK", definition: "CHECK ((decision_source IS NULL OR ((decision_source)::text = 'partner_portal'::text)))" },
+      { name: "seller_acceptance_decisions_seller_order_id_fkey", type: "FOREIGN KEY", definition: "FOREIGN KEY (seller_order_id) REFERENCES seller_orders(id)" }
     ]
   }
 };
