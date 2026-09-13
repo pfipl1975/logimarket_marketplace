@@ -4185,10 +4185,18 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const diskMigrations = readMigrationFiles({
       migrationsFolder: MIGRATIONS_DIR,
     });
-    // Run up to 0012
-    for (let i = 0; i <= 12; i++) {
-      const sql = fs.readFileSync(`${MIGRATIONS_DIR}/${diskMigrations[i].migration}`, "utf-8");
-      await pool.query(sql);
+
+    const post0012Migrations = diskMigrations.slice(0, 13);
+    assert.strictEqual(
+      post0012Migrations.length,
+      13,
+      "Expected migrations 0000 through 0012"
+    );
+
+    for (const migration of post0012Migrations) {
+      for (const statement of migration.sql) {
+        await pool.query(statement);
+      }
     }
 
     // Create journal with 0000..0012
@@ -4200,10 +4208,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         created_at bigint
       );
     `);
-    for (let i = 0; i <= 12; i++) {
+
+    for (const migration of post0012Migrations) {
       await pool.query(
         `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
-        [diskMigrations[i].hash, Date.now()]
+        [migration.hash, migration.folderMillis]
       );
     }
 
@@ -4226,13 +4235,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0013");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
-      \`INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id\`,
+      `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
       ['Test Partner AuthZ A', 'test-partner-authz-a@test.com']
     );
     const partnerId1 = fakePartnerRes1.rows[0].id;
 
     const fakePartnerRes2 = await pool.query<{ id: string }>(
-      \`INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id\`,
+      `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
       ['Test Partner AuthZ B', 'test-partner-authz-b@test.com']
     );
     const partnerId2 = fakePartnerRes2.rows[0].id;
