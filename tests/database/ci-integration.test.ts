@@ -4760,7 +4760,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // === 01C-B Outbox Integration & Atomicity Proofs ===
 
     // Setup an order for Atomicity proofs
-    const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (buyer_id, buyer_email, buyer_ip, acceptance_status) VALUES ('00000000-0000-0000-0000-000000000030', 'd1@test', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer D1', 'PL', 'NIP', '1234567895', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
     const mktD1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash-d1', $1) RETURNING id`, [buyerD1.rows[0].id]);
     const sellerOutboxCheck = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktD1.rows[0].id, pIdA]);
     const atomicityOrderId = parseInt(sellerOutboxCheck.rows[0].id);
