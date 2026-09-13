@@ -4411,6 +4411,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const beforeCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
     const legacyOrdersBefore = parseInt(beforeCounts.rows[0].c);
 
+    const beforeItemCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM order_items`);
+    const legacyOrderItemsBefore = parseInt(beforeItemCounts.rows[0].c);
+
     // Route
     const routeRes1 = await routeSellerOrderToPartner(sOrderId1);
     assert.equal(routeRes1.ok, true);
@@ -4437,7 +4440,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     };
     const crossRes = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerCross);
     assert.equal(crossRes.ok, false);
-    assert.equal((crossRes as any).code, "FORBIDDEN");
+    if (crossRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(crossRes.code, "FORBIDDEN");
     
     // S/T. Accept Workflow
     const user1Id = "00000000-0000-0000-0000-000000000021";
@@ -4463,12 +4467,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     
     const accDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
     assert.equal(accDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState2.rows[0].decision_source, accDecState.rows[0].decision_source);
     assert.equal(accDecState2.rows[0].accepted_at.getTime(), accDecState.rows[0].accepted_at.getTime());
+    assert.equal(accDecState2.rows[0].resolved_at.getTime(), accDecState.rows[0].resolved_at.getTime());
 
     // X. reject after accept -> Conflict
     const rejAfterAccRes = await rejectSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
     assert.equal(rejAfterAccRes.ok, false);
-    assert.equal((rejAfterAccRes as any).code, "SELLER_ORDER_ALREADY_ACCEPTED");
+    if (rejAfterAccRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(rejAfterAccRes.code, "SELLER_ORDER_ALREADY_ACCEPTED");
 
     // Real Rejection Proof
     const buyerSnapRes2 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 2', 'PL', 'NIP', '1234567891', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
@@ -4495,11 +4502,15 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(rejRes2.ok, true);
     const rejDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
     assert.equal(rejDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(rejDecState2.rows[0].decision_source, rejDecState.rows[0].decision_source);
+    assert.equal(rejDecState2.rows[0].resolved_at.getTime(), rejDecState.rows[0].resolved_at.getTime());
+    assert.equal(rejDecState2.rows[0].accepted_at, null);
 
     // W. accept after reject -> Conflict
     const accAfterRejRes = await acceptSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
     assert.equal(accAfterRejRes.ok, false);
-    assert.equal((accAfterRejRes as any).code, "SELLER_ORDER_ALREADY_REJECTED");
+    if (accAfterRejRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(accAfterRejRes.code, "SELLER_ORDER_ALREADY_REJECTED");
 
     // CONCURRENCY PROOF
     const buyerSnapRes3 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 3', 'PL', 'NIP', '1234567892', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
@@ -4531,6 +4542,17 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const afterCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
     const legacyOrdersAfter = parseInt(afterCounts.rows[0].c);
     assert.equal(legacyOrdersAfter, legacyOrdersBefore);
+
+    const afterItemCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM order_items`);
+    const legacyOrderItemsAfter = parseInt(afterItemCounts.rows[0].c);
+    assert.equal(legacyOrderItemsAfter, legacyOrderItemsBefore);
+
+    const mktStatus1 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId1]);
+    assert.equal(mktStatus1.rows[0].status, 'checkout_submitted');
+    const mktStatus2 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId2]);
+    assert.equal(mktStatus2.rows[0].status, 'checkout_submitted');
+    const mktStatus3 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId3]);
+    assert.equal(mktStatus3.rows[0].status, 'checkout_submitted');
 
   });
 
