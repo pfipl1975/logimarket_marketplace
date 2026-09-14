@@ -10,7 +10,7 @@ test("journal exists and is valid", () => {
   assert.ok(fs.existsSync(journalPath));
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
-  assert.strictEqual(journal.entries.length, 15);
+  assert.strictEqual(journal.entries.length, 16);
   for (let i = 0; i < journal.entries.length; i++) {
     assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
     if (i > 0) {
@@ -57,4 +57,5 @@ test("the complete journaled SQL chain is loaded by migrator", () => {
   assert.ok(migrations[9].sql.some((s: string) => s.includes("partner_agreement_execution_evidence")));
   assert.ok(migrations[14].sql.some((s: string) => s.includes("expires_at")));
   assert.ok(migrations[14].sql.some((s: string) => s.includes("idx_seller_acceptance_decisions_pending_expires_at")));
+  assert.ok(migrations[15].sql.some((s: string) => s.includes("notification_outbox_events")));
 });

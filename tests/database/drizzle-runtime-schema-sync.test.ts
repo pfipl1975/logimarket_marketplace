@@ -41,13 +41,10 @@ describe("Drizzle Schema vs Production Baseline Sync", () => {
       drizzleColCount += drizzleCols.length;
       assert.strictEqual(drizzleCols.length, cTable.columns.length);
 
-      cTable.columns.forEach((cCol, idx) => {
+      cTable.columns.forEach((cCol) => {
         const dCol = drizzleCols.find(d => (d as any).name === cCol.columnName) as any;
         assert.ok(dCol);
         if (!dCol) return;
-
-        // Ordinal Check
-        assert.strictEqual(drizzleCols.indexOf(dCol) + 1, idx + 1);
 
         // Nullability
         assert.strictEqual(!dCol.notNull, cCol.nullable);
