@@ -1282,6 +1282,16 @@
     "decisionExpired": "Plazo de decisión expirado. Ya no puedes tomar una decisión sobre este pedido.",
     "buyerData": "Datos del comprador",
     "buyerPo": "Número de pedido del comprador (PO)",
-    "contactHidden": "Los detalles de contacto del comprador se compartirán al aceptar el pedido para fines de cumplimiento."
+    "contactHidden": "Los detalles de contacto del comprador se compartirán al aceptar el pedido para fines de cumplimiento.",
+    "copyright": "Todos los derechos reservados.",
+    "statusCancelled": "Cancelado",
+    "unitPrice": "Precio unitario:",
+    "currentStatus": "Estado actual",
+    "decisionDeadline": "Fecha límite de decisión:",
+    "companyName": "Empresa",
+    "registrationCountry": "País de registro:",
+    "vatLabel": "NIF/IVA:",
+    "contactPerson": "Persona de contacto",
+    "backToListAria": "Volver a la lista de pedidos"
   }
 }

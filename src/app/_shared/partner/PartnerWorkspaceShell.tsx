@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LogOut, Package } from "lucide-react";
+
 
 export function PartnerWorkspaceShell({
   children,
@@ -12,7 +12,7 @@ export function PartnerWorkspaceShell({
   partnerId: string;
   partnerName?: string;
   ordersHref: string;
-  dict: { title: string; orders: string; logout: string };
+  dict: Record<string, string>;
 }) {
   return (
     <div className="min-h-screen bg-brand-light-gray flex flex-col font-sans">
@@ -57,7 +57,7 @@ export function PartnerWorkspaceShell({
       
       <footer className="bg-white border-t border-border-industrial py-6 mt-auto">
         <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <div>&copy; {new Date().getFullYear()} LogiMarket. Wszelkie prawa zastrzeżone.</div>
+          <div>&copy; {new Date().getFullYear()} LogiMarket. {dict.copyright || "Wszelkie prawa zastrzeżone"}</div>
         </div>
       </footer>
     </div>

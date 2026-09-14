@@ -16,9 +16,9 @@ const authMock = mock.module("../../src/lib/auth/partner-membership", {
         };
       }
       if (partnerId === 3) {
-         throw new ForbiddenError("Revoked");
+         throw new ForbiddenError();
       }
-      throw new UnauthorizedError("Not a member");
+      throw new UnauthorizedError();
     }
   }
 });
@@ -74,6 +74,6 @@ test("Read Boundary Authorization & Tenant Isolation", async (t) => {
   await t.test("Partner A membership passes auth boundary with can_accept_orders=false", async () => {
     // Just verifying that it doesn't throw UNAUTHORIZED and reaches the DB layer
     const result = await getPartnerOrderDetail(1, 123);
-    assert.notEqual((result as any).code, "UNAUTHORIZED");
+    assert.notEqual((!result.ok ? result.code : ""), "UNAUTHORIZED");
   });
 });

@@ -1282,6 +1282,16 @@
     "decisionExpired": "Termin decyzji minął. Nie możesz już podjąć decyzji w sprawie tego zamówienia.",
     "buyerData": "Dane Kupującego",
     "buyerPo": "Numer zamówienia Kupującego (PO)",
-    "contactHidden": "Dane kontaktowe kupującego zostaną udostępnione po zaakceptowaniu zamówienia, w celu jego realizacji."
+    "contactHidden": "Dane kontaktowe kupującego zostaną udostępnione po zaakceptowaniu zamówienia, w celu jego realizacji.",
+    "copyright": "Wszelkie prawa zastrzeżone.",
+    "statusCancelled": "Anulowane",
+    "unitPrice": "Cena jednostkowa:",
+    "currentStatus": "Obecny status",
+    "decisionDeadline": "Termin decyzji:",
+    "companyName": "Firma",
+    "registrationCountry": "Kraj rejestracji:",
+    "vatLabel": "NIP/VAT:",
+    "contactPerson": "Osoba kontaktowa",
+    "backToListAria": "Wróć do listy zamówień"
   }
 }

@@ -1282,6 +1282,16 @@
     "decisionExpired": "Entscheidungsfrist abgelaufen. Sie können keine Entscheidung mehr zu dieser Bestellung treffen.",
     "buyerData": "Käuferdaten",
     "buyerPo": "Bestellnummer des Käufers (PO)",
-    "contactHidden": "Die Kontaktdaten des Käufers werden nach der Annahme der Bestellung zur Erfüllung mitgeteilt."
+    "contactHidden": "Die Kontaktdaten des Käufers werden nach der Annahme der Bestellung zur Erfüllung mitgeteilt.",
+    "copyright": "Alle Rechte vorbehalten.",
+    "statusCancelled": "Storniert",
+    "unitPrice": "Stückpreis:",
+    "currentStatus": "Aktueller Status",
+    "decisionDeadline": "Entscheidungsfrist:",
+    "companyName": "Unternehmen",
+    "registrationCountry": "Registrierungsland:",
+    "vatLabel": "USt-IdNr.:",
+    "contactPerson": "Kontaktperson",
+    "backToListAria": "Zurück zur Bestellliste"
   }
 }

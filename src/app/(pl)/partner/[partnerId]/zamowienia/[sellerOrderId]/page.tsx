@@ -4,20 +4,20 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Info } from "lucide-react";
 import { requirePartnerMembership } from "@/lib/auth/partner-membership";
 
-function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: any) {
+function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: Record<string, string>) {
   switch (status) {
     case "pending_decision": return dict.statusPending;
     case "accepted": return dict.statusAccepted;
     case "fulfillment_in_progress": return dict.tabInProgress;
     case "fulfilled": return dict.tabCompleted;
     case "rejected": return dict.statusRejected;
-    case "cancelled": return "Anulowane"; // Fallback if no translation, but we could add it
+    case "cancelled": return dict.statusCancelled; // Fallback if no translation, but we could add it
     case "expired": return dict.statusExpired;
     default: return status;
   }
 }
 
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: any) {
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: Record<string, string>) {
   if (!expiresAt) return null;
   const diff = expiresAt.getTime() - serverNow.getTime();
   if (diff <= 0) return dict.timeExpired;
@@ -27,6 +27,7 @@ function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: any)
 }
 
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { isLocale } from "@/lib/i18n/config";
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
 
 export default async function PartnerOrderDetailPage({
@@ -35,7 +36,7 @@ export default async function PartnerOrderDetailPage({
   params: Promise<{ partnerId: string; sellerOrderId: string; locale?: string }>;
 }) {
   const { partnerId, sellerOrderId, locale } = await params;
-  const { PartnerWorkspace: dict } = await getDictionary(locale || "pl");
+  const { PartnerWorkspace: dict } = await getDictionary(isLocale(locale) ? locale : "pl");
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
   const parsedSellerOrderId = parseStrictIdOrNotFound(sellerOrderId);
 
@@ -67,7 +68,7 @@ export default async function PartnerOrderDetailPage({
         <Link 
           href={`${basePath}`}
           className="p-2 -ml-2 rounded-industrial text-muted-foreground hover:bg-white hover:text-brand-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal"
-          aria-label="Wróć do listy zamówień"
+          aria-label={dict.backToListAria}
         >
           <ArrowLeft className="w-5 h-5" />
         </Link>
@@ -76,7 +77,7 @@ export default async function PartnerOrderDetailPage({
             {dict.orderRef} {order.publicOrderReference}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {dict.placedOnDate} {order.createdAt.toLocaleString(locale || "pl")}
+            {dict.placedOnDate} {order.createdAt.toLocaleString(isLocale(locale) ? locale : "pl")}
           </p>
         </div>
       </div>
@@ -100,7 +101,7 @@ export default async function PartnerOrderDetailPage({
                       </p>
                     )}
                     <div className="text-sm text-muted-foreground mt-2">
-                      Cena jednostkowa: {item.unitPrice} {item.currency}
+                      {dict.unitPrice} {item.unitPrice} {item.currency}
                     </div>
                   </div>
                   <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
@@ -130,7 +131,7 @@ export default async function PartnerOrderDetailPage({
             <h2 className="font-semibold text-brand-navy mb-4">{dict.orderStatus}</h2>
             <div className="space-y-4">
               <div>
-                <div className="text-sm text-muted-foreground">Obecny status</div>
+                <div className="text-sm text-muted-foreground">{dict.currentStatus}</div>
                 <div className="font-medium text-lg mt-1">{getStatusLabel(order.effectiveStatus, dict)}</div>
               </div>
 
@@ -144,7 +145,7 @@ export default async function PartnerOrderDetailPage({
                     {formatRemainingTime(order.expiresAt, order.serverNow, dict)}
                   </div>
                   <div className="text-xs text-orange-700">
-                    Termin decyzji: {order.expiresAt.toLocaleString("pl-PL")}
+                    {dict.decisionDeadline} {order.expiresAt.toLocaleString(isLocale(locale) ? locale : "pl")}
                   </div>
                 </div>
               )}
@@ -164,10 +165,10 @@ export default async function PartnerOrderDetailPage({
             <h2 className="font-semibold text-brand-navy mb-4">{dict.buyerData}</h2>
             <div className="space-y-4">
               <div>
-                <div className="text-xs text-muted-foreground mb-1">Firma</div>
+                <div className="text-xs text-muted-foreground mb-1">{dict.companyName}</div>
                 <div className="font-medium text-brand-navy">{order.buyerBusinessName}</div>
                 <div className="text-sm text-muted-foreground mt-0.5">
-                  Kraj rejestracji: {order.buyerCountryCode}
+                  {dict.registrationCountry} {order.buyerCountryCode}
                 </div>
               </div>
 
@@ -175,7 +176,7 @@ export default async function PartnerOrderDetailPage({
                 <div>
                   {order.buyerTaxId && (
                     <div className="text-sm">
-                      <span className="text-muted-foreground">NIP/VAT:</span> <span className="font-medium">{order.buyerTaxId}</span>
+                      <span className="text-muted-foreground">{dict.vatLabel}</span> <span className="font-medium">{order.buyerTaxId}</span>
                     </div>
                   )}
                   {order.buyerRegistryId && (
@@ -203,7 +204,7 @@ export default async function PartnerOrderDetailPage({
 
               {showContact && (
                 <div className="pt-2 border-t border-border-industrial space-y-2">
-                  <h3 className="text-sm font-semibold text-brand-navy">Osoba kontaktowa</h3>
+                  <h3 className="text-sm font-semibold text-brand-navy">{dict.contactPerson}</h3>
                   {order.buyerContactName && (
                     <div className="text-sm">
                       {order.buyerContactName}

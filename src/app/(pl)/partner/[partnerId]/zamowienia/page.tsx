@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 
 // Helper to format countdown or time remaining
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: any) {
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: Record<string, string>) {
   if (!expiresAt) return null;
   const diff = expiresAt.getTime() - serverNow.getTime();
   if (diff <= 0) return dict.timeExpired;
@@ -13,7 +13,7 @@ function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: any)
   return `${hours}${dict.h} ${minutes}${dict.m}`;
 }
 
-function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: any) {
+function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: Record<string, string>) {
   switch (status) {
     case "pending_decision":
       return <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-200">{dict.statusPending}</span>;
@@ -33,6 +33,7 @@ function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: any) {
 
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
 import { getDictionary } from "@/lib/i18n/dictionaries";
+import { isLocale } from "@/lib/i18n/config";
 
 export default async function PartnerOrdersPage({
   params,
@@ -44,7 +45,7 @@ export default async function PartnerOrdersPage({
   const { partnerId, locale } = await params;
   const { filter } = await searchParams;
   
-  const { PartnerWorkspace: dict } = await getDictionary(locale || "pl");
+  const { PartnerWorkspace: dict } = await getDictionary(isLocale(locale) ? locale : "pl");
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
 
   const result = await getPartnerOrdersList(parsedPartnerId);
@@ -155,7 +156,7 @@ export default async function PartnerOrdersPage({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {item.createdAt.toLocaleDateString("pl-PL")}
+                      {item.createdAt.toLocaleDateString(isLocale(locale) ? locale : "pl")}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand-navy">
                       {item.orderTotal} {item.currency}

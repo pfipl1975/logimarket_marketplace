@@ -1282,6 +1282,16 @@
     "decisionExpired": "Decision deadline expired. You can no longer make a decision on this order.",
     "buyerData": "Buyer Data",
     "buyerPo": "Buyer PO Number",
-    "contactHidden": "Buyer contact details will be shared upon order acceptance for fulfillment purposes."
+    "contactHidden": "Buyer contact details will be shared upon order acceptance for fulfillment purposes.",
+    "copyright": "All rights reserved.",
+    "statusCancelled": "Cancelled",
+    "unitPrice": "Unit price:",
+    "currentStatus": "Current status",
+    "decisionDeadline": "Decision deadline:",
+    "companyName": "Company",
+    "registrationCountry": "Registration country:",
+    "vatLabel": "VAT:",
+    "contactPerson": "Contact person",
+    "backToListAria": "Back to orders list"
   }
 }

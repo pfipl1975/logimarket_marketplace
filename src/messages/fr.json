@@ -1282,6 +1282,16 @@
     "decisionExpired": "Délai de décision expiré. Vous ne pouvez plus prendre de décision concernant cette commande.",
     "buyerData": "Données de l'acheteur",
     "buyerPo": "Numéro de commande de l'acheteur (PO)",
-    "contactHidden": "Les coordonnées de l'acheteur seront partagées lors de l'acceptation de la commande à des fins d'exécution."
+    "contactHidden": "Les coordonnées de l'acheteur seront partagées lors de l'acceptation de la commande à des fins d'exécution.",
+    "copyright": "Tous droits réservés.",
+    "statusCancelled": "Annulé",
+    "unitPrice": "Prix unitaire:",
+    "currentStatus": "Statut actuel",
+    "decisionDeadline": "Date limite de décision:",
+    "companyName": "Entreprise",
+    "registrationCountry": "Pays d'enregistrement:",
+    "vatLabel": "TVA:",
+    "contactPerson": "Personne de contact",
+    "backToListAria": "Retour à la liste des commandes"
   }
 }

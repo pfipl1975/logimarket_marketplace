@@ -79,10 +79,16 @@ export function deriveEffectiveStatus(
 
   // Post-acceptance workflow statuses
   if (persistedOrderStatus === "fulfillment_in_progress") {
-    return { effectiveStatus: "fulfillment_in_progress", decisionWindowOpen: false };
+    if (decisionStatus === "seller_accepted") {
+      return { effectiveStatus: "fulfillment_in_progress", decisionWindowOpen: false };
+    }
+    return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
   }
   if (persistedOrderStatus === "fulfilled") {
-    return { effectiveStatus: "fulfilled", decisionWindowOpen: false };
+    if (decisionStatus === "seller_accepted") {
+      return { effectiveStatus: "fulfilled", decisionWindowOpen: false };
+    }
+    return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
   }
   if (persistedOrderStatus === "cancelled") {
     return { effectiveStatus: "cancelled", decisionWindowOpen: false };

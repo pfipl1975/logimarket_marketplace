@@ -1282,6 +1282,16 @@
     "decisionExpired": "决定期限已过。您不能再对此订单做出决定。",
     "buyerData": "买家数据",
     "buyerPo": "买家采购订单号 (PO)",
-    "contactHidden": "买家联系方式将在接受订单后共享以供履行。"
+    "contactHidden": "买家联系方式将在接受订单后共享以供履行。",
+    "copyright": "版权所有。",
+    "statusCancelled": "已取消",
+    "unitPrice": "单价:",
+    "currentStatus": "当前状态",
+    "decisionDeadline": "决定截止日期:",
+    "companyName": "公司",
+    "registrationCountry": "注册国家:",
+    "vatLabel": "增值税:",
+    "contactPerson": "联系人",
+    "backToListAria": "返回订单列表"
   }
 }
