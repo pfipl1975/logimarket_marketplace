@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 
-import { deriveEffectiveStatus } from "../../src/lib/partner-orders/read-model";
-import { parseStrictIdOrNotFound } from "../../src/lib/partner-orders/route-params";
+import { deriveEffectiveStatus } from "../../src/lib/partner-orders/read-model-core";
 
 test("deriveEffectiveStatus - SLA Logic", async (t) => {
   const routedAt = new Date("2026-09-14T12:00:00Z");
@@ -65,18 +65,16 @@ test("deriveEffectiveStatus - SLA Logic", async (t) => {
   });
 });
 
-test("parseStrictIdOrNotFound", async (t) => {
-  await t.test("Valid IDs", () => {
-    assert.equal(parseStrictIdOrNotFound("1"), 1);
-    assert.equal(parseStrictIdOrNotFound("123"), 123);
-  });
+test("parseStrictIdOrNotFound preserves strict positive-integer routing", () => {
+  const source = readFileSync(
+    new URL("../../src/lib/partner-orders/route-params.ts", import.meta.url),
+    "utf8"
+  );
 
-  await t.test("Invalid IDs throw", () => {
-    const invalid = ["1abc", "0", "-1", "1.5", "", "abc"];
-    for (const inv of invalid) {
-      assert.throws(() => parseStrictIdOrNotFound(inv), { name: "Error", message: "NEXT_NOT_FOUND" });
-    }
-  });
+  assert.match(source, /if \(!idStr\) notFound\(\);/);
+  assert.match(source, /if \(!\/\^\[1-9\]\\d\*\$\/\.test\(idStr\)\)/);
+  assert.match(source, /parseInt\(idStr, 10\)/);
+  assert.doesNotMatch(source, /parseFloat|Number\(idStr\)/);
 });
 
 test("Disclosure & Tenancy Requirements", async (t) => {

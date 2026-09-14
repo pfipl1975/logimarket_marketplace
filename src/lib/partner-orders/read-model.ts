@@ -10,16 +10,13 @@ import {
 } from "@/lib/schema";
 import { eq, and, sql, asc } from "drizzle-orm";
 import { requirePartnerMembership } from "@/lib/auth/partner-membership";
+import {
+  deriveEffectiveStatus,
+  type PartnerOrderEffectiveStatus,
+} from "@/lib/partner-orders/read-model-core";
 
-export type PartnerOrderEffectiveStatus =
-  | "pending_decision"
-  | "accepted"
-  | "rejected"
-  | "expired"
-  | "fulfillment_in_progress"
-  | "fulfilled"
-  | "cancelled"
-  | "invalid_order_state";
+export { deriveEffectiveStatus };
+export type { PartnerOrderEffectiveStatus };
 
 export type PartnerOrderListItem = {
   sellerOrderId: number;
@@ -36,67 +33,6 @@ export type PartnerOrderListItem = {
   orderTotal: string;
   itemCount: number;
 };
-
-export function deriveEffectiveStatus(
-  persistedOrderStatus: string,
-  decisionStatus: string | null,
-  routedAt: Date | null,
-  expiresAt: Date | null,
-  serverNow: Date
-): { effectiveStatus: PartnerOrderEffectiveStatus; decisionWindowOpen: boolean } {
-  // Actionable pending requires ALL criteria matching EXACTLY.
-  if (
-    persistedOrderStatus === "submitted" &&
-    decisionStatus === "pending_seller_review" &&
-    routedAt !== null &&
-    expiresAt !== null
-  ) {
-    if (serverNow.getTime() >= expiresAt.getTime()) {
-      return { effectiveStatus: "expired", decisionWindowOpen: false };
-    }
-    return { effectiveStatus: "pending_decision", decisionWindowOpen: true };
-  }
-
-  // Any other combination involving "submitted" or "pending_seller_review" without full consistency is invalid.
-  if (persistedOrderStatus === "submitted" || decisionStatus === "pending_seller_review") {
-    return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
-  }
-
-  // Consistent accepted state
-  if (persistedOrderStatus === "seller_accepted" && decisionStatus === "seller_accepted") {
-    return { effectiveStatus: "accepted", decisionWindowOpen: false };
-  }
-
-  // Consistent rejected state
-  if (persistedOrderStatus === "seller_rejected" && decisionStatus === "seller_rejected") {
-    return { effectiveStatus: "rejected", decisionWindowOpen: false };
-  }
-
-  // Consistent expired state
-  if (persistedOrderStatus === "expired" && decisionStatus === "expired") {
-    return { effectiveStatus: "expired", decisionWindowOpen: false };
-  }
-
-  // Post-acceptance workflow statuses
-  if (persistedOrderStatus === "fulfillment_in_progress") {
-    if (decisionStatus === "seller_accepted") {
-      return { effectiveStatus: "fulfillment_in_progress", decisionWindowOpen: false };
-    }
-    return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
-  }
-  if (persistedOrderStatus === "fulfilled") {
-    if (decisionStatus === "seller_accepted") {
-      return { effectiveStatus: "fulfilled", decisionWindowOpen: false };
-    }
-    return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
-  }
-  if (persistedOrderStatus === "cancelled") {
-    return { effectiveStatus: "cancelled", decisionWindowOpen: false };
-  }
-
-  // Anything else is invalid
-  return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
-}
 
 export async function getPartnerOrdersList(
   partnerId: number

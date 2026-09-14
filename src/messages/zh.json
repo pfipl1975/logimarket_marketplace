@@ -1243,6 +1243,7 @@
     "statusAccepted": "已接受",
     "statusRejected": "已拒绝",
     "statusExpired": "已过期",
+    "statusInvalid": "订单状态无效",
     "error": "错误",
     "errorList": "无法加载订单。",
     "errorDetail": "无法加载订单详细信息。",
@@ -1263,6 +1264,7 @@
     "orderValue": "订单金额",
     "productsCount": "产品",
     "orderItems": "订单项目",
+    "itemsLabel": "项",
     "quantity": "数量",
     "noAccess": "无访问权限",
     "noAccessDesc": "您没有激活的合作伙伴分配。请联系管理员。",
@@ -1291,6 +1293,7 @@
     "companyName": "公司",
     "registrationCountry": "注册国家:",
     "vatLabel": "增值税:",
+    "registryIdLabel": "注册编号：",
     "contactPerson": "联系人",
     "backToListAria": "返回订单列表"
   }

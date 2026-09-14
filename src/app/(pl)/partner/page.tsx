@@ -5,9 +5,9 @@ import { partnerUserMemberships, partners } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
 import { getDictionary } from "@/lib/i18n/dictionaries";
-export default async function PartnerEntryPage({ params }: { params: Promise<{ locale?: string }> }) {
-  const locale = (await params)?.locale || "pl";
-  const { PartnerWorkspace: dict } = await getDictionary(locale);
+
+export default async function PartnerEntryPage() {
+  const { PartnerWorkspace: dict } = await getDictionary("pl");
   const result = await getCurrentUser();
   if (result.status !== "authenticated") {
     redirect("/login?next=/partner");

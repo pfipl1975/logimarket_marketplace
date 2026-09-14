@@ -1243,6 +1243,7 @@
     "statusAccepted": "Accepté",
     "statusRejected": "Rejeté",
     "statusExpired": "Expiré",
+    "statusInvalid": "État de commande invalide",
     "error": "Erreur",
     "errorList": "Impossible de charger les commandes.",
     "errorDetail": "Impossible de charger les détails de la commande.",
@@ -1263,6 +1264,7 @@
     "orderValue": "Valeur de la commande",
     "productsCount": "Produits",
     "orderItems": "Articles de la commande",
+    "itemsLabel": "articles",
     "quantity": "Qté",
     "noAccess": "Pas d'accès",
     "noAccessDesc": "Vous n'avez aucune affectation de partenaire active. Contactez l'administrateur.",
@@ -1291,6 +1293,7 @@
     "companyName": "Entreprise",
     "registrationCountry": "Pays d'enregistrement:",
     "vatLabel": "TVA:",
+    "registryIdLabel": "Numéro d’immatriculation :",
     "contactPerson": "Personne de contact",
     "backToListAria": "Retour à la liste des commandes"
   }

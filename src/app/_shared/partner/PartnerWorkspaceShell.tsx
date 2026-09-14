@@ -1,18 +1,18 @@
 import Link from "next/link";
+import type { Dictionary } from "@/lib/i18n/types";
 
+type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
 
 export function PartnerWorkspaceShell({
   children,
-  partnerId,
-  partnerName = "Partner Portal",
+  partnerName,
   ordersHref,
   dict,
 }: {
   children: React.ReactNode;
-  partnerId: string;
-  partnerName?: string;
+  partnerName: string;
   ordersHref: string;
-  dict: Record<string, string>;
+  dict: PartnerWorkspaceDictionary;
 }) {
   return (
     <div className="min-h-screen bg-brand-light-gray flex flex-col font-sans">
@@ -57,7 +57,7 @@ export function PartnerWorkspaceShell({
       
       <footer className="bg-white border-t border-border-industrial py-6 mt-auto">
         <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-muted-foreground">
-          <div>&copy; {new Date().getFullYear()} LogiMarket. {dict.copyright || "Wszelkie prawa zastrzeżone"}</div>
+          <div>&copy; {new Date().getFullYear()} LogiMarket. {dict.copyright}</div>
         </div>
       </footer>
     </div>

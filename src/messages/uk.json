@@ -1243,6 +1243,7 @@
     "statusAccepted": "Прийнято",
     "statusRejected": "Відхилено",
     "statusExpired": "Минув",
+    "statusInvalid": "Некоректний стан замовлення",
     "error": "Помилка",
     "errorList": "Не вдалося завантажити замовлення.",
     "errorDetail": "Не вдалося завантажити деталі замовлення.",
@@ -1263,6 +1264,7 @@
     "orderValue": "Вартість замовлення",
     "productsCount": "Продукти",
     "orderItems": "Товари замовлення",
+    "itemsLabel": "позицій",
     "quantity": "Кількість",
     "noAccess": "Немає доступу",
     "noAccessDesc": "У вас немає активних призначень партнерів. Зверніться до адміністратора.",
@@ -1291,6 +1293,7 @@
     "companyName": "Компанія",
     "registrationCountry": "Країна реєстрації:",
     "vatLabel": "ІПН/ПДВ:",
+    "registryIdLabel": "Реєстраційний номер:",
     "contactPerson": "Контактна особа",
     "backToListAria": "Повернутися до списку замовлень"
   }

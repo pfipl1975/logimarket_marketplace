@@ -2,9 +2,12 @@ import { getPartnerOrdersList, PartnerOrderEffectiveStatus } from "@/lib/partner
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Clock } from "lucide-react";
+import type { Dictionary } from "@/lib/i18n/types";
+
+type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
 
 // Helper to format countdown or time remaining
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: Record<string, string>) {
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: PartnerWorkspaceDictionary) {
   if (!expiresAt) return null;
   const diff = expiresAt.getTime() - serverNow.getTime();
   if (diff <= 0) return dict.timeExpired;
@@ -13,7 +16,7 @@ function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: Reco
   return `${hours}${dict.h} ${minutes}${dict.m}`;
 }
 
-function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: Record<string, string>) {
+function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: PartnerWorkspaceDictionary) {
   switch (status) {
     case "pending_decision":
       return <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-200">{dict.statusPending}</span>;
@@ -26,8 +29,8 @@ function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: Record<string
       return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 border border-gray-200">{dict.statusRejected}</span>;
     case "expired":
       return <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 border border-red-200">{dict.statusExpired}</span>;
-    default:
-      return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 border border-gray-200">{status}</span>;
+    case "invalid_order_state":
+      return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 border border-gray-200">{dict.statusInvalid}</span>;
   }
 }
 
@@ -44,8 +47,12 @@ export default async function PartnerOrdersPage({
 }) {
   const { partnerId, locale } = await params;
   const { filter } = await searchParams;
-  
-  const { PartnerWorkspace: dict } = await getDictionary(isLocale(locale) ? locale : "pl");
+
+  const resolvedLocale =
+    typeof locale === "string" && isLocale(locale)
+      ? locale
+      : "pl";
+  const { PartnerWorkspace: dict } = await getDictionary(resolvedLocale);
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
 
   const result = await getPartnerOrdersList(parsedPartnerId);
@@ -76,11 +83,11 @@ export default async function PartnerOrdersPage({
   }
 
   const filterTabs = [
-    { id: "pending", label: "Do decyzji" },
-    { id: "accepted", label: "Zaakceptowane" },
-    { id: "rejected", label: "Odrzucone" },
-    { id: "expired", label: "Wygasłe" },
-    { id: "all", label: "Wszystkie" },
+    { id: "pending", label: dict.statusPending },
+    { id: "accepted", label: dict.statusAccepted },
+    { id: "rejected", label: dict.statusRejected },
+    { id: "expired", label: dict.statusExpired },
+    { id: "all", label: dict.tabAll },
   ];
 
   return (
@@ -122,19 +129,19 @@ export default async function PartnerOrdersPage({
               <thead className="bg-brand-light-gray/50">
                 <tr>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Zamówienie
+                    {dict.colOrder}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Kupujący
+                    {dict.colBuyer}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Data
+                    {dict.colDate}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Wartość
+                    {dict.colValue}
                   </th>
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                    Status
+                    {dict.colStatus}
                   </th>
                 </tr>
               </thead>
@@ -148,7 +155,7 @@ export default async function PartnerOrdersPage({
                       >
                         {item.publicOrderReference}
                       </Link>
-                      <span className="text-xs text-muted-foreground">{item.itemCount} pozycje</span>
+                      <span className="text-xs text-muted-foreground">{item.itemCount} {dict.itemsLabel}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm font-medium text-brand-navy max-w-[200px] truncate" title={item.buyerBusinessName}>
@@ -156,7 +163,7 @@ export default async function PartnerOrdersPage({
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-muted-foreground">
-                      {item.createdAt.toLocaleDateString(isLocale(locale) ? locale : "pl")}
+                      {item.createdAt.toLocaleDateString(resolvedLocale)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-brand-navy">
                       {item.orderTotal} {item.currency}

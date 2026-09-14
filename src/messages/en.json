@@ -1243,6 +1243,7 @@
     "statusAccepted": "Accepted",
     "statusRejected": "Rejected",
     "statusExpired": "Expired",
+    "statusInvalid": "Invalid order state",
     "error": "Error",
     "errorList": "Failed to load orders.",
     "errorDetail": "Failed to load order details.",
@@ -1263,6 +1264,7 @@
     "orderValue": "Order value",
     "productsCount": "Products",
     "orderItems": "Order items",
+    "itemsLabel": "items",
     "quantity": "Qty",
     "noAccess": "No access",
     "noAccessDesc": "You do not have active partner assignments. Contact administrator.",
@@ -1291,6 +1293,7 @@
     "companyName": "Company",
     "registrationCountry": "Registration country:",
     "vatLabel": "VAT:",
+    "registryIdLabel": "Registry ID:",
     "contactPerson": "Contact person",
     "backToListAria": "Back to orders list"
   }

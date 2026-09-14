@@ -1243,6 +1243,7 @@
     "statusAccepted": "Aceptado",
     "statusRejected": "Rechazado",
     "statusExpired": "Expirado",
+    "statusInvalid": "Estado de pedido no válido",
     "error": "Error",
     "errorList": "No se pudieron cargar los pedidos.",
     "errorDetail": "No se pudieron cargar los detalles del pedido.",
@@ -1263,6 +1264,7 @@
     "orderValue": "Valor del pedido",
     "productsCount": "Productos",
     "orderItems": "Artículos del pedido",
+    "itemsLabel": "artículos",
     "quantity": "Cant.",
     "noAccess": "Sin acceso",
     "noAccessDesc": "No tienes asignaciones de socio activas. Contacta al administrador.",
@@ -1291,6 +1293,7 @@
     "companyName": "Empresa",
     "registrationCountry": "País de registro:",
     "vatLabel": "NIF/IVA:",
+    "registryIdLabel": "ID de registro:",
     "contactPerson": "Persona de contacto",
     "backToListAria": "Volver a la lista de pedidos"
   }

@@ -25,17 +25,17 @@ export default async function LocalizedPartnerLayout({ children, params }: { chi
     throw err;
   }
 
-  let partnerName = 'Partner Portal';
+  const dictionary = await getDictionary(locale);
+  let partnerName = dictionary.PartnerWorkspace.title;
   const partnerResult = await db.select({ companyName: partners.companyName }).from(partners).where(eq(partners.id, parsedPartnerId)).limit(1);
   if (partnerResult.length > 0) {
     partnerName = partnerResult[0].companyName;
   }
 
-  const dict = await getDictionary(locale);
   const ordersHref = `/${locale}/partner/${partnerId}/orders`;
 
   return (
-    <PartnerWorkspaceShell partnerId={partnerId} partnerName={partnerName} dict={dict.PartnerWorkspace} ordersHref={ordersHref}>
+    <PartnerWorkspaceShell partnerName={partnerName} dict={dictionary.PartnerWorkspace} ordersHref={ordersHref}>
       {children}
     </PartnerWorkspaceShell>
   );

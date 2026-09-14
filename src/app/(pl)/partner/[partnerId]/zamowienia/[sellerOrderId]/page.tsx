@@ -2,22 +2,24 @@ import { getPartnerOrderDetail, PartnerOrderEffectiveStatus } from "@/lib/partne
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock, Info } from "lucide-react";
-import { requirePartnerMembership } from "@/lib/auth/partner-membership";
+import type { Dictionary } from "@/lib/i18n/types";
 
-function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: Record<string, string>) {
+type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
+
+function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: PartnerWorkspaceDictionary) {
   switch (status) {
     case "pending_decision": return dict.statusPending;
     case "accepted": return dict.statusAccepted;
     case "fulfillment_in_progress": return dict.tabInProgress;
     case "fulfilled": return dict.tabCompleted;
     case "rejected": return dict.statusRejected;
-    case "cancelled": return dict.statusCancelled; // Fallback if no translation, but we could add it
+    case "cancelled": return dict.statusCancelled;
     case "expired": return dict.statusExpired;
-    default: return status;
+    case "invalid_order_state": return dict.statusInvalid;
   }
 }
 
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: Record<string, string>) {
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: PartnerWorkspaceDictionary) {
   if (!expiresAt) return null;
   const diff = expiresAt.getTime() - serverNow.getTime();
   if (diff <= 0) return dict.timeExpired;
@@ -36,13 +38,13 @@ export default async function PartnerOrderDetailPage({
   params: Promise<{ partnerId: string; sellerOrderId: string; locale?: string }>;
 }) {
   const { partnerId, sellerOrderId, locale } = await params;
-  const { PartnerWorkspace: dict } = await getDictionary(isLocale(locale) ? locale : "pl");
+  const resolvedLocale =
+    typeof locale === "string" && isLocale(locale)
+      ? locale
+      : "pl";
+  const { PartnerWorkspace: dict } = await getDictionary(resolvedLocale);
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
   const parsedSellerOrderId = parseStrictIdOrNotFound(sellerOrderId);
-
-  // The layout already ran requirePartnerMembership(parsedPartnerId) but doing it here again is 
-  // cheap if cached, and safe to ensure tenant isolation directly on the read. 
-  // Read model has WHERE partner_id = parsedPartnerId, which enforces isolation anyway.
 
   const result = await getPartnerOrderDetail(parsedPartnerId, parsedSellerOrderId);
   
@@ -77,7 +79,7 @@ export default async function PartnerOrderDetailPage({
             {dict.orderRef} {order.publicOrderReference}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            {dict.placedOnDate} {order.createdAt.toLocaleString(isLocale(locale) ? locale : "pl")}
+            {dict.placedOnDate} {order.createdAt.toLocaleString(resolvedLocale)}
           </p>
         </div>
       </div>
@@ -139,13 +141,13 @@ export default async function PartnerOrderDetailPage({
                 <div className="bg-orange-50 border border-orange-200 rounded-industrial p-4 flex flex-col gap-2">
                   <div className="flex items-center gap-2 text-orange-800 font-medium text-sm">
                     <Clock className="w-4 h-4" />
-                    Oczekuje na decyzję
+                    {dict.awaitingDecision}
                   </div>
                   <div className="text-orange-900 font-bold text-xl">
                     {formatRemainingTime(order.expiresAt, order.serverNow, dict)}
                   </div>
                   <div className="text-xs text-orange-700">
-                    {dict.decisionDeadline} {order.expiresAt.toLocaleString(isLocale(locale) ? locale : "pl")}
+                    {dict.decisionDeadline} {order.expiresAt.toLocaleString(resolvedLocale)}
                   </div>
                 </div>
               )}
@@ -154,7 +156,7 @@ export default async function PartnerOrderDetailPage({
                 <div className="bg-red-50 border border-red-200 rounded-industrial p-4 flex items-center gap-2">
                   <Info className="w-5 h-5 text-red-600 shrink-0" />
                   <span className="text-sm font-medium text-red-800">
-                    Termin decyzji minął. Nie możesz już podjąć decyzji w sprawie tego zamówienia.
+                    {dict.decisionExpired}
                   </span>
                 </div>
               )}
@@ -181,7 +183,7 @@ export default async function PartnerOrderDetailPage({
                   )}
                   {order.buyerRegistryId && (
                     <div className="text-sm mt-1">
-                      <span className="text-muted-foreground">KRS/Regon:</span> <span className="font-medium">{order.buyerRegistryId}</span>
+                      <span className="text-muted-foreground">{dict.registryIdLabel}</span> <span className="font-medium">{order.buyerRegistryId}</span>
                     </div>
                   )}
                 </div>
@@ -197,7 +199,7 @@ export default async function PartnerOrderDetailPage({
               {!showContact && order.effectiveStatus === "pending_decision" && (
                 <div className="pt-2 border-t border-border-industrial">
                   <div className="text-xs text-muted-foreground bg-brand-light-gray p-3 rounded-industrial">
-                    Dane kontaktowe kupującego zostaną udostępnione po zaakceptowaniu zamówienia, w celu jego realizacji.
+                    {dict.contactHidden}
                   </div>
                 </div>
               )}

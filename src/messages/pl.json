@@ -1243,6 +1243,7 @@
     "statusAccepted": "Zaakceptowane",
     "statusRejected": "Odrzucone",
     "statusExpired": "Wygasłe",
+    "statusInvalid": "Nieprawidłowy stan zamówienia",
     "error": "Błąd",
     "errorList": "Nie udało się pobrać listy zamówień.",
     "errorDetail": "Nie można załadować szczegółów zamówienia.",
@@ -1263,6 +1264,7 @@
     "orderValue": "Wartość zamówienia",
     "productsCount": "Produkty",
     "orderItems": "Pozycje zamówienia",
+    "itemsLabel": "pozycji",
     "quantity": "Ilość",
     "noAccess": "Brak dostępu",
     "noAccessDesc": "Nie posiadasz aktywnych przypisań do żadnego Partnera. Skontaktuj się z administratorem.",
@@ -1291,6 +1293,7 @@
     "companyName": "Firma",
     "registrationCountry": "Kraj rejestracji:",
     "vatLabel": "NIP/VAT:",
+    "registryIdLabel": "KRS/REGON:",
     "contactPerson": "Osoba kontaktowa",
     "backToListAria": "Wróć do listy zamówień"
   }
