@@ -15,6 +15,12 @@ import {
   FINAL_POST_0006_PRODUCTION_FINGERPRINT,
   FINAL_POST_0007_PRODUCTION_FINGERPRINT,
   FINAL_POST_0008_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0009_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0010_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0011_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0012_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0013_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0014_PRODUCTION_FINGERPRINT,
   PRE_0008_SECURITY_CONTRACT,
   POST_0008_SECURITY_CONTRACT,
   POST_0009_SECURITY_CONTRACT,
@@ -182,9 +188,45 @@ test("TARGET_EXACT_POST_0008", () => {
 });
 
 test("TARGET_EXACT_POST_0009", () => {
+  const actual = buildSide(FINAL_POST_0009_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0009");
+});
+
+test("TARGET_EXACT_POST_0010", () => {
+  const actual = buildSide(FINAL_POST_0010_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0010");
+});
+
+test("TARGET_EXACT_POST_0011", () => {
+  const actual = buildSide(FINAL_POST_0011_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0011");
+});
+
+test("TARGET_EXACT_POST_0012", () => {
+  const actual = buildSide(FINAL_POST_0012_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0012");
+});
+
+test("TARGET_EXACT_POST_0013", () => {
+  const actual = buildSide(FINAL_POST_0013_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0013");
+});
+
+test("TARGET_EXACT_POST_0014", () => {
+  const actual = buildSide(FINAL_POST_0014_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0014");
+});
+
+test("TARGET_EXACT_POST_0015", () => {
   const actual = buildSide(PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES, POST_0009_SECURITY_CONTRACT);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0009");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0015");
 });
 
 // ===========================================================================

@@ -41,9 +41,11 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "partner_agreement_execution_evidence",
   "agreement_versions",
   "seller_acceptance_decisions",
+  "notification_outbox_events",
   "seller_order_items",
   "seller_order_seller_snapshots",
   "seller_orders",
+  "marketplace_order_buyer_contact_snapshots",
   "marketplace_order_seller_disclosures",
   "marketplace_orders",
   "buyer_legal_context_snapshots",
@@ -53,6 +55,7 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "rfq_leads",
   "offer_attribute_option_values",
   "offer_attribute_values",
+  "offer_media",
   "category_attribute_assignments",
   "offers",
   "seller_verification_events",
@@ -66,6 +69,7 @@ const REVERSE_DROP_ORDER: readonly string[] = [
   "attribute_definition_translations",
   "attribute_definitions",
   "categories",
+  "partner_user_memberships",
   "partners",
 ] as const;
 
@@ -207,10 +211,10 @@ export async function verifyRollbackPreconditions(
     }
   }
 
-  // 5. Full fingerprint must be the authoritative post-0009 state
+  // 5. Full fingerprint must be the authoritative post-0015 state
   const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-  if (classification.state !== "EXACT_EXISTING_POST_0009") {
+  if (classification.state !== "EXACT_EXISTING_POST_0015") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,
