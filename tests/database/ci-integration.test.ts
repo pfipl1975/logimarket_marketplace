@@ -4780,13 +4780,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     if (!d1Result.ok) assert.strictEqual(d1Result.code, "SYSTEM_ERROR");
 
     // E6 not committed
-    let orderD1 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [atomicityOrderId]);
+    const orderD1 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [atomicityOrderId]);
     assert.strictEqual(orderD1.rows[0].e6_routed_to_seller_at, null);
 
-    let decisionD1 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
+    const decisionD1 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
     assert.strictEqual(decisionD1.rows.length, 0);
 
-    let outboxD1 = await pool.query(`SELECT * FROM notification_outbox_events WHERE seller_order_id = $1`, [atomicityOrderId]);
+    const outboxD1 = await pool.query(`SELECT * FROM notification_outbox_events WHERE seller_order_id = $1`, [atomicityOrderId]);
     assert.strictEqual(outboxD1.rows.length, 0);
 
     // E6 first successful route
@@ -4794,12 +4794,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const e6Result = await routeSellerOrderToPartner(atomicityOrderId);
     assert.strictEqual(e6Result.ok, true);
 
-    let outboxE6 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
+    const outboxE6 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
     assert.strictEqual(outboxE6.rows.length, 1);
 
     // Repeat E6: still exactly one
     await routeSellerOrderToPartner(atomicityOrderId);
-    let outboxE6_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
+    const outboxE6_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
     assert.strictEqual(outboxE6_repeat.rows.length, 1);
 
     // D2. Force accepted_for_buyer outbox failure
@@ -4809,10 +4809,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(d2Result.ok, false);
     if (!d2Result.ok) assert.strictEqual(d2Result.code, "SYSTEM_ERROR");
 
-    let decisionD2 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
+    const decisionD2 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
     assert.strictEqual(decisionD2.rows[0].decision_status, 'pending_seller_review');
 
-    let outboxD2 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    const outboxD2 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
     assert.strictEqual(outboxD2.rows.length, 0);
 
     // Accept first successful E7
@@ -4820,12 +4820,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const acceptResult = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
     assert.strictEqual(acceptResult.ok, true);
 
-    let outboxAccept = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    const outboxAccept = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
     assert.strictEqual(outboxAccept.rows.length, 1);
 
     // Repeat Accept: still exactly one
     await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
-    let outboxAccept_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    const outboxAccept_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
     assert.strictEqual(outboxAccept_repeat.rows.length, 1);
 
     // D3. Force rejected_for_buyer failure
@@ -4838,7 +4838,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(d3Result.ok, false);
     if (!d3Result.ok) assert.strictEqual(d3Result.code, "SYSTEM_ERROR");
 
-    let decisionD3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId2]);
+    const decisionD3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId2]);
     assert.strictEqual(decisionD3.rows[0].decision_status, 'pending_seller_review');
 
     // Reject successful
@@ -4846,12 +4846,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const rejectResult = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
     assert.strictEqual(rejectResult.ok, true);
 
-    let outboxReject = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
+    const outboxReject = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
     assert.strictEqual(outboxReject.rows.length, 1);
 
     // Repeat Reject: exactly one
     await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
-    let outboxReject_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
+    const outboxReject_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
     assert.strictEqual(outboxReject_repeat.rows.length, 1);
 
     // D4. Force expiry event persistence failure
@@ -4865,7 +4865,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(d4Result.ok, false);
     if (!d4Result.ok) assert.strictEqual(d4Result.code, "SYSTEM_ERROR");
 
-    let decisionD4 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId3]);
+    const decisionD4 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId3]);
     assert.strictEqual(decisionD4.rows[0].decision_status, 'pending_seller_review');
 
     // Canonical expiry successful
@@ -4873,12 +4873,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const expireResult = await expireSellerOrder(atomicityOrderId3);
     assert.strictEqual(expireResult.ok, true);
 
-    let outboxExpire = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
+    const outboxExpire = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
     assert.strictEqual(outboxExpire.rows.length, 2);
 
     // Repeat Expiry: still exactly two
     await expireSellerOrder(atomicityOrderId3);
-    let outboxExpire_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
+    const outboxExpire_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
     assert.strictEqual(outboxExpire_repeat.rows.length, 2);
 
     // Expiry convergence proof: Lazy Accept, Lazy Reject, Batch Expire
@@ -4891,7 +4891,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const bResult = await acceptSellerOrderWithAuthority(idB, authorizePartnerValid1);
     assert.strictEqual(bResult.ok, false);
     if (!bResult.ok) assert.strictEqual(bResult.code, "SELLER_ORDER_EXPIRED");
-    let outboxB = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idB]);
+    const outboxB = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idB]);
     assert.strictEqual(outboxB.rows.length, 2);
 
     // C. Lazy Reject Expire
@@ -4901,7 +4901,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const cResult = await rejectSellerOrderWithAuthority(idC, authorizePartnerValid1);
     assert.strictEqual(cResult.ok, false);
     if (!cResult.ok) assert.strictEqual(cResult.code, "SELLER_ORDER_EXPIRED");
-    let outboxC = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idC]);
+    const outboxC = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idC]);
     assert.strictEqual(outboxC.rows.length, 2);
 
     // D. Batch Expire
@@ -4910,13 +4910,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idD]);
 
     // Check outbox count before
-    let countBefore = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
+    const countBefore = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
     const expiredCountBefore = parseInt(countBefore.rows[0].c);
 
     const dResult = await expireDueSellerOrders(100);
     assert.strictEqual(dResult.ok, true);
 
-    let countAfter = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
+    const countAfter = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
     const expiredCountAfter = parseInt(countAfter.rows[0].c);
     assert.strictEqual(expiredCountAfter, expiredCountBefore + 2);
 

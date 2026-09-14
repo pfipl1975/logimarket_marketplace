@@ -1,4 +1,4 @@
-import { test, mock } from "node:test";
+import { test } from "node:test";
 import assert from "node:assert/strict";
 import { createSellerExpirationCronHandler } from "../../src/lib/cron/seller-expiration-cron.js";
 
