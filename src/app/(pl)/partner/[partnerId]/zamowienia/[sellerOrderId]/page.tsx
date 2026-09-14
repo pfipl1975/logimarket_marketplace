@@ -1,0 +1,235 @@
+import { getPartnerOrderDetail, PartnerOrderEffectiveStatus } from "@/lib/partner-orders/read-model";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, Clock, Info } from "lucide-react";
+import type { Dictionary } from "@/lib/i18n/types";
+
+type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
+
+function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: PartnerWorkspaceDictionary) {
+  switch (status) {
+    case "pending_decision": return dict.statusPending;
+    case "accepted": return dict.statusAccepted;
+    case "fulfillment_in_progress": return dict.tabInProgress;
+    case "fulfilled": return dict.tabCompleted;
+    case "rejected": return dict.statusRejected;
+    case "cancelled": return dict.statusCancelled;
+    case "expired": return dict.statusExpired;
+    case "invalid_order_state": return dict.statusInvalid;
+  }
+}
+
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: PartnerWorkspaceDictionary) {
+  if (!expiresAt) return null;
+  const diff = expiresAt.getTime() - serverNow.getTime();
+  if (diff <= 0) return dict.timeExpired;
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  return `${hours}${dict.h} ${minutes}${dict.m}`;
+}
+
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { isLocale } from "@/lib/i18n/config";
+import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
+
+export default async function PartnerOrderDetailPage({
+  params,
+}: {
+  params: Promise<{ partnerId: string; sellerOrderId: string; locale?: string }>;
+}) {
+  const { partnerId, sellerOrderId, locale } = await params;
+  const resolvedLocale =
+    typeof locale === "string" && isLocale(locale)
+      ? locale
+      : "pl";
+  const { PartnerWorkspace: dict } = await getDictionary(resolvedLocale);
+  const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
+  const parsedSellerOrderId = parseStrictIdOrNotFound(sellerOrderId);
+
+  const result = await getPartnerOrderDetail(parsedPartnerId, parsedSellerOrderId);
+  
+  if (!result.ok) {
+    if (result.code === "NOT_FOUND") notFound();
+    if (result.code === "UNAUTHORIZED") notFound();
+    return (
+      <div className="bg-white p-8 rounded-industrial border border-border-industrial text-center">
+        <h2 className="text-xl font-bold text-brand-navy mb-2">{dict.error}</h2>
+        <p className="text-muted-foreground">{dict.errorDetail}</p>
+      </div>
+    );
+  }
+
+  const basePath = locale ? `/${locale}/partner/${partnerId}/orders` : `/partner/${partnerId}/zamowienia`;
+
+  const order = result.data;
+  const showContact = order.buyerContactName || order.buyerEmail || order.buyerPhone;
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center gap-4">
+        <Link 
+          href={`${basePath}`}
+          className="p-2 -ml-2 rounded-industrial text-muted-foreground hover:bg-white hover:text-brand-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal"
+          aria-label={dict.backToListAria}
+        >
+          <ArrowLeft className="w-5 h-5" />
+        </Link>
+        <div>
+          <h1 className="text-2xl font-bold text-brand-navy">
+            {dict.orderRef} {order.publicOrderReference}
+          </h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {dict.placedOnDate} {order.createdAt.toLocaleString(resolvedLocale)}
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content */}
+        <div className="lg:col-span-2 space-y-6">
+          
+          <div className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
+            <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30">
+              <h2 className="font-semibold text-brand-navy">{dict.orderItems}</h2>
+            </div>
+            <div className="divide-y divide-border-industrial">
+              {order.items.map((item) => (
+                <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-4 justify-between">
+                  <div>
+                    <h3 className="font-medium text-brand-navy">{item.offerTitle}</h3>
+                    {(item.manufacturer || item.model) && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {item.manufacturer} {item.model}
+                      </p>
+                    )}
+                    <div className="text-sm text-muted-foreground mt-2">
+                      {dict.unitPrice} {item.unitPrice} {item.currency}
+                    </div>
+                  </div>
+                  <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
+                    <span className="bg-brand-light-gray text-brand-navy px-3 py-1 rounded-industrial text-sm font-medium">
+                      {dict.quantity}: {item.quantity}
+                    </span>
+                    <span className="font-semibold text-brand-navy">
+                      {item.lineTotal} {item.currency}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="px-6 py-4 bg-brand-light-gray/30 flex justify-between items-center border-t border-border-industrial">
+              <span className="font-medium text-muted-foreground">{dict.totalToPay}</span>
+              <span className="text-xl font-bold text-brand-navy">
+                {order.orderTotal} {order.currency}
+              </span>
+            </div>
+          </div>
+
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6">
+          <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
+            <h2 className="font-semibold text-brand-navy mb-4">{dict.orderStatus}</h2>
+            <div className="space-y-4">
+              <div>
+                <div className="text-sm text-muted-foreground">{dict.currentStatus}</div>
+                <div className="font-medium text-lg mt-1">{getStatusLabel(order.effectiveStatus, dict)}</div>
+              </div>
+
+              {order.effectiveStatus === "pending_decision" && order.expiresAt && (
+                <div className="bg-orange-50 border border-orange-200 rounded-industrial p-4 flex flex-col gap-2">
+                  <div className="flex items-center gap-2 text-orange-800 font-medium text-sm">
+                    <Clock className="w-4 h-4" />
+                    {dict.awaitingDecision}
+                  </div>
+                  <div className="text-orange-900 font-bold text-xl">
+                    {formatRemainingTime(order.expiresAt, order.serverNow, dict)}
+                  </div>
+                  <div className="text-xs text-orange-700">
+                    {dict.decisionDeadline} {order.expiresAt.toLocaleString(resolvedLocale)}
+                  </div>
+                </div>
+              )}
+
+              {order.effectiveStatus === "expired" && (
+                <div className="bg-red-50 border border-red-200 rounded-industrial p-4 flex items-center gap-2">
+                  <Info className="w-5 h-5 text-red-600 shrink-0" />
+                  <span className="text-sm font-medium text-red-800">
+                    {dict.decisionExpired}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
+            <h2 className="font-semibold text-brand-navy mb-4">{dict.buyerData}</h2>
+            <div className="space-y-4">
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">{dict.companyName}</div>
+                <div className="font-medium text-brand-navy">{order.buyerBusinessName}</div>
+                <div className="text-sm text-muted-foreground mt-0.5">
+                  {dict.registrationCountry} {order.buyerCountryCode}
+                </div>
+              </div>
+
+              {(order.buyerTaxId || order.buyerRegistryId) && (
+                <div>
+                  {order.buyerTaxId && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">{dict.vatLabel}</span> <span className="font-medium">{order.buyerTaxId}</span>
+                    </div>
+                  )}
+                  {order.buyerRegistryId && (
+                    <div className="text-sm mt-1">
+                      <span className="text-muted-foreground">{dict.registryIdLabel}</span> <span className="font-medium">{order.buyerRegistryId}</span>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {order.customerPoNumber && (
+                <div className="pt-2 border-t border-border-industrial">
+                  <div className="text-xs text-muted-foreground mb-1">{dict.buyerPo}</div>
+                  <div className="font-medium text-brand-navy">{order.customerPoNumber}</div>
+                </div>
+              )}
+
+              {!showContact && order.effectiveStatus === "pending_decision" && (
+                <div className="pt-2 border-t border-border-industrial">
+                  <div className="text-xs text-muted-foreground bg-brand-light-gray p-3 rounded-industrial">
+                    {dict.contactHidden}
+                  </div>
+                </div>
+              )}
+
+              {showContact && (
+                <div className="pt-2 border-t border-border-industrial space-y-2">
+                  <h3 className="text-sm font-semibold text-brand-navy">{dict.contactPerson}</h3>
+                  {order.buyerContactName && (
+                    <div className="text-sm">
+                      {order.buyerContactName}
+                    </div>
+                  )}
+                  {order.buyerEmail && (
+                    <div className="text-sm text-brand-teal">
+                      <a href={`mailto:${order.buyerEmail}`}>{order.buyerEmail}</a>
+                    </div>
+                  )}
+                  {order.buyerPhone && (
+                    <div className="text-sm">
+                      <a href={`tel:${order.buyerPhone}`}>{order.buyerPhone}</a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
