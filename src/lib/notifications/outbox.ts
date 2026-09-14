@@ -21,7 +21,7 @@ export async function enqueueNotificationIntent(
       eventType,
     }).onConflictDoNothing({ target: [notificationOutboxEvents.sellerOrderId, notificationOutboxEvents.eventType] });
     return { ok: true };
-  } catch (error) {
+  } catch {
     return { ok: false, code: "SYSTEM_ERROR" };
   }
 }
