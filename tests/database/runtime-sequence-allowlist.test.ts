@@ -23,6 +23,7 @@ import {
   EXPECTED_COUNTS,
   EXPECTED_BASELINE_TABLES,
   PRODUCTION_FINGERPRINT,
+  CANONICAL_0000_BASELINE_FINGERPRINT,
 } from "../../scripts/database/runtime-migration-contract";
 import type { Queryable } from "../../scripts/database/verify-runtime-schema-fingerprint";
 
@@ -48,14 +49,31 @@ function contractSequenceOwnership(): string[] {
   return pairs.sort();
 }
 
-function getSqlFilesContent(): string {
-  const dir = path.join(process.cwd(), "drizzle-runtime");
-  const files = fs.readdirSync(dir).filter(f => f.endsWith('.sql'));
-  return files.map(f => fs.readFileSync(path.join(dir, f), 'utf8')).join('\n');
+function contractBaselineSequenceOwnership(): string[] {
+  const pairs: string[] = [];
+  for (const t of Object.keys(CANONICAL_0000_BASELINE_FINGERPRINT)) {
+    for (const c of CANONICAL_0000_BASELINE_FINGERPRINT[t].columns) {
+      if (c.sequenceName) pairs.push(`${c.sequenceName} -> ${t}.${c.name}`);
+    }
+  }
+  return pairs.sort();
 }
 
-function sqlSequenceNames(): string[] {
-  const sql = getSqlFilesContent();
+function contractBaselineSequenceNames(): string[] {
+  return Object.keys(CANONICAL_0000_BASELINE_FINGERPRINT).flatMap((t) =>
+    CANONICAL_0000_BASELINE_FINGERPRINT[t].columns
+      .map((c) => c.sequenceName)
+      .filter((n): n is string => n !== null)
+  ).sort();
+}
+
+function getBaselineSqlContent(): string {
+  const file = path.join(process.cwd(), "drizzle-runtime", "0000_production_runtime_baseline.sql");
+  return fs.readFileSync(file, 'utf8');
+}
+
+function baselineSqlSequenceNames(): string[] {
+  const sql = getBaselineSqlContent();
   const seqs = [...sql.matchAll(/CREATE SEQUENCE (\w+) AS/g)].map((m) => m[1]);
 
   const tables = [...sql.matchAll(/CREATE TABLE IF NOT EXISTS "(\w+)" \(([^;]+)\)/g)];
@@ -70,8 +88,8 @@ function sqlSequenceNames(): string[] {
   return seqs.sort();
 }
 
-function sqlSequenceOwnership(): string[] {
-  const sql = getSqlFilesContent();
+function baselineSqlSequenceOwnership(): string[] {
+  const sql = getBaselineSqlContent();
   const ownership = [...sql.matchAll(/ALTER SEQUENCE (\w+) OWNED BY (\w+)\.(\w+);/g)]
     .map((m) => `${m[1]} -> ${m[2]}.${m[3]}`);
 
@@ -141,12 +159,12 @@ test("ALLOWLIST_CONTRACT_TEST: allowlist is identical to the contract sequenceNa
   assert.deepStrictEqual([...EXPECTED_RUNTIME_SEQUENCES].sort(), contractSequenceNames());
 });
 
-test("ALLOWLIST_SQL_TEST: allowlist is identical to the baseline SQL sequences", () => {
-  assert.deepStrictEqual([...EXPECTED_RUNTIME_SEQUENCES].sort(), sqlSequenceNames());
+test("BASELINE_SQL_TEST: baseline contract is identical to the baseline SQL sequences", () => {
+  assert.deepStrictEqual(contractBaselineSequenceNames(), baselineSqlSequenceNames());
 });
 
-test("SEQUENCE_OWNERSHIP_TEST: ownership matches contract and baseline SQL", () => {
-  assert.deepStrictEqual(contractSequenceOwnership(), sqlSequenceOwnership());
+test("SEQUENCE_OWNERSHIP_TEST: baseline ownership matches SQL, and current ownership matches allowlist", () => {
+  assert.deepStrictEqual(contractBaselineSequenceOwnership(), baselineSqlSequenceOwnership());
   assert.strictEqual(contractSequenceOwnership().length, EXPECTED_COUNTS.SEQUENCES);
   for (const pair of contractSequenceOwnership()) {
     const [seq] = pair.split(" -> ");
@@ -177,7 +195,7 @@ test("ALLOWLIST: verifier source does not generate names via ${table}_id_seq heu
 });
 
 test("ALLOWLIST_DRIFT_TEST: a missing required sequence is detected", () => {
-  const incomplete = sqlSequenceNames().slice(1);
+  const incomplete = contractSequenceNames().slice(1);
   assert.strictEqual(
     setsMatch(incomplete, [...EXPECTED_RUNTIME_SEQUENCES]),
     false,
@@ -186,7 +204,7 @@ test("ALLOWLIST_DRIFT_TEST: a missing required sequence is detected", () => {
 });
 
 test("ALLOWLIST_DRIFT_TEST: an additional sequence is detected", () => {
-  const extended = [...sqlSequenceNames(), "random_extra_seq"];
+  const extended = [...contractSequenceNames(), "random_extra_seq"];
   assert.strictEqual(
     setsMatch(extended, [...EXPECTED_RUNTIME_SEQUENCES]),
     false,
@@ -221,7 +239,7 @@ test("EXTRA_PUBLIC_SEQUENCE_IGNORED_TEST: a random extra public sequence is neve
     !(seqQuery?.values?.[0] as string[]).includes("random_public_seq"),
     "scope must not include unapproved sequences"
   );
-  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, sqlSequenceNames().length);
+  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, EXPECTED_COUNTS.SEQUENCES);
   assert.strictEqual(result.ANON_SEQUENCE_GRANT_COUNT, 0, "extra sequence grant must not leak in");
 });
 
@@ -234,7 +252,7 @@ test("SEQUENCE_COUNT_TEST: all approved sequences are counted", async () => {
     })),
   });
   const result = await queryRuntimeGrants(q);
-  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, sqlSequenceNames().length);
+  assert.strictEqual(result.SERVICE_ROLE_SEQUENCE_GRANT_COUNT, EXPECTED_COUNTS.SEQUENCES);
 });
 
 test("ANON_SEQUENCE_GRANT_TEST: anon sequence grants are counted", async () => {

@@ -63,7 +63,7 @@ export function validateAppliedMigrationPrefix(
     if (appliedRows.length !== 4) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0003 but journal has ${appliedRows.length} rows)`);
     }
-  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0004" || schemaClassificationState === "MIGRATABLE_POST_0004" || schemaClassificationState === "EXACT_EXISTING") {
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0004" || schemaClassificationState === "MIGRATABLE_POST_0004") {
     if (appliedRows.length !== 5) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is EXACT_EXISTING but journal has ${appliedRows.length} rows)`);
     }
@@ -86,6 +86,30 @@ export function validateAppliedMigrationPrefix(
   } else if (schemaClassificationState === "EXACT_EXISTING_POST_0009") {
     if (appliedRows.length !== 10) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0009 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0010") {
+    if (appliedRows.length !== 11) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0010 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0011") {
+    if (appliedRows.length !== 12) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0011 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0012") {
+    if (appliedRows.length !== 13) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0012 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0013") {
+    if (appliedRows.length !== 14) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0013 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0014") {
+    if (appliedRows.length !== 15) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0014 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0015" || schemaClassificationState === "EXACT_EXISTING") {
+    if (appliedRows.length !== diskJournal.entries.length) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is EXACT_EXISTING but journal has ${appliedRows.length} rows)`);
     }
   } else if (schemaClassificationState === "PARTIAL_OR_DRIFTED") {
     throw new Error(`RUNNER: BLOCKED. Schema is PARTIAL_OR_DRIFTED`);

@@ -66,7 +66,12 @@ export const EXPECTED_POST_0013_TABLES = [
 
 export const EXPECTED_POST_0014_TABLES = EXPECTED_POST_0013_TABLES;
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0014_TABLES;
+export const EXPECTED_POST_0015_TABLES = [
+  ...EXPECTED_POST_0014_TABLES,
+  "notification_outbox_events"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0015_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
