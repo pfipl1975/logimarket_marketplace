@@ -26,18 +26,16 @@ function formatRemainingTime(expiresAt: Date | null, serverNow: Date) {
   return `${hours}h ${minutes}m`;
 }
 
+import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
+
 export default async function PartnerOrderDetailPage({
   params,
 }: {
-  params: Promise<{ partnerId: string; sellerOrderId: string }>;
+  params: Promise<{ partnerId: string; sellerOrderId: string; locale?: string }>;
 }) {
-  const { partnerId, sellerOrderId } = await params;
-  const parsedPartnerId = parseInt(partnerId, 10);
-  const parsedSellerOrderId = parseInt(sellerOrderId, 10);
-  
-  if (isNaN(parsedPartnerId) || isNaN(parsedSellerOrderId)) {
-    notFound();
-  }
+  const { partnerId, sellerOrderId, locale } = await params;
+  const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
+  const parsedSellerOrderId = parseStrictIdOrNotFound(sellerOrderId);
 
   // The layout already ran requirePartnerMembership(parsedPartnerId) but doing it here again is 
   // cheap if cached, and safe to ensure tenant isolation directly on the read. 
@@ -47,6 +45,7 @@ export default async function PartnerOrderDetailPage({
   
   if (!result.ok) {
     if (result.code === "NOT_FOUND") notFound();
+    if (result.code === "UNAUTHORIZED") notFound();
     return (
       <div className="bg-white p-8 rounded-industrial border border-border-industrial text-center">
         <h2 className="text-xl font-bold text-brand-navy mb-2">Błąd</h2>
@@ -55,6 +54,8 @@ export default async function PartnerOrderDetailPage({
     );
   }
 
+  const basePath = locale ? `/${locale}/partner/${partnerId}/orders` : `/partner/${partnerId}/zamowienia`;
+
   const order = result.data;
   const showContact = order.buyerContactName || order.buyerEmail || order.buyerPhone;
 
@@ -62,7 +63,7 @@ export default async function PartnerOrderDetailPage({
     <div className="space-y-6">
       <div className="flex items-center gap-4">
         <Link 
-          href={`/partner/${partnerId}/zamowienia`}
+          href={`${basePath}`}
           className="p-2 -ml-2 rounded-industrial text-muted-foreground hover:bg-white hover:text-brand-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal"
           aria-label="Wróć do listy zamówień"
         >

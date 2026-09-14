@@ -1231,5 +1231,10 @@
     "errorDescription": "Partner konnte nicht erstellt werden.",
     "invalidEmail": "Ungültige E-Mail-Adresse",
     "invalidWebsite": "Ungültige URL"
+  },
+  "PartnerWorkspace": {
+    "title": "Partnerportal",
+    "orders": "Bestellungen",
+    "logout": "Abmelden"
   }
 }

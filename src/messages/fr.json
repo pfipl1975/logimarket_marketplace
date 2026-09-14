@@ -1231,5 +1231,10 @@
     "errorDescription": "Échec de la création du partenaire.",
     "invalidEmail": "Adresse email invalide",
     "invalidWebsite": "URL invalide"
+  },
+  "PartnerWorkspace": {
+    "title": "Portail Partenaire",
+    "orders": "Commandes",
+    "logout": "Déconnexion"
   }
 }

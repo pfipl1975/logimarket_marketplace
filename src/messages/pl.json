@@ -1231,5 +1231,10 @@
     "errorDescription": "Nie udało się utworzyć partnera.",
     "invalidEmail": "Nieprawidłowy adres e-mail",
     "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
+  },
+  "PartnerWorkspace": {
+    "title": "LogiMarket Partner",
+    "orders": "Zamówienia",
+    "logout": "Wyloguj"
   }
 }

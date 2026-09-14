@@ -5,10 +5,12 @@ export function PartnerWorkspaceShell({
   children,
   partnerId,
   partnerName = "Partner Portal", // Might be expanded later
+  dict,
 }: {
   children: React.ReactNode;
   partnerId: string;
   partnerName?: string;
+  dict: { title: string; orders: string; logout: string };
 }) {
   return (
     <div className="min-h-screen bg-brand-light-gray flex flex-col font-sans">
@@ -16,7 +18,7 @@ export function PartnerWorkspaceShell({
         <div className="max-w-[1400px] mx-auto w-full px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-6">
             <Link href={`/partner/${partnerId}/zamowienia`} className="text-xl font-bold tracking-tight text-white focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy rounded-sm">
-              LogiMarket <span className="font-light text-brand-teal">Partner</span>
+              {dict.title}
             </Link>
             
             <nav className="hidden md:flex items-center gap-1">
@@ -24,7 +26,7 @@ export function PartnerWorkspaceShell({
                 href={`/partner/${partnerId}/zamowienia`}
                 className="px-4 py-2 rounded-industrial bg-white/10 text-white font-medium transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-brand-teal"
               >
-                Zamówienia
+                {dict.orders}
               </Link>
             </nav>
           </div>
@@ -36,7 +38,8 @@ export function PartnerWorkspaceShell({
             <form action="/auth/signout" method="POST">
               <button
                 type="submit"
-                aria-label="Wyloguj"
+                aria-label={dict.logout}
+                title={dict.logout}
                 className="p-2 rounded-industrial text-brand-light-gray/70 hover:text-white hover:bg-white/10 transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal"
               >
                 <LogOut className="w-5 h-5" />
@@ -46,13 +49,12 @@ export function PartnerWorkspaceShell({
         </div>
       </header>
 
-      {/* Mobile nav */}
       <div className="md:hidden bg-brand-navy border-t border-white/10 px-4 py-2 flex overflow-x-auto gap-2">
         <Link 
           href={`/partner/${partnerId}/zamowienia`}
           className="px-4 py-1.5 rounded-industrial bg-white/10 text-white text-sm font-medium whitespace-nowrap"
         >
-          Zamówienia
+          {dict.orders}
         </Link>
       </div>
 

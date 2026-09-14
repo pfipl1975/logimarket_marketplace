@@ -1231,5 +1231,10 @@
     "errorDescription": "Error al crear socio.",
     "invalidEmail": "Correo electrónico inválido",
     "invalidWebsite": "URL inválida"
+  },
+  "PartnerWorkspace": {
+    "title": "Portal de Socios",
+    "orders": "Pedidos",
+    "logout": "Cerrar sesión"
   }
 }

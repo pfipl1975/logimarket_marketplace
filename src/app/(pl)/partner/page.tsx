@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { db } from "@/lib/db";
-import { partnerUserMemberships } from "@/lib/schema";
+import { partnerUserMemberships, partners } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
 export default async function PartnerEntryPage() {
@@ -11,8 +11,12 @@ export default async function PartnerEntryPage() {
   }
 
   const memberships = await db
-    .select({ partnerId: partnerUserMemberships.partnerId })
+    .select({
+      partnerId: partnerUserMemberships.partnerId,
+      companyName: partners.companyName
+    })
     .from(partnerUserMemberships)
+    .innerJoin(partners, eq(partnerUserMemberships.partnerId, partners.id))
     .where(
       and(
         eq(partnerUserMemberships.authUserId, result.user.id),
@@ -46,7 +50,7 @@ export default async function PartnerEntryPage() {
             href={`/partner/${m.partnerId}/zamowienia`}
             className="block p-4 border border-border-industrial rounded-industrial hover:border-brand-teal transition-colors text-center font-medium text-brand-navy"
           >
-            Partner ID: {m.partnerId}
+            {m.companyName}
           </a>
         ))}
       </div>

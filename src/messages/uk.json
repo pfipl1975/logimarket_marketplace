@@ -1231,5 +1231,10 @@
     "errorDescription": "Не вдалося створити партнера.",
     "invalidEmail": "Некоректна адреса e-mail",
     "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
+  },
+  "PartnerWorkspace": {
+    "title": "Портал партнера",
+    "orders": "Замовлення",
+    "logout": "Вийти"
   }
 }

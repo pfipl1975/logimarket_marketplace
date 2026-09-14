@@ -31,32 +31,34 @@ function getStatusBadge(status: PartnerOrderEffectiveStatus) {
   }
 }
 
+import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
+
 export default async function PartnerOrdersPage({
   params,
   searchParams,
 }: {
-  params: Promise<{ partnerId: string }>;
+  params: Promise<{ partnerId: string; locale?: string }>;
   searchParams: Promise<{ filter?: string }>;
 }) {
-  const { partnerId } = await params;
-  const parsedPartnerId = parseInt(partnerId, 10);
+  const { partnerId, locale } = await params;
+  const { filter } = await searchParams;
   
-  if (isNaN(parsedPartnerId)) {
-    notFound();
-  }
+  const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
 
   const result = await getPartnerOrdersList(parsedPartnerId);
   
   if (!result.ok) {
+    if (result.code === "UNAUTHORIZED") notFound();
     return (
-      <div className="bg-white p-8 rounded-industrial border border-border-industrial text-center">
-        <h2 className="text-xl font-bold text-brand-navy mb-2">Błąd pobierania danych</h2>
+      <div className="p-8 text-center bg-white rounded-industrial border border-border-industrial">
+        <h2 className="text-xl font-bold text-brand-navy mb-2">Błąd</h2>
         <p className="text-muted-foreground">Nie udało się pobrać listy zamówień.</p>
       </div>
     );
   }
 
-  const { filter } = await searchParams;
+  const basePath = locale ? `/${locale}/partner/${partnerId}/orders` : `/partner/${partnerId}/zamowienia`;
+
   const activeFilter = filter || "pending";
 
   let filteredItems = result.items;
@@ -93,7 +95,7 @@ export default async function PartnerOrdersPage({
               return (
                 <Link
                   key={tab.id}
-                  href={`/partner/${partnerId}/zamowienia?filter=${tab.id}`}
+                  href={`${basePath}?filter=${tab.id}`}
                   className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 ${
                     isActive
                       ? "border-brand-teal text-brand-teal"
@@ -138,7 +140,7 @@ export default async function PartnerOrdersPage({
                   <tr key={item.sellerOrderId} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Link 
-                        href={`/partner/${partnerId}/zamowienia/${item.sellerOrderId}`}
+                        href={`${basePath}/${item.sellerOrderId}`}
                         className="text-brand-teal hover:text-brand-navy font-medium block focus:outline-none focus:underline rounded-sm"
                       >
                         {item.publicOrderReference}
