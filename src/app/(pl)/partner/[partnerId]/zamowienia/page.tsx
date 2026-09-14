@@ -4,34 +4,35 @@ import Link from "next/link";
 import { Clock } from "lucide-react";
 
 // Helper to format countdown or time remaining
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date) {
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: any) {
   if (!expiresAt) return null;
   const diff = expiresAt.getTime() - serverNow.getTime();
-  if (diff <= 0) return "Termin minął";
+  if (diff <= 0) return dict.timeExpired;
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}h ${minutes}m`;
+  return `${hours}${dict.h} ${minutes}${dict.m}`;
 }
 
-function getStatusBadge(status: PartnerOrderEffectiveStatus) {
+function getStatusBadge(status: PartnerOrderEffectiveStatus, dict: any) {
   switch (status) {
     case "pending_decision":
-      return <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-200">Do decyzji</span>;
+      return <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800 border border-yellow-200">{dict.statusPending}</span>;
     case "accepted":
     case "fulfillment_in_progress":
     case "fulfilled":
-      return <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 border border-green-200">Zaakceptowane</span>;
+      return <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800 border border-green-200">{dict.statusAccepted}</span>;
     case "rejected":
     case "cancelled":
-      return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 border border-gray-200">Odrzucone</span>;
+      return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 border border-gray-200">{dict.statusRejected}</span>;
     case "expired":
-      return <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 border border-red-200">Wygasłe</span>;
+      return <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 border border-red-200">{dict.statusExpired}</span>;
     default:
       return <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800 border border-gray-200">{status}</span>;
   }
 }
 
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
+import { getDictionary } from "@/lib/i18n/dictionaries";
 
 export default async function PartnerOrdersPage({
   params,
@@ -43,6 +44,7 @@ export default async function PartnerOrdersPage({
   const { partnerId, locale } = await params;
   const { filter } = await searchParams;
   
+  const { PartnerWorkspace: dict } = await getDictionary(locale || "pl");
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
 
   const result = await getPartnerOrdersList(parsedPartnerId);
@@ -51,8 +53,8 @@ export default async function PartnerOrdersPage({
     if (result.code === "UNAUTHORIZED") notFound();
     return (
       <div className="p-8 text-center bg-white rounded-industrial border border-border-industrial">
-        <h2 className="text-xl font-bold text-brand-navy mb-2">Błąd</h2>
-        <p className="text-muted-foreground">Nie udało się pobrać listy zamówień.</p>
+        <h2 className="text-xl font-bold text-brand-navy mb-2">{dict.error}</h2>
+        <p className="text-muted-foreground">{dict.errorList}</p>
       </div>
     );
   }
@@ -83,8 +85,8 @@ export default async function PartnerOrdersPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-brand-navy">Zamówienia</h1>
-        <p className="text-muted-foreground mt-1">Zarządzaj zamówieniami od kupujących.</p>
+        <h1 className="text-2xl font-bold text-brand-navy">{dict.titleOrders}</h1>
+        <p className="text-muted-foreground mt-1">{dict.manageOrders}</p>
       </div>
 
       <div className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
@@ -112,7 +114,7 @@ export default async function PartnerOrdersPage({
         <div className="overflow-x-auto min-h-[400px]">
           {filteredItems.length === 0 ? (
             <div className="flex flex-col items-center justify-center p-12 text-center">
-              <p className="text-muted-foreground">Brak zamówień do wyświetlenia w tej kategorii.</p>
+              <p className="text-muted-foreground">{dict.emptyListCategory}</p>
             </div>
           ) : (
             <table className="min-w-full divide-y divide-border-industrial">
@@ -160,11 +162,11 @@ export default async function PartnerOrdersPage({
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex flex-col gap-1 items-start">
-                        {getStatusBadge(item.effectiveStatus)}
+                        {getStatusBadge(item.effectiveStatus, dict)}
                         {item.effectiveStatus === "pending_decision" && item.expiresAt && (
                           <div className="flex items-center text-xs text-orange-600 font-medium mt-1">
                             <Clock className="w-3 h-3 mr-1" />
-                            {formatRemainingTime(item.expiresAt, item.serverNow)}
+                            {formatRemainingTime(item.expiresAt, item.serverNow, dict)}
                           </div>
                         )}
                       </div>

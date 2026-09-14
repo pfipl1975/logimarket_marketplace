@@ -18,7 +18,8 @@ export type PartnerOrderEffectiveStatus =
   | "expired"
   | "fulfillment_in_progress"
   | "fulfilled"
-  | "cancelled";
+  | "cancelled"
+  | "invalid_order_state";
 
 export type PartnerOrderListItem = {
   sellerOrderId: number;
@@ -39,50 +40,56 @@ export type PartnerOrderListItem = {
 export function deriveEffectiveStatus(
   persistedOrderStatus: string,
   decisionStatus: string | null,
+  routedAt: Date | null,
   expiresAt: Date | null,
   serverNow: Date
 ): { effectiveStatus: PartnerOrderEffectiveStatus; decisionWindowOpen: boolean } {
-  // R1 correction: Fail closed on inconsistent pending state
+  // Actionable pending requires ALL criteria matching EXACTLY.
   if (
-    persistedOrderStatus === "submitted" ||
-    (decisionStatus === "pending_seller_review" && persistedOrderStatus !== "expired")
+    persistedOrderStatus === "submitted" &&
+    decisionStatus === "pending_seller_review" &&
+    routedAt !== null &&
+    expiresAt !== null
   ) {
-    if (!expiresAt) {
-      // Inconsistent pending state, missing expiresAt -> NOT actionable
-      return { effectiveStatus: "pending_decision", decisionWindowOpen: false };
-    }
-
     if (serverNow.getTime() >= expiresAt.getTime()) {
       return { effectiveStatus: "expired", decisionWindowOpen: false };
     }
     return { effectiveStatus: "pending_decision", decisionWindowOpen: true };
   }
 
-  if (persistedOrderStatus === "expired" || decisionStatus === "expired") {
-    return { effectiveStatus: "expired", decisionWindowOpen: false };
+  // Any other combination involving "submitted" or "pending_seller_review" without full consistency is invalid.
+  if (persistedOrderStatus === "submitted" || decisionStatus === "pending_seller_review") {
+    return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
   }
 
-  if (persistedOrderStatus === "seller_accepted" || decisionStatus === "seller_accepted") {
+  // Consistent accepted state
+  if (persistedOrderStatus === "seller_accepted" && decisionStatus === "seller_accepted") {
     return { effectiveStatus: "accepted", decisionWindowOpen: false };
   }
 
-  if (persistedOrderStatus === "seller_rejected" || decisionStatus === "seller_rejected") {
+  // Consistent rejected state
+  if (persistedOrderStatus === "seller_rejected" && decisionStatus === "seller_rejected") {
     return { effectiveStatus: "rejected", decisionWindowOpen: false };
   }
 
+  // Consistent expired state
+  if (persistedOrderStatus === "expired" && decisionStatus === "expired") {
+    return { effectiveStatus: "expired", decisionWindowOpen: false };
+  }
+
+  // Post-acceptance workflow statuses
   if (persistedOrderStatus === "fulfillment_in_progress") {
     return { effectiveStatus: "fulfillment_in_progress", decisionWindowOpen: false };
   }
-
   if (persistedOrderStatus === "fulfilled") {
     return { effectiveStatus: "fulfilled", decisionWindowOpen: false };
   }
-
   if (persistedOrderStatus === "cancelled") {
     return { effectiveStatus: "cancelled", decisionWindowOpen: false };
   }
 
-  return { effectiveStatus: "pending_decision", decisionWindowOpen: false };
+  // Anything else is invalid
+  return { effectiveStatus: "invalid_order_state", decisionWindowOpen: false };
 }
 
 export async function getPartnerOrdersList(
@@ -144,9 +151,14 @@ export async function getPartnerOrdersList(
       const { effectiveStatus, decisionWindowOpen } = deriveEffectiveStatus(
         row.status,
         row.decisionStatus,
+        row.e6RoutedToSellerAt,
         row.expiresAt,
         serverNow
       );
+
+      if (!row.orderTotal) {
+         return { ok: false, code: "MISSING_TOTAL" };
+      }
 
       items.push({
         sellerOrderId: row.sellerOrderId,
@@ -160,8 +172,8 @@ export async function getPartnerOrdersList(
         decisionWindowOpen,
         buyerBusinessName: row.buyerBusinessName,
         currency: row.currency,
-        orderTotal: row.orderTotal || "0",
-        itemCount: row.itemCount || 0,
+        orderTotal: row.orderTotal,
+        itemCount: row.itemCount,
       });
     }
 
@@ -214,7 +226,6 @@ export type PartnerOrderDetailDTO = {
   orderTotal: string;
   currency: string;
 
-  decidedByAuthUserId: string | null;
   resolvedAt: Date | null;
 };
 
@@ -242,8 +253,10 @@ export async function getPartnerOrderDetail(
 
         decisionStatus: sellerAcceptanceDecisions.decisionStatus,
         expiresAt: sellerAcceptanceDecisions.expiresAt,
-        decidedByAuthUserId: sellerAcceptanceDecisions.decidedByAuthUserId,
         resolvedAt: sellerAcceptanceDecisions.resolvedAt,
+        acceptedAt: sellerAcceptanceDecisions.acceptedAt,
+        decidedByAuthUserId: sellerAcceptanceDecisions.decidedByAuthUserId,
+        decisionSource: sellerAcceptanceDecisions.decisionSource,
 
         serverNow: sql<string>`clock_timestamp()`,
       })
@@ -266,6 +279,7 @@ export async function getPartnerOrderDetail(
     const { effectiveStatus, decisionWindowOpen } = deriveEffectiveStatus(
       row.status,
       row.decisionStatus,
+      row.e6RoutedToSellerAt,
       row.expiresAt,
       serverNow
     );
@@ -304,13 +318,27 @@ export async function getPartnerOrderDetail(
       .from(sellerOrderItems)
       .where(eq(sellerOrderItems.sellerOrderId, sellerOrderId));
 
+    const orderTotalValue = orderTotalData[0]?.total;
+    if (!orderTotalValue) {
+       return { ok: false, code: "MISSING_TOTAL" };
+    }
+
     const contactInfo = {
       buyerContactName: null as string | null,
       buyerEmail: null as string | null,
       buyerPhone: null as string | null,
     };
 
-    if (effectiveStatus === "accepted" || effectiveStatus === "fulfillment_in_progress" || effectiveStatus === "fulfilled") {
+    const isCanonicalAccepted = (
+      row.decisionStatus === "seller_accepted" &&
+      row.acceptedAt !== null &&
+      row.resolvedAt !== null &&
+      row.decidedByAuthUserId !== null &&
+      row.decisionSource === "partner_portal" &&
+      (row.status === "seller_accepted" || row.status === "fulfillment_in_progress" || row.status === "fulfilled")
+    );
+
+    if (isCanonicalAccepted) {
       const contactData = await db
         .select({
           contactName: marketplaceOrderBuyerContactSnapshots.contactName,
@@ -353,10 +381,9 @@ export async function getPartnerOrderDetail(
         customerPoNumber: row.customerPoNumber,
 
         items: itemsData,
-        orderTotal: orderTotalData[0]?.total || "0",
+        orderTotal: orderTotalValue,
         currency: itemsData[0].currency,
 
-        decidedByAuthUserId: row.decidedByAuthUserId,
         resolvedAt: row.resolvedAt,
       }
     };

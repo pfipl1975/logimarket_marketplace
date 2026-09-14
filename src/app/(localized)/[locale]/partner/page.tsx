@@ -4,9 +4,11 @@ import { db } from '@/lib/db';
 import { partnerUserMemberships, partners } from '@/lib/schema';
 import { eq, and } from 'drizzle-orm';
 
+import { isLocale } from '@/lib/i18n/config';
+
 export default async function LocalizedPartnerEntryPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
-  if (locale === 'pl') notFound();
+  if (!isLocale(locale) || locale === 'pl') notFound();
 
   const result = await getCurrentUser();
   if (result.status !== 'authenticated') {

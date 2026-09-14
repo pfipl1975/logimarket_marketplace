@@ -4,7 +4,10 @@ import { db } from "@/lib/db";
 import { partnerUserMemberships, partners } from "@/lib/schema";
 import { eq, and } from "drizzle-orm";
 
-export default async function PartnerEntryPage() {
+import { getDictionary } from "@/lib/i18n/dictionaries";
+export default async function PartnerEntryPage({ params }: { params: Promise<{ locale?: string }> }) {
+  const locale = (await params)?.locale || "pl";
+  const { PartnerWorkspace: dict } = await getDictionary(locale);
   const result = await getCurrentUser();
   if (result.status !== "authenticated") {
     redirect("/login?next=/partner");
@@ -27,9 +30,9 @@ export default async function PartnerEntryPage() {
   if (memberships.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh] p-8 text-center">
-        <h1 className="text-2xl font-bold text-brand-navy mb-4">Brak dostępu</h1>
+        <h1 className="text-2xl font-bold text-brand-navy mb-4">{dict.noAccess}</h1>
         <p className="text-muted-foreground">
-          Nie posiadasz aktywnych przypisań do żadnego Partnera. Skontaktuj się z administratorem.
+          {dict.noAccessDesc}
         </p>
       </div>
     );
@@ -42,7 +45,7 @@ export default async function PartnerEntryPage() {
   // Selector for > 1
   return (
     <div className="flex flex-col items-center justify-center min-h-[50vh] p-8">
-      <h1 className="text-2xl font-bold text-brand-navy mb-6">Wybierz profil Partnera</h1>
+      <h1 className="text-2xl font-bold text-brand-navy mb-6">{dict.selectProfile}</h1>
       <div className="grid gap-4 w-full max-w-md">
         {memberships.map((m) => (
           <a

@@ -37,8 +37,10 @@ export default async function PartnerLayout({
   // hardcoded to PL here because this is the (pl) route
   const dict = await getDictionary("pl");
 
+  const ordersHref = `/partner/${partnerId}/zamowienia`;
+
   return (
-    <PartnerWorkspaceShell partnerId={partnerId} partnerName={partnerName} dict={dict.PartnerWorkspace}>
+    <PartnerWorkspaceShell partnerId={partnerId} partnerName={partnerName} dict={dict.PartnerWorkspace} ordersHref={ordersHref}>
       {children}
     </PartnerWorkspaceShell>
   );

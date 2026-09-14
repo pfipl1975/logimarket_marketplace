@@ -8,9 +8,11 @@ import { eq } from 'drizzle-orm';
 import { parseStrictIdOrNotFound } from '@/lib/partner-orders/route-params';
 import { getDictionary } from '@/lib/i18n/dictionaries';
 
+import { isLocale } from '@/lib/i18n/config';
+
 export default async function LocalizedPartnerLayout({ children, params }: { children: React.ReactNode; params: Promise<{ partnerId: string; locale: string }> }) {
   const { partnerId, locale } = await params;
-  if (locale === 'pl') notFound();
+  if (!isLocale(locale) || locale === 'pl') notFound();
 
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
 
@@ -29,10 +31,11 @@ export default async function LocalizedPartnerLayout({ children, params }: { chi
     partnerName = partnerResult[0].companyName;
   }
 
-  const dict = await getDictionary(locale as any);
+  const dict = await getDictionary(locale);
+  const ordersHref = `/${locale}/partner/${partnerId}/orders`;
 
   return (
-    <PartnerWorkspaceShell partnerId={partnerId} partnerName={partnerName} dict={dict.PartnerWorkspace}>
+    <PartnerWorkspaceShell partnerId={partnerId} partnerName={partnerName} dict={dict.PartnerWorkspace} ordersHref={ordersHref}>
       {children}
     </PartnerWorkspaceShell>
   );

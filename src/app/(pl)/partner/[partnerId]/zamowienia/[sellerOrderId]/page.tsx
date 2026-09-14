@@ -4,28 +4,29 @@ import Link from "next/link";
 import { ArrowLeft, Clock, Info } from "lucide-react";
 import { requirePartnerMembership } from "@/lib/auth/partner-membership";
 
-function getStatusLabel(status: PartnerOrderEffectiveStatus) {
+function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: any) {
   switch (status) {
-    case "pending_decision": return "Do decyzji";
-    case "accepted": return "Zaakceptowane";
-    case "fulfillment_in_progress": return "W trakcie realizacji";
-    case "fulfilled": return "Zrealizowane";
-    case "rejected": return "Odrzucone";
-    case "cancelled": return "Anulowane";
-    case "expired": return "Wygasłe";
+    case "pending_decision": return dict.statusPending;
+    case "accepted": return dict.statusAccepted;
+    case "fulfillment_in_progress": return dict.tabInProgress;
+    case "fulfilled": return dict.tabCompleted;
+    case "rejected": return dict.statusRejected;
+    case "cancelled": return "Anulowane"; // Fallback if no translation, but we could add it
+    case "expired": return dict.statusExpired;
     default: return status;
   }
 }
 
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date) {
+function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: any) {
   if (!expiresAt) return null;
   const diff = expiresAt.getTime() - serverNow.getTime();
-  if (diff <= 0) return "Termin minął";
+  if (diff <= 0) return dict.timeExpired;
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}h ${minutes}m`;
+  return `${hours}${dict.h} ${minutes}${dict.m}`;
 }
 
+import { getDictionary } from "@/lib/i18n/dictionaries";
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
 
 export default async function PartnerOrderDetailPage({
@@ -34,6 +35,7 @@ export default async function PartnerOrderDetailPage({
   params: Promise<{ partnerId: string; sellerOrderId: string; locale?: string }>;
 }) {
   const { partnerId, sellerOrderId, locale } = await params;
+  const { PartnerWorkspace: dict } = await getDictionary(locale || "pl");
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
   const parsedSellerOrderId = parseStrictIdOrNotFound(sellerOrderId);
 
@@ -48,8 +50,8 @@ export default async function PartnerOrderDetailPage({
     if (result.code === "UNAUTHORIZED") notFound();
     return (
       <div className="bg-white p-8 rounded-industrial border border-border-industrial text-center">
-        <h2 className="text-xl font-bold text-brand-navy mb-2">Błąd</h2>
-        <p className="text-muted-foreground">Nie można załadować szczegółów zamówienia.</p>
+        <h2 className="text-xl font-bold text-brand-navy mb-2">{dict.error}</h2>
+        <p className="text-muted-foreground">{dict.errorDetail}</p>
       </div>
     );
   }
@@ -71,10 +73,10 @@ export default async function PartnerOrderDetailPage({
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-brand-navy">
-            Zamówienie {order.publicOrderReference}
+            {dict.orderRef} {order.publicOrderReference}
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Złożone: {order.createdAt.toLocaleString("pl-PL")}
+            {dict.placedOnDate} {order.createdAt.toLocaleString(locale || "pl")}
           </p>
         </div>
       </div>
@@ -85,7 +87,7 @@ export default async function PartnerOrderDetailPage({
           
           <div className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
             <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30">
-              <h2 className="font-semibold text-brand-navy">Pozycje zamówienia</h2>
+              <h2 className="font-semibold text-brand-navy">{dict.orderItems}</h2>
             </div>
             <div className="divide-y divide-border-industrial">
               {order.items.map((item) => (
@@ -103,17 +105,17 @@ export default async function PartnerOrderDetailPage({
                   </div>
                   <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
                     <span className="bg-brand-light-gray text-brand-navy px-3 py-1 rounded-industrial text-sm font-medium">
-                      Ilość: {item.quantity}
+                      {dict.quantity}: {item.quantity}
                     </span>
                     <span className="font-semibold text-brand-navy">
-                      {(Number(item.unitPrice) * item.quantity).toFixed(2)} {item.currency}
+                      {item.lineTotal} {item.currency}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
             <div className="px-6 py-4 bg-brand-light-gray/30 flex justify-between items-center border-t border-border-industrial">
-              <span className="font-medium text-muted-foreground">Razem do zapłaty</span>
+              <span className="font-medium text-muted-foreground">{dict.totalToPay}</span>
               <span className="text-xl font-bold text-brand-navy">
                 {order.orderTotal} {order.currency}
               </span>
@@ -125,11 +127,11 @@ export default async function PartnerOrderDetailPage({
         {/* Sidebar */}
         <div className="space-y-6">
           <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
-            <h2 className="font-semibold text-brand-navy mb-4">Status zamówienia</h2>
+            <h2 className="font-semibold text-brand-navy mb-4">{dict.orderStatus}</h2>
             <div className="space-y-4">
               <div>
                 <div className="text-sm text-muted-foreground">Obecny status</div>
-                <div className="font-medium text-lg mt-1">{getStatusLabel(order.effectiveStatus)}</div>
+                <div className="font-medium text-lg mt-1">{getStatusLabel(order.effectiveStatus, dict)}</div>
               </div>
 
               {order.effectiveStatus === "pending_decision" && order.expiresAt && (
@@ -139,7 +141,7 @@ export default async function PartnerOrderDetailPage({
                     Oczekuje na decyzję
                   </div>
                   <div className="text-orange-900 font-bold text-xl">
-                    {formatRemainingTime(order.expiresAt, order.serverNow)}
+                    {formatRemainingTime(order.expiresAt, order.serverNow, dict)}
                   </div>
                   <div className="text-xs text-orange-700">
                     Termin decyzji: {order.expiresAt.toLocaleString("pl-PL")}
@@ -159,7 +161,7 @@ export default async function PartnerOrderDetailPage({
           </div>
 
           <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
-            <h2 className="font-semibold text-brand-navy mb-4">Dane Kupującego</h2>
+            <h2 className="font-semibold text-brand-navy mb-4">{dict.buyerData}</h2>
             <div className="space-y-4">
               <div>
                 <div className="text-xs text-muted-foreground mb-1">Firma</div>
@@ -186,7 +188,7 @@ export default async function PartnerOrderDetailPage({
 
               {order.customerPoNumber && (
                 <div className="pt-2 border-t border-border-industrial">
-                  <div className="text-xs text-muted-foreground mb-1">Numer zamówienia Kupującego (PO)</div>
+                  <div className="text-xs text-muted-foreground mb-1">{dict.buyerPo}</div>
                   <div className="font-medium text-brand-navy">{order.customerPoNumber}</div>
                 </div>
               )}
