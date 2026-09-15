@@ -121,17 +121,17 @@ export async function SiteHeader({
 
           <div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">
             {navState.showLogin && navLabels.login && (
-              <Link href={navState.loginUrl} className="hidden lg:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+              <Link href={navState.loginUrl} className="hidden xl:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
                 {navLabels.login}
               </Link>
             )}
             {navState.showPartnerPanel && navLabels.partnerPanel && (
-              <Link href={navState.partnerUrl} className="hidden lg:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+              <Link href={navState.partnerUrl} className="hidden xl:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
                 {navLabels.partnerPanel}
               </Link>
             )}
             {navState.showLogout && navLabels.logout && (
-              <div className="hidden lg:block shrink-0">
+              <div className="hidden xl:block shrink-0">
                 <PublicLogoutForm locale={locale} label={navLabels.logout} variant="desktop" />
               </div>
             )}
