@@ -19,6 +19,7 @@
     "glossary": "词典",
     "login": "登录",
     "partnerPanel": "合作伙伴面板",
+    "myOrders": "我的订单",
     "logout": "退出登录"
   },
   "common": {
@@ -1313,5 +1314,22 @@
     "decisionNotAllowed": "您没有权限对此订单做出决定。",
     "decisionError": "保存决定时出错。",
     "decisionPermissionMissing": "您没有权限接受或拒绝此订单。"
+  },
+  "BuyerOrders": {
+    "title": "我的订单",
+    "intro": "查看您的订单及卖家决定。每项决定仅对应一笔卖家订单。",
+    "order": "订单",
+    "created": "创建时间",
+    "sellerDecisions": "卖家决定",
+    "sellerOrders": "卖家订单",
+    "awaiting": "等待决定",
+    "accepted": "已接受",
+    "rejected": "已拒绝",
+    "expired": "已过期",
+    "notRouted": "尚未发送给卖家",
+    "unavailable": "决定暂不可用",
+    "noOrders": "暂无订单",
+    "noOrdersDescription": "登录后提交的订单及其卖家决定会显示在这里。",
+    "browseCatalog": "浏览商品目录"
   }
 }

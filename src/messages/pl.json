@@ -19,6 +19,7 @@
     "glossary": "Słownik branżowy",
     "login": "Zaloguj się",
     "partnerPanel": "Panel Partnera",
+    "myOrders": "Moje zamówienia",
     "logout": "Wyloguj się"
   },
   "common": {
@@ -1313,5 +1314,22 @@
     "decisionNotAllowed": "Brak uprawnień do podjęcia decyzji dla tego zamówienia.",
     "decisionError": "Wystąpił błąd podczas zapisywania decyzji.",
     "decisionPermissionMissing": "Nie masz uprawnień, aby zaakceptować lub odrzucić to zamówienie."
+  },
+  "BuyerOrders": {
+    "title": "Moje zamówienia",
+    "intro": "Zobacz swoje zamówienia i decyzje sprzedawców. Każda decyzja dotyczy osobnego zamówienia u sprzedawcy.",
+    "order": "Zamówienie",
+    "created": "Utworzono",
+    "sellerDecisions": "Decyzje sprzedawców",
+    "sellerOrders": "Zamówienia u sprzedawców",
+    "awaiting": "Oczekuje na decyzję",
+    "accepted": "Zaakceptowane",
+    "rejected": "Odrzucone",
+    "expired": "Wygasłe",
+    "notRouted": "Jeszcze nieprzekazane",
+    "unavailable": "Decyzja niedostępna",
+    "noOrders": "Nie masz jeszcze zamówień",
+    "noOrdersDescription": "Gdy złożysz zamówienie po zalogowaniu, zobaczysz je tutaj wraz z decyzjami sprzedawców.",
+    "browseCatalog": "Przeglądaj katalog"
   }
 }

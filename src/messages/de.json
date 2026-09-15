@@ -19,6 +19,7 @@
     "glossary": "Logistik-Lexikon",
     "login": "Anmelden",
     "partnerPanel": "Partnerportal",
+    "myOrders": "Meine Bestellungen",
     "logout": "Abmelden"
   },
   "common": {
@@ -1313,5 +1314,22 @@
     "decisionNotAllowed": "Sie haben keine Berechtigung, eine Entscheidung für diese Bestellung zu treffen.",
     "decisionError": "Beim Speichern der Entscheidung ist ein Fehler aufgetreten.",
     "decisionPermissionMissing": "Sie haben keine Berechtigung, diese Bestellung zu akzeptieren oder abzulehnen."
+  },
+  "BuyerOrders": {
+    "title": "Meine Bestellungen",
+    "intro": "Sehen Sie Ihre Bestellungen und die Entscheidungen der Verkäufer. Jede Entscheidung betrifft eine eigene Verkäuferbestellung.",
+    "order": "Bestellung",
+    "created": "Erstellt",
+    "sellerDecisions": "Entscheidungen der Verkäufer",
+    "sellerOrders": "Verkäuferbestellungen",
+    "awaiting": "Entscheidung ausstehend",
+    "accepted": "Angenommen",
+    "rejected": "Abgelehnt",
+    "expired": "Abgelaufen",
+    "notRouted": "Noch nicht an Verkäufer gesendet",
+    "unavailable": "Entscheidung nicht verfügbar",
+    "noOrders": "Noch keine Bestellungen",
+    "noOrdersDescription": "Bestellungen, die Sie angemeldet aufgeben, erscheinen hier zusammen mit den Entscheidungen der Verkäufer.",
+    "browseCatalog": "Katalog ansehen"
   }
 }
