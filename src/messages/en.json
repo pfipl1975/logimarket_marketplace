@@ -19,6 +19,7 @@
     "glossary": "Logistics glossary",
     "login": "Log in",
     "partnerPanel": "Partner Panel",
+    "myOrders": "My Orders",
     "logout": "Log out"
   },
   "common": {
@@ -1313,5 +1314,22 @@
     "decisionNotAllowed": "You do not have permission to make a decision for this order.",
     "decisionError": "An error occurred while saving the decision.",
     "decisionPermissionMissing": "You do not have permission to accept or reject this order."
+  },
+  "BuyerOrders": {
+    "title": "My Orders",
+    "intro": "View your orders and seller decisions. Each decision applies to a separate seller order.",
+    "order": "Order",
+    "created": "Created",
+    "sellerDecisions": "Seller decisions",
+    "sellerOrders": "Seller orders",
+    "awaiting": "Awaiting decision",
+    "accepted": "Accepted",
+    "rejected": "Rejected",
+    "expired": "Expired",
+    "notRouted": "Not sent to seller yet",
+    "unavailable": "Decision unavailable",
+    "noOrders": "No orders yet",
+    "noOrdersDescription": "Orders placed while signed in will appear here with their seller decisions.",
+    "browseCatalog": "Browse catalog"
   }
 }

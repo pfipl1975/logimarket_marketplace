@@ -19,6 +19,7 @@
     "glossary": "Glosario",
     "login": "Iniciar sesión",
     "partnerPanel": "Panel de socio",
+    "myOrders": "Mis pedidos",
     "logout": "Cerrar sesión"
   },
   "common": {
@@ -1313,5 +1314,22 @@
     "decisionNotAllowed": "No tiene permiso para tomar una decisión para este pedido.",
     "decisionError": "Ocurrió un error al guardar la decisión.",
     "decisionPermissionMissing": "No tiene permiso para aceptar o rechazar este pedido."
+  },
+  "BuyerOrders": {
+    "title": "Mis pedidos",
+    "intro": "Consulta tus pedidos y las decisiones de los vendedores. Cada decisión corresponde a un pedido de vendedor distinto.",
+    "order": "Pedido",
+    "created": "Creado",
+    "sellerDecisions": "Decisiones de los vendedores",
+    "sellerOrders": "Pedidos de vendedores",
+    "awaiting": "Decisión pendiente",
+    "accepted": "Aceptados",
+    "rejected": "Rechazados",
+    "expired": "Caducados",
+    "notRouted": "Aún no enviado al vendedor",
+    "unavailable": "Decisión no disponible",
+    "noOrders": "Aún no tienes pedidos",
+    "noOrdersDescription": "Los pedidos realizados con la sesión iniciada aparecerán aquí junto con las decisiones de los vendedores.",
+    "browseCatalog": "Explorar el catálogo"
   }
 }

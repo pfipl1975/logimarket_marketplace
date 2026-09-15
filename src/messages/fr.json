@@ -19,6 +19,7 @@
     "glossary": "Glossaire",
     "login": "Se connecter",
     "partnerPanel": "Espace Partenaire",
+    "myOrders": "Mes commandes",
     "logout": "Se déconnecter"
   },
   "common": {
@@ -1313,5 +1314,22 @@
     "decisionNotAllowed": "Vous n'avez pas l'autorisation de prendre une décision pour cette commande.",
     "decisionError": "Une erreur s'est produite lors de l'enregistrement de la décision.",
     "decisionPermissionMissing": "Vous n'avez pas l'autorisation d'accepter ou de refuser cette commande."
+  },
+  "BuyerOrders": {
+    "title": "Mes commandes",
+    "intro": "Consultez vos commandes et les décisions des vendeurs. Chaque décision concerne une commande vendeur distincte.",
+    "order": "Commande",
+    "created": "Créée",
+    "sellerDecisions": "Décisions des vendeurs",
+    "sellerOrders": "Commandes vendeur",
+    "awaiting": "Décision en attente",
+    "accepted": "Acceptées",
+    "rejected": "Refusées",
+    "expired": "Expirées",
+    "notRouted": "Pas encore transmises au vendeur",
+    "unavailable": "Décision indisponible",
+    "noOrders": "Aucune commande pour le moment",
+    "noOrdersDescription": "Les commandes passées en étant connecté apparaîtront ici avec les décisions des vendeurs.",
+    "browseCatalog": "Parcourir le catalogue"
   }
 }
