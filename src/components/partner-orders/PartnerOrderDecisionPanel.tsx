@@ -21,7 +21,7 @@ export function PartnerOrderDecisionPanel({
     partnerSellerOrderDecisionAction,
     "idle"
   );
-  
+
   const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
   const [showRejectConfirm, setShowRejectConfirm] = useState(false);
 
@@ -83,7 +83,7 @@ export function PartnerOrderDecisionPanel({
     <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6 mt-6">
       <h2 className="font-semibold text-brand-navy mb-4">{dict.statusPending}</h2>
       {renderError()}
-      
+
       {!isTerminal && !showAcceptConfirm && !showRejectConfirm ? (
         <div className="flex flex-col sm:flex-row gap-4">
           <button

@@ -12,7 +12,7 @@ import type { AcceptRejectResult } from "@/lib/seller-order/seller-order-workflo
 test("PARSER: strict input validation", () => {
   const validAccept = PartnerDecisionFormSchema.safeParse({ sellerOrderId: "123", decision: "accept" });
   assert.equal(validAccept.success, true);
-  
+
   const validReject = PartnerDecisionFormSchema.safeParse({ sellerOrderId: "123", decision: "reject" });
   assert.equal(validReject.success, true);
 
@@ -36,27 +36,32 @@ test("PARSER: strict input validation", () => {
 });
 
 test("MAPPING: domain errors to public states", () => {
-  type ErrorCode = Extract<AcceptRejectResult, {ok: false}>["code"];
-  const t = (code: ErrorCode | undefined, expected: string, ok: boolean = false) => {
-    const res = ok ? { ok: true } : { ok: false, code };
-    assert.equal(mapDecisionResultToUiState("accept", res as any), ok ? "accepted" : expected);
+  type ErrorCode = Extract<AcceptRejectResult, { ok: false }>["code"];
+
+  const testSuccessAccept: AcceptRejectResult = { ok: true };
+  assert.equal(mapDecisionResultToUiState("accept", testSuccessAccept), "accepted");
+
+  const testSuccessReject: AcceptRejectResult = { ok: true };
+  assert.equal(mapDecisionResultToUiState("reject", testSuccessReject), "rejected");
+
+  const testError = (code: ErrorCode, expected: string) => {
+    const res: AcceptRejectResult = { ok: false, code };
+    assert.equal(mapDecisionResultToUiState("accept", res), expected);
   };
 
-  t(undefined, "accepted", true);
-  
-  t("SELLER_ORDER_NOT_FOUND", "not_allowed");
-  t("UNAUTHORIZED", "not_allowed");
-  t("FORBIDDEN", "not_allowed");
-  
-  t("SELLER_ORDER_EXPIRED", "expired");
-  
-  t("SELLER_ORDER_NOT_ROUTED", "state_changed");
-  t("SELLER_ORDER_NOT_ELIGIBLE", "state_changed");
-  t("SELLER_ORDER_ALREADY_ACCEPTED", "state_changed");
-  t("SELLER_ORDER_ALREADY_REJECTED", "state_changed");
-  t("SELLER_ORDER_DECISION_CONFLICT", "state_changed");
-  
-  t("SYSTEM_ERROR", "system_error");
+  testError("SELLER_ORDER_NOT_FOUND", "not_allowed");
+  testError("UNAUTHORIZED", "not_allowed");
+  testError("FORBIDDEN", "not_allowed");
+
+  testError("SELLER_ORDER_EXPIRED", "expired");
+
+  testError("SELLER_ORDER_NOT_ROUTED", "state_changed");
+  testError("SELLER_ORDER_NOT_ELIGIBLE", "state_changed");
+  testError("SELLER_ORDER_ALREADY_ACCEPTED", "state_changed");
+  testError("SELLER_ORDER_ALREADY_REJECTED", "state_changed");
+  testError("SELLER_ORDER_DECISION_CONFLICT", "state_changed");
+
+  testError("SYSTEM_ERROR", "system_error");
 });
 
 test("EXECUTION: pure adapter delegation", async () => {
