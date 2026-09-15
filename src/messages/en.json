@@ -16,7 +16,10 @@
     "openMenu": "Open menu",
     "closeMenu": "Close menu",
     "mainNavigation": "Main navigation",
-    "glossary": "Logistics glossary"
+    "glossary": "Logistics glossary",
+    "login": "Log in",
+    "partnerPanel": "Partner Panel",
+    "logout": "Log out"
   },
   "common": {
     "close": "Close"

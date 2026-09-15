@@ -16,7 +16,10 @@
     "openMenu": "Menü öffnen",
     "closeMenu": "Menü schließen",
     "mainNavigation": "Hauptnavigation",
-    "glossary": "Logistik-Lexikon"
+    "glossary": "Logistik-Lexikon",
+    "login": "Anmelden",
+    "partnerPanel": "Partnerportal",
+    "logout": "Abmelden"
   },
   "common": {
     "close": "Schließen"

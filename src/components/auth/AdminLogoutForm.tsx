@@ -22,6 +22,7 @@ export function AdminLogoutForm({
   return (
     <form action={formAction} className="inline-block">
       <input type="hidden" name="locale" value={locale} />
+      <input type="hidden" name="intent" value="admin" />
       <button
         type="submit"
         disabled={isPending}

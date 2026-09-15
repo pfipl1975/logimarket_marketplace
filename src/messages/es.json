@@ -16,7 +16,10 @@
     "openMenu": "Abrir menú",
     "closeMenu": "Cerrar menú",
     "mainNavigation": "Navegación principal",
-    "glossary": "Glosario"
+    "glossary": "Glosario",
+    "login": "Iniciar sesión",
+    "partnerPanel": "Panel de socio",
+    "logout": "Cerrar sesión"
   },
   "common": {
     "close": "Cerrar"

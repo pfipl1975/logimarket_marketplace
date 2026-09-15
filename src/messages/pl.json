@@ -16,7 +16,10 @@
     "openMenu": "Otwórz menu",
     "closeMenu": "Zamknij menu",
     "mainNavigation": "Główna nawigacja",
-    "glossary": "Słownik branżowy"
+    "glossary": "Słownik branżowy",
+    "login": "Zaloguj się",
+    "partnerPanel": "Panel Partnera",
+    "logout": "Wyloguj się"
   },
   "common": {
     "close": "Zamknij"

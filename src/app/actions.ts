@@ -752,11 +752,17 @@ export async function logoutUser(
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
-  const { getAdminLoginRedirectPath } =
-    await import("@/lib/auth/admin-page-access-core");
+  const intent = formData?.get("intent")?.toString();
 
   revalidatePath("/", "layout");
-  redirect(getAdminLoginRedirectPath(safeLocale));
+  
+  if (intent === "admin") {
+    const { getAdminLoginRedirectPath } = await import("@/lib/auth/admin-page-access-core");
+    redirect(getAdminLoginRedirectPath(safeLocale));
+  } else {
+    const { getHomePath } = await import("@/lib/i18n/paths");
+    redirect(getHomePath(safeLocale));
+  }
 }
 
 export type AdminOffersPageResult =
