@@ -4984,7 +4984,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { executeMarketplaceCheckout } = await import("@/lib/checkout/marketplace-checkout-core");
     const checkoutReqF = {
       offerId: Number(oId), quantity: 1, buyerIp: "127.0.0.1", sessionHash: "chk-sess-null",
-      buyerContext: { businessName: "Null", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "0000" } as any,
+      buyerContext: { businessName: "Null", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "0000", businessVerificationStatus: "verified", categoryBStatus: "not_applicable", legalContextReviewState: "no_review_needed" } as any,
       contactContext: { name: "Null", email: "null@null.com" }
     };
 
@@ -4994,14 +4994,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await db.insert(schema.cartItems).values({ sessionHash: "chk-sess-null", offerId: Number(oId), quantity: 1 });
 
     const resF = await executeMarketplaceCheckout(db as any, "chk-sess-null", checkoutReqF.buyerContext, checkoutReqF.contactContext);
-    assert.strictEqual(resF.ok, true);
-    const orderFRes = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [(resF as any).value]);
+    if (!resF.ok) assert.fail("Guest checkout failed: " + resF.reason);
+    const orderFRes = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [(resF as any).marketplaceOrderId]);
     assert.strictEqual(orderFRes.rows[0].buyer_auth_user_id, null);
 
     // 10. Authenticated checkout persists trusted UUID
     const checkoutReqG = {
       offerId: Number(oId), quantity: 1, buyerIp: "127.0.0.1", sessionHash: "chk-sess-uuid",
-      buyerContext: { businessName: "UUID", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "1111" } as any,
+      buyerContext: { businessName: "UUID", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "1111", businessVerificationStatus: "verified", categoryBStatus: "not_applicable", legalContextReviewState: "no_review_needed" } as any,
       contactContext: { name: "UUID", email: "uuid@uuid.com" },
       buyerAuthUserId: testAuthUuid
     };
@@ -5009,8 +5009,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await db.insert(schema.cartItems).values({ sessionHash: "chk-sess-uuid", offerId: Number(oId), quantity: 1 });
 
     const resG = await executeMarketplaceCheckout(db as any, "chk-sess-uuid", checkoutReqG.buyerContext, checkoutReqG.contactContext, testAuthUuid);
-    assert.strictEqual(resG.ok, true);
-    const orderGRes = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [(resG as any).value]);
+    if (!resG.ok) assert.fail("Auth checkout failed: " + resG.reason);
+    const orderGRes = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [(resG as any).marketplaceOrderId]);
     assert.strictEqual(orderGRes.rows[0].buyer_auth_user_id, testAuthUuid);
 
     // 11. Ownership query for User A returns only A's owned orders.
@@ -5025,12 +5025,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const ordersB = await listOwnedOrders(userB, db as any);
     assert.strictEqual(ordersB.length, 0);
 
-    const checkB = await findOwnedOrder((resG as any).value, userB, db as any);
+    const checkB = await findOwnedOrder((resG as any).marketplaceOrderId, userB, db as any);
     assert.strictEqual(checkB.ok, false);
     if (!checkB.ok) assert.strictEqual(checkB.reason, "NOT_FOUND");
 
     // 13. NULL/unclaimed order is not included in A's authenticated ownership.
-    const checkAForLegacy = await findOwnedOrder((resF as any).value, testAuthUuid, db as any);
+    const checkAForLegacy = await findOwnedOrder((resF as any).marketplaceOrderId, testAuthUuid, db as any);
     assert.strictEqual(checkAForLegacy.ok, false);
     if (!checkAForLegacy.ok) assert.strictEqual(checkAForLegacy.reason, "NOT_FOUND");
   });
