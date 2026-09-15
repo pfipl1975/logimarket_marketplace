@@ -1,8 +1,10 @@
 import { getPartnerOrderDetail, PartnerOrderEffectiveStatus } from "@/lib/partner-orders/read-model";
+import { requirePartnerOrderDecisionAuthority } from "@/lib/auth/partner-membership";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Clock, Info } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
+import { PartnerOrderDecisionPanel } from "@/components/partner-orders/PartnerOrderDecisionPanel";
 
 type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
 
@@ -45,6 +47,14 @@ export default async function PartnerOrderDetailPage({
   const { PartnerWorkspace: dict } = await getDictionary(resolvedLocale);
   const parsedPartnerId = parseStrictIdOrNotFound(partnerId);
   const parsedSellerOrderId = parseStrictIdOrNotFound(sellerOrderId);
+
+  let canMakeDecision = false;
+  try {
+    await requirePartnerOrderDecisionAuthority(parsedPartnerId);
+    canMakeDecision = true;
+  } catch {
+    canMakeDecision = false;
+  }
 
   const result = await getPartnerOrderDetail(parsedPartnerId, parsedSellerOrderId);
   
@@ -124,6 +134,10 @@ export default async function PartnerOrderDetailPage({
               </span>
             </div>
           </div>
+
+          {order.effectiveStatus === "pending_decision" && order.decisionWindowOpen && (
+            <PartnerOrderDecisionPanel sellerOrderId={order.sellerOrderId} dict={dict} canMakeDecision={canMakeDecision} />
+          )}
 
         </div>
 

@@ -1284,7 +1284,7 @@
     "totalToPay": "应付总额",
     "orderStatus": "订单状态",
     "awaitingDecision": "等待决定",
-    "decisionExpired": "决定期限已过。您不能再对此订单做出决定。",
+    "decisionExpired": "做决定的时间已过期。",
     "buyerData": "买家数据",
     "buyerPo": "买家采购订单号 (PO)",
     "contactHidden": "买家联系方式将在接受订单后共享以供履行。",
@@ -1298,6 +1298,20 @@
     "vatLabel": "增值税:",
     "registryIdLabel": "注册编号：",
     "contactPerson": "联系人",
-    "backToListAria": "返回订单列表"
+    "backToListAria": "返回订单列表",
+    "acceptOrder": "接受订单",
+    "rejectOrder": "拒绝订单",
+    "acceptConfirmText": "接受此订单将构成合作伙伴/卖家与买家之间的销售合同。LogiMarket作为中介。",
+    "rejectConfirmText": "拒绝此订单是最终决定。未构成销售合同。",
+    "confirmAcceptButton": "确认接受",
+    "confirmRejectButton": "确认拒绝",
+    "cancelButton": "取消",
+    "acceptConfirmTitle": "确认接受",
+    "rejectConfirmTitle": "确认拒绝",
+    "decisionSubmitting": "提交中...",
+    "decisionStateChanged": "订单状态已改变。请刷新页面。",
+    "decisionNotAllowed": "您没有权限对此订单做出决定。",
+    "decisionError": "保存决定时出错。",
+    "decisionPermissionMissing": "您没有权限接受或拒绝此订单。"
   }
 }

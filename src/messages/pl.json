@@ -1284,7 +1284,7 @@
     "totalToPay": "Razem do zapłaty",
     "orderStatus": "Status zamówienia",
     "awaitingDecision": "Oczekuje na decyzję",
-    "decisionExpired": "Termin decyzji minął. Nie możesz już podjąć decyzji w sprawie tego zamówienia.",
+    "decisionExpired": "Czas na podjęcie decyzji minął.",
     "buyerData": "Dane Kupującego",
     "buyerPo": "Numer zamówienia Kupującego (PO)",
     "contactHidden": "Dane kontaktowe kupującego zostaną udostępnione po zaakceptowaniu zamówienia, w celu jego realizacji.",
@@ -1298,6 +1298,20 @@
     "vatLabel": "NIP/VAT:",
     "registryIdLabel": "KRS/REGON:",
     "contactPerson": "Osoba kontaktowa",
-    "backToListAria": "Wróć do listy zamówień"
+    "acceptOrder": "Akceptuj zamówienie",
+    "rejectOrder": "Odrzuć zamówienie",
+    "acceptConfirmText": "Akceptacja tego zamówienia powoduje zawarcie umowy sprzedaży pomiędzy Partnerem/Sprzedawcą a Kupującym. LogiMarket pozostaje pośrednikiem.",
+    "rejectConfirmText": "Odrzucenie tego zamówienia jest ostateczne. Umowa sprzedaży nie zostaje zawarta.",
+    "confirmAcceptButton": "Potwierdź akceptację",
+    "confirmRejectButton": "Potwierdź odrzucenie",
+    "cancelButton": "Anuluj",
+    "backToListAria": "Wróć do listy zamówień",
+    "acceptConfirmTitle": "Potwierdź akceptację",
+    "rejectConfirmTitle": "Potwierdź odrzucenie",
+    "decisionSubmitting": "Przetwarzanie...",
+    "decisionStateChanged": "Stan zamówienia uległ zmianie. Odśwież stronę.",
+    "decisionNotAllowed": "Brak uprawnień do podjęcia decyzji dla tego zamówienia.",
+    "decisionError": "Wystąpił błąd podczas zapisywania decyzji.",
+    "decisionPermissionMissing": "Nie masz uprawnień, aby zaakceptować lub odrzucić to zamówienie."
   }
 }

@@ -1284,7 +1284,7 @@
     "totalToPay": "Total à payer",
     "orderStatus": "Statut de la commande",
     "awaitingDecision": "En attente de décision",
-    "decisionExpired": "Délai de décision expiré. Vous ne pouvez plus prendre de décision concernant cette commande.",
+    "decisionExpired": "Le délai pour prendre une décision a expiré.",
     "buyerData": "Données de l'acheteur",
     "buyerPo": "Numéro de commande de l'acheteur (PO)",
     "contactHidden": "Les coordonnées de l'acheteur seront partagées lors de l'acceptation de la commande à des fins d'exécution.",
@@ -1298,6 +1298,20 @@
     "vatLabel": "TVA:",
     "registryIdLabel": "Numéro d’immatriculation :",
     "contactPerson": "Personne de contact",
-    "backToListAria": "Retour à la liste des commandes"
+    "backToListAria": "Retour à la liste des commandes",
+    "acceptOrder": "Accepter la commande",
+    "rejectOrder": "Refuser la commande",
+    "acceptConfirmText": "L'acceptation de cette commande forme un contrat de vente entre le Partenaire/Vendeur et l'Acheteur. LogiMarket agit en tant qu'intermédiaire.",
+    "rejectConfirmText": "Le refus de cette commande est définitif. Aucun contrat de vente n'est formé.",
+    "confirmAcceptButton": "Confirmer l'acceptation",
+    "confirmRejectButton": "Confirmer le refus",
+    "cancelButton": "Annuler",
+    "acceptConfirmTitle": "Confirmer l'acceptation",
+    "rejectConfirmTitle": "Confirmer le refus",
+    "decisionSubmitting": "Envoi en cours...",
+    "decisionStateChanged": "L'état de la commande a changé. Veuillez rafraîchir la page.",
+    "decisionNotAllowed": "Vous n'avez pas l'autorisation de prendre une décision pour cette commande.",
+    "decisionError": "Une erreur s'est produite lors de l'enregistrement de la décision.",
+    "decisionPermissionMissing": "Vous n'avez pas l'autorisation d'accepter ou de refuser cette commande."
   }
 }
