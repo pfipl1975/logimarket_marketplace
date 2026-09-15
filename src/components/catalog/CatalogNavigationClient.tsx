@@ -32,6 +32,7 @@ export type CatalogNavigationClientProps = {
   tree: CatalogExplorerNode[];
   desktopItems: HeaderDesktopNavigationItem[];
   mobileItems: MobileNavigationItem[];
+  mobileAuthNode?: React.ReactNode;
   desktopLabels: CatalogDesktopMegaMenuLabels;
   mobileLabels: MobileCatalogNavigationLabels;
   catalogHref: string;
@@ -48,6 +49,7 @@ export function CatalogNavigationClient({
   tree,
   desktopItems,
   mobileItems,
+  mobileAuthNode,
   desktopLabels,
   mobileLabels,
   catalogHref,
@@ -367,6 +369,7 @@ export function CatalogNavigationClient({
                           </Link>
                         );
                       })}
+                      {mobileAuthNode}
                     </>
                   ) : (
                     <>
