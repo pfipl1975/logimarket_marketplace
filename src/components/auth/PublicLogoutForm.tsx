@@ -18,10 +18,11 @@ export function PublicLogoutForm({
   return (
     <form action={formAction} className="inline-block">
       <input type="hidden" name="locale" value={locale} />
+      <input type="hidden" name="intent" value="public" />
       <button
         type="submit"
         disabled={isPending}
-        className="text-sm font-medium text-white/80 hover:text-white focus:outline-none disabled:opacity-50"
+        className="flex min-h-[36px] items-center rounded-md px-2.5 py-1.5 text-sm font-medium text-white/80 transition-all hover:bg-white/10 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy disabled:opacity-50"
       >
         {label}
       </button>

@@ -46,10 +46,8 @@ export async function SiteHeader({
     hasPartnerPanel = await hasAnyActivePartnerMembership(userResult.user!.id);
   }
 
-  const localePrefix = locale === "pl" ? "" : `/${locale}`;
-  const loginNextUrl = `${localePrefix}/partner`;
-  const loginUrl = `${localePrefix}/login?next=${loginNextUrl}`;
-  const partnerUrl = `${localePrefix}/partner`;
+  const { getPublicAuthNavigationState } = await import("@/lib/auth/public-auth-navigation");
+  const navState = getPublicAuthNavigationState(isAuth, hasPartnerPanel, locale);
 
   const desktopNavItems: HeaderDesktopNavigationItem[] = [
     ...portalLinks.map((link) => ({ ...link, external: true })),
@@ -64,12 +62,12 @@ export async function SiteHeader({
     { label: navLabels.solutions, href: solutionsHref },
   ];
 
-  if (isAuth && hasPartnerPanel && navLabels.partnerPanel) {
-    const pLink = { label: navLabels.partnerPanel, href: partnerUrl };
+  if (navState.showPartnerPanel && navLabels.partnerPanel) {
+    const pLink = { label: navLabels.partnerPanel, href: navState.partnerUrl };
     desktopNavItems.push(pLink);
     mobileNavItems.push(pLink);
-  } else if (!isAuth && navLabels.login) {
-    const lLink = { label: navLabels.login, href: loginUrl };
+  } else if (navState.showLogin && navLabels.login) {
+    const lLink = { label: navLabels.login, href: navState.loginUrl };
     desktopNavItems.push(lLink);
     mobileNavItems.push(lLink);
   }
@@ -110,7 +108,7 @@ export async function SiteHeader({
           />
 
           <div className="flex shrink-0 items-center gap-2">
-            {isAuth && !hasPartnerPanel && navLabels.logout && (
+            {navState.showLogout && navLabels.logout && (
               <PublicLogoutForm locale={locale} label={navLabels.logout} />
             )}
             <LanguageSwitcher
