@@ -62,15 +62,8 @@ export async function SiteHeader({
     { label: navLabels.solutions, href: solutionsHref },
   ];
 
-  if (navState.showPartnerPanel && navLabels.partnerPanel) {
-    const pLink = { label: navLabels.partnerPanel, href: navState.partnerUrl };
-    desktopNavItems.push(pLink);
-    mobileNavItems.push(pLink);
-  } else if (navState.showLogin && navLabels.login) {
-    const lLink = { label: navLabels.login, href: navState.loginUrl };
-    desktopNavItems.push(lLink);
-    mobileNavItems.push(lLink);
-  }
+  // We don't push auth items to primary nav arrays anymore.
+  // They are handled by dedicated desktop and mobile UI components.
 
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
@@ -89,7 +82,7 @@ export async function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
           <CatalogNavigationLoader
             locale={locale}
             desktopItems={desktopNavItems}
@@ -99,17 +92,48 @@ export async function SiteHeader({
             menuCloseLabel={navLabels.closeMenu ?? navLabels.menu ?? "Menu"}
             mainNavigationLabel={navLabels.mainNavigation ?? navLabels.menu ?? "Menu"}
             searchLabels={searchLabels}
+            mobileAuthNode={
+              <div className="mt-4 border-t border-white/10 pt-4 flex flex-col gap-2">
+                {navState.showLogin && navLabels.login && (
+                  <Link href={navState.loginUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                    {navLabels.login}
+                  </Link>
+                )}
+                {navState.showPartnerPanel && navLabels.partnerPanel && (
+                  <Link href={navState.partnerUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                    {navLabels.partnerPanel}
+                  </Link>
+                )}
+                {navState.showLogout && navLabels.logout && (
+                  <PublicLogoutForm locale={locale} label={navLabels.logout} variant="mobile" />
+                )}
+              </div>
+            }
           />
 
-          <CatalogSearchSuggestions
-            locale={locale}
-            labels={searchLabels}
-            variant="desktop"
-          />
+          <div className="hidden lg:block flex-1 min-w-[200px] max-w-[420px]">
+            <CatalogSearchSuggestions
+              locale={locale}
+              labels={searchLabels}
+              variant="desktop"
+            />
+          </div>
 
-          <div className="flex shrink-0 items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">
+            {navState.showLogin && navLabels.login && (
+              <Link href={navState.loginUrl} className="hidden min-[1600px]:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+                {navLabels.login}
+              </Link>
+            )}
+            {navState.showPartnerPanel && navLabels.partnerPanel && (
+              <Link href={navState.partnerUrl} className="hidden min-[1600px]:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+                {navLabels.partnerPanel}
+              </Link>
+            )}
             {navState.showLogout && navLabels.logout && (
-              <PublicLogoutForm locale={locale} label={navLabels.logout} />
+              <div className="hidden min-[1600px]:block shrink-0">
+                <PublicLogoutForm locale={locale} label={navLabels.logout} variant="desktop" />
+              </div>
             )}
             <LanguageSwitcher
               currentLocale={locale}

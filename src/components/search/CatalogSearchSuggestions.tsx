@@ -306,7 +306,7 @@ export function CatalogSearchSuggestions({
       ref={wrapperRef}
       className={cn(
         "relative",
-        variant === "desktop" ? "hidden lg:block shrink-0 min-w-0 lg:w-48 xl:w-56 2xl:w-72 max-w-72" : "w-full mb-3"
+        variant === "desktop" ? "hidden lg:block w-full h-full" : "w-full mb-3"
       )}
     >
       <div className="relative">

@@ -19,6 +19,7 @@ interface CatalogNavigationLoaderProps {
   menuCloseLabel: string;
   mainNavigationLabel: string;
   searchLabels: Dictionary["search"];
+  mobileAuthNode?: React.ReactNode;
 }
 
 export async function CatalogNavigationLoader({ 
@@ -29,7 +30,8 @@ export async function CatalogNavigationLoader({
   menuOpenLabel,
   menuCloseLabel,
   mainNavigationLabel,
-  searchLabels
+  searchLabels,
+  mobileAuthNode
 }: CatalogNavigationLoaderProps) {
   let tree: CatalogExplorerNode[] = [];
   let desktopLabels = {
@@ -124,6 +126,7 @@ export async function CatalogNavigationLoader({
       mainNavigationLabel={mainNavigationLabel}
       searchLabels={searchLabels}
       locale={locale}
+      mobileAuthNode={mobileAuthNode}
     />
   );
 }
