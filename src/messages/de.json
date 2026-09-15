@@ -1284,7 +1284,7 @@
     "totalToPay": "Zu zahlender Gesamtbetrag",
     "orderStatus": "Bestellstatus",
     "awaitingDecision": "Ausstehende Entscheidung",
-    "decisionExpired": "Entscheidungsfrist abgelaufen. Sie können keine Entscheidung mehr zu dieser Bestellung treffen.",
+    "decisionExpired": "Die Frist für eine Entscheidung ist abgelaufen.",
     "buyerData": "Käuferdaten",
     "buyerPo": "Bestellnummer des Käufers (PO)",
     "contactHidden": "Die Kontaktdaten des Käufers werden nach der Annahme der Bestellung zur Erfüllung mitgeteilt.",
@@ -1298,6 +1298,20 @@
     "vatLabel": "USt-IdNr.:",
     "registryIdLabel": "Registernummer:",
     "contactPerson": "Kontaktperson",
-    "backToListAria": "Zurück zur Bestellliste"
+    "backToListAria": "Zurück zur Bestellliste",
+    "acceptOrder": "Bestellung akzeptieren",
+    "rejectOrder": "Bestellung ablehnen",
+    "acceptConfirmText": "Die Annahme dieser Bestellung begründet einen Kaufvertrag zwischen dem Partner/Verkäufer und dem Käufer. LogiMarket bleibt als Vermittler tätig.",
+    "rejectConfirmText": "Die Ablehnung dieser Bestellung ist endgültig. Es kommt kein Kaufvertrag zustande.",
+    "confirmAcceptButton": "Akzeptanz bestätigen",
+    "confirmRejectButton": "Ablehnung bestätigen",
+    "cancelButton": "Abbrechen",
+    "acceptConfirmTitle": "Akzeptanz bestätigen",
+    "rejectConfirmTitle": "Ablehnung bestätigen",
+    "decisionSubmitting": "Wird gesendet...",
+    "decisionStateChanged": "Der Bestellstatus hat sich geändert. Bitte laden Sie die Seite neu.",
+    "decisionNotAllowed": "Sie haben keine Berechtigung, eine Entscheidung für diese Bestellung zu treffen.",
+    "decisionError": "Beim Speichern der Entscheidung ist ein Fehler aufgetreten.",
+    "decisionPermissionMissing": "Sie haben keine Berechtigung, diese Bestellung zu akzeptieren oder abzulehnen."
   }
 }

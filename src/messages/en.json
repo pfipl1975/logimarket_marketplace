@@ -1284,7 +1284,7 @@
     "totalToPay": "Total to pay",
     "orderStatus": "Order status",
     "awaitingDecision": "Awaiting decision",
-    "decisionExpired": "Decision deadline expired. You can no longer make a decision on this order.",
+    "decisionExpired": "The time to make a decision has expired.",
     "buyerData": "Buyer Data",
     "buyerPo": "Buyer PO Number",
     "contactHidden": "Buyer contact details will be shared upon order acceptance for fulfillment purposes.",
@@ -1298,6 +1298,20 @@
     "vatLabel": "VAT:",
     "registryIdLabel": "Registry ID:",
     "contactPerson": "Contact person",
-    "backToListAria": "Back to orders list"
+    "backToListAria": "Back to orders list",
+    "acceptOrder": "Accept order",
+    "rejectOrder": "Reject order",
+    "acceptConfirmText": "Accepting this order forms a sale contract between the Partner/Seller and the Buyer. LogiMarket acts as an intermediary.",
+    "rejectConfirmText": "Rejecting this order is final. No sale contract is formed.",
+    "confirmAcceptButton": "Confirm accept",
+    "confirmRejectButton": "Confirm reject",
+    "cancelButton": "Cancel",
+    "acceptConfirmTitle": "Confirm acceptance",
+    "rejectConfirmTitle": "Confirm rejection",
+    "decisionSubmitting": "Submitting...",
+    "decisionStateChanged": "The order state has changed. Please refresh the page.",
+    "decisionNotAllowed": "You do not have permission to make a decision for this order.",
+    "decisionError": "An error occurred while saving the decision.",
+    "decisionPermissionMissing": "You do not have permission to accept or reject this order."
   }
 }

@@ -1446,3 +1446,16 @@ export async function rejectSellerOrderAction(sellerOrderId: unknown) {
   }
   return rejectSellerOrder(parsed.data);
 }
+
+import type { PartnerDecisionUiState } from "@/lib/partner-orders/decision-action-core";
+
+export async function partnerSellerOrderDecisionAction(
+  _prevState: PartnerDecisionUiState,
+  formData: FormData
+): Promise<PartnerDecisionUiState> {
+  const { executeDecisionActionCore } = await import("@/lib/partner-orders/decision-action-core");
+  return executeDecisionActionCore(formData, {
+    acceptSellerOrder,
+    rejectSellerOrder,
+  });
+}

@@ -1284,7 +1284,7 @@
     "totalToPay": "Total a pagar",
     "orderStatus": "Estado del pedido",
     "awaitingDecision": "Esperando decisión",
-    "decisionExpired": "Plazo de decisión expirado. Ya no puedes tomar una decisión sobre este pedido.",
+    "decisionExpired": "El plazo para tomar una decisión ha expirado.",
     "buyerData": "Datos del comprador",
     "buyerPo": "Número de pedido del comprador (PO)",
     "contactHidden": "Los detalles de contacto del comprador se compartirán al aceptar el pedido para fines de cumplimiento.",
@@ -1298,6 +1298,20 @@
     "vatLabel": "NIF/IVA:",
     "registryIdLabel": "ID de registro:",
     "contactPerson": "Persona de contacto",
-    "backToListAria": "Volver a la lista de pedidos"
+    "backToListAria": "Volver a la lista de pedidos",
+    "acceptOrder": "Aceptar pedido",
+    "rejectOrder": "Rechazar pedido",
+    "acceptConfirmText": "Aceptar este pedido forma un contrato de venta entre el Socio/Vendedor y el Comprador. LogiMarket actúa como intermediario.",
+    "rejectConfirmText": "El rechazo de este pedido es definitivo. No se forma ningún contrato de venta.",
+    "confirmAcceptButton": "Confirmar aceptación",
+    "confirmRejectButton": "Confirmar rechazo",
+    "cancelButton": "Cancelar",
+    "acceptConfirmTitle": "Confirmar aceptación",
+    "rejectConfirmTitle": "Confirmar rechazo",
+    "decisionSubmitting": "Enviando...",
+    "decisionStateChanged": "El estado del pedido ha cambiado. Por favor, actualice la página.",
+    "decisionNotAllowed": "No tiene permiso para tomar una decisión para este pedido.",
+    "decisionError": "Ocurrió un error al guardar la decisión.",
+    "decisionPermissionMissing": "No tiene permiso para aceptar o rechazar este pedido."
   }
 }
