@@ -1,6 +1,3 @@
-import { getHomePath } from "@/lib/i18n/paths";
-import { getAdminLoginRedirectPath } from "./admin-page-access-core";
-
 export type PublicAuthNavigationState = {
   showLogin: boolean;
   showPartnerPanel: boolean;
