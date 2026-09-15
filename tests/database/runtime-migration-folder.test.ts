@@ -10,7 +10,7 @@ test("journal exists and is valid", () => {
   assert.ok(fs.existsSync(journalPath));
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
-  assert.strictEqual(journal.entries.length, 16);
+  assert.strictEqual(journal.entries.length, 17);
   for (let i = 0; i < journal.entries.length; i++) {
     assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
     if (i > 0) {
@@ -42,6 +42,8 @@ test("journal exists and is valid", () => {
   assert.strictEqual(journal.entries[14].when, 1789255000000);
   assert.strictEqual(journal.entries[15].tag, "0015_notification_outbox");
   assert.strictEqual(journal.entries[15].when, 1789320414668);
+  assert.strictEqual(journal.entries[16].tag, "0016_buyer_order_ownership");
+  assert.strictEqual(journal.entries[16].when, 1789321000000);
 });
 
 test("the complete journaled SQL chain is loaded by migrator", () => {
@@ -58,4 +60,6 @@ test("the complete journaled SQL chain is loaded by migrator", () => {
   assert.ok(migrations[14].sql.some((s: string) => s.includes("expires_at")));
   assert.ok(migrations[14].sql.some((s: string) => s.includes("idx_seller_acceptance_decisions_pending_expires_at")));
   assert.ok(migrations[15].sql.some((s: string) => s.includes("notification_outbox_events")));
+  assert.ok(migrations[16].sql.some((s: string) => s.includes("buyer_auth_user_id")));
+  assert.ok(migrations[16].sql.some((s: string) => s.includes("idx_marketplace_orders_buyer_auth")));
 });

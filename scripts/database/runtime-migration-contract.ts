@@ -1372,5 +1372,20 @@ export const FINAL_POST_0015_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
+export const FINAL_POST_0016_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0015_PRODUCTION_FINGERPRINT,
+  "marketplace_orders": {
+    ...FINAL_POST_0015_PRODUCTION_FINGERPRINT["marketplace_orders"],
+    columns: [
+      ...FINAL_POST_0015_PRODUCTION_FINGERPRINT["marketplace_orders"].columns,
+      { name: "buyer_auth_user_id", type: "uuid", nullable: true, defaultVal: null, sequenceName: null },
+    ],
+    explicitIndexes: [
+      ...(FINAL_POST_0015_PRODUCTION_FINGERPRINT["marketplace_orders"].explicitIndexes || []),
+      { name: "idx_marketplace_orders_buyer_auth", method: "btree", expressions: "buyer_auth_user_id" },
+    ],
+  },
+};
+
 export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0014_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0015_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0016_PRODUCTION_FINGERPRINT;

@@ -233,7 +233,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -621,7 +621,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 16, "Journal count must be exactly 16");
+      assert.strictEqual(journalRows.length, 17, "Journal count must be exactly 17");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -772,7 +772,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0015",
+        "EXACT_EXISTING_POST_0016",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -809,7 +809,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Post-migration classification must be EXACT_EXISTING_POST_0015
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -823,7 +823,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 16);
+    assert.strictEqual(journalRows.length, 17);
   });
 
   await t.test(
@@ -989,7 +989,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1003,7 +1003,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 16);
+      assert.strictEqual(journalRows.length, 17);
     },
   );
 
@@ -4225,7 +4225,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015", "Must recognize POST_0014 after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016", "Must recognize the POST_0016 terminal state after migration");
   });
 
   await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
@@ -4251,17 +4251,303 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     await runMigrations(process.env);
     const after = await fetchLiveSchemaMetadata(pool);
-    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0016");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 16);
+    assert.strictEqual(journalAfter.rows[0].count, 17);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 16);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 17);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
   });
+  await t.test("PATH POST_0016: durable buyer order ownership cleanroom proof", async () => {
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { eq, and } = await import("drizzle-orm");
+    const schemaModule = await import("../../src/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+    const { executeMarketplaceCheckout } = await import("../../src/lib/checkout/marketplace-checkout-core");
+    const { getOwnedOrder, listOwnedOrders } = await import("../../src/lib/buyer-orders/ownership-core");
+    const { randomUUID } = await import("crypto");
+
+    const USER_A = "11111111-1111-4111-8111-111111111111";
+    const USER_B = "22222222-2222-4222-8222-222222222222";
+
+    // ------------------------------------------------------------------
+    // RUNTIME A: build a physical POST_0015 state with canonical journal
+    // ------------------------------------------------------------------
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    assert.strictEqual(diskMigrations.length, 17);
+    const post0015Migrations = diskMigrations.slice(0, 16);
+    assert.strictEqual(post0015Migrations.length, 16);
+    for (const migration of post0015Migrations) {
+      for (const statement of migration.sql) await pool.query(statement);
+    }
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    for (const migration of post0015Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis],
+      );
+    }
+
+    const physical0015 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(physical0015.fingerprint, physical0015.publicTables, physical0015.security).state,
+      "EXACT_EXISTING_POST_0015",
+      "physical POST_0015 must remain a valid historical predecessor state",
+    );
+
+    // ------------------------------------------------------------------
+    // SCHEMA H (precondition): a pre-0016 MarketplaceOrder already exists
+    // ------------------------------------------------------------------
+    const preBuyer = await pool.query<{ id: number }>(
+      `INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Pre 0016 Buyer', 'PL', 'tax_id', '1111111111', 'unknown', 'unknown', 'no_review_needed') RETURNING id`,
+    );
+    const preOrderRow = await pool.query<{ id: number }>(
+      `INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id, status) VALUES ('pre-0016-survivor', $1, 'checkout_submitted') RETURNING id`,
+      [preBuyer.rows[0].id],
+    );
+    const preOrderId = Number(preOrderRow.rows[0].id);
+
+    // ------------------------------------------------------------------
+    // RUNTIME B: the runner applies exactly 0016 from POST_0015
+    // ------------------------------------------------------------------
+    await runMigrations(process.env);
+
+    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0016
+    const post0016 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(post0016.fingerprint, post0016.publicTables, post0016.security).state,
+      "EXACT_EXISTING_POST_0016",
+    );
+
+    // RUNTIME D: journal has 17 rows
+    const journalAfter0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfter0016.rows[0].count, 17);
+
+    // RUNTIME E: POST_0016 rerun is a terminal no-op
+    await runMigrations(process.env);
+    const journalAfterNoOp0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 17);
+
+    // ------------------------------------------------------------------
+    // SCHEMA F: buyer_auth_user_id is a nullable uuid, not unique, no auth.users FK
+    // ------------------------------------------------------------------
+    const columnMeta = await pool.query(
+      `SELECT data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'marketplace_orders' AND column_name = 'buyer_auth_user_id'`,
+    );
+    assert.strictEqual(columnMeta.rows.length, 1);
+    assert.strictEqual(columnMeta.rows[0].data_type, "uuid");
+    assert.strictEqual(columnMeta.rows[0].is_nullable, "YES");
+
+    const uniqueOwnershipIndex = await pool.query(
+      `SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'marketplace_orders' AND indexdef ILIKE '%UNIQUE%' AND indexdef ILIKE '%buyer_auth_user_id%'`,
+    );
+    assert.strictEqual(uniqueOwnershipIndex.rows.length, 0, "buyer_auth_user_id must not be unique");
+
+    // buyer_auth_user_id has no FK constraint, including no FK to auth.users.
+    const ownershipFkCount = await pool.query(
+      `SELECT COUNT(*)::int AS fk_count
+       FROM pg_constraint con
+       JOIN pg_class rel ON rel.oid = con.conrelid
+       JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+       JOIN LATERAL unnest(con.conkey) AS key_column(attnum) ON TRUE
+       JOIN pg_attribute attr ON attr.attrelid = con.conrelid AND attr.attnum = key_column.attnum
+       WHERE con.contype = 'f'
+         AND ns.nspname = 'public'
+         AND rel.relname = 'marketplace_orders'
+         AND attr.attname = 'buyer_auth_user_id'`,
+    );
+    assert.strictEqual(ownershipFkCount.rows[0].fk_count, 0, "buyer_auth_user_id must have no FK, including to auth.users");
+
+    // SCHEMA G: normal non-unique btree ownership index
+    const ownershipIndex = await pool.query(
+      `SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'marketplace_orders' AND indexname = 'idx_marketplace_orders_buyer_auth'`,
+    );
+    assert.strictEqual(ownershipIndex.rows.length, 1);
+    assert.match(ownershipIndex.rows[0].indexdef, /USING btree/);
+    assert.match(ownershipIndex.rows[0].indexdef, /buyer_auth_user_id/);
+    assert.ok(!/UNIQUE/i.test(ownershipIndex.rows[0].indexdef), "ownership index must not be unique");
+
+    // SCHEMA H: the pre-0016 order survived 0016 with NULL ownership
+    const survivor = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [preOrderId]);
+    assert.strictEqual(survivor.rows.length, 1);
+    assert.strictEqual(survivor.rows[0].buyer_auth_user_id, null);
+
+    // ------------------------------------------------------------------
+    // CHECKOUT fixtures (reusing the PATH COMMERCE setup pattern)
+    // ------------------------------------------------------------------
+    let sellerFixtureNumber = 0;
+    const agreementVersionResult = await pool.query<{ id: number }>(
+      `INSERT INTO agreement_versions (agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at) VALUES ('partner_agreement_b2b', 'ownership-r3-v1', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'active', NOW(), NOW()) RETURNING id`,
+    );
+    const activeAgreementVersionId = agreementVersionResult.rows[0].id;
+    const ownershipCategory = await pool.query<{ id: number }>(
+      `INSERT INTO categories (name, slug) VALUES ('Ownership R3', 'ownership-r3') RETURNING id`,
+    );
+    const ownershipCategoryId = Number(ownershipCategory.rows[0].id);
+
+    async function seedOwnershipPartnerAndOffer(price = "10.00") {
+      sellerFixtureNumber += 1;
+      const fixtureSuffix = String(sellerFixtureNumber).padStart(2, "0");
+      const nip = `98765432${fixtureSuffix}`;
+      const registryValue = `11111111${fixtureSuffix}`;
+      const pRes = await pool.query<{ id: number }>(
+        `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+        [`Ownership Seller Corp ${fixtureSuffix}`, `ownership-seller-${fixtureSuffix}@corp.com`],
+      );
+      const partnerId = Number(pRes.rows[0].id);
+
+      await pool.query(
+        `INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, verification_status, registered_address_line1, registered_postal_code, registered_city, registered_country_code) VALUES ($1, $2, 'PL', 'verified', 'Street 1', '00-001', 'City', 'PL')`,
+        [partnerId, `Legal Ownership Seller Corp ${fixtureSuffix}`],
+      );
+      await pool.query(
+        `INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status) VALUES ($1, 'tax_id', $2, 'PL', 'PL:NIP', $2, 'verified')`,
+        [partnerId, nip],
+      );
+      await pool.query(
+        `INSERT INTO seller_registry_identifiers (partner_id, registry_type, registry_value, jurisdiction_country, verification_status) VALUES ($1, 'commercial_register', $2, 'PL', 'verified')`,
+        [partnerId, registryValue],
+      );
+      await pool.query(`INSERT INTO seller_eligibility (partner_id, eligibility_status) VALUES ($1, 'eligible')`, [partnerId]);
+      await pool.query(
+        `INSERT INTO partner_agreement_execution_evidence (partner_id, agreement_version_id, execution_method, signed_at, signatory_name, signatory_role, signatory_email, external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id) VALUES ($1, $2, 'platform_documentary_electronic', NOW(), $3, 'Director', $4, 'ownership_ci', $5, 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'ownership_ci_admin')`,
+        [partnerId, activeAgreementVersionId, `Signer ${fixtureSuffix}`, `signer-${fixtureSuffix}@corp.com`, `ownership-r3-${fixtureSuffix}`],
+      );
+      const oRes = await pool.query<{ id: number }>(
+        `INSERT INTO offers (title, category_id, offer_model, conversion_type, is_active, publication_status, partner_id, price_brutto, price_on_request) VALUES ($1, $2, 'marketplace', 'inbound', true, 'published', $3, $4, false) RETURNING id`,
+        [`Ownership Offer ${fixtureSuffix}`, ownershipCategoryId, partnerId, price],
+      );
+      return { partnerId, offerId: Number(oRes.rows[0].id) };
+    }
+
+    const ownershipBuyerLegal: BuyerLegalContextInput = {
+      businessName: "Ownership Buyer Corp",
+      countryCode: "PL",
+      taxIdentifierType: "tax_id",
+      taxIdentifierValue: "5555555555",
+      registryIdentifierType: null,
+      registryIdentifierValue: null,
+      businessVerificationStatus: "verified",
+      businessVerificationMethod: "registry_lookup",
+      businessVerificationSource: "manual",
+      businessVerifiedAt: new Date(),
+      professionalPurposeEvidence: null,
+      categoryBStatus: "not_applicable",
+      legalContextReviewState: "no_review_needed",
+    };
+
+    const ownershipBuyerContact = {
+      contactName: "Ownership Buyer",
+      email: "ownership-buyer@corp.com",
+    };
+
+    async function runOwnershipCheckout(offerId: number, quantity: number, buyerAuthUserId?: string) {
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity });
+      return buyerAuthUserId === undefined
+        ? executeMarketplaceCheckout(db, sessionHash, ownershipBuyerLegal, ownershipBuyerContact)
+        : executeMarketplaceCheckout(db, sessionHash, ownershipBuyerLegal, ownershipBuyerContact, buyerAuthUserId);
+    }
+
+    const { offerId: ownershipOfferId } = await seedOwnershipPartnerAndOffer();
+
+    // CHECKOUT I: guest canonical checkout persists NULL
+    const guestResult = await runOwnershipCheckout(ownershipOfferId, 1);
+    assert.strictEqual(guestResult.ok, true);
+    if (!guestResult.ok) return;
+    const guestOrderId = guestResult.marketplaceOrderId;
+    const guestRow = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [guestOrderId]);
+    assert.strictEqual(guestRow.rows[0].buyer_auth_user_id, null);
+
+    // CHECKOUT J: authenticated canonical checkout persists the exact trusted UUID
+    const authResult = await runOwnershipCheckout(ownershipOfferId, 2, USER_A);
+    assert.strictEqual(authResult.ok, true);
+    if (!authResult.ok) return;
+    const authOrderId = authResult.marketplaceOrderId;
+    const authRow = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [authOrderId]);
+    assert.strictEqual(authRow.rows[0].buyer_auth_user_id, USER_A);
+
+    // CHECKOUT K: two orders may share the same buyer_auth_user_id
+    const authResult2 = await runOwnershipCheckout(ownershipOfferId, 3, USER_A);
+    assert.strictEqual(authResult2.ok, true);
+    if (!authResult2.ok) return;
+    const authOrderId2 = authResult2.marketplaceOrderId;
+    const sharedOwnership = await pool.query(`SELECT count(*)::int AS count FROM marketplace_orders WHERE buyer_auth_user_id = $1`, [USER_A]);
+    assert.strictEqual(sharedOwnership.rows[0].count, 2);
+
+    // ------------------------------------------------------------------
+    // OWNERSHIP L/M/N: production-shaped dependencies over (orderId, authUserId)
+    // ------------------------------------------------------------------
+    const ownershipProjection = {
+      orderId: schemaModule.marketplaceOrders.id,
+      status: schemaModule.marketplaceOrders.status,
+      createdAt: schemaModule.marketplaceOrders.createdAt,
+    };
+
+    function ownershipDeps(authUserId: string) {
+      return {
+        async requireUser() {
+          return { id: authUserId };
+        },
+        async findOwnedOrder(orderId: number, ownerId: string) {
+          const rows = await db
+            .select(ownershipProjection)
+            .from(schemaModule.marketplaceOrders)
+            .where(
+              and(
+                eq(schemaModule.marketplaceOrders.id, orderId),
+                eq(schemaModule.marketplaceOrders.buyerAuthUserId, ownerId),
+              ),
+            )
+            .limit(1);
+          return rows[0] ?? null;
+        },
+        async listOwnedOrders(ownerId: string) {
+          return db
+            .select(ownershipProjection)
+            .from(schemaModule.marketplaceOrders)
+            .where(eq(schemaModule.marketplaceOrders.buyerAuthUserId, ownerId));
+        },
+      };
+    }
+
+    // OWNERSHIP L: User A can read A's order
+    const ownerLookup = await getOwnedOrder(ownershipDeps(USER_A), authOrderId);
+    assert.strictEqual(ownerLookup.ok, true);
+    if (ownerLookup.ok) {
+      assert.strictEqual(ownerLookup.order.orderId, authOrderId);
+    }
+
+    // OWNERSHIP M: User B cannot retrieve A's order
+    const crossUserLookup = await getOwnedOrder(ownershipDeps(USER_B), authOrderId);
+    assert.strictEqual(crossUserLookup.ok, false);
+    if (!crossUserLookup.ok) {
+      assert.strictEqual(crossUserLookup.reason, "NOT_FOUND");
+    }
+
+    const nonexistentLookup = await getOwnedOrder(ownershipDeps(USER_B), 9007199254740000);
+    assert.strictEqual(nonexistentLookup.ok, false);
+    if (!nonexistentLookup.ok) {
+      assert.strictEqual(nonexistentLookup.reason, "NOT_FOUND");
+    }
+
+    // OWNERSHIP N: NULL/unclaimed and other-user orders are excluded from the list
+    const ownedByA = await listOwnedOrders(ownershipDeps(USER_A));
+    const ownedIds = ownedByA.map((order) => order.orderId).sort((a, b) => a - b);
+    assert.deepStrictEqual(ownedIds, [authOrderId, authOrderId2].sort((a, b) => a - b));
+    assert.ok(!ownedIds.includes(guestOrderId), "unclaimed NULL-owned order must not appear");
+    assert.ok(!ownedIds.includes(preOrderId), "pre-0016 NULL-owned order must not appear");
+
+    const ownedByB = await listOwnedOrders(ownershipDeps(USER_B));
+    assert.strictEqual(ownedByB.length, 0);
+  });
+
 
   await t.test("PATH M: POST_0013 decision without E6 fails 0014 closed", async () => {
     await cleanDB();
@@ -4301,7 +4587,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0016");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
       `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
@@ -4384,7 +4670,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0016");
 
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);

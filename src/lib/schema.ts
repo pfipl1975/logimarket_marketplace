@@ -910,9 +910,11 @@ export const marketplaceOrders = pgTable("marketplace_orders", {
   customerPoNumber: varchar("customer_po_number", { length: 255 }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }),
+  buyerAuthUserId: uuid("buyer_auth_user_id"),
 }, (t) => [
   check("chk_marketplace_orders_status", sql`((status)::text = ANY ((ARRAY['intent_created'::character varying, 'checkout_submitted'::character varying, 'pending_seller_review'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))`),
   index("idx_marketplace_orders_session").on(t.sessionHash),
+  index("idx_marketplace_orders_buyer_auth").on(t.buyerAuthUserId),
 ]);
 
 export const marketplaceOrderBuyerContactSnapshots = pgTable("marketplace_order_buyer_contact_snapshots", {
