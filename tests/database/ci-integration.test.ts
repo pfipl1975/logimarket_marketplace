@@ -4958,7 +4958,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const schema = await import("@/lib/schema");
 
     const [blc] = await getDb().insert(schema.buyerLegalContextSnapshots).values({
-      businessName: "Pre-existing", countryCode: "PL"
+      businessName: "Pre-existing",
+      countryCode: "PL",
+      taxIdentifierType: "NIP",
+      taxIdentifierValue: "1234567890"
     }).returning({ id: schema.buyerLegalContextSnapshots.id });
 
     const [preOrder] = await getDb().insert(schema.marketplaceOrders).values({
@@ -4975,7 +4978,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { executeMarketplaceCheckout } = await import("@/lib/checkout/marketplace-checkout-core");
     const checkoutReqF = {
       offerId: Number(oId), quantity: 1, buyerIp: "127.0.0.1", sessionHash: "chk-sess-null",
-      buyerContext: { businessName: "Null", countryCode: "PL" } as any,
+      buyerContext: { businessName: "Null", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "0000" } as any,
       contactContext: { name: "Null", email: "null@null.com" }
     };
 
@@ -4992,7 +4995,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 10. Authenticated checkout persists trusted UUID
     const checkoutReqG = {
       offerId: Number(oId), quantity: 1, buyerIp: "127.0.0.1", sessionHash: "chk-sess-uuid",
-      buyerContext: { businessName: "UUID", countryCode: "PL" } as any,
+      buyerContext: { businessName: "UUID", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "1111" } as any,
       contactContext: { name: "UUID", email: "uuid@uuid.com" },
       buyerAuthUserId: testAuthUuid
     };
