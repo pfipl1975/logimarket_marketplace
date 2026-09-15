@@ -19,6 +19,10 @@ test("Header Layout Regression Tests", async (t) => {
     assert.doesNotMatch(content, /border-t border-white\/10 bg-brand-navy[\s\S]*?max-w-7xl/);
     assert.match(content, /max-w-\[1600px\]/);
 
+    // desktop search wrapper uses max-w-[420px] and rejects max-w-[500px]
+    assert.match(content, /<div className="hidden lg:block flex-1 min-w-\[200px\] max-w-\[420px\]">/);
+    assert.doesNotMatch(content, /max-w-\[500px\]/);
+
     // 3-5. desktop controls expose appropriate links aligned to >=1600 (min-[1600px]) breakpoint
     assert.match(content, /<div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">/);
     assert.match(content, /navState\.showLogin && navLabels\.login/);

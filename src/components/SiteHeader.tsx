@@ -111,7 +111,7 @@ export async function SiteHeader({
             }
           />
 
-          <div className="hidden lg:block flex-1 min-w-[200px] max-w-[500px]">
+          <div className="hidden lg:block flex-1 min-w-[200px] max-w-[420px]">
             <CatalogSearchSuggestions
               locale={locale}
               labels={searchLabels}
