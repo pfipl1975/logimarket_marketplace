@@ -4947,8 +4947,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // 7. A MarketplaceOrder created before 0016 survives migration and has buyer_auth_user_id IS NULL
     const partnerIdResult = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Owner Partner', 'own@p.com') RETURNING id`);
     const pId = partnerIdResult.rows[0].id;
-    const { createMockMarketplaceOffer } = await import("../../scripts/database/mock-data-helpers");
-    const { id: oId } = await createMockMarketplaceOffer(pool, pId);
+    const catRes = await pool.query("INSERT INTO categories (name, slug) VALUES ('C_OWN', 'c-own') RETURNING id");
+    const offerRes = await pool.query(`
+      INSERT INTO offers (partner_id, category_id, conversion_type, offer_model, publication_status, title, description, price_brutto)
+      VALUES ($1, $2, 'inbound', 'marketplace', 'published', 'T', 'D', 10) RETURNING id
+    `, [pId, catRes.rows[0].id]);
+    const oId = offerRes.rows[0].id;
 
     const { getDb } = await import("@/lib/db");
     const schema = await import("@/lib/schema");
