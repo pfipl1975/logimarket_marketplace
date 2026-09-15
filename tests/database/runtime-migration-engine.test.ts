@@ -40,6 +40,7 @@ import {
   BASELINE_PRODUCTION_FINGERPRINT,
   FINAL_POST_0004_PRODUCTION_FINGERPRINT,
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0015_PRODUCTION_FINGERPRINT,
   type TableContract,
 } from "../../scripts/database/runtime-migration-contract";
 
@@ -65,6 +66,7 @@ const exactJournalEntries = [
   { tag: "fake_tag_0013", when: 1789254426542 },
   { tag: "fake_tag_0014", when: 1789255000000 },
   { tag: "fake_tag_0015", when: 1789320414668 },
+  { tag: "fake_tag_0016", when: 1789321000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
@@ -439,6 +441,11 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0016");
+});
+
+test("TARGET: EXACT_EXISTING_POST_0015 for the historical POST_0015 fingerprint", () => {
+  const result = classifyRuntimeTarget(FINAL_POST_0015_PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
   assert.strictEqual(result.state, "EXACT_EXISTING_POST_0015");
 });
 
@@ -647,7 +654,7 @@ for (const expectedPreState of [undefined, "MIGRATABLE_POST_0004"]) {
 
 for (const { expectedPreState, actualState, fingerprint } of [
   { expectedPreState: "MIGRATABLE_POST_0004", actualState: "EXACT_EXISTING_POST_0005", fingerprint: FINAL_POST_0005_PRODUCTION_FINGERPRINT },
-  { expectedPreState: "MIGRATABLE_POST_0004", actualState: "EXACT_EXISTING_POST_0015", fingerprint: PRODUCTION_FINGERPRINT },
+  { expectedPreState: "MIGRATABLE_POST_0004", actualState: "EXACT_EXISTING_POST_0015", fingerprint: FINAL_POST_0015_PRODUCTION_FINGERPRINT },
   { expectedPreState: "", actualState: "MIGRATABLE_POST_0004", fingerprint: FINAL_POST_0004_PRODUCTION_FINGERPRINT },
   { expectedPreState: " MIGRATABLE_POST_0004", actualState: "MIGRATABLE_POST_0004", fingerprint: FINAL_POST_0004_PRODUCTION_FINGERPRINT },
 ]) {

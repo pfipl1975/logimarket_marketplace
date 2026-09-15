@@ -21,6 +21,8 @@ import {
   FINAL_POST_0012_PRODUCTION_FINGERPRINT,
   FINAL_POST_0013_PRODUCTION_FINGERPRINT,
   FINAL_POST_0014_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0015_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0016_PRODUCTION_FINGERPRINT,
   PRE_0008_SECURITY_CONTRACT,
   POST_0008_SECURITY_CONTRACT,
   POST_0009_SECURITY_CONTRACT,
@@ -224,9 +226,21 @@ test("TARGET_EXACT_POST_0014", () => {
 });
 
 test("TARGET_EXACT_POST_0015", () => {
+  const actual = buildSide(FINAL_POST_0015_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0015");
+});
+
+test("TARGET_EXACT_POST_0016", () => {
   const actual = buildSide(PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES, POST_0009_SECURITY_CONTRACT);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0015");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0016");
+});
+
+test("TARGET_EXACT_POST_0016_EXPLICIT_FINGERPRINT", () => {
+  const actual = buildSide(FINAL_POST_0016_PRODUCTION_FINGERPRINT);
+  const result = classifyRuntimeTarget(actual, Object.keys(actual), POST_0009_SECURITY_CONTRACT);
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0016");
 });
 
 // ===========================================================================
