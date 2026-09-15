@@ -43,13 +43,6 @@
       "when": 1788029753104,
       "tag": "0005_hard_venom",
       "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1789479237546,
-      "tag": "0006_cooing_titanium_man",
-      "breakpoints": true
     }
   ]
 }
