@@ -16,7 +16,10 @@
     "openMenu": "Відкрити меню",
     "closeMenu": "Закрити menu",
     "mainNavigation": "Головна навігація",
-    "glossary": "Словник"
+    "glossary": "Словник",
+    "login": "Увійти",
+    "partnerPanel": "Панель Партнера",
+    "logout": "Вийти"
   },
   "common": {
     "close": "Закрити"

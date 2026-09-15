@@ -16,7 +16,10 @@
     "openMenu": "打开菜单",
     "closeMenu": "关闭菜单",
     "mainNavigation": "主导航",
-    "glossary": "词典"
+    "glossary": "词典",
+    "login": "登录",
+    "partnerPanel": "合作伙伴面板",
+    "logout": "退出登录"
   },
   "common": {
     "close": "关闭"

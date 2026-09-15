@@ -10,7 +10,7 @@ import type { Locale } from "@/lib/i18n/config";
 import { getHomePath, getGlossaryPath } from "@/lib/i18n/paths";
 import { getSolutionsIndexPath } from "@/lib/landing/links";
 import type { Dictionary } from "@/lib/i18n/types";
-
+import { PublicLogoutForm } from "@/components/auth/PublicLogoutForm";
 
 interface SiteHeaderProps {
   locale: Locale;
@@ -19,7 +19,7 @@ interface SiteHeaderProps {
   searchLabels: Dictionary["search"];
 }
 
-export function SiteHeader({
+export async function SiteHeader({
   locale,
   languageLinks,
   navLabels,
@@ -35,6 +35,22 @@ export function SiteHeader({
   const glossaryHref = getGlossaryPath(locale);
   const solutionsHref = getSolutionsIndexPath(locale);
 
+  const { getCurrentUser } = await import("@/lib/auth/session");
+  const { hasAnyActivePartnerMembership } = await import("@/lib/auth/partner-membership");
+  
+  const userResult = await getCurrentUser();
+  const isAuth = userResult.status === "authenticated";
+  
+  let hasPartnerPanel = false;
+  if (isAuth) {
+    hasPartnerPanel = await hasAnyActivePartnerMembership(userResult.user!.id);
+  }
+
+  const localePrefix = locale === "pl" ? "" : `/${locale}`;
+  const loginNextUrl = `${localePrefix}/partner`;
+  const loginUrl = `${localePrefix}/login?next=${loginNextUrl}`;
+  const partnerUrl = `${localePrefix}/partner`;
+
   const desktopNavItems: HeaderDesktopNavigationItem[] = [
     ...portalLinks.map((link) => ({ ...link, external: true })),
     ...(glossaryHref ? [{ label: navLabels.glossary, href: glossaryHref }] : []),
@@ -47,6 +63,16 @@ export function SiteHeader({
     ...(glossaryHref ? [{ label: navLabels.glossary, href: glossaryHref }] : []),
     { label: navLabels.solutions, href: solutionsHref },
   ];
+
+  if (isAuth && hasPartnerPanel && navLabels.partnerPanel) {
+    const pLink = { label: navLabels.partnerPanel, href: partnerUrl };
+    desktopNavItems.push(pLink);
+    mobileNavItems.push(pLink);
+  } else if (!isAuth && navLabels.login) {
+    const lLink = { label: navLabels.login, href: loginUrl };
+    desktopNavItems.push(lLink);
+    mobileNavItems.push(lLink);
+  }
 
   return (
     <header className="sticky top-0 z-40 bg-brand-navy text-white shadow-lg">
@@ -84,6 +110,9 @@ export function SiteHeader({
           />
 
           <div className="flex shrink-0 items-center gap-2">
+            {isAuth && !hasPartnerPanel && navLabels.logout && (
+              <PublicLogoutForm locale={locale} label={navLabels.logout} />
+            )}
             <LanguageSwitcher
               currentLocale={locale}
               links={languageLinks}

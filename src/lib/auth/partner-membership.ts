@@ -100,3 +100,13 @@ export async function requirePartnerOrderDecisionAuthorityCore(
 export async function requirePartnerOrderDecisionAuthority(partnerId: number): Promise<AuthenticatedIdentity> {
   return requirePartnerOrderDecisionAuthorityCore(getCurrentUser, getDbMembership, partnerId);
 }
+
+
+export async function hasAnyActivePartnerMembership(userId: string): Promise<boolean> {
+  try {
+    const result = await db.select({ id: partnerUserMemberships.id }).from(partnerUserMemberships).where(and(eq(partnerUserMemberships.authUserId, userId), eq(partnerUserMemberships.membershipStatus, 'active'))).limit(1);
+    return result.length > 0;
+  } catch {
+    return false;
+  }
+}
