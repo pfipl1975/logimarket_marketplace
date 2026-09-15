@@ -763,7 +763,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       assert.strictEqual(replayJournal.rows[0].count, 8);
 
-      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0012 + journal 13 -> search_path hardened
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0016 + journal 17 -> search_path hardened
       await runMigrations(process.env);
       const post0010Metadata = await fetchLiveSchemaMetadata(pool);
       assert.strictEqual(
@@ -782,7 +782,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 16);
+      assert.strictEqual(post0010Journal.rows[0].count, 17);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
