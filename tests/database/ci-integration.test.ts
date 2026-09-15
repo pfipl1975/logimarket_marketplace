@@ -4971,8 +4971,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // 8. Two MarketplaceOrders can share the same UUID
     const testAuthUuid = "c3f56b2c-6878-433a-bcba-7a2e6f3b0c10";
-    await getDb().insert(schema.marketplaceOrders).values({ sessionHash: "s1", buyerLegalContextSnapshotId: blc.id, buyerAuthUserId: testAuthUuid, status: "intent_created" });
-    await getDb().insert(schema.marketplaceOrders).values({ sessionHash: "s2", buyerLegalContextSnapshotId: blc.id, buyerAuthUserId: testAuthUuid, status: "intent_created" });
+    const [blc2] = await getDb().insert(schema.buyerLegalContextSnapshots).values({
+      businessName: "Pre-existing 2", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "1234567891"
+    }).returning({ id: schema.buyerLegalContextSnapshots.id });
+    const [blc3] = await getDb().insert(schema.buyerLegalContextSnapshots).values({
+      businessName: "Pre-existing 3", countryCode: "PL", taxIdentifierType: "NIP", taxIdentifierValue: "1234567892"
+    }).returning({ id: schema.buyerLegalContextSnapshots.id });
+    await getDb().insert(schema.marketplaceOrders).values({ sessionHash: "s1", buyerLegalContextSnapshotId: blc3.id, buyerAuthUserId: testAuthUuid, status: "intent_created" });
+    await getDb().insert(schema.marketplaceOrders).values({ sessionHash: "s2", buyerLegalContextSnapshotId: blc2.id, buyerAuthUserId: testAuthUuid, status: "intent_created" });
 
     // 9. Guest checkout persists NULL
     const { executeMarketplaceCheckout } = await import("@/lib/checkout/marketplace-checkout-core");
