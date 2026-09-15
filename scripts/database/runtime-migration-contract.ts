@@ -71,7 +71,8 @@ export const EXPECTED_POST_0015_TABLES = [
   "notification_outbox_events"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0015_TABLES;
+export const EXPECTED_POST_0016_TABLES = EXPECTED_POST_0015_TABLES;
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0016_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1373,4 +1374,19 @@ export const FINAL_POST_0015_PRODUCTION_FINGERPRINT: Record<string, TableContrac
 };
 
 export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0014_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0015_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0016_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0015_PRODUCTION_FINGERPRINT,
+  "marketplace_orders": {
+    ...FINAL_POST_0015_PRODUCTION_FINGERPRINT["marketplace_orders"],
+    columns: [
+      ...FINAL_POST_0015_PRODUCTION_FINGERPRINT["marketplace_orders"].columns,
+      { name: "buyer_auth_user_id", type: "uuid", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    explicitIndexes: [
+      ...FINAL_POST_0015_PRODUCTION_FINGERPRINT["marketplace_orders"].explicitIndexes,
+      { name: "idx_marketplace_orders_buyer_auth", method: "btree", expressions: "buyer_auth_user_id" }
+    ]
+  }
+};
+
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0016_PRODUCTION_FINGERPRINT;

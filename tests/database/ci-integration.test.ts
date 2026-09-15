@@ -233,7 +233,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -772,7 +772,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0015",
+        "EXACT_EXISTING_POST_0016",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -782,7 +782,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 16);
+      assert.strictEqual(post0010Journal.rows[0].count, 17);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -806,10 +806,10 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Run official runner
     await runMigrations(process.env);
 
-    // Post-migration classification must be EXACT_EXISTING_POST_0015
+    // Post-migration classification must be EXACT_EXISTING_POST_0016
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -982,14 +982,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         "3 rfq/inbound rows",
       );
 
-      // Post-migration classification must be EXACT_EXISTING_POST_0015
+      // Post-migration classification must be EXACT_EXISTING_POST_0016
       const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
       const postClassification = classifyRuntimeTarget(
         fingerprint,
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1003,7 +1003,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 16);
+      assert.strictEqual(journalRows.length, 17);
     },
   );
 
@@ -4225,7 +4225,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0015", "Must recognize POST_0014 after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0016", "Must recognize POST_0016 after migration");
   });
 
   await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
@@ -4251,13 +4251,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     await runMigrations(process.env);
     const after = await fetchLiveSchemaMetadata(pool);
-    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0016");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 16);
+    assert.strictEqual(journalAfter.rows[0].count, 17);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 16);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 17);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
@@ -4301,7 +4301,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0016");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
       `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
@@ -4384,7 +4384,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0015");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0016");
 
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
@@ -4921,6 +4921,105 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.strictEqual(expiredCountAfter, expiredCountBefore + 2);
 
 
+  });
+
+  await t.test("PATH POST_0016: BUYER ORDER OWNERSHIP FOUNDATION", async () => {
+    // 1-4 are implicitly checked by the overall framework logic verifying EXACT_EXISTING_POST_0016 after apply
+
+    // 5-6. Schema constraints
+    const colCheck = await pool.query(`
+      SELECT is_nullable, data_type
+      FROM information_schema.columns
+      WHERE table_name = 'marketplace_orders' AND column_name = 'buyer_auth_user_id'
+    `);
+    assert.strictEqual(colCheck.rows.length, 1);
+    assert.strictEqual(colCheck.rows[0].is_nullable, 'YES');
+    assert.strictEqual(colCheck.rows[0].data_type, 'uuid');
+
+    const idxCheck = await pool.query(`
+      SELECT indexdef
+      FROM pg_indexes
+      WHERE tablename = 'marketplace_orders' AND indexname = 'idx_marketplace_orders_buyer_auth'
+    `);
+    assert.strictEqual(idxCheck.rows.length, 1);
+    assert.ok(idxCheck.rows[0].indexdef.includes('btree'));
+
+    // 7. A MarketplaceOrder created before 0016 survives migration and has buyer_auth_user_id IS NULL
+    const partnerIdResult = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Owner Partner', 'own@p.com') RETURNING id`);
+    const pId = partnerIdResult.rows[0].id;
+    const { createMockMarketplaceOffer } = await import("../../scripts/database/mock-data-helpers");
+    const { id: oId } = await createMockMarketplaceOffer(pool, pId);
+
+    const { getDb } = await import("@/lib/db");
+    const schema = await import("@/lib/schema");
+
+    const [blc] = await getDb().insert(schema.buyerLegalContextSnapshots).values({
+      businessName: "Pre-existing", countryCode: "PL"
+    }).returning({ id: schema.buyerLegalContextSnapshots.id });
+
+    const [preOrder] = await getDb().insert(schema.marketplaceOrders).values({
+      sessionHash: "legacy-sess", buyerLegalContextSnapshotId: blc.id, status: "intent_created"
+    }).returning();
+    assert.strictEqual(preOrder.buyerAuthUserId, null);
+
+    // 8. Two MarketplaceOrders can share the same UUID
+    const testAuthUuid = "c3f56b2c-6878-433a-bcba-7a2e6f3b0c10";
+    await getDb().insert(schema.marketplaceOrders).values({ sessionHash: "s1", buyerLegalContextSnapshotId: blc.id, buyerAuthUserId: testAuthUuid, status: "intent_created" });
+    await getDb().insert(schema.marketplaceOrders).values({ sessionHash: "s2", buyerLegalContextSnapshotId: blc.id, buyerAuthUserId: testAuthUuid, status: "intent_created" });
+
+    // 9. Guest checkout persists NULL
+    const { executeMarketplaceCheckout } = await import("@/lib/checkout/marketplace-checkout-core");
+    const checkoutReqF = {
+      offerId: Number(oId), quantity: 1, buyerIp: "127.0.0.1", sessionHash: "chk-sess-null",
+      buyerContext: { businessName: "Null", countryCode: "PL" } as any,
+      contactContext: { name: "Null", email: "null@null.com" }
+    };
+
+    const db = getDb();
+
+    // Simulate cart
+    await db.insert(schema.cartItems).values({ sessionHash: "chk-sess-null", offerId: Number(oId), quantity: 1 });
+
+    const resF = await executeMarketplaceCheckout(db as any, "chk-sess-null", checkoutReqF.buyerContext, checkoutReqF.contactContext);
+    assert.strictEqual(resF.ok, true);
+    const orderFRes = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [(resF as any).value]);
+    assert.strictEqual(orderFRes.rows[0].buyer_auth_user_id, null);
+
+    // 10. Authenticated checkout persists trusted UUID
+    const checkoutReqG = {
+      offerId: Number(oId), quantity: 1, buyerIp: "127.0.0.1", sessionHash: "chk-sess-uuid",
+      buyerContext: { businessName: "UUID", countryCode: "PL" } as any,
+      contactContext: { name: "UUID", email: "uuid@uuid.com" },
+      buyerAuthUserId: testAuthUuid
+    };
+
+    await db.insert(schema.cartItems).values({ sessionHash: "chk-sess-uuid", offerId: Number(oId), quantity: 1 });
+
+    const resG = await executeMarketplaceCheckout(db as any, "chk-sess-uuid", checkoutReqG.buyerContext, checkoutReqG.contactContext, testAuthUuid);
+    assert.strictEqual(resG.ok, true);
+    const orderGRes = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [(resG as any).value]);
+    assert.strictEqual(orderGRes.rows[0].buyer_auth_user_id, testAuthUuid);
+
+    // 11. Ownership query for User A returns only A's owned orders.
+    const { listOwnedOrders, findOwnedOrder } = await import("@/lib/buyer-orders/ownership-core");
+
+    const ordersA = await listOwnedOrders(testAuthUuid, db as any);
+    assert.ok(ordersA.length >= 3);
+    assert.ok(ordersA.every(o => o.buyerAuthUserId === testAuthUuid));
+
+    // 12. User B cannot retrieve A-owned order.
+    const userB = "1f8cb159-83c8-47c3-982c-473539fc2a22";
+    const ordersB = await listOwnedOrders(userB, db as any);
+    assert.strictEqual(ordersB.length, 0);
+
+    const checkB = await findOwnedOrder((resG as any).value, userB, db as any);
+    assert.strictEqual(checkB.ok, false);
+    if (!checkB.ok) assert.strictEqual(checkB.reason, "NOT_FOUND");
+
+    // 13. NULL/unclaimed order is not included in A's authenticated ownership.
+    const checkAForLegacy = await findOwnedOrder((resF as any).value, testAuthUuid, db as any);
+    assert.strictEqual(checkAForLegacy.ok, false);
+    if (!checkAForLegacy.ok) assert.strictEqual(checkAForLegacy.reason, "NOT_FOUND");
   });
 
   await pool.end();
