@@ -216,7 +216,7 @@ export function CatalogNavigationClient({
         )}
       </HeaderDesktopNavigation>
 
-      <div className="relative xl:hidden">
+      <div className="relative min-[1600px]:hidden">
         {/* Trigger Button */}
         <button
           ref={triggerRef}

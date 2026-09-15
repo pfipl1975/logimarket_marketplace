@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 test("Header Layout Regression Tests", async (t) => {
-  await t.test("SiteHeader.tsx verifies desktop auth layout separated from primary nav and aligned to xl breakpoint", async () => {
+  await t.test("SiteHeader.tsx verifies desktop auth layout, row capacity, and min-[1600px] breakpoint", async () => {
     const filePath = path.join(__dirname, "../../src/components/SiteHeader.tsx");
     const content = await fs.readFile(filePath, "utf-8");
 
@@ -15,35 +15,49 @@ test("Header Layout Regression Tests", async (t) => {
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.partnerUrl/);
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.loginUrl/);
     
-    // 2-4. unauthenticated/authenticated desktop controls expose appropriate links in Account Controls aligned to xl breakpoint
+    // 7. second-row container no longer uses restrictive max-w-7xl contract for the navigation row
+    assert.doesNotMatch(content, /border-t border-white\/10 bg-brand-navy[\s\S]*?max-w-7xl/);
+    assert.match(content, /max-w-\[1600px\]/);
+
+    // 3-5. desktop controls expose appropriate links aligned to >=1600 (min-[1600px]) breakpoint
     assert.match(content, /<div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">/);
     assert.match(content, /navState\.showLogin && navLabels\.login/);
-    assert.match(content, /<Link href=\{navState\.loginUrl\} className="hidden xl:flex/);
+    assert.match(content, /<Link href=\{navState\.loginUrl\} className="hidden min-\[1600px\]:flex/);
     assert.match(content, /navState\.showPartnerPanel && navLabels\.partnerPanel/);
-    assert.match(content, /<Link href=\{navState\.partnerUrl\} className="hidden xl:flex/);
+    assert.match(content, /<Link href=\{navState\.partnerUrl\} className="hidden min-\[1600px\]:flex/);
     assert.match(content, /navState\.showLogout && navLabels\.logout/);
-    assert.match(content, /<div className="hidden xl:block shrink-0">\s*<PublicLogoutForm locale=\{locale\} label=\{navLabels\.logout\} variant="desktop" \/>/);
+    assert.match(content, /<div className="hidden min-\[1600px\]:block shrink-0">\s*<PublicLogoutForm locale=\{locale\} label=\{navLabels\.logout\} variant="desktop" \/>/);
 
-    // 5. mobile drawer receives auth components
+    // 6. mobile drawer receives auth components
     assert.match(content, /mobileAuthNode=\{/);
     assert.match(content, /<PublicLogoutForm.*variant="mobile"/);
+  });
+
+  await t.test("HeaderDesktopNavigation.tsx full desktop activation is >=1600", async () => {
+    const filePath = path.join(__dirname, "../../src/components/HeaderDesktopNavigation.tsx");
+    const content = await fs.readFile(filePath, "utf-8");
+
+    // 1. HeaderDesktopNavigation uses min-[1600px]:flex, not xl:flex
+    assert.match(content, /className="hidden min-\[1600px\]:flex/);
+    assert.doesNotMatch(content, /className="hidden xl:flex/);
   });
 
   await t.test("CatalogSearchSuggestions.tsx is responsive on desktop", async () => {
     const filePath = path.join(__dirname, "../../src/components/search/CatalogSearchSuggestions.tsx");
     const content = await fs.readFile(filePath, "utf-8");
 
-    // 7. search desktop layout no longer uses unconditional shrink-0 fixed-width contract
+    // 8. search desktop layout no longer uses unconditional shrink-0 fixed-width contract
     assert.doesNotMatch(content, /variant === "desktop"\s*\?\s*"hidden lg:block shrink-0 min-w-0 lg:w-48 xl:w-56 2xl:w-72 max-w-72"/);
     assert.match(content, /variant === "desktop"\s*\?\s*"hidden lg:block w-full h-full"/);
   });
 
-  await t.test("CatalogNavigationClient.tsx hamburger remains xl:hidden and renders mobileAuthNode", async () => {
+  await t.test("CatalogNavigationClient.tsx hamburger is active below 1600 and hidden >=1600", async () => {
     const filePath = path.join(__dirname, "../../src/components/catalog/CatalogNavigationClient.tsx");
     const content = await fs.readFile(filePath, "utf-8");
 
-    // Hamburger remains xl:hidden
-    assert.match(content, /className="relative xl:hidden"/);
+    // 2. Hamburger uses min-[1600px]:hidden, not xl:hidden
+    assert.match(content, /className="relative min-\[1600px\]:hidden"/);
+    assert.doesNotMatch(content, /className="relative xl:hidden"/);
     assert.match(content, /mobileAuthNode/);
     assert.match(content, /\{mobileAuthNode\}/);
   });

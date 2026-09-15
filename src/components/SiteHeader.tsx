@@ -82,7 +82,7 @@ export async function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
           <CatalogNavigationLoader
             locale={locale}
             desktopItems={desktopNavItems}
@@ -121,17 +121,17 @@ export async function SiteHeader({
 
           <div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">
             {navState.showLogin && navLabels.login && (
-              <Link href={navState.loginUrl} className="hidden xl:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+              <Link href={navState.loginUrl} className="hidden min-[1600px]:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
                 {navLabels.login}
               </Link>
             )}
             {navState.showPartnerPanel && navLabels.partnerPanel && (
-              <Link href={navState.partnerUrl} className="hidden xl:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+              <Link href={navState.partnerUrl} className="hidden min-[1600px]:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
                 {navLabels.partnerPanel}
               </Link>
             )}
             {navState.showLogout && navLabels.logout && (
-              <div className="hidden xl:block shrink-0">
+              <div className="hidden min-[1600px]:block shrink-0">
                 <PublicLogoutForm locale={locale} label={navLabels.logout} variant="desktop" />
               </div>
             )}
