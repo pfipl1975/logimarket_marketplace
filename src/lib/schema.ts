@@ -903,6 +903,7 @@ export const buyerLegalContextSnapshots = pgTable("buyer_legal_context_snapshots
 export const marketplaceOrders = pgTable("marketplace_orders", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   sessionHash: varchar("session_hash", { length: 64 }).notNull(),
+  buyerAuthUserId: uuid("buyer_auth_user_id"),
   buyerLegalContextSnapshotId: bigint("buyer_legal_context_snapshot_id", { mode: "number" }).notNull().unique().references(() => buyerLegalContextSnapshots.id),
   status: varchar("status", { length: 50 }).notNull().default("intent_created"),
   e2BuyerIntentAt: timestamp("e2_buyer_intent_at", { withTimezone: true }).notNull().defaultNow(),
@@ -913,6 +914,7 @@ export const marketplaceOrders = pgTable("marketplace_orders", {
 }, (t) => [
   check("chk_marketplace_orders_status", sql`((status)::text = ANY ((ARRAY['intent_created'::character varying, 'checkout_submitted'::character varying, 'pending_seller_review'::character varying, 'completed'::character varying, 'cancelled'::character varying])::text[]))`),
   index("idx_marketplace_orders_session").on(t.sessionHash),
+  index("idx_marketplace_orders_buyer_auth").on(t.buyerAuthUserId),
 ]);
 
 export const marketplaceOrderBuyerContactSnapshots = pgTable("marketplace_order_buyer_contact_snapshots", {

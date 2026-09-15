@@ -79,7 +79,8 @@ export async function executeMarketplaceCheckout(
   db: MarketplaceDatabase,
   sessionHash: string,
   buyerLegalContext: BuyerLegalContextInput,
-  buyerContact: BuyerContactInput
+  buyerContact: BuyerContactInput,
+  buyerAuthUserId?: string | null
 ): Promise<MarketplaceCheckoutResult> {
   try {
     return await db.transaction(async (tx) => {
@@ -216,6 +217,7 @@ export async function executeMarketplaceCheckout(
 
       const [moInsert] = await tx.insert(marketplaceOrders).values({
         sessionHash,
+        buyerAuthUserId: buyerAuthUserId ?? null,
         buyerLegalContextSnapshotId: blcInsert.id,
         status: "checkout_submitted",
       }).returning({ id: marketplaceOrders.id });
