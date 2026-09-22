@@ -1,0 +1,714 @@
+import type { CategoryContentMap } from "./types";
+
+export const enCategoryContent: CategoryContentMap = {
+  "regaly-i-systemy-skladowania": {
+    slug: "regaly-i-systemy-skladowania",
+    locale: "en",
+    definition: "Racking systems and warehouse structures constitute key intralogistic infrastructure designed for the safe and organized storage of goods at multiple height levels. These systems are customized to load unit characteristics, rotation requirements, and warehouse building technical specifications.",
+    applications: [
+      "High-bay warehouses and distribution centers",
+      "Buffer zones next to production lines",
+      "Cold storage and freezers (requiring space optimization)",
+      "Wholesalers and corporate archives"
+    ],
+    decisionFactors: [
+      "Type of stored load units (EUR pallets, industrial pallets, long goods, cartons, non-standard items)",
+      "Maximum load capacity per storage level and maximum load capacity of the racking column",
+      "Required inventory rotation principle (LIFO - e.g. drive-in racking, FIFO - e.g. pallet flow racking, selective racking)",
+      "Warehouse building dimensions, including clear height, structural column spacing, and floor load capacity",
+      "Operating aisle width (AST) and compatibility with reach trucks, VNA trucks, or counterbalance forklifts",
+      "Occupational safety requirements (upright protectors, backstop mesh panels, safety fencing)",
+      "Need for future racking system expansion or integration with warehouse automation",
+      "Technical condition and joints of the concrete floor slab affecting footplate anchoring",
+      "Fire resistance class of steel components and sprinkler system requirements (ESFR)",
+      "Influence of installation tolerances and upright verticality on structure stability per EN 15620"
+    ],
+    technicalParameters: [
+      { label: "Design standards", value: "EN 15620 / EN 15635 compliant" },
+      { label: "Max structure height", value: "Up to 30+ meters (in silo / clad-rack systems)" },
+      { label: "Allowable beam deflection", value: "L/200 (according to FEM standards)" },
+      { label: "Protective coating", value: "Powder coated (epoxy-polyester) / Hot-dip galvanized (HDG)" }
+    ],
+    faq: [
+      {
+        question: "How often should expert inspections of warehouse racking be carried out?",
+        answer: "According to the EN 15635 standard, expert inspections by a certified inspector must be performed at least once every 12 months. In addition, weekly internal visual inspections conducted by the designated PRSES (Person Responsible for Racking Safety) are required."
+      },
+      {
+        question: "What do racking damage classification levels (green, amber, red) mean?",
+        answer: "Damage levels define the deformation of uprights or braces. Green level indicates deflection within limits (safe to continue operating). Amber level requires part replacement at the next opportunity (no reloading allowed after unloading). Red level indicates a critical risk of collapse — the bay must be immediately offloaded and isolated from use."
+      },
+      {
+        question: "Is it permissible to use wire mesh decking on selective pallet racks?",
+        answer: "Yes, drop-in wire mesh decking is widely used to store non-standard or small loads and to prevent loose cartons from falling. It is also recommended by fire safety regulations because it allows water from sprinkler systems to flow freely."
+      }
+    ],
+    relatedCategoryEdges: [
+      {
+        targetSlug: "regaly-paletowe",
+        relationType: "parent_child",
+        priority: 1,
+        context: "Main group of racking systems for palletized storage"
+      },
+      {
+        targetSlug: "regaly-polkowe-i-antresole",
+        relationType: "parent_child",
+        priority: 2,
+        context: "Solutions for small parts storage and multi-level storage"
+      },
+      {
+        targetSlug: "wozki-i-transport-wewnetrzny",
+        relationType: "application_context",
+        priority: 3,
+        context: "Equipment used to operate racking systems"
+      },
+      {
+        targetSlug: "systemy-bezpieczenstwa-i-oznakowanie",
+        relationType: "safety_dependency",
+        priority: 4,
+        context: "Safety guards and protectors required by occupational safety standards for racking"
+      }
+    ]
+  },
+  "wozki-i-transport-wewnetrzny": {
+    slug: "wozki-i-transport-wewnetrzny",
+    locale: "en",
+    definition: "Material handling and internal transport equipment are machines designed to move, lift, and stack load units inside logistics and production facilities. They range from simple manual hand pallet trucks to advanced mechanical forklifts and autonomous guided vehicles.",
+    applications: [
+      "Unloading and loading transport units at loading docks",
+      "Horizontal transport of goods over long distances inside halls",
+      "Operation of high-bay racking systems (reach trucks, VNA)",
+      "Order picking in low and high storage zones",
+      "Supplying production lines with components"
+    ],
+    decisionFactors: [
+      "Maximum load weight (nominal capacity and residual capacity at maximum lift height) and load dimensions",
+      "Drive type (lead-acid electric, lithium-ion, LPG/Diesel internal combustion, manual hydraulic)",
+      "Environmental conditions (indoor use, outdoor use, cold storage/freezer, explosion-proof EX zones)",
+      "Required working aisle based on forklift turning radius and transported pallet length",
+      "Work intensity (number of shifts, need for fast battery exchange or opportunity charging)",
+      "Surface type and wheels (polyurethane wheels for smooth floors, solid resilient or pneumatic wheels for uneven terrain)",
+      "Occupational safety requirements and additional equipment (fork cameras, proximity radars, blue spot, speed limiters)",
+      "Compatibility with existing infrastructure (clearance height of doorways, parameters of loading docks and ramps)",
+      "Warranty service availability, response times (SLA), and access to original spare parts",
+      "Total Cost of Ownership (TCO), including energy consumption, charging cycles, and mandatory safety inspections"
+    ],
+    technicalParameters: [
+      { label: "Load capacity", value: "from 1000 kg to 8000+ kg (depending on class)" },
+      { label: "Battery standards", value: "Lead-acid (PzS) / Lithium-ion (Li-Ion, fast charging support)" },
+      { label: "Lift height", value: "Up to 13+ meters (for Reach Trucks and VNA system trucks)" },
+      { label: "Safety standard", value: "ISO 3691-1 compliant" }
+    ],
+    faq: [
+      {
+        question: "When is it recommended to replace lead-acid batteries with lithium-ion (Li-Ion) technology?",
+        answer: "Li-Ion technology is highly recommended for intensive, multi-shift operations. It allows opportunity charging (e.g. during 15-minute breaks), requires no dedicated charging rooms (no gas emissions), and needs zero maintenance. In contrast, lead-acid batteries require 8 hours of charging and 8 hours of cooling."
+      },
+      {
+        question: "What is the difference between a Reach Truck and a standard counterbalance forklift?",
+        answer: "A Reach Truck has a mast that extends forward, allowing it to retrieve pallets in narrow working aisles (often under 2.9 m). Traditional counterbalance forklifts require wider aisles (3.5 - 4.0 m) but are more versatile for outdoor operations, trailer loading, and uneven terrain."
+      },
+      {
+        question: "What safety equipment is recommended for forklifts operating in shared pedestrian zones?",
+        answer: "Recommended equipment includes optical warnings (e.g. blue spot / red zone lights projected on the floor), acoustic reverse alarms, speed limiting systems, and active pedestrian detection radars that automatically slow down the vehicle."
+      }
+    ],
+    relatedCategoryEdges: [
+      {
+        targetSlug: "wozki-widlowe-czolowe",
+        relationType: "parent_child",
+        priority: 1,
+        context: "Classic counterbalance forklifts with combustion or electric drive"
+      },
+      {
+        targetSlug: "wozki-paletowe-i-podnosnikowe",
+        relationType: "parent_child",
+        priority: 2,
+        context: "Electric and manual pallet trucks for horizontal transport"
+      },
+      {
+        targetSlug: "regaly-i-systemy-skladowania",
+        relationType: "compatibility",
+        priority: 3,
+        context: "Racking systems adapted to be operated by forklifts"
+      },
+      {
+        targetSlug: "systemy-bezpieczenstwa-i-oznakowanie",
+        relationType: "safety_dependency",
+        priority: 4,
+        context: "Safety mirrors, guardrails, and traffic zone marking for forklifts"
+      }
+    ]
+  },
+  "pojemniki-plastikowe-euro": {
+    slug: "pojemniki-plastikowe-euro",
+    locale: "en",
+    definition: "Euro plastic containers are standardized transport and storage packaging whose dimensions are optimized for the logistics module based on EUR pallet dimensions (1200x800 mm). Made of high-density polyethylene (HDPE) or polypropylene (PP), they provide dimensional stability, chemical resistance, and mechanical durability in harsh industrial conditions.",
+    applications: [
+      "Storage and transport of parts on production lines",
+      "Automated storage and retrieval systems (AS/RS, mini-load)",
+      "Order packing and picking in the e-commerce sector",
+      "Transport of food and pharmaceutical products (food-grade certified versions)"
+    ],
+    decisionFactors: [
+      "External dimensions (standard modules: 400x300, 600x400, 800x600 mm) and height",
+      "Wall and base design (solid for containment, perforated for ventilation, reinforced for heavy loads)",
+      "Material type (scratch-resistant PP, temperature-resistant HDPE)",
+      "Required accessories (drop-on lids, hinged lids, internal dividers)",
+      "Adaptation for use on conveyor belts and roller tracks (silent base)"
+    ],
+    technicalParameters: [
+      { label: "Standard specification", value: "Euro (DIN EN 13626 compliant)" },
+      { label: "Available base dimensions", value: "300x200, 400x300, 600x400, 800x600 mm" },
+      { label: "Material", value: "Polypropylene (PP) / High-density polyethylene (HDPE)" },
+      { label: "Temperature resistance", value: "-20°C to +60°C (PP), -40°C to +70°C (HDPE)" },
+      { label: "Maximum capacity", value: "from 15 kg to 50 kg (depending on base variant)" },
+      { label: "Container base", value: "Smooth, ribbed, double (reinforced)" },
+      { label: "Stackability", value: "Yes (structure allows stable stacking)" },
+      { label: "Antistatic versions (ESD)", value: "Available (with surface resistance 10^3 - 10^10 Ohm)" },
+      { label: "Labeling options", value: "RFID / Barcode I2of5 / Laser logo engraving" }
+    ],
+    faq: [
+      {
+        question: "Are Euro containers suitable for direct food contact?",
+        answer: "Yes, variants made from virgin HDPE or PP raw materials have certificates permitting food contact. Containers made of recycled plastics (regranulates) should not be used for unpackaged food."
+      },
+      {
+        question: "What is the difference between a reinforced base and a standard base?",
+        answer: "A reinforced base (ribbed or double) prevents container deflection under heavy loads. This is crucial in automated conveyor warehouses, where base deflection above limits could jam the roller system."
+      },
+      {
+        question: "Are Euro containers resistant to oils and chemicals?",
+        answer: "Yes, polypropylene and polyethylene exhibit very high resistance to most acids, alkalis, oils, and industrial greases."
+      },
+      {
+        question: "Are Euro containers recyclable?",
+        answer: "Yes, the containers are made from homogeneous thermoplastics (HDPE or PP), allowing 100% material recycling. Worn or damaged containers can be ground down and processed into new industrial regranulate."
+      }
+    ],
+    relatedCategoryEdges: [
+      {
+        targetSlug: "pojemniki-i-kuwety",
+        relationType: "parent_child",
+        priority: 1,
+        context: "Parent group of storage containers"
+      },
+      {
+        targetSlug: "regaly-polkowe-metalowe",
+        relationType: "compatibility",
+        priority: 2,
+        context: "Shelving systems optimized for Euro container dimensions"
+      },
+      {
+        targetSlug: "stoly-pakowe-i-kompletacyjne",
+        relationType: "application_context",
+        priority: 3,
+        context: "Containers used at picking and packing stations"
+      }
+    ]
+  },
+  "stoly-pakowe-i-kompletacyjne": {
+    slug: "stoly-pakowe-i-kompletacyjne",
+    locale: "en",
+    definition: "Packing benches and picking stations are ergonomic industrial workstations designed to optimize the process of parcel packing, content verification, and shipment preparation. Their modular design allows integration with stretch film holders, carton shelves, scales, and IT systems.",
+    applications: [
+      "Packing and shipping areas in e-commerce warehouses",
+      "Quality control stations on production lines",
+      "Picking stations in distribution centers",
+      "Courier parcel drop-off points"
+    ],
+    decisionFactors: [
+      "Worktop dimensions adapted to the size of packed goods",
+      "Height adjustment range (fixed, manual step-by-step, smooth electric under ergonomic standards)",
+      "Mechanical durability of the worktop and frame load capacity",
+      "Additional equipment: upper shelves for cartons, bubble wrap/stretch film holder, LED workstation lighting, power strips, monitor and scanner mount",
+      "Integration with gravity or powered roller conveyors"
+    ],
+    technicalParameters: [
+      { label: "Worktop width", value: "1200, 1600, 1800, 2000 mm" },
+      { label: "Worktop depth", value: "700, 800, 900 mm" },
+      { label: "Frame load capacity", value: "up to 300 kg (standard), up to 600 kg (heavy duty)" },
+      { label: "Worktop type", value: "Laminated MDF, worktop with oil-resistant rubber, hardwood multiplex plywood" },
+      { label: "Height adjustment", value: "Manual (750-1050 mm) or smooth electric" },
+      { label: "Frame finish", value: "Powder coated (steel structure)" },
+      { label: "ESD protection", value: "Optional (grounded worktops and frame per EN 61340-5-1)" },
+      { label: "Ergonomic certification", value: "Design compliant with ISO 6385 standards" }
+    ],
+    inquiryChecklist: {
+      description: "The checklist below applies only to custom-made, individual designs of packing benches and picking stations. It helps match ergonomic parameters and equipment to your specific warehouse processes:",
+      groups: [
+        {
+          groupLabel: "Workstation and ergonomics",
+          fields: [
+            "Required width and depth of the worktop (matched to carton sizes)",
+            "Height adjustment system (manual with locking bolts or electric with push button control)",
+            "Work type at the station (continuous standing, sit-stand with an industrial stool, sitting)",
+            "Required worktop cover (standard melamine laminate, thick multiplex plywood, ESD antistatic rubber, oil-resistant mat)"
+          ]
+        },
+        {
+          groupLabel: "Packing and picking process",
+          fields: [
+            "Expected volume and type of packed shipments (number of packages per hour)",
+            "Maximum weight of packages assembled and weighed on the bench",
+            "Method of supplying goods to the station (from Euro containers, directly from trolleys, from conveyor lines)",
+            "Method of receiving finished packages (stacking on pallets, sliding onto receiving table, conveyor)"
+          ]
+        },
+        {
+          groupLabel: "Bench structure and accessories",
+          fields: [
+            "Desired configuration of upper shelves (shelves with carton dividers, shelves for documents)",
+            "Packaging material dispensing systems (lower/upper holder for bubble wrap, corrugated paper, stretch film)",
+            "Built-in equipment (integrated scale in the worktop, drawers for small accessories, sliding cutter for film)",
+            "LED work lighting (mounted on a vertical frame with angle adjustment)"
+          ]
+        },
+        {
+          groupLabel: "Utilities and IT integration",
+          fields: [
+            "Required system mounts for IT devices (VESA monitor mount, keyboard mount, shelf for label printer)",
+            "Power and network installation requirements (number of 230V sockets, RJ45 LAN sockets, USB ports)",
+            "Integrated pneumatic connections (quick couplers for compressed air tools)",
+            "Compatibility with roller lines (need to build in a ball transfer unit or directional rollers)"
+          ]
+        },
+        {
+          groupLabel: "Deployment and modularity",
+          fields: [
+            "Total number of planned packing stations in the given warehouse zone",
+            "Possibility of future reconfiguration (requirement of modular structure based on perforated profiles)",
+            "Scope of assembly (delivery of pre-assembled benches or on-site assembly by service team)",
+            "Planned deployment schedule and expected commissioning date of workstations"
+          ]
+        }
+      ]
+    },
+    faq: [
+      {
+        question: "Can the packing bench be retrofitted with new accessories in the future?",
+        answer: "Yes, due to the modular design of vertical perforated profiles, most accessories (shelves, mounts, lighting) can be installed or their height adjusted at any time."
+      },
+      {
+        question: "When is it worth choosing a bench with electric height adjustment?",
+        answer: "Electric adjustment is key in multi-shift work environments where people of different heights work at one station, or when the process requires frequent changes from sitting to standing position to maintain ergonomics."
+      },
+      {
+        question: "When is it necessary to use ESD (antistatic) packing benches?",
+        answer: "An ESD configuration is mandatory when packing and assembling electronic components, microprocessors, and sensitive measuring devices. The grounded ESD worktop and conductive powder coating protect electronics from electrostatic discharge damage caused by operator movement."
+      }
+    ],
+    relatedCategoryEdges: [
+      {
+        targetSlug: "pojemniki-plastikowe-euro",
+        relationType: "compatibility",
+        priority: 1,
+        context: "Euro containers as standard equipment of packing bench shelves"
+      },
+      {
+        targetSlug: "antresole-i-podesty-magazynowe",
+        relationType: "application_context",
+        priority: 2,
+        context: "Packing areas are frequently positioned on warehouse mezzanines"
+      }
+    ]
+  },
+  "antresole-i-podesty-magazynowe": {
+    slug: "antresole-i-podesty-magazynowe",
+    locale: "en",
+    definition: "Warehouse mezzanines (work platforms) are self-supporting steel structures that allow full utilization of the clear height of a hall by creating additional storage levels or work zones. This solution multiplies the storage surface area without the need for expensive building extension.",
+    applications: [
+      "Multi-level small parts picking zones (e-commerce warehouses)",
+      "Increasing storage space for bulky goods",
+      "Assembly, production, or packing zones located above the main storage floor",
+      "Office or social spaces elevated on a platform to save ground floor space"
+    ],
+    decisionFactors: [
+      "Uniform load capacity of the platform (typically from 250 to 1000 kg/m²)",
+      "Clear height of the hall (optimally above 5 meters for a single platform level)",
+      "Column grid (span of the steel structure affecting free movement under the mezzanine)",
+      "Floor slab parameters in the hall (point load capacity of the mezzanine column baseplates)",
+      "Platform floor decking type (high-density P5 chipboard, welded mesh gratings)",
+      "Occupational safety and fire regulations (mesh/swing loading gates, stairs with handrails, sprinkler installation)"
+    ],
+    technicalParameters: [
+      { label: "Platform capacity", value: "250 - 1000+ kg/m²" },
+      { label: "Structure material", value: "Hot-rolled steel or cold-formed steel sections" },
+      { label: "Design standards", value: "Eurocode compliant (EN 1993)" },
+      { label: "Decking type", value: "P5 chipboard, trapezoidal sheet with board, steel grating" },
+      { label: "Clear height", value: "Customized individually (typically min. 2200 mm under the mezzanine)" },
+      { label: "Edge protection", value: "System guardrails (handrail, knee rail, toe board)" },
+      { label: "Loading gates", value: "Sliding, tilting (safety lock gates protecting operator)" },
+      { label: "Execution class (EXC)", value: "EXC2 (in accordance with EN 1090-2)" },
+      { label: "Assembly bolts", value: "Grade 8.8 / 10.9 (high-strength structural bolting assemblies)" }
+    ],
+    inquiryChecklist: {
+      description: "For the preparation of a complete engineering concept, structural calculations, and budget estimation of the warehouse mezzanine, please collect and provide the following technical data of the facility:",
+      groups: [
+        {
+          groupLabel: "Dimensions and spatial layout of the hall",
+          fields: [
+            "Planned external dimensions of the mezzanine (width x length in meters)",
+            "Exact clear height of the hall (from finished floor level to the lowest element of the roof structure or installations)",
+            "Required clear height under the mezzanine structure (free space for pedestrian or forklift movement)",
+            "Mezzanine location in the hall (free-standing, in a corner, adjacent to one or more walls)",
+            "Any construction or installation obstacles in the assembly zone (hall columns, air handling units, fire pipes, gates)"
+          ]
+        },
+        {
+          groupLabel: "Floor slab capacity and load requirements",
+          fields: [
+            "Desired uniform load capacity of the mezzanine floor (e.g. 300, 500, 800, or over 1000 kg/m²)",
+            "Type of planned storage on the platform (shelving, palletized goods, manual pallet truck traffic)",
+            "Allowable load capacity of the hall floor slab (thickness of the concrete slab, allowable point load of the column footplate in kN)",
+            "Method of anchoring the structure to the ground (does the floor have underfloor heating, underground installations)",
+            "Occurrence of specific point loads (e.g. heavy machinery, control cabinets, forklifts)"
+          ]
+        },
+        {
+          groupLabel: "Structure, equipment, and access",
+          fields: [
+            "Preferred spacing of support columns (is a wide span required for movement below or is a denser grid acceptable)",
+            "Number of staircases and their preferred location for evacuation purposes",
+            "Floor decking type (standard non-slip P5 chipboard, welded steel grating, checker plate)",
+            "Number of pallet drop-off zones (delivery points of loads from a forklift)",
+            "Type of safety gate at the pallet drop-off zone (tilting/cradle gate protecting the operator, sliding gate, safety chain)"
+          ]
+        },
+        {
+          groupLabel: "Safety, fire protection, and formalities",
+          fields: [
+            "Required safety barriers and guardrails (standard height 1100 mm, toe board, knee rail)",
+            "Fire protection requirements (fire resistance class of the structure R30, R60, or no requirement)",
+            "Integration with safety installations (need for a sprinkler system under the platform, emergency lighting)",
+            "Verification of evacuation routes and distances to emergency exits from mezzanine levels",
+            "Does the design require approval by an occupational safety and fire protection expert before installation"
+          ]
+        },
+        {
+          groupLabel: "Operations and deployment conditions",
+          fields: [
+            "Planned work shift pattern on the mezzanine (single-shift, multi-shift with high intensity)",
+            "Possibility of conducting installation works during normal warehouse operations (phased assembly)",
+            "Availability of space for unloading and storing structural elements before and during installation",
+            "Requirement of using specialized equipment for installation (e.g. forklifts, scissor lifts with specific drive types)",
+            "Expected start date of installation works and planned operational launch date of the mezzanine"
+          ]
+        }
+      ]
+    },
+    faq: [
+      {
+        question: "Does building a mezzanine require a building permit?",
+        answer: "Self-supporting warehouse platforms anchored only to the floor slab are treated as interior fixtures/structures. They typically do not require a building permit under building regulations (they do not alter the building envelope) as long as they do not interfere with the hall load-bearing structure. However, notification and project approval from occupational safety and fire protection experts are required."
+      },
+      {
+        question: "What platform floor decking is best?",
+        answer: "The most popular and economical solution is high-density P5 chipboard (often with a white underside to reflect light). For strict fire safety requirements, steel mesh gratings (allowing water penetration from roof sprinklers) or trapezoidal sheet metal covered with fire-resistant board are used."
+      },
+      {
+        question: "Can manual hand pallet trucks be operated on the mezzanine?",
+        answer: "Yes, provided the mezzanine is designed for appropriate dynamic and point loads (typically min. 500 kg/m² and appropriate decking resistant to wheel pressure, e.g. P5 board covered with sheet metal or plywood)."
+      },
+      {
+        question: "What safety gates (cradle gates) are recommended at mezzanine drop-off points?",
+        answer: "It is recommended to use tilting/cradle safety gates. They work on a counterweight principle: when the gate is open for the forklift on the edge, the operator's side is closed by a steel barrier. Once rotated, the operator gains safe access to the pallet while the outer edge becomes completely blocked."
+      }
+    ],
+    relatedCategoryEdges: [
+      {
+        targetSlug: "regaly-polkowe-metalowe",
+        relationType: "compatibility",
+        priority: 1,
+        context: "Shelving systems installed on mezzanine levels"
+      },
+      {
+        targetSlug: "stoly-pakowe-i-kompletacyjne",
+        relationType: "application_context",
+        priority: 2,
+        context: "Picking and packing workstations positioned on the mezzanine"
+      },
+      {
+        targetSlug: "systemy-bezpieczenstwa-i-oznakowanie",
+        relationType: "safety_dependency",
+        priority: 3,
+        context: "Safety handrails, mesh screens, and guardrails"
+      }
+    ]
+  },
+  "osprzet-do-wozkow-widlowych":   {
+    "slug": "osprzet-do-wozkow-widlowych",
+    "locale": "en",
+    "definition": "Forklift attachments are interchangeable devices mounted on the carriage or directly on the forks to extend a truck beyond standard pallet lifting. B2B selection depends on carriage class, residual capacity, hydraulic circuits and the load type being handled.",
+    "applications": [
+      "Handling non-palletized loads",
+      "Precise load positioning in racking and docks",
+      "Emptying bins and process containers",
+      "Maintenance and service tasks inside warehouses"
+    ],
+    "decisionFactors": [
+      "ISO/FEM carriage class and residual capacity",
+      "Mounting type: carriage-mounted, fork-mounted or adapter-based",
+      "Hydraulic requirements and available auxiliary circuits",
+      "Load type: palletized, cylindrical, fragile, unstable or bulk",
+      "Attachment weight and effect on truck stability"
+    ],
+    "inquiryChecklist": {
+      "description": "A forklift attachment inquiry should describe both the base truck and the handled load.",
+      "groups": [
+        {
+          "groupLabel": "Base truck",
+          "fields": [
+            "Truck manufacturer, model and nominal capacity",
+            "ISO/FEM carriage class and lifting height",
+            "Available hydraulic circuits and hose routing"
+          ]
+        },
+        {
+          "groupLabel": "Load and operation",
+          "fields": [
+            "Load weight, dimensions and center of gravity",
+            "Whether the load is palletized, cylindrical, fragile, bulk or unstable",
+            "Operation type: shifting, rotating, clamping, lifting, emptying or work at height"
+          ]
+        }
+      ]
+    },
+    "faq": [
+      {
+        "question": "Does every attachment fit every forklift?",
+        "answer": "No. The attachment must match the carriage class, residual capacity, hydraulics and operating environment of the truck."
+      },
+      {
+        "question": "Why is residual capacity critical?",
+        "answer": "Attachments add weight and move the load center. This reduces the real safe capacity of the truck and must be checked before use."
+      }
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-i-transport-wewnetrzny",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Material handling and internal transport context"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Common base trucks for forklift attachments"
+      },
+      {
+        "targetSlug": "widly-i-przedluzki",
+        "relationType": "parent_child",
+        "priority": 3,
+        "context": "Existing forks and extensions category"
+      },
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "safety_dependency",
+        "priority": 4,
+        "context": "Existing fork-mounted work cage category"
+      }
+    ]
+  },
+  "pozycjonery-i-przesuwy-boczne":   {
+    "slug": "pozycjonery-i-przesuwy-boczne",
+    "locale": "en",
+    "definition": "Fork positioners and side shifters allow the operator to adjust fork spacing or carriage position without repeatedly repositioning the truck.",
+    "decisionFactors": [
+      "Side-shift and fork-spacing range",
+      "ISO/FEM carriage compatibility",
+      "Residual capacity and operator visibility",
+      "Hydraulic requirements"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Base trucks for carriage-mounted positioning attachments"
+      },
+      {
+        "targetSlug": "regaly-i-systemy-skladowania",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Precise load placement in storage systems"
+      }
+    ]
+  },
+  "chwytaki-do-wozkow-widlowych":   {
+    "slug": "chwytaki-do-wozkow-widlowych",
+    "locale": "en",
+    "definition": "Forklift clamps handle non-palletized loads or products requiring controlled pressure.",
+    "decisionFactors": [
+      "Arm opening range",
+      "Contact pad shape and material",
+      "Clamping force and pressure control",
+      "Load stability without a pallet"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Base trucks for specialist clamps"
+      },
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 2,
+        "context": "Palletless handling and load securing context"
+      }
+    ]
+  },
+  "obrotnice-do-wozkow-widlowych":   {
+    "slug": "obrotnice-do-wozkow-widlowych",
+    "locale": "en",
+    "definition": "Forklift rotators turn a load or container in a controlled range, usually for emptying, mixing or changing load orientation.",
+    "decisionFactors": [
+      "Rotation range and speed",
+      "Load retention during rotation",
+      "Hydraulic requirements and attachment weight",
+      "Effect on load center"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "pojemniki-i-kuwety",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Bins and containers used in process handling"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Base trucks for rotators"
+      }
+    ]
+  },
+  "widly-i-przedluzki":   {
+    "slug": "widly-i-przedluzki",
+    "locale": "en",
+    "definition": "Forks and extensions are the primary load-bearing components of a forklift.",
+    "decisionFactors": [
+      "Carriage class and fork section",
+      "Fork length, thickness and wear",
+      "Open or closed fork-extension design",
+      "Whether weighing is part of the process"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "osprzet-do-wozkow-widlowych",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Parent forklift attachments category"
+      },
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 2,
+        "context": "Forklifts using replaceable forks"
+      }
+    ]
+  },
+  "systemy-push-pull-i-stabilizatory-ladunku":   {
+    "slug": "systemy-push-pull-i-stabilizatory-ladunku",
+    "locale": "en",
+    "definition": "Push-pull systems and load stabilizers support processes where pallets are replaced with slip-sheets or loads require additional top pressure.",
+    "decisionFactors": [
+      "Whether slip-sheet logistics are accepted",
+      "Required top pressure and stabilization",
+      "Number of pallets per cycle",
+      "Effect on truck length and manoeuvrability"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "opakowania-i-materialy-eksploatacyjne",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Slip sheets and load securing materials"
+      },
+      {
+        "targetSlug": "nosniki-ladunku",
+        "relationType": "comparison",
+        "priority": 2,
+        "context": "Pallet and alternative load-carrier comparison"
+      }
+    ]
+  },
+  "osprzet-wysiegnikowy-i-dzwigowy":   {
+    "slug": "osprzet-wysiegnikowy-i-dzwigowy",
+    "locale": "en",
+    "definition": "Jib and lifting attachments let forklifts handle suspended loads.",
+    "decisionFactors": [
+      "Jib length and hook position",
+      "Capacity at the selected hook point",
+      "Fork-mounted or carriage-mounted design",
+      "Protection against slipping from forks"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-czolowe",
+        "relationType": "compatibility",
+        "priority": 1,
+        "context": "Base trucks for lifting adapters"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Marking and securing lifting zones"
+      }
+    ]
+  },
+  "osprzet-budowlany-komunalny-i-rolniczy":   {
+    "slug": "osprzet-budowlany-komunalny-i-rolniczy",
+    "locale": "en",
+    "definition": "Construction, municipal and agricultural attachments extend forklifts beyond standard warehouse work for bulk materials, snow, waste and sweeping tasks.",
+    "decisionFactors": [
+      "Mechanical or hydraulic operation",
+      "Structure resistance to bulk material work",
+      "Fork-mounted locking method",
+      "Outdoor conditions and surface quality"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "wozki-widlowe-spalinowe",
+        "relationType": "application_context",
+        "priority": 1,
+        "context": "Common base trucks for outdoor work"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Marking of yard and municipal work zones"
+      }
+    ]
+  },
+  "bezpieczenstwo-i-praca-na-wysokosci":   {
+    "slug": "bezpieczenstwo-i-praca-na-wysokosci",
+    "locale": "en",
+    "definition": "Safety and work-at-height attachments include cages and platforms mounted to forklifts for short, controlled service tasks.",
+    "decisionFactors": [
+      "Cage locking method on forks",
+      "Guardrails, entry gate and anchor points",
+      "Allowed worker count and working load",
+      "Safety procedures and restrictions on personnel lifting"
+    ],
+    "relatedCategoryEdges": [
+      {
+        "targetSlug": "kosze-robocze-na-widly",
+        "relationType": "parent_child",
+        "priority": 1,
+        "context": "Existing fork work cage category"
+      },
+      {
+        "targetSlug": "systemy-bezpieczenstwa-i-oznakowanie",
+        "relationType": "safety_dependency",
+        "priority": 2,
+        "context": "Safety and marking context"
+      }
+    ]
+  }
+};

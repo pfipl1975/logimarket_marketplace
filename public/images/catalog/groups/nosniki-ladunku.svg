@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Pallet perspective top -->
+  <polygon points="8,18 24,10 40,18 24,26" fill="#141c2c" />
+
+  <!-- Pallet slats -->
+  <polygon points="12,17 24,11 26,12 14,18" fill="#147487" />
+  <polygon points="20,21 32,15 34,16 22,22" fill="#147487" />
+
+  <!-- Pallet blocks and bottom deck -->
+  <rect x="8" y="18" width="3" height="6" fill="#141c2c" />
+  <rect x="22.5" y="24" width="3" height="6" fill="#141c2c" />
+  <rect x="37" y="18" width="3" height="6" fill="#141c2c" />
+
+  <polygon points="8,24 24,30 40,24 40,26 24,32 8,26" fill="#147487" />
+
+  <!-- Yellow label RFID -->
+  <rect x="23" y="25" width="2" height="2" fill="#eab308" />
+</svg>

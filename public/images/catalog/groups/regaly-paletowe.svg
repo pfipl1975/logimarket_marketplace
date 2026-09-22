@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Pallet rack frames -->
+  <rect x="6" y="6" width="3" height="36" fill="#141c2c" />
+  <rect x="39" y="6" width="3" height="36" fill="#141c2c" />
+
+  <!-- Beams -->
+  <rect x="9" y="18" width="30" height="3" fill="#141c2c" />
+  <rect x="9" y="32" width="30" height="3" fill="#141c2c" />
+
+  <!-- Load on Level 1 -->
+  <rect x="12" y="10" width="10" height="8" rx="1" fill="#147487" />
+  <rect x="11" y="16" width="12" height="2" fill="#141c2c" />
+  <rect x="26" y="10" width="10" height="8" rx="1" fill="#147487" />
+  <rect x="25" y="16" width="12" height="2" fill="#141c2c" />
+
+  <!-- Load on Level 2 -->
+  <rect x="12" y="24" width="10" height="8" rx="1" fill="#147487" />
+  <rect x="11" y="30" width="12" height="2" fill="#141c2c" />
+  <rect x="26" y="24" width="10" height="8" rx="1" fill="#147487" />
+  <rect x="25" y="30" width="12" height="2" fill="#141c2c" />
+
+  <!-- Yellow safety protectors -->
+  <rect x="4" y="36" width="5" height="6" rx="1" fill="#eab308" />
+  <rect x="39" y="36" width="5" height="6" rx="1" fill="#eab308" />
+</svg>

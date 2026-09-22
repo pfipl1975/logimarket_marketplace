@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Shelving vertical framing -->
+  <rect x="8" y="8" width="3" height="34" fill="#141c2c" />
+  <rect x="26" y="8" width="3" height="34" fill="#141c2c" />
+
+  <!-- Shelves -->
+  <rect x="11" y="18" width="15" height="2" fill="#141c2c" />
+  <rect x="11" y="28" width="15" height="2" fill="#141c2c" />
+  <rect x="11" y="38" width="15" height="2" fill="#141c2c" />
+
+  <!-- Boxes on shelves -->
+  <rect x="13" y="12" width="5" height="6" fill="#147487" />
+  <rect x="19" y="14" width="5" height="4" fill="#147487" />
+
+  <rect x="14" y="22" width="8" height="6" fill="#147487" />
+
+  <!-- Mezzanine platform right hand side -->
+  <rect x="29" y="24" width="13" height="3" fill="#141c2c" />
+  <rect x="38" y="27" width="2" height="15" fill="#141c2c" />
+
+  <!-- Mezzanine railing -->
+  <rect x="29" y="14" width="2" height="10" fill="#147487" />
+  <rect x="40" y="14" width="2" height="10" fill="#147487" />
+  <rect x="29" y="14" width="13" height="2" fill="#eab308" />
+</svg>

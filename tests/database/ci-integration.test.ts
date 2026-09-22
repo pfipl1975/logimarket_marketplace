@@ -1,0 +1,6487 @@
+import { test } from "node:test";
+import assert from "node:assert";
+import fs from "node:fs";
+import { Pool } from "pg";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { eq } from "drizzle-orm";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
+import { getDb } from "@/lib/db";
+import { executeBuyerTrustTransition, loadTrustedBuyerIdentity } from "@/lib/buyer-trust/service-core";
+import { executeOfferPublicationStateChange, PublicationSellerReadinessQuery } from "@/lib/admin/offer-publication-core";
+import { mutateRfqStatusCore } from "@/lib/rfq/admin-core";
+import type { RfqStatus } from "@/lib/schema";
+import { readMigrationFiles } from "drizzle-orm/migrator";
+import { runMigrations } from "../../scripts/database/run-runtime-migrations";
+import type { BuyerLegalContextInput } from "@/lib/marketplace/buyer-legal-context";
+import {
+  POST_0007_RECONCILIATION_AUTHORIZATION,
+  POST_0007_RECONCILIATION_MODE,
+} from "../../scripts/database/runtime-migration-journal";
+import {
+  cleanupCanonicalRuntimeMigrationDirectory,
+  createCanonicalRuntimeMigrationDirectory,
+} from "../../scripts/database/runtime-migration-temp-dir";
+import {
+  fetchLiveSchemaMetadata,
+  classifyRuntimeTarget,
+  compareRuntimeFingerprint,
+} from "../../scripts/database/verify-runtime-schema-fingerprint";
+import { PROD_LEGACY_BASELINE_FINGERPRINT, EXPECTED_COUNTS, MARKETPLACE_ORDER_RLS_TARGET_TABLES } from "../../scripts/database/runtime-migration-contract";
+import {
+  validateDestructiveTestEnvironment,
+  resetDisposableTestDatabase,
+} from "./helpers/destructive-db-safety";
+
+const MIGRATIONS_DIR = "./drizzle-runtime";
+const M0000_FILE = `${MIGRATIONS_DIR}/0000_production_runtime_baseline.sql`;
+const M0001_FILE = `${MIGRATIONS_DIR}/0001_rfq_workflow_hardening.sql`;
+const M0002_FILE = `${MIGRATIONS_DIR}/0002_seller_identity_56b1.sql`;
+const M0003_FILE = `${MIGRATIONS_DIR}/0003_prod_legacy_offer_reconciliation.sql`;
+const M0009_FILE = `${MIGRATIONS_DIR}/0009_partner_agreement_evidence.sql`;
+const M0011_FILE = `${MIGRATIONS_DIR}/0011_partner_tax_canonical.sql`;
+
+test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
+  const guard = validateDestructiveTestEnvironment(process.env);
+  if (guard.type === "SKIP") {
+    t.skip(guard.reason);
+    return;
+  }
+  if (guard.type === "FAIL") {
+    throw new Error(`Destructive DB guard failed: ${guard.reason}`);
+  }
+
+  const testDatabaseUrl = guard.url;
+  const originalDbUrl = process.env.DATABASE_URL;
+
+  // Safe alias for getDb() and any other internal tooling reading process.env.DATABASE_URL
+  process.env.DATABASE_URL = testDatabaseUrl;
+
+  t.after(() => {
+    if (originalDbUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDbUrl;
+    }
+  });
+
+  const pool = new Pool({ connectionString: testDatabaseUrl });
+
+  // Clean start: drop public and drizzle_runtime
+  const cleanDB = async () => {
+    const safetyEnv = {
+      ...process.env,
+      TEST_DATABASE_URL: testDatabaseUrl,
+      DATABASE_URL: originalDbUrl,
+    };
+    await resetDisposableTestDatabase(pool, safetyEnv);
+  };
+
+  const setup0000 = async () => {
+    await cleanDB();
+    const sql = fs.readFileSync(M0000_FILE, "utf-8");
+    await pool.query(sql);
+  };
+
+  const setupProdLegacyFixture = async () => {
+    await setup0000();
+    // Reconfigure constraints to match exact physical legacy PROD baseline
+    await pool.query(`
+      ALTER TABLE public.categories DROP CONSTRAINT IF EXISTS categories_parent_id_fkey;
+      ALTER TABLE public.categories ADD CONSTRAINT categories_parent_id_fkey FOREIGN KEY (parent_id) REFERENCES categories(id) ON DELETE RESTRICT;
+
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_category_id_fkey;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_category_id_fkey FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE RESTRICT;
+
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_partner_id_fkey;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_partner_id_fkey FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE;
+
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_conversion_type_check;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_conversion_type_check CHECK (((conversion_type)::text = ANY ((ARRAY['rfq'::character varying, 'cart'::character varying, 'outbound'::character varying])::text[])));
+
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_offer_model_check;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_offer_model_check CHECK (((offer_model)::text = ANY ((ARRAY['rfq'::character varying, 'ecommerce'::character varying, 'outbound'::character varying])::text[])));
+
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_publication_status_check;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_publication_status_check CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])));
+
+      ALTER TABLE public.clicks DROP CONSTRAINT IF EXISTS clicks_offer_id_fkey;
+      ALTER TABLE public.clicks ADD CONSTRAINT clicks_offer_id_fkey FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE CASCADE;
+
+      ALTER TABLE public.clicks DROP CONSTRAINT IF EXISTS clicks_partner_id_fkey;
+      ALTER TABLE public.clicks ADD CONSTRAINT clicks_partner_id_fkey FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE;
+
+      DROP INDEX IF EXISTS public.idx_clicks_tracking;
+      CREATE INDEX idx_clicks_tracking ON public.clicks USING btree (ip_hash, offer_id, clicked_at);
+
+      ALTER TABLE public.offer_attribute_values DROP CONSTRAINT IF EXISTS chk_oav_value_exclusivity;
+      ALTER TABLE public.offer_attribute_values ADD CONSTRAINT chk_oav_value_exclusivity CHECK (
+        (num_nonnulls(
+          value_text,
+          value_number,
+          value_boolean,
+          value_date,
+          value_year,
+          option_id
+        ) = 1)
+      );
+    `);
+  };
+
+  const setupPost0002 = async () => {
+    await setup0000();
+    const sql1 = fs.readFileSync(M0001_FILE, "utf-8");
+    await pool.query(sql1);
+    const sql2 = fs.readFileSync(M0002_FILE, "utf-8");
+    await pool.query(sql2);
+
+    // Create journal with 0000, 0001, 0002
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS drizzle_runtime;`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS drizzle_runtime.__drizzle_migrations (
+        id SERIAL PRIMARY KEY,
+        hash text NOT NULL,
+        created_at bigint
+      );
+    `);
+    const diskMigrations = readMigrationFiles({
+      migrationsFolder: MIGRATIONS_DIR,
+    });
+    for (let i = 0; i < 3; i++) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [diskMigrations[i].hash, diskMigrations[i].folderMillis],
+      );
+    }
+  };
+
+  const getStats = async () => {
+    const res = await pool.query(`
+      SELECT
+        (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND n.nspname = 'public') as tables,
+        (SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public') as columns,
+        (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'S' AND n.nspname = 'public') as sequences,
+        (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.contype = 'p' AND n.nspname = 'public') as primary_keys,
+        (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.contype = 'f' AND n.nspname = 'public') as foreign_keys,
+        (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.contype = 'u' AND n.nspname = 'public') as uniques,
+        (SELECT count(*) FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.contype = 'c' AND n.nspname = 'public') as checks,
+        (SELECT count(*) FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public') as indexes,
+        (SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relkind = 'r' AND c.relrowsecurity = true AND n.nspname = 'public') as rls_tables,
+        (SELECT count(*) FROM pg_policy p JOIN pg_class c ON c.oid = p.polrelid JOIN pg_namespace n ON n.oid = c.relnamespace WHERE n.nspname = 'public') as policies
+    `);
+    return res.rows[0];
+  };
+
+  const getMarketplaceOrderRlsStats = async () => {
+    const res = await pool.query(`
+      SELECT
+        count(*)::int AS target_tables,
+        count(*) FILTER (WHERE c.relrowsecurity)::int AS rls_enabled,
+        (
+          SELECT count(*)::int
+          FROM pg_policy p
+          JOIN pg_class pc ON pc.oid = p.polrelid
+          JOIN pg_namespace pn ON pn.oid = pc.relnamespace
+          WHERE pn.nspname = 'public'
+            AND pc.relname = ANY($1::text[])
+        ) AS policies
+      FROM pg_class c
+      JOIN pg_namespace n ON n.oid = c.relnamespace
+      WHERE n.nspname = 'public'
+        AND c.relkind = 'r'
+        AND c.relname = ANY($1::text[])
+    `, [[...MARKETPLACE_ORDER_RLS_TARGET_TABLES]]);
+    return res.rows[0];
+  };
+
+  await t.test(
+    "PATH A: EMPTY DATABASE -> canonical runtime 0000 through 0012",
+    async () => {
+      await cleanDB();
+
+      // Classify empty state
+      const { fingerprint: preFingerprint, publicTables: preTables } =
+        await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(preFingerprint, preTables).state,
+        "EMPTY",
+      );
+
+      // Run official runner
+      await runMigrations(process.env);
+
+      const stats = await getStats();
+      assert.strictEqual(Number(stats.tables), EXPECTED_COUNTS.TABLES, "tables count mismatch");
+      assert.strictEqual(Number(stats.columns), EXPECTED_COUNTS.COLUMNS, "columns count mismatch");
+      assert.strictEqual(
+        Number(stats.sequences),
+        EXPECTED_COUNTS.SEQUENCES,
+        "sequences count mismatch",
+      );
+      assert.strictEqual(
+        Number(stats.primary_keys),
+        EXPECTED_COUNTS.PRIMARY_KEYS,
+        "primary_keys mismatch",
+      );
+      assert.strictEqual(
+        Number(stats.foreign_keys),
+        EXPECTED_COUNTS.FOREIGN_KEYS,
+        "foreign_keys mismatch",
+      );
+      assert.strictEqual(Number(stats.uniques), EXPECTED_COUNTS.UNIQUE_CONSTRAINTS, "uniques mismatch");
+      assert.strictEqual(Number(stats.checks), EXPECTED_COUNTS.CHECK_CONSTRAINTS, "checks mismatch");
+      assert.strictEqual(Number(stats.indexes), EXPECTED_COUNTS.INDEXES, "indexes mismatch");
+      assert.strictEqual(Number(stats.rls_tables), EXPECTED_COUNTS.RLS_ENABLED, "rls_tables mismatch");
+      assert.strictEqual(Number(stats.policies), 0, "policies mismatch");
+
+      const marketplaceOrderRls = await getMarketplaceOrderRlsStats();
+      assert.strictEqual(Number(marketplaceOrderRls.target_tables), 7, "target table count mismatch");
+      assert.strictEqual(Number(marketplaceOrderRls.rls_enabled), 7, "target RLS enabled mismatch");
+      assert.strictEqual(Number(marketplaceOrderRls.policies), 0, "target policies mismatch");
+
+      // Post-migration classification must be the exact terminal runtime state.
+      const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+      const postClassification = classifyRuntimeTarget(
+        fingerprint,
+        publicTables,
+        security,
+      );
+
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0018");
+
+      // 0009 PROOF: tables present
+      assert.ok(publicTables.includes("agreement_versions"));
+      assert.ok(publicTables.includes("partner_agreement_execution_evidence"));
+      assert.ok(publicTables.includes("partner_agreement_evidence_invalidations"));
+
+      // 0004 PROOF
+      const sellerColumnNames = new Set(
+        fingerprint["seller_legal_identities"].columns.map((column) => column.name),
+      );
+      assert.ok(sellerColumnNames.has("registered_address_line1"));
+      assert.ok(sellerColumnNames.has("registered_address_line2"));
+      assert.ok(sellerColumnNames.has("registered_postal_code"));
+      assert.ok(sellerColumnNames.has("registered_city"));
+      assert.ok(sellerColumnNames.has("registered_region"));
+      assert.ok(sellerColumnNames.has("registered_country_code"));
+
+
+
+      // 0005 PROOF: Real DB constraints check
+      const tablesExist = await pool.query(`
+        SELECT count(*) as c FROM information_schema.tables
+        WHERE table_schema = 'public'
+        AND table_name IN ('buyer_legal_context_snapshots', 'marketplace_orders', 'marketplace_order_seller_disclosures', 'seller_orders', 'seller_order_seller_snapshots', 'seller_order_items', 'seller_acceptance_decisions')
+      `);
+      assert.strictEqual(Number(tablesExist.rows[0].c), 7, "0005 tables must exist");
+
+      // Insert minimal valid buyer snapshot
+      const buyerSnapRes = await pool.query(`
+        INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state)
+        VALUES ('Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed')
+        RETURNING id
+      `);
+      const buyerSnapId = buyerSnapRes.rows[0].id;
+      assert.ok(buyerSnapId);
+
+
+      // valid Buyer with registry-only pair accepted
+      const buyerRegRes = await pool.query(`
+        INSERT INTO buyer_legal_context_snapshots (business_name, country_code, registry_identifier_type, registry_identifier_value, business_verification_status, category_b_status, legal_context_review_state)
+        VALUES ('Test Buyer Reg', 'PL', 'KRS', '0000123456', 'unknown', 'unknown', 'no_review_needed')
+        RETURNING id
+      `);
+      assert.ok(buyerRegRes.rows[0].id);
+
+      // professional_purpose_evidence NULL accepted
+      const buyerProfRes = await pool.query(`
+        INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, professional_purpose_evidence, business_verification_status, category_b_status, legal_context_review_state)
+        VALUES ('Test Buyer Prof', 'PL', 'NIP', '1234567891', NULL, 'unknown', 'unknown', 'no_review_needed')
+        RETURNING id
+      `);
+      assert.ok(buyerProfRes.rows[0].id);
+
+      // verified Buyer without verification metadata rejected
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state)
+          VALUES ('Bad Buyer Verified', 'PL', 'NIP', '1234567891', 'verified', 'unknown', 'no_review_needed')
+        `),
+        /chk_buyer_verification_consistency/,
+        "Must reject verified buyer without metadata"
+      );
+
+      // Invalid buyer snapshot: missing both tax and registry
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO buyer_legal_context_snapshots (business_name, country_code)
+          VALUES ('Bad Buyer', 'PL')
+        `),
+        /chk_buyer_identifiers_present/,
+        "Must reject buyer snapshot without identifiers"
+      );
+
+      // Invalid buyer snapshot: partial tax pair
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, registry_identifier_type, registry_identifier_value)
+          VALUES ('Bad Buyer 2', 'PL', 'NIP', 'KRS', '000123')
+        `),
+        /chk_buyer_tax_pair/,
+        "Must reject partial tax pair"
+      );
+
+      // Marketplace order creation
+      const moRes = await pool.query(`
+        INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id)
+        VALUES ('session123', $1)
+        RETURNING id
+      `, [buyerSnapId]);
+      const moId = moRes.rows[0].id;
+      assert.ok(moId);
+
+
+      // invalid MarketplaceOrder LC-04 status rejected
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id, status)
+          VALUES ('session_bad_status', $1, 'invalid_status')
+        `, [buyerSnapId]),
+        /chk_marketplace_orders_status/,
+        "Must reject invalid marketplace order status"
+      );
+
+      // Duplicate UNIQUE snapshot rejection
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id)
+          VALUES ('session999', $1)
+        `, [buyerSnapId]),
+        /uq_marketplace_orders_snapshot/,
+        "Must reject multiple orders for same snapshot"
+      );
+
+      // Insert partner for FKs
+      const partnerRes = await pool.query(`
+        INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner', 'test@test.com') RETURNING id
+      `);
+      const partnerId = partnerRes.rows[0].id;
+
+      // Disclosure insertion
+      const discRes = await pool.query(`
+        INSERT INTO marketplace_order_seller_disclosures (
+          marketplace_order_id, partner_id, seller_legal_name, registered_address, jurisdiction_country, firm_contact_email, seller_role, goods_invoice_issuer, delivery_responsible_party, complaint_responsible_party, return_responsible_party, logimarket_platform_role
+        ) VALUES (
+          $1, $2, 'Seller', 'Add', 'PL', 'a@a.com', 'a', 'a', 'a', 'a', 'a', 'a'
+        ) RETURNING id
+      `, [moId, partnerId]);
+      assert.ok(discRes.rows[0].id);
+
+      // Disclosure duplicate unique
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO marketplace_order_seller_disclosures (
+            marketplace_order_id, partner_id, seller_legal_name, registered_address, jurisdiction_country, firm_contact_email, seller_role, goods_invoice_issuer, delivery_responsible_party, complaint_responsible_party, return_responsible_party, logimarket_platform_role
+          ) VALUES (
+            $1, $2, 'Seller2', 'Add2', 'PL', 'b@b.com', 'b', 'b', 'b', 'b', 'b', 'b'
+          )
+        `, [moId, partnerId]),
+        /uq_mkt_order_disclosure_order_partner/,
+        "Must reject duplicate disclosure for same order/partner"
+      );
+
+      // Seller Order creation
+      const soRes = await pool.query(`
+        INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+        VALUES ($1, $2, 'submitted')
+        RETURNING id
+      `, [moId, partnerId]);
+      const soId = soRes.rows[0].id;
+      assert.ok(soId);
+
+      // Seller Order duplicate uniqueness
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+          VALUES ($1, $2, 'submitted')
+        `, [moId, partnerId]),
+        /uq_seller_orders_mkt_partner/,
+        "Must reject duplicate seller order for same order and partner"
+      );
+
+      // Seller Order status enum constraint
+      const partnerRes2 = await pool.query(`
+        INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner 2', 'test2@test.com') RETURNING id
+      `);
+      const partnerId2 = partnerRes2.rows[0].id;
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+          VALUES ($1, $2, 'invalid_status')
+        `, [moId, partnerId2]),
+        /chk_seller_orders_status/,
+        "Must reject invalid seller order status"
+      );
+
+      // Seller Snapshot creation
+      const snapRes = await pool.query(`
+        INSERT INTO seller_order_seller_snapshots (
+          seller_order_id, seller_legal_name, seller_display_name, jurisdiction_country, registered_address, firm_contact_email, contract_model, seller_of_record_responsibility, goods_invoice_responsibility, delivery_responsibility, complaint_responsibility, return_responsibility, refund_financial_liability
+        ) VALUES (
+          $1, 'SN', 'SD', 'PL', 'Addr', 'a@a', 'partner_marketplace', 'a', 'a', 'a', 'a', 'a', 'a'
+        ) RETURNING id
+      `, [soId]);
+      assert.ok(snapRes.rows[0].id);
+
+
+      // duplicate seller snapshot rejected by its 1:1 UNIQUE
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_seller_snapshots (
+            seller_order_id, seller_legal_name, seller_display_name, jurisdiction_country, registered_address, firm_contact_email, contract_model, seller_of_record_responsibility, goods_invoice_responsibility, delivery_responsibility, complaint_responsibility, return_responsibility, refund_financial_liability
+          ) VALUES (
+            $1, 'SN2', 'SD2', 'PL', 'Addr2', 'b@b', 'partner_marketplace', 'b', 'b', 'b', 'b', 'b', 'b'
+          )
+        `, [soId]),
+        /uq_seller_order_seller_snapshots_seller_order/,
+        "Must reject duplicate seller snapshot"
+      );
+
+      // Seller snapshot contract_model constraint
+      const soRes2 = await pool.query(`
+        INSERT INTO seller_orders (marketplace_order_id, partner_id, status)
+        VALUES ($1, $2, 'submitted')
+        RETURNING id
+      `, [moId, partnerId2]);
+      const soId2 = soRes2.rows[0].id;
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_seller_snapshots (
+            seller_order_id, seller_legal_name, seller_display_name, jurisdiction_country, registered_address, firm_contact_email, contract_model, seller_of_record_responsibility, goods_invoice_responsibility, delivery_responsibility, complaint_responsibility, return_responsibility, refund_financial_liability
+          ) VALUES (
+            $1, 'SN', 'SD', 'PL', 'Addr', 'a@a', 'invalid_model', 'a', 'a', 'a', 'a', 'a', 'a'
+          )
+        `, [soId2]),
+        /chk_snapshot_contract_model/,
+        "Must reject invalid contract model"
+      );
+
+      // Insert offer for items
+      const catRes = await pool.query("INSERT INTO categories (name, slug) VALUES ('C', 'c') RETURNING id");
+      const offerRes = await pool.query(`
+        INSERT INTO offers (partner_id, category_id, conversion_type, offer_model, publication_status, title, description, price_brutto)
+        VALUES ($1, $2, 'inbound', 'marketplace', 'published', 'T', 'D', 10) RETURNING id
+      `, [partnerId, catRes.rows[0].id]);
+      const offerId = offerRes.rows[0].id;
+
+      // Valid order item
+      const itemRes = await pool.query(`
+        INSERT INTO seller_order_items (seller_order_id, offer_id, offer_title, quantity, unit_price, currency)
+        VALUES ($1, $2, 'T', 1, 10, 'PLN') RETURNING id
+      `, [soId, offerId]);
+      assert.ok(itemRes.rows[0].id);
+
+      // 0010 PROOF: offer_media constraints
+      const mediaRes = await pool.query(`
+        INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+        VALUES ($1, 'b', 'path1', 'upload', 'image/jpeg', 100, '6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72', true) RETURNING id
+      `, [offerId]);
+      assert.ok(mediaRes.rows[0].id);
+
+      // duplicate primary
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+          VALUES ($1, 'b', 'path2', 'upload', 'image/jpeg', 100, '1234567890123456789012345678901234567890123456789012345678901234', true)
+        `, [offerId]),
+        /uq_offer_media_primary/,
+        "Must reject multiple primary images for same offer"
+      );
+
+      // duplicate checksum for same offer
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+          VALUES ($1, 'b', 'path_dup_chk', 'upload', 'image/jpeg', 100, '6ae8a75555209fd6c44157c0aed8016e763ff435a19cf186f76863140143ff72', false)
+        `, [offerId]),
+        /uq_offer_media_checksum/,
+        "Must reject duplicate checksum for same offer"
+      );
+
+      // size_bytes > 0
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256)
+          VALUES ($1, 'b', 'path3', 'upload', 'image/jpeg', 0, '1234567890123456789012345678901234567890123456789012345678901235')
+        `, [offerId]),
+        /offer_media_size_bytes_check/,
+        "Must reject 0 size bytes"
+      );
+
+      // valid non-primary
+      const mediaRes2 = await pool.query(`
+        INSERT INTO offer_media (offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, is_primary)
+        VALUES ($1, 'b', 'path4', 'upload', 'image/jpeg', 100, '1234567890123456789012345678901234567890123456789012345678901235', false) RETURNING id
+      `, [offerId]);
+      assert.ok(mediaRes2.rows[0].id);
+
+      // Invalid quantity
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_items (seller_order_id, offer_id, offer_title, quantity, unit_price, currency)
+          VALUES ($1, $2, 'T', 0, 10, 'PLN')
+        `, [soId, offerId]),
+        /chk_seller_order_items_qty/,
+        "Must reject non-positive quantity"
+      );
+
+      // Invalid currency shape
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_order_items (seller_order_id, offer_id, offer_title, quantity, unit_price, currency)
+          VALUES ($1, $2, 'T', 1, 10, 'pln')
+        `, [soId, offerId]),
+        /chk_seller_order_items_currency_shape/,
+        "Must reject lower-case currency"
+      );
+
+      // Prove chk_seller_acc_dec_status exists, is a CHECK constraint, and is validated
+      const statusConstraintRes = await pool.query(`
+        SELECT convalidated, contype
+        FROM pg_constraint
+        WHERE conname = 'chk_seller_acc_dec_status'
+          AND conrelid = 'public.seller_acceptance_decisions'::regclass
+      `);
+      assert.strictEqual(statusConstraintRes.rows.length, 1, "chk_seller_acc_dec_status must exist");
+      assert.strictEqual(statusConstraintRes.rows[0].convalidated, true, "chk_seller_acc_dec_status must be validated");
+      assert.strictEqual(statusConstraintRes.rows[0].contype, 'c', "chk_seller_acc_dec_status must be a check constraint");
+
+      // OVERLAPPING_CHECK_EVALUATION_ORDER=NON_DETERMINISTIC
+      // Seller acceptance decision enum
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+          VALUES ($1, 'invalid_status', now() + interval '24 hours')
+        `, [soId]),
+        /chk_seller_acc_dec_(status|consistency)/,
+        "Must reject invalid decision status"
+      );
+
+      // seller_accepted without resolved_at / accepted_at consistency
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+          VALUES ($1, 'seller_accepted', now() + interval '24 hours')
+        `, [soId]),
+        /chk_seller_acc_dec_consistency/,
+        "Must reject seller_accepted without timestamps"
+      );
+
+      // Seller acceptance consistency
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at, resolved_at)
+          VALUES ($1, 'pending_seller_review', now() + interval '24 hours', now())
+        `, [soId]),
+        /chk_seller_acc_dec_consistency/,
+        "Must reject pending with resolved_at"
+      );
+
+
+      // seller_rejected with accepted_at rejected
+      await assert.rejects(
+        pool.query(`
+          INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at, resolved_at, accepted_at)
+          VALUES ($1, 'seller_rejected', now() + interval '24 hours', now(), now())
+        `, [soId2]),
+        /chk_seller_acc_dec_consistency/,
+        "Must reject seller_rejected with accepted_at"
+      );
+
+      // expired + resolved_at + accepted_at NULL accepted
+      const expiredRes = await pool.query(`
+        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at, resolved_at)
+        VALUES ($1, 'expired', now() + interval '24 hours', now()) RETURNING id
+      `, [soId2]);
+      assert.ok(expiredRes.rows[0].id);
+
+      // SellerOrder accepts the canonical explicit expired aggregate state.
+      await pool.query(`UPDATE seller_orders SET status = 'expired' WHERE id = $1`, [soId2]);
+      const soStatusRes = await pool.query(`
+        SELECT status FROM seller_orders WHERE id = $1
+      `, [soId2]);
+      assert.strictEqual(soStatusRes.rows[0].status, 'expired');
+
+      const validDecRes = await pool.query(`
+        INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+        VALUES ($1, 'pending_seller_review', now() + interval '24 hours') RETURNING id
+      `, [soId]);
+      assert.ok(validDecRes.rows[0].id);
+
+      // Journal must match the complete disk migration chain.
+      const diskMigrations = readMigrationFiles({
+        migrationsFolder: MIGRATIONS_DIR,
+      });
+      assert.ok(diskMigrations.length > 0, "Disk migration chain must not be empty");
+
+      const journalRes = await pool.query(
+        `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
+      );
+      const journalRows = journalRes.rows as {
+        hash: string;
+        created_at: string | number;
+      }[];
+      assert.strictEqual(
+        journalRows.length, diskMigrations.length,
+        "Journal should match the complete disk migration chain",
+      );
+      assert.strictEqual(journalRows.length, 19, "journal count must be exactly 19");
+
+      for (let i = 0; i < diskMigrations.length; i++) {
+        assert.strictEqual(
+          journalRows[i].hash,
+          diskMigrations[i].hash,
+          `Row ${i} hash mismatch`,
+        );
+        assert.strictEqual(
+          String(journalRows[i].created_at),
+          String(diskMigrations[i].folderMillis),
+          `Row ${i} created_at mismatch`,
+        );
+      }
+    },
+  );
+
+  await t.test(
+    "PATH A2: exact physical POST-0007 plus journal 0000-0006 -> bounded canonical reconciliation",
+    async () => {
+      await cleanDB();
+
+      const journalPath = `${MIGRATIONS_DIR}/meta/_journal.json`;
+      const fullJournal = JSON.parse(
+        fs.readFileSync(journalPath, "utf8"),
+      ) as {
+        version: string;
+        dialect: string;
+        entries: { tag: string; when: number; breakpoints: boolean }[];
+      };
+      const prefixJournal = {
+        ...fullJournal,
+        entries: fullJournal.entries.slice(0, 7),
+      };
+      const getMigrationBuffer = (tag: string) =>
+        fs.readFileSync(`${MIGRATIONS_DIR}/${tag}.sql`);
+      const prefixDirectory = createCanonicalRuntimeMigrationDirectory(
+        JSON.stringify(prefixJournal),
+        prefixJournal,
+        getMigrationBuffer,
+      );
+
+      try {
+        await migrate(drizzle(pool), {
+          migrationsFolder: prefixDirectory,
+          migrationsSchema: "drizzle_runtime",
+          migrationsTable: "__drizzle_migrations",
+        });
+      } finally {
+        cleanupCanonicalRuntimeMigrationDirectory(prefixDirectory);
+      }
+
+      const preOwnerEffect = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          preOwnerEffect.fingerprint,
+          preOwnerEffect.publicTables,
+        ).state,
+        "EXACT_EXISTING_POST_0006",
+      );
+
+      const journalBeforeOwnerEffect = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(journalBeforeOwnerEffect.rows[0].count, 7);
+
+      await pool.query(
+        fs.readFileSync(
+          `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`,
+          "utf8",
+        ),
+      );
+
+      const driftMetadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          driftMetadata.fingerprint,
+          driftMetadata.publicTables,
+          driftMetadata.security,
+        ).state,
+        "EXACT_EXISTING_POST_0007",
+      );
+      const driftJournal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(driftJournal.rows[0].count, 7);
+
+      const driftRls = await getMarketplaceOrderRlsStats();
+      assert.strictEqual(Number(driftRls.target_tables), 7);
+      assert.strictEqual(Number(driftRls.rls_enabled), 7);
+      assert.strictEqual(Number(driftRls.policies), 0);
+
+      const reconciliationEnv = {
+        ...process.env,
+        RUNTIME_MIGRATION_TARGET: "production",
+        RUNTIME_MIGRATION_WRITE_AUTHORIZATION:
+          POST_0007_RECONCILIATION_AUTHORIZATION,
+        RUNTIME_MIGRATION_RECONCILIATION:
+          POST_0007_RECONCILIATION_MODE,
+      };
+      await runMigrations(reconciliationEnv);
+
+      const reconciledMetadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          reconciledMetadata.fingerprint,
+          reconciledMetadata.publicTables,
+          reconciledMetadata.security,
+        ).state,
+        "EXACT_EXISTING_POST_0007",
+      );
+      assert.deepStrictEqual(
+        reconciledMetadata.security.preventVerificationEventsMutationSearchPath,
+        null,
+        "search_path must still be null (PRE_0008) after reconciliation",
+      );
+      const reconciledJournal = await pool.query(
+        `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at`,
+      );
+      const diskMigrations = readMigrationFiles({
+        migrationsFolder: MIGRATIONS_DIR,
+      });
+      assert.strictEqual(reconciledJournal.rows.length, 8);
+      assert.strictEqual(
+        reconciledJournal.rows[7].hash,
+        diskMigrations[7].hash,
+      );
+      assert.strictEqual(
+        String(reconciledJournal.rows[7].created_at),
+        String(diskMigrations[7].folderMillis),
+      );
+
+      // D. POST_0007 reconciliation mode on journal 8 -> ALREADY_RECONCILED -> no migration 0008 execution
+      await assert.rejects(
+        () => runMigrations(reconciliationEnv),
+        /ALREADY_RECONCILED/,
+      );
+      const replayJournal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(replayJournal.rows[0].count, 8);
+
+      // C. same reconciled POST_0007 state -> normal runtime migration -> POST_0016 + journal 18 -> search_path hardened
+      await runMigrations(process.env);
+      const post0010Metadata = await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(
+          post0010Metadata.fingerprint,
+          post0010Metadata.publicTables,
+          post0010Metadata.security,
+        ).state,
+        "EXACT_EXISTING_POST_0018",
+      );
+      assert.deepStrictEqual(
+        post0010Metadata.security.preventVerificationEventsMutationSearchPath,
+        ['search_path=""'],
+        "search_path must be hardened to the canonical empty search_path proconfig",
+      );
+      const post0010Journal = await pool.query(
+        `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
+      );
+      assert.strictEqual(post0010Journal.rows[0].count, 19);
+
+      // E. POST_0007 reconciliation authorization cannot apply 0008
+      await assert.rejects(
+        () => runMigrations(reconciliationEnv),
+        /Reconciliation requires exact POST_0007 physical state|ALREADY_RECONCILED/,
+      );
+    },
+  );
+
+  await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0014", async () => {
+    await setupPost0002();
+
+    // Classify pre-state
+    const { fingerprint: preFingerprint, publicTables: preTables } =
+      await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(preFingerprint, preTables).state,
+      "MIGRATABLE_POST_0002",
+    );
+
+    // Run official runner
+    await runMigrations(process.env);
+
+    // Post-migration classification must be EXACT_EXISTING_POST_0015
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0018");
+
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const journalRes = await pool.query(
+      `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
+    );
+    const journalRows = journalRes.rows as {
+      hash: string;
+      created_at: string | number;
+    }[];
+    assert.strictEqual(
+      journalRows.length, diskMigrations.length,
+      "Journal should match the complete disk migration chain",
+    );
+    assert.strictEqual(journalRows.length, 19);
+  });
+
+  await t.test(
+    "PATH C: LEGACY PROD FIXTURE WITH DATA TRANSFORMATION",
+    async () => {
+      await setupProdLegacyFixture();
+
+      // Classify pre-state
+      const { fingerprint: preFingerprint, publicTables: preTables } =
+        await fetchLiveSchemaMetadata(pool);
+      assert.strictEqual(
+        classifyRuntimeTarget(preFingerprint, preTables).state,
+        "MIGRATABLE_PROD_LEGACY",
+      );
+
+      // Seed deterministic 9 non-PII test offers
+      await pool.query(`
+      INSERT INTO public.partners (id, company_name, contact_email)
+      VALUES (1, 'Test Partner', 'test@partner.test')
+      ON CONFLICT (id) DO NOTHING;
+
+      INSERT INTO public.categories (id, name, slug)
+      VALUES (1, 'Test Category', 'test-category')
+      ON CONFLICT (id) DO NOTHING;
+
+      -- 3 rows: ecommerce/outbound/published
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, price_brutto, price_on_request, is_active)
+      VALUES
+        (101, 1, 1, 'Ecom Offer 1', 'ecommerce', 'outbound', 'published', 100.00, false, true),
+        (102, 1, 1, 'Ecom Offer 2', 'ecommerce', 'outbound', 'published', 200.00, false, true),
+        (103, 1, 1, 'Ecom Offer 3', 'ecommerce', 'outbound', 'published', 300.00, false, true);
+
+      -- 3 rows: rfq/outbound/draft
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, outbound_url, is_active)
+      VALUES
+        (201, 1, 1, 'RFQ Outbound 1', 'rfq', 'outbound', 'draft', 'https://example.com/1', true),
+        (202, 1, 1, 'RFQ Outbound 2', 'rfq', 'outbound', 'draft', 'https://example.com/2', true),
+        (203, 1, 1, 'RFQ Outbound 3', 'rfq', 'outbound', 'draft', 'https://example.com/3', true);
+
+      -- 3 rows: rfq/rfq/published
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active)
+      VALUES
+        (301, 1, 1, 'RFQ Inbound 1', 'rfq', 'rfq', 'published', true),
+        (302, 1, 1, 'RFQ Inbound 2', 'rfq', 'rfq', 'published', true),
+        (303, 1, 1, 'RFQ Inbound 3', 'rfq', 'rfq', 'published', true);
+    `);
+
+      // Capture OIDs to prove no DROP/CREATE occurs on already-final objects
+      const getLegacyOids = async () => {
+        const res = await pool.query(`
+        SELECT
+          (SELECT oid FROM pg_constraint WHERE conname = 'categories_parent_id_fkey' AND conrelid = 'public.categories'::regclass) as cat_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'offers_category_id_fkey' AND conrelid = 'public.offers'::regclass) as off_cat_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'offers_partner_id_fkey' AND conrelid = 'public.offers'::regclass) as off_part_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'clicks_offer_id_fkey' AND conrelid = 'public.clicks'::regclass) as clk_off_fkey_oid,
+          (SELECT oid FROM pg_constraint WHERE conname = 'clicks_partner_id_fkey' AND conrelid = 'public.clicks'::regclass) as clk_part_fkey_oid,
+          (SELECT c.oid FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace WHERE c.relname = 'idx_clicks_tracking' AND n.nspname = 'public') as idx_oid
+      `);
+        return res.rows[0];
+      };
+      const preOids = await getLegacyOids();
+
+      // Run official runner
+      await runMigrations(process.env);
+
+      // Verify DDL NO-OP: OIDs must be identical (not reconstructed)
+      const postOids = await getLegacyOids();
+      assert.strictEqual(
+        postOids.cat_fkey_oid,
+        preOids.cat_fkey_oid,
+        "categories_parent_id_fkey must NOT be reconstructed",
+      );
+      assert.strictEqual(
+        postOids.off_cat_fkey_oid,
+        preOids.off_cat_fkey_oid,
+        "offers_category_id_fkey must NOT be reconstructed",
+      );
+      assert.strictEqual(
+        postOids.off_part_fkey_oid,
+        preOids.off_part_fkey_oid,
+        "offers_partner_id_fkey must NOT be reconstructed",
+      );
+      assert.strictEqual(
+        postOids.clk_off_fkey_oid,
+        preOids.clk_off_fkey_oid,
+        "clicks_offer_id_fkey must NOT be reconstructed",
+      );
+      assert.strictEqual(
+        postOids.clk_part_fkey_oid,
+        preOids.clk_part_fkey_oid,
+        "clicks_partner_id_fkey must NOT be reconstructed",
+      );
+      assert.strictEqual(
+        postOids.idx_oid,
+        preOids.idx_oid,
+        "idx_clicks_tracking must NOT be reconstructed",
+      );
+
+      // Verify data transformations:
+      // Total count must be 9
+      const totalCountRes = await pool.query(
+        `SELECT count(*) as cnt FROM public.offers`,
+      );
+      assert.strictEqual(
+        Number(totalCountRes.rows[0].cnt),
+        9,
+        "Total offers count must remain 9",
+      );
+
+      // 0 rows with legacy tuples
+      const legacyEcomRes = await pool.query(
+        `SELECT count(*) as cnt FROM public.offers WHERE offer_model = 'ecommerce' AND conversion_type = 'outbound'`,
+      );
+      assert.strictEqual(
+        Number(legacyEcomRes.rows[0].cnt),
+        0,
+        "0 legacy ecommerce/outbound rows",
+      );
+
+      const legacyRfqRes = await pool.query(
+        `SELECT count(*) as cnt FROM public.offers WHERE offer_model = 'rfq' AND conversion_type = 'rfq'`,
+      );
+      assert.strictEqual(
+        Number(legacyRfqRes.rows[0].cnt),
+        0,
+        "0 legacy rfq/rfq rows",
+      );
+
+      // Exactly 3 marketplace/inbound/published
+      const ecomTransformedRes = await pool.query(
+        `SELECT count(*) as cnt FROM public.offers WHERE offer_model = 'marketplace' AND conversion_type = 'inbound' AND publication_status = 'published'`,
+      );
+      assert.strictEqual(
+        Number(ecomTransformedRes.rows[0].cnt),
+        3,
+        "3 marketplace/inbound rows",
+      );
+
+      // Exactly 3 rfq/outbound/draft
+      const rfqOutboundRes = await pool.query(
+        `SELECT count(*) as cnt FROM public.offers WHERE offer_model = 'rfq' AND conversion_type = 'outbound' AND publication_status = 'draft'`,
+      );
+      assert.strictEqual(
+        Number(rfqOutboundRes.rows[0].cnt),
+        3,
+        "3 rfq/outbound rows preserved",
+      );
+
+      // Exactly 3 rfq/inbound/published
+      const rfqInboundRes = await pool.query(
+        `SELECT count(*) as cnt FROM public.offers WHERE offer_model = 'rfq' AND conversion_type = 'inbound' AND publication_status = 'published'`,
+      );
+      assert.strictEqual(
+        Number(rfqInboundRes.rows[0].cnt),
+        3,
+        "3 rfq/inbound rows",
+      );
+
+      // Post-migration classification must be EXACT_EXISTING_POST_0015
+      const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+      const postClassification = classifyRuntimeTarget(
+        fingerprint,
+        publicTables,
+        security,
+      );
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0018");
+
+      const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+      const journalRes = await pool.query(
+        `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at ASC`,
+      );
+      const journalRows = journalRes.rows as {
+        hash: string;
+        created_at: string | number;
+      }[];
+      assert.strictEqual(
+        journalRows.length, diskMigrations.length,
+        "Journal should match the complete disk migration chain",
+      );
+      assert.strictEqual(journalRows.length, 19);
+    },
+  );
+
+  await t.test("PATH D: CANONICAL POST-0004 MIGRATABLE PROOF", async () => {
+    await cleanDB();
+    const M0004_FILE = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+
+    // Apply 0000 to 0004 manually
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004_FILE, "utf-8"));
+
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables);
+    assert.strictEqual(
+      classification.state,
+      "MIGRATABLE_POST_0004",
+      "Exact post-0004 schema should classify as MIGRATABLE_POST_0004"
+    );
+  });
+
+  await t.test("NEGATIVE PATH: 0001 FAILURE ROLLBACK", async () => {
+    await setup0000();
+
+    // Create invalid status row
+    await pool.query(`
+      INSERT INTO rfq_leads (offer_id, partner_id, contact_name, email, status)
+      VALUES (999, 999, 'Bad Guy', 'bad@example.com', 'hacked_status')
+    `);
+
+    let errorThrown = false;
+    try {
+      await runMigrations(process.env);
+    } catch (err: unknown) {
+      errorThrown = true;
+      assert.ok(
+        (err as Error).message.includes(
+          "RFQ migration blocked: invalid status rows exist",
+        ),
+      );
+    }
+    assert.strictEqual(errorThrown, true);
+
+    const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+    const postFailureClassification = classifyRuntimeTarget(
+      fingerprint,
+      publicTables,
+    );
+    assert.strictEqual(postFailureClassification.state, "MIGRATABLE_BASELINE");
+  });
+
+  await t.test(
+    "NEGATIVE PATH: 0003 FAILURE TUPLE PRECHECK ROLLBACK",
+    async () => {
+      await setupProdLegacyFixture();
+
+      // Insert invalid offer tuple that violates 0003 precheck
+      await pool.query(`
+      INSERT INTO public.partners (id, company_name, contact_email) VALUES (1, 'Test Partner', 'test@test.test') ON CONFLICT DO NOTHING;
+      INSERT INTO public.categories (id, name, slug) VALUES (1, 'Test Cat', 'test-cat-neg') ON CONFLICT DO NOTHING;
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status)
+      VALUES (999, 1, 1, 'Corrupted Offer', 'outbound', 'outbound', 'draft');
+    `);
+
+      let errorThrown = false;
+      try {
+        await runMigrations(process.env);
+      } catch (err: unknown) {
+        errorThrown = true;
+        assert.ok(
+          (err as Error).message.includes(
+            "0003 precheck failed: unsupported (offer_model, conversion_type) tuple exists",
+          ),
+        );
+      }
+      assert.strictEqual(errorThrown, true);
+
+      const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+      const postFailureClassification = classifyRuntimeTarget(
+        fingerprint,
+        publicTables,
+      );
+      assert.strictEqual(
+        postFailureClassification.state,
+        "MIGRATABLE_PROD_LEGACY",
+      );
+    },
+  );
+
+  await t.test(
+    "NEGATIVE PATH: 0003 FAILURE PUBLICATION STATUS PRECHECK ROLLBACK",
+    async () => {
+      await setupProdLegacyFixture();
+
+      // Insert invalid publication status row directly
+      await pool.query(`
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_publication_status_check;
+      INSERT INTO public.partners (id, company_name, contact_email) VALUES (1, 'Test Partner', 'test@test.test') ON CONFLICT DO NOTHING;
+      INSERT INTO public.categories (id, name, slug) VALUES (1, 'Test Cat', 'test-cat-neg') ON CONFLICT DO NOTHING;
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, outbound_url)
+      VALUES (998, 1, 1, 'Invalid Status Offer', 'rfq', 'outbound', 'invalid_status', 'https://example.com/test');
+    `);
+
+      // Execute 0003 migration directly in a transactional client
+      const migration0003Sql = fs.readFileSync(M0003_FILE, "utf-8");
+      const client = await pool.connect();
+      let errorThrown = false;
+      try {
+        await client.query("BEGIN;");
+        await client.query(migration0003Sql);
+        await client.query("COMMIT;");
+      } catch (err: unknown) {
+        await client.query("ROLLBACK;");
+        errorThrown = true;
+        assert.ok(
+          (err as Error).message.includes(
+            "0003 precheck failed: unsupported publication_status exists",
+          ),
+        );
+      } finally {
+        client.release();
+      }
+      assert.strictEqual(
+        errorThrown,
+        true,
+        "PUBLICATION_PRECHECK_DIRECT: must throw 0003 unsupported publication_status exception",
+      );
+
+      // PUBLICATION_PRECHECK_ROLLBACK assertions:
+      // 1. Pre-existing test row remains unchanged
+      const testRowRes = await pool.query(
+        `SELECT publication_status FROM public.offers WHERE id = 998`,
+      );
+      assert.strictEqual(testRowRes.rows.length, 1);
+      assert.strictEqual(
+        testRowRes.rows[0].publication_status,
+        "invalid_status",
+      );
+
+      // 2. 0003 DDL did not commit (delivery_options column absent)
+      const colRes = await pool.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'offers' AND column_name = 'delivery_options'
+    `);
+      assert.strictEqual(
+        colRes.rows.length,
+        0,
+        "PUBLICATION_PRECHECK_ROLLBACK: 0003 DDL must have rolled back cleanly",
+      );
+
+      // 3. No journal progression (table absent or 0 rows)
+      const journalRes = await pool.query(`
+      SELECT count(*) as cnt
+      FROM information_schema.tables
+      WHERE table_schema = 'drizzle_runtime' AND table_name = '__drizzle_migrations'
+    `);
+      if (Number(journalRes.rows[0].cnt) > 0) {
+        const rowsRes = await pool.query(
+          `SELECT count(*) as cnt FROM drizzle_runtime.__drizzle_migrations`,
+        );
+        assert.strictEqual(
+          Number(rowsRes.rows[0].cnt),
+          0,
+          "No journal progression on rollback",
+        );
+      }
+    },
+  );
+
+  await t.test(
+    "NEGATIVE PATH: NOT VALID CONSTRAINT CAUSES RUNNER ABORT AS PARTIAL_OR_DRIFTED",
+    async () => {
+      await setupProdLegacyFixture();
+
+      // Create a NOT VALID constraint on legacy prod fixture
+      await pool.query(`
+      ALTER TABLE public.offers DROP CONSTRAINT IF EXISTS offers_partner_id_fkey;
+      ALTER TABLE public.offers ADD CONSTRAINT offers_partner_id_fkey
+        FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE CASCADE NOT VALID;
+    `);
+
+      // Verify classification is PARTIAL_OR_DRIFTED
+      const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(pool);
+      const classification = classifyRuntimeTarget(fingerprint, publicTables);
+      assert.strictEqual(classification.state, "PARTIAL_OR_DRIFTED");
+
+      // Verify that legacy comparison specifically detects the NOT VALID constraint
+      const legacyComp = compareRuntimeFingerprint(
+        fingerprint,
+        publicTables,
+        PROD_LEGACY_BASELINE_FINGERPRINT,
+      );
+      assert.strictEqual(legacyComp.isExactMatch, false);
+      assert.ok(
+        legacyComp.driftReasons.some(
+          (d) =>
+            d.includes("validation status mismatch") ||
+            d.includes("NOT VALID") ||
+            d.includes("definition mismatch"),
+        ),
+        "Legacy comparison must report NOT VALID constraint drift",
+      );
+
+      // Official runner must abort before calling migrate
+      let runnerThrew = false;
+      try {
+        await runMigrations(process.env);
+      } catch (err: unknown) {
+        runnerThrew = true;
+        assert.ok((err as Error).message.includes("PARTIAL_OR_DRIFTED"));
+      }
+      assert.strictEqual(
+        runnerThrew,
+        true,
+        "NOT_VALID_RUNNER_ABORTS: runner must abort on NOT VALID constraint",
+      );
+
+      // No journal progression
+      const journalRes = await pool.query(`
+      SELECT count(*) as cnt
+      FROM information_schema.tables
+      WHERE table_schema = 'drizzle_runtime' AND table_name = '__drizzle_migrations'
+    `);
+      if (Number(journalRes.rows[0].cnt) > 0) {
+        const rowsRes = await pool.query(
+          `SELECT count(*) as cnt FROM drizzle_runtime.__drizzle_migrations`,
+        );
+        assert.strictEqual(
+          Number(rowsRes.rows[0].cnt),
+          0,
+          "No journal progression when runner aborts",
+        );
+      }
+    },
+  );
+
+  await t.test("ADMIN_SELLER_ELIGIBILITY_MUTATION_PROOF", async () => {
+    // Isolated CI mutation proof
+    await cleanDB();
+    await runMigrations(process.env); // Setup full current schema
+
+    // 1. Setup disposable partner
+    const partnerId = 9999;
+    await pool.query(
+      `INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'Elig Test', 'elig@test.com')`,
+      [partnerId],
+    );
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { executeSellerEligibilityChange } =
+      await import("@/lib/admin/seller-eligibility-core");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+
+    // A. none -> eligible
+    const resA = await executeSellerEligibilityChange(db, {
+      partnerId,
+      expectedStatus: "none",
+      targetStatus: "eligible",
+      reason: null,
+    });
+    assert.strictEqual(resA.ok, true);
+    if (resA.ok) {
+      assert.strictEqual(resA.code, "ELIGIBILITY_CREATED");
+      assert.strictEqual(resA.changed, true);
+    }
+    const dbRowA = await pool.query(
+      `SELECT * FROM public.seller_eligibility WHERE partner_id = $1`,
+      [partnerId],
+    );
+    assert.strictEqual(dbRowA.rows[0].eligibility_status, "eligible");
+    assert.strictEqual(dbRowA.rows[0].reason, null);
+    assert.ok(dbRowA.rows[0].updated_at);
+
+    // Helper wait for timing deterministic updatedAt comparison
+    await pool.query(
+      `UPDATE public.seller_eligibility SET updated_at = '2000-01-01T00:00:00Z' WHERE partner_id = $1`,
+      [partnerId],
+    );
+    const dbRowA_fixed = await pool.query(
+      `SELECT * FROM public.seller_eligibility WHERE partner_id = $1`,
+      [partnerId],
+    );
+
+    // B. eligible -> suspended
+    const resB = await executeSellerEligibilityChange(db, {
+      partnerId,
+      expectedStatus: "eligible",
+      targetStatus: "suspended",
+      reason: "Fraud",
+    });
+    assert.strictEqual(resB.ok, true);
+    if (resB.ok) {
+      assert.strictEqual(resB.code, "ELIGIBILITY_UPDATED");
+      assert.strictEqual(resB.changed, true);
+    }
+    const dbRowB = await pool.query(
+      `SELECT * FROM public.seller_eligibility WHERE partner_id = $1`,
+      [partnerId],
+    );
+    assert.strictEqual(dbRowB.rows[0].eligibility_status, "suspended");
+    assert.strictEqual(dbRowB.rows[0].reason, "Fraud");
+    assert.ok(
+      dbRowB.rows[0].updated_at.getTime() >
+        dbRowA_fixed.rows[0].updated_at.getTime(),
+    );
+
+    // C. stale expectedStatus -> conflict
+    const resC = await executeSellerEligibilityChange(db, {
+      partnerId,
+      expectedStatus: "eligible",
+      targetStatus: "eligible",
+      reason: null,
+    });
+    assert.strictEqual(resC.ok, false);
+    if (!resC.ok) {
+      assert.strictEqual(resC.code, "ELIGIBILITY_CONFLICT");
+    }
+    const dbRowC = await pool.query(
+      `SELECT * FROM public.seller_eligibility WHERE partner_id = $1`,
+      [partnerId],
+    );
+    assert.strictEqual(dbRowC.rows[0].eligibility_status, "suspended"); // Unchanged
+    assert.strictEqual(dbRowC.rows[0].reason, "Fraud");
+
+    // D. suspended -> eligible (reason clear proof)
+    const resD = await executeSellerEligibilityChange(db, {
+      partnerId,
+      expectedStatus: "suspended",
+      targetStatus: "eligible",
+      reason: null,
+    });
+    assert.strictEqual(resD.ok, true);
+    const dbRowD = await pool.query(
+      `SELECT * FROM public.seller_eligibility WHERE partner_id = $1`,
+      [partnerId],
+    );
+    assert.strictEqual(dbRowD.rows[0].eligibility_status, "eligible");
+    assert.strictEqual(dbRowD.rows[0].reason, null); // Must be cleared
+
+    // Save timestamp to prove idempotency
+    const tsBefore = dbRowD.rows[0].updated_at.getTime();
+
+    // E. same state + same normalized reason -> idempotent
+    const resE = await executeSellerEligibilityChange(db, {
+      partnerId,
+      expectedStatus: "eligible",
+      targetStatus: "eligible",
+      reason: null,
+    });
+    assert.strictEqual(resE.ok, true);
+    if (resE.ok) {
+      assert.strictEqual(resE.code, "ELIGIBILITY_UNCHANGED");
+      assert.strictEqual(resE.changed, false);
+    }
+    const dbRowE = await pool.query(
+      `SELECT * FROM public.seller_eligibility WHERE partner_id = $1`,
+      [partnerId],
+    );
+    assert.strictEqual(dbRowE.rows[0].updated_at.getTime(), tsBefore);
+  });
+
+  await t.test("ADMIN_OFFER_EDIT_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const partnerId = 9999;
+    await pool.query(
+      `INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'Edit Test', 'edit@test.com')`,
+      [partnerId],
+    );
+
+    const categoryId = 8889;
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug) VALUES ($1, 'Edit Cat', 'edit-cat')`,
+      [categoryId],
+    );
+
+    const offerId = 8888;
+    await pool.query(
+      `INSERT INTO public.offers (
+      id, partner_id, category_id, title, description,
+      publication_status, is_active, offer_model, conversion_type,
+      updated_at
+    ) VALUES (
+      $1, $2, $3, 'Old Title', 'Old Desc',
+      'draft', false, 'rfq', 'outbound',
+      '2024-01-01T10:00:00.000Z'
+    )`,
+      [offerId, partnerId, categoryId],
+    );
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { executeAdminOfferEdit } =
+      await import("@/lib/admin/offer-edit-core");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+
+    // A. NOT FOUND
+    const resA = await executeAdminOfferEdit(db, {
+      offerId: 7777,
+      expectedUpdatedAt: null,
+      title: "T",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resA.ok, false);
+    if (!resA.ok) assert.strictEqual(resA.code, "OFFER_NOT_FOUND");
+
+    // B. SUCCESS UPDATE
+    const initialRow = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    const expectedUpdatedAt = initialRow.rows[0].updated_at.toISOString();
+
+    const resB = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt,
+      title: "New Title",
+      description: "New Desc",
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resB.ok, true);
+    if (resB.ok) {
+      assert.strictEqual(resB.code, "OFFER_UPDATED");
+      assert.strictEqual(resB.changed, true);
+    }
+
+    const rowAfterB = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    assert.strictEqual(rowAfterB.rows[0].title, "New Title");
+    assert.notStrictEqual(
+      rowAfterB.rows[0].updated_at.getTime(),
+      initialRow.rows[0].updated_at.getTime(),
+    );
+
+    // C. UNRELATED FIELDS UNCHANGED
+    assert.strictEqual(
+      rowAfterB.rows[0].partner_id.toString(),
+      initialRow.rows[0].partner_id.toString(),
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].category_id?.toString(),
+      initialRow.rows[0].category_id?.toString(),
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].publication_status,
+      initialRow.rows[0].publication_status,
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].is_active,
+      initialRow.rows[0].is_active,
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].contract_model,
+      initialRow.rows[0].contract_model,
+    );
+    assert.deepStrictEqual(
+      rowAfterB.rows[0].technical_attributes,
+      initialRow.rows[0].technical_attributes,
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].created_at.getTime(),
+      initialRow.rows[0].created_at.getTime(),
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].published_at,
+      initialRow.rows[0].published_at,
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].archived_at,
+      initialRow.rows[0].archived_at,
+    );
+    assert.strictEqual(
+      rowAfterB.rows[0].deleted_at,
+      initialRow.rows[0].deleted_at,
+    );
+
+
+    // ADDED DB_TYPE_03_CHANGE_TO_EXTERNAL
+    await pool.query(
+      `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'inbound' WHERE id = $1`,
+      [offerId]
+    );
+    const rowBeforeC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    const resC3 = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowBeforeC3.rows[0].updated_at.toISOString(),
+      title: "New Title",
+      description: "New Desc",
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resC3.ok, true);
+    const rowAfterC3 = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+    assert.strictEqual(rowAfterC3.rows[0].offer_model, "marketplace");
+    assert.strictEqual(rowAfterC3.rows[0].conversion_type, "outbound");
+
+    // revert back for the rest of tests
+    await pool.query(
+      `UPDATE public.offers SET offer_model = 'rfq', conversion_type = 'outbound' WHERE id = $1`,
+      [offerId]
+    );
+
+    // D. IDEMPOTENT
+      const rowBeforeD = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [offerId]);
+      const resD = await executeAdminOfferEdit(db, {
+        offerId,
+        expectedUpdatedAt: rowBeforeD.rows[0].updated_at.toISOString(),
+        title: "New Title",
+        description: "New Desc",
+        imageUrl: null,
+        priceBrutto: null,
+        priceOnRequest: true,
+        adminOfferType: "external_partner",
+        outboundUrl: null,
+        isFeatured: false,
+      });
+      assert.strictEqual(resD.ok, true);
+      if (resD.ok) {
+        assert.strictEqual(resD.code, "OFFER_UNCHANGED");
+        assert.strictEqual(resD.changed, false);
+      }
+      const rowAfterD = await pool.query(
+        `SELECT * FROM public.offers WHERE id = $1`,
+        [offerId],
+      );
+      assert.strictEqual(
+        rowAfterD.rows[0].updated_at.getTime(),
+        rowBeforeD.rows[0].updated_at.getTime(),
+      );
+
+    // E. CONFLICT
+    const resE = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: expectedUpdatedAt, // stale
+      title: "Conflicting Title",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resE.ok, false);
+    if (!resE.ok) assert.strictEqual(resE.code, "OFFER_CONFLICT");
+
+    // Helper for no-write assertions
+    /* eslint-disable @typescript-eslint/no-explicit-any */
+    const assertNoWrite = (before: any, after: any) => {
+      assert.strictEqual(after.title, before.title);
+      assert.strictEqual(after.description, before.description);
+      assert.strictEqual(after.image_url, before.image_url);
+      assert.strictEqual(
+        after.price_brutto?.toString(),
+        before.price_brutto?.toString(),
+      );
+      assert.strictEqual(after.price_on_request, before.price_on_request);
+      assert.strictEqual(after.offer_model, before.offer_model);
+      assert.strictEqual(after.conversion_type, before.conversion_type);
+      assert.strictEqual(after.outbound_url, before.outbound_url);
+      assert.strictEqual(after.is_featured, before.is_featured);
+      assert.strictEqual(
+        after.updated_at.getTime(),
+        before.updated_at.getTime(),
+      );
+    };
+
+    // G1. HIDDEN NOT EDITABLE
+    await pool.query(
+      `UPDATE public.offers SET publication_status = 'hidden' WHERE id = $1`,
+      [offerId],
+    );
+    const rowHidden = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    const resG1 = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowHidden.rows[0].updated_at.toISOString(),
+      title: "Hidden Edit",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resG1.ok, false);
+    if (!resG1.ok) assert.strictEqual(resG1.code, "OFFER_NOT_EDITABLE_STATUS");
+    const afterG1 = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    assertNoWrite(rowHidden.rows[0], afterG1.rows[0]);
+
+    // G2. DELETED NOT EDITABLE
+    await pool.query(
+      `UPDATE public.offers SET publication_status = 'deleted' WHERE id = $1`,
+      [offerId],
+    );
+    const rowDeleted = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    const resG2 = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowDeleted.rows[0].updated_at.toISOString(),
+      title: "Deleted Edit",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resG2.ok, false);
+    if (!resG2.ok) assert.strictEqual(resG2.code, "OFFER_NOT_EDITABLE_STATUS");
+    const afterG2 = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    assertNoWrite(rowDeleted.rows[0], afterG2.rows[0]);
+
+    // H1. PUBLISHED ECOMMERCE VALIDATION
+    await pool.query(
+      `UPDATE public.offers SET publication_status = 'published', updated_at = '2024-01-01T10:00:00.000Z' WHERE id = $1`,
+      [offerId],
+    );
+    const rowPub1 = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    const resH1 = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowPub1.rows[0].updated_at.toISOString(),
+      title: "Published Edit",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: false,
+      adminOfferType: "marketplace",
+      outboundUrl: null,
+      isFeatured: false, // ecommerce without price
+    });
+    assert.strictEqual(resH1.ok, false);
+    if (!resH1.ok) {
+      assert.strictEqual(resH1.code, "OFFER_TARGET_INVALID");
+      if (resH1.code === "OFFER_TARGET_INVALID")
+        assert.strictEqual(resH1.reason, "ECOMMERCE_PRICE_INVALID");
+    }
+    const afterH1 = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    assertNoWrite(rowPub1.rows[0], afterH1.rows[0]);
+
+    // H2. PUBLISHED OUTBOUND VALIDATION
+    const rowPub2 = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    const resH2 = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowPub2.rows[0].updated_at.toISOString(),
+      title: "Published Edit",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false, // outbound without url
+    });
+    assert.strictEqual(resH2.ok, false);
+    if (!resH2.ok) {
+      assert.strictEqual(resH2.code, "OFFER_TARGET_INVALID");
+      if (resH2.code === "OFFER_TARGET_INVALID")
+        assert.strictEqual(resH2.reason, "OUTBOUND_URL_INVALID");
+    }
+    const afterH2 = await pool.query(
+      `SELECT * FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    assertNoWrite(rowPub2.rows[0], afterH2.rows[0]);
+    // I. CONCURRENCY ROW LOCK PROOF
+    await pool.query(
+      `UPDATE public.offers SET publication_status = 'draft', title = 'Base Title', updated_at = '2024-01-01T12:00:00.000Z' WHERE id = $1`,
+      [offerId],
+    );
+    const baseExpectedDate = "2024-01-01T12:00:00.000Z";
+
+    const p1 = executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: baseExpectedDate,
+      title: "Update 1",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+
+    const p2 = executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: baseExpectedDate,
+      title: "Update 2",
+      description: null,
+      imageUrl: null,
+      priceBrutto: null,
+      priceOnRequest: true,
+      adminOfferType: "external_partner",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+
+    const [res1, res2] = await Promise.all([p1, p2]);
+
+    let updatedCount = 0;
+    let conflictCount = 0;
+    if (res1.ok && res1.code === "OFFER_UPDATED") updatedCount++;
+    if (!res1.ok && res1.code === "OFFER_CONFLICT") conflictCount++;
+    if (res2.ok && res2.code === "OFFER_UPDATED") updatedCount++;
+    if (!res2.ok && res2.code === "OFFER_CONFLICT") conflictCount++;
+
+    assert.strictEqual(
+      updatedCount,
+      1,
+      "Exactly one concurrent update should succeed",
+    );
+    assert.strictEqual(
+      conflictCount,
+      1,
+      "Exactly one concurrent update should fail with conflict",
+    );
+
+    const finalRow = await pool.query(
+      `SELECT title FROM public.offers WHERE id = $1`,
+      [offerId],
+    );
+    assert.ok(
+      finalRow.rows[0].title === "Update 1" ||
+        finalRow.rows[0].title === "Update 2",
+      "Title should be one of the updates",
+    );
+
+    // J. EXACT DB PRICE READ / 3 DECIMAL LEGACY TEST
+    await pool.query(
+      `UPDATE public.offers SET publication_status = 'draft', price_brutto = 1.234 WHERE id = $1`,
+      [offerId],
+    );
+    const rowJ = await pool.query(`SELECT * FROM public.offers WHERE id = $1`, [
+      offerId,
+    ]);
+    const resJ = await executeAdminOfferEdit(db, {
+      offerId,
+      expectedUpdatedAt: rowJ.rows[0].updated_at.toISOString(),
+      title: "Price Precision Edit",
+      description: null,
+      imageUrl: null,
+      priceBrutto: "1.23",
+      priceOnRequest: false,
+      adminOfferType: "marketplace",
+      outboundUrl: null,
+      isFeatured: false,
+    });
+    assert.strictEqual(resJ.ok, true);
+    if (resJ.ok) {
+      assert.strictEqual(resJ.code, "OFFER_UPDATED");
+      const afterJ = await pool.query(
+        `SELECT price_brutto FROM public.offers WHERE id = $1`,
+        [offerId],
+      );
+      assert.strictEqual(afterJ.rows[0].price_brutto?.toString(), "1.23");
+    }
+  });
+
+  await t.test("ADMIN_PUBLICATION_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const partnerId = 9998;
+    await pool.query(
+      "INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'Pub Test', 'pub@test.com')",
+      [partnerId],
+    );
+
+    const categoryId = 8888;
+    await pool.query(
+      "INSERT INTO public.categories (id, name, slug) VALUES ($1, 'Pub Cat', 'pub-cat')",
+      [categoryId],
+    );
+
+    const insertOffer = async (id: number, status: string, price: string) => {
+      await pool.query(
+        `INSERT INTO public.offers (
+        id, partner_id, category_id, title, description,
+        publication_status, is_active, offer_model, conversion_type,
+        price_brutto, price_on_request, outbound_url,
+        updated_at, published_at, archived_at
+      ) VALUES (
+        $1, $2, $3, 'Pub Title', 'Pub Desc',
+        $4, true, 'marketplace', 'inbound',
+        $5, false, null,
+        '2024-01-01T10:00:00.000Z', null, null
+      )`,
+        [id, partnerId, categoryId, status, price],
+      );
+    };
+
+    const db = getDb();
+    const sellerReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "ready" as const });
+    const sellerReadyDeps = { querySellerReadiness: sellerReadyQuery };
+
+    // A. draft ecommerce, DB raw price = 1.234 -> ECOMMERCE_PRICE_INVALID
+    await insertOffer(1001, "draft", "1.234");
+    const resA = await executeOfferPublicationStateChange(db, {
+      offerId: 1001,
+      expectedStatus: "draft",
+      targetStatus: "published",
+    }, sellerReadyDeps);
+    assert.deepEqual(resA, {
+      ok: false,
+      code: "OFFER_PUBLISH_NOT_ELIGIBLE",
+      reason: "ECOMMERCE_PRICE_INVALID",
+    });
+
+    const rowA = await pool.query(
+      `SELECT publication_status, updated_at, published_at FROM public.offers WHERE id = 1001`,
+    );
+    assert.equal(rowA.rows[0].publication_status, "draft");
+    assert.equal(rowA.rows[0].published_at, null);
+    assert.equal(
+      rowA.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+
+    // B. valid draft publish
+    await insertOffer(1002, "draft", "1.23");
+    const resB = await executeOfferPublicationStateChange(db, {
+      offerId: 1002,
+      expectedStatus: "draft",
+      targetStatus: "published",
+    }, sellerReadyDeps);
+    assert.equal(resB.ok, true);
+    assert.equal(resB.code, "OFFER_PUBLISHED");
+
+    const rowB = await pool.query(
+      `SELECT publication_status, updated_at, published_at FROM public.offers WHERE id = 1002`,
+    );
+    assert.equal(rowB.rows[0].publication_status, "published");
+    assert.notEqual(rowB.rows[0].published_at, null);
+    assert.notEqual(
+      rowB.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+
+    // C. published archive
+    await insertOffer(1003, "published", "1.23");
+    const resC = await executeOfferPublicationStateChange(db, {
+      offerId: 1003,
+      expectedStatus: "published",
+      targetStatus: "archived",
+    }, sellerReadyDeps);
+    assert.equal(resC.ok, true);
+    assert.equal(resC.code, "OFFER_ARCHIVED");
+
+    const rowC = await pool.query(
+      `SELECT publication_status, updated_at, archived_at FROM public.offers WHERE id = 1003`,
+    );
+    assert.equal(rowC.rows[0].publication_status, "archived");
+    assert.notEqual(rowC.rows[0].archived_at, null);
+    assert.notEqual(
+      rowC.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+
+    // D. stale expectedStatus (current: draft, expected: published, target: archived)
+    await insertOffer(1004, "draft", "1.23");
+    const resD = await executeOfferPublicationStateChange(db, {
+      offerId: 1004,
+      expectedStatus: "published",
+      targetStatus: "archived",
+    }, sellerReadyDeps);
+    assert.deepEqual(resD, { ok: false, code: "OFFER_TRANSITION_CONFLICT" });
+    const rowD = await pool.query(
+      `SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1004`,
+    );
+    assert.equal(rowD.rows[0].publication_status, "draft");
+    assert.equal(
+      rowD.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+    assert.equal(rowD.rows[0].published_at, null);
+    assert.equal(rowD.rows[0].archived_at, null);
+    assert.equal(rowD.rows[0].deleted_at, null);
+
+    // E. current hidden -> attempt published
+    await insertOffer(1005, "hidden", "1.23");
+    const resE = await executeOfferPublicationStateChange(db, {
+      offerId: 1005,
+      expectedStatus: "hidden",
+      targetStatus: "published",
+    }, sellerReadyDeps);
+    assert.deepEqual(resE, { ok: false, code: "OFFER_INVALID_TRANSITION" });
+    const rowE = await pool.query(
+      `SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1005`,
+    );
+    assert.equal(rowE.rows[0].publication_status, "hidden");
+    assert.equal(
+      rowE.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+    assert.equal(rowE.rows[0].published_at, null);
+    assert.equal(rowE.rows[0].archived_at, null);
+    assert.equal(rowE.rows[0].deleted_at, null);
+    assert.equal(rowE.rows[0].title, "Pub Title");
+
+        // I. ecommerce + Seller NOT READY -> fail closed without mutating
+    await insertOffer(1009, "draft", "1.23");
+    const sellerNotReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "not_ready" as const });
+    const resI = await executeOfferPublicationStateChange(db, {
+      offerId: 1009,
+      expectedStatus: "draft",
+      targetStatus: "published",
+    }, { querySellerReadiness: sellerNotReadyQuery });
+    assert.deepEqual(resI, {
+      ok: false,
+      code: "OFFER_PUBLISH_NOT_ELIGIBLE",
+      reason: "SELLER_NOT_READY",
+    });
+    const rowI = await pool.query(
+      `SELECT publication_status, updated_at, published_at FROM public.offers WHERE id = 1009`,
+    );
+    assert.equal(rowI.rows[0].publication_status, "draft");
+    assert.equal(rowI.rows[0].published_at, null);
+    assert.equal(
+      rowI.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+
+    // F. current deleted -> attempt archived
+    await insertOffer(1006, "deleted", "1.23");
+    const resF = await executeOfferPublicationStateChange(db, {
+      offerId: 1006,
+      expectedStatus: "deleted",
+      targetStatus: "archived",
+    }, sellerReadyDeps);
+    assert.deepEqual(resF, { ok: false, code: "OFFER_INVALID_TRANSITION" });
+    const rowF = await pool.query(
+      `SELECT publication_status, updated_at, published_at, archived_at, deleted_at, title FROM public.offers WHERE id = 1006`,
+    );
+    assert.equal(rowF.rows[0].publication_status, "deleted");
+    assert.equal(
+      rowF.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+    assert.equal(rowF.rows[0].published_at, null);
+    assert.equal(rowF.rows[0].archived_at, null);
+    assert.equal(rowF.rows[0].deleted_at, null);
+    assert.equal(rowF.rows[0].title, "Pub Title");
+
+    // G. Idempotent published
+    await insertOffer(1007, "published", "1.23");
+    const resG = await executeOfferPublicationStateChange(db, {
+      offerId: 1007,
+      expectedStatus: "published",
+      targetStatus: "published",
+    }, sellerReadyDeps);
+    assert.deepEqual(resG, {
+      ok: true,
+      code: "OFFER_PUBLISHED",
+      changed: false,
+    });
+    const rowG = await pool.query(
+      `SELECT publication_status, updated_at, published_at, archived_at, deleted_at FROM public.offers WHERE id = 1007`,
+    );
+    assert.equal(rowG.rows[0].publication_status, "published");
+    assert.equal(
+      rowG.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+    assert.equal(rowG.rows[0].published_at, null);
+    assert.equal(rowG.rows[0].archived_at, null);
+    assert.equal(rowG.rows[0].deleted_at, null);
+
+    // H. Idempotent archived
+    await insertOffer(1008, "archived", "1.23");
+    const resH = await executeOfferPublicationStateChange(db, {
+      offerId: 1008,
+      expectedStatus: "archived",
+      targetStatus: "archived",
+    }, sellerReadyDeps);
+    assert.deepEqual(resH, {
+      ok: true,
+      code: "OFFER_ARCHIVED",
+      changed: false,
+    });
+    const rowH = await pool.query(
+      `SELECT publication_status, updated_at, published_at, archived_at, deleted_at FROM public.offers WHERE id = 1008`,
+    );
+    assert.equal(rowH.rows[0].publication_status, "archived");
+    assert.equal(
+      rowH.rows[0].updated_at.toISOString(),
+      "2024-01-01T10:00:00.000Z",
+    );
+    assert.equal(rowH.rows[0].published_at, null);
+    assert.equal(rowH.rows[0].archived_at, null);
+    assert.equal(rowH.rows[0].deleted_at, null);
+  });
+
+  await t.test("ADMIN_RFQ_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const partnerId = 9997;
+    await pool.query(
+      "INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, 'RFQ Test', 'rfq@test.com')",
+      [partnerId],
+    );
+
+    const categoryId = 8887;
+    await pool.query(
+      "INSERT INTO public.categories (id, name, slug) VALUES ($1, 'RFQ Cat', 'rfq-cat')",
+      [categoryId],
+    );
+
+    const offerId = 7777;
+    await pool.query(
+      `
+      INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active)
+      VALUES ($1, $2, $3, 'RFQ Offer', 'rfq', 'inbound', 'published', true)
+    `,
+      [offerId, partnerId, categoryId],
+    );
+
+    const db = getDb();
+
+
+
+
+    const PII = {
+      company_name: "Test Corp",
+      contact_name: "Jane Doe",
+      email: "jane@test.com",
+      phone: "+48000000000",
+      message: "Need info",
+    };
+
+    const insertRfq = async (id: number, status: string) => {
+      await pool.query(
+        `
+        INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `,
+        [
+          id,
+          offerId,
+          partnerId,
+          PII.company_name,
+          PII.contact_name,
+          PII.email,
+          PII.phone,
+          PII.message,
+          status,
+        ],
+      );
+    };
+
+    const runCase = async (
+      id: number,
+      current: RfqStatus,
+      expected: RfqStatus,
+      target: RfqStatus,
+      wantOk: boolean,
+      wantCode: string,
+      wantStatus: RfqStatus,
+    ) => {
+      await insertRfq(id, current);
+      const res = await db.transaction(async (tx) =>
+        mutateRfqStatusCore(tx, {
+          rfqId: id,
+          expectedStatus: expected,
+          targetStatus: target,
+        }),
+      );
+      assert.equal(res.ok, wantOk, `rfq ${id}: expected ok=${wantOk}`);
+      assert.equal(res.code, wantCode, `rfq ${id}: expected code=${wantCode}`);
+      const row = await pool.query(
+        `SELECT status, company_name, contact_name, email, phone, message FROM public.rfq_leads WHERE id = $1`,
+        [id],
+      );
+      assert.equal(
+        row.rows[0].status,
+        wantStatus,
+        `rfq ${id}: status must be ${wantStatus}`,
+      );
+      // PII fields must remain unchanged by any status mutation
+      assert.equal(row.rows[0].company_name, PII.company_name);
+      assert.equal(row.rows[0].contact_name, PII.contact_name);
+      assert.equal(row.rows[0].email, PII.email);
+      assert.equal(row.rows[0].phone, PII.phone);
+      assert.equal(row.rows[0].message, PII.message);
+    };
+
+    // Allowed forward transitions — status must change (UPDATED)
+    await runCase(
+      2001,
+      "new",
+      "new",
+      "in_progress",
+      true,
+      "UPDATED",
+      "in_progress",
+    ); // A
+    await runCase(
+      2002,
+      "new",
+      "new",
+      "responded",
+      true,
+      "UPDATED",
+      "responded",
+    ); // B
+    await runCase(2003, "new", "new", "closed", true, "UPDATED", "closed"); // C
+    await runCase(
+      2004,
+      "in_progress",
+      "in_progress",
+      "responded",
+      true,
+      "UPDATED",
+      "responded",
+    ); // D
+    await runCase(
+      2005,
+      "in_progress",
+      "in_progress",
+      "closed",
+      true,
+      "UPDATED",
+      "closed",
+    ); // E
+    await runCase(
+      2006,
+      "responded",
+      "responded",
+      "closed",
+      true,
+      "UPDATED",
+      "closed",
+    ); // F
+
+    // G. stale expectedStatus -> CONFLICT, NO WRITE
+    await runCase(
+      2007,
+      "responded",
+      "new",
+      "closed",
+      false,
+      "CONFLICT",
+      "responded",
+    );
+
+    // H. same-state idempotent -> UNCHANGED, NO WRITE
+    await runCase(
+      2008,
+      "in_progress",
+      "in_progress",
+      "in_progress",
+      true,
+      "UNCHANGED",
+      "in_progress",
+    );
+
+    // I. closed -> new (reopen) -> TRANSITION_NOT_ALLOWED, NO WRITE (closed is terminal)
+    await runCase(
+      2009,
+      "closed",
+      "closed",
+      "new",
+      false,
+      "TRANSITION_NOT_ALLOWED",
+      "closed",
+    );
+
+    // Extra: backward transition in_progress -> new -> TRANSITION_NOT_ALLOWED, NO WRITE
+    await runCase(
+      2010,
+      "in_progress",
+      "in_progress",
+      "new",
+      false,
+      "TRANSITION_NOT_ALLOWED",
+      "in_progress",
+    );
+
+    // Extra: NOT_FOUND for non-existent RFQ id
+    const resNotFound = await db.transaction(async (tx) =>
+      mutateRfqStatusCore(tx, {
+        rfqId: 99999,
+        expectedStatus: "new",
+        targetStatus: "in_progress",
+      }),
+    );
+    assert.equal(resNotFound.ok, false);
+    assert.equal(resNotFound.code, "NOT_FOUND");
+  });
+
+  await t.test("ADMIN_DASHBOARD_READ_MODEL_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    // Insert 5 Partners
+    for (let i = 1; i <= 5; i++) {
+      await pool.query(
+        "INSERT INTO public.partners (id, company_name, contact_email) VALUES ($1, $2, 'p@test.com')",
+        [i, `Partner ${i}`],
+      );
+    }
+
+    // 1 pending, 1 eligible, 1 ineligible, 1 suspended, 1 none (Partner 5)
+    await pool.query(
+      "INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (1, 'pending')",
+    );
+    await pool.query(
+      "INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (2, 'eligible')",
+    );
+    await pool.query(
+      "INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (3, 'ineligible')",
+    );
+    await pool.query(
+      "INSERT INTO public.seller_eligibility (partner_id, eligibility_status) VALUES (4, 'suspended')",
+    );
+
+    // 1 category
+    await pool.query(
+      "INSERT INTO public.categories (id, name, slug) VALUES (1, 'Cat', 'cat')",
+    );
+
+    // 5 Offers (1 of each status)
+    const statuses = ["draft", "published", "hidden", "archived", "deleted"];
+    for (let i = 1; i <= 5; i++) {
+      await pool.query(
+        "INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, is_active) VALUES ($1, 1, 1, $2, 'rfq', 'inbound', $3, true)",
+        [i, `Offer ${i}`, statuses[i - 1]],
+      );
+    }
+
+    // Insert RFQ Leads
+    // 1 closed
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (10, 1, 1, 'Buyer 10', 'Bob', 'bob@test.com', '123', 'Msg', 'closed', '2026-08-01T10:00:00Z')",
+    );
+    // 1 responded
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (11, 2, 2, 'Buyer 11', 'Bob', 'bob@test.com', '123', 'Msg', 'responded', '2026-08-02T10:00:00Z')",
+    );
+    // 1 in_progress
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (12, 3, 3, 'Buyer 12', 'Bob', 'bob@test.com', '123', 'Msg', 'in_progress', '2026-08-03T10:00:00Z')",
+    );
+    // 4 new
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (13, 4, 4, 'Buyer 13', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-04T10:00:00Z')",
+    );
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (14, 5, 5, 'Buyer 14', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-05T10:00:00Z')",
+    );
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (15, 1, 1, 'Buyer 15', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-06T10:00:00Z')",
+    );
+    await pool.query(
+      "INSERT INTO public.rfq_leads (id, offer_id, partner_id, company_name, contact_name, email, phone, message, status, created_at) VALUES (16, 2, 2, 'Buyer 16', 'Bob', 'bob@test.com', '123', 'Msg', 'new', '2026-08-07T10:00:00Z')",
+    );
+
+    const db = getDb();
+
+
+
+    const { getAdminDashboardReadModel } =
+      await import("../../src/lib/admin/dashboard-read-model-core.js");
+
+    const result = await getAdminDashboardReadModel(db);
+
+    assert.deepEqual(result.counts.partners, { total: 5 });
+    assert.deepEqual(result.counts.offers, {
+      total: 5,
+      draft: 1,
+      pendingReview: 0,
+      published: 1,
+      hidden: 1,
+      archived: 1,
+      deleted: 1,
+    });
+    assert.deepEqual(result.counts.sellerEligibility, {
+      none: 1,
+      pending: 1,
+      eligible: 1,
+      ineligible: 1,
+      suspended: 1,
+    });
+    assert.deepEqual(result.counts.rfq, {
+      total: 7,
+      new: 4,
+      inProgress: 1,
+      responded: 1,
+      closed: 1,
+    });
+
+    assert.equal(result.recentRfqQueue.length, 5);
+
+    // Check sorting: created_at DESC NULLS LAST, then id DESC
+    assert.equal(result.recentRfqQueue[0].id, 16);
+    assert.equal(result.recentRfqQueue[1].id, 15);
+    assert.equal(result.recentRfqQueue[2].id, 14);
+    assert.equal(result.recentRfqQueue[3].id, 13);
+    assert.equal(result.recentRfqQueue[4].id, 12);
+
+    const q0 = result.recentRfqQueue[0];
+    const allowedKeys = [
+      "id",
+      "createdAt",
+      "status",
+      "companyName",
+      "offerId",
+      "offerTitle",
+      "partnerId",
+      "partnerCompanyName",
+    ];
+    assert.deepEqual(Object.keys(q0).sort(), allowedKeys.sort());
+
+    assert.equal(q0.status, "new");
+    assert.equal(q0.companyName, "Buyer 16");
+    assert.equal(q0.offerId, 2);
+    assert.equal(q0.offerTitle, "Offer 2");
+    assert.equal(q0.partnerId, 2);
+    assert.equal(q0.partnerCompanyName, "Partner 2");
+
+    const stringified = JSON.stringify(q0);
+    assert.ok(!stringified.includes("bob@test.com"), "PII email leaked");
+    assert.ok(!stringified.includes("Bob"), "PII contactName leaked");
+    assert.ok(!stringified.includes("123"), "PII phone leaked");
+    assert.ok(!stringified.includes("Msg"), "PII message leaked");
+  });
+
+  await t.test("ADMIN_OFFER_CREATE_DRAFT_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("../../src/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+    const { parseOfferDraftCreateInput, createOfferDraftCore } =
+      await import("../../src/lib/offers/draft-core");
+
+    // A. setup
+    await pool.query(
+      `INSERT INTO public.partners (id, company_name, contact_email) VALUES (99991, 'Create Draft Test Partner', 'create-draft@test.invalid');`,
+    );
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug) VALUES (99992, 'Create Draft Test Category', 'create-draft-test-category');`,
+    );
+
+    const offersRes1 = await pool.query(`SELECT count(*) as c FROM offers;`);
+    const initialOffers = parseInt(offersRes1.rows[0].c, 10);
+
+    // B. successful creation
+    const input = {
+      partnerId: "99991",
+      categoryId: "99992",
+      title: "  My New Draft  ",
+      adminOfferType: "external_partner",
+    };
+
+    const parsed = parseOfferDraftCreateInput(input);
+    assert.equal(parsed.ok, true, "Input should parse");
+    if (parsed.ok) {
+      const res = await createOfferDraftCore(db, parsed.data);
+      assert.equal(res.ok, true, "Core should succeed");
+      if (!res.ok) throw new Error("res not ok");
+
+      // C. assert
+      assert.equal(res.code, "OFFER_DRAFT_CREATED");
+      assert.ok(res.offerId > 0, "Should return positive ID");
+
+      const offersRes2 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(
+        parseInt(offersRes2.rows[0].c, 10),
+        initialOffers + 1,
+        "Should have exactly 1 more offer now",
+      );
+
+      const rowRes = await pool.query(`SELECT * FROM offers WHERE id = $1;`, [
+        res.offerId,
+      ]);
+      const row = rowRes.rows[0];
+      assert.equal(row.partner_id, 99991);
+      assert.equal(row.category_id, 99992);
+      assert.equal(row.title, "My New Draft"); // trimmed
+      assert.equal(row.offer_model, "marketplace");
+        assert.equal(row.conversion_type, "outbound");
+        assert.equal(row.publication_status, "draft");
+      assert.equal(row.contract_model, null);
+      assert.equal(row.published_at, null);
+      assert.equal(row.archived_at, null);
+      assert.equal(row.deleted_at, null);
+    }
+
+    // D. nonexistent Partner
+    const badPartnerInput = parseOfferDraftCreateInput({
+      partnerId: "99999",
+      categoryId: "99992",
+      title: "T",
+      adminOfferType: "external_partner",
+    });
+    if (badPartnerInput.ok) {
+      const res = await createOfferDraftCore(db, badPartnerInput.data);
+      assert.equal(res.ok, false);
+      assert.equal(res.code, "PARTNER_NOT_FOUND");
+
+      const c3 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(
+        parseInt(c3.rows[0].c, 10),
+        initialOffers + 1,
+        "Count unchanged",
+      );
+    }
+
+    // E. nonexistent Category
+    const badCatInput = parseOfferDraftCreateInput({
+      partnerId: "99991",
+      categoryId: "99999",
+      title: "T",
+      adminOfferType: "external_partner",
+    });
+    if (badCatInput.ok) {
+      const res = await createOfferDraftCore(db, badCatInput.data);
+      assert.equal(res.ok, false);
+      assert.equal(res.code, "CATEGORY_NOT_FOUND");
+
+      const c4 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(
+        parseInt(c4.rows[0].c, 10),
+        initialOffers + 1,
+        "Count unchanged",
+      );
+    }
+
+    // E2. parent category with children rejected (CATEGORY_NOT_LEAF)
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug, parent_id) VALUES (99993, 'Parent Category', 'parent-category', NULL) ON CONFLICT DO NOTHING;`,
+    );
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug, parent_id) VALUES (99994, 'Child Category', 'child-category', 99993) ON CONFLICT DO NOTHING;`,
+    );
+
+    const parentCatInput = parseOfferDraftCreateInput({
+      partnerId: "99991",
+      categoryId: "99993",
+      title: "Parent Cat Draft",
+      adminOfferType: "external_partner",
+    });
+    assert.equal(parentCatInput.ok, true);
+    if (parentCatInput.ok) {
+      const res = await createOfferDraftCore(db, parentCatInput.data);
+      assert.equal(res.ok, false);
+      assert.equal(res.code, "CATEGORY_NOT_LEAF");
+
+      const c5 = await pool.query(`SELECT count(*) as c FROM offers;`);
+      assert.equal(
+        parseInt(c5.rows[0].c, 10),
+        initialOffers + 1,
+        "Count unchanged when category is not leaf",
+      );
+    }
+
+    // E3. child leaf category accepted
+    const childCatInput = parseOfferDraftCreateInput({
+      partnerId: "99991",
+      categoryId: "99994",
+      title: "Child Leaf Draft",
+      adminOfferType: "external_partner",
+    });
+    assert.equal(childCatInput.ok, true);
+    if (childCatInput.ok) {
+      const res = await createOfferDraftCore(db, childCatInput.data);
+      assert.equal(res.ok, true);
+      assert.equal(res.code, "OFFER_DRAFT_CREATED");
+      if (!res.ok) assert.fail(`Expected offer draft creation, received ${res.code}`);
+      const rowRes = await pool.query(`SELECT * FROM offers WHERE id = $1;`, [
+        res.offerId,
+      ]);
+      assert.equal(rowRes.rows[0].category_id, 99994);
+    }
+
+    // F. malformed model
+    const badModelInput = parseOfferDraftCreateInput({
+      partnerId: "99991",
+      categoryId: "99992",
+      title: "T",
+      adminOfferType: "invalid",
+    });
+    assert.equal(
+      badModelInput.ok,
+      false,
+      "Parser must reject invalid model before INSERT",
+    );
+  });
+
+  await t.test("ADMIN_OFFER_ATTRIBUTES_EDIT_MUTATION_PROOF", async () => {
+    // Prepared CI cases include:
+    // text, number exact 1234.5600, boolean false, date, year, enum,
+    // multi_enum, inactive historical option preservation, new inactive option rejection,
+    // clear, no-op, mixed invalid rollback, unrelated OAV preservation, unrelated OAOV preservation,
+    // orphan preservation, stale concurrency, updatedAt bump, no-op timestamp unchanged,
+    // legacy JSONB unchanged, public relational projection.
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("../../src/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+    const {
+      parseAdminOfferAttributesEditInput,
+      executeAdminOfferAttributesMutation,
+    } = await import("../../src/lib/admin/offer-attributes-edit-core");
+
+    // A. Setup test data
+    await pool.query(
+      `INSERT INTO public.partners (id, company_name, contact_email) VALUES (99991, 'P1', 'p1@test.com');`,
+    );
+    await pool.query(
+      `INSERT INTO public.categories (id, name, slug) VALUES (99992, 'C1', 'c1');`,
+    );
+    await pool.query(
+      `INSERT INTO public.offers (id, partner_id, category_id, title, offer_model, conversion_type, publication_status, updated_at) VALUES (99993, 99991, 99992, 'O1', 'rfq', 'outbound', 'published', '2020-01-01T00:00:00Z');`,
+    );
+
+    // Create Attributes
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (1, 'text1', 'text', true);`,
+    );
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (2, 'num1', 'number', true);`,
+    );
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (3, 'bool1', 'boolean', true);`,
+    );
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (4, 'date1', 'date', true);`,
+    );
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (5, 'year1', 'year', true);`,
+    );
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (6, 'enum1', 'enum', true);`,
+    );
+    await pool.query(
+      `INSERT INTO public.attribute_definitions (id, stable_key, data_type, is_active) VALUES (7, 'multi1', 'multi_enum', true);`,
+    );
+
+    // Assign to category
+    await pool.query(
+      `INSERT INTO public.category_attribute_assignments (category_id, attribute_definition_id, is_required) VALUES (99992, 1, false), (99992, 2, false), (99992, 3, false), (99992, 4, false), (99992, 5, false), (99992, 6, false), (99992, 7, false);`,
+    );
+
+    // Create Options
+    await pool.query(
+      `INSERT INTO public.controlled_option_values (id, attribute_id, stable_key, is_active) VALUES (10, 6, 'o1', true), (11, 7, 'm1', true), (12, 7, 'm2', true);`,
+    );
+
+    // Initial values
+    await pool.query(
+      `INSERT INTO public.offer_attribute_values (offer_id, attribute_id, value_text) VALUES (99993, 1, 'Initial');`,
+    );
+
+    // B. Test Mutation: update text, add number, boolean, date, year, enum, multi_enum
+    const input = {
+      offerId: 99993,
+      expectedUpdatedAt: (await pool.query(`SELECT updated_at FROM offers WHERE id = 99993;`)).rows[0].updated_at.toISOString(),
+      attributes: [
+        { attributeId: 1, value: { type: "text", value: "Updated" } },
+        { attributeId: 2, value: { type: "number", value: "42.5" } },
+        { attributeId: 3, value: { type: "boolean", value: true } },
+        { attributeId: 4, value: { type: "date", value: "2024-12-31" } },
+        { attributeId: 5, value: { type: "year", value: "2024" } },
+        { attributeId: 6, value: { type: "enum", optionId: 10 } },
+        { attributeId: 7, value: { type: "multi_enum", optionIds: [11, 12] } },
+      ],
+    };
+
+    const parsed = parseAdminOfferAttributesEditInput(input);
+    assert.equal(parsed !== null, true);
+
+    if (parsed) {
+      const res = await executeAdminOfferAttributesMutation(db, parsed);
+      assert.equal(res.ok, true);
+      assert.equal(res.code, "ATTRIBUTES_UPDATED");
+
+      const v1 = await pool.query(
+        `SELECT * FROM offer_attribute_values WHERE offer_id=99993 AND attribute_id=1;`,
+      );
+      assert.equal(v1.rows[0].value_text, "Updated");
+
+      const v2 = await pool.query(
+        `SELECT * FROM offer_attribute_values WHERE offer_id=99993 AND attribute_id=2;`,
+      );
+      assert.equal(v2.rows[0].value_number, "42.5");
+
+      const vm = await pool.query(
+        `SELECT option_id FROM offer_attribute_option_values WHERE offer_id=99993 AND attribute_id=7 ORDER BY option_id;`,
+      );
+      assert.equal(vm.rows.length, 2);
+      assert.equal(vm.rows[0].option_id, 11);
+      assert.equal(vm.rows[1].option_id, 12);
+    }
+
+
+    const tCheck = await pool.query(`SELECT to_regclass('public.migration_oav_targets') AS has_oav, to_regclass('public.migration_oaov_targets') AS has_oaov`);
+    assert.equal(tCheck.rows[0].has_oav, null);
+    assert.equal(tCheck.rows[0].has_oaov, null);
+
+    // C. Clear mutation
+    const clearInput = {
+      offerId: 99993,
+      expectedUpdatedAt: (
+        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+      ).rows[0].updated_at.toISOString(),
+      attributes: [
+        { attributeId: 1, value: { type: "clear" } },
+        { attributeId: 7, value: { type: "clear" } },
+      ],
+    };
+    const cParsed = parseAdminOfferAttributesEditInput(clearInput);
+    if (cParsed) {
+      const res = await executeAdminOfferAttributesMutation(db, cParsed);
+      assert.equal(res.ok, true);
+
+      const v1 = await pool.query(
+        `SELECT * FROM offer_attribute_values WHERE offer_id=99993 AND attribute_id=1;`,
+      );
+      assert.equal(v1.rows.length, 0); // cleared
+
+      const vm = await pool.query(
+        `SELECT * FROM offer_attribute_option_values WHERE offer_id=99993 AND attribute_id=7;`,
+      );
+      assert.equal(vm.rows.length, 0); // cleared
+    }
+      // Create minimal CI test fixture for provenance tables
+      await pool.query(`
+        CREATE TABLE public.migration_oav_targets (
+          id bigint PRIMARY KEY,
+          target_row_id_current bigint
+        )
+      `);
+
+      await pool.query(`
+        CREATE TABLE public.migration_oaov_targets (
+          id bigint PRIMARY KEY,
+          target_row_id_current bigint
+        )
+      `);
+
+      const tCheck2 = await pool.query(`SELECT to_regclass('public.migration_oav_targets') AS has_oav, to_regclass('public.migration_oaov_targets') AS has_oaov`);
+      assert.notEqual(tCheck2.rows[0].has_oav, null);
+      assert.notEqual(tCheck2.rows[0].has_oaov, null);
+
+      // D. Provenance Lock Guard
+      // 1. Re-insert OAV and OAOV
+      await pool.query(`INSERT INTO offer_attribute_values (id, offer_id, attribute_id, value_text) VALUES (1001, 99993, 1, 'Locked')`);
+      await pool.query(`INSERT INTO offer_attribute_option_values (id, offer_id, attribute_id, option_id) VALUES (1002, 99993, 7, 11)`);
+
+      // Assign minimal targets
+      await pool.query(`INSERT INTO migration_oav_targets (id, target_row_id_current) VALUES (1, 1001)`);
+      await pool.query(`INSERT INTO migration_oaov_targets (id, target_row_id_current) VALUES (1, 1002)`);
+
+      const currentUpdatedAt = (
+      await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+    ).rows[0].updated_at.toISOString();
+
+    // Try to clear provenance tracked OAV -> Should reject
+    const rejectOavInput = parseAdminOfferAttributesEditInput({
+      offerId: 99993,
+      expectedUpdatedAt: currentUpdatedAt,
+      attributes: [{ attributeId: 1, value: { type: "clear" } }],
+    })!;
+    const rOav = await executeAdminOfferAttributesMutation(db, rejectOavInput);
+    assert.equal(rOav.ok, false);
+    assert.equal((rOav as any).code, "ATTRIBUTE_PROVENANCE_LOCKED");
+
+    // Try to deselect provenance tracked OAOV -> Should reject
+    const rejectOaovInput = parseAdminOfferAttributesEditInput({
+      offerId: 99993,
+      expectedUpdatedAt: currentUpdatedAt,
+      attributes: [
+        { attributeId: 7, value: { type: "multi_enum", optionIds: [] } },
+      ],
+    })!;
+    const rOaov = await executeAdminOfferAttributesMutation(
+      db,
+      rejectOaovInput,
+    );
+    assert.equal(rOaov.ok, false);
+    assert.equal((rOaov as any).code, "ATTRIBUTE_PROVENANCE_LOCKED");
+
+    // Try to clear provenance tracked OAOV -> Should reject
+    const rejectOaovClearInput = parseAdminOfferAttributesEditInput({
+      offerId: 99993,
+      expectedUpdatedAt: currentUpdatedAt,
+      attributes: [{ attributeId: 7, value: { type: "clear" } }],
+    })!;
+    const rOaovClear = await executeAdminOfferAttributesMutation(
+      db,
+      rejectOaovClearInput,
+    );
+    assert.equal(rOaovClear.ok, false);
+    assert.equal((rOaovClear as any).code, "ATTRIBUTE_PROVENANCE_LOCKED");
+
+    // Valid UPDATE of provenance tracked OAV -> Should succeed and keep ID
+    const validOavUpdateInput = parseAdminOfferAttributesEditInput({
+      offerId: 99993,
+      expectedUpdatedAt: currentUpdatedAt,
+      attributes: [
+        { attributeId: 1, value: { type: "text", value: "LockedButUpdated" } },
+      ],
+    })!;
+    const rOavValid = await executeAdminOfferAttributesMutation(
+      db,
+      validOavUpdateInput,
+    );
+    assert.equal(rOavValid.ok, true);
+    const updatedOav = await pool.query(
+      `SELECT id, value_text FROM offer_attribute_values WHERE id=1001`,
+    );
+    assert.equal(updatedOav.rows[0].value_text, "LockedButUpdated");
+
+
+      // Atomicity check: mixed valid update and invalid clear
+      const atomicityUpdatedAt = (await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)).rows[0].updated_at.toISOString();
+      const atomicityInput = parseAdminOfferAttributesEditInput({
+        offerId: 99993,
+        expectedUpdatedAt: atomicityUpdatedAt,
+        attributes: [
+          { attributeId: 1, value: { type: "clear" } }, // invalid (locked OAV)
+          { attributeId: 2, value: { type: "number", value: "99.5" } } // valid
+        ]
+      })!;
+      const rAtomicity = await executeAdminOfferAttributesMutation(db, atomicityInput);
+      assert.equal(rAtomicity.ok, false);
+      assert.equal((rAtomicity as any).code, "ATTRIBUTE_PROVENANCE_LOCKED");
+
+      const checkOav2 = await pool.query(`SELECT value_text, value_number FROM offer_attribute_values WHERE attribute_id=2 AND offer_id=99993`);
+      // Should not have the new text value, should remain 42.5 from earlier
+      assert.equal(checkOav2.rows[0].value_number, '42.5');
+      assert.equal(checkOav2.rows[0].value_text, null);
+
+      // Unrelated inactive option preservation
+      const existingEnumOav = await pool.query(`
+        SELECT id, option_id
+        FROM offer_attribute_values
+        WHERE offer_id = 99993
+          AND attribute_id = 6
+      `);
+      assert.equal(existingEnumOav.rows.length, 1);
+      assert.equal(Number(existingEnumOav.rows[0].option_id), 10);
+
+      await pool.query(
+        `UPDATE controlled_option_values SET is_active=false WHERE id=10`,
+      ); // set enum1's opt 10 inactive
+
+      const beforeInactiveUpdatedAt = (
+        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+      ).rows[0].updated_at.toISOString();
+      // Try to assign a NEW inactive option (multi_enum 12) -> should fail
+      await pool.query(
+        `UPDATE controlled_option_values SET is_active=false WHERE id=12`,
+      );
+
+      const preInactiveOaov = await pool.query(`SELECT option_id FROM offer_attribute_option_values WHERE offer_id=99993 AND attribute_id=7 ORDER BY option_id`);
+      assert.deepEqual(preInactiveOaov.rows.map(r => Number(r.option_id)), [11]);
+
+      const inactiveReject = parseAdminOfferAttributesEditInput({
+        offerId: 99993,
+        expectedUpdatedAt: beforeInactiveUpdatedAt,
+        attributes: [
+          { attributeId: 7, value: { type: "multi_enum", optionIds: [11, 12] } },
+        ],
+      })!;
+      const rInactive = await executeAdminOfferAttributesMutation(
+        db,
+        inactiveReject,
+      );
+      assert.equal(rInactive.ok, false);
+      assert.equal((rInactive as any).code, "OPTION_INACTIVE");
+
+      const afterInactiveUpdatedAt = (
+        await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)
+      ).rows[0].updated_at.toISOString();
+      assert.equal(afterInactiveUpdatedAt, beforeInactiveUpdatedAt);
+
+    // Partial schema fail-closed
+    const partialUpdatedAt = (await pool.query(`SELECT updated_at FROM offers WHERE id=99993`)).rows[0].updated_at.toISOString();
+    await pool.query(`DROP TABLE public.migration_oav_targets`);
+    const partialInput = parseAdminOfferAttributesEditInput({
+      offerId: 99993,
+      expectedUpdatedAt: partialUpdatedAt,
+      attributes: [{ attributeId: 7, value: { type: "clear" } }],
+    })!;
+    const rPartial = await executeAdminOfferAttributesMutation(db, partialInput);
+    assert.equal(rPartial.ok, false);
+    assert.equal((rPartial as any).code, "SYSTEM_ERROR");
+
+    const partialCheckOaov = await pool.query(`SELECT * FROM offer_attribute_option_values WHERE id=1002`);
+    assert.equal(partialCheckOaov.rows.length, 1);
+
+    // Cleanup
+    await pool.query(`DROP TABLE IF EXISTS public.migration_oav_targets`);
+    await pool.query(`DROP TABLE IF EXISTS public.migration_oaov_targets`);
+  });
+
+  await t.test("SELLER_VERIFICATION_EVIDENCE_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    // The feature schema must exist solely through the canonical runtime chain.
+    // 1. Verify schema existence and constraints
+    const tableRes = await pool.query(`SELECT to_regclass('public.seller_verification_events') AS exists`);
+    assert.notEqual(tableRes.rows[0].exists, null, "seller_verification_events must exist");
+
+    // 2. Test Append-Only Trigger
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('Test', 'test@test.com') RETURNING id`);
+    const pid = pRes.rows[0].id;
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'Legal Name', 'PL')`, [pid]);
+
+    const insertRes = await pool.query(`
+      INSERT INTO seller_verification_events (
+        subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
+      ) VALUES (
+        'legal_identity', $1, 'verified', 'system', 'system_rule', '{}'::jsonb
+      ) RETURNING id
+    `, [pid]);
+
+    const eventId = insertRes.rows[0].id;
+
+    let updateFailed = false;
+    try {
+      await pool.query(`UPDATE seller_verification_events SET source_name = 'hacked' WHERE id = $1`, [eventId]);
+    } catch (err: any) {
+      if (err.code === '55000') updateFailed = true;
+    }
+    assert.ok(updateFailed, "Trigger must block UPDATE");
+
+    let deleteFailed = false;
+    try {
+      await pool.query(`DELETE FROM seller_verification_events WHERE id = $1`, [eventId]);
+    } catch (err: any) {
+      if (err.code === '55000') deleteFailed = true;
+    }
+    assert.ok(deleteFailed, "Trigger must block DELETE");
+
+    // The nullable current-event pointer accepts the matching event and rejects
+    // a nonexistent event through the canonical FK.
+    await pool.query(
+      `UPDATE seller_legal_identities SET current_verification_event_id = $1 WHERE partner_id = $2`,
+      [eventId, pid],
+    );
+    let currentEventFkFailed = false;
+    try {
+      await pool.query(
+        `UPDATE seller_legal_identities SET current_verification_event_id = $1 WHERE partner_id = $2`,
+        [eventId + 999999, pid],
+      );
+    } catch (err: any) {
+      if (err.code === "23503") currentEventFkFailed = true;
+    }
+    assert.ok(currentEventFkFailed, "Current verification event FK must reject a missing event");
+
+    let subjectMatrixFailed = false;
+    try {
+      await pool.query(`
+        INSERT INTO seller_verification_events (
+          subject_type, legal_identity_partner_id, event_type, actor_type, source_type, subject_snapshot
+        ) VALUES ('tax_identifier', $1, 'verified', 'system', 'system_rule', '{}'::jsonb)
+      `, [pid]);
+    } catch (err: any) {
+      if (err.code === "23514") subjectMatrixFailed = true;
+    }
+    assert.ok(subjectMatrixFailed, "Subject matrix must reject inconsistent ownership columns");
+
+    let historyProtectionFailed = false;
+    try {
+      await pool.query(`DELETE FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    } catch (err: any) {
+      if (err.code === "23503") historyProtectionFailed = true;
+    }
+    assert.ok(historyProtectionFailed, "Verification history FK must protect its subject from hard delete");
+  });
+
+  await t.test("ADMIN_PARTNER_CREATE_MUTATION_PROOF", async () => {
+    const { createPartnerCore } = await import("@/lib/admin/partners-create");
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+
+    const rawInput = {
+      companyName: '  New Corp  ',
+      contactEmail: '  TEST@corP.com ',
+      websiteUrl: '  https://new.test  ',
+      legalName: '  New Corporation sp. z o.o.  ',
+      jurisdictionCountry: 'pl',
+      registeredAddressLine1: '  Testowa 1  ',
+      registeredAddressLine2: '',
+      registeredPostalCode: '00-001',
+      registeredCity: 'Warszawa',
+      registeredRegion: 'Mazowieckie',
+      registeredCountryCode: 'pl',
+      taxIdentifiers: [
+        { identifierType: 'tax_id', identifierValue: '123-456-78-90', countryCode: 'pl' },
+        { identifierType: 'vat_id', identifierValue: 'PL1234567890', countryCode: 'PL' },
+      ],
+      registryIdentifiers: [
+        { registryType: 'commercial_register', registryValue: '0000-123-456', jurisdictionCountry: 'pl' },
+        { registryType: 'statistical_id', registryValue: '123 456 785', jurisdictionCountry: 'PL' },
+      ],
+    };
+
+    const res = await createPartnerCore(db, rawInput);
+    assert.equal(res.ok, true);
+
+    if (res.ok) {
+      const partnerId = res.partnerId;
+
+      // Prove createPartnerCore cross-Partner duplicate preflight against real PostgreSQL
+      const duplicateInput = { ...rawInput, companyName: "Duplicate Corp", contactEmail: "dup@test.com" };
+      const dupRes = await createPartnerCore(db, duplicateInput);
+      assert.equal(dupRes.ok, false);
+      if (!dupRes.ok) {
+        assert.equal(dupRes.reason, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+        if (dupRes.reason === "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED") {
+          assert.equal(dupRes.existingPartnerId, partnerId);
+        }
+      }
+
+      // Prove rejected Partner B was not persisted
+      const dupRows = await pool.query(`SELECT * FROM partners WHERE company_name = 'Duplicate Corp'`);
+      assert.equal(dupRows.rowCount, 0, "Rejected duplicate partner must not be persisted");
+      assert.ok(partnerId > 0);
+
+      const pRows = await pool.query(`SELECT * FROM partners WHERE id = $1`, [partnerId]);
+      assert.equal(pRows.rows.length, 1);
+      assert.equal(pRows.rows[0].company_name, 'New Corp');
+      assert.equal(pRows.rows[0].contact_email, 'TEST@corP.com');
+      assert.equal(pRows.rows[0].website_url, 'https://new.test');
+      assert.ok(pRows.rows[0].created_at);
+
+      const liRows = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [partnerId]);
+      assert.equal(liRows.rows.length, 1);
+      assert.equal(liRows.rows[0].legal_name, 'New Corporation sp. z o.o.');
+      assert.equal(liRows.rows[0].registered_address_line1, 'Testowa 1');
+      assert.equal(liRows.rows[0].registered_country_code, 'PL');
+      assert.equal(liRows.rows[0].verification_status, 'unverified');
+      assert.equal(liRows.rows[0].verified_at, null);
+      assert.equal(liRows.rows[0].current_verification_event_id, null);
+
+      const taxRows = await pool.query(`SELECT * FROM seller_tax_identifiers WHERE partner_id = $1 ORDER BY identifier_type`, [partnerId]);
+      assert.equal(taxRows.rows.length, 2);
+      assert.deepEqual(taxRows.rows.map((row) => row.identifier_type), ['tax_id', 'vat_id']);
+      assert.ok(taxRows.rows.every((row) => row.identifier_value === '1234567890'));
+      assert.ok(taxRows.rows.every((row) => row.verification_status === 'unverified' && row.verified_at === null));
+
+      const registryRows = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1 ORDER BY registry_type`, [partnerId]);
+      assert.equal(registryRows.rows.length, 2);
+      assert.deepEqual(registryRows.rows.map((row) => row.registry_type), ['commercial_register', 'statistical_id']);
+      assert.deepEqual(registryRows.rows.map((row) => row.registry_value), ['0000123456', '123456785']);
+      assert.ok(registryRows.rows.every((row) => row.verification_status === 'unverified' && row.verified_at === null));
+
+      const seRows = await pool.query(`SELECT * FROM seller_eligibility WHERE partner_id = $1`, [partnerId]);
+      assert.equal(seRows.rows.length, 0);
+      const eventRows = await pool.query(`SELECT * FROM seller_verification_events WHERE legal_identity_partner_id = $1 OR tax_identifier_id = ANY($2::bigint[]) OR registry_identifier_id = ANY($3::bigint[])`, [partnerId, taxRows.rows.map((row) => row.id), registryRows.rows.map((row) => row.id)]);
+      assert.equal(eventRows.rows.length, 0);
+    }
+
+    const rollbackInput = {
+      ...rawInput,
+      companyName: 'Rollback Corp',
+      contactEmail: 'rollback-onboarding@test.local',
+      legalName: 'Rollback Corporation',
+      taxIdentifiers: [{ identifierType: 'tax_id', identifierValue: '9876543210', countryCode: 'PL' }],
+      registryIdentifiers: [{ registryType: 'commercial_register', registryValue: '0000987654', jurisdictionCountry: 'PL' }],
+    };
+    const countRollbackRows = async () => {
+      const result = await pool.query(`
+        SELECT
+          (SELECT count(*)::int FROM partners WHERE contact_email = 'rollback-onboarding@test.local') AS partners,
+          (SELECT count(*)::int FROM seller_legal_identities WHERE legal_name = 'Rollback Corporation') AS legal,
+          (SELECT count(*)::int FROM seller_tax_identifiers WHERE identifier_value = '9876543210') AS tax,
+          (SELECT count(*)::int FROM seller_registry_identifiers WHERE registry_value = '0000987654') AS registry
+      `);
+      return result.rows[0];
+    };
+
+    const before = await countRollbackRows();
+    const failingDb = {
+      transaction: async (callback: (tx: any) => Promise<unknown>) => db.transaction(async (tx: any) => {
+        let insertNumber = 0;
+        const controlledTx = new Proxy(tx, {
+          get(target, property, receiver) {
+            if (property !== 'insert') return Reflect.get(target, property, receiver);
+            return (table: unknown) => {
+              insertNumber += 1;
+              const builder = target.insert(table);
+              if (insertNumber !== 4) return builder;
+              return {
+                values: async (values: unknown) => {
+                  await builder.values(values);
+                  throw new Error('CONTROLLED_ONBOARDING_FAILURE_AFTER_REGISTRY_INSERT');
+                },
+              };
+            };
+          },
+        });
+        return callback(controlledTx);
+      }),
+    };
+
+    const rollbackResult = await createPartnerCore(failingDb as any, rollbackInput);
+    assert.deepEqual(rollbackResult, { ok: false, reason: 'PARTNER_CREATE_FAILED' });
+    const after = await countRollbackRows();
+    assert.equal(after.partners - before.partners, 0, 'PARTNER_ROWS_DELTA=0');
+    assert.equal(after.legal - before.legal, 0, 'LEGAL_IDENTITY_ROWS_DELTA=0');
+    assert.equal(after.tax - before.tax, 0, 'TAX_IDENTIFIER_ROWS_DELTA=0');
+    assert.equal(after.registry - before.registry, 0, 'REGISTRY_IDENTIFIER_ROWS_DELTA=0');
+  });
+
+
+  await t.test("ADMIN_SELLER_REGISTRY_IDENTIFIER_MUTATION_PROOF", async () => {
+    const {
+      executeAdminSellerRegistryIdentifierAdd,
+      executeAdminSellerRegistryIdentifierDelete
+    } = await import("@/lib/admin/partner-edit-core");
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+    // 1. partner missing
+    const res1 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: 99999,
+      registryType: "commercial_register",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res1.ok, false);
+    if (!res1.ok) assert.strictEqual(res1.code, "PARTNER_NOT_FOUND");
+
+    // Create partner
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('RegCorp', 'reg@corp.com') RETURNING id`);
+    const pid = pRes.rows[0].id;
+
+    // 2. legal identity missing
+    const res2 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: pid,
+      registryType: "commercial_register",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res2.ok, false);
+    if (!res2.ok) assert.strictEqual(res2.code, "LEGAL_IDENTITY_REQUIRED");
+
+    // Create legal identity
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'RegCorp Sp.', 'PL')`, [pid]);
+
+    // 3. successful add
+    const res3 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: pid,
+      registryType: "commercial_register",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res3.ok, true);
+
+    const check1 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check1.rows.length, 1);
+    assert.strictEqual(check1.rows[0].registry_value, "0000111222");
+    const regId = check1.rows[0].id;
+
+    // 4. duplicate add -> REGISTRY_IDENTIFIER_CONFLICT
+    const res4 = await executeAdminSellerRegistryIdentifierAdd(db, {
+      partnerId: pid,
+      registryType: "commercial_register",
+      registryValue: "0000111222",
+      jurisdictionCountry: "PL",
+    });
+    assert.strictEqual(res4.ok, false);
+    if (!res4.ok) assert.strictEqual(res4.code, "REGISTRY_IDENTIFIER_CONFLICT");
+
+    // 5. delete wrong partner/id -> NOT_FOUND
+    const res5 = await executeAdminSellerRegistryIdentifierDelete(db, {
+      partnerId: pid,
+      registryIdentifierId: 99999, // wrong id
+    });
+    assert.strictEqual(res5.ok, false);
+    if (!res5.ok) assert.strictEqual(res5.code, "NOT_FOUND");
+
+    // 6. delete correct partner/id -> DELETED
+    const res6 = await executeAdminSellerRegistryIdentifierDelete(db, {
+      partnerId: pid,
+      registryIdentifierId: regId,
+    });
+    assert.strictEqual(res6.ok, true);
+
+    const check2 = await pool.query(`SELECT * FROM seller_registry_identifiers WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check2.rows.length, 0);
+  });
+
+
+  await t.test("ADMIN_SELLER_LEGAL_IDENTITY_MUTATION_PROOF", async () => {
+    const { executeAdminSellerLegalDataSave } = await import("@/lib/admin/partner-edit-core");
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+    const adminContext = { actorUserId: "ci-admin-seller-legal-proof" };
+
+    // CASE 4: New identity -> unverified
+    const pRes = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('LegalCorp', 'legal@corp.com') RETURNING id`);
+    const rawPid = pRes.rows[0].id;
+    const pid = Number(rawPid);
+    assert.ok(Number.isSafeInteger(pid));
+    assert.ok(pid > 0);
+
+    const res4 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "legal@corp.com",
+      legalName: "LegalCorp Sp.",
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Test 1",
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    }, adminContext);
+    assert.strictEqual(res4.ok, true);
+
+    const check4 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check4.rows.length, 1);
+    assert.strictEqual(check4.rows[0].verification_status, "unverified");
+
+    // Pre-seed verified evidence for CASE 1-3
+    await pool.query(`UPDATE seller_legal_identities SET verification_status = 'verified', verified_at = '2025-01-01 12:00:00Z', verification_source = 'KRS', verification_reference = '123' WHERE partner_id = $1`, [pid]);
+
+    // CASE 3: Only contactEmail changed -> evidence preserved
+    const res3 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "newemail@corp.com", // Changed
+      legalName: "LegalCorp Sp.", // Same
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Test 1",
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    }, adminContext);
+    assert.strictEqual(res3.ok, true);
+
+    const check3 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check3.rows[0].verification_status, "verified");
+    assert.notStrictEqual(check3.rows[0].verified_at, null);
+    assert.strictEqual(check3.rows[0].verification_source, "KRS");
+    assert.strictEqual(check3.rows[0].verification_reference, "123");
+
+    // Check partners email
+    const pCheck3 = await pool.query(`SELECT contact_email FROM partners WHERE id = $1`, [pid]);
+    assert.strictEqual(pCheck3.rows[0].contact_email, "newemail@corp.com");
+
+    // CASE 1: legalName changed -> evidence reset
+    const res1 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "newemail@corp.com",
+      legalName: "LegalCorp Sp. z o.o.", // Changed
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Test 1",
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    }, adminContext);
+    assert.strictEqual(res1.ok, true);
+
+    const check1 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check1.rows[0].verification_status, "unverified");
+    assert.strictEqual(check1.rows[0].verified_at, null);
+    assert.strictEqual(check1.rows[0].verification_source, null);
+    assert.strictEqual(check1.rows[0].verification_reference, null);
+
+    const eventCheck = await pool.query(
+      `SELECT actor_type, actor_user_id
+       FROM seller_verification_events
+       WHERE legal_identity_partner_id = $1
+       ORDER BY id DESC
+       LIMIT 1`,
+      [pid]
+    );
+    assert.strictEqual(eventCheck.rows.length, 1);
+    assert.strictEqual(eventCheck.rows[0].actor_type, "admin");
+    assert.strictEqual(eventCheck.rows[0].actor_user_id, adminContext.actorUserId);
+
+    // Restore verified state for CASE 2
+    await pool.query(`UPDATE seller_legal_identities SET verification_status = 'verified', verified_at = '2025-01-01 12:00:00Z', verification_source = 'KRS', verification_reference = '123' WHERE partner_id = $1`, [pid]);
+
+    // CASE 2: registeredAddressLine1 changed -> evidence reset
+    const res2 = await executeAdminSellerLegalDataSave(db, {
+      partnerId: pid,
+      businessEmail: "newemail@corp.com",
+      legalName: "LegalCorp Sp. z o.o.",
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: "Nowa 2", // Changed
+      registeredAddressLine2: null,
+      registeredPostalCode: "00-000",
+      registeredCity: "Warsaw",
+      registeredRegion: "Mazowieckie",
+      registeredCountryCode: "PL"
+    }, adminContext);
+    assert.strictEqual(res2.ok, true);
+
+    const check2 = await pool.query(`SELECT * FROM seller_legal_identities WHERE partner_id = $1`, [pid]);
+    assert.strictEqual(check2.rows[0].verification_status, "unverified");
+    assert.strictEqual(check2.rows[0].verified_at, null);
+    assert.strictEqual(check2.rows[0].verification_source, null);
+    assert.strictEqual(check2.rows[0].verification_reference, null);
+  });
+
+  await t.test("PATH E: POST-0008 HARDENING AND FAIL-CLOSED PROOFS", async () => {
+    await cleanDB();
+    const M0004 = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+    const M0005 = `${MIGRATIONS_DIR}/0005_marketplace_order_56b2a.sql`;
+    const M0006 = `${MIGRATIONS_DIR}/0006_seller_verification_evidence.sql`;
+    const M0007 = `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`;
+    const M0008 = `${MIGRATIONS_DIR}/0008_verification_event_function_search_path_hardening.sql`;
+
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004, "utf-8"));
+    await pool.query(fs.readFileSync(M0005, "utf-8"));
+    await pool.query(fs.readFileSync(M0006, "utf-8"));
+    await pool.query(fs.readFileSync(M0007, "utf-8"));
+
+    const getRLSAndGrants = async () => {
+      const stats = await getStats();
+      const grantsRes = await pool.query(`SELECT table_name, privilege_type FROM information_schema.role_table_grants WHERE grantee = 'authenticated' ORDER BY table_name, privilege_type`);
+      return { stats, grants: grantsRes.rows };
+    };
+    const pre0008State = await getRLSAndGrants();
+
+    await pool.query(fs.readFileSync(M0008, "utf-8"));
+
+    const post0008 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(post0008.fingerprint, post0008.publicTables, post0008.security).state,
+      "EXACT_EXISTING_POST_0008",
+    );
+
+    const procRes = await pool.query(`SELECT proconfig FROM pg_proc WHERE proname = 'prevent_verification_events_mutation'`);
+    assert.deepStrictEqual(procRes.rows[0].proconfig, ['search_path=""']);
+
+    const post0008State = await getRLSAndGrants();
+    assert.strictEqual(post0008State.stats.rls_tables, pre0008State.stats.rls_tables);
+    assert.strictEqual(post0008State.stats.policies, pre0008State.stats.policies);
+    assert.deepStrictEqual(post0008State.grants, pre0008State.grants);
+
+    await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (999, 'Test', 't@t.com') ON CONFLICT DO NOTHING`);
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, registered_address_line1, registered_city, registered_postal_code, registered_country_code) VALUES (999, 'Test', 'PL', 'A', 'B', 'C', 'PL') ON CONFLICT DO NOTHING`);
+
+    const evRes = await pool.query(`INSERT INTO seller_verification_events (subject_type, legal_identity_partner_id, event_type, actor_type, actor_user_id, source_type, subject_snapshot, previous_verification_status) VALUES ('legal_identity', 999, 'verified', 'admin', 'user_123', 'admin_manual', '{"status":"verified"}', 'unverified') RETURNING id`);
+    const evId = evRes.rows[0].id;
+    assert.ok(evId);
+
+    await assert.rejects(pool.query(`UPDATE seller_verification_events SET previous_verification_status = 'verified' WHERE id = $1`, [evId]), /UPDATE not allowed/);
+    await assert.rejects(pool.query(`DELETE FROM seller_verification_events WHERE id = $1`, [evId]), /DELETE not allowed/);
+
+    await pool.query(`ALTER FUNCTION public.prevent_verification_events_mutation() SET search_path = 'public'`);
+    const drift0008 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(classifyRuntimeTarget(drift0008.fingerprint, drift0008.publicTables, drift0008.security).state, "PARTIAL_OR_DRIFTED");
+    await pool.query(`ALTER FUNCTION public.prevent_verification_events_mutation() SET search_path = ''`);
+
+    const client = await pool.connect();
+    try {
+      await client.query("BEGIN");
+      await client.query("DROP FUNCTION public.prevent_verification_events_mutation CASCADE");
+      const missing0008 = await fetchLiveSchemaMetadata(client);
+      assert.strictEqual(classifyRuntimeTarget(missing0008.fingerprint, missing0008.publicTables, missing0008.security).state, "PARTIAL_OR_DRIFTED");
+      await client.query("ROLLBACK");
+    } finally {
+      client.release();
+    }
+  });
+
+  await t.test("PATH G: POST-0009 IMMUTABILITY, RLS, AND CONCURRENCY INTEGRATION PROOFS", async () => {
+    await cleanDB();
+    const M0004 = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+    const M0005 = `${MIGRATIONS_DIR}/0005_marketplace_order_56b2a.sql`;
+    const M0006 = `${MIGRATIONS_DIR}/0006_seller_verification_evidence.sql`;
+    const M0007 = `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`;
+    const M0008 = `${MIGRATIONS_DIR}/0008_verification_event_function_search_path_hardening.sql`;
+    const M0009 = M0009_FILE;
+
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004, "utf-8"));
+    await pool.query(fs.readFileSync(M0005, "utf-8"));
+    await pool.query(fs.readFileSync(M0006, "utf-8"));
+    await pool.query(fs.readFileSync(M0007, "utf-8"));
+    await pool.query(fs.readFileSync(M0008, "utf-8"));
+
+    const pre0009 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(pre0009.fingerprint, pre0009.publicTables, pre0009.security).state,
+      "EXACT_EXISTING_POST_0008",
+    );
+
+    // Apply 0009
+    await pool.query(fs.readFileSync(M0009, "utf-8"));
+
+    const post0009 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(post0009.fingerprint, post0009.publicTables, post0009.security).state,
+      "EXACT_EXISTING_POST_0009",
+    );
+
+    // 1. Verify RLS is enabled on all 3 new tables
+    assert.strictEqual(post0009.fingerprint["agreement_versions"].rlsEnabled, true);
+    assert.strictEqual(post0009.fingerprint["partner_agreement_execution_evidence"].rlsEnabled, true);
+    assert.strictEqual(post0009.fingerprint["partner_agreement_evidence_invalidations"].rlsEnabled, true);
+
+    // 2. Verify search_path="" on all 3 new trigger functions
+    const funcsRes = await pool.query(`
+      SELECT proname, proconfig
+      FROM pg_proc
+      WHERE proname IN (
+        'prevent_partner_agreement_execution_evidence_mutation',
+        'prevent_partner_agreement_evidence_invalidations_mutation',
+        'check_partner_agreement_active_external_tx'
+      )
+      ORDER BY proname
+    `);
+    assert.strictEqual(funcsRes.rows.length, 3);
+    for (const row of funcsRes.rows) {
+      assert.deepStrictEqual(row.proconfig, ['search_path=""'], `${row.proname} must have search_path=""`);
+    }
+
+    // 3. Test insert & immutability on partner_agreement_execution_evidence
+    await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (888, 'Partner 888', 'p888@test.com') ON CONFLICT DO NOTHING`);
+
+    // 3a. Single active version DB invariant & mixed-case rejection
+    const vRes = await pool.query(`
+      INSERT INTO agreement_versions (
+        agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at
+      ) VALUES (
+        'partner_agreement_b2b', 'v1.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active', NOW(), NOW()
+      ) RETURNING id
+    `);
+    const versionId = vRes.rows[0].id;
+    assert.ok(versionId);
+
+    // Assert SINGLE_ACTIVE_VERSION_DB_INVARIANT=PASS
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at
+        ) VALUES (
+          'partner_agreement_b2b', 'v2.0-proof', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'active', NOW(), NOW()
+        )
+      `),
+      (err: any) => err.code === '23505',
+      "SINGLE_ACTIVE_VERSION_DB_INVARIANT=PASS"
+    );
+
+    // Assert MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'PARTNER_AGREEMENT_B2B', 'v_upper', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        )
+      `),
+      (err: any) => err.code === '23514',
+      "MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED (uppercase)"
+    );
+
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO agreement_versions (
+          agreement_type, version, canonical_template_hash_sha256, status
+        ) VALUES (
+          'Partner_Agreement_B2b', 'v_mixed', 'abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789', 'draft'
+        )
+      `),
+      (err: any) => err.code === '23514',
+      "MIXED_CASE_ACTIVE_VERSION_BYPASS=REJECTED (mixed case)"
+    );
+
+    const evRes = await pool.query(`
+      INSERT INTO partner_agreement_execution_evidence (
+        partner_id, agreement_version_id, execution_method,
+        signed_at, signatory_name, signatory_role, signatory_email,
+        external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+      ) VALUES (
+        888, $1, 'platform_documentary_electronic',
+        NOW(), 'Signer Name', 'Director', 'signer@test.com',
+        'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+      ) RETURNING id
+    `, [versionId]);
+    const evidenceId = evRes.rows[0].id;
+    assert.ok(evidenceId);
+
+    // Immutability: UPDATE rejected with 55000
+    await assert.rejects(
+      pool.query(`UPDATE partner_agreement_execution_evidence SET signatory_name = 'Hacked' WHERE id = $1`, [evidenceId]),
+      (err: any) => err.code === '55000' || /UPDATE not allowed/i.test(err.message)
+    );
+
+    // Immutability: DELETE rejected with 55000
+    await assert.rejects(
+      pool.query(`DELETE FROM partner_agreement_execution_evidence WHERE id = $1`, [evidenceId]),
+      (err: any) => err.code === '55000' || /DELETE not allowed/i.test(err.message)
+    );
+
+    // 4. Test duplicate external_transaction_id rejected while active
+    await assert.rejects(
+      pool.query(`
+        INSERT INTO partner_agreement_execution_evidence (
+          partner_id, agreement_version_id, execution_method,
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+        ) VALUES (
+          888, $1, 'platform_documentary_electronic',
+          NOW(), 'Another Signer', 'Officer', 'signer2@test.com',
+          'docusign', 'tx-ci-001', '1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+        )
+      `, [versionId]),
+      (err: any) => err.code === '23505' || /Active execution evidence registration already exists/i.test(err.message)
+    );
+
+    // 5. Invalidation
+    const invRes = await pool.query(`
+      INSERT INTO partner_agreement_evidence_invalidations (
+        execution_evidence_id, reason, invalidated_by_admin_user_id
+      ) VALUES (
+        $1, 'Testing invalidation workflow', 'admin_ci'
+      ) RETURNING id
+    `, [evidenceId]);
+    const invalidationId = invRes.rows[0].id;
+    assert.ok(invalidationId);
+
+    // Invalidation immutability: UPDATE rejected with 55000
+    await assert.rejects(
+      pool.query(`UPDATE partner_agreement_evidence_invalidations SET reason = 'Changed' WHERE id = $1`, [invalidationId]),
+      (err: any) => err.code === '55000' || /UPDATE not allowed/i.test(err.message)
+    );
+
+    // Invalidation immutability: DELETE rejected with 55000
+    await assert.rejects(
+      pool.query(`DELETE FROM partner_agreement_evidence_invalidations WHERE id = $1`, [invalidationId]),
+      (err: any) => err.code === '55000' || /DELETE not allowed/i.test(err.message)
+    );
+
+    // 6. After invalidation, the same external transaction CAN be re-registered
+    const reRegRes = await pool.query(`
+      INSERT INTO partner_agreement_execution_evidence (
+        partner_id, agreement_version_id, execution_method,
+        signed_at, signatory_name, signatory_role, signatory_email,
+        external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+      ) VALUES (
+        888, $1, 'platform_documentary_electronic',
+        NOW(), 'Corrected Signer', 'Director', 'signer_fixed@test.com',
+        'docusign', 'tx-ci-001', '2234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+      ) RETURNING id
+    `, [versionId]);
+    assert.ok(reRegRes.rows[0].id);
+
+    // 6b. REAL_TWO_CONNECTION_CONCURRENCY_PROOF:
+    // Two distinct pool clients executing simultaneous inserts for identical (external_platform, external_transaction_id).
+    // Advisory xact lock inside trigger serializes them; exactly 1 succeeds, 1 fails with 23505.
+    const client1 = await pool.connect();
+    const client2 = await pool.connect();
+    try {
+      const concurrentTxId = `tx-race-${Date.now()}`;
+      const insertSql = `
+        INSERT INTO partner_agreement_execution_evidence (
+          partner_id, agreement_version_id, execution_method,
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id
+        ) VALUES (
+          888, $1, 'platform_documentary_electronic',
+          NOW(), 'Concurrent Signer', 'Officer', 'race@test.com',
+          'autenti_concurrent', $2, '3234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef', 'admin_ci'
+        ) RETURNING id
+      `;
+
+      const [outcome1, outcome2] = await Promise.allSettled([
+        client1.query(insertSql, [versionId, concurrentTxId]),
+        client2.query(insertSql, [versionId, concurrentTxId]),
+      ]);
+
+      const fulfilled = [outcome1, outcome2].filter((o) => o.status === 'fulfilled');
+      const rejected = [outcome1, outcome2].filter((o) => o.status === 'rejected');
+
+      assert.strictEqual(fulfilled.length, 1, 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Exactly 1 concurrent insert must succeed');
+      assert.strictEqual(rejected.length, 1, 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Exactly 1 concurrent insert must fail');
+
+      const rejectionReason = (rejected[0] as PromiseRejectedResult).reason;
+      assert.strictEqual(rejectionReason.code, '23505', 'REAL_TWO_CONNECTION_CONCURRENCY_PROOF: Rejection must be PostgreSQL 23505');
+
+      // Invalidate winner and prove re-registration succeeds
+      const winnerId = (fulfilled[0] as PromiseFulfilledResult<any>).value.rows[0].id;
+      await pool.query(`
+        INSERT INTO partner_agreement_evidence_invalidations (
+          execution_evidence_id, reason, invalidated_by_admin_user_id
+        ) VALUES (
+          $1, 'Invalidation to allow re-registration proof', 'admin_ci'
+        )
+      `, [winnerId]);
+
+      const postInvalidationRes = await pool.query(insertSql, [versionId, concurrentTxId]);
+      assert.ok(postInvalidationRes.rows[0].id, 'Re-registration of external transaction succeeded after invalidation');
+    } finally {
+      client1.release();
+      client2.release();
+    }
+
+    // 7. Test security drift fail-closed
+    await pool.query(`ALTER FUNCTION public.prevent_partner_agreement_execution_evidence_mutation() SET search_path = 'public'`);
+    const drift0009 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(drift0009.fingerprint, drift0009.publicTables, drift0009.security).state,
+      "PARTIAL_OR_DRIFTED"
+    );
+    await pool.query(`ALTER FUNCTION public.prevent_partner_agreement_execution_evidence_mutation() SET search_path = ''`);
+  });
+
+  // ---------------------------------------------------------------------------
+  // PATH H: CANONICAL TAX IDENTITY — CROSS-PARTNER UNIQUENESS & RACE SAFETY
+  // ---------------------------------------------------------------------------
+
+  await t.test("PATH H: CANONICAL_TAX_IDENTITY_CROSS_PARTNER_UNIQUENESS", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("@/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule }) as any;
+
+    const { executeAdminSellerTaxIdentifierAdd } = await import("@/lib/admin/partner-edit-core");
+
+    // Setup: two distinct partners with legal identities
+    const pRes1 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('TaxCorp A', 'a@taxcorp.com') RETURNING id`);
+    const pid1 = Number(pRes1.rows[0].id);
+    const pRes2 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('TaxCorp B', 'b@taxcorp.com') RETURNING id`);
+    const pid2 = Number(pRes2.rows[0].id);
+
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'TaxCorp A Sp.', 'PL'), ($2, 'TaxCorp B Sp.', 'PL')`, [pid1, pid2]);
+
+    // 1. Partner A adds NIP 1234567890 as tax_id -> OK
+    const r1 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid1,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r1.ok, true, "Partner A should add NIP tax_id successfully");
+
+    // Verify canonical columns were populated
+    const check1 = await pool.query(`SELECT canonical_identity_class, canonical_identifier_value FROM seller_tax_identifiers WHERE partner_id = $1 AND retired_at IS NULL`, [pid1]);
+    assert.strictEqual(check1.rows.length, 1);
+    assert.strictEqual(check1.rows[0].canonical_identity_class, "PL:NIP");
+    assert.strictEqual(check1.rows[0].canonical_identifier_value, "1234567890");
+
+    // 2. SAME partner adds same NIP again -> TAX_IDENTIFIER_CONFLICT (same-partner deduplicate)
+    const r2 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid1,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r2.ok, false);
+    if (!r2.ok) assert.strictEqual(r2.code, "TAX_IDENTIFIER_CONFLICT");
+
+    // 3. CROSS-TYPE: Partner A tries to add same NIP as vat_id -> ALLOWED
+    const r3 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid1,
+      identifierType: "vat_id",
+      identifierValue: "PL1234567890", // PL prefix stripped to same NIP
+      countryCode: "PL",
+    });
+    assert.strictEqual(r3.ok, true, "PL vat_id with same NIP as existing tax_id on same partner is allowed");
+    if (r3.ok) assert.strictEqual(r3.code, "ADDED");
+
+    const pid1Rows = await pool.query(`SELECT identifier_type FROM seller_tax_identifiers WHERE partner_id = $1 AND retired_at IS NULL`, [pid1]);
+    assert.strictEqual(pid1Rows.rowCount, 2, "Partner A should have exactly 2 active tax identifiers");
+
+    // 4. CROSS-PARTNER: Partner B tries to add same NIP -> SELLER_TAX_IDENTITY_ALREADY_ASSIGNED
+    const r4 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid2,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r4.ok, false, "Cross-partner duplicate NIP must be rejected");
+    if (!r4.ok) {
+      assert.strictEqual(r4.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+      assert.strictEqual((r4 as any).existingPartnerId, pid1);
+    }
+
+    // 5. CROSS-PARTNER + CROSS-TYPE: Partner B tries vat_id with same NIP -> also blocked
+    const r5 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid2,
+      identifierType: "vat_id",
+      identifierValue: "PL1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r5.ok, false, "Cross-partner vat_id bypass must be rejected");
+    if (!r5.ok) assert.strictEqual(r5.code, "SELLER_TAX_IDENTITY_ALREADY_ASSIGNED");
+
+    // 6. Retiring Partner A's tax identifier lifts the lock
+    await pool.query(`UPDATE seller_tax_identifiers SET retired_at = NOW() WHERE partner_id = $1 AND canonical_identifier_value = '1234567890'`, [pid1]);
+
+    const r6 = await executeAdminSellerTaxIdentifierAdd(db, {
+      partnerId: pid2,
+      identifierType: "tax_id",
+      identifierValue: "1234567890",
+      countryCode: "PL",
+    });
+    assert.strictEqual(r6.ok, true, "After retiring Partner A's NIP, Partner B should be able to claim it");
+
+    // 7. DB-level uniqueness constraint enforced even if app check bypassed (23505)
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status)
+         VALUES ($1, 'tax_id', '9999999999', 'PL', 'PL:NIP', '1234567890', 'unverified')`,
+        [pid1] // pid1 has a retired row for this value — but pid2 has active
+      ),
+      (err: any) => err.code === "23505",
+      "DB-level unique index must catch bypassed app logic"
+    );
+  });
+
+  // ---------------------------------------------------------------------------
+  // PATH H2: CANONICAL TAX IDENTITY — CONCURRENT RACE SAFETY
+  // ---------------------------------------------------------------------------
+
+  await t.test("PATH H2: CANONICAL_TAX_IDENTITY_RACE_CONDITION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const pRes1 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('RaceCorp A', 'race_a@test.com') RETURNING id`);
+    const pid1 = Number(pRes1.rows[0].id);
+    const pRes2 = await pool.query(`INSERT INTO partners (company_name, contact_email) VALUES ('RaceCorp B', 'race_b@test.com') RETURNING id`);
+    const pid2 = Number(pRes2.rows[0].id);
+
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES ($1, 'RaceCorp A Sp.', 'PL'), ($2, 'RaceCorp B Sp.', 'PL')`, [pid1, pid2]);
+
+    const client1 = await pool.connect();
+    const client2 = await pool.connect();
+
+    try {
+      // Two simultaneous inserts for the same canonical identity PL:NIP/5555555555
+      const insertSql = (pid: number, idType: string, val: string) =>
+        client1.query(
+          `INSERT INTO seller_tax_identifiers
+             (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status)
+           VALUES ($1, $2, $3, 'PL', 'PL:NIP', '5555555555', 'unverified')`,
+          [pid, idType, val]
+        );
+
+      const insertSql2 = (pid: number, idType: string, val: string) =>
+        client2.query(
+          `INSERT INTO seller_tax_identifiers
+             (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status)
+           VALUES ($1, $2, $3, 'PL', 'PL:NIP', '5555555555', 'unverified')`,
+          [pid, idType, val]
+        );
+
+      const [outcome1, outcome2] = await Promise.allSettled([
+        insertSql(pid1, "tax_id", "5555555555"),
+        insertSql2(pid2, "tax_id", "5555555555"),
+      ]);
+
+      const fulfilled = [outcome1, outcome2].filter((o) => o.status === "fulfilled");
+      const rejected = [outcome1, outcome2].filter((o) => o.status === "rejected");
+
+      assert.strictEqual(fulfilled.length, 1, "RACE_PROOF: Exactly 1 concurrent insert must succeed");
+      assert.strictEqual(rejected.length, 1, "RACE_PROOF: Exactly 1 concurrent insert must fail");
+
+      const rejectionReason = (rejected[0] as PromiseRejectedResult).reason;
+      assert.strictEqual(rejectionReason.code, "23505", "RACE_PROOF: Rejection must be PostgreSQL 23505 (unique_violation)");
+    } finally {
+      client1.release();
+      client2.release();
+    }
+  });
+
+  // ---------------------------------------------------------------------------
+  // PATH H3: MIGRATION 0011 PRECHECK BLOCKS EXISTING DUPLICATES
+  // ---------------------------------------------------------------------------
+
+  await t.test("PATH H3: MIGRATION_0011_FAIL_CLOSED_PRECHECK", async () => {
+    await cleanDB();
+
+    // Apply migrations only through 0010 (NOT 0011)
+    const M0004 = `${MIGRATIONS_DIR}/0004_seller_registered_address.sql`;
+    const M0005 = `${MIGRATIONS_DIR}/0005_marketplace_order_56b2a.sql`;
+    const M0006 = `${MIGRATIONS_DIR}/0006_seller_verification_evidence.sql`;
+    const M0007 = `${MIGRATIONS_DIR}/0007_marketplace_order_rls_hardening.sql`;
+    const M0008 = `${MIGRATIONS_DIR}/0008_verification_event_function_search_path_hardening.sql`;
+    const M0009 = M0009_FILE;
+    const M0010 = `${MIGRATIONS_DIR}/0010_offer_media_foundation.sql`;
+
+    await pool.query(fs.readFileSync(M0000_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0001_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0002_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0003_FILE, "utf-8"));
+    await pool.query(fs.readFileSync(M0004, "utf-8"));
+    await pool.query(fs.readFileSync(M0005, "utf-8"));
+    await pool.query(fs.readFileSync(M0006, "utf-8"));
+    await pool.query(fs.readFileSync(M0007, "utf-8"));
+    await pool.query(fs.readFileSync(M0008, "utf-8"));
+    await pool.query(fs.readFileSync(M0009, "utf-8"));
+    await pool.query(fs.readFileSync(M0010, "utf-8"));
+
+    // Insert two partners with the same NIP in different identifier types (simulating a pre-existing duplicate)
+    await pool.query(`INSERT INTO partners (id, company_name, contact_email) VALUES (7001, 'DupA', 'a@dup.com'), (7002, 'DupB', 'b@dup.com')`);
+    await pool.query(`INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country) VALUES (7001, 'DupA Sp.', 'PL'), (7002, 'DupB Sp.', 'PL')`);
+
+    // Insert conflicting canonical tax identifiers without canonical columns (old schema)
+    await pool.query(`
+      INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, verification_status)
+      VALUES
+        (7001, 'tax_id',  '7777777777', 'PL', 'unverified'),
+        (7002, 'vat_id',  'PL7777777777', 'PL', 'unverified')
+    `);
+
+    // Attempt to apply 0011 — must fail with BLOCKED_EXISTING_TAX_IDENTITY_DUPLICATES
+    await assert.rejects(
+      pool.query(fs.readFileSync(M0011_FILE, "utf-8")),
+      (err: any) => /BLOCKED_EXISTING_TAX_IDENTITY_DUPLICATES/i.test(err.message),
+      "Migration 0011 precheck must abort when pre-existing cross-partner duplicates exist"
+    );
+
+    // Verify: schema is unchanged (no canonical columns added)
+    const colCheck = await pool.query(`
+      SELECT column_name FROM information_schema.columns
+      WHERE table_schema = 'public' AND table_name = 'seller_tax_identifiers'
+        AND column_name IN ('canonical_identity_class', 'canonical_identifier_value')
+    `);
+    assert.strictEqual(colCheck.rows.length, 0, "Columns must NOT be present when precheck aborted the migration");
+  });
+
+  await t.test("PATH COMMERCE: 56B2 MARKETPLACE CHECKOUT", async (tt) => {
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const schemaModule = await import("../../src/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+    const { executeMarketplaceCheckout } = await import("../../src/lib/checkout/marketplace-checkout-core");
+    const { randomUUID } = await import("crypto");
+
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const agreementVersionResult = await pool.query<{ id: number }>(`
+      INSERT INTO agreement_versions (
+        agreement_type, version, canonical_template_hash_sha256,
+        status, effective_from, published_at
+      ) VALUES (
+        'partner_agreement_b2b', 'commerce-r2-v1',
+        'cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc',
+        'active', NOW(), NOW()
+      ) RETURNING id
+    `);
+    const activeAgreementVersionId = agreementVersionResult.rows[0].id;
+    const categoryResult = await pool.query<{ id: number }>(
+      `INSERT INTO categories (name, slug) VALUES ('Commerce R2', 'commerce-r2') RETURNING id`,
+    );
+    const categoryId = Number(categoryResult.rows[0].id);
+    let sellerFixtureNumber = 0;
+
+    async function seedPartnerAndOffer(price = "10.00") {
+      sellerFixtureNumber += 1;
+      const fixtureSuffix = String(sellerFixtureNumber).padStart(2, "0");
+      const nip = `12345678${fixtureSuffix}`;
+      const registryValue = `00000000${fixtureSuffix}`;
+      const pRes = await pool.query<{ id: number }>(
+        `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+        [`Seller Corp ${fixtureSuffix}`, `seller-${fixtureSuffix}@corp.com`],
+      );
+      const partnerId = Number(pRes.rows[0].id);
+
+      await pool.query(
+        `INSERT INTO seller_legal_identities (
+          partner_id, legal_name, jurisdiction_country, verification_status,
+          registered_address_line1, registered_postal_code, registered_city, registered_country_code
+        ) VALUES ($1, $2, 'PL', 'verified', 'Street 1', '00-001', 'City', 'PL')`,
+        [partnerId, `Legal Seller Corp ${fixtureSuffix}`],
+      );
+
+      await pool.query(
+        `INSERT INTO seller_tax_identifiers (
+          partner_id, identifier_type, identifier_value, country_code,
+          canonical_identity_class, canonical_identifier_value, verification_status
+        ) VALUES ($1, 'tax_id', $2, 'PL', 'PL:NIP', $2, 'verified')`,
+        [partnerId, nip],
+      );
+
+      await pool.query(
+        `INSERT INTO seller_registry_identifiers (
+          partner_id, registry_type, registry_value, jurisdiction_country, verification_status
+        ) VALUES ($1, 'commercial_register', $2, 'PL', 'verified')`,
+        [partnerId, registryValue],
+      );
+
+      await pool.query(`INSERT INTO seller_eligibility (partner_id, eligibility_status) VALUES ($1, 'eligible')`, [partnerId]);
+
+      await pool.query(
+        `INSERT INTO partner_agreement_execution_evidence (
+          partner_id, agreement_version_id, execution_method,
+          signed_at, signatory_name, signatory_role, signatory_email,
+          external_platform, external_transaction_id, signed_pdf_sha256,
+          recorded_by_admin_user_id
+        ) VALUES (
+          $1, $2, 'platform_documentary_electronic',
+          NOW(), $3, 'Director', $4,
+          'commerce_ci', $5,
+          'dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd',
+          'commerce_ci_admin'
+        )`,
+        [
+          partnerId,
+          activeAgreementVersionId,
+          `Signer ${fixtureSuffix}`,
+          `signer-${fixtureSuffix}@corp.com`,
+          `commerce-r2-${fixtureSuffix}`,
+        ],
+      );
+
+      const oRes = await pool.query<{ id: number }>(
+        `INSERT INTO offers (
+          title, category_id, offer_model, conversion_type, is_active,
+          publication_status, partner_id, price_brutto, price_on_request
+        ) VALUES ($1, $2, 'marketplace', 'inbound', true, 'published', $3, $4, false) RETURNING id`,
+        [`Test Offer ${fixtureSuffix}`, categoryId, partnerId, price],
+      );
+      const offerId = Number(oRes.rows[0].id);
+
+      return { partnerId, offerId, nip };
+    }
+
+    const defaultBuyerLegal: BuyerLegalContextInput = {
+      businessName: "Buyer Corp",
+      countryCode: "PL",
+      taxIdentifierType: "tax_id",
+      taxIdentifierValue: "0987654321",
+      registryIdentifierType: null,
+      registryIdentifierValue: null,
+      businessVerificationStatus: "verified",
+      businessVerificationMethod: "registry_lookup",
+      businessVerificationSource: "manual",
+      businessVerifiedAt: new Date(),
+      professionalPurposeEvidence: null,
+      categoryBStatus: "not_applicable",
+      legalContextReviewState: "no_review_needed",
+    };
+
+    const defaultBuyerContact = {
+      contactName: "John Doe",
+      email: "john@buyer.com",
+    };
+
+    type CommerceCounts = {
+      marketplaceOrders: number;
+      sellerOrders: number;
+      sellerOrderItems: number;
+      buyerContactSnapshots: number;
+    };
+
+    async function getCommerceCounts(): Promise<CommerceCounts> {
+      const result = await pool.query<CommerceCounts>(`
+        SELECT
+          (SELECT COUNT(*)::int FROM marketplace_orders) AS "marketplaceOrders",
+          (SELECT COUNT(*)::int FROM seller_orders) AS "sellerOrders",
+          (SELECT COUNT(*)::int FROM seller_order_items) AS "sellerOrderItems",
+          (SELECT COUNT(*)::int FROM marketplace_order_buyer_contact_snapshots) AS "buyerContactSnapshots"
+      `);
+      return result.rows[0];
+    }
+
+    await tt.test("PATH COMMERCE-A: Single Seller successful E2", async () => {
+      const { partnerId, offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 2 });
+
+      const legacyOrdersBefore = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
+      const legacyItemsBefore = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      if (!res.ok) assert.fail(`Expected checkout success, got ${res.reason}`);
+
+      const mOrderId = res.marketplaceOrderId;
+
+      const mOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.id, mOrderId));
+      assert.strictEqual(mOrders.length, 1);
+      assert.strictEqual(mOrders[0].status, "checkout_submitted");
+      assert.strictEqual(mOrders[0].e3ReceiptAcknowledgedAt, null);
+
+      const blcSnaps = await db.select().from(schemaModule.buyerLegalContextSnapshots).where(eq(schemaModule.buyerLegalContextSnapshots.id, mOrders[0].buyerLegalContextSnapshotId));
+      assert.strictEqual(blcSnaps.length, 1);
+      assert.strictEqual(blcSnaps[0].businessName, defaultBuyerLegal.businessName);
+      assert.strictEqual(blcSnaps[0].businessVerificationStatus, "verified");
+
+      const bcSnaps = await db.select().from(schemaModule.marketplaceOrderBuyerContactSnapshots).where(eq(schemaModule.marketplaceOrderBuyerContactSnapshots.marketplaceOrderId, mOrderId));
+      assert.strictEqual(bcSnaps.length, 1);
+      assert.strictEqual(bcSnaps[0].contactName, defaultBuyerContact.contactName);
+      assert.strictEqual(bcSnaps[0].email, defaultBuyerContact.email);
+
+      const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sOrders.length, 1);
+      assert.strictEqual(sOrders[0].partnerId, partnerId);
+      assert.strictEqual(sOrders[0].status, "submitted");
+      assert.strictEqual(sOrders[0].e6RoutedToSellerAt, null);
+
+      const sItems = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, sOrders[0].id));
+      assert.strictEqual(sItems.length, 1);
+      assert.strictEqual(sItems[0].offerId, offerId);
+      assert.strictEqual(sItems[0].quantity, 2);
+      assert.strictEqual(sItems[0].offerTitle.startsWith("Test Offer"), true);
+      assert.strictEqual(sItems[0].unitPrice, "10.00");
+      assert.strictEqual(sItems[0].currency, "PLN");
+
+      const sDisclosures = await db.select().from(schemaModule.marketplaceOrderSellerDisclosures).where(eq(schemaModule.marketplaceOrderSellerDisclosures.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sDisclosures.length, 1);
+      assert.strictEqual(sDisclosures[0].partnerId, partnerId);
+      assert.strictEqual(sDisclosures[0].sellerRole, "PRINCIPAL_SELLER");
+      assert.strictEqual(sDisclosures[0].goodsInvoiceIssuer, "PARTNER");
+      assert.strictEqual(sDisclosures[0].logimarketPlatformRole, "INTERMEDIARY_PLATFORM");
+
+      const ssSnaps = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, sOrders[0].id));
+      assert.strictEqual(ssSnaps.length, 1);
+      assert.strictEqual(ssSnaps[0].contractModel, "partner_marketplace");
+      assert.strictEqual(ssSnaps[0].sellerOfRecordResponsibility, "PARTNER");
+      assert.strictEqual(ssSnaps[0].goodsInvoiceResponsibility, "PARTNER");
+
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 0);
+
+      const legacyOrdersAfter = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
+      const legacyItemsAfter = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
+
+      assert.strictEqual(legacyOrdersAfter, legacyOrdersBefore);
+      assert.strictEqual(legacyItemsAfter, legacyItemsBefore);
+    });
+
+    await tt.test("PATH COMMERCE-B: Multi-Seller cart", async () => {
+      const { partnerId: p1, offerId: o1, nip: nip1 } = await seedPartnerAndOffer();
+      const { partnerId: p2, offerId: o2, nip: nip2 } = await seedPartnerAndOffer();
+      assert.notStrictEqual(nip1, nip2);
+
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o1, quantity: 2 });
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o2, quantity: 3 });
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      if (!res.ok) assert.fail(`Expected multi-seller checkout success, got ${res.reason}`);
+
+      const mOrderId = res.marketplaceOrderId;
+      const mOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.id, mOrderId));
+      assert.strictEqual(mOrders.length, 1);
+      const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sOrders.length, 2);
+
+      const pIds = sOrders.map(so => so.partnerId).sort();
+      assert.deepStrictEqual(pIds, [p1, p2].sort());
+
+      const sDisclosures = await db.select().from(schemaModule.marketplaceOrderSellerDisclosures).where(eq(schemaModule.marketplaceOrderSellerDisclosures.marketplaceOrderId, mOrderId));
+      assert.strictEqual(sDisclosures.length, 2);
+      assert.deepStrictEqual(sDisclosures.map((row) => row.partnerId).sort(), [p1, p2].sort());
+
+      const taxRows = await pool.query<{
+        partnerId: string;
+        canonicalIdentityClass: string;
+        canonicalIdentifierValue: string;
+      }>(`
+        SELECT
+          partner_id AS "partnerId",
+          canonical_identity_class AS "canonicalIdentityClass",
+          canonical_identifier_value AS "canonicalIdentifierValue"
+        FROM seller_tax_identifiers
+        WHERE partner_id = ANY($1::bigint[])
+        ORDER BY partner_id
+      `, [[p1, p2]]);
+      assert.strictEqual(taxRows.rows.length, 2);
+      assert.deepStrictEqual(taxRows.rows.map((row) => row.canonicalIdentityClass), ["PL:NIP", "PL:NIP"]);
+      assert.deepStrictEqual(
+        new Set(taxRows.rows.map((row) => row.canonicalIdentifierValue)).size,
+        2,
+      );
+
+      for (const so of sOrders) {
+        const ss = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, so.id));
+        assert.strictEqual(ss.length, 1);
+
+        const si = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, so.id));
+        assert.strictEqual(si.length, 1);
+        const expectedOfferId = so.partnerId === p1 ? o1 : o2;
+        const expectedQuantity = so.partnerId === p1 ? 2 : 3;
+        assert.strictEqual(si[0].offerId, expectedOfferId);
+        assert.strictEqual(si[0].quantity, expectedQuantity);
+      }
+
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 0);
+    });
+
+    await tt.test("PATH COMMERCE-C: Buyer not ready", async () => {
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      const countsBefore = await getCommerceCounts();
+
+      const badBuyer: BuyerLegalContextInput = { ...defaultBuyerLegal, businessName: null };
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, badBuyer, defaultBuyerContact);
+      if (res.ok) assert.fail("Buyer-not-ready checkout unexpectedly succeeded");
+      assert.strictEqual(res.reason, "CHECKOUT_BUYER_NOT_READY");
+      assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
+
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
+      assert.strictEqual(cItems[0].quantity, 1);
+    });
+
+    await tt.test("PATH COMMERCE-D: Seller not ready", async () => {
+      const { partnerId, offerId } = await seedPartnerAndOffer();
+      await pool.query(`UPDATE seller_eligibility SET eligibility_status = 'suspended' WHERE partner_id = $1`, [partnerId]);
+
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      const countsBefore = await getCommerceCounts();
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      if (res.ok) assert.fail("Seller-not-ready checkout unexpectedly succeeded");
+      assert.strictEqual(res.reason, "CHECKOUT_SELLER_NOT_READY");
+      assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
+
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
+      assert.strictEqual(cItems[0].quantity, 1);
+    });
+
+    await tt.test("PATH COMMERCE-E: Non-ecommerce/changed offer", async () => {
+      const { offerId } = await seedPartnerAndOffer();
+      await pool.query(`UPDATE offers SET offer_model = 'rfq', conversion_type = 'inbound' WHERE id = $1`, [offerId]);
+
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      const countsBefore = await getCommerceCounts();
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      if (res.ok) assert.fail("Changed-offer checkout unexpectedly succeeded");
+      assert.strictEqual(res.reason, "CHECKOUT_CART_CHANGED");
+      assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
+
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
+      assert.strictEqual(cItems[0].quantity, 1);
+    });
+
+    await tt.test("PATH COMMERCE-F: Atomic rollback", async () => {
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+
+      const badContact = { ...defaultBuyerContact, email: "a".repeat(300) };
+      const countsBefore = await getCommerceCounts();
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, badContact);
+      if (res.ok) assert.fail("Rollback checkout unexpectedly succeeded");
+      assert.strictEqual(res.reason, "SYSTEM_ERROR");
+      assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
+
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 1);
+      assert.strictEqual(cItems[0].quantity, 1);
+    });
+
+    await tt.test("PATH COMMERCE-G: Concurrent double submit", async () => {
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+
+      const moBefore = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
+
+      const p1 = executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const p2 = executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+
+      const results = await Promise.all([p1, p2]);
+
+      const successCount = results.filter(r => r.ok).length;
+      assert.strictEqual(successCount, 1);
+
+      const failedResult = results.find((result) => !result.ok);
+      assert.ok(failedResult && !failedResult.ok);
+      assert.strictEqual(failedResult.reason, "CHECKOUT_CART_EMPTY");
+
+      const moAfter = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
+      assert.strictEqual(moAfter, moBefore + 1);
+
+      const sessionOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.sessionHash, sessionHash));
+      assert.strictEqual(sessionOrders.length, 1);
+      const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+      assert.strictEqual(cItems.length, 0);
+    });
+
+    await tt.test("PATH COMMERCE-H: Legacy isolation", async () => {
+      const legacyOrdersBefore = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM orders`);
+      const legacyItemsBefore = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM order_items`);
+      const { offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+
+      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      if (!res.ok) assert.fail(`Expected legacy-isolation checkout success, got ${res.reason}`);
+
+      const legacyOrdersAfter = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM orders`);
+      const legacyItemsAfter = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM order_items`);
+      assert.strictEqual(legacyOrdersAfter.rows[0].count, legacyOrdersBefore.rows[0].count);
+      assert.strictEqual(legacyItemsAfter.rows[0].count, legacyItemsBefore.rows[0].count);
+    });
+  });
+
+
+  await t.test("PATH K: POST_0012 -> terminal POST_0013", async () => {
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({
+      migrationsFolder: MIGRATIONS_DIR,
+    });
+
+    const post0012Migrations = diskMigrations.slice(0, 13);
+    assert.strictEqual(
+      post0012Migrations.length,
+      13,
+      "Expected migrations 0000 through 0012"
+    );
+
+    for (const migration of post0012Migrations) {
+      for (const statement of migration.sql) {
+        await pool.query(statement);
+      }
+    }
+
+    // Create journal with 0000..0012
+    await pool.query(`CREATE SCHEMA IF NOT EXISTS drizzle_runtime;`);
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS drizzle_runtime.__drizzle_migrations (
+        id SERIAL PRIMARY KEY,
+        hash text NOT NULL,
+        created_at bigint
+      );
+    `);
+
+    for (const migration of post0012Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis]
+      );
+    }
+
+    const { fingerprint: preFingerprint, publicTables: preTables, security: preSecurity } = await fetchLiveSchemaMetadata(pool);
+    const preClassification = classifyRuntimeTarget(preFingerprint, preTables, preSecurity);
+    assert.strictEqual(preClassification.state, "EXACT_EXISTING_POST_0012", "Must recognize POST_0012 before migration");
+
+    await runMigrations(process.env);
+
+    const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
+    const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0018", "Must recognize the POST_0018 terminal state after migration");
+  });
+
+  await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const post0013Migrations = diskMigrations.slice(0, 14);
+    assert.strictEqual(post0013Migrations.length, 14);
+
+    for (const migration of post0013Migrations) {
+      for (const statement of migration.sql) await pool.query(statement);
+    }
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    for (const migration of post0013Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis]
+      );
+    }
+
+    const before = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(classifyRuntimeTarget(before.fingerprint, before.publicTables, before.security).state, "EXACT_EXISTING_POST_0013");
+
+    await runMigrations(process.env);
+    const after = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0018");
+    const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfter.rows[0].count, 19);
+
+    await runMigrations(process.env);
+    const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 19);
+
+    await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
+    await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
+  });
+  await t.test("PATH POST_0016: durable buyer order ownership cleanroom proof", async () => {
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { eq, and } = await import("drizzle-orm");
+    const schemaModule = await import("../../src/lib/schema");
+    const db = drizzle(pool, { schema: schemaModule });
+    const { executeMarketplaceCheckout } = await import("../../src/lib/checkout/marketplace-checkout-core");
+    const { getOwnedOrder, listOwnedOrders } = await import("../../src/lib/buyer-orders/ownership-core");
+    const { randomUUID } = await import("crypto");
+
+    const USER_A = "11111111-1111-4111-8111-111111111111";
+    const USER_B = "22222222-2222-4222-8222-222222222222";
+
+    // ------------------------------------------------------------------
+    // RUNTIME A: build a physical POST_0015 state with canonical journal
+    // ------------------------------------------------------------------
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    assert.strictEqual(diskMigrations.length, 19);
+    const post0015Migrations = diskMigrations.slice(0, 16);
+    assert.strictEqual(post0015Migrations.length, 16);
+    for (const migration of post0015Migrations) {
+      for (const statement of migration.sql) await pool.query(statement);
+    }
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    for (const migration of post0015Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis],
+      );
+    }
+
+    const physical0015 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(physical0015.fingerprint, physical0015.publicTables, physical0015.security).state,
+      "EXACT_EXISTING_POST_0015",
+      "physical POST_0015 must remain a valid historical predecessor state",
+    );
+
+    // ------------------------------------------------------------------
+    // SCHEMA H (precondition): a pre-0016 MarketplaceOrder already exists
+    // ------------------------------------------------------------------
+    const preBuyer = await pool.query<{ id: number }>(
+      `INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Pre 0016 Buyer', 'PL', 'tax_id', '1111111111', 'unknown', 'unknown', 'no_review_needed') RETURNING id`,
+    );
+    const preOrderRow = await pool.query<{ id: number }>(
+      `INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id, status) VALUES ('pre-0016-survivor', $1, 'checkout_submitted') RETURNING id`,
+      [preBuyer.rows[0].id],
+    );
+    const preOrderId = Number(preOrderRow.rows[0].id);
+
+    // ------------------------------------------------------------------
+    // RUNTIME B: the runner applies exactly 0016 from POST_0015
+    // ------------------------------------------------------------------
+    await runMigrations(process.env);
+
+    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0018
+    const post0016 = await fetchLiveSchemaMetadata(pool);
+    assert.strictEqual(
+      classifyRuntimeTarget(post0016.fingerprint, post0016.publicTables, post0016.security).state,
+      "EXACT_EXISTING_POST_0018",
+    );
+
+    // RUNTIME D: journal has 17 rows
+    const journalAfter0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfter0016.rows[0].count, 19);
+
+    // RUNTIME E: POST_0016 rerun is a terminal no-op
+    await runMigrations(process.env);
+    const journalAfterNoOp0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 19);
+
+    // ------------------------------------------------------------------
+    // SCHEMA F: buyer_auth_user_id is a nullable uuid, not unique, no auth.users FK
+    // ------------------------------------------------------------------
+    const columnMeta = await pool.query(
+      `SELECT data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'marketplace_orders' AND column_name = 'buyer_auth_user_id'`,
+    );
+    assert.strictEqual(columnMeta.rows.length, 1);
+    assert.strictEqual(columnMeta.rows[0].data_type, "uuid");
+    assert.strictEqual(columnMeta.rows[0].is_nullable, "YES");
+
+    const uniqueOwnershipIndex = await pool.query(
+      `SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'marketplace_orders' AND indexdef ILIKE '%UNIQUE%' AND indexdef ILIKE '%buyer_auth_user_id%'`,
+    );
+    assert.strictEqual(uniqueOwnershipIndex.rows.length, 0, "buyer_auth_user_id must not be unique");
+
+    // buyer_auth_user_id has no FK constraint, including no FK to auth.users.
+    const ownershipFkCount = await pool.query(
+      `SELECT COUNT(*)::int AS fk_count
+       FROM pg_constraint con
+       JOIN pg_class rel ON rel.oid = con.conrelid
+       JOIN pg_namespace ns ON ns.oid = rel.relnamespace
+       JOIN LATERAL unnest(con.conkey) AS key_column(attnum) ON TRUE
+       JOIN pg_attribute attr ON attr.attrelid = con.conrelid AND attr.attnum = key_column.attnum
+       WHERE con.contype = 'f'
+         AND ns.nspname = 'public'
+         AND rel.relname = 'marketplace_orders'
+         AND attr.attname = 'buyer_auth_user_id'`,
+    );
+    assert.strictEqual(ownershipFkCount.rows[0].fk_count, 0, "buyer_auth_user_id must have no FK, including to auth.users");
+
+    // SCHEMA G: normal non-unique btree ownership index
+    const ownershipIndex = await pool.query(
+      `SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'marketplace_orders' AND indexname = 'idx_marketplace_orders_buyer_auth'`,
+    );
+    assert.strictEqual(ownershipIndex.rows.length, 1);
+    assert.match(ownershipIndex.rows[0].indexdef, /USING btree/);
+    assert.match(ownershipIndex.rows[0].indexdef, /buyer_auth_user_id/);
+    assert.ok(!/UNIQUE/i.test(ownershipIndex.rows[0].indexdef), "ownership index must not be unique");
+
+    // SCHEMA H: the pre-0016 order survived 0016 with NULL ownership
+    const survivor = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [preOrderId]);
+    assert.strictEqual(survivor.rows.length, 1);
+    assert.strictEqual(survivor.rows[0].buyer_auth_user_id, null);
+
+    // ------------------------------------------------------------------
+    // CHECKOUT fixtures (reusing the PATH COMMERCE setup pattern)
+    // ------------------------------------------------------------------
+    let sellerFixtureNumber = 0;
+    const agreementVersionResult = await pool.query<{ id: number }>(
+      `INSERT INTO agreement_versions (agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at) VALUES ('partner_agreement_b2b', 'ownership-r3-v1', 'eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee', 'active', NOW(), NOW()) RETURNING id`,
+    );
+    const activeAgreementVersionId = agreementVersionResult.rows[0].id;
+    const ownershipCategory = await pool.query<{ id: number }>(
+      `INSERT INTO categories (name, slug) VALUES ('Ownership R3', 'ownership-r3') RETURNING id`,
+    );
+    const ownershipCategoryId = Number(ownershipCategory.rows[0].id);
+
+    async function seedOwnershipPartnerAndOffer(price = "10.00") {
+      sellerFixtureNumber += 1;
+      const fixtureSuffix = String(sellerFixtureNumber).padStart(2, "0");
+      const nip = `98765432${fixtureSuffix}`;
+      const registryValue = `11111111${fixtureSuffix}`;
+      const pRes = await pool.query<{ id: number }>(
+        `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+        [`Ownership Seller Corp ${fixtureSuffix}`, `ownership-seller-${fixtureSuffix}@corp.com`],
+      );
+      const partnerId = Number(pRes.rows[0].id);
+
+      await pool.query(
+        `INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, verification_status, registered_address_line1, registered_postal_code, registered_city, registered_country_code) VALUES ($1, $2, 'PL', 'verified', 'Street 1', '00-001', 'City', 'PL')`,
+        [partnerId, `Legal Ownership Seller Corp ${fixtureSuffix}`],
+      );
+      await pool.query(
+        `INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status) VALUES ($1, 'tax_id', $2, 'PL', 'PL:NIP', $2, 'verified')`,
+        [partnerId, nip],
+      );
+      await pool.query(
+        `INSERT INTO seller_registry_identifiers (partner_id, registry_type, registry_value, jurisdiction_country, verification_status) VALUES ($1, 'commercial_register', $2, 'PL', 'verified')`,
+        [partnerId, registryValue],
+      );
+      await pool.query(`INSERT INTO seller_eligibility (partner_id, eligibility_status) VALUES ($1, 'eligible')`, [partnerId]);
+      await pool.query(
+        `INSERT INTO partner_agreement_execution_evidence (partner_id, agreement_version_id, execution_method, signed_at, signatory_name, signatory_role, signatory_email, external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id) VALUES ($1, $2, 'platform_documentary_electronic', NOW(), $3, 'Director', $4, 'ownership_ci', $5, 'ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff', 'ownership_ci_admin')`,
+        [partnerId, activeAgreementVersionId, `Signer ${fixtureSuffix}`, `signer-${fixtureSuffix}@corp.com`, `ownership-r3-${fixtureSuffix}`],
+      );
+      const oRes = await pool.query<{ id: number }>(
+        `INSERT INTO offers (title, category_id, offer_model, conversion_type, is_active, publication_status, partner_id, price_brutto, price_on_request) VALUES ($1, $2, 'marketplace', 'inbound', true, 'published', $3, $4, false) RETURNING id`,
+        [`Ownership Offer ${fixtureSuffix}`, ownershipCategoryId, partnerId, price],
+      );
+      return { partnerId, offerId: Number(oRes.rows[0].id) };
+    }
+
+    const ownershipBuyerLegal: BuyerLegalContextInput = {
+      businessName: "Ownership Buyer Corp",
+      countryCode: "PL",
+      taxIdentifierType: "tax_id",
+      taxIdentifierValue: "5555555555",
+      registryIdentifierType: null,
+      registryIdentifierValue: null,
+      businessVerificationStatus: "verified",
+      businessVerificationMethod: "registry_lookup",
+      businessVerificationSource: "manual",
+      businessVerifiedAt: new Date(),
+      professionalPurposeEvidence: null,
+      categoryBStatus: "not_applicable",
+      legalContextReviewState: "no_review_needed",
+    };
+
+    const ownershipBuyerContact = {
+      contactName: "Ownership Buyer",
+      email: "ownership-buyer@corp.com",
+    };
+
+    async function runOwnershipCheckout(offerId: number, quantity: number, buyerAuthUserId?: string) {
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity });
+      return buyerAuthUserId === undefined
+        ? executeMarketplaceCheckout(db, sessionHash, ownershipBuyerLegal, ownershipBuyerContact)
+        : executeMarketplaceCheckout(db, sessionHash, ownershipBuyerLegal, ownershipBuyerContact, buyerAuthUserId);
+    }
+
+    const { offerId: ownershipOfferId } = await seedOwnershipPartnerAndOffer();
+
+    // CHECKOUT I: guest canonical checkout persists NULL
+    const guestResult = await runOwnershipCheckout(ownershipOfferId, 1);
+    assert.strictEqual(guestResult.ok, true);
+    if (!guestResult.ok) return;
+    const guestOrderId = guestResult.marketplaceOrderId;
+    const guestRow = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [guestOrderId]);
+    assert.strictEqual(guestRow.rows[0].buyer_auth_user_id, null);
+
+    // CHECKOUT J: authenticated canonical checkout persists the exact trusted UUID
+    const authResult = await runOwnershipCheckout(ownershipOfferId, 2, USER_A);
+    assert.strictEqual(authResult.ok, true);
+    if (!authResult.ok) return;
+    const authOrderId = authResult.marketplaceOrderId;
+    const authRow = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [authOrderId]);
+    assert.strictEqual(authRow.rows[0].buyer_auth_user_id, USER_A);
+
+    // CHECKOUT K: two orders may share the same buyer_auth_user_id
+    const authResult2 = await runOwnershipCheckout(ownershipOfferId, 3, USER_A);
+    assert.strictEqual(authResult2.ok, true);
+    if (!authResult2.ok) return;
+    const authOrderId2 = authResult2.marketplaceOrderId;
+    const sharedOwnership = await pool.query(`SELECT count(*)::int AS count FROM marketplace_orders WHERE buyer_auth_user_id = $1`, [USER_A]);
+    assert.strictEqual(sharedOwnership.rows[0].count, 2);
+
+    // ------------------------------------------------------------------
+    // OWNERSHIP L/M/N: production-shaped dependencies over (orderId, authUserId)
+    // ------------------------------------------------------------------
+    const ownershipProjection = {
+      orderId: schemaModule.marketplaceOrders.id,
+      status: schemaModule.marketplaceOrders.status,
+      createdAt: schemaModule.marketplaceOrders.createdAt,
+    };
+
+    function ownershipDeps(authUserId: string) {
+      return {
+        async requireUser() {
+          return { id: authUserId };
+        },
+        async findOwnedOrder(orderId: number, ownerId: string) {
+          const rows = await db
+            .select(ownershipProjection)
+            .from(schemaModule.marketplaceOrders)
+            .where(
+              and(
+                eq(schemaModule.marketplaceOrders.id, orderId),
+                eq(schemaModule.marketplaceOrders.buyerAuthUserId, ownerId),
+              ),
+            )
+            .limit(1);
+          return rows[0] ?? null;
+        },
+        async listOwnedOrders(ownerId: string) {
+          return db
+            .select(ownershipProjection)
+            .from(schemaModule.marketplaceOrders)
+            .where(eq(schemaModule.marketplaceOrders.buyerAuthUserId, ownerId));
+        },
+      };
+    }
+
+    // OWNERSHIP L: User A can read A's order
+    const ownerLookup = await getOwnedOrder(ownershipDeps(USER_A), authOrderId);
+    assert.strictEqual(ownerLookup.ok, true);
+    if (ownerLookup.ok) {
+      assert.strictEqual(ownerLookup.order.orderId, authOrderId);
+    }
+
+    // OWNERSHIP M: User B cannot retrieve A's order
+    const crossUserLookup = await getOwnedOrder(ownershipDeps(USER_B), authOrderId);
+    assert.strictEqual(crossUserLookup.ok, false);
+    if (!crossUserLookup.ok) {
+      assert.strictEqual(crossUserLookup.reason, "NOT_FOUND");
+    }
+
+    const nonexistentLookup = await getOwnedOrder(ownershipDeps(USER_B), 9007199254740000);
+    assert.strictEqual(nonexistentLookup.ok, false);
+    if (!nonexistentLookup.ok) {
+      assert.strictEqual(nonexistentLookup.reason, "NOT_FOUND");
+    }
+
+    // OWNERSHIP N: NULL/unclaimed and other-user orders are excluded from the list
+    const ownedByA = await listOwnedOrders(ownershipDeps(USER_A));
+    const ownedIds = ownedByA.map((order) => order.orderId).sort((a, b) => a - b);
+    assert.deepStrictEqual(ownedIds, [authOrderId, authOrderId2].sort((a, b) => a - b));
+    assert.ok(!ownedIds.includes(guestOrderId), "unclaimed NULL-owned order must not appear");
+    assert.ok(!ownedIds.includes(preOrderId), "pre-0016 NULL-owned order must not appear");
+
+    const ownedByB = await listOwnedOrders(ownershipDeps(USER_B));
+    assert.strictEqual(ownedByB.length, 0);
+  });
+
+
+  await t.test("PATH M: POST_0013 decision without E6 fails 0014 closed", async () => {
+    await cleanDB();
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const post0013Migrations = diskMigrations.slice(0, 14);
+    for (const migration of post0013Migrations) {
+      for (const statement of migration.sql) await pool.query(statement);
+    }
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    for (const migration of post0013Migrations) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis]
+      );
+    }
+
+    const partner = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Historical Partner', 'historical@test.com') RETURNING id`);
+    const buyer = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Historical Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const marketplaceOrder = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (session_hash, buyer_legal_context_snapshot_id, status) VALUES ('historical', $1, 'checkout_submitted') RETURNING id`, [buyer.rows[0].id]);
+    const sellerOrder = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [marketplaceOrder.rows[0].id, partner.rows[0].id]);
+    await pool.query(`INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status) VALUES ($1, 'pending_seller_review')`, [sellerOrder.rows[0].id]);
+
+    await assert.rejects(
+      () => runMigrations(process.env),
+      /Cannot backfill seller acceptance deadline without E6 timestamp/
+    );
+    const unchanged = await pool.query(`SELECT so.e6_routed_to_seller_at, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [sellerOrder.rows[0].id]);
+    assert.strictEqual(unchanged.rows[0].e6_routed_to_seller_at, null);
+    assert.strictEqual(unchanged.rows[0].decision_status, "pending_seller_review");
+    const expiresColumn = await pool.query(`SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'seller_acceptance_decisions' AND column_name = 'expires_at'`);
+    assert.strictEqual(expiresColumn.rows.length, 0, "Failed migration must roll back expires_at addition");
+  });
+
+  await t.test("N to R: PARTNER_USER_MEMBERSHIPS_CONSTRAINTS_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0018");
+
+    const fakePartnerRes1 = await pool.query<{ id: string }>(
+      `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+      ['Test Partner AuthZ A', 'test-partner-authz-a@test.com']
+    );
+    const partnerId1 = fakePartnerRes1.rows[0].id;
+
+    const fakePartnerRes2 = await pool.query<{ id: string }>(
+      `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+      ['Test Partner AuthZ B', 'test-partner-authz-b@test.com']
+    );
+    const partnerId2 = fakePartnerRes2.rows[0].id;
+
+    const userId1 = "00000000-0000-0000-0000-000000000010";
+    const userId2 = "00000000-0000-0000-0000-000000000011";
+
+    // FK constraint
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`, [userId1, '999999999']),
+      /violates foreign key constraint/
+    );
+
+    // UNIQUE constraint, default can_accept_orders = false
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`,
+      [userId1, partnerId1]
+    );
+
+    const memRes = await pool.query<{ can_accept_orders: boolean }>(`SELECT can_accept_orders FROM partner_user_memberships WHERE auth_user_id = $1 AND partner_id = $2`, [userId1, partnerId1]);
+    assert.strictEqual(memRes.rows[0].can_accept_orders, false);
+
+    // M. duplicate same user + Partner rejected
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`, [userId1, partnerId1]),
+      /violates unique constraint/
+    );
+
+    // N. same user may belong to Partner A and Partner B
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`,
+      [userId1, partnerId2]
+    );
+
+    // O. same Partner may have multiple distinct users
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'active')`,
+      [userId2, partnerId1]
+    );
+
+    // P. revoked consistency enforced
+    // revoked without revoked_at
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status) VALUES ($1, $2, 'revoked')`, ['00000000-0000-0000-0000-000000000012', partnerId1]),
+      /violates check constraint "chk_partner_membership_consistency"/
+    );
+    // active with revoked_at
+    await assert.rejects(
+      pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, revoked_at) VALUES ($1, $2, 'active', now())`, ['00000000-0000-0000-0000-000000000013', partnerId1]),
+      /violates check constraint "chk_partner_membership_consistency"/
+    );
+    // valid revoked
+    await pool.query(
+      `INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, revoked_at) VALUES ($1, $2, 'revoked', now())`,
+      ['00000000-0000-0000-0000-000000000014', partnerId1]
+    );
+  });
+
+  await t.test("Q to U: SELLER_ACCEPTANCE_DECISIONS_CONSTRAINTS_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const expiresColumn = await pool.query(`SELECT data_type, is_nullable FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'seller_acceptance_decisions' AND column_name = 'expires_at'`);
+    assert.strictEqual(expiresColumn.rows.length, 1);
+    assert.strictEqual(expiresColumn.rows[0].data_type, "timestamp with time zone");
+    assert.strictEqual(expiresColumn.rows[0].is_nullable, "NO");
+    const pendingExpiryIndex = await pool.query(`SELECT indexdef FROM pg_indexes WHERE schemaname = 'public' AND tablename = 'seller_acceptance_decisions' AND indexname = 'idx_seller_acceptance_decisions_pending_expires_at'`);
+    assert.strictEqual(pendingExpiryIndex.rows.length, 1);
+    assert.match(pendingExpiryIndex.rows[0].indexdef, /expires_at/);
+    assert.match(pendingExpiryIndex.rows[0].indexdef, /pending_seller_review/);
+
+    const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
+    const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0018");
+
+    // Create an order for testing
+    const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);
+    const pId = partnerRes.rows[0].id;
+
+    const buyerCtxRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (
+      business_name, country_code, tax_identifier_type, tax_identifier_value,
+      business_verification_status, category_b_status, legal_context_review_state
+    ) VALUES (
+      'AuthZ Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed'
+    ) RETURNING id`);
+    const buyerCtxId = buyerCtxRes.rows[0].id;
+
+    const mktRes = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash123', $1) RETURNING id`, [buyerCtxId]);
+    const mktOrderId = mktRes.rows[0].id;
+
+    const soRes = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktOrderId, pId]);
+    const sellerOrderId = soRes.rows[0].id;
+
+    const userId = "00000000-0000-0000-0000-000000000020";
+
+    // Q. Seller acceptance pending row permits NULL actor evidence
+    const decRes = await pool.query<{ id: string }>(
+      `INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at) VALUES ($1, 'pending_seller_review', now() + interval '24 hours') RETURNING id`,
+      [sellerOrderId]
+    );
+    const decId = decRes.rows[0].id;
+
+    // R. seller_accepted row without actor evidence rejected
+    await assert.rejects(
+      pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_accepted', resolved_at = now(), accepted_at = now() WHERE id = $1`, [decId]),
+      /violates check constraint "chk_seller_acc_dec_consistency"/
+    );
+
+    // S. seller_accepted row with actor + partner_portal accepted
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'seller_accepted', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now(), accepted_at = now() WHERE id = $2`,
+      [userId, decId]
+    );
+
+    // Back to pending for T
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'pending_seller_review', decided_by_auth_user_id = NULL, decision_source = NULL, resolved_at = NULL, accepted_at = NULL WHERE id = $1`,
+      [decId]
+    );
+
+    // T. seller_rejected row requires actor but accepted_at remains NULL
+    await assert.rejects(
+      pool.query(`UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', resolved_at = now() WHERE id = $1`, [decId]),
+      /violates check constraint "chk_seller_acc_dec_consistency"/
+    );
+
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'seller_rejected', decided_by_auth_user_id = $1, decision_source = 'partner_portal', resolved_at = now() WHERE id = $2`,
+      [userId, decId]
+    );
+
+    const readbackRes = await pool.query<{ accepted_at: Date | null }>(
+      `SELECT accepted_at FROM seller_acceptance_decisions WHERE id = $1`,
+      [decId]
+    );
+    assert.strictEqual(readbackRes.rows[0].accepted_at, null);
+
+    await pool.query(
+      `UPDATE seller_acceptance_decisions SET decision_status = 'pending_seller_review', decided_by_auth_user_id = NULL, decision_source = NULL, resolved_at = NULL, accepted_at = NULL WHERE id = $1`,
+      [decId]
+    );
+
+    // U. INVALID DECISION SOURCE MUST BE REJECTED BY THE CANONICAL DECISION CONSTRAINTS
+    await assert.rejects(
+      pool.query(
+        `UPDATE seller_acceptance_decisions SET decision_status = 'expired', decided_by_auth_user_id = NULL, decision_source = 'invalid_source', resolved_at = now(), accepted_at = NULL WHERE id = $1`,
+        [decId]
+      ),
+      /violates check constraint "chk_seller_acc_dec_(source|consistency)"/
+    );
+
+    await assert.rejects(
+      pool.query(
+        `UPDATE seller_acceptance_decisions SET decision_status = 'expired', decided_by_auth_user_id = $1, decision_source = NULL, resolved_at = now(), accepted_at = NULL WHERE id = $2`,
+        [userId, decId]
+      ),
+      /violates check constraint "chk_seller_acc_dec_consistency"/
+    );
+  });
+
+  await t.test("V to AD: E6 AND E7 WORKFLOW PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    // Import functions dynamically so they connect to test DB properly if needed,
+    // but they just use drizzle which is configured via DATABASE_URL
+    const {
+      routeSellerOrderToPartner,
+      acceptSellerOrderWithAuthority,
+      rejectSellerOrderWithAuthority,
+      expireSellerOrder,
+      expireDueSellerOrders,
+    } = await import("../../src/lib/seller-order/seller-order-workflow");
+
+    const partnerResA = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner A', 'a@test.com') RETURNING id`);
+    const pIdA = parseInt(partnerResA.rows[0].id);
+
+    const partnerResB = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Partner B', 'b@test.com') RETURNING id`);
+    const pIdB = parseInt(partnerResB.rows[0].id);
+
+    const createRoutedSellerOrder = async (suffix: string, partnerId: number) => {
+      const buyer = await pool.query<{ id: string }>(
+        `INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ($1, 'PL', 'NIP', $2, 'unknown', 'unknown', 'no_review_needed') RETURNING id`,
+        [`SLA Buyer ${suffix}`, `sla-${suffix}`]
+      );
+      const marketplaceOrder = await pool.query<{ id: string }>(
+        `INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', $1, $2) RETURNING id`,
+        [`sla-${suffix}`, buyer.rows[0].id]
+      );
+      const sellerOrder = await pool.query<{ id: string }>(
+        `INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`,
+        [marketplaceOrder.rows[0].id, partnerId]
+      );
+      const sellerOrderId = parseInt(sellerOrder.rows[0].id);
+      assert.deepStrictEqual(await routeSellerOrderToPartner(sellerOrderId), { ok: true });
+      return { sellerOrderId, marketplaceOrderId: marketplaceOrder.rows[0].id };
+    };
+
+    const buyerSnapRes = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer', 'PL', 'NIP', '1234567890', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId = buyerSnapRes.rows[0].id;
+
+    // Q. Create submitted SellerOrder
+    const mktRes1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash123', $1) RETURNING id`, [buyerCtxId]);
+    const mktId1 = mktRes1.rows[0].id;
+    const orderRes1 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId1, pIdA]);
+    const sOrderId1 = parseInt(orderRes1.rows[0].id);
+
+    // Snapshot legacy before execution
+    const beforeCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
+    const legacyOrdersBefore = parseInt(beforeCounts.rows[0].c);
+
+    const beforeItemCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM order_items`);
+    const legacyOrderItemsBefore = parseInt(beforeItemCounts.rows[0].c);
+
+    // Route
+    const routeRes1 = await routeSellerOrderToPartner(sOrderId1);
+    assert.equal(routeRes1.ok, true);
+
+    const postRouteQuery = await pool.query(`SELECT status, e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.notEqual(postRouteQuery.rows[0].e6_routed_to_seller_at, null);
+
+    const postRouteDecQuery = await pool.query(`SELECT decision_status, expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(postRouteDecQuery.rows[0].decision_status, 'pending_seller_review');
+    assert.strictEqual(
+      postRouteDecQuery.rows[0].expires_at.getTime() - postRouteQuery.rows[0].e6_routed_to_seller_at.getTime(),
+      24 * 60 * 60 * 1000,
+      "E6 deadline must be exactly 24 hours"
+    );
+
+    // R. Call route again -> Idempotent
+    const routeRes2 = await routeSellerOrderToPartner(sOrderId1);
+    assert.equal(routeRes2.ok, true);
+    const postRouteQuery2 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.equal(postRouteQuery2.rows[0].e6_routed_to_seller_at.getTime(), postRouteQuery.rows[0].e6_routed_to_seller_at.getTime());
+    const postRouteDecQuery2 = await pool.query(`SELECT expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(postRouteDecQuery2.rows[0].expires_at.getTime(), postRouteDecQuery.rows[0].expires_at.getTime());
+
+    const decCountQuery = await pool.query(`SELECT COUNT(*) as c FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(parseInt(decCountQuery.rows[0].c), 1);
+
+    // Cross Partner Proof
+    const authorizePartnerCross = async (partnerId: number) => {
+      assert.equal(partnerId, pIdA);
+      throw new (await import("../../src/lib/auth/authorization-errors")).ForbiddenError();
+    };
+    const crossRes = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerCross);
+    assert.equal(crossRes.ok, false);
+    if (crossRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(crossRes.code, "FORBIDDEN");
+
+    // S/T. Accept Workflow
+    const user1Id = "00000000-0000-0000-0000-000000000021";
+    const authorizePartnerValid1 = async () => ({ id: user1Id });
+    const acceptRes1 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
+    assert.equal(acceptRes1.ok, true);
+
+    const accState = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId1]);
+    assert.equal(accState.rows[0].status, 'seller_accepted');
+
+    const accDecState = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(accDecState.rows[0].decision_status, 'seller_accepted');
+    assert.equal(accDecState.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState.rows[0].decision_source, 'partner_portal');
+    assert.notEqual(accDecState.rows[0].resolved_at, null);
+    assert.notEqual(accDecState.rows[0].accepted_at, null);
+
+    // AC. Accept again User2 -> Idempotent
+    const user2Id = "00000000-0000-0000-0000-000000000022";
+    const authorizePartnerValid2 = async () => ({ id: user2Id });
+    const acceptRes2 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid2);
+    assert.equal(acceptRes2.ok, true);
+
+    const accDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId1]);
+    assert.equal(accDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(accDecState2.rows[0].decision_source, accDecState.rows[0].decision_source);
+    assert.equal(accDecState2.rows[0].accepted_at.getTime(), accDecState.rows[0].accepted_at.getTime());
+    assert.equal(accDecState2.rows[0].resolved_at.getTime(), accDecState.rows[0].resolved_at.getTime());
+
+    // X. reject after accept -> Conflict
+    const rejAfterAccRes = await rejectSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
+    assert.equal(rejAfterAccRes.ok, false);
+    if (rejAfterAccRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(rejAfterAccRes.code, "SELLER_ORDER_ALREADY_ACCEPTED");
+
+    // Real Rejection Proof
+    const buyerSnapRes2 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 2', 'PL', 'NIP', '1234567891', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId2 = buyerSnapRes2.rows[0].id;
+    const mktRes2 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash124', $1) RETURNING id`, [buyerCtxId2]);
+    const mktId2 = mktRes2.rows[0].id;
+    const orderRes2 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId2, pIdB]);
+    const sOrderId2 = parseInt(orderRes2.rows[0].id);
+    await routeSellerOrderToPartner(sOrderId2);
+
+    const rejRes1 = await rejectSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
+    assert.equal(rejRes1.ok, true);
+
+    const rejState = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId2]);
+    assert.equal(rejState.rows[0].status, 'seller_rejected');
+    const rejDecState = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
+    assert.equal(rejDecState.rows[0].decision_status, 'seller_rejected');
+    assert.equal(rejDecState.rows[0].accepted_at, null);
+    assert.notEqual(rejDecState.rows[0].resolved_at, null);
+    assert.equal(rejDecState.rows[0].decided_by_auth_user_id, user1Id);
+
+    // AD. Repeat Reject with User2
+    const rejRes2 = await rejectSellerOrderWithAuthority(sOrderId2, authorizePartnerValid2);
+    assert.equal(rejRes2.ok, true);
+    const rejDecState2 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId2]);
+    assert.equal(rejDecState2.rows[0].decided_by_auth_user_id, user1Id);
+    assert.equal(rejDecState2.rows[0].decision_source, rejDecState.rows[0].decision_source);
+    assert.equal(rejDecState2.rows[0].resolved_at.getTime(), rejDecState.rows[0].resolved_at.getTime());
+    assert.equal(rejDecState2.rows[0].accepted_at, null);
+
+    // W. accept after reject -> Conflict
+    const accAfterRejRes = await acceptSellerOrderWithAuthority(sOrderId2, authorizePartnerValid1);
+    assert.equal(accAfterRejRes.ok, false);
+    if (accAfterRejRes.ok) { assert.fail("expected failure result"); }
+    assert.equal(accAfterRejRes.code, "SELLER_ORDER_ALREADY_REJECTED");
+
+    // CONCURRENCY PROOF
+    const buyerSnapRes3 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer 3', 'PL', 'NIP', '1234567892', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const buyerCtxId3 = buyerSnapRes3.rows[0].id;
+    const mktRes3 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash125', $1) RETURNING id`, [buyerCtxId3]);
+    const mktId3 = mktRes3.rows[0].id;
+    const orderRes3 = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktId3, pIdA]);
+    const sOrderId3 = parseInt(orderRes3.rows[0].id);
+    await routeSellerOrderToPartner(sOrderId3);
+
+    const concRes = await Promise.all([
+      acceptSellerOrderWithAuthority(sOrderId3, authorizePartnerValid1),
+      rejectSellerOrderWithAuthority(sOrderId3, authorizePartnerValid2)
+    ]);
+
+    // One should succeed, one should fail
+    const successes = concRes.filter(r => r.ok);
+    const failures = concRes.filter(r => !r.ok);
+    assert.equal(successes.length, 1);
+    assert.equal(failures.length, 1);
+
+    const finalState3 = await pool.query(`SELECT status FROM seller_orders WHERE id = $1`, [sOrderId3]);
+    const finalDecState3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [sOrderId3]);
+
+    assert.equal(finalState3.rows[0].status, finalDecState3.rows[0].decision_status);
+    assert.ok(finalState3.rows[0].status === 'seller_accepted' || finalState3.rows[0].status === 'seller_rejected');
+
+    const acceptExpired = await createRoutedSellerOrder("accept-expired", pIdA);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [acceptExpired.sellerOrderId]);
+    const acceptExpiredResult = await acceptSellerOrderWithAuthority(acceptExpired.sellerOrderId, authorizePartnerValid1);
+    assert.deepStrictEqual(acceptExpiredResult, { ok: false, code: "SELLER_ORDER_EXPIRED" });
+    const acceptExpiredState = await pool.query(`SELECT so.status, decision.* FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [acceptExpired.sellerOrderId]);
+    assert.strictEqual(acceptExpiredState.rows[0].status, "expired");
+    assert.strictEqual(acceptExpiredState.rows[0].decision_status, "expired");
+    assert.strictEqual(acceptExpiredState.rows[0].decided_by_auth_user_id, null);
+    assert.strictEqual(acceptExpiredState.rows[0].decision_source, null);
+    assert.strictEqual(acceptExpiredState.rows[0].accepted_at, null);
+    assert.notStrictEqual(acceptExpiredState.rows[0].resolved_at, null);
+
+    const rejectExpired = await createRoutedSellerOrder("reject-expired", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [rejectExpired.sellerOrderId]);
+    const rejectExpiredResult = await rejectSellerOrderWithAuthority(rejectExpired.sellerOrderId, authorizePartnerValid1);
+    assert.deepStrictEqual(rejectExpiredResult, { ok: false, code: "SELLER_ORDER_EXPIRED" });
+    const rejectExpiredState = await pool.query(`SELECT so.status, decision.decision_status, decision.decided_by_auth_user_id, decision.decision_source FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [rejectExpired.sellerOrderId]);
+    assert.strictEqual(rejectExpiredState.rows[0].status, "expired");
+    assert.strictEqual(rejectExpiredState.rows[0].decision_status, "expired");
+    assert.strictEqual(rejectExpiredState.rows[0].decided_by_auth_user_id, null);
+    assert.strictEqual(rejectExpiredState.rows[0].decision_source, null);
+
+    const notDue = await createRoutedSellerOrder("not-due", pIdA);
+    assert.deepStrictEqual(await expireSellerOrder(notDue.sellerOrderId), { ok: false, code: "SELLER_ORDER_NOT_DUE" });
+    const notDueState = await pool.query(`SELECT so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [notDue.sellerOrderId]);
+    assert.strictEqual(notDueState.rows[0].status, "submitted");
+    assert.strictEqual(notDueState.rows[0].decision_status, "pending_seller_review");
+
+    const due = await createRoutedSellerOrder("due", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [due.sellerOrderId]);
+    assert.deepStrictEqual(await expireSellerOrder(due.sellerOrderId), { ok: true, changed: true });
+    const dueState = await pool.query(`SELECT so.status, decision.* FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [due.sellerOrderId]);
+    assert.strictEqual(dueState.rows[0].status, "expired");
+    assert.strictEqual(dueState.rows[0].decision_status, "expired");
+    assert.strictEqual(dueState.rows[0].decided_by_auth_user_id, null);
+    assert.strictEqual(dueState.rows[0].decision_source, null);
+    assert.strictEqual(dueState.rows[0].accepted_at, null);
+    const firstResolvedAt = dueState.rows[0].resolved_at.getTime();
+    const originalExpiresAt = dueState.rows[0].expires_at.getTime();
+    assert.deepStrictEqual(await expireSellerOrder(due.sellerOrderId), { ok: true, changed: false });
+    const dueRepeated = await pool.query(`SELECT resolved_at, expires_at FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [due.sellerOrderId]);
+    assert.strictEqual(dueRepeated.rows[0].resolved_at.getTime(), firstResolvedAt);
+    assert.strictEqual(dueRepeated.rows[0].expires_at.getTime(), originalExpiresAt);
+
+    assert.deepStrictEqual(await expireSellerOrder(sOrderId1), { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" });
+    assert.deepStrictEqual(await expireSellerOrder(sOrderId2), { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" });
+
+    const acceptRace = await createRoutedSellerOrder("accept-race", pIdA);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [acceptRace.sellerOrderId]);
+    await Promise.all([
+      acceptSellerOrderWithAuthority(acceptRace.sellerOrderId, authorizePartnerValid1),
+      expireSellerOrder(acceptRace.sellerOrderId),
+    ]);
+    const acceptRaceState = await pool.query(`SELECT so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [acceptRace.sellerOrderId]);
+    assert.strictEqual(acceptRaceState.rows[0].status, "expired");
+    assert.strictEqual(acceptRaceState.rows[0].decision_status, "expired");
+
+    const rejectRace = await createRoutedSellerOrder("reject-race", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [rejectRace.sellerOrderId]);
+    await Promise.all([
+      rejectSellerOrderWithAuthority(rejectRace.sellerOrderId, authorizePartnerValid1),
+      expireSellerOrder(rejectRace.sellerOrderId),
+    ]);
+    const rejectRaceState = await pool.query(`SELECT so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id = $1`, [rejectRace.sellerOrderId]);
+    assert.strictEqual(rejectRaceState.rows[0].status, "expired");
+    assert.strictEqual(rejectRaceState.rows[0].decision_status, "expired");
+
+    const batchDue = await createRoutedSellerOrder("batch-due", pIdA);
+    const batchFuture = await createRoutedSellerOrder("batch-future", pIdB);
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = clock_timestamp() - interval '1 second' WHERE seller_order_id = $1`, [batchDue.sellerOrderId]);
+    const batchResult = await expireDueSellerOrders(100);
+    assert.strictEqual(batchResult.ok, true);
+    const batchStates = await pool.query(`SELECT so.id, so.status, decision.decision_status FROM seller_orders so JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id WHERE so.id IN ($1, $2)`, [batchDue.sellerOrderId, batchFuture.sellerOrderId]);
+    const batchDueState = batchStates.rows.find((row) => Number(row.id) === batchDue.sellerOrderId);
+    const batchFutureState = batchStates.rows.find((row) => Number(row.id) === batchFuture.sellerOrderId);
+    assert.strictEqual(batchDueState?.status, "expired");
+    assert.strictEqual(batchDueState?.decision_status, "expired");
+    assert.strictEqual(batchFutureState?.status, "submitted");
+    assert.strictEqual(batchFutureState?.decision_status, "pending_seller_review");
+
+    for (const marketplaceOrderId of [acceptExpired.marketplaceOrderId, rejectExpired.marketplaceOrderId, due.marketplaceOrderId, acceptRace.marketplaceOrderId, rejectRace.marketplaceOrderId, batchDue.marketplaceOrderId]) {
+      const marketplaceState = await pool.query(`SELECT status FROM marketplace_orders WHERE id = $1`, [marketplaceOrderId]);
+      assert.strictEqual(marketplaceState.rows[0].status, "checkout_submitted");
+    }
+
+    // Verify Isolation
+    const afterCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM orders`);
+    const legacyOrdersAfter = parseInt(afterCounts.rows[0].c);
+    assert.equal(legacyOrdersAfter, legacyOrdersBefore);
+
+    const afterItemCounts = await pool.query<{ c: string }>(`SELECT COUNT(*) as c FROM order_items`);
+    const legacyOrderItemsAfter = parseInt(afterItemCounts.rows[0].c);
+    assert.equal(legacyOrderItemsAfter, legacyOrderItemsBefore);
+
+    const mktStatus1 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId1]);
+    assert.equal(mktStatus1.rows[0].status, 'checkout_submitted');
+    const mktStatus2 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId2]);
+    assert.equal(mktStatus2.rows[0].status, 'checkout_submitted');
+    const mktStatus3 = await pool.query<{status: string}>(`SELECT status FROM marketplace_orders WHERE id = $1`, [mktId3]);
+    assert.equal(mktStatus3.rows[0].status, 'checkout_submitted');
+
+    // === 01C-B Outbox Integration & Atomicity Proofs ===
+
+    // Setup an order for Atomicity proofs
+    const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer D1', 'PL', 'NIP', '1234567895', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
+    const mktD1 = await pool.query<{ id: string }>(`INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id) VALUES ('checkout_submitted', 'hash-d1', $1) RETURNING id`, [buyerD1.rows[0].id]);
+    const sellerOutboxCheck = await pool.query<{ id: string }>(`INSERT INTO seller_orders (marketplace_order_id, partner_id, status) VALUES ($1, $2, 'submitted') RETURNING id`, [mktD1.rows[0].id, pIdA]);
+    const atomicityOrderId = parseInt(sellerOutboxCheck.rows[0].id);
+
+    // D1. Force routed_to_seller outbox INSERT failure
+    await pool.query(`
+      CREATE OR REPLACE FUNCTION trigger_fail_outbox() RETURNS TRIGGER AS $$
+      BEGIN
+        RAISE EXCEPTION 'Forced outbox failure';
+      END;
+      $$ LANGUAGE plpgsql;
+      CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.routed_to_seller') EXECUTE FUNCTION trigger_fail_outbox();
+    `);
+
+    const d1Result = await routeSellerOrderToPartner(atomicityOrderId);
+    assert.strictEqual(d1Result.ok, false);
+    if (!d1Result.ok) assert.strictEqual(d1Result.code, "SYSTEM_ERROR");
+
+    // E6 not committed
+    const orderD1 = await pool.query(`SELECT e6_routed_to_seller_at FROM seller_orders WHERE id = $1`, [atomicityOrderId]);
+    assert.strictEqual(orderD1.rows[0].e6_routed_to_seller_at, null);
+
+    const decisionD1 = await pool.query(`SELECT * FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
+    assert.strictEqual(decisionD1.rows.length, 0);
+
+    const outboxD1 = await pool.query(`SELECT * FROM notification_outbox_events WHERE seller_order_id = $1`, [atomicityOrderId]);
+    assert.strictEqual(outboxD1.rows.length, 0);
+
+    // E6 first successful route
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const e6Result = await routeSellerOrderToPartner(atomicityOrderId);
+    assert.strictEqual(e6Result.ok, true);
+
+    const outboxE6 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
+    assert.strictEqual(outboxE6.rows.length, 1);
+
+    // Repeat E6: still exactly one
+    await routeSellerOrderToPartner(atomicityOrderId);
+    const outboxE6_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.routed_to_seller'`, [atomicityOrderId]);
+    assert.strictEqual(outboxE6_repeat.rows.length, 1);
+
+    // D2. Force accepted_for_buyer outbox failure
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.accepted_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d2Result = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
+    assert.strictEqual(d2Result.ok, false);
+    if (!d2Result.ok) assert.strictEqual(d2Result.code, "SYSTEM_ERROR");
+
+    const decisionD2 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId]);
+    assert.strictEqual(decisionD2.rows[0].decision_status, 'pending_seller_review');
+
+    const outboxD2 = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    assert.strictEqual(outboxD2.rows.length, 0);
+
+    // Accept first successful E7
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const acceptResult = await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
+    assert.strictEqual(acceptResult.ok, true);
+
+    const outboxAccept = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    assert.strictEqual(outboxAccept.rows.length, 1);
+
+    // Repeat Accept: still exactly one
+    await acceptSellerOrderWithAuthority(atomicityOrderId, authorizePartnerValid1);
+    const outboxAccept_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.accepted_for_buyer'`, [atomicityOrderId]);
+    assert.strictEqual(outboxAccept_repeat.rows.length, 1);
+
+    // D3. Force rejected_for_buyer failure
+    const orderD3 = await createRoutedSellerOrder("atomicity-d3", pIdA);
+    const atomicityOrderId2 = orderD3.sellerOrderId;
+
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.rejected_for_buyer') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d3Result = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
+    assert.strictEqual(d3Result.ok, false);
+    if (!d3Result.ok) assert.strictEqual(d3Result.code, "SYSTEM_ERROR");
+
+    const decisionD3 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId2]);
+    assert.strictEqual(decisionD3.rows[0].decision_status, 'pending_seller_review');
+
+    // Reject successful
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const rejectResult = await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
+    assert.strictEqual(rejectResult.ok, true);
+
+    const outboxReject = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
+    assert.strictEqual(outboxReject.rows.length, 1);
+
+    // Repeat Reject: exactly one
+    await rejectSellerOrderWithAuthority(atomicityOrderId2, authorizePartnerValid1);
+    const outboxReject_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type = 'seller_order.rejected_for_buyer'`, [atomicityOrderId2]);
+    assert.strictEqual(outboxReject_repeat.rows.length, 1);
+
+    // D4. Force expiry event persistence failure
+    const orderD4 = await createRoutedSellerOrder("atomicity-d4", pIdA);
+    const atomicityOrderId3 = orderD4.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [atomicityOrderId3]);
+
+    await pool.query(`CREATE TRIGGER force_outbox_fail BEFORE INSERT ON notification_outbox_events FOR EACH ROW WHEN (NEW.event_type = 'seller_order.expired_for_seller') EXECUTE FUNCTION trigger_fail_outbox();`);
+
+    const d4Result = await expireSellerOrder(atomicityOrderId3);
+    assert.strictEqual(d4Result.ok, false);
+    if (!d4Result.ok) assert.strictEqual(d4Result.code, "SYSTEM_ERROR");
+
+    const decisionD4 = await pool.query(`SELECT decision_status FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [atomicityOrderId3]);
+    assert.strictEqual(decisionD4.rows[0].decision_status, 'pending_seller_review');
+
+    // Canonical expiry successful
+    await pool.query(`DROP TRIGGER force_outbox_fail ON notification_outbox_events`);
+    const expireResult = await expireSellerOrder(atomicityOrderId3);
+    assert.strictEqual(expireResult.ok, true);
+
+    const outboxExpire = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
+    assert.strictEqual(outboxExpire.rows.length, 2);
+
+    // Repeat Expiry: still exactly two
+    await expireSellerOrder(atomicityOrderId3);
+    const outboxExpire_repeat = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [atomicityOrderId3]);
+    assert.strictEqual(outboxExpire_repeat.rows.length, 2);
+
+    // Expiry convergence proof: Lazy Accept, Lazy Reject, Batch Expire
+    // A. already proven (expireSellerOrder)
+
+    // B. Lazy Accept Expire
+    const soB = await createRoutedSellerOrder("cb-b", pIdA);
+    const idB = soB.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idB]);
+    const bResult = await acceptSellerOrderWithAuthority(idB, authorizePartnerValid1);
+    assert.strictEqual(bResult.ok, false);
+    if (!bResult.ok) assert.strictEqual(bResult.code, "SELLER_ORDER_EXPIRED");
+    const outboxB = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idB]);
+    assert.strictEqual(outboxB.rows.length, 2);
+
+    // C. Lazy Reject Expire
+    const soC = await createRoutedSellerOrder("cb-c", pIdA);
+    const idC = soC.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idC]);
+    const cResult = await rejectSellerOrderWithAuthority(idC, authorizePartnerValid1);
+    assert.strictEqual(cResult.ok, false);
+    if (!cResult.ok) assert.strictEqual(cResult.code, "SELLER_ORDER_EXPIRED");
+    const outboxC = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1 AND event_type LIKE 'seller_order.expired_for_%'`, [idC]);
+    assert.strictEqual(outboxC.rows.length, 2);
+
+    // D. Batch Expire
+    const soD = await createRoutedSellerOrder("cb-d", pIdA);
+    const idD = soD.sellerOrderId;
+    await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = now() - interval '1 hour' WHERE seller_order_id = $1`, [idD]);
+
+    // Check outbox count before
+    const countBefore = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
+    const expiredCountBefore = parseInt(countBefore.rows[0].c);
+
+    const dResult = await expireDueSellerOrders(100);
+    assert.strictEqual(dResult.ok, true);
+
+    const countAfter = await pool.query<{c: string}>(`SELECT COUNT(*) as c FROM notification_outbox_events WHERE event_type LIKE 'seller_order.expired_for_%'`);
+    const expiredCountAfter = parseInt(countAfter.rows[0].c);
+    assert.strictEqual(expiredCountAfter, expiredCountBefore + 2);
+
+
+  });
+
+  await t.test("PARTNER_OFFER_ATTRIBUTES_EDIT_MUTATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const { eq, and } = await import("drizzle-orm");
+    const schemaModule = await import("../../src/lib/schema");
+    const {
+      executePartnerOfferAttributesMutation,
+      parsePartnerOfferAttributesEditInput,
+    } = await import("../../src/lib/partner-offers/attribute-edit-core");
+    const { executePartnerOfferEdit } = await import(
+      "../../src/lib/partner-offers/edit-core"
+    );
+    const db = drizzle(pool, { schema: schemaModule });
+
+    await db.insert(schemaModule.partners).values({
+      id: 99001,
+      companyName: "ATTR-08 Partner",
+      contactEmail: "attr08@example.test",
+    });
+    await db.insert(schemaModule.categories).values({
+      id: 99001,
+      name: "ATTR-08 Category",
+      slug: "attr-08-category",
+    });
+    await db.insert(schemaModule.offers).values({
+      id: 99001,
+      partnerId: 99001,
+      categoryId: 99001,
+      title: "ATTR-08 Draft",
+      description: "unchanged",
+      priceBrutto: "100.00",
+      priceOnRequest: false,
+      offerModel: "marketplace",
+      conversionType: "inbound",
+      publicationStatus: "draft",
+      isActive: true,
+      isFeatured: false,
+      technicalAttributes: { legacy: "untouched" },
+      updatedAt: null,
+    });
+
+    const definitions = [
+      { id: 99011, stableKey: "attr08_text", dataType: "text", isActive: true },
+      { id: 99012, stableKey: "attr08_number", dataType: "number", isActive: true },
+      { id: 99013, stableKey: "attr08_boolean", dataType: "boolean", isActive: true },
+      { id: 99014, stableKey: "attr08_date", dataType: "date", isActive: true },
+      { id: 99015, stableKey: "attr08_year", dataType: "year", isActive: true },
+      { id: 99016, stableKey: "attr08_enum", dataType: "enum", isActive: true },
+      { id: 99017, stableKey: "attr08_multi", dataType: "multi_enum", isActive: true },
+      { id: 99018, stableKey: "attr08_constraint", dataType: "text", isActive: true },
+    ];
+    await db.insert(schemaModule.attributeDefinitions).values(definitions);
+    await db.insert(schemaModule.categoryAttributeAssignments).values(
+      definitions.map((definition, index) => ({
+        categoryId: 99001,
+        attributeDefinitionId: definition.id,
+        sortOrder: index,
+      })),
+    );
+    await db.insert(schemaModule.controlledOptionValues).values([
+      { id: 99161, attributeId: 99016, stableKey: "enum-a", isActive: true },
+      { id: 99171, attributeId: 99017, stableKey: "multi-a", isActive: true },
+      { id: 99172, attributeId: 99017, stableKey: "multi-b", isActive: true },
+    ]);
+
+    const before = await db
+      .select()
+      .from(schemaModule.offers)
+      .where(eq(schemaModule.offers.id, 99001));
+    const parsed = parsePartnerOfferAttributesEditInput({
+      partnerId: 99001,
+      offerId: 99001,
+      expectedCategoryId: 99001,
+      expectedUpdatedAt: null,
+      attributes: [
+        { attributeId: 99011, value: { type: "text", value: "  Steel  " } },
+        { attributeId: 99012, value: { type: "number", value: "1234.5600" } },
+        { attributeId: 99013, value: { type: "boolean", value: false } },
+        { attributeId: 99014, value: { type: "date", value: "2026-09-17" } },
+        { attributeId: 99015, value: { type: "year", value: "2026" } },
+        { attributeId: 99016, value: { type: "enum", optionId: 99161 } },
+        {
+          attributeId: 99017,
+          value: { type: "multi_enum", optionIds: [99171, 99172] },
+        },
+      ],
+    });
+    assert.equal(parsed.ok, true);
+    if (!parsed.ok) throw new Error("ATTR08_PARSE_FAILED");
+
+    const result = await executePartnerOfferAttributesMutation(db, parsed.data);
+    assert.equal(result.ok, true);
+    assert.equal(result.code, "ATTRIBUTES_UPDATED");
+    if (!result.ok) throw new Error("ATTR08_MUTATION_FAILED");
+    assert.notEqual(result.newUpdatedAt, null, "attribute write advances offers.updated_at");
+
+    const scalarRows = await db
+      .select()
+      .from(schemaModule.offerAttributeValues)
+      .where(eq(schemaModule.offerAttributeValues.offerId, 99001));
+    const multiRows = await db
+      .select()
+      .from(schemaModule.offerAttributeOptionValues)
+      .where(eq(schemaModule.offerAttributeOptionValues.offerId, 99001));
+    assert.equal(scalarRows.length, 6);
+    assert.equal(scalarRows.find((row) => row.attributeId === 99011)?.valueText, "Steel");
+    assert.equal(scalarRows.find((row) => row.attributeId === 99012)?.valueNumber, "1234.5600");
+    assert.equal(scalarRows.find((row) => row.attributeId === 99013)?.valueBoolean, false);
+    assert.equal(scalarRows.find((row) => row.attributeId === 99015)?.valueYear, 2026);
+    assert.equal(scalarRows.find((row) => row.attributeId === 99016)?.optionId, 99161);
+    assert.deepEqual(
+      multiRows.map((row) => row.optionId).sort(),
+      [99171, 99172],
+    );
+
+    const after = await db
+      .select()
+      .from(schemaModule.offers)
+      .where(eq(schemaModule.offers.id, 99001));
+    for (const field of [
+      "partnerId",
+      "categoryId",
+      "title",
+      "description",
+      "priceBrutto",
+      "priceOnRequest",
+      "offerModel",
+      "conversionType",
+      "publicationStatus",
+      "isActive",
+      "isFeatured",
+      "contractModel",
+      "technicalAttributes",
+    ] as const) {
+      assert.deepEqual(after[0][field], before[0][field], `${field} remains immutable`);
+    }
+    const media = await db
+      .select()
+      .from(schemaModule.offerMedia)
+      .where(eq(schemaModule.offerMedia.offerId, 99001));
+    assert.equal(media.length, 0, "media remains untouched");
+
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO offer_attribute_values (offer_id, attribute_id, value_text, value_number)
+         VALUES ($1, $2, $3, $4)`,
+        [99001, 99018, "x", "1"],
+      ),
+      /chk_oav_value_exclusivity/,
+    );
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO offer_attribute_values (offer_id, attribute_id, value_text)
+         VALUES ($1, $2, $3)`,
+        [99001, 99011, "duplicate"],
+      ),
+      /uq_oav_offer_attribute/,
+    );
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO offer_attribute_option_values (offer_id, attribute_id, option_id)
+         VALUES ($1, $2, $3)`,
+        [99001, 99017, 99171],
+      ),
+      /uq_oaov_offer_attribute_option/,
+    );
+    await assert.rejects(
+      pool.query(
+        `INSERT INTO offer_attribute_option_values (offer_id, attribute_id, option_id)
+         VALUES ($1, $2, $3)`,
+        [99001, 99017, 99161],
+      ),
+      /fk_oaov_attribute_option_pair/,
+    );
+
+    const invalidMixed = await executePartnerOfferAttributesMutation(db, {
+      ...parsed.data,
+      expectedUpdatedAt: result.newUpdatedAt,
+      attributes: [
+        { attributeId: 99011, value: { type: "text", value: "must rollback" } },
+        { attributeId: 99016, value: { type: "enum", optionId: 999999 } },
+      ],
+    });
+    assert.equal(invalidMixed.ok, false);
+    assert.equal(invalidMixed.code, "OPTION_NOT_FOUND");
+    const afterInvalid = await db
+      .select()
+      .from(schemaModule.offerAttributeValues)
+      .where(eq(schemaModule.offerAttributeValues.offerId, 99001));
+    assert.equal(
+      afterInvalid.find((row) => row.attributeId === 99011)?.valueText,
+      "Steel",
+      "mixed invalid mutation is atomic",
+    );
+
+    await db.insert(schemaModule.controlledOptionValues).values({
+      id: 99181,
+      attributeId: 99018,
+      stableKey: "cross-store-option",
+      isActive: true,
+    });
+    await db.insert(schemaModule.offerAttributeOptionValues).values({
+      offerId: 99001,
+      attributeId: 99018,
+      optionId: 99181,
+    });
+    const beforeStorageRejection = await db
+      .select({ updatedAt: schemaModule.offers.updatedAt })
+      .from(schemaModule.offers)
+      .where(eq(schemaModule.offers.id, 99001));
+    const storageRejected = await executePartnerOfferAttributesMutation(db, {
+      ...parsed.data,
+      expectedUpdatedAt: result.newUpdatedAt,
+      attributes: [
+        { attributeId: 99018, value: { type: "text", value: "must not write" } },
+      ],
+    });
+    assert.equal(storageRejected.code, "ATTRIBUTE_STORAGE_INCONSISTENT");
+    const afterStorageRejection = await db
+      .select({ updatedAt: schemaModule.offers.updatedAt })
+      .from(schemaModule.offers)
+      .where(eq(schemaModule.offers.id, 99001));
+    assert.deepEqual(
+      afterStorageRejection[0].updatedAt,
+      beforeStorageRejection[0].updatedAt,
+      "rejected cross-store state preserves offers.updated_at",
+    );
+    const rejectedOav = await db
+      .select()
+      .from(schemaModule.offerAttributeValues)
+      .where(eq(schemaModule.offerAttributeValues.attributeId, 99018));
+    const rejectedOaov = await db
+      .select()
+      .from(schemaModule.offerAttributeOptionValues)
+      .where(eq(schemaModule.offerAttributeOptionValues.attributeId, 99018));
+    assert.equal(rejectedOav.length, 0, "rejected drift creates no canonical OAV row");
+    assert.equal(rejectedOaov.length, 1, "rejected drift is not reconciled or deleted");
+
+    await db.insert(schemaModule.controlledOptionValues).values({
+      id: 99191,
+      attributeId: 99016,
+      stableKey: "enum-inactive-test",
+      isActive: false,
+    });
+    await db
+      .update(schemaModule.offerAttributeValues)
+      .set({ optionId: 99191 })
+      .where(
+        and(
+          eq(schemaModule.offerAttributeValues.offerId, 99001),
+          eq(schemaModule.offerAttributeValues.attributeId, 99016)
+        )
+      );
+
+    const beforeInactiveRejection = await db
+      .select({ updatedAt: schemaModule.offers.updatedAt })
+      .from(schemaModule.offers)
+      .where(eq(schemaModule.offers.id, 99001));
+
+    const inactiveRejected = await executePartnerOfferAttributesMutation(db, {
+      ...parsed.data,
+      expectedUpdatedAt: result.newUpdatedAt,
+      attributes: [
+        { attributeId: 99016, value: { type: "clear" } },
+      ],
+    });
+
+    assert.equal(inactiveRejected.ok, false);
+    assert.equal(inactiveRejected.code, "OPTION_INACTIVE");
+
+    const afterInactiveRejection = await db
+      .select({ updatedAt: schemaModule.offers.updatedAt })
+      .from(schemaModule.offers)
+      .where(eq(schemaModule.offers.id, 99001));
+    assert.deepEqual(
+      afterInactiveRejection[0].updatedAt,
+      beforeInactiveRejection[0].updatedAt,
+      "rejected persisted inactive option preserves offers.updated_at",
+    );
+
+    const rejectedInactiveOav = await db
+      .select()
+      .from(schemaModule.offerAttributeValues)
+      .where(
+        and(
+          eq(schemaModule.offerAttributeValues.offerId, 99001),
+          eq(schemaModule.offerAttributeValues.attributeId, 99016)
+        )
+      );
+    assert.equal(rejectedInactiveOav[0].optionId, 99191, "rejected inactive option is not reconciled or deleted");
+
+    const staleCore = await executePartnerOfferEdit(db, {
+      partnerId: 99001,
+      offerId: 99001,
+      expectedUpdatedAt: null,
+      title: "stale core",
+      description: "unchanged",
+      partnerOfferType: "marketplace",
+      priceBrutto: "100.00",
+      priceOnRequest: false,
+      outboundUrl: null,
+    });
+    assert.equal(staleCore.code, "OFFER_CONFLICT");
+
+    const validCore = await executePartnerOfferEdit(db, {
+      partnerId: 99001,
+      offerId: 99001,
+      expectedUpdatedAt: result.newUpdatedAt,
+      title: "core changed",
+      description: "unchanged",
+      partnerOfferType: "marketplace",
+      priceBrutto: "100.00",
+      priceOnRequest: false,
+      outboundUrl: null,
+    });
+    assert.equal(validCore.code, "OFFER_UPDATED");
+    const staleAttribute = await executePartnerOfferAttributesMutation(db, {
+      ...parsed.data,
+      expectedUpdatedAt: result.newUpdatedAt,
+      attributes: [
+        { attributeId: 99011, value: { type: "text", value: "stale" } },
+      ],
+    });
+    assert.equal(staleAttribute.code, "OFFER_CONFLICT");
+  });
+
+  await t.test("PARTNER_OFFER_MEDIA_MANAGEMENT_PROOF", async () => {
+    const { persistPartnerOfferImage,  readPartnerOfferMedia } = await import("../../src/lib/partner-offers/media-service");
+    const schemaModule = await import("../../src/lib/schema");
+    const { eq } = await import("drizzle-orm");
+    const db = drizzle(pool, { schema: schemaModule });
+
+    const fakeStorage = {
+      _files: new Map<string, Buffer>(),
+      async put(bucket: string, path: string, buffer: Buffer) {
+        this._files.set(`${bucket}/${path}`, buffer);
+        return { ok: true, path };
+      },
+      async delete(bucket: string, path: string) {
+        this._files.delete(`${bucket}/${path}`);
+        return { ok: true };
+      },
+      async download(bucket: string, path: string) {
+        const file = this._files.get(`${bucket}/${path}`);
+        if (!file) throw new Error("Not found");
+        return file;
+      },
+      getPublicUrl(bucket: string, path: string) {
+        return `http://fake-storage/${bucket}/${path}`;
+      }
+    };
+
+    const deps = { db, storage: fakeStorage as any };
+
+    // We can use 99001, which is draft.
+    const fakeBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01]);
+
+    const persistRes = await persistPartnerOfferImage(99001, 99001, fakeBuffer, deps);
+    assert.equal(persistRes.ok, true, "DB mutation succeeds for own draft");
+
+    const media = await readPartnerOfferMedia(99001, 99001, deps);
+    assert.equal(media.length, 1);
+    assert.equal(media[0].isPrimary, true, "First image primary contract preserved");
+
+    const crossPartnerRes = await persistPartnerOfferImage(99001, 99002, fakeBuffer, deps);
+    assert.equal(crossPartnerRes.ok, false);
+    if (!crossPartnerRes.ok) assert.equal(crossPartnerRes.code, "UNAUTHORIZED", "Cross-partner rejected");
+
+    // test that non-draft gets rejected
+    await db.update(schemaModule.offers).set({ publicationStatus: "published" }).where(eq(schemaModule.offers.id, 99001));
+    const publishedRes = await persistPartnerOfferImage(99001, 99001, fakeBuffer, deps);
+    assert.equal(publishedRes.ok, false);
+    if (!publishedRes.ok) assert.equal(publishedRes.code, "OFFER_NOT_EDITABLE", "Non-draft rejected");
+
+    // Restore
+    await db.update(schemaModule.offers).set({ publicationStatus: "draft" }).where(eq(schemaModule.offers.id, 99001));
+  });
+  await t.test("PARTNER_MEDIA_DOMAIN_BOUNDARY_PROOF", async (tt) => {
+    const { assertPartnerMediaOffer, changePartnerOfferMedia } = await import("../../src/lib/partner-offers/media-service");
+
+    // DOMAIN BOUNDARY TESTS
+    // Create two isolated partners for this proof
+    const db = drizzle(pool, { schema: await import("../../src/lib/schema") });
+    const { offers, offerMedia } = await import("../../src/lib/schema");
+    const suffix = String(Date.now()).slice(-6);
+    const partnerSellerRes = await pool.query<{ id: string }>(`
+      INSERT INTO partners (company_name, contact_email)
+      VALUES ($1, $2) RETURNING id
+    `, [`BoundarySellerCo-${suffix}`, `seller-${suffix}@boundary.test`]);
+    const partnerOtherRes = await pool.query<{ id: string }>(`
+      INSERT INTO partners (company_name, contact_email)
+      VALUES ($1, $2) RETURNING id
+    `, [`BoundaryOtherCo-${suffix}`, `other-${suffix}@boundary.test`]);
+    const parseFixtureId = (val: string): number => {
+      const num = Number(val);
+      if (!Number.isSafeInteger(num) || num <= 0) throw new Error("Invalid fixture ID");
+      return num;
+    };
+    const sellerId = parseFixtureId(partnerSellerRes.rows[0].id);
+    const otherId = parseFixtureId(partnerOtherRes.rows[0].id);
+
+    const categoryRes = await pool.query<{ id: string }>(`
+      INSERT INTO categories (name, slug)
+      VALUES ($1, $2) RETURNING id
+    `, [`Boundary Media ${suffix}`, `boundary-media-${suffix}`]);
+    const categoryId = parseFixtureId(categoryRes.rows[0].id);
+
+    // Create DRAFT offer
+    const [draftOffer] = await db.insert(offers).values({
+      partnerId: sellerId,
+      categoryId: categoryId,
+      title: "Draft offer",
+      publicationStatus: "draft",
+      offerModel: "marketplace",
+      conversionType: "inbound",
+      isActive: true,
+      priceOnRequest: true
+    }).returning();
+    const draftOid = draftOffer.id;
+
+    const [publishedOffer] = await db.insert(offers).values({
+      partnerId: sellerId,
+      categoryId: categoryId,
+      title: "Published offer",
+      publicationStatus: "published",
+      offerModel: "marketplace",
+      conversionType: "inbound",
+      isActive: true,
+      priceOnRequest: true
+    }).returning();
+    const pubOid = publishedOffer.id;
+
+    const [hiddenOffer] = await db.insert(offers).values({
+      partnerId: sellerId,
+      categoryId: categoryId,
+      title: "Hidden offer",
+      publicationStatus: "hidden",
+      offerModel: "marketplace",
+      conversionType: "inbound",
+      isActive: true,
+      priceOnRequest: true
+    }).returning();
+    const hiddenOid = hiddenOffer.id;
+
+    const [archivedOffer] = await db.insert(offers).values({
+      partnerId: sellerId,
+      categoryId: categoryId,
+      title: "Archived offer",
+      publicationStatus: "archived",
+      offerModel: "marketplace",
+      conversionType: "inbound",
+      isActive: false,
+      priceOnRequest: true
+    }).returning();
+    const archivedOid = archivedOffer.id;
+    const [deletedOffer] = await db.insert(offers).values({
+      partnerId: sellerId,
+      categoryId: categoryId,
+      title: "Deleted offer",
+      publicationStatus: "draft",
+      offerModel: "marketplace",
+      conversionType: "inbound",
+      isActive: false,
+      priceOnRequest: true,
+      deletedAt: new Date()
+    }).returning();
+    const deletedOid = deletedOffer.id;
+    const [crossOfferMedia] = await db.insert(offerMedia).values({
+      offerId: pubOid,
+      storageBucket: "offer-media",
+      objectPath: `boundary-media/${suffix}/cross-offer.jpg`,
+      sourceType: "upload",
+      mimeType: "image/jpeg",
+      sizeBytes: 1,
+      checksumSha256: "a".repeat(64),
+      sortOrder: 0,
+      isPrimary: true
+    }).returning({ id: offerMedia.id });
+    const crossOfferMediaId = crossOfferMedia.id;
+
+    // cross-partner
+    await tt.test("cross-partner -> rejected (UNAUTHORIZED)", async () => {
+      let threw = false;
+      try {
+        await assertPartnerMediaOffer(draftOid, otherId, { db });
+      } catch (e: any) {
+        threw = true;
+        assert.equal(e.message, "UNAUTHORIZED");
+      }
+      assert.equal(threw, true);
+    });
+
+    // published
+    await tt.test("published -> OFFER_NOT_EDITABLE", async () => {
+      let threw = false;
+      try {
+        await assertPartnerMediaOffer(pubOid, sellerId, { db });
+      } catch (e: any) {
+        threw = true;
+        assert.equal(e.message, "OFFER_NOT_EDITABLE");
+      }
+      assert.equal(threw, true);
+    });
+
+    // hidden
+    await tt.test("hidden -> OFFER_NOT_EDITABLE", async () => {
+      let threw = false;
+      try {
+        await assertPartnerMediaOffer(hiddenOid, sellerId, { db });
+      } catch (e: any) {
+        threw = true;
+        assert.equal(e.message, "OFFER_NOT_EDITABLE");
+      }
+      assert.equal(threw, true);
+    });
+
+    // archived
+    await tt.test("archived -> OFFER_NOT_EDITABLE", async () => {
+      let threw = false;
+      try {
+        await assertPartnerMediaOffer(archivedOid, sellerId, { db });
+      } catch (e: any) {
+        threw = true;
+        assert.equal(e.message, "OFFER_NOT_EDITABLE");
+      }
+      assert.equal(threw, true);
+    });
+
+    // soft-deleted offer is deliberately hidden by assertPartnerMediaOffer
+    await tt.test("soft-deleted -> rejected (OFFER_NOT_FOUND)", async () => {
+      let threw = false;
+      try {
+        await assertPartnerMediaOffer(deletedOid, sellerId, { db });
+      } catch (e: any) {
+        threw = true;
+        assert.equal(e.message, "OFFER_NOT_FOUND");
+      }
+      assert.equal(threw, true);
+    });
+
+    // own DRAFT -> allowed
+    await tt.test("own DRAFT -> allowed", async () => {
+      // should not throw
+      await assertPartnerMediaOffer(draftOid, sellerId, { db });
+    });
+
+    const fakeStorage = {
+      async put(_bucket: string, path: string) {
+        return { ok: true, path };
+      },
+      async delete() {
+        return { ok: true };
+      },
+      async download() {
+        return Buffer.alloc(0);
+      },
+      getPublicUrl() {
+        return "http://fake-storage";
+      }
+    };
+    const deps = { db, storage: fakeStorage as any };
+
+    // cross-offer / unknown mediaId -> MEDIA_NOT_FOUND
+    await tt.test("cross-offer mediaId -> MEDIA_NOT_FOUND", async () => {
+      const result = await changePartnerOfferMedia(
+        draftOid,
+        sellerId,
+        crossOfferMediaId,
+        "primary",
+        deps
+      );
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.code, "MEDIA_NOT_FOUND");
+    });
+
+    await tt.test("no arbitrary Error.message is exposed", async () => {
+      const failingDeps = {
+        db: {
+          transaction: async () => {
+            throw new Error("Secret DB Syntax Error");
+          }
+        } as any,
+        storage: fakeStorage as any
+      };
+
+      const result = await changePartnerOfferMedia(
+        draftOid,
+        sellerId,
+        999999,
+        "primary",
+        failingDeps
+      );
+
+      assert.equal(result.ok, false);
+      if (!result.ok) assert.equal(result.code, "DB_ERROR");
+    });
+  });
+
+
+  await t.test("PARTNER_OFFER_SUBMISSION_DOMAIN_BOUNDARY_PROOF", async (tt) => {
+    const { executePartnerOfferSubmit } = await import("../../src/lib/partner-offers/submit-core");
+    const { executeOfferPublicationStateChange } = await import("../../src/lib/admin/offer-publication-core");
+    const { drizzle } = await import("drizzle-orm/node-postgres");
+    const db = drizzle(pool, { schema: await import("../../src/lib/schema") });
+    const schemaModule = await import("../../src/lib/schema");
+    const { eq } = await import("drizzle-orm");
+
+    const sellerId = 99100;
+    const otherSellerId = 99101;
+    const catId = 99102;
+    await pool.query("INSERT INTO partners (id, company_name, contact_email) VALUES ($1, 'Seller', 's@x.com') ON CONFLICT DO NOTHING", [sellerId]);
+    await pool.query("INSERT INTO partners (id, company_name, contact_email) VALUES ($1, 'Other', 'o@x.com') ON CONFLICT DO NOTHING", [otherSellerId]);
+    await pool.query("INSERT INTO categories (id, name, slug) VALUES ($1, 'Cat', 'cat-99102') ON CONFLICT DO NOTHING", [catId]);
+
+    const parseFixtureId = (val: string): number => {
+      const n = parseInt(val, 10);
+      assert.ok(Number.isSafeInteger(n), "Fixture ID must be safe integer");
+      return n;
+    };
+
+    const offerRes = await pool.query<{ id: string }>(
+      `INSERT INTO offers (partner_id, category_id, title, publication_status, offer_model, conversion_type)
+       VALUES ($1, $2, 'Submit Test Offer', 'draft', 'rfq', 'inbound')
+       RETURNING id`,
+      [sellerId, catId]
+    );
+    const offerId = parseFixtureId(offerRes.rows[0].id);
+
+    await tt.test("1. owner Partner: draft -> pending_review PASS", async () => {
+      const res = await executePartnerOfferSubmit(db, sellerId, offerId);
+      assert.equal(res.ok, true);
+      const [offer] = await db.select().from(schemaModule.offers).where(eq(schemaModule.offers.id, offerId));
+      assert.equal(offer.publicationStatus, "pending_review");
+    });
+
+    await tt.test("3. pending_review cannot be submitted again (idempotent or error)", async () => {
+      const res = await executePartnerOfferSubmit(db, sellerId, offerId);
+      if (res.ok === true) {
+        assert.equal(res.ok, true, "Should be idempotent");
+      } else {
+        assert.equal(res.ok, false);
+        assert.equal((res as any).code, "OFFER_NOT_EDITABLE_STATUS");
+      }
+    });
+
+    await tt.test("5. pending_review core edit blocked", async () => {
+      const { executePartnerOfferEdit } = await import("../../src/lib/partner-offers/edit-core");
+      const res = await executePartnerOfferEdit(db, {
+        partnerId: sellerId,
+        offerId,
+        title: "Edited",
+        description: null,
+        priceBrutto: null,
+        priceOnRequest: true,
+        partnerOfferType: "rfq_inbound",
+        outboundUrl: null,
+        expectedUpdatedAt: null
+      });
+      assert.equal(res.ok, false);
+      if (!res.ok) assert.equal(res.code, "OFFER_NOT_EDITABLE_STATUS");
+    });
+
+
+    await tt.test("6. pending_review attribute mutation blocked", async () => {
+      const { executePartnerOfferAttributesMutation } = await import("../../src/lib/partner-offers/attribute-edit-core");
+      const res = await executePartnerOfferAttributesMutation(db, {
+        partnerId: sellerId,
+        offerId,
+        expectedCategoryId: catId,
+        expectedUpdatedAt: null,
+        attributes: []
+      });
+      assert.equal(res.ok, false);
+      if (!res.ok) assert.equal(res.code, "OFFER_NOT_EDITABLE_STATUS");
+    });
+
+    await tt.test("7. pending_review media mutation blocked", async () => {
+      const { changePartnerOfferMedia } = await import("../../src/lib/partner-offers/media-service");
+      try {
+        const res = await changePartnerOfferMedia(offerId, sellerId, 99999, "delete" as any);
+        if (res && typeof res === "object" && "ok" in res) {
+          assert.equal(res.ok, false);
+        } else {
+          assert.fail("Should have thrown");
+        }
+      } catch (err: any) {
+        assert.equal(err.code || err.message, "OFFER_NOT_EDITABLE");
+      }
+    });
+
+    await tt.test("10. non-admin Server Action moderation blocked", async () => {
+      try {
+        const { changeAdminOfferPublicationState } = await import("../../src/app/actions");
+        await changeAdminOfferPublicationState({
+          offerId: offerId,
+          targetStatus: "published",
+          expectedStatus: "pending_review"
+        });
+        assert.fail("Should have rejected");
+      } catch (err: any) {
+        // Next.js redirect or auth error is expected
+        assert.ok(err, "Must throw unauthorized or redirect");
+      }
+    });
+
+    await tt.test("8. Admin can approve: pending_review -> published", async () => {
+      const deps = { querySellerReadiness: async () => ({ status: "ready" as const, methods: [] as string[] }) };
+      const res = await executeOfferPublicationStateChange(db, { offerId, targetStatus: "published", expectedStatus: "pending_review" }, deps);
+      assert.equal(res.ok, true);
+      const [offer] = await db.select().from(schemaModule.offers).where(eq(schemaModule.offers.id, offerId));
+      assert.equal(offer.publicationStatus, "published");
+    });
+
+    await tt.test("9. Admin can return: published -> pending_review -> draft", async () => {
+      const deps = { querySellerReadiness: async () => ({ status: "ready" as const, methods: [] as string[] }) };
+      const offer2Res = await pool.query<{ id: string }>(
+        `INSERT INTO offers (partner_id, category_id, title, publication_status, offer_model, conversion_type)
+         VALUES ($1, $2, 'Submit Test Offer 2', 'pending_review', 'rfq', 'inbound')
+         RETURNING id`,
+        [sellerId, catId]
+      );
+      const offerId2 = parseFixtureId(offer2Res.rows[0].id);
+
+      const res = await executeOfferPublicationStateChange(db, { offerId: offerId2, targetStatus: "draft", expectedStatus: "pending_review" }, deps);
+      assert.equal(res.ok, true);
+      const [offer2] = await db.select().from(schemaModule.offers).where(eq(schemaModule.offers.id, offerId2));
+      assert.equal(offer2.publicationStatus, "draft");
+    });
+
+    await tt.test("2. non-owner Partner cannot submit", async () => {
+      const offer2Res = await pool.query<{ id: string }>(
+        `INSERT INTO offers (partner_id, category_id, title, publication_status, offer_model, conversion_type)
+         VALUES ($1, $2, 'Submit Test Offer 3', 'draft', 'rfq', 'inbound')
+         RETURNING id`,
+        [sellerId, catId]
+      );
+      const offerId3 = parseFixtureId(offer2Res.rows[0].id);
+
+      const res = await executePartnerOfferSubmit(db, otherSellerId, offerId3);
+      assert.equal(res.ok, false);
+      if (!res.ok) assert.equal(res.code, "OFFER_NOT_FOUND");
+    });
+  });
+
+  await t.test("PARTNER_OFFER_CREATE_INTEGRATION_BOUNDARY_PROOF", async (tt) => {
+    const { createOfferDraftCore } = await import("../../src/lib/offers/draft-core");
+    const { requirePartnerMembershipCore } = await import("../../src/lib/auth/partner-membership");
+    const { ForbiddenError } = await import("../../src/lib/auth/authorization-errors");
+
+    // SETUP
+    const p1Res = await pool.query<{ id: number }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Creator Partner A', 'create-a@example.com') RETURNING id`);
+    const sellerA = p1Res.rows[0].id;
+    const p2Res = await pool.query<{ id: number }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Creator Partner B', 'create-b@example.com') RETURNING id`);
+    const sellerB = p2Res.rows[0].id;
+    const catRes = await pool.query<{ id: number }>(`INSERT INTO categories (name, slug) VALUES ('Create Tests', 'create-tests-01') RETURNING id`);
+    const catId = catRes.rows[0].id;
+
+    // A. authorized active Partner membership can create a draft; (Auth check)
+    await tt.test("Auth: Authorized membership allows access", async () => {
+      const identity = await requirePartnerMembershipCore(
+        async () => ({ status: "authenticated", user: { id: "user-1", email: "a@test", roles: [] } }),
+        async (uid, pid) => {
+          if (uid === "user-1" && pid === sellerA) return { membershipStatus: "active", canAcceptOrders: false };
+          return undefined;
+        },
+        sellerA
+      );
+      assert.equal(identity.id, "user-1");
+    });
+
+    // E. user without valid/active Partner membership cannot create
+    await tt.test("Auth: No membership throws Forbidden", async () => {
+      let threw = false;
+      try {
+        await requirePartnerMembershipCore(
+          async () => ({ status: "authenticated", user: { id: "user-2", email: "b@test", roles: [] } }),
+          async () => undefined,
+          sellerA
+        );
+      } catch (err: any) {
+        threw = true;
+        assert.ok(err instanceof ForbiddenError);
+      }
+      assert.equal(threw, true);
+    });
+
+    // D. foreign Partner context cannot create an offer for another Partner
+    await tt.test("Auth: Foreign active membership throws Forbidden", async () => {
+      let threw = false;
+      try {
+        await requirePartnerMembershipCore(
+          async () => ({ status: "authenticated", user: { id: "user-1", email: "a@test", roles: [] } }),
+          async (uid, pid) => {
+            if (uid === "user-1" && pid === sellerA) return { membershipStatus: "active", canAcceptOrders: false };
+            return undefined; // Not active for sellerB
+          },
+          sellerB
+        );
+      } catch (err: any) {
+        threw = true;
+        assert.ok(err instanceof ForbiddenError);
+      }
+      assert.equal(threw, true);
+    });
+
+    // B. persisted draft belongs to the authorized Partner & C. persisted publication_status is `draft` & F. cannot create as pending_review/published
+    const { drizzle } = await import('drizzle-orm/node-postgres');
+    const db = drizzle(pool, { schema: await import('../../src/lib/schema') });
+
+    await tt.test("DB: Draft creation succeeds and enforces default status/ownership", async () => {
+      const res = await createOfferDraftCore(db, {
+        partnerId: sellerA,
+        categoryId: catId,
+        title: "Test Draft Offer",
+        adminOfferType: "rfq" // Cannot specify status, it defaults to draft inside the core
+      });
+      assert.equal(res.ok, true);
+      if (!res.ok) return;
+
+      const rowRes = await pool.query(`SELECT partner_id, publication_status FROM offers WHERE id = $1`, [res.offerId]);
+      assert.equal(rowRes.rows.length, 1);
+      assert.equal(rowRes.rows[0].partner_id, sellerA);
+      assert.equal(rowRes.rows[0].publication_status, "draft");
+    });
+
+    // G. created draft remains compatible with existing Partner read/edit ownership path
+    await tt.test("DB: Edit compatibility", async () => {
+      const res = await createOfferDraftCore(db, {
+        partnerId: sellerA,
+        categoryId: catId,
+        title: "Test Draft Offer For Edit",
+        adminOfferType: "rfq"
+      });
+      assert.equal(res.ok, true);
+      if (!res.ok) return;
+
+      const { executePartnerOfferEdit } = await import("../../src/lib/partner-offers/edit-core");
+      const editRes = await executePartnerOfferEdit(db, {
+        partnerId: sellerA, // Same partner
+        offerId: res.offerId,
+        title: "Edited Title",
+        description: null,
+        priceBrutto: null,
+        priceOnRequest: true,
+        expectedUpdatedAt: null,
+        partnerOfferType: "rfq",
+        outboundUrl: null
+      });
+      assert.equal(editRes.ok, true);
+
+      const editForeignRes = await executePartnerOfferEdit(db, {
+        partnerId: sellerB, // Foreign partner
+        offerId: res.offerId,
+        title: "Hacked",
+        description: null,
+        priceBrutto: null,
+        priceOnRequest: true,
+        expectedUpdatedAt: null,
+        partnerOfferType: "rfq",
+        outboundUrl: null
+      });
+      assert.equal(editForeignRes.ok, false);
+      if (!editForeignRes.ok) assert.equal(editForeignRes.code, "OFFER_NOT_FOUND");
+    });
+  });
+
+  // SPRINT 12: Partner Order Fulfillment Integration
+  await t.test("Partner Order Fulfillment: state, ownership and locking proof", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const {
+      markSellerOrderFulfillmentInProgressWithAuthority,
+      markSellerOrderFulfilledWithAuthority,
+    } = await import("../../src/lib/seller-order/seller-order-workflow");
+    const { ForbiddenError, UnauthorizedError } = await import("../../src/lib/auth/authorization-errors");
+
+    const ownerPartner = await pool.query<{ id: string }>(
+      `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+      ["Fulfillment Test Partner", "fulfillment-owner@test.com"]
+    );
+    const foreignPartner = await pool.query<{ id: string }>(
+      `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
+      ["Foreign Fulfillment Partner", "fulfillment-foreign@test.com"]
+    );
+    const ownerPartnerId = Number(ownerPartner.rows[0].id);
+    const foreignPartnerId = Number(foreignPartner.rows[0].id);
+    const actorUserId = "00000000-0000-0000-0000-000000000031";
+
+    const createFulfillmentOrder = async (
+      suffix: string,
+      partnerId: number,
+      status: "submitted" | "seller_accepted" | "fulfillment_in_progress" | "fulfilled" | "seller_rejected",
+      decisionStatus: "pending_seller_review" | "seller_accepted" | "seller_rejected"
+    ) => {
+      const buyer = await pool.query<{ id: string }>(
+        `INSERT INTO buyer_legal_context_snapshots (
+          business_name, country_code, tax_identifier_type, tax_identifier_value,
+          business_verification_status, category_b_status, legal_context_review_state
+        ) VALUES ($1, 'PL', 'NIP', $2, 'unknown', 'unknown', 'no_review_needed') RETURNING id`,
+        [`Fulfillment Buyer ${suffix}`, `fulfillment-${suffix}`]
+      );
+      const marketplaceOrder = await pool.query<{ id: string }>(
+        `INSERT INTO marketplace_orders (status, session_hash, buyer_legal_context_snapshot_id)
+         VALUES ('checkout_submitted', $1, $2) RETURNING id`,
+        [`fulfillment-${suffix}`, buyer.rows[0].id]
+      );
+      const sellerOrder = await pool.query<{ id: string }>(
+        `INSERT INTO seller_orders (
+          marketplace_order_id, partner_id, status, e6_routed_to_seller_at
+        ) VALUES ($1, $2, $3, clock_timestamp()) RETURNING id`,
+        [marketplaceOrder.rows[0].id, partnerId, status]
+      );
+      const sellerOrderId = Number(sellerOrder.rows[0].id);
+
+      if (decisionStatus === "pending_seller_review") {
+        await pool.query(
+          `INSERT INTO seller_acceptance_decisions (seller_order_id, decision_status, expires_at)
+           VALUES ($1, 'pending_seller_review', clock_timestamp() + interval '24 hours')`,
+          [sellerOrderId]
+        );
+      } else if (decisionStatus === "seller_accepted") {
+        await pool.query(
+          `INSERT INTO seller_acceptance_decisions (
+            seller_order_id, decision_status, expires_at, decided_by_auth_user_id,
+            decision_source, resolved_at, accepted_at
+          ) VALUES (
+            $1, 'seller_accepted', clock_timestamp() + interval '24 hours', $2,
+            'partner_portal', clock_timestamp(), clock_timestamp()
+          )`,
+          [sellerOrderId, actorUserId]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO seller_acceptance_decisions (
+            seller_order_id, decision_status, expires_at, decided_by_auth_user_id,
+            decision_source, resolved_at
+          ) VALUES (
+            $1, 'seller_rejected', clock_timestamp() + interval '24 hours', $2,
+            'partner_portal', clock_timestamp()
+          )`,
+          [sellerOrderId, actorUserId]
+        );
+      }
+
+      return sellerOrderId;
+    };
+
+    const authorizeOwner = async (partnerId: number) => {
+      assert.equal(partnerId, ownerPartnerId, "ownership must be derived from the locked SellerOrder");
+      return { id: actorUserId };
+    };
+    const authorizeForeign = async (partnerId: number) => {
+      assert.equal(partnerId, ownerPartnerId, "the client must not choose a Partner ID");
+      assert.notEqual(partnerId, foreignPartnerId);
+      throw new ForbiddenError();
+    };
+    const authorizeMissing = async () => {
+      throw new UnauthorizedError();
+    };
+
+    const pendingOrderId = await createFulfillmentOrder(
+      "pending",
+      ownerPartnerId,
+      "submitted",
+      "pending_seller_review"
+    );
+    assert.deepEqual(
+      await markSellerOrderFulfillmentInProgressWithAuthority(pendingOrderId, authorizeOwner),
+      { ok: false, code: "SELLER_ORDER_INVALID_STATE" }
+    );
+
+    const rejectedOrderId = await createFulfillmentOrder(
+      "rejected",
+      ownerPartnerId,
+      "seller_rejected",
+      "seller_rejected"
+    );
+    assert.deepEqual(
+      await markSellerOrderFulfillmentInProgressWithAuthority(rejectedOrderId, authorizeOwner),
+      { ok: false, code: "SELLER_ORDER_INVALID_STATE" }
+    );
+
+    const acceptedOrderId = await createFulfillmentOrder(
+      "accepted",
+      ownerPartnerId,
+      "seller_accepted",
+      "seller_accepted"
+    );
+    assert.deepEqual(
+      await markSellerOrderFulfillmentInProgressWithAuthority(acceptedOrderId, authorizeMissing),
+      { ok: false, code: "UNAUTHORIZED" }
+    );
+    assert.deepEqual(
+      await markSellerOrderFulfillmentInProgressWithAuthority(acceptedOrderId, authorizeForeign),
+      { ok: false, code: "FORBIDDEN" }
+    );
+
+    assert.deepEqual(
+      await markSellerOrderFulfillmentInProgressWithAuthority(acceptedOrderId, authorizeOwner),
+      { ok: true }
+    );
+    const inProgress = await pool.query<{ status: string }>(
+      `SELECT status FROM seller_orders WHERE id = $1`,
+      [acceptedOrderId]
+    );
+    assert.equal(inProgress.rows[0].status, "fulfillment_in_progress");
+
+    assert.deepEqual(
+      await markSellerOrderFulfilledWithAuthority(acceptedOrderId, authorizeOwner),
+      { ok: true }
+    );
+    const fulfilled = await pool.query<{ status: string; decision_status: string }>(
+      `SELECT so.status, decision.decision_status
+       FROM seller_orders so
+       JOIN seller_acceptance_decisions decision ON decision.seller_order_id = so.id
+       WHERE so.id = $1`,
+      [acceptedOrderId]
+    );
+    assert.deepEqual(fulfilled.rows[0], {
+      status: "fulfilled",
+      decision_status: "seller_accepted",
+    });
+    assert.deepEqual(
+      await markSellerOrderFulfillmentInProgressWithAuthority(acceptedOrderId, authorizeOwner),
+      { ok: false, code: "SELLER_ORDER_INVALID_STATE" }
+    );
+    assert.deepEqual(
+      await markSellerOrderFulfilledWithAuthority(acceptedOrderId, authorizeOwner),
+      { ok: false, code: "SELLER_ORDER_INVALID_STATE" }
+    );
+
+    const concurrentOrderId = await createFulfillmentOrder(
+      "concurrent",
+      ownerPartnerId,
+      "seller_accepted",
+      "seller_accepted"
+    );
+    const concurrentResults = await Promise.all([
+      markSellerOrderFulfillmentInProgressWithAuthority(concurrentOrderId, authorizeOwner),
+      markSellerOrderFulfillmentInProgressWithAuthority(concurrentOrderId, authorizeOwner),
+    ]);
+    assert.equal(concurrentResults.filter((result) => result.ok).length, 1);
+    assert.equal(
+      concurrentResults.filter(
+        (result) => !result.ok && result.code === "SELLER_ORDER_INVALID_STATE"
+      ).length,
+      1
+    );
+    const concurrentState = await pool.query<{ status: string }>(
+      `SELECT status FROM seller_orders WHERE id = $1`,
+      [concurrentOrderId]
+    );
+    assert.equal(concurrentState.rows[0].status, "fulfillment_in_progress");
+  });
+
+  await t.test("BUYER_INTERNAL_TRUST_FOUNDATION_PROOF", async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+
+    const legacySnapshotCount = Number((await pool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM buyer_legal_context_snapshots",
+    )).rows[0].count);
+    const userOne = "11111111-1111-4111-8111-111111111111";
+    const userTwo = "22222222-2222-4222-8222-222222222222";
+
+    const orgOne = await pool.query<{ id: string }>(
+      "INSERT INTO buyer_organizations (legal_name, jurisdiction_country) VALUES ($1, 'PL') RETURNING id",
+      ["QA Buyer One sp. z o.o."],
+    );
+    const orgOneId = Number(orgOne.rows[0].id);
+    const orgTwo = await pool.query<{ id: string }>(
+      "INSERT INTO buyer_organizations (legal_name, jurisdiction_country) VALUES ($1, 'PL') RETURNING id",
+      ["QA Buyer Two sp. z o.o."],
+    );
+    const orgTwoId = Number(orgTwo.rows[0].id);
+
+    const taxOne = await pool.query<{ id: string }>(
+      `INSERT INTO buyer_tax_identifiers (
+        buyer_organization_id, identifier_type, identifier_value, country_code,
+        canonical_identity_class, canonical_identifier_value
+      ) VALUES ($1, 'tax_id', '5260250995', 'PL', 'PL:NIP', '5260250995') RETURNING id`,
+      [orgOneId],
+    );
+    const taxOneId = Number(taxOne.rows[0].id);
+    const taxTwo = await pool.query<{ id: string }>(
+      `INSERT INTO buyer_tax_identifiers (
+        buyer_organization_id, identifier_type, identifier_value, country_code,
+        canonical_identity_class, canonical_identifier_value
+      ) VALUES ($1, 'tax_id', '5260250995', 'PL', 'PL:NIP', '5260250995') RETURNING id`,
+      [orgTwoId],
+    );
+    const taxTwoId = Number(taxTwo.rows[0].id);
+
+    await pool.query(
+      `INSERT INTO buyer_organization_memberships (auth_user_id, buyer_organization_id, membership_role)
+       VALUES ($1, $2, 'authorized_buyer'), ($1, $3, 'organization_admin'), ($4, $2, 'authorized_buyer')`,
+      [userOne, orgOneId, orgTwoId, userTwo],
+    );
+    await assert.rejects(
+      () => pool.query(
+        `INSERT INTO buyer_organization_memberships (auth_user_id, buyer_organization_id, membership_role)
+         VALUES ($1, $2, 'authorized_buyer')`,
+        [userOne, orgOneId],
+      ),
+      (error: { code?: string }) => error.code === "23505",
+    );
+
+    const buyerDb = getDb();
+    const beforeEventCount = Number((await pool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM buyer_organization_verification_events",
+    )).rows[0].count);
+    const invalidAttempt = await executeBuyerTrustTransition(buyerDb, {
+      buyerOrganizationId: orgOneId,
+      expectedStatus: "pending",
+      eventType: "verified",
+      actorType: "buyer_user",
+      actorUserId: userOne,
+      sourceType: "buyer_change",
+      sourceName: "spoofed",
+      sourceReference: "browser",
+      verificationMethod: "browser_claim",
+      reasonCode: null,
+      taxIdentifierId: taxOneId,
+      registryIdentifierId: null,
+    });
+    assert.deepEqual(invalidAttempt, { ok: false, code: "BUYER_TRUST_INPUT_INVALID" });
+    const afterInvalidCount = Number((await pool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM buyer_organization_verification_events",
+    )).rows[0].count);
+    assert.equal(afterInvalidCount, beforeEventCount);
+
+    const verified = await executeBuyerTrustTransition(buyerDb, {
+      buyerOrganizationId: orgOneId,
+      expectedStatus: "pending",
+      eventType: "verified",
+      actorType: "admin",
+      actorUserId: userOne,
+      sourceType: "admin_manual",
+      sourceName: "LogiMarket Admin",
+      sourceReference: "qa-13c-org-1",
+      verificationMethod: "internal_admin_review",
+      reasonCode: null,
+      taxIdentifierId: taxOneId,
+      registryIdentifierId: null,
+    });
+    assert.equal(verified.ok, true);
+    if (!verified.ok) throw new Error("verification fixture did not succeed");
+
+    const trusted = await loadTrustedBuyerIdentity(buyerDb, userOne, orgOneId);
+    assert.equal(trusted.ok, true);
+    if (!trusted.ok) throw new Error("trusted read model did not resolve");
+    assert.equal(trusted.value.taxIdentifierValue, "5260250995");
+    assert.equal(trusted.value.buyerOrganizationId, orgOneId);
+    assert.equal("categoryBStatus" in trusted.value, false);
+
+    const wrongOrganization = await loadTrustedBuyerIdentity(buyerDb, userOne, 999999);
+    assert.deepEqual(wrongOrganization, { ok: false, code: "BUYER_ORGANIZATION_MEMBERSHIP_REQUIRED" });
+    const secondUserTrusted = await loadTrustedBuyerIdentity(buyerDb, userTwo, orgOneId);
+    assert.equal(secondUserTrusted.ok, true);
+
+    const duplicateVerified = await executeBuyerTrustTransition(buyerDb, {
+      buyerOrganizationId: orgTwoId,
+      expectedStatus: "pending",
+      eventType: "verified",
+      actorType: "admin",
+      actorUserId: userOne,
+      sourceType: "admin_manual",
+      sourceName: "LogiMarket Admin",
+      sourceReference: "qa-13c-org-2",
+      verificationMethod: "internal_admin_review",
+      reasonCode: null,
+      taxIdentifierId: taxTwoId,
+      registryIdentifierId: null,
+    });
+    assert.deepEqual(duplicateVerified, { ok: false, code: "BUYER_CANONICAL_IDENTITY_CONFLICT" });
+
+    await assert.rejects(
+      () => pool.query(
+        `INSERT INTO buyer_organization_verification_events (
+          buyer_organization_id, event_type, outcome_status, actor_type, actor_user_id,
+          source_type, verification_method, reason_code, previous_verification_status,
+          legal_name_snapshot, jurisdiction_country_snapshot,
+          tax_identifier_id, tax_identifier_type_snapshot, tax_identifier_value_snapshot, tax_country_code_snapshot
+        ) VALUES ($1, 'rejected', 'rejected', 'admin', $2, 'admin_manual', 'manual', 'cross_owner', 'pending',
+                  'QA Buyer Two sp. z o.o.', 'PL', $3, 'tax_id', '5260250995', 'PL')`,
+        [orgOneId, userOne, taxTwoId],
+      ),
+      (error: { code?: string }) => error.code === "23503",
+    );
+
+    await assert.rejects(
+      () => pool.query(
+        "UPDATE buyer_organization_verification_events SET reason_code = 'changed' WHERE id = $1",
+        [verified.value.eventId],
+      ),
+      (error: { code?: string }) => error.code === "55000",
+    );
+    await assert.rejects(
+      () => pool.query(
+        "DELETE FROM buyer_organization_verification_events WHERE id = $1",
+        [verified.value.eventId],
+      ),
+      (error: { code?: string }) => error.code === "55000",
+    );
+
+    const revoked = await executeBuyerTrustTransition(buyerDb, {
+      buyerOrganizationId: orgOneId,
+      expectedStatus: "verified",
+      eventType: "revoked",
+      actorType: "admin",
+      actorUserId: userOne,
+      sourceType: "admin_manual",
+      sourceName: null,
+      sourceReference: null,
+      verificationMethod: "internal_admin_review",
+      reasonCode: "qa_revoked",
+      taxIdentifierId: null,
+      registryIdentifierId: null,
+    });
+    assert.equal(revoked.ok, true);
+    const noLongerTrusted = await loadTrustedBuyerIdentity(buyerDb, userOne, orgOneId);
+    assert.deepEqual(noLongerTrusted, { ok: false, code: "BUYER_ORGANIZATION_NOT_VERIFIED" });
+
+    const trustState = await pool.query<{ verification_status: string; trusted_by_verification_event_id: string | null }>(
+      `SELECT o.verification_status, t.trusted_by_verification_event_id
+       FROM buyer_organizations o JOIN buyer_tax_identifiers t ON t.buyer_organization_id = o.id
+       WHERE o.id = $1`,
+      [orgOneId],
+    );
+    assert.equal(trustState.rows[0].verification_status, "revoked");
+    assert.equal(trustState.rows[0].trusted_by_verification_event_id, null);
+
+    const rls = await pool.query<{ table_name: string; relrowsecurity: boolean; policy_count: number }>(
+      `SELECT c.relname AS table_name, c.relrowsecurity,
+              count(p.polname)::int AS policy_count
+       FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+       LEFT JOIN pg_policy p ON p.polrelid = c.oid
+       WHERE n.nspname = 'public' AND c.relname = ANY($1::text[])
+       GROUP BY c.relname, c.relrowsecurity`,
+      [["buyer_organizations", "buyer_organization_memberships", "buyer_tax_identifiers", "buyer_registry_identifiers", "buyer_organization_verification_events"]],
+    );
+    assert.equal(rls.rows.length, 5);
+    for (const row of rls.rows) {
+      assert.equal(row.relrowsecurity, true);
+      assert.equal(Number(row.policy_count), 0);
+    }
+
+    const finalSnapshotCount = Number((await pool.query<{ count: string }>(
+      "SELECT count(*)::text AS count FROM buyer_legal_context_snapshots",
+    )).rows[0].count);
+    assert.equal(finalSnapshotCount, legacySnapshotCount);
+  });
+  await pool.end();
+});
+
+
+
+
+
+

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Charging dock post -->
+  <path d="M 14 36 L 20 12 L 28 12 L 34 36 Z" fill="#141c2c" />
+  <rect x="10" y="36" width="28" height="4" rx="1" fill="#141c2c" />
+
+  <!-- Contact plate -->
+  <rect x="18" y="16" width="12" height="4" fill="#147487" />
+
+  <!-- Battery level screen -->
+  <rect x="20" y="24" width="8" height="10" fill="#147487" />
+  <rect x="22" y="26" width="4" height="6" fill="#141c2c" />
+
+  <!-- Yellow lightning symbol / LED -->
+  <polygon points="24,27 22,30 24,30 23,32 25,29 23,29" fill="#eab308" />
+</svg>

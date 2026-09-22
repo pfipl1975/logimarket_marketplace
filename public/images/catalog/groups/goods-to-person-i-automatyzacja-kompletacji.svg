@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Mobile shelving tower -->
+  <rect x="16" y="6" width="22" height="24" rx="1" fill="#141c2c" />
+  <!-- Shelf division lines -->
+  <line x1="18" y1="14" x2="36" y2="14" stroke="#147487" stroke-width="2" />
+  <line x1="18" y1="22" x2="36" y2="22" stroke="#147487" stroke-width="2" />
+
+  <!-- AMR drive robot underneath -->
+  <rect x="18" y="30" width="18" height="6" rx="1.5" fill="#147487" />
+  <circle cx="22" cy="36" r="2" fill="#141c2c" />
+  <circle cx="32" cy="36" r="2" fill="#141c2c" />
+
+  <!-- Yellow alignment sensor lights -->
+  <circle cx="27" cy="33" r="1.5" fill="#eab308" />
+</svg>

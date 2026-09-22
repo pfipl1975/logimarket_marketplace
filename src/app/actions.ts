@@ -1,0 +1,1781 @@
+"use server";
+import { acceptSellerOrder, rejectSellerOrder } from "@/lib/seller-order/seller-order-workflow";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { and, eq, asc, inArray, sql } from "drizzle-orm";
+import { db } from "@/lib/db";
+import {
+  offers,
+  categories,
+  partners,
+  cartItems,
+  rfqLeads,
+  offerMedia,
+} from "@/lib/schema";
+import type { TechnicalAttributes, OfferPublicationStatus } from "@/lib/schema";
+import { getCategoryDescendantIds } from "@/lib/catalog/tree";
+import type { CatalogCategoryRow } from "@/lib/catalog/tree";
+import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model";
+import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model";
+import { validateCategoryId } from "@/lib/catalog/category-attribute-read-model";
+import { isLocale, type Locale, defaultLocale } from "@/lib/i18n/config";
+import { getHomePath } from "@/lib/i18n/paths";
+import { catalogOfferOrder } from "@/lib/catalog/catalog-offer-order";
+import { getFilteredCategoryOffersFromDb } from "@/lib/catalog/filter-query";
+import { getOffersRelationalAttributes } from "@/lib/catalog/offer-attributes-read-model";
+import { parseFilterQueryInput } from "@/lib/filters/parser";
+import { normalizeFilterQuery } from "@/lib/filters/validation";
+import type { FilterValidationError } from "@/lib/filters/types";
+import { getCatalogFilterConfigurationFromDb } from "@/lib/filters/configuration";
+import type { CatalogFilterConfiguration } from "@/lib/filters/configuration-types";
+import {
+  parseCatalogSearchInput,
+  CatalogSearchParserError,
+} from "@/lib/search/parser";
+import { searchLocalizedCategories } from "@/lib/search/category-search";
+import { searchCatalogOffersFromDb } from "@/lib/search/search-query";
+import { projectCatalogOfferSearchResults } from "@/lib/search/projection";
+import type { CatalogSearchResult } from "@/lib/search/types";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
+import { buildCategoryTree } from "@/lib/catalog/tree";
+import { resolveCanonicalOfferModel } from "@/lib/offers/model";
+import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
+import {
+  getExistingSessionHash,
+  getOrCreateSessionHash,
+} from "@/lib/session/session-hash";
+import { CheckoutContactSchema } from "@/lib/checkout/contact-schema";
+import { executeCheckout } from "@/lib/checkout/checkout-core";
+import {
+  isValidCheckoutQuantity,
+  parseDecimalToMinorUnits,
+} from "@/lib/checkout/money";
+import type { CheckoutActionResult } from "@/lib/checkout/checkout-types";
+
+export type CatalogOffer = {
+  id: number;
+  title: string;
+  description: string | null;
+  imageUrl: string | null;
+  priceBrutto: string | null;
+  priceOnRequest: boolean;
+  conversionType: string;
+  offerModel: CanonicalOfferModelResolution;
+  outboundUrl: string | null;
+  isFeatured: boolean;
+  isActive: boolean;
+  technicalAttributes: TechnicalAttributes;
+  attributes?: import("@/lib/catalog/offer-attributes-read-model").PublicOfferAttribute[];
+  categoryId: number;
+  categoryName: string;
+  categorySlug: string;
+  partnerId: number;
+  partnerName: string;
+  partnerLogo: string | null;
+  partnerWebsite: string | null;
+  partnerEmail: string;
+  publicationStatus: OfferPublicationStatus;
+};
+
+export type FilterQueryResult =
+  | {
+      ok: true;
+      items: CatalogOffer[];
+      total: number;
+      page: number | null;
+      pageSize: number | null;
+    }
+  | { ok: false; errors: FilterValidationError[] };
+
+import { resolvePublicOfferImage } from "@/lib/offers/public-media-resolver";
+
+function rowToOffer(row: {
+  offer: typeof offers.$inferSelect;
+  category: typeof categories.$inferSelect | null;
+  partner: typeof partners.$inferSelect | null;
+  primaryMedia?: typeof offerMedia.$inferSelect | null;
+}): CatalogOffer {
+  const resolvedImageUrl = resolvePublicOfferImage(
+    row.offer.imageUrl,
+    row.primaryMedia?.storageBucket,
+    row.primaryMedia?.objectPath
+  );
+
+  return {
+    id: row.offer.id,
+    title: row.offer.title,
+    description: row.offer.description,
+    imageUrl: resolvedImageUrl,
+    priceBrutto: row.offer.priceBrutto,
+    priceOnRequest: row.offer.priceOnRequest,
+    conversionType: row.offer.conversionType,
+    offerModel: resolveCanonicalOfferModel(
+      row.offer.offerModel,
+      row.offer.conversionType,
+    ),
+    outboundUrl: row.offer.outboundUrl,
+    isFeatured: row.offer.isFeatured,
+    isActive: row.offer.isActive,
+    technicalAttributes:
+      (row.offer.technicalAttributes as TechnicalAttributes) ?? {},
+    categoryId: row.category?.id ?? 0,
+    categoryName: row.category?.name ?? "Bez kategorii",
+    categorySlug: row.category?.slug ?? "",
+    partnerId: row.partner?.id ?? 0,
+    partnerName: row.partner?.companyName ?? "Partner",
+    partnerLogo: row.partner?.logoUrl ?? null,
+    partnerWebsite: row.partner?.websiteUrl ?? null,
+    partnerEmail: row.partner?.contactEmail ?? "",
+    publicationStatus: row.offer.publicationStatus,
+  };
+}
+
+export async function getCategories(): Promise<CatalogCategoryRow[]> {
+  const rows = await db.select().from(categories).orderBy(asc(categories.name));
+  return rows.map((row) => ({
+    id: Number(row.id),
+    name: row.name,
+    slug: row.slug,
+    parentId: row.parentId !== null ? Number(row.parentId) : null,
+    createdAt: row.createdAt,
+  }));
+}
+
+export async function getCategoryBySlug(
+  slug: string,
+): Promise<CatalogCategoryRow | null> {
+  const rows = await db
+    .select()
+    .from(categories)
+    .where(eq(categories.slug, slug))
+    .limit(1);
+  if (rows.length === 0) return null;
+  const row = rows[0];
+  return {
+    id: Number(row.id),
+    name: row.name,
+    slug: row.slug,
+    parentId: row.parentId !== null ? Number(row.parentId) : null,
+    createdAt: row.createdAt,
+  };
+}
+
+export async function getCategoryOffers(
+  categorySlug: string,
+): Promise<CatalogOffer[]> {
+  const cats = await getCategories();
+  const activeCat = cats.find((c) => c.slug === categorySlug);
+  if (!activeCat) return [];
+
+  const descendantIds = getCategoryDescendantIds(cats, activeCat.id);
+  const targetIds = [activeCat.id, ...descendantIds];
+
+  const rows = await db
+    .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
+    .from(offers)
+    .leftJoin(categories, eq(offers.categoryId, categories.id))
+    .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
+    .where(
+      and(
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published"),
+        inArray(offers.categoryId, targetIds),
+      ),
+    )
+    .orderBy(...catalogOfferOrder());
+
+  return rows.map(rowToOffer);
+}
+
+/** Publiczny, cienki Server Action: parser → normalizacja → rdzeń DB → istniejąca projekcja. */
+export async function getFilteredCategoryOffers(
+  rawInput: unknown,
+  locale: Locale = defaultLocale,
+): Promise<FilterQueryResult> {
+  const parsed = parseFilterQueryInput(rawInput);
+  if (!parsed.ok)
+    return { ok: false, errors: parsed.errors.map((code) => ({ code })) };
+  const normalized = normalizeFilterQuery(parsed.value);
+  if (!normalized.ok) return { ok: false, errors: normalized.errors };
+  const result = await getFilteredCategoryOffersFromDb(normalized.value);
+  if (!result.ok) return result;
+  return {
+    ok: true,
+    items: await hydrateOffersWithAttributes(
+      result.rows.map(rowToOffer),
+      locale,
+    ),
+    total: result.total,
+    page: normalized.value.page ?? null,
+    pageSize: normalized.value.pageSize ?? null,
+  };
+}
+
+export async function getCatalogFilterConfiguration(
+  categoryId: unknown,
+  locale: unknown,
+): Promise<CatalogFilterConfiguration | null> {
+  return getCatalogFilterConfigurationFromDb({ categoryId, locale });
+}
+
+export async function getCategoryOffersCount(
+  categorySlug: string,
+): Promise<number> {
+  const cats = await getCategories();
+  const activeCat = cats.find((c) => c.slug === categorySlug);
+  if (!activeCat) return 0;
+
+  const descendantIds = getCategoryDescendantIds(cats, activeCat.id);
+  const targetIds = [activeCat.id, ...descendantIds];
+
+  const rows = await db
+    .select({
+      id: offers.id,
+    })
+    .from(offers)
+    .where(
+      and(
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published"),
+        inArray(offers.categoryId, targetIds),
+      ),
+    );
+
+  return rows.length;
+}
+
+export async function getOffers(
+  categorySlug?: string,
+  locale: Locale = defaultLocale,
+): Promise<CatalogOffer[]> {
+  const conditions = [
+    eq(offers.isActive, true),
+    eq(offers.publicationStatus, "published"),
+  ];
+  if (categorySlug) conditions.push(eq(categories.slug, categorySlug));
+  const rows = await db
+    .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
+    .from(offers)
+    .leftJoin(categories, eq(offers.categoryId, categories.id))
+    .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
+    .where(and(...conditions))
+    .orderBy(...catalogOfferOrder());
+  return hydrateOffersWithAttributes(rows.map(rowToOffer), locale);
+}
+
+export async function getOfferById(
+  id: number,
+  locale: Locale = defaultLocale,
+): Promise<CatalogOffer | null> {
+  const rows = await db
+    .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
+    .from(offers)
+    .leftJoin(categories, eq(offers.categoryId, categories.id))
+    .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
+    .where(
+      and(
+        eq(offers.id, id),
+        inArray(offers.publicationStatus, ["published", "archived"]),
+      ),
+    )
+    .limit(1);
+  if (rows.length === 0) return null;
+  const offer = rowToOffer(rows[0]);
+  const hydrated = await hydrateOffersWithAttributes([offer], locale);
+  return hydrated[0];
+}
+
+export type CartItemWithOffer = {
+  id: number;
+  offerId: number;
+  title: string;
+  imageUrl: string | null;
+  priceBrutto: string | null;
+  priceOnRequest: boolean;
+  quantity: number;
+  partnerName: string;
+  categoryName: string;
+};
+
+export type RfqActionResult =
+  | { ok: null; code: "IDLE" }
+  | { ok: true; code: "RFQ_SENT" }
+  | {
+      ok: false;
+      code: "RFQ_OFFER_NOT_FOUND" | "RFQ_VALIDATION_ERROR" | "SYSTEM_ERROR";
+    };
+
+import type { AdminRfqMutationResult } from "@/lib/rfq/admin-core";
+
+export async function getCartItems(): Promise<CartItemWithOffer[]> {
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) {
+    return [];
+  }
+  const items = await db
+    .select({
+      cartItem: cartItems,
+      offer: offers,
+      partner: partners,
+      category: categories,
+      primaryMedia: offerMedia,
+    })
+    .from(cartItems)
+    .leftJoin(offers, eq(cartItems.offerId, offers.id))
+    .leftJoin(partners, eq(offers.partnerId, partners.id))
+    .leftJoin(categories, eq(offers.categoryId, categories.id))
+    .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
+    .where(eq(cartItems.sessionHash, sessionHash));
+  return items.map((row) => {
+    const resolvedImageUrl = resolvePublicOfferImage(
+      row.offer?.imageUrl ?? null,
+      row.primaryMedia?.storageBucket,
+      row.primaryMedia?.objectPath
+    );
+
+    return {
+      id: row.cartItem.id,
+      offerId: row.offer?.id ?? 0,
+      title: row.offer?.title ?? "",
+      imageUrl: resolvedImageUrl,
+      priceBrutto: row.offer?.priceBrutto ?? null,
+      priceOnRequest: row.offer?.priceOnRequest ?? true,
+      quantity: row.cartItem.quantity,
+      partnerName: row.partner?.companyName ?? "",
+      categoryName: row.category?.name ?? "",
+    };
+  });
+}
+
+export async function getCartCount(): Promise<number> {
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) {
+    return 0;
+  }
+  const items = await db
+    .select()
+    .from(cartItems)
+    .where(eq(cartItems.sessionHash, sessionHash));
+  return items.reduce((sum, item) => sum + item.quantity, 0);
+}
+
+export async function addToCart(offerId: number, quantity = 1) {
+  if (!isValidCheckoutQuantity(quantity)) {
+    throw new Error("Nieprawidłowa ilość");
+  }
+  const offer = await db
+    .select({
+      id: offers.id,
+      offerModel: offers.offerModel,
+      conversionType: offers.conversionType,
+      priceOnRequest: offers.priceOnRequest,
+      normalizedPrice: sql<
+        string | null
+      >`ROUND(${offers.priceBrutto}, 2)::text`,
+    })
+    .from(offers)
+    .where(
+      and(
+        eq(offers.id, offerId),
+        eq(offers.isActive, true),
+        eq(offers.publicationStatus, "published"),
+      ),
+    )
+    .limit(1);
+
+  if (offer.length === 0) {
+    throw new Error("Oferta nie jest już dostępna.");
+  }
+
+  const o = offer[0];
+  const canonicalModel = resolveCanonicalOfferModel(
+    o.offerModel,
+    o.conversionType,
+  );
+  if (canonicalModel !== "ecommerce") {
+    throw new Error("Oferta nie jest przeznaczona do zakupu.");
+  }
+  if (o.priceOnRequest || !o.normalizedPrice) {
+    throw new Error("Oferta nie ma prawidłowej ceny.");
+  }
+
+  try {
+    parseDecimalToMinorUnits(o.normalizedPrice);
+  } catch {
+    throw new Error("Oferta nie ma prawidłowej ceny.");
+  }
+
+  const sessionHash = await getOrCreateSessionHash();
+  const existing = await db
+    .select()
+    .from(cartItems)
+    .where(
+      and(
+        eq(cartItems.offerId, offerId),
+        eq(cartItems.sessionHash, sessionHash),
+      ),
+    )
+    .limit(1);
+  if (existing.length > 0) {
+    const nextQuantity = existing[0].quantity + quantity;
+    if (!isValidCheckoutQuantity(nextQuantity)) {
+      throw new Error("Przekroczono maksymalną ilość.");
+    }
+    await db
+      .update(cartItems)
+      .set({ quantity: nextQuantity })
+      .where(eq(cartItems.id, existing[0].id));
+  } else {
+    await db.insert(cartItems).values({ offerId, quantity, sessionHash });
+  }
+  revalidatePath("/");
+}
+
+export async function removeFromCart(cartItemId: number) {
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) return;
+  await db
+    .delete(cartItems)
+    .where(
+      and(eq(cartItems.id, cartItemId), eq(cartItems.sessionHash, sessionHash)),
+    );
+  revalidatePath("/");
+}
+
+export async function updateCartQuantity(cartItemId: number, quantity: number) {
+  if (!isValidCheckoutQuantity(quantity)) {
+    throw new Error("Nieprawidłowa ilość");
+  }
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) return;
+  await db
+    .update(cartItems)
+    .set({ quantity })
+    .where(
+      and(eq(cartItems.id, cartItemId), eq(cartItems.sessionHash, sessionHash)),
+    );
+  revalidatePath("/");
+}
+
+export async function clearCart() {
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) return;
+  await db.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
+  revalidatePath("/");
+}
+
+export async function submitCheckout(
+  rawInput: unknown,
+): Promise<CheckoutActionResult> {
+
+  const parsed = CheckoutContactSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "CHECKOUT_VALIDATION_ERROR" };
+  }
+
+  const sessionHash = await getExistingSessionHash();
+  if (!sessionHash) {
+    return { ok: false, code: "CHECKOUT_CART_EMPTY" };
+  }
+  const result = await executeCheckout(db, sessionHash, parsed.data);
+
+  if (result.ok) {
+    revalidatePath("/");
+  }
+  return result;
+}
+
+import {
+  PublicRfqInputSchema,
+  AdminRfqStatusMutationSchema,
+} from "@/lib/rfq/schema";
+import { validatePublicRfqEligibility } from "@/lib/rfq/eligibility";
+
+export async function submitRfq(rawInput: unknown): Promise<RfqActionResult> {
+  try {
+    const parsed = PublicRfqInputSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { ok: false, code: "RFQ_VALIDATION_ERROR" };
+    }
+    const data = parsed.data;
+
+    const offerRows = await db
+      .select({
+        id: offers.id,
+        partnerId: offers.partnerId,
+        isActive: offers.isActive,
+        publicationStatus: offers.publicationStatus,
+        offerModel: offers.offerModel,
+        conversionType: offers.conversionType,
+      })
+      .from(offers)
+      .where(eq(offers.id, data.offerId))
+      .limit(1);
+
+    if (offerRows.length === 0)
+      return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
+    const offer = offerRows[0];
+
+    if (!validatePublicRfqEligibility(offer)) {
+      return { ok: false, code: "RFQ_OFFER_NOT_FOUND" };
+    }
+
+    await db.insert(rfqLeads).values({
+      offerId: data.offerId,
+      partnerId: offer.partnerId,
+      companyName: data.companyName,
+      contactName: data.contactName,
+      email: data.email,
+      phone: data.phone ?? null,
+      message: data.message ?? null,
+    });
+
+    return { ok: true, code: "RFQ_SENT" };
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function mutateRfqStatus(
+  rawInput: unknown,
+): Promise<AdminRfqMutationResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const parsed = AdminRfqStatusMutationSchema.safeParse(rawInput);
+    if (!parsed.success) {
+      return { ok: false, code: "VALIDATION_ERROR" };
+    }
+    const data = parsed.data;
+
+    const { mutateRfqStatusCore } = await import("@/lib/rfq/admin-core");
+    const result = await db.transaction(async (tx) =>
+      mutateRfqStatusCore(tx, data),
+    );
+
+    if (result.ok && result.code === "UPDATED") {
+      revalidatePath("/", "layout");
+    }
+
+    return result;
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function getCategoryAttributeConfiguration(
+  categoryId: number,
+  locale: string,
+  onlyVisible = true,
+  onlyFilterable = false,
+): Promise<CategoryAttributeConfiguration[]> {
+  if (!isLocale(locale)) {
+    throw new Error(`Invalid locale: ${locale}`);
+  }
+  validateCategoryId(categoryId);
+  return getCategoryAttributeConfigurationFromDb(
+    db,
+    categoryId,
+    locale as Locale,
+    onlyVisible,
+    onlyFilterable,
+  );
+}
+
+export async function searchCatalog(
+  rawInput: unknown,
+): Promise<CatalogSearchResult> {
+  try {
+    const query = parseCatalogSearchInput(rawInput);
+
+    if (query.isEmpty) {
+      return {
+        ok: true,
+        normalizedQuery: query.query,
+        categories: [],
+        offers: [],
+      };
+    }
+
+    const fallbackDictionaryPromise =
+      query.locale === defaultLocale
+        ? Promise.resolve(null)
+        : getDictionary(defaultLocale);
+
+    const [categoriesDb, dictionary, fallbackDictionary, dbOffers] =
+      await Promise.all([
+        getCategories(),
+        getDictionary(query.locale),
+        fallbackDictionaryPromise,
+        searchCatalogOffersFromDb(query),
+      ]);
+
+    const fallbackBySlug =
+      fallbackDictionary?.categories.bySlug ?? dictionary.categories.bySlug;
+
+    const tree = buildCategoryTree(categoriesDb);
+    const explorerTree = buildLocalizedExplorerTree(
+      tree,
+      getHomePath(query.locale),
+      dictionary.categories?.bySlug,
+      fallbackBySlug,
+    );
+
+    const categoriesResult = searchLocalizedCategories(explorerTree, query);
+
+    const offersResult = projectCatalogOfferSearchResults(
+      dbOffers,
+      query,
+      dictionary.categories?.bySlug,
+      fallbackBySlug,
+    );
+
+    return {
+      ok: true,
+      normalizedQuery: query.query,
+      categories: categoriesResult,
+      offers: offersResult,
+    };
+  } catch (error: unknown) {
+    if (error instanceof CatalogSearchParserError) {
+      return {
+        ok: false,
+        errors: [{ code: error.code }],
+      };
+    }
+    console.error("Catalog search failed", {
+      errorName: error instanceof Error ? error.name : "UnknownError",
+    });
+    return {
+      ok: false,
+      errors: [{ code: "SYSTEM_ERROR" }],
+    };
+  }
+}
+
+export type LoginActionCode =
+  "IDLE" | "INVALID_CREDENTIALS" | "AUTH_UNAVAILABLE";
+
+export type LoginActionResult = {
+  success: boolean;
+  code: LoginActionCode;
+};
+
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(1).max(255),
+  next: z.string().max(2048).optional(),
+  locale: z.string().max(10).optional(),
+});
+
+export async function loginUser(
+  _prevState: LoginActionResult,
+  formData: FormData,
+): Promise<LoginActionResult> {
+  const parsed = loginSchema.safeParse({
+    email: formData.get("email"),
+    password: formData.get("password"),
+    next: formData.get("next"),
+    locale: formData.get("locale"),
+  });
+
+  if (!parsed.success) {
+    return { success: false, code: "INVALID_CREDENTIALS" };
+  }
+
+  const { email, password, next: nextPath, locale } = parsed.data;
+
+  const { createClient } = await import("@/lib/supabase/server");
+  const supabase = await createClient();
+
+  if (!supabase) {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
+  }
+
+  try {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      const { classifyLoginError } = await import("@/lib/auth/login-error");
+      return { success: false, code: classifyLoginError(error) };
+    }
+  } catch {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
+  }
+
+  const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
+  const redirectUrl = getSafeRedirectUrl(nextPath, locale);
+
+  revalidatePath("/", "layout");
+  redirect(redirectUrl);
+}
+
+export type LogoutActionResult =
+  { success: false; code: "AUTH_UNAVAILABLE" } | never;
+
+export async function logoutUser(
+  _prevState: LogoutActionResult | null,
+  formData?: FormData,
+): Promise<LogoutActionResult> {
+  const parsedLocale = formData?.get("locale")?.toString() || "";
+  const { isLocale, defaultLocale } = await import("@/lib/i18n/config");
+  const safeLocale = isLocale(parsedLocale) ? parsedLocale : defaultLocale;
+
+  try {
+    const { createClient } = await import("@/lib/supabase/server");
+    const supabase = await createClient();
+
+    if (!supabase) {
+      return { success: false, code: "AUTH_UNAVAILABLE" };
+    }
+
+    const { error } = await supabase.auth.signOut({
+      scope: "local",
+    });
+
+    if (error) {
+      return { success: false, code: "AUTH_UNAVAILABLE" };
+    }
+  } catch {
+    return { success: false, code: "AUTH_UNAVAILABLE" };
+  }
+
+  const intent = formData?.get("intent")?.toString();
+
+  revalidatePath("/", "layout");
+
+  if (intent === "admin") {
+    const { getAdminLoginRedirectPath } = await import("@/lib/auth/admin-page-access-core");
+    redirect(getAdminLoginRedirectPath(safeLocale));
+  } else {
+    const { getHomePath } = await import("@/lib/i18n/paths");
+    redirect(getHomePath(safeLocale));
+  }
+}
+
+export type AdminOffersPageResult =
+  | {
+      ok: true;
+      data: import("@/lib/admin/offers-read-model-core").AdminOffersReadResult & {
+        query: import("@/lib/admin/offers-query").AdminOffersQuery;
+      };
+    }
+  | { ok: false; code: "ADMIN_OFFERS_UNAVAILABLE" };
+
+export async function getAdminOffersPage(
+  rawInput: unknown,
+): Promise<AdminOffersPageResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOffersQuery } = await import("@/lib/admin/offers-query");
+  const query = parseAdminOffersQuery(rawInput);
+
+  try {
+    const { getAdminOffersReadModel } =
+      await import("@/lib/admin/offers-read-model-core");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminOffersReadModel(db, query);
+    return {
+      ok: true,
+      data: { ...data, query: { ...query, page: data.currentPage } },
+    };
+  } catch {
+    console.error("Admin offers read query failed.");
+    return { ok: false, code: "ADMIN_OFFERS_UNAVAILABLE" };
+  }
+}
+
+export async function getAdminPartnersPage(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminPartnersQuery } =
+    await import("@/lib/admin/partners-query");
+  const query = parseAdminPartnersQuery(rawInput);
+
+  try {
+    const { getAdminPartnersReadModel } =
+      await import("@/lib/admin/partners-read-model-core");
+    const { db } = await import("@/lib/db");
+    const readModel = await getAdminPartnersReadModel(db, query);
+    return {
+      ok: true as const,
+      data: {
+        ...readModel,
+        query: {
+          ...query,
+          page: readModel.currentPage,
+        },
+      },
+    };
+  } catch {
+    console.error("Admin partners read query failed.");
+    return { ok: false as const, code: "ADMIN_PARTNERS_UNAVAILABLE" };
+  }
+}
+
+function revalidateAdminMediaPaths() {
+  revalidatePath("/admin/oferty/[id]/edytuj", "page");
+  revalidatePath("/[locale]/admin/offers/[id]/edit", "page");
+}
+
+export async function uploadAdminOfferMedia(
+  offerId: number,
+  formData: FormData
+) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const file = formData.get("file");
+  if (!file || !(file instanceof File)) {
+    return { ok: false as const, code: "VALIDATION_ERROR" };
+  }
+
+  const { MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
+  if (!file.size) return { ok: false as const, code: "FILE_EMPTY" };
+  if (file.size > MAX_UPLOAD_SIZE) return { ok: false as const, code: "FILE_TOO_LARGE" };
+  const { persistOfferImage } = await import("@/lib/admin/offer-media-service");
+  const result = await persistOfferImage(offerId, Buffer.from(await file.arrayBuffer()));
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
+
+export async function getAdminOfferMedia(offerId: number) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  try {
+    const { readOfferMedia } = await import("@/lib/admin/offer-media-service");
+    return { ok: true as const, media: await readOfferMedia(offerId) };
+  } catch { return { ok: false as const, code: "DB_ERROR" }; }
+}
+
+export async function prepareAdminOfferMediaUpload(offerId: number, size: number, mime: string) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  const { MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
+  if (!Number.isSafeInteger(size) || size < 1) return { ok: false as const, code: "FILE_EMPTY" };
+  if (size > MAX_UPLOAD_SIZE) return { ok: false as const, code: "FILE_TOO_LARGE" };
+  if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(mime)) return { ok: false as const, code: "INVALID_MIME_TYPE" };
+  try {
+    const { assertMediaOffer } = await import("@/lib/admin/offer-media-service");
+    await assertMediaOffer(offerId);
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const { createStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { path, receipt } = createStagingReceipt(offerId, actor.id, key);
+      const uploadData = await new SupabaseOfferMediaStorage().createSignedUpload(path);
+      return { ok: true as const, receipt, signedUrl: uploadData.signedUrl, path: uploadData.path, token: uploadData.token };
+  } catch { return { ok: false as const, code: "STORAGE_ERROR" }; }
+}
+
+export async function finalizeAdminOfferMediaUpload(offerId: number, receipt: string) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  try {
+    const { verifyStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const path = verifyStagingReceipt(receipt, offerId, actor.id, key);
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { persistOfferImage } = await import("@/lib/admin/offer-media-service");
+    const { finalizeStagedImage } = await import("@/lib/admin/offer-media-staging-core");
+    const { STAGING_BUCKET } = await import("@/lib/storage/staging-receipt");
+    const storage = new SupabaseOfferMediaStorage();
+    const result = await finalizeStagedImage(path, {
+      download: (p) => storage.download(STAGING_BUCKET, p),
+      persist: (bytes) => persistOfferImage(offerId, bytes),
+      remove: (p) => storage.delete(STAGING_BUCKET, p),
+    });
+    revalidateAdminMediaPaths();
+    return result;
+  } catch { return { ok: false as const, code: "STAGING_INVALID" }; }
+}
+
+export async function cancelAdminOfferMediaUpload(offerId: number, receipt: string) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  try {
+    const { verifyStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const path = verifyStagingReceipt(receipt, offerId, actor.id, key, Date.now(), true);
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { STAGING_BUCKET } = await import("@/lib/storage/staging-receipt");
+    if (!(await new SupabaseOfferMediaStorage().delete(STAGING_BUCKET, path)).ok) return { ok: false as const, code: "STAGING_CLEANUP_FAILED" };
+    return { ok: true as const };
+  } catch { return { ok: false as const, code: "STAGING_CLEANUP_FAILED" }; }
+}
+
+export async function importAdminOfferMedia(offerId: number, sourceUrl: string) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { fetchRemoteImage, RemoteImageError } = await import("@/lib/storage/remote-image");
+  try {
+    const { assertMediaOffer, persistOfferImage } = await import("@/lib/admin/offer-media-service");
+    await assertMediaOffer(offerId);
+    const bytes = await fetchRemoteImage(sourceUrl);
+    const result = await persistOfferImage(offerId, bytes, { sourceType: "remote_import", sourceUrl });
+    if (result.ok) revalidateAdminMediaPaths();
+    return result;
+  } catch (error) { return { ok: false as const, code: error instanceof RemoteImageError ? error.code : "DB_ERROR" }; }
+}
+
+export async function setAdminOfferPrimaryMedia(offerId: number, mediaId: number) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
+  const result = await changeOfferMedia(offerId, mediaId, "primary");
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
+
+export async function moveAdminOfferMedia(offerId: number, mediaId: number, direction: "previous" | "next") {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  if (direction !== "previous" && direction !== "next") return { ok: false as const, code: "VALIDATION_ERROR" };
+  const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
+  const result = await changeOfferMedia(offerId, mediaId, direction);
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
+
+export async function deleteAdminOfferMedia(offerId: number, mediaId: number) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { changeOfferMedia } = await import("@/lib/admin/offer-media-service");
+  const result = await changeOfferMedia(offerId, mediaId, "delete");
+  if (result.ok) revalidateAdminMediaPaths();
+  return result;
+}
+
+export async function getAdminRfqPage(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminRfqQuery } = await import("@/lib/admin/rfq-query");
+  const query = parseAdminRfqQuery(rawInput);
+
+  try {
+    const { getAdminRfqReadModel } =
+      await import("@/lib/admin/rfq-read-model-core");
+    const { db } = await import("@/lib/db");
+
+    const readModel = await getAdminRfqReadModel(db, query);
+
+    return {
+      ok: true as const,
+      data: {
+        ...readModel,
+        query: {
+          ...query,
+          page: readModel.currentPage,
+        },
+      },
+    };
+  } catch {
+    console.error("Admin RFQ read query failed.");
+    return {
+      ok: false as const,
+      code: "ADMIN_RFQ_UNAVAILABLE",
+    };
+  }
+}
+
+export async function getAdminOrdersPage(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOrdersQuery } = await import("@/lib/admin/orders-query");
+  const query = parseAdminOrdersQuery(rawInput);
+
+  try {
+    const { getAdminOrdersReadModel } =
+      await import("@/lib/admin/orders-read-model-core");
+    const { db } = await import("@/lib/db");
+
+    const readModel = await getAdminOrdersReadModel(db, query);
+
+    return {
+      ok: true as const,
+      data: {
+        ...readModel,
+        query: {
+          ...query,
+          page: readModel.currentPage,
+        },
+      },
+    };
+  } catch {
+    console.error("Admin orders read query failed.");
+    return {
+      ok: false as const,
+      code: "ADMIN_ORDERS_UNAVAILABLE",
+    };
+  }
+}
+
+export async function changeAdminOfferPublicationState(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const {
+    parseAdminOfferPublicationInput,
+    executeOfferPublicationStateChange,
+  } = await import("@/lib/admin/offer-publication-core");
+  const input = parseAdminOfferPublicationInput(rawInput);
+
+  if (!input) {
+    return { ok: false as const, code: "OFFER_INVALID_INPUT" as const };
+  }
+
+  const { db } = await import("@/lib/db");
+  const { querySellerReadiness } = await import("@/lib/admin/seller-readiness-query");
+  const result = await executeOfferPublicationStateChange(db, input, { querySellerReadiness });
+
+  if (result.ok && result.changed) {
+    revalidatePath("/", "layout");
+  }
+
+  return result;
+}
+
+export async function getAdminPartnerDetail(rawId: string) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminPartnerDetailReadModel } =
+      await import("@/lib/admin/partner-detail-read-model-core");
+    const { db } = await import("@/lib/db");
+
+    return await getAdminPartnerDetailReadModel(db, rawId);
+  } catch {
+    console.error("Admin partner detail read query failed.");
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+
+export async function changeAdminSellerEligibility(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminSellerEligibilityInput, executeSellerEligibilityChange } =
+    await import("@/lib/admin/seller-eligibility-core");
+
+  const inputRes = parseAdminSellerEligibilityInput(rawInput);
+  if (!inputRes.ok) {
+    return inputRes;
+  }
+
+  try {
+    const { db } = await import("@/lib/db");
+    return await executeSellerEligibilityChange(db, inputRes.data);
+  } catch {
+    console.error("changeAdminSellerEligibility execution failed.");
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+
+export async function registerPartnerAgreementEvidenceAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const adminUser = await requireAdmin();
+
+  try {
+    const { registerPartnerAgreementExecutionEvidence } = await import("@/lib/legal/partner-agreement-core");
+    const { db } = await import("@/lib/db");
+
+    const result = await registerPartnerAgreementExecutionEvidence(db, rawInput, adminUser.id);
+    if (result.ok) {
+      revalidatePath("/admin/partners/[id]", "page");
+      revalidatePath("/admin/partnerzy/[id]", "page");
+    }
+    return result;
+  } catch (err) {
+    console.error("registerPartnerAgreementEvidenceAction execution failed:", err);
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+
+export async function invalidatePartnerAgreementEvidenceAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const adminUser = await requireAdmin();
+
+  try {
+    const { invalidatePartnerAgreementExecutionEvidence } = await import("@/lib/legal/partner-agreement-core");
+    const { db } = await import("@/lib/db");
+
+    const result = await invalidatePartnerAgreementExecutionEvidence(db, rawInput, adminUser.id);
+    if (result.ok) {
+      revalidatePath("/admin/partners/[id]", "page");
+      revalidatePath("/admin/partnerzy/[id]", "page");
+    }
+    return result;
+  } catch (err) {
+    console.error("invalidatePartnerAgreementEvidenceAction execution failed:", err);
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+
+import type { AdminOfferDetailResult } from "@/lib/admin/offer-detail-read-model-core";
+
+export async function getAdminOfferDetail(
+  rawId: string,
+  locale: Locale,
+): Promise<AdminOfferDetailResult | { ok: false; code: "SYSTEM_ERROR" }> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminOfferDetailReadModel } =
+      await import("@/lib/admin/offer-detail-read-model-core");
+    return await getAdminOfferDetailReadModel(db, rawId, locale);
+  } catch {
+    console.error("[getAdminOfferDetail] read model execution failed.");
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+import type { AdminOfferEditResult } from "@/lib/admin/offer-edit-core";
+
+export async function updateAdminOffer(
+  rawInput: unknown,
+): Promise<AdminOfferEditResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseAdminOfferEditInput, executeAdminOfferEdit } =
+    await import("@/lib/admin/offer-edit-core");
+
+  const inputRes = parseAdminOfferEditInput(rawInput);
+  if (!inputRes.ok) {
+    return inputRes;
+  }
+
+  try {
+    const { db } = await import("@/lib/db");
+    const result = await executeAdminOfferEdit(db, inputRes.data);
+
+    if (result.ok && result.changed) {
+      revalidatePath("/", "layout");
+    }
+
+    return result;
+  } catch (error) {
+    const errorName = error instanceof Error ? error.name : "UnknownError";
+    console.error("[updateAdminOffer] execution failed.", { errorName });
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function getAdminRfqDetail(rawId: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { parseAdminRfqDetailId, getAdminRfqDetail: fetchDetail } =
+      await import("@/lib/admin/rfq-detail-read-model-core");
+
+    const id = parseAdminRfqDetailId(rawId);
+    if (id === null) {
+      return { ok: false as const, code: "INVALID_ID" as const };
+    }
+
+    const { db } = await import("@/lib/db");
+    const result = await fetchDetail(db, id);
+    return result;
+  } catch {
+    console.error("[getAdminRfqDetail] read model execution failed.");
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
+export type AdminDashboardPageResult =
+  | {
+      ok: true;
+      data: import("@/lib/admin/dashboard-read-model-core").AdminDashboardReadResult;
+    }
+  | { ok: false; code: "ADMIN_DASHBOARD_UNAVAILABLE" };
+
+export async function getAdminDashboardPage(): Promise<AdminDashboardPageResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminDashboardReadModel } =
+      await import("@/lib/admin/dashboard-read-model-core");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminDashboardReadModel(db);
+    return { ok: true, data };
+  } catch {
+    console.error("Admin dashboard read query failed.");
+    return { ok: false, code: "ADMIN_DASHBOARD_UNAVAILABLE" };
+  }
+}
+
+import type { OfferDraftCreateResult } from "@/lib/offers/draft-core";
+import type { AdminCreateOptionsResult } from "@/lib/admin/create-options-read-model";
+
+export async function createAdminOfferDraft(
+  rawInput: unknown,
+): Promise<OfferDraftCreateResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseOfferDraftCreateInput, createOfferDraftCore } =
+    await import("@/lib/offers/draft-core");
+  const inputRes = parseOfferDraftCreateInput(rawInput);
+
+  if (!inputRes.ok) {
+    return inputRes;
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await createOfferDraftCore(db, inputRes.data);
+
+  if (result.ok) {
+    revalidatePath("/", "layout");
+  }
+
+  return result;
+}
+
+export async function createPartnerOfferDraft(
+  rawInput: unknown,
+): Promise<OfferDraftCreateResult> {
+  const { parseOfferDraftCreateInput, createOfferDraftCore } =
+    await import("@/lib/offers/draft-core");
+  const inputRes = parseOfferDraftCreateInput(rawInput);
+
+  if (!inputRes.ok) {
+    return inputRes;
+  }
+
+  const { requirePartnerMembership } = await import("@/lib/auth/partner-membership");
+  try {
+    await requirePartnerMembership(inputRes.data.partnerId);
+  } catch {
+    return { ok: false, code: "UNAUTHORIZED" };
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await createOfferDraftCore(db, inputRes.data);
+
+  if (result.ok) {
+    revalidatePath("/", "layout");
+  }
+
+  return result;
+}
+
+export async function getAdminCreateOptions(): Promise<
+  | { ok: true; data: AdminCreateOptionsResult }
+  | { ok: false; code: "SYSTEM_ERROR" }
+> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { getAdminCreateOptionsReadModel } =
+      await import("@/lib/admin/create-options-read-model");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminCreateOptionsReadModel(db);
+    return { ok: true, data };
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function getPartnerCreateOptions(partnerId: number): Promise<
+  | { ok: true; data: import("@/lib/partner-offers/create-options-read-model").PartnerCreateOptionsResult }
+  | { ok: false; code: "SYSTEM_ERROR" | "UNAUTHORIZED" }
+> {
+  const { requirePartnerMembership } = await import("@/lib/auth/partner-membership");
+  try {
+    await requirePartnerMembership(partnerId);
+  } catch {
+    return { ok: false, code: "UNAUTHORIZED" };
+  }
+
+  try {
+    const { getPartnerCreateOptionsReadModel } =
+      await import("@/lib/partner-offers/create-options-read-model");
+    const { db } = await import("@/lib/db");
+    const data = await getPartnerCreateOptionsReadModel(db);
+    return { ok: true, data };
+  } catch {
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
+export async function hydrateOffersWithAttributes(
+  offers: CatalogOffer[],
+  locale: Locale,
+): Promise<CatalogOffer[]> {
+  if (offers.length === 0) return offers;
+  const mapped = await getOffersRelationalAttributes(db, offers, locale);
+  return offers.map((o) => ({
+    ...o,
+    attributes: mapped[o.id] || [],
+  }));
+}
+
+import {
+  executeAdminOfferAttributesMutation,
+  parseAdminOfferAttributesEditInput,
+} from "@/lib/admin/offer-attributes-edit-core";
+import type { AdminOfferAttributesMutationResult } from "@/lib/admin/offer-attributes-edit-core";
+
+export async function updateAdminOfferTechnicalAttributes(
+  rawInput: unknown,
+): Promise<AdminOfferAttributesMutationResult> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const parsed = parseAdminOfferAttributesEditInput(rawInput);
+  if (!parsed) return { ok: false, code: "INVALID_INPUT" };
+  const result = await executeAdminOfferAttributesMutation(db, parsed);
+  if (result.ok && result.code === "ATTRIBUTES_UPDATED") {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function getAdminOfferAttributesEdit(
+  offerId: number,
+  locale: import("@/lib/i18n/config").Locale,
+) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { getAdminOfferAttributesEditModel } =
+    await import("@/lib/admin/offer-attributes-edit-read-model");
+  return getAdminOfferAttributesEditModel(db, offerId, locale);
+}
+
+
+export async function saveAdminSellerLegalData(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const admin = await requireAdmin();
+  const {
+    AdminSellerLegalDataSaveInputSchema,
+    executeAdminSellerLegalDataSave,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerLegalDataSaveInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await executeAdminSellerLegalDataSave(db, parsed.data, { actorUserId: admin.id });
+  if (result.ok) {
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function addAdminSellerTaxIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerTaxIdentifierAddInputSchema,
+    executeAdminSellerTaxIdentifierAdd,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerTaxIdentifierAddInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await executeAdminSellerTaxIdentifierAdd(db, parsed.data);
+  if (result.ok) {
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function deleteAdminSellerTaxIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerTaxIdentifierDeleteInputSchema,
+    executeAdminSellerTaxIdentifierDelete,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerTaxIdentifierDeleteInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const result = await executeAdminSellerTaxIdentifierDelete(db, parsed.data);
+  if (result.ok) {
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function createAdminPartner(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { createPartnerCore } = await import("@/lib/admin/partners-create");
+  const { db } = await import("@/lib/db");
+
+  return createPartnerCore(db, rawInput);
+}
+
+
+export async function addAdminSellerRegistryIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerRegistryIdentifierAddInputSchema,
+    executeAdminSellerRegistryIdentifierAdd,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerRegistryIdentifierAddInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await executeAdminSellerRegistryIdentifierAdd(db, parsed.data);
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+export async function deleteAdminSellerRegistryIdentifier(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const {
+    AdminSellerRegistryIdentifierDeleteInputSchema,
+    executeAdminSellerRegistryIdentifierDelete,
+  } = await import("@/lib/admin/partner-edit-core");
+
+  const parsed = AdminSellerRegistryIdentifierDeleteInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await executeAdminSellerRegistryIdentifierDelete(db, parsed.data);
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/", "layout");
+  }
+  return result;
+}
+
+
+const SellerOrderIdInputSchema = z.number().int().positive();
+
+export async function acceptSellerOrderAction(sellerOrderId: unknown) {
+  const parsed = SellerOrderIdInputSchema.safeParse(sellerOrderId);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+  return acceptSellerOrder(parsed.data);
+}
+
+export async function rejectSellerOrderAction(sellerOrderId: unknown) {
+  const parsed = SellerOrderIdInputSchema.safeParse(sellerOrderId);
+  if (!parsed.success) {
+    return { ok: false, code: "INVALID_INPUT" } as const;
+  }
+  return rejectSellerOrder(parsed.data);
+}
+
+import type { PartnerDecisionUiState } from "@/lib/partner-orders/decision-action-core";
+
+export async function partnerSellerOrderDecisionAction(
+  _prevState: PartnerDecisionUiState,
+  formData: FormData
+): Promise<PartnerDecisionUiState> {
+  const { executeDecisionActionCore } = await import("@/lib/partner-orders/decision-action-core");
+  return executeDecisionActionCore(formData, {
+    acceptSellerOrder,
+    rejectSellerOrder,
+  });
+}
+
+import type { PartnerFulfillmentUiState } from "@/lib/partner-orders/fulfillment-action-core";
+
+export async function partnerSellerOrderFulfillmentAction(
+  _prevState: PartnerFulfillmentUiState,
+  formData: FormData
+): Promise<PartnerFulfillmentUiState> {
+  const { executeFulfillmentActionCore } = await import("@/lib/partner-orders/fulfillment-action-core");
+  const { markSellerOrderFulfillmentInProgress, markSellerOrderFulfilled } = await import("@/lib/seller-order/seller-order-workflow");
+  return executeFulfillmentActionCore(formData, {
+    markSellerOrderFulfillmentInProgress,
+    markSellerOrderFulfilled,
+  });
+}
+
+import { parsePartnerOfferEditInput, executePartnerOfferEdit } from "@/lib/partner-offers/edit-core";
+import {
+  executePartnerOfferAttributesMutation,
+  parsePartnerOfferAttributesEditInput,
+} from "@/lib/partner-offers/attribute-edit-core";
+import { requirePartnerMembership } from "@/lib/auth/partner-membership";
+
+
+export async function updatePartnerOfferDraft(raw: unknown) {
+  const rawObj = raw as Record<string, unknown> | null;
+  let locale: Locale = "pl";
+  if (typeof rawObj?.locale === "string" && isLocale(rawObj.locale)) {
+    locale = rawObj.locale;
+  }
+
+  const parsed = parsePartnerOfferEditInput(raw);
+  if (!parsed.ok) return parsed;
+
+  try {
+    await requirePartnerMembership(parsed.data.partnerId);
+  } catch {
+    return { ok: false, code: "UNAUTHORIZED" };
+  }
+
+  const result = await executePartnerOfferEdit(db, parsed.data);
+  if (result.ok && result.changed) {
+    if (locale === "pl") {
+      revalidatePath(`/partner/${parsed.data.partnerId}/oferty`, "page");
+      revalidatePath(`/partner/${parsed.data.partnerId}/oferty/${parsed.data.offerId}`, "page");
+      revalidatePath(`/partner/${parsed.data.partnerId}/oferty/${parsed.data.offerId}/edytuj`, "page");
+    } else {
+      revalidatePath(`/${locale}/partner/${parsed.data.partnerId}/offers`, "page");
+      revalidatePath(`/${locale}/partner/${parsed.data.partnerId}/offers/${parsed.data.offerId}`, "page");
+      revalidatePath(`/${locale}/partner/${parsed.data.partnerId}/offers/${parsed.data.offerId}/edit`, "page");
+    }
+  }
+  return result;
+}
+
+export async function updatePartnerOfferTechnicalAttributes(raw: unknown) {
+  const rawObject = raw as Record<string, unknown> | null;
+  let locale: Locale = "pl";
+  if (typeof rawObject?.locale === "string" && isLocale(rawObject.locale)) {
+    locale = rawObject.locale;
+  }
+
+  const parsed = parsePartnerOfferAttributesEditInput(raw);
+  if (!parsed.ok) return parsed;
+
+  try {
+    await requirePartnerMembership(parsed.data.partnerId);
+  } catch {
+    return { ok: false, code: "UNAUTHORIZED" } as const;
+  }
+
+  const result = await executePartnerOfferAttributesMutation(db, parsed.data);
+  if (result.ok && result.changed) {
+    if (locale === "pl") {
+      revalidatePath(`/partner/${parsed.data.partnerId}/oferty`, "page");
+      revalidatePath(
+        `/partner/${parsed.data.partnerId}/oferty/${parsed.data.offerId}`,
+        "page",
+      );
+      revalidatePath(
+        `/partner/${parsed.data.partnerId}/oferty/${parsed.data.offerId}/edytuj`,
+        "page",
+      );
+    } else {
+      revalidatePath(`/${locale}/partner/${parsed.data.partnerId}/offers`, "page");
+      revalidatePath(
+        `/${locale}/partner/${parsed.data.partnerId}/offers/${parsed.data.offerId}`,
+        "page",
+      );
+      revalidatePath(
+        `/${locale}/partner/${parsed.data.partnerId}/offers/${parsed.data.offerId}/edit`,
+        "page",
+      );
+    }
+  }
+  return result;
+}
+function validId(id: number) { return typeof id === "number" && Number.isSafeInteger(id) && id > 0; }
+
+function revalidatePartnerMediaPaths(partnerId: number, offerId: number, locale: string) {
+  if (locale === "pl") {
+    revalidatePath(`/partner/${partnerId}/oferty/${offerId}`, "page");
+    revalidatePath(`/partner/${partnerId}/oferty/${offerId}/edytuj`, "page");
+  } else {
+    revalidatePath(`/${locale}/partner/${partnerId}/offers/${offerId}`, "page");
+    revalidatePath(`/${locale}/partner/${partnerId}/offers/${offerId}/edit`, "page");
+  }
+}
+
+export async function getPartnerOfferMedia(partnerId: number, offerId: number) {
+  if (!validId(partnerId) || !validId(offerId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  try {
+    await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+  try {
+    const { readPartnerOfferMedia } = await import("@/lib/partner-offers/media-service");
+    return { ok: true as const, media: await readPartnerOfferMedia(offerId, partnerId) };
+  } catch (e: unknown) {
+    if (e instanceof Error && e.name === "MediaOperationError") return { ok: false as const, code: e.message };
+    return { ok: false as const, code: "DB_ERROR" };
+  }
+}
+
+export async function preparePartnerOfferMediaUpload(partnerId: number, offerId: number, size: number, mime: string) {
+  if (!validId(partnerId) || !validId(offerId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  const { MAX_UPLOAD_SIZE } = await import("@/lib/admin/offer-media-core");
+  if (!Number.isSafeInteger(size) || size < 1) return { ok: false as const, code: "FILE_EMPTY" };
+  if (size > MAX_UPLOAD_SIZE) return { ok: false as const, code: "FILE_TOO_LARGE" };
+  if (!["image/jpeg", "image/png", "image/webp", "image/avif"].includes(mime)) return { ok: false as const, code: "INVALID_MIME_TYPE" };
+
+  let actor;
+  try {
+    actor = await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+
+  try {
+    const { assertPartnerMediaOffer } = await import("@/lib/partner-offers/media-service");
+    await assertPartnerMediaOffer(offerId, partnerId);
+  } catch (e: unknown) {
+    if (e instanceof Error && e.name === "MediaOperationError") return { ok: false as const, code: e.message };
+    return { ok: false as const, code: "DB_ERROR" };
+  }
+
+  try {
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const { createStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { path, receipt } = createStagingReceipt(offerId, actor.id, key);
+    const uploadData = await new SupabaseOfferMediaStorage().createSignedUpload(path);
+    return { ok: true as const, receipt, signedUrl: uploadData.signedUrl, path: uploadData.path, token: uploadData.token };
+  } catch { return { ok: false as const, code: "STORAGE_ERROR" }; }
+}
+
+export async function finalizePartnerOfferMediaUpload(partnerId: number, offerId: number, receipt: string, locale: string) {
+  if (!validId(partnerId) || !validId(offerId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  if (typeof locale !== "string" || !isLocale(locale)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  let actor;
+  try {
+    actor = await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+
+  let path;
+  try {
+    const { verifyStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    path = verifyStagingReceipt(receipt, offerId, actor.id, key);
+  } catch { return { ok: false as const, code: "STAGING_INVALID" }; }
+
+  try {
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { persistPartnerOfferImage } = await import("@/lib/partner-offers/media-service");
+    const { finalizeStagedImage } = await import("@/lib/admin/offer-media-staging-core");
+    const { STAGING_BUCKET } = await import("@/lib/storage/staging-receipt");
+    const storage = new SupabaseOfferMediaStorage();
+    const result = await finalizeStagedImage(path, {
+      download: (p) => storage.download(STAGING_BUCKET, p),
+      persist: (bytes) => persistPartnerOfferImage(offerId, partnerId, bytes),
+      remove: (p) => storage.delete(STAGING_BUCKET, p),
+    });
+    if (result.ok) revalidatePartnerMediaPaths(partnerId, offerId, locale);
+    return result;
+  } catch { return { ok: false as const, code: "STAGING_INVALID" }; }
+}
+
+export async function cancelPartnerOfferMediaUpload(partnerId: number, offerId: number, receipt: string) {
+  if (!validId(partnerId) || !validId(offerId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  let actor;
+  try {
+    actor = await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+  try {
+    const { verifyStagingReceipt } = await import("@/lib/storage/staging-receipt");
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!key) return { ok: false as const, code: "STORAGE_ERROR" };
+    const path = verifyStagingReceipt(receipt, offerId, actor.id, key, Date.now(), true);
+    const { SupabaseOfferMediaStorage } = await import("@/lib/storage/adapter");
+    const { STAGING_BUCKET } = await import("@/lib/storage/staging-receipt");
+    if (!(await new SupabaseOfferMediaStorage().delete(STAGING_BUCKET, path)).ok) return { ok: false as const, code: "STAGING_CLEANUP_FAILED" };
+    return { ok: true as const };
+  } catch { return { ok: false as const, code: "STAGING_CLEANUP_FAILED" }; }
+}
+
+export async function setPartnerOfferPrimaryMedia(partnerId: number, offerId: number, mediaId: number, locale: string) {
+  if (!validId(partnerId) || !validId(offerId) || !validId(mediaId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  if (typeof locale !== "string" || !isLocale(locale)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  try {
+    await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+  const { changePartnerOfferMedia } = await import("@/lib/partner-offers/media-service");
+  const result = await changePartnerOfferMedia(offerId, partnerId, mediaId, "primary");
+  if (result.ok) revalidatePartnerMediaPaths(partnerId, offerId, locale);
+  return result;
+}
+
+export async function movePartnerOfferMedia(partnerId: number, offerId: number, mediaId: number, direction: "previous" | "next", locale: string) {
+  if (!validId(partnerId) || !validId(offerId) || !validId(mediaId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  if (typeof locale !== "string" || !isLocale(locale)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  if (direction !== "previous" && direction !== "next") return { ok: false as const, code: "VALIDATION_ERROR" };
+  try {
+    await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+  const { changePartnerOfferMedia } = await import("@/lib/partner-offers/media-service");
+  const result = await changePartnerOfferMedia(offerId, partnerId, mediaId, direction);
+  if (result.ok) revalidatePartnerMediaPaths(partnerId, offerId, locale);
+  return result;
+}
+
+export async function deletePartnerOfferMedia(partnerId: number, offerId: number, mediaId: number, locale: string) {
+  if (!validId(partnerId) || !validId(offerId) || !validId(mediaId)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  if (typeof locale !== "string" || !isLocale(locale)) return { ok: false as const, code: "VALIDATION_ERROR" };
+  try {
+    await requirePartnerMembership(partnerId);
+  } catch { return { ok: false as const, code: "UNAUTHORIZED" }; }
+  const { changePartnerOfferMedia } = await import("@/lib/partner-offers/media-service");
+  const result = await changePartnerOfferMedia(offerId, partnerId, mediaId, "delete");
+  if (result.ok) revalidatePartnerMediaPaths(partnerId, offerId, locale);
+  return result;
+}
+
+export async function submitPartnerOfferAction(partnerId: number, offerId: number, locale: string) {
+  if (!Number.isSafeInteger(partnerId) || partnerId <= 0) return { ok: false as const, code: "VALIDATION_ERROR" };
+  if (!Number.isSafeInteger(offerId) || offerId <= 0) return { ok: false as const, code: "VALIDATION_ERROR" };
+  
+  try {
+    const { requirePartnerMembership } = await import("@/lib/auth/partner-membership");
+    await requirePartnerMembership(partnerId);
+  } catch {
+    return { ok: false as const, code: "UNAUTHORIZED" };
+  }
+
+  const { db } = await import("@/lib/db");
+  const { executePartnerOfferSubmit } = await import("@/lib/partner-offers/submit-core");
+  const result = await executePartnerOfferSubmit(db, partnerId, offerId);
+  
+  if (result.ok) {
+    const { revalidatePath } = await import("next/cache");
+    if (locale === "pl") {
+      revalidatePath(`/partner/${partnerId}/oferty`, "page");
+      revalidatePath(`/partner/${partnerId}/oferty/${offerId}`, "page");
+      revalidatePath(`/partner/${partnerId}/oferty/${offerId}/edytuj`, "page");
+    } else {
+      revalidatePath(`/${locale}/partner/${partnerId}/offers`, "page");
+      revalidatePath(`/${locale}/partner/${partnerId}/offers/${offerId}`, "page");
+      revalidatePath(`/${locale}/partner/${partnerId}/offers/${offerId}/edit`, "page");
+    }
+  }
+  
+  return result;
+}

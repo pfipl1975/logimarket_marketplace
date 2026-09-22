@@ -1,0 +1,90 @@
+{
+  "contractVersion": "lm46-sanitized-source-v1",
+  "fixtureClass": "REAL_SANITIZED_SOURCE",
+  "sourceClass": "offers.technical_attributes",
+  "sanitizationConfirmed": true,
+  "nonSyntheticValuesConfirmed": true,
+  "offers": [
+    {
+      "sourceOfferId": 1,
+      "sourceCategoryId": 21,
+      "technicalAttributes": {
+        "Napęd": "Elektryczny",
+        "Typ masztu": "Triplex",
+        "Udźwig (kg)": 1500,
+        "Wysokość podnoszenia (mm)": 4500
+      }
+    },
+    {
+      "sourceOfferId": 2,
+      "sourceCategoryId": 33,
+      "technicalAttributes": {
+        "Średnica talerza (mm)": 1500,
+        "Maks. waga ładunku (kg)": 2000,
+        "Maks. wysokość owijania (mm)": 2200
+      }
+    },
+    {
+      "sourceOfferId": 3,
+      "sourceCategoryId": 29,
+      "technicalAttributes": {
+        "Regulacja wysokości": "Manualna",
+        "Szerokość blatu (mm)": 1600,
+        "Głębokość blatu (mm)": 800
+      }
+    },
+    {
+      "sourceOfferId": 4,
+      "sourceCategoryId": 32,
+      "technicalAttributes": {
+        "Kolor": "Transparentny",
+        "Grubość (μm)": 23,
+        "Waga rolki (kg)": 2.5,
+        "Szerokość (mm)": 500
+      }
+    },
+    {
+      "sourceOfferId": 5,
+      "sourceCategoryId": 30,
+      "technicalAttributes": {
+        "Materiał": "PP (Polipropylen)",
+        "Pojemność (l)": 45,
+        "Wymiary zewnętrzne (mm)": "600x400x220"
+      }
+    },
+    {
+      "sourceOfferId": 6,
+      "sourceCategoryId": 30,
+      "technicalAttributes": {
+        "Materiał": "PP (Polipropylen)",
+        "Pojemność (l)": 10,
+        "Wymiary zewnętrzne (mm)": "400x300x120"
+      }
+    },
+    {
+      "sourceOfferId": 7,
+      "sourceCategoryId": 20,
+      "technicalAttributes": {
+        "Wysokość poziomu (mm)": 2800,
+        "Maks. obciążenie (kg/m²)": 500
+      }
+    },
+    {
+      "sourceOfferId": 8,
+      "sourceCategoryId": 21,
+      "technicalAttributes": {
+        "Bateria": "Li-Ion 24V/30Ah",
+        "Udźwig (kg)": 1800,
+        "Długość wideł (mm)": 1150
+      }
+    },
+    {
+      "sourceOfferId": 9,
+      "sourceCategoryId": 29,
+      "technicalAttributes": {
+        "Typ transportera": "Rolkowy/Taśmowy",
+        "Przepustowość (paczki/h)": 600
+      }
+    }
+  ]
+}

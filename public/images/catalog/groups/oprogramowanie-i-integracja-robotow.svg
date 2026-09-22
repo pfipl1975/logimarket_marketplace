@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Flat Industrial Screen monitor -->
+  <rect x="6" y="10" width="36" height="24" rx="2" fill="#141c2c" />
+  <rect x="8" y="12" width="32" height="20" fill="#147487" />
+  <rect x="20" y="34" width="8" height="6" fill="#141c2c" />
+  <rect x="14" y="40" width="20" height="2" fill="#141c2c" />
+
+  <!-- Process Nodes / AGVs on screen map -->
+  <circle cx="15" cy="18" r="2.5" fill="#141c2c" />
+  <circle cx="28" cy="18" r="2.5" fill="#141c2c" />
+  <circle cx="22" cy="26" r="2.5" fill="#141c2c" />
+
+  <line x1="15" y1="18" x2="22" y2="26" stroke="#141c2c" stroke-width="1.5" />
+  <line x1="28" y1="18" x2="22" y2="26" stroke="#141c2c" stroke-width="1.5" />
+
+  <!-- System Status LED -->
+  <circle cx="36" cy="15" r="1.5" fill="#eab308" />
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Robotic base -->
+  <rect x="10" y="36" width="14" height="4" rx="1" fill="#141c2c" />
+  <circle cx="17" cy="36" r="3.5" fill="#147487" />
+
+  <!-- Robot arm link 1 -->
+  <path d="M 15 36 L 20 18 L 23 18 L 18 36 Z" fill="#141c2c" />
+
+  <!-- Joint 2 -->
+  <circle cx="21.5" cy="18" r="3" fill="#147487" />
+
+  <!-- Robot arm link 2 -->
+  <path d="M 21.5 18 L 33 12 L 35 15 L 23.5 21 Z" fill="#141c2c" />
+
+  <!-- Wrist joint -->
+  <circle cx="34" cy="13.5" r="2" fill="#eab308" />
+
+  <!-- Gripper claw picking a box -->
+  <path d="M 34 13.5 L 38 21 L 35 23 L 31 16 Z" fill="#141c2c" />
+  <rect x="36" y="20" width="6" height="8" rx="0.5" fill="#147487" />
+</svg>

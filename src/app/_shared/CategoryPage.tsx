@@ -1,0 +1,969 @@
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
+import {
+  getCategoryAttributeConfiguration,
+  getCategoryBySlug,
+  getFilteredCategoryOffers,
+} from "@/app/actions";
+import type { CatalogOffer } from "@/app/actions";
+import { getCachedCategories } from "@/lib/catalog/navigation.server";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
+import { CartDrawer } from "@/components/CartDrawer";
+import { OfferCard } from "@/components/OfferCard";
+import { OfferProcurementListRow } from "@/components/offers/OfferProcurementListRow";
+import { CategoryOfferFilters } from "@/components/catalog/CategoryOfferFilters";
+import { CategoryAttributeFilters } from "@/components/catalog/CategoryAttributeFilters";
+import {
+  resolveCategoryName,
+  resolveCategoryIntro,
+} from "@/lib/i18n/category-labels";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getHomePath, getOfferPath, getPrivacyPolicyPath } from "@/lib/i18n/paths";
+import { absoluteUrl } from "@/lib/seo/urls";
+import {
+  buildCategoryOfferQueryHref,
+  buildClearAllCategoryFiltersHref,
+  hasActiveCategoryOfferFilters,
+  type CategoryOfferFilters as CategoryOfferFiltersState,
+  type OfferModelFilter,
+  type CatalogOfferSort,
+} from "@/lib/catalog/query";
+import { resolveAttributeFilterUrlState } from "@/lib/catalog/attribute-filter-url";
+import {
+  getCategoryBreadcrumbs,
+  buildCategoryTree,
+  type CatalogCategoryNode,
+} from "@/lib/catalog/tree";
+import { resolveCategoryPageRole } from "@/lib/catalog/page-role";
+import {
+  JsonLdScript,
+  createCategoryItemListJsonLd,
+  createFaqPageJsonLd,
+} from "@/lib/seo/json-ld";
+import { defaultLocale } from "@/lib/i18n/config";
+import { CategoryPagination } from "@/components/catalog/CategoryPagination";
+import { CategoryOfferSort } from "@/components/catalog/CategoryOfferSort";
+import {
+  CATALOG_PAGE_SIZE,
+  buildCategoryPaginationHref,
+} from "@/lib/catalog/pagination";
+import { CategoryDecisionGuidance } from "@/components/catalog/CategoryDecisionGuidance";
+import { CategoryTechnicalParameters } from "@/components/catalog/CategoryTechnicalParameters";
+import { CategoryRelatedLinks } from "@/components/catalog/CategoryRelatedLinks";
+import { CategoryInquiryChecklist } from "@/components/catalog/CategoryInquiryChecklist";
+import { CategoryFaqBlock } from "@/components/catalog/CategoryFaqBlock";
+import { resolveRelatedCategoryLinks } from "@/lib/catalog/content/related";
+import { getCategoryContent } from "@/lib/catalog/content";
+import type { Locale } from "@/lib/i18n/types";
+
+import { resolveGlossaryLinksForCategory } from "@/lib/glossary";
+import { resolveCategorySolutionLinks } from "@/lib/landing";
+import { RelatedSolutions } from "@/components/landing/RelatedSolutions";
+
+interface CategoryPageProps {
+  locale: Locale;
+  categorySlug: string; // dbSlug (without 'c-' prefix)
+  view?: "grid" | "list";
+  sort: CatalogOfferSort;
+  filters?: CategoryOfferFiltersState;
+  currentPage?: number;
+}
+
+const blockHeadings = {
+  pl: {
+    decisionGuidance: "Wskazówki decyzyjne / Kryteria wyboru",
+    technicalParameters: "Specyfikacja i parametry techniczne",
+    inquiryChecklist:
+      "Lista kontrolna zapytania (RFQ) — Co przygotować do wyceny?",
+    faq: "Często zadawane pytania (FAQ)",
+    relatedLinks: "Powiązane kategorie i rozwiązania",
+  },
+  en: {
+    decisionGuidance: "Decision Guidance / Selection Criteria",
+    technicalParameters: "Technical Specification & Parameters",
+    inquiryChecklist: "Inquiry Checklist (RFQ) — What to prepare?",
+    faq: "Frequently Asked Questions (FAQ)",
+    relatedLinks: "Related Categories & Solutions",
+  },
+  de: {
+    decisionGuidance: "Entscheidungshilfe / Auswahlkriterien",
+    technicalParameters: "Technische Spezifikationen & Parameter",
+    inquiryChecklist: "Anfrage-Checkliste (RFQ) — Was ist vorzubereiten?",
+    faq: "Häufig gestellte Fragen (FAQ)",
+    relatedLinks: "Verwandte Kategorien & Lösungen",
+  },
+  fr: {
+    decisionGuidance: "Guide de décision / Critères de sélection",
+    technicalParameters: "Spécifications techniques & paramètres",
+    inquiryChecklist: "Liste de contrôle de demande (RFQ) — Que préparer ?",
+    faq: "Foire aux questions (FAQ)",
+    relatedLinks: "Catégories & solutions associées",
+  },
+  uk: {
+    decisionGuidance: "Рекомендації щодо вибору / Критерії",
+    technicalParameters: "Технічні характеристики та параметри",
+    inquiryChecklist: "Контрольний список запиту (RFQ) — Що підготувати?",
+    faq: "Часті питання (FAQ)",
+    relatedLinks: "Пов'язані категорії та рішення",
+  },
+  es: {
+    decisionGuidance: "Guía de decisión / Criterios de selección",
+    technicalParameters: "Especificaciones técnicas y parámetros",
+    inquiryChecklist:
+      "Lista de verificación de consulta (RFQ) — ¿Qué preparar?",
+    faq: "Preguntas frecuentes (FAQ)",
+    relatedLinks: "Categorías y soluciones relacionadas",
+  },
+  zh: {
+    decisionGuidance: "决策指南 / 选择标准",
+    technicalParameters: "技术规范与参数",
+    inquiryChecklist: "询价清单 (RFQ) — 准备工作",
+    faq: "常见问题解答 (FAQ)",
+    relatedLinks: "相关类别 & 解决方案",
+  },
+};
+
+function PackageIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className={className}
+      viewBox="0 0 24 24"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        className="fill-none stroke-current"
+        d="m3 7 9-4 9 4-9 4-9-4ZM3 7v10l9 4 9-4V7M12 11v10"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+export async function CategoryPage({
+  locale,
+  categorySlug,
+  view = "grid",
+  sort,
+  filters = {},
+  currentPage = 1,
+}: CategoryPageProps) {
+  const [dict, category, allCategories] = await Promise.all([
+    getDictionary(locale),
+    getCategoryBySlug(categorySlug),
+    getCachedCategories(),
+  ]);
+
+  const fallbackDict =
+    locale === defaultLocale ? dict : await getDictionary(defaultLocale);
+
+  if (!category) {
+    notFound();
+  }
+
+  const attributeDefinitions = await getCategoryAttributeConfiguration(
+    category.id,
+    locale,
+    true,
+    true,
+  );
+  const attributeState = resolveAttributeFilterUrlState(
+    attributeDefinitions,
+    filters.attributeParams,
+  );
+  const effectiveFilters: CategoryOfferFiltersState = {
+    ...filters,
+    attributeParams: attributeState.params,
+  };
+
+  const basePath = `${getHomePath(locale) === "/" ? "" : getHomePath(locale)}/katalog/c-${category.slug}`;
+
+  if (!attributeState.isCanonical) {
+    redirect(
+      buildCategoryPaginationHref(
+        basePath,
+        { view, sort, filters: effectiveFilters },
+        currentPage,
+      ),
+    );
+  }
+
+  const filteredResult = await getFilteredCategoryOffers({
+    categoryId: category.id,
+    offerModel: effectiveFilters.model,
+    featured: effectiveFilters.featured,
+    controlled: attributeState.input.controlled,
+    numbers: attributeState.input.numbers,
+    years: attributeState.input.years,
+    booleans: attributeState.input.booleans,
+    page: currentPage,
+    pageSize: CATALOG_PAGE_SIZE,
+    sort,
+  });
+  const offers: CatalogOffer[] = filteredResult.ok ? filteredResult.items : [];
+  const totalOffers = filteredResult.ok ? filteredResult.total : 0;
+  const totalPages = Math.max(1, Math.ceil(totalOffers / CATALOG_PAGE_SIZE));
+
+  if (filteredResult.ok) {
+    if (totalOffers === 0 && currentPage > 1) {
+      redirect(
+        buildCategoryPaginationHref(
+          basePath,
+          { view, sort, filters: effectiveFilters },
+          1,
+        ),
+      );
+    }
+    if (totalOffers > 0 && currentPage > totalPages) {
+      redirect(
+        buildCategoryPaginationHref(
+          basePath,
+          { view, sort, filters: effectiveFilters },
+          totalPages,
+        ),
+      );
+    }
+  }
+
+  const localeBySlug = dict.categories?.bySlug as
+    Record<string, string> | undefined;
+  const fallbackBySlug = fallbackDict.categories?.bySlug as
+    Record<string, string> | undefined;
+  const localeIntrosBySlug = dict.categories?.introsBySlug as
+    Record<string, string> | undefined;
+  const fallbackIntrosBySlug = fallbackDict.categories?.introsBySlug as
+    Record<string, string> | undefined;
+
+  const activeCategoryLabel = resolveCategoryName({
+    slug: category.slug,
+    dbName: category.name,
+    localeBySlug,
+    fallbackBySlug,
+  });
+
+  const activeCategoryIntro = resolveCategoryIntro({
+    slug: category.slug,
+    localeIntrosBySlug,
+    fallbackIntrosBySlug,
+    fallbackIntro: "",
+  });
+
+  // ── Tree + subcategory resolution ─────────────────────────────────────────
+  const categoryTree = buildCategoryTree(allCategories);
+
+  const findNode = (
+    nodes: CatalogCategoryNode[],
+    targetId: number,
+  ): CatalogCategoryNode | null => {
+    for (const node of nodes) {
+      if (node.id === targetId) return node;
+      const found = findNode(node.children, targetId);
+      if (found) return found;
+    }
+    return null;
+  };
+
+  const activeNode = findNode(categoryTree, category.id);
+  const subcategories = activeNode ? activeNode.children : [];
+
+  const parentCategory =
+    category.parentId !== null
+      ? (allCategories.find((c) => c.id === category.parentId) ?? null)
+      : null;
+
+  // ── PageRole (stateless, in-memory, no DB flags, no extra SQL) ────────────
+  const pageRole = resolveCategoryPageRole({
+    activeParentId: category.parentId,
+    parentOfParentId: parentCategory?.parentId,
+  });
+
+  // ── Breadcrumbs ───────────────────────────────────────────────────────────
+  const breadcrumbs = getCategoryBreadcrumbs(allCategories, category.id);
+  const categoryFilterBasePath = getHomePath(locale);
+
+  // ── JSON-LD: BreadcrumbList ───────────────────────────────────────────────
+  const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
+  const canonicalPath = `${catalogPath}/c-${category.slug}`;
+  const canonicalUrl = absoluteUrl(canonicalPath);
+
+  const breadcrumbItems = [
+    {
+      "@type": "ListItem",
+      position: 1,
+      name: dict.nav.catalog,
+      item: absoluteUrl(catalogPath),
+    },
+    ...breadcrumbs.map((bc, idx) => ({
+      "@type": "ListItem",
+      position: idx + 2,
+      name: resolveCategoryName({
+        slug: bc.slug,
+        dbName: bc.name,
+        localeBySlug,
+        fallbackBySlug,
+      }),
+      item: absoluteUrl(`${catalogPath}/c-${bc.slug}`),
+    })),
+  ];
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems,
+  };
+
+  // ── JSON-LD: CollectionPage ───────────────────────────────────────────────
+  const hasFacetedState =
+    view !== "grid" ||
+    hasActiveCategoryOfferFilters(effectiveFilters) ||
+    sort !== "default";
+  const cleanPaginationSuffix =
+    currentPage > 1 && !hasFacetedState ? `?page=${currentPage}` : "";
+  const pageJsonLdUrl = absoluteUrl(`${canonicalPath}${cleanPaginationSuffix}`);
+
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": `${pageJsonLdUrl}#collection`,
+    url: pageJsonLdUrl,
+    name: activeCategoryLabel,
+    description:
+      activeCategoryIntro ||
+      `${activeCategoryLabel} - ${dict.meta.description}`,
+  };
+
+  // ── JSON-LD: ItemList (role-aware, no Product schema) ────────────────────
+  const isSubcategories = subcategories.length > 0;
+  const itemListItems = (() => {
+    if (isSubcategories) {
+      return subcategories.map((sub: CatalogCategoryNode) => ({
+        name: resolveCategoryName({
+          slug: sub.slug,
+          dbName: sub.name,
+          localeBySlug,
+          fallbackBySlug,
+        }),
+        url: absoluteUrl(`${catalogPath}/c-${sub.slug}`),
+      }));
+    }
+
+    return offers.map((offer) => ({
+      name: offer.title,
+      url: absoluteUrl(getOfferPath(locale, String(offer.id))),
+    }));
+  })();
+
+  const startPosition =
+    !isSubcategories && currentPage > 1
+      ? (currentPage - 1) * CATALOG_PAGE_SIZE + 1
+      : 1;
+
+  const itemListJsonLd = createCategoryItemListJsonLd({
+    pageUrl: pageJsonLdUrl,
+    items: itemListItems,
+    startPosition,
+  });
+
+  // ── Retrieve static content (Hybrid Model C: stateless TS seed) ───────────
+  const categoryContent = getCategoryContent(locale, category.slug);
+
+  const decisionGuidanceItems = categoryContent?.decisionFactors || null;
+
+  const technicalParams = (() => {
+    if (!categoryContent?.technicalParameters) return null;
+    const params: Record<string, string> = {};
+    for (const item of categoryContent.technicalParameters) {
+      params[item.label] = item.value;
+    }
+    return params;
+  })();
+
+  const relatedLinks = (() => {
+    const resolved = resolveRelatedCategoryLinks({
+      edges: categoryContent?.relatedCategoryEdges,
+      allCategories,
+      locale,
+      categoryFilterBasePath,
+      localeBySlug,
+      fallbackBySlug,
+    });
+    return resolved.length > 0 ? resolved : null;
+  })();
+
+  const inquiryChecklistGroups =
+    categoryContent?.inquiryChecklist?.groups || null;
+  const inquiryChecklistDescription =
+    categoryContent?.inquiryChecklist?.description || null;
+  const faqItems = categoryContent?.faq || null;
+  const glossaryLinks = resolveGlossaryLinksForCategory(
+    category.slug,
+    locale as any,
+  );
+  const relatedSolutionLinks = resolveCategorySolutionLinks({
+    categorySlug: category.slug,
+    ancestorSlugs: breadcrumbs.map((breadcrumb) => breadcrumb.slug),
+    locale,
+  }).map((link) => ({
+    href: link.href,
+    label: link.label ?? dict.solutions.allSolutionsCta,
+  }));
+
+  // ── JSON-LD: FAQPage ──────────────────────────────────────────────────────
+  const faqJsonLd = createFaqPageJsonLd({
+    faq: faqItems,
+    pageUrl: canonicalUrl,
+  });
+
+  const headings = blockHeadings[locale] || blockHeadings.pl;
+  const privacyPolicyHref = getPrivacyPolicyPath(locale);
+  const viewBasePath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${category.slug}`;
+  const hasNestedSubcategories = subcategories.some(
+    (sub) => sub.children.length > 0,
+  );
+  const queryState = { view, sort, filters: effectiveFilters };
+  const hasActiveFilters = hasActiveCategoryOfferFilters(effectiveFilters);
+  const renderedOffers = offers;
+  const gridHref = buildCategoryOfferQueryHref(viewBasePath, queryState, {
+    view: "grid",
+  });
+  const listHref = buildCategoryOfferQueryHref(viewBasePath, queryState, {
+    view: "list",
+  });
+  const clearFiltersHref = buildClearAllCategoryFiltersHref(
+    viewBasePath,
+    queryState,
+  );
+
+  const renderedOfferCountLabel = `${totalOffers} ${
+    totalOffers === 1
+      ? dict.catalog.offerCountOne
+      : dict.catalog.offerCountOther
+  }`;
+  const offerCountLabel = hasActiveFilters
+    ? `${dict.catalog.filtersResultsLabel}: ${renderedOfferCountLabel}`
+    : renderedOfferCountLabel;
+
+  return (
+    <div className="flex min-h-screen flex-col bg-brand-light-gray">
+      {/* ── JSON-LD injection ───────────────────────────────────────────── */}
+      <JsonLdScript data={breadcrumbJsonLd} />
+      <JsonLdScript data={collectionJsonLd} />
+      {itemListJsonLd && <JsonLdScript data={itemListJsonLd} />}
+      {faqJsonLd && <JsonLdScript data={faqJsonLd} />}
+
+      <SiteHeader
+        locale={locale}
+        languageLinks={{
+          pl: `/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          en: `/en/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          de: `/de/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          fr: `/fr/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          es: `/es/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          uk: `/uk/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+          zh: `/zh/katalog/c-${category.slug}${cleanPaginationSuffix}`,
+        }}
+        navLabels={dict.nav}
+        searchLabels={dict.search}
+      />
+
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 md:px-6 md:py-8">
+        {/* ── Breadcrumbs nav ──────────────────────────────────────────── */}
+        <nav
+          aria-label="Breadcrumbs"
+          className="mb-4 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground sm:text-sm"
+        >
+          <Link
+            href={
+              categoryFilterBasePath === "/"
+                ? "/katalog"
+                : `${categoryFilterBasePath}/katalog`
+            }
+            className="hover:text-foreground transition-colors"
+          >
+            {dict.nav.catalog}
+          </Link>
+          {breadcrumbs.map((bc, idx) => {
+            const isLast = idx === breadcrumbs.length - 1;
+            const bcLabel = resolveCategoryName({
+              slug: bc.slug,
+              dbName: bc.name,
+              localeBySlug,
+              fallbackBySlug,
+            });
+            return (
+              <span key={bc.id} className="flex items-center gap-1.5">
+                <span>/</span>
+                {isLast ? (
+                  <span
+                    className="font-semibold text-foreground"
+                    aria-current="page"
+                  >
+                    {bcLabel}
+                  </span>
+                ) : (
+                  <Link
+                    href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${bc.slug}`}
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {bcLabel}
+                  </Link>
+                )}
+              </span>
+            );
+          })}
+        </nav>
+
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          <div className="min-w-0 flex-1 w-full">
+            {/* ── Hero / header section ─────────────────────────────────────── */}
+            <div className="rounded-lg border border-border bg-white px-5 py-5 shadow-sm sm:px-6">
+              <h1 className="text-2xl font-bold tracking-tight text-brand-navy sm:text-3xl">
+                {activeCategoryLabel}
+              </h1>
+              {activeCategoryIntro && (
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+                  {activeCategoryIntro}
+                </p>
+              )}
+            </div>
+
+            {/* ── Offer discovery controls + listing ────────────────────────── */}
+            <section aria-labelledby="category-offers-heading" className="mt-6">
+              <div className="flex flex-col gap-4 rounded-lg border border-border bg-white p-4 shadow-sm sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                  <h2
+                    id="category-offers-heading"
+                    className="text-xl font-bold text-brand-navy"
+                  >
+                    {dict.catalog.allOffers}
+                  </h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {offerCountLabel}
+                  </p>
+                </div>
+
+                <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row sm:items-end">
+                  <CategoryOfferSort
+                    basePath={viewBasePath}
+                    view={view}
+                    currentSort={sort}
+                    filters={effectiveFilters}
+                    labels={{
+                      sortLabel: dict.catalog.sortLabel || "Sortuj:",
+                      sortDefault: dict.catalog.sortDefault || "Domyślnie",
+                      sortPriceAsc:
+                        dict.catalog.sortPriceAsc || "Cena: od najniższej",
+                      sortPriceDesc:
+                        dict.catalog.sortPriceDesc || "Cena: od najwyższej",
+                      sortNewest: dict.catalog.sortNewest || "Najnowsze",
+                      apply: dict.catalog.attributeFiltersApply || "Zastosuj",
+                    }}
+                  />
+
+                  <nav
+                    aria-label={dict.offers.viewSwitcherAria}
+                    className="flex min-h-10 w-fit overflow-hidden rounded border border-border"
+                  >
+                    <Link
+                      href={gridHref}
+                      aria-current={view === "grid" ? "page" : undefined}
+                      className={`inline-flex items-center px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        view === "grid"
+                          ? "bg-brand-navy text-white"
+                          : "bg-white text-brand-navy hover:bg-gray-50"
+                      }`}
+                    >
+                      {dict.offers.gridView}
+                    </Link>
+                    <Link
+                      href={listHref}
+                      aria-current={view === "list" ? "page" : undefined}
+                      className={`inline-flex items-center border-l border-border px-3 py-1.5 text-xs font-semibold transition-colors ${
+                        view === "list"
+                          ? "bg-brand-navy text-white"
+                          : "bg-white text-brand-navy hover:bg-gray-50"
+                      }`}
+                    >
+                      {dict.offers.listView}
+                    </Link>
+                  </nav>
+                </div>
+              </div>
+
+              <CategoryOfferFilters
+                basePath={viewBasePath}
+                view={view}
+                sort={sort}
+                filters={effectiveFilters}
+                labels={{
+                  filtersHeading: dict.catalog.filtersHeading,
+                  filtersSummary: dict.catalog.filtersSummary,
+                  filtersAll: dict.catalog.filtersAll,
+                  filtersModelHeading: dict.catalog.filtersModelHeading,
+                  filtersModelRfq: dict.catalog.filtersModelRfq,
+                  filtersModelEcommerce: dict.catalog.filtersModelEcommerce,
+                  filtersModelOutbound: dict.catalog.filtersModelOutbound,
+                  filtersFeaturedOnly: dict.catalog.filtersFeaturedOnly,
+                }}
+              />
+
+              <CategoryAttributeFilters
+                basePath={viewBasePath}
+                view={view}
+                sort={sort}
+                filters={effectiveFilters}
+                definitions={attributeDefinitions}
+                labels={{
+                  heading: dict.catalog.attributeFiltersHeading,
+                  summary: dict.catalog.attributeFiltersSummary,
+                  from: dict.catalog.attributeFiltersFrom,
+                  to: dict.catalog.attributeFiltersTo,
+                  apply: dict.catalog.attributeFiltersApply,
+                  clear: dict.catalog.attributeFiltersClear,
+                  booleanAny: dict.catalog.filtersBooleanAny,
+                  booleanYes: dict.catalog.filtersBooleanYes,
+                  booleanNo: dict.catalog.filtersBooleanNo,
+                  multiEnumGuidance: dict.catalog.filtersMultiEnumGuidance,
+                }}
+              />
+
+              {hasActiveFilters && (
+                <div className="mt-3 flex justify-end">
+                  <Link
+                    href={clearFiltersHref}
+                    className="inline-flex min-h-10 items-center gap-2 rounded border border-border bg-white px-3 py-2 text-sm font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
+                  >
+                    <svg
+                      aria-hidden="true"
+                      focusable="false"
+                      className="h-4 w-4"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                    {dict.catalog.filtersClearAll}
+                  </Link>
+                </div>
+              )}
+
+              {renderedOffers.length === 0 ? (
+                <div className="mt-6 flex flex-col items-center gap-3 rounded-lg border border-border bg-white px-4 py-14 text-center">
+                  <PackageIcon className="h-12 w-12 text-muted-foreground/40" />
+                  <p className="text-lg font-semibold">
+                    {hasActiveFilters
+                      ? dict.catalog.filtersEmptyTitle
+                      : dict.catalog.emptyTitle}
+                  </p>
+                  <p className="text-sm text-muted-foreground max-w-xs">
+                    {hasActiveFilters
+                      ? dict.catalog.filtersEmptyDescription
+                      : dict.catalog.emptyDescription}
+                  </p>
+                  {hasActiveFilters && (
+                    <Link
+                      href={buildCategoryOfferQueryHref(
+                        viewBasePath,
+                        { view, sort, filters: effectiveFilters },
+                        { clearAttributeFilters: true },
+                      )}
+                      className="mt-4 rounded bg-brand-navy px-5 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-brand-teal"
+                    >
+                      {dict.catalog.filtersClear}
+                    </Link>
+                  )}
+                </div>
+              ) : view === "list" ? (
+                <div className="mt-5 flex flex-col gap-3">
+                  {renderedOffers.map((offer) => (
+                    <OfferProcurementListRow
+                      key={offer.id}
+                      offer={offer}
+                      detailHref={getOfferPath(locale, String(offer.id))}
+                      offerLabels={dict.offers}
+                      ctaLabels={dict.cta}
+                      rfqLabels={dict.rfq}
+                      formLabels={dict.form}
+                      systemLabels={dict.system}
+                      closeLabel={dict.common.close}
+                      categoryLabels={localeBySlug || {}}
+                      privacyPolicyHref={privacyPolicyHref}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {renderedOffers.map((offer) => (
+                    <OfferCard
+                      key={offer.id}
+                      offer={offer}
+                      detailHref={getOfferPath(locale, String(offer.id))}
+                      offerLabels={dict.offers}
+                      ctaLabels={dict.cta}
+                      rfqLabels={dict.rfq}
+                      formLabels={dict.form}
+                      systemLabels={dict.system}
+                      closeLabel={dict.common.close}
+                      categoryLabels={localeBySlug || {}}
+                      privacyPolicyHref={privacyPolicyHref}
+                    />
+                  ))}
+                </div>
+              )}
+
+              <CategoryPagination
+                basePath={viewBasePath}
+                state={queryState}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                labels={{
+                  paginationLabel:
+                    dict.catalog.paginationLabel || "Paginacja katalogu",
+                  paginationPrevious:
+                    dict.catalog.paginationPrevious || "Poprzednia",
+                  paginationNext: dict.catalog.paginationNext || "Następna",
+                  paginationPage:
+                    dict.catalog.paginationPage || "Strona {page}",
+                  paginationCurrentPage:
+                    dict.catalog.paginationCurrentPage ||
+                    "Bieżąca strona, strona {page}",
+                }}
+              />
+            </section>
+
+            {/* ── Supporting category navigation and SEO content ───────────── */}
+            {subcategories.length > 0 && (
+              <section className="mt-10 border-t border-border pt-8">
+                <h2 className="mb-5 text-xl font-bold text-brand-navy">
+                  {dict.catalog.allCategories}
+                </h2>
+
+                {pageRole === "section" || hasNestedSubcategories ? (
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {subcategories.map((group: CatalogCategoryNode) => {
+                      const groupLabel = resolveCategoryName({
+                        slug: group.slug,
+                        dbName: group.name,
+                        localeBySlug,
+                        fallbackBySlug,
+                      });
+                      return (
+                        <div
+                          key={group.id}
+                          className="rounded-lg border border-border bg-white p-4 shadow-sm"
+                        >
+                          <h3 className="mb-3 text-sm font-bold text-brand-navy">
+                            <Link
+                              href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${group.slug}`}
+                              className="transition-colors hover:text-brand-teal"
+                            >
+                              {groupLabel}
+                            </Link>
+                          </h3>
+                          {group.children.length > 0 && (
+                            <ul className="space-y-1.5 border-t border-gray-50 pt-2.5">
+                              {group.children.map(
+                                (cat: CatalogCategoryNode) => {
+                                  const catLabel = resolveCategoryName({
+                                    slug: cat.slug,
+                                    dbName: cat.name,
+                                    localeBySlug,
+                                    fallbackBySlug,
+                                  });
+                                  return (
+                                    <li key={cat.id}>
+                                      <Link
+                                        href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${cat.slug}`}
+                                        className={`text-xs transition-colors hover:text-brand-teal ${
+                                          cat.children.length > 0
+                                            ? "font-semibold text-brand-navy/80"
+                                            : "text-muted-foreground"
+                                        }`}
+                                      >
+                                        {catLabel}
+                                      </Link>
+                                      {cat.children.length > 0 && (
+                                        <ul className="mt-1.5 space-y-1 border-l border-border pl-3">
+                                          {cat.children.map(
+                                            (leaf: CatalogCategoryNode) => {
+                                              const leafLabel =
+                                                resolveCategoryName({
+                                                  slug: leaf.slug,
+                                                  dbName: leaf.name,
+                                                  localeBySlug,
+                                                  fallbackBySlug,
+                                                });
+
+                                              return (
+                                                <li key={leaf.id}>
+                                                  <Link
+                                                    href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${leaf.slug}`}
+                                                    className="text-xs text-muted-foreground transition-colors hover:text-brand-teal"
+                                                  >
+                                                    {leafLabel}
+                                                  </Link>
+                                                </li>
+                                              );
+                                            },
+                                          )}
+                                        </ul>
+                                      )}
+                                    </li>
+                                  );
+                                },
+                              )}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {subcategories.map((sub: CatalogCategoryNode) => {
+                      const subLabel = resolveCategoryName({
+                        slug: sub.slug,
+                        dbName: sub.name,
+                        localeBySlug,
+                        fallbackBySlug,
+                      });
+                      return (
+                        <Link
+                          key={sub.id}
+                          href={`${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog/c-${sub.slug}`}
+                          className="rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"
+                        >
+                          {subLabel}
+                        </Link>
+                      );
+                    })}
+                  </div>
+                )}
+              </section>
+            )}
+
+            {categoryContent?.definition && (
+              <p className="mt-8 max-w-3xl border-l-2 border-brand-teal pl-3 text-sm leading-relaxed text-muted-foreground">
+                {categoryContent.definition}
+              </p>
+            )}
+
+            <CategoryDecisionGuidance
+              items={decisionGuidanceItems}
+              heading={headings.decisionGuidance}
+            />
+            <CategoryTechnicalParameters
+              params={technicalParams}
+              heading={headings.technicalParameters}
+            />
+            <CategoryInquiryChecklist
+              groups={inquiryChecklistGroups}
+              heading={headings.inquiryChecklist}
+              description={inquiryChecklistDescription}
+            />
+
+            {/* ── Optional lower content slots (FAQ + related) ─────────────── */}
+            <CategoryFaqBlock items={faqItems} heading={headings.faq} />
+
+            {/* Słownik branżowy - Powiązane pojęcia */}
+            {(locale === "pl" || locale === "en" || locale === "de") &&
+              glossaryLinks &&
+              glossaryLinks.length > 0 &&
+              (() => {
+                const secLabels = {
+                  pl: {
+                    sectionTitle: "Pojęcia branżowe",
+                    viewDefinition: "Definicja pojęcia",
+                  },
+                  en: {
+                    sectionTitle: "Industry terms",
+                    viewDefinition: "Term definition",
+                  },
+                  de: {
+                    sectionTitle: "Fachbegriffe",
+                    viewDefinition: "Definition anzeigen",
+                  },
+                };
+                const activeLabels =
+                  secLabels[locale as "pl" | "en" | "de"] || secLabels.pl;
+
+                return (
+                  <div className="mt-8 border-t border-border pt-8">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-teal block mb-3">
+                      {activeLabels.sectionTitle}
+                    </span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {glossaryLinks.map((link) => (
+                        <div
+                          key={link.slug}
+                          className="border border-border bg-white p-4 rounded-none shadow-none flex flex-col justify-between"
+                        >
+                          <div>
+                            <h3 className="text-sm font-bold text-brand-navy mb-1.5">
+                              <Link
+                                href={link.href}
+                                className="hover:text-brand-teal transition-colors"
+                              >
+                                {link.term}
+                              </Link>
+                            </h3>
+                            <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
+                              {link.shortDefinition}
+                            </p>
+                          </div>
+                          <div className="mt-3 text-right">
+                            <Link
+                              href={link.href}
+                              className="text-xs font-semibold text-brand-teal hover:underline inline-flex items-center gap-1"
+                            >
+                              {activeLabels.viewDefinition} <span>→</span>
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+
+            <CategoryRelatedLinks
+              links={relatedLinks}
+              heading={headings.relatedLinks}
+            />
+
+            <RelatedSolutions
+              links={relatedSolutionLinks}
+              heading={dict.solutions.relatedHeading}
+              intro={dict.solutions.relatedIntro}
+            />
+          </div>
+        </div>
+      </main>
+
+      <SiteFooter
+        locale={locale}
+        navLabels={dict.nav}
+        footerLabels={dict.footer}
+      />
+      <CartDrawer
+        cartLabels={dict.cart}
+        ctaLabels={dict.cta}
+        checkoutLabels={dict.checkout}
+        formLabels={dict.form}
+        systemLabels={dict.system}
+        offerLabels={dict.offers}
+        closeLabel={dict.common.close}
+        privacyPolicyHref={privacyPolicyHref}
+      />
+    </div>
+  );
+}

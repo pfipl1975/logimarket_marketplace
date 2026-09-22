@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- AGV vehicle chassis -->
+  <path d="M 8 26 L 24 26 L 26 14 L 30 14 L 28 34 L 8 34 Z" fill="#141c2c" />
+  <circle cx="14" cy="35" r="4" fill="#141c2c" />
+  <circle cx="24" cy="35" r="4" fill="#141c2c" />
+
+  <!-- Mast & Heavy payload -->
+  <rect x="30" y="8" width="2" height="26" fill="#147487" />
+  <rect x="32" y="16" width="10" height="12" rx="1" fill="#147487" />
+  <!-- Pallet below payload -->
+  <rect x="31" y="28" width="12" height="2" fill="#141c2c" />
+
+  <!-- Yellow safety scanner LiDAR -->
+  <rect x="6" y="30" width="3" height="3" fill="#eab308" />
+</svg>

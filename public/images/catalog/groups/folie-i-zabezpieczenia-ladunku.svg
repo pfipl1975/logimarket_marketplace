@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Box Load -->
+  <polygon points="24,10 38,17 38,37 24,44 10,37 10,17" fill="#141c2c" />
+
+  <!-- Wrapping film bands -->
+  <path d="M 10 21 L 24 28 L 38 21" stroke="#147487" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.9" />
+  <path d="M 10 29 L 24 36 L 38 29" stroke="#147487" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.9" />
+
+  <!-- Film roll dispenser tool silhouette on the side -->
+  <rect x="36" y="12" width="3" height="22" rx="1.5" fill="#147487" />
+  <rect x="37" y="15" width="1" height="16" fill="#eab308" />
+</svg>

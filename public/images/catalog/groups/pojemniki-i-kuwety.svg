@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48">
+  <!-- Bottom Stacking Bin -->
+  <path d="M 8 24 L 40 24 L 38 40 L 10 40 Z" fill="#141c2c" />
+  <rect x="14" y="28" width="20" height="4" fill="#147487" />
+
+  <!-- Top Stacking Bin -->
+  <path d="M 8 8 L 40 8 L 38 24 L 10 24 Z" fill="#147487" />
+  <rect x="14" y="12" width="20" height="4" fill="#141c2c" />
+
+  <!-- Yellow Label/Handles -->
+  <rect x="22" y="34" width="4" height="2" fill="#eab308" />
+  <rect x="22" y="18" width="4" height="2" fill="#eab308" />
+</svg>

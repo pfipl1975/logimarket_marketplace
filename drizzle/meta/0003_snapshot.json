@@ -1,0 +1,2101 @@
+{
+  "id": "3ee2b4af-7048-43f0-a6fa-28448a68ca65",
+  "prevId": "a9bc203c-8302-46bd-a7d5-70cd7c5f6c60",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.attribute_definition_translations": {
+      "name": "attribute_definition_translations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "attribute_definition_id": {
+          "name": "attribute_definition_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "short_label": {
+          "name": "short_label",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_adt_attribute_definition": {
+          "name": "fk_adt_attribute_definition",
+          "tableFrom": "attribute_definition_translations",
+          "tableTo": "attribute_definitions",
+          "columnsFrom": [
+            "attribute_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_adt_attribute_locale": {
+          "name": "uq_adt_attribute_locale",
+          "nullsNotDistinct": false,
+          "columns": [
+            "attribute_definition_id",
+            "locale"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_adt_locale": {
+          "name": "chk_adt_locale",
+          "value": "\"attribute_definition_translations\".\"locale\" IN ('pl','en','de','fr','uk','es','zh')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.attribute_definitions": {
+      "name": "attribute_definitions",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "stable_key": {
+          "name": "stable_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data_type": {
+          "name": "data_type",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_ad_stable_key": {
+          "name": "uq_ad_stable_key",
+          "nullsNotDistinct": false,
+          "columns": [
+            "stable_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_ad_data_type": {
+          "name": "chk_ad_data_type",
+          "value": "\"attribute_definitions\".\"data_type\" IN ('text','number','boolean','date','year','enum','multi_enum')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.cart_items": {
+      "name": "cart_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "session_hash": {
+          "name": "session_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.categories": {
+      "name": "categories",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "slug": {
+          "name": "slug",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "parent_id": {
+          "name": "parent_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "categories_slug_unique": {
+          "name": "categories_slug_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "slug"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.category_attribute_assignments": {
+      "name": "category_attribute_assignments",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribute_definition_id": {
+          "name": "attribute_definition_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sort_order": {
+          "name": "sort_order",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "is_filterable": {
+          "name": "is_filterable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_comparable": {
+          "name": "is_comparable",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_required": {
+          "name": "is_required",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_visible": {
+          "name": "is_visible",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "unit_code": {
+          "name": "unit_code",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {
+        "idx_caa_cat_visible_sort": {
+          "name": "idx_caa_cat_visible_sort",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "is_visible",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_caa_cat_filterable_sort": {
+          "name": "idx_caa_cat_filterable_sort",
+          "columns": [
+            {
+              "expression": "category_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "is_filterable",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "sort_order",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "idx_caa_attribute": {
+          "name": "idx_caa_attribute",
+          "columns": [
+            {
+              "expression": "attribute_definition_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "fk_caa_category": {
+          "name": "fk_caa_category",
+          "tableFrom": "category_attribute_assignments",
+          "tableTo": "categories",
+          "columnsFrom": [
+            "category_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_caa_attribute_definition": {
+          "name": "fk_caa_attribute_definition",
+          "tableFrom": "category_attribute_assignments",
+          "tableTo": "attribute_definitions",
+          "columnsFrom": [
+            "attribute_definition_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_caa_category_attribute": {
+          "name": "uq_caa_category_attribute",
+          "nullsNotDistinct": false,
+          "columns": [
+            "category_id",
+            "attribute_definition_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_caa_sort_order": {
+          "name": "chk_caa_sort_order",
+          "value": "\"category_attribute_assignments\".\"sort_order\" >= 0"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.clicks": {
+      "name": "clicks",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "clicked_at": {
+          "name": "clicked_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "session_hash": {
+          "name": "session_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ip_hash": {
+          "name": "ip_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_unique_24h": {
+          "name": "is_unique_24h",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.controlled_option_value_translations": {
+      "name": "controlled_option_value_translations",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "controlled_option_value_id": {
+          "name": "controlled_option_value_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "locale": {
+          "name": "locale",
+          "type": "varchar(10)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_covt_controlled_option_value": {
+          "name": "fk_covt_controlled_option_value",
+          "tableFrom": "controlled_option_value_translations",
+          "tableTo": "controlled_option_values",
+          "columnsFrom": [
+            "controlled_option_value_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_covt_option_locale": {
+          "name": "uq_covt_option_locale",
+          "nullsNotDistinct": false,
+          "columns": [
+            "controlled_option_value_id",
+            "locale"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_covt_locale": {
+          "name": "chk_covt_locale",
+          "value": "\"controlled_option_value_translations\".\"locale\" IN ('pl','en','de','fr','uk','es','zh')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.controlled_option_values": {
+      "name": "controlled_option_values",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "attribute_id": {
+          "name": "attribute_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "stable_key": {
+          "name": "stable_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_cov_attribute": {
+          "name": "fk_cov_attribute",
+          "tableFrom": "controlled_option_values",
+          "tableTo": "attribute_definitions",
+          "columnsFrom": [
+            "attribute_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_cov_attr_option": {
+          "name": "uq_cov_attr_option",
+          "nullsNotDistinct": false,
+          "columns": [
+            "attribute_id",
+            "stable_key"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.migration_batches": {
+      "name": "migration_batches",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'running'"
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "completed_at": {
+          "name": "completed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "source_description": {
+          "name": "source_description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_by": {
+          "name": "created_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "chk_mb_status": {
+          "name": "chk_mb_status",
+          "value": "\"migration_batches\".\"status\" IN ('running','completed','rollback_in_progress','rolled_back','rollback_conflict','failed')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.migration_oaov_targets": {
+      "name": "migration_oaov_targets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_entry_id": {
+          "name": "source_entry_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_row_id_current": {
+          "name": "target_row_id_current",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_row_id_original": {
+          "name": "target_row_id_original",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_offer_id": {
+          "name": "target_offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_attribute_id": {
+          "name": "target_attribute_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_option_id": {
+          "name": "target_option_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_hash_at_creation": {
+          "name": "target_hash_at_creation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_payload_version": {
+          "name": "canonical_payload_version",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_provenance": {
+          "name": "target_provenance",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rollback_status": {
+          "name": "rollback_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "rollback_reason": {
+          "name": "rollback_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_deleted_at": {
+          "name": "target_deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_mott_oaov_target_current": {
+          "name": "fk_mott_oaov_target_current",
+          "tableFrom": "migration_oaov_targets",
+          "tableTo": "offer_attribute_option_values",
+          "columnsFrom": [
+            "target_row_id_current"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_mott_source_entry": {
+          "name": "fk_mott_source_entry",
+          "tableFrom": "migration_oaov_targets",
+          "tableTo": "migration_source_entries",
+          "columnsFrom": [
+            "source_entry_id",
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id",
+            "batch_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_mott_batch": {
+          "name": "fk_mott_batch",
+          "tableFrom": "migration_oaov_targets",
+          "tableTo": "migration_batches",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_mott_target_original": {
+          "name": "uq_mott_target_original",
+          "nullsNotDistinct": false,
+          "columns": [
+            "target_row_id_original"
+          ]
+        },
+        "uq_mott_target_current": {
+          "name": "uq_mott_target_current",
+          "nullsNotDistinct": false,
+          "columns": [
+            "target_row_id_current"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_mott_provenance": {
+          "name": "chk_mott_provenance",
+          "value": "\"migration_oaov_targets\".\"target_provenance\" IN ('created_by_batch', 'unknown_legacy')"
+        },
+        "chk_mott_canonical_version": {
+          "name": "chk_mott_canonical_version",
+          "value": "\"migration_oaov_targets\".\"canonical_payload_version\" IN ('lm-source-v1', 'lm-source-v2')"
+        },
+        "chk_mott_rollback_status": {
+          "name": "chk_mott_rollback_status",
+          "value": "\"migration_oaov_targets\".\"rollback_status\" IN ('pending','cleaned_up','rollback_conflict')"
+        },
+        "chk_mott_hash_format": {
+          "name": "chk_mott_hash_format",
+          "value": "\"migration_oaov_targets\".\"target_hash_at_creation\" ~ '^[0-9a-f]{64}$'"
+        },
+        "chk_mott_row_ids": {
+          "name": "chk_mott_row_ids",
+          "value": "\"migration_oaov_targets\".\"target_row_id_current\" IS NULL OR \"migration_oaov_targets\".\"target_row_id_current\" = \"migration_oaov_targets\".\"target_row_id_original\""
+        },
+        "chk_mott_lifecycle": {
+          "name": "chk_mott_lifecycle",
+          "value": "\n      (\n        \"migration_oaov_targets\".\"rollback_status\" = 'pending'\n        AND \"migration_oaov_targets\".\"target_row_id_current\" IS NOT NULL\n        AND \"migration_oaov_targets\".\"target_deleted_at\" IS NULL\n        AND \"migration_oaov_targets\".\"rollback_reason\" IS NULL\n      )\n      OR\n      (\n        \"migration_oaov_targets\".\"rollback_status\" = 'cleaned_up'\n        AND \"migration_oaov_targets\".\"target_row_id_current\" IS NULL\n        AND \"migration_oaov_targets\".\"target_deleted_at\" IS NOT NULL\n        AND \"migration_oaov_targets\".\"rollback_reason\" = 'deleted_by_batch_rollback'\n      )\n      OR\n      (\n        \"migration_oaov_targets\".\"rollback_status\" = 'rollback_conflict'\n        AND \"migration_oaov_targets\".\"rollback_reason\" IS NOT NULL\n        AND \"migration_oaov_targets\".\"target_deleted_at\" IS NULL\n      )\n    "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.migration_oav_targets": {
+      "name": "migration_oav_targets",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_entry_id": {
+          "name": "source_entry_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_row_id_current": {
+          "name": "target_row_id_current",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_row_id_original": {
+          "name": "target_row_id_original",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_offer_id": {
+          "name": "target_offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_attribute_id": {
+          "name": "target_attribute_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_option_id": {
+          "name": "target_option_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_hash_at_creation": {
+          "name": "target_hash_at_creation",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "canonical_payload_version": {
+          "name": "canonical_payload_version",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "target_provenance": {
+          "name": "target_provenance",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "rollback_status": {
+          "name": "rollback_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "rollback_reason": {
+          "name": "rollback_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "target_deleted_at": {
+          "name": "target_deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_mot_oav_target_current": {
+          "name": "fk_mot_oav_target_current",
+          "tableFrom": "migration_oav_targets",
+          "tableTo": "offer_attribute_values",
+          "columnsFrom": [
+            "target_row_id_current"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_mot_option": {
+          "name": "fk_mot_option",
+          "tableFrom": "migration_oav_targets",
+          "tableTo": "controlled_option_values",
+          "columnsFrom": [
+            "target_option_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_mot_source_entry": {
+          "name": "fk_mot_source_entry",
+          "tableFrom": "migration_oav_targets",
+          "tableTo": "migration_source_entries",
+          "columnsFrom": [
+            "source_entry_id",
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id",
+            "batch_id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_mot_batch": {
+          "name": "fk_mot_batch",
+          "tableFrom": "migration_oav_targets",
+          "tableTo": "migration_batches",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_mot_target_original": {
+          "name": "uq_mot_target_original",
+          "nullsNotDistinct": false,
+          "columns": [
+            "target_row_id_original"
+          ]
+        },
+        "uq_mot_target_current": {
+          "name": "uq_mot_target_current",
+          "nullsNotDistinct": false,
+          "columns": [
+            "target_row_id_current"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_mot_provenance": {
+          "name": "chk_mot_provenance",
+          "value": "\"migration_oav_targets\".\"target_provenance\" IN ('created_by_batch', 'unknown_legacy')"
+        },
+        "chk_mot_canonical_version": {
+          "name": "chk_mot_canonical_version",
+          "value": "\"migration_oav_targets\".\"canonical_payload_version\" IN ('lm-source-v1', 'lm-source-v2')"
+        },
+        "chk_mot_rollback_status": {
+          "name": "chk_mot_rollback_status",
+          "value": "\"migration_oav_targets\".\"rollback_status\" IN ('pending','cleaned_up','rollback_conflict')"
+        },
+        "chk_mot_hash_format": {
+          "name": "chk_mot_hash_format",
+          "value": "\"migration_oav_targets\".\"target_hash_at_creation\" ~ '^[0-9a-f]{64}$'"
+        },
+        "chk_mot_row_ids": {
+          "name": "chk_mot_row_ids",
+          "value": "\"migration_oav_targets\".\"target_row_id_current\" IS NULL OR \"migration_oav_targets\".\"target_row_id_current\" = \"migration_oav_targets\".\"target_row_id_original\""
+        },
+        "chk_mot_lifecycle": {
+          "name": "chk_mot_lifecycle",
+          "value": "\n      (\n        \"migration_oav_targets\".\"rollback_status\" = 'pending'\n        AND \"migration_oav_targets\".\"target_row_id_current\" IS NOT NULL\n        AND \"migration_oav_targets\".\"target_deleted_at\" IS NULL\n        AND \"migration_oav_targets\".\"rollback_reason\" IS NULL\n      )\n      OR\n      (\n        \"migration_oav_targets\".\"rollback_status\" = 'cleaned_up'\n        AND \"migration_oav_targets\".\"target_row_id_current\" IS NULL\n        AND \"migration_oav_targets\".\"target_deleted_at\" IS NOT NULL\n        AND \"migration_oav_targets\".\"rollback_reason\" = 'deleted_by_batch_rollback'\n      )\n      OR\n      (\n        \"migration_oav_targets\".\"rollback_status\" = 'rollback_conflict'\n        AND \"migration_oav_targets\".\"rollback_reason\" IS NOT NULL\n        AND \"migration_oav_targets\".\"target_deleted_at\" IS NULL\n      )\n    "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.migration_rollback_attempts": {
+      "name": "migration_rollback_attempts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attempt_number": {
+          "name": "attempt_number",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "started_at": {
+          "name": "started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "finished_at": {
+          "name": "finished_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "sqlstate": {
+          "name": "sqlstate",
+          "type": "varchar(5)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "constraint_name": {
+          "name": "constraint_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "detail": {
+          "name": "detail",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "hint": {
+          "name": "hint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "targets_deleted_count": {
+          "name": "targets_deleted_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "targets_skipped_count": {
+          "name": "targets_skipped_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "targets_conflict_count": {
+          "name": "targets_conflict_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "initiated_by": {
+          "name": "initiated_by",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_mra_batch": {
+          "name": "fk_mra_batch",
+          "tableFrom": "migration_rollback_attempts",
+          "tableTo": "migration_batches",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "restrict",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_mra_batch_attempt": {
+          "name": "uq_mra_batch_attempt",
+          "nullsNotDistinct": false,
+          "columns": [
+            "batch_id",
+            "attempt_number"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_mra_attempt_number": {
+          "name": "chk_mra_attempt_number",
+          "value": "\"migration_rollback_attempts\".\"attempt_number\" > 0"
+        },
+        "chk_mra_deleted_nonnegative": {
+          "name": "chk_mra_deleted_nonnegative",
+          "value": "\"migration_rollback_attempts\".\"targets_deleted_count\" >= 0"
+        },
+        "chk_mra_skipped_nonnegative": {
+          "name": "chk_mra_skipped_nonnegative",
+          "value": "\"migration_rollback_attempts\".\"targets_skipped_count\" >= 0"
+        },
+        "chk_mra_conflict_nonnegative": {
+          "name": "chk_mra_conflict_nonnegative",
+          "value": "\"migration_rollback_attempts\".\"targets_conflict_count\" >= 0"
+        },
+        "chk_mra_status_check": {
+          "name": "chk_mra_status_check",
+          "value": "\"migration_rollback_attempts\".\"status\" IN ('running', 'succeeded', 'failed', 'conflict')"
+        },
+        "chk_mra_lifecycle": {
+          "name": "chk_mra_lifecycle",
+          "value": "\n      (\n        \"migration_rollback_attempts\".\"status\" = 'running'\n        AND \"migration_rollback_attempts\".\"finished_at\" IS NULL\n        AND \"migration_rollback_attempts\".\"sqlstate\" IS NULL\n        AND \"migration_rollback_attempts\".\"constraint_name\" IS NULL\n        AND \"migration_rollback_attempts\".\"message\" IS NULL\n        AND \"migration_rollback_attempts\".\"detail\" IS NULL\n        AND \"migration_rollback_attempts\".\"hint\" IS NULL\n        AND \"migration_rollback_attempts\".\"targets_deleted_count\" = 0\n        AND \"migration_rollback_attempts\".\"targets_skipped_count\" = 0\n        AND \"migration_rollback_attempts\".\"targets_conflict_count\" = 0\n      )\n      OR\n      (\n        \"migration_rollback_attempts\".\"status\" = 'succeeded'\n        AND \"migration_rollback_attempts\".\"finished_at\" IS NOT NULL\n        AND \"migration_rollback_attempts\".\"sqlstate\" IS NULL\n        AND \"migration_rollback_attempts\".\"constraint_name\" IS NULL\n        AND \"migration_rollback_attempts\".\"message\" IS NULL\n        AND \"migration_rollback_attempts\".\"detail\" IS NULL\n        AND \"migration_rollback_attempts\".\"hint\" IS NULL\n        AND \"migration_rollback_attempts\".\"targets_deleted_count\" > 0\n        AND \"migration_rollback_attempts\".\"targets_conflict_count\" = 0\n      )\n      OR\n      (\n        \"migration_rollback_attempts\".\"status\" = 'failed'\n        AND \"migration_rollback_attempts\".\"finished_at\" IS NOT NULL\n        AND \"migration_rollback_attempts\".\"sqlstate\" IS NOT NULL\n        AND char_length(\"migration_rollback_attempts\".\"sqlstate\") = 5\n        AND \"migration_rollback_attempts\".\"message\" IS NOT NULL\n      )\n      OR\n      (\n        \"migration_rollback_attempts\".\"status\" = 'conflict'\n        AND \"migration_rollback_attempts\".\"finished_at\" IS NOT NULL\n        AND \"migration_rollback_attempts\".\"targets_conflict_count\" > 0\n        AND \"migration_rollback_attempts\".\"sqlstate\" IS NULL\n        AND \"migration_rollback_attempts\".\"constraint_name\" IS NULL\n        AND \"migration_rollback_attempts\".\"message\" IS NULL\n        AND \"migration_rollback_attempts\".\"detail\" IS NULL\n        AND \"migration_rollback_attempts\".\"hint\" IS NULL\n      )\n    "
+        },
+        "chk_mra_sqlstate": {
+          "name": "chk_mra_sqlstate",
+          "value": "\"migration_rollback_attempts\".\"sqlstate\" IS NULL OR char_length(\"migration_rollback_attempts\".\"sqlstate\") = 5"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.migration_source_entries": {
+      "name": "migration_source_entries",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "batch_id": {
+          "name": "batch_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_offer_id": {
+          "name": "source_offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_key": {
+          "name": "source_key",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "raw_value": {
+          "name": "raw_value",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_hash": {
+          "name": "source_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_payload_version": {
+          "name": "source_payload_version",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "processing_status": {
+          "name": "processing_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
+        },
+        "classification_status": {
+          "name": "classification_status",
+          "type": "varchar(30)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "classification_reason": {
+          "name": "classification_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "expected_target_count": {
+          "name": "expected_target_count",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "frequency": {
+          "name": "frequency",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 1
+        },
+        "approved_reason": {
+          "name": "approved_reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "scope_owner": {
+          "name": "scope_owner",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "decision_timestamp": {
+          "name": "decision_timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "fallback_status": {
+          "name": "fallback_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processing_error_code": {
+          "name": "processing_error_code",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processing_error_message": {
+          "name": "processing_error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "processing_failed_at": {
+          "name": "processing_failed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_mse_batch": {
+          "name": "fk_mse_batch",
+          "tableFrom": "migration_source_entries",
+          "tableTo": "migration_batches",
+          "columnsFrom": [
+            "batch_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_mse_source_identity": {
+          "name": "uq_mse_source_identity",
+          "nullsNotDistinct": false,
+          "columns": [
+            "batch_id",
+            "source_offer_id",
+            "source_key"
+          ]
+        },
+        "uq_mse_id_batch": {
+          "name": "uq_mse_id_batch",
+          "nullsNotDistinct": false,
+          "columns": [
+            "id",
+            "batch_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_mse_proc_status": {
+          "name": "chk_mse_proc_status",
+          "value": "\"migration_source_entries\".\"processing_status\" IN ('pending','processing','processed','failed')"
+        },
+        "chk_mse_class_status": {
+          "name": "chk_mse_class_status",
+          "value": "\"migration_source_entries\".\"classification_status\" IN ('migrated','intentionally_skipped','manual_review_required','out_of_scope')"
+        },
+        "chk_mse_technical_error_state_matrix": {
+          "name": "chk_mse_technical_error_state_matrix",
+          "value": "\n      (\n        \"migration_source_entries\".\"processing_status\" IN ('pending', 'processing')\n        AND \"migration_source_entries\".\"classification_status\" IS NULL\n        AND \"migration_source_entries\".\"processing_error_code\" IS NULL\n        AND \"migration_source_entries\".\"processing_error_message\" IS NULL\n        AND \"migration_source_entries\".\"processing_failed_at\" IS NULL\n      )\n      OR\n      (\n        \"migration_source_entries\".\"processing_status\" = 'processed'\n        AND \"migration_source_entries\".\"classification_status\" IS NOT NULL\n        AND \"migration_source_entries\".\"processing_error_code\" IS NULL\n        AND \"migration_source_entries\".\"processing_error_message\" IS NULL\n        AND \"migration_source_entries\".\"processing_failed_at\" IS NULL\n      )\n      OR\n      (\n        \"migration_source_entries\".\"processing_status\" = 'failed'\n        AND \"migration_source_entries\".\"classification_status\" IS NULL\n        AND \"migration_source_entries\".\"processing_error_code\" IS NOT NULL\n        AND \"migration_source_entries\".\"processing_error_message\" IS NOT NULL\n        AND \"migration_source_entries\".\"processing_failed_at\" IS NOT NULL\n      )\n    "
+        },
+        "chk_mse_expected_nonnegative": {
+          "name": "chk_mse_expected_nonnegative",
+          "value": "\"migration_source_entries\".\"expected_target_count\" >= 0"
+        },
+        "chk_mse_expected_by_classification": {
+          "name": "chk_mse_expected_by_classification",
+          "value": "\n      (\n        \"migration_source_entries\".\"classification_status\" = 'migrated'\n        AND \"migration_source_entries\".\"expected_target_count\" >= 1\n      )\n      OR\n      (\n        \"migration_source_entries\".\"classification_status\" IN ('intentionally_skipped', 'manual_review_required', 'out_of_scope')\n        AND \"migration_source_entries\".\"expected_target_count\" = 0\n      )\n      OR\n      \"migration_source_entries\".\"classification_status\" IS NULL\n    "
+        },
+        "chk_mse_out_of_scope_governance": {
+          "name": "chk_mse_out_of_scope_governance",
+          "value": "\n      \"migration_source_entries\".\"classification_status\" <> 'out_of_scope'\n      OR (\n        \"migration_source_entries\".\"approved_reason\" IS NOT NULL\n        AND \"migration_source_entries\".\"scope_owner\" IS NOT NULL\n        AND \"migration_source_entries\".\"decision_timestamp\" IS NOT NULL\n        AND \"migration_source_entries\".\"fallback_status\" IS NOT NULL\n        AND \"migration_source_entries\".\"frequency\" > 0\n      )\n    "
+        },
+        "chk_mse_source_payload_version": {
+          "name": "chk_mse_source_payload_version",
+          "value": "\"migration_source_entries\".\"source_payload_version\" IN ('lm-source-v1', 'lm-source-v2')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.offer_attribute_option_values": {
+      "name": "offer_attribute_option_values",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribute_id": {
+          "name": "attribute_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "option_id": {
+          "name": "option_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_oaov_offer": {
+          "name": "fk_oaov_offer",
+          "tableFrom": "offer_attribute_option_values",
+          "tableTo": "offers",
+          "columnsFrom": [
+            "offer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_oaov_attribute": {
+          "name": "fk_oaov_attribute",
+          "tableFrom": "offer_attribute_option_values",
+          "tableTo": "attribute_definitions",
+          "columnsFrom": [
+            "attribute_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_oaov_option": {
+          "name": "fk_oaov_option",
+          "tableFrom": "offer_attribute_option_values",
+          "tableTo": "controlled_option_values",
+          "columnsFrom": [
+            "option_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_oaov_offer_attribute_option": {
+          "name": "uq_oaov_offer_attribute_option",
+          "nullsNotDistinct": false,
+          "columns": [
+            "offer_id",
+            "attribute_id",
+            "option_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.offer_attribute_values": {
+      "name": "offer_attribute_values",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "attribute_id": {
+          "name": "attribute_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "value_text": {
+          "name": "value_text",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value_number": {
+          "name": "value_number",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value_boolean": {
+          "name": "value_boolean",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value_date": {
+          "name": "value_date",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "value_year": {
+          "name": "value_year",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "option_id": {
+          "name": "option_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "fk_oav_offer": {
+          "name": "fk_oav_offer",
+          "tableFrom": "offer_attribute_values",
+          "tableTo": "offers",
+          "columnsFrom": [
+            "offer_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_oav_attribute": {
+          "name": "fk_oav_attribute",
+          "tableFrom": "offer_attribute_values",
+          "tableTo": "attribute_definitions",
+          "columnsFrom": [
+            "attribute_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "fk_oav_option": {
+          "name": "fk_oav_option",
+          "tableFrom": "offer_attribute_values",
+          "tableTo": "controlled_option_values",
+          "columnsFrom": [
+            "option_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "uq_oav_offer_attribute": {
+          "name": "uq_oav_offer_attribute",
+          "nullsNotDistinct": false,
+          "columns": [
+            "offer_id",
+            "attribute_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "chk_oav_value_exclusivity": {
+          "name": "chk_oav_value_exclusivity",
+          "value": "\n      num_nonnulls(\n        value_text,\n        value_number,\n        value_boolean,\n        value_date,\n        value_year,\n        option_id\n      ) = 1\n    "
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.offers": {
+      "name": "offers",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "category_id": {
+          "name": "category_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "description": {
+          "name": "description",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "image_url": {
+          "name": "image_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_brutto": {
+          "name": "price_brutto",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "price_on_request": {
+          "name": "price_on_request",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "conversion_type": {
+          "name": "conversion_type",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'outbound'"
+        },
+        "offer_model": {
+          "name": "offer_model",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'rfq'"
+        },
+        "outbound_url": {
+          "name": "outbound_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "is_featured": {
+          "name": "is_featured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "is_active": {
+          "name": "is_active",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": true
+        },
+        "publication_status": {
+          "name": "publication_status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'draft'"
+        },
+        "published_at": {
+          "name": "published_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "archived_at": {
+          "name": "archived_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "deleted_at": {
+          "name": "deleted_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "technical_attributes": {
+          "name": "technical_attributes",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'::jsonb"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.order_items": {
+      "name": "order_items",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "order_id": {
+          "name": "order_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "title": {
+          "name": "title",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "quantity": {
+          "name": "quantity",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit_price": {
+          "name": "unit_price",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.orders": {
+      "name": "orders",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "company_name": {
+          "name": "company_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_name": {
+          "name": "contact_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "session_hash": {
+          "name": "session_hash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "total_amount": {
+          "name": "total_amount",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(20)",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'new'"
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.partners": {
+      "name": "partners",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "company_name": {
+          "name": "company_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "website_url": {
+          "name": "website_url",
+          "type": "varchar(512)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "contact_email": {
+          "name": "contact_email",
+          "type": "varchar(100)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.rfq_leads": {
+      "name": "rfq_leads",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigserial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "offer_id": {
+          "name": "offer_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "partner_id": {
+          "name": "partner_id",
+          "type": "bigint",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "company_name": {
+          "name": "company_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "contact_name": {
+          "name": "contact_name",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "email": {
+          "name": "email",
+          "type": "varchar(255)",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "phone": {
+          "name": "phone",
+          "type": "varchar(50)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "message": {
+          "name": "message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

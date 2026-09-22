@@ -1,0 +1,2 @@
+ALTER TABLE public.offers DROP CONSTRAINT offers_publication_status_check;
+ALTER TABLE public.offers ADD CONSTRAINT offers_publication_status_check CHECK (((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[])));
