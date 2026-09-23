@@ -14,7 +14,7 @@ test("Header Layout Regression Tests", async (t) => {
     // 1. desktop auth links are NOT injected into primary desktopNavItems
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.partnerUrl/);
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.loginUrl/);
-    
+
     // 7. second-row container no longer uses restrictive max-w-7xl contract for the navigation row
     assert.doesNotMatch(content, /<div className="border-t border-white\/10 bg-brand-navy">\s*<div className="[^"]*max-w-7xl/);
     assert.match(content, /<div className="border-t border-white\/10 bg-brand-navy">\s*<div className="[^"]*max-w-\[1600px\]/);
@@ -44,6 +44,10 @@ test("Header Layout Regression Tests", async (t) => {
     // 1. HeaderDesktopNavigation uses min-[1600px]:flex, not xl:flex
     assert.match(content, /className="hidden min-\[1600px\]:flex/);
     assert.doesNotMatch(content, /className="hidden xl:flex/);
+
+    // desktop navigation does not grow to consume space (caused LM-BASELINE-HEADER-LAYOUT-02 visual regression)
+    assert.match(content, /shrink-0/);
+    assert.doesNotMatch(content, /flex-1/);
   });
 
   await t.test("CatalogSearchSuggestions.tsx is responsive on desktop", async () => {
