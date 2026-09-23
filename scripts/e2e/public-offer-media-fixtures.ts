@@ -54,15 +54,17 @@ export async function insertOfferMediaFixtures(client: import("pg").PoolClient) 
     `, [fixture.offerId, fixture.title, fixture.publicationStatus]);
 
     for (const media of fixture.media) {
+      // Use media id to generate a unique but deterministic SHA256 checksum
+      const mockChecksum = `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b8${media.id.toString().padStart(2, '0')}`;
       await client.query(`
         INSERT INTO offer_media (
           id, offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, sort_order, is_primary
         ) VALUES (
           $1, $2, 'offer-media', $3, 'upload', 'image/jpeg', 1024,
-          'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
-          $4, $5
+          $4,
+          $5, $6
         )
-      `, [media.id, fixture.offerId, media.path, media.sortOrder, media.isPrimary]);
+      `, [media.id, fixture.offerId, media.path, mockChecksum, media.sortOrder, media.isPrimary]);
     }
   }
 }
