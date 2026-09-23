@@ -1,4 +1,4 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -89,6 +89,18 @@ const server = http.createServer((req, res) => {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message || 'bad_jwt', error_code: e.message || 'bad_jwt', code: 401, msg: e.message || 'bad_jwt' }));
     }
+    return;
+  }
+
+  if (req.method === 'GET' && req.url.startsWith('/storage/v1/object/public/offer-media/')) {
+    logSync("Got request for mock image: " + req.url);
+    const mockImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 transparent png
+    const imageBuffer = Buffer.from(mockImageBase64, 'base64');
+    res.writeHead(200, {
+      'Content-Type': 'image/png',
+      'Content-Length': imageBuffer.length
+    });
+    res.end(imageBuffer);
     return;
   }
 
