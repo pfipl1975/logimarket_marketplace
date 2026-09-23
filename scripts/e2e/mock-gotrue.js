@@ -102,13 +102,21 @@ const server = http.createServer((req, res) => {
 
   if (req.method === 'GET' && allowedMockImages.has(req.url)) {
     logSync("Got request for mock image: " + req.url);
-    const mockImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 transparent png
-    const imageBuffer = Buffer.from(mockImageBase64, 'base64');
-    res.writeHead(200, {
-      'Content-Type': 'image/png',
-      'Content-Length': imageBuffer.length
-    });
-    res.end(imageBuffer);
+    const path = require('path');
+    const imagePath = path.join(__dirname, '../../tests/e2e/fixtures/public-offer-media/promo_tshirt_full.jpg');
+
+    try {
+      const imageBuffer = fs.readFileSync(imagePath);
+      res.writeHead(200, {
+        'Content-Type': 'image/jpeg',
+        'Content-Length': imageBuffer.length
+      });
+      res.end(imageBuffer);
+    } catch (err) {
+      logSync("Failed to read fixture image: " + err.message);
+      res.writeHead(500);
+      res.end();
+    }
     return;
   }
 

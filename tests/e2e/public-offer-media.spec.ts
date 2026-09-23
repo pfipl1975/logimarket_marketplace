@@ -22,9 +22,14 @@ test.describe("Public Offer Media Gallery", () => {
     await expect(thumbnails.nth(0)).toHaveAttribute("aria-pressed", "true");
 
     // Check changing image via thumbnail
+    const srcBefore = await mainImage.getAttribute("src");
     await thumbnails.nth(1).click();
     await expect(thumbnails.nth(1)).toHaveAttribute("aria-pressed", "true");
     await expect(thumbnails.nth(0)).toHaveAttribute("aria-pressed", "false");
+    const srcAfter = await mainImage.getAttribute("src");
+    expect(srcBefore).not.toBeNull();
+    expect(srcAfter).not.toBeNull();
+    expect(srcBefore).not.toBe(srcAfter);
 
     // Check keyboard navigation
     await thumbnails.nth(2).focus();
