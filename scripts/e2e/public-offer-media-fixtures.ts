@@ -54,8 +54,8 @@ export async function insertOfferMediaFixtures(client: import("pg").PoolClient) 
     `, [fixture.offerId, fixture.title, fixture.publicationStatus]);
 
     for (const media of fixture.media) {
-      // Use media id to generate a unique but deterministic SHA256 checksum
-      const mockChecksum = `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b8${media.id.toString().padStart(2, '0')}`;
+      // Use media id to generate a unique but deterministic SHA256 checksum (exactly 64 chars)
+      const mockChecksum = media.id.toString(16).padStart(64, '0');
       await client.query(`
         INSERT INTO offer_media (
           id, offer_id, storage_bucket, object_path, source_type, mime_type, size_bytes, checksum_sha256, sort_order, is_primary

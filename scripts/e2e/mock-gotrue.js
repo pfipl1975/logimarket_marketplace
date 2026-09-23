@@ -92,7 +92,15 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (req.method === 'GET' && req.url.startsWith('/storage/v1/object/public/offer-media/')) {
+  const allowedMockImages = new Set([
+    '/storage/v1/object/public/offer-media/multi/1.jpg',
+    '/storage/v1/object/public/offer-media/multi/2.jpg',
+    '/storage/v1/object/public/offer-media/multi/3.jpg',
+    '/storage/v1/object/public/offer-media/single/1.jpg',
+    '/storage/v1/object/public/offer-media/archived/1.jpg'
+  ]);
+
+  if (req.method === 'GET' && allowedMockImages.has(req.url)) {
     logSync("Got request for mock image: " + req.url);
     const mockImageBase64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 transparent png
     const imageBuffer = Buffer.from(mockImageBase64, 'base64');
