@@ -92,7 +92,7 @@ export async function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
+        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
           <CatalogNavigationLoader
             locale={locale}
             desktopItems={desktopNavItems}
@@ -126,7 +126,7 @@ export async function SiteHeader({
             }
           />
 
-          <div className="hidden lg:block flex-1 min-w-[200px] max-w-[420px] min-[1600px]:max-w-[300px]">
+          <div className="hidden lg:block flex-1 min-w-[200px] max-w-[420px]">
             <CatalogSearchSuggestions
               locale={locale}
               labels={searchLabels}
