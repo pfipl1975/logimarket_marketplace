@@ -92,41 +92,44 @@ export async function SiteHeader({
       </div>
 
       <div className="border-t border-white/10 bg-brand-navy">
-        <div className="mx-auto flex w-full max-w-[1600px] items-center gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
-          <CatalogNavigationLoader
-            locale={locale}
-            desktopItems={desktopNavItems}
-            mobileItems={mobileNavItems}
-            fallbackLabel={navLabels.catalog}
-            menuOpenLabel={navLabels.menu ?? "Menu"}
-            menuCloseLabel={navLabels.closeMenu ?? navLabels.menu ?? "Menu"}
-            mainNavigationLabel={navLabels.mainNavigation ?? navLabels.menu ?? "Menu"}
-            searchLabels={searchLabels}
-            mobileAuthNode={
-              <div key="mobile-auth" className="mt-4 border-t border-white/10 pt-4 flex flex-col gap-2">
-                {navState.showLogin && navLabels.login && (
-                  <Link key="mobile-login" href={navState.loginUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
-                    {navLabels.login}
-                  </Link>
-                )}
-                {isAuth && navLabels.myOrders && (
-                  <Link key="mobile-orders" href={buyerOrdersHref} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
-                    {navLabels.myOrders}
-                  </Link>
-                )}
-                {navState.showPartnerPanel && navLabels.partnerPanel && (
-                  <Link key="mobile-partner" href={navState.partnerUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
-                    {navLabels.partnerPanel}
-                  </Link>
-                )}
-                {navState.showLogout && navLabels.logout && (
-                  <PublicLogoutForm key="mobile-logout" locale={locale} label={navLabels.logout} variant="mobile" />
-                )}
-              </div>
-            }
-          />
+        <div className="mx-auto flex w-full max-w-[1600px] items-center justify-between gap-3 px-3 py-1.5 sm:px-4 md:px-6 relative xl:gap-3 2xl:gap-4">
+          
+          <div className="flex flex-1 basis-0 min-w-0 justify-start items-center">
+            <CatalogNavigationLoader
+              locale={locale}
+              desktopItems={desktopNavItems}
+              mobileItems={mobileNavItems}
+              fallbackLabel={navLabels.catalog}
+              menuOpenLabel={navLabels.menu ?? "Menu"}
+              menuCloseLabel={navLabels.closeMenu ?? navLabels.menu ?? "Menu"}
+              mainNavigationLabel={navLabels.mainNavigation ?? navLabels.menu ?? "Menu"}
+              searchLabels={searchLabels}
+              mobileAuthNode={
+                <div key="mobile-auth" className="mt-4 border-t border-white/10 pt-4 flex flex-col gap-2">
+                  {navState.showLogin && navLabels.login && (
+                    <Link key="mobile-login" href={navState.loginUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                      {navLabels.login}
+                    </Link>
+                  )}
+                  {isAuth && navLabels.myOrders && (
+                    <Link key="mobile-orders" href={buyerOrdersHref} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                      {navLabels.myOrders}
+                    </Link>
+                  )}
+                  {navState.showPartnerPanel && navLabels.partnerPanel && (
+                    <Link key="mobile-partner" href={navState.partnerUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                      {navLabels.partnerPanel}
+                    </Link>
+                  )}
+                  {navState.showLogout && navLabels.logout && (
+                    <PublicLogoutForm key="mobile-logout" locale={locale} label={navLabels.logout} variant="mobile" />
+                  )}
+                </div>
+              }
+            />
+          </div>
 
-          <div className="hidden lg:block flex-1 min-w-[200px] max-w-[420px]">
+          <div className="hidden lg:flex shrink-0 justify-center w-full min-w-[200px] max-w-[420px]">
             <CatalogSearchSuggestions
               locale={locale}
               labels={searchLabels}
@@ -134,7 +137,7 @@ export async function SiteHeader({
             />
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">
+          <div className="flex flex-1 basis-0 min-w-0 justify-end items-center gap-2 lg:gap-3">
             {navState.showLogin && navLabels.login && (
               <Link href={navState.loginUrl} className="hidden min-[1600px]:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
                 {navLabels.login}

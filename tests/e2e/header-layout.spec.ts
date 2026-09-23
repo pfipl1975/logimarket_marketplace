@@ -40,6 +40,17 @@ test.describe("Header Layout Regression Tests", () => {
         // Search width constraints
         expect(searchBox.width).toBeGreaterThanOrEqual(200);
         expect(searchBox.width).toBeLessThanOrEqual(420);
+        
+        // Center alignment constraints
+        const container = page.locator('header > div.border-t > div.max-w-\\[1600px\\]');
+        const containerBox = await container.boundingBox();
+        expect(containerBox).not.toBeNull();
+        if (containerBox) {
+          const containerCenter = containerBox.x + containerBox.width / 2;
+          const searchCenter = searchBox.x + searchBox.width / 2;
+          const centerDelta = Math.abs(searchCenter - containerCenter);
+          expect(centerDelta).toBeLessThanOrEqual(32);
+        }
       }
       
       // No horizontal overflow on the page
@@ -58,6 +69,7 @@ test.describe("Header Layout Regression Tests", () => {
 
     // The desktop catalog trigger should be hidden (part of the desktop nav)
     const catalogTrigger = page.locator('header nav').locator('visible=true');
+    await expect(catalogTrigger).toHaveCount(0);
     // We can just verify the hamburger menu is visible and search is visible
     
     // No horizontal overflow
