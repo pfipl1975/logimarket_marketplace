@@ -16,8 +16,8 @@ test("Header Layout Regression Tests", async (t) => {
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.loginUrl/);
     
     // 7. second-row container no longer uses restrictive max-w-7xl contract for the navigation row
-    assert.doesNotMatch(content, /border-t border-white\/10 bg-brand-navy[\s\S]*?max-w-7xl/);
-    assert.match(content, /max-w-\[1600px\]/);
+    assert.doesNotMatch(content, /<div className="border-t border-white\/10 bg-brand-navy">\s*<div className="[^"]*max-w-7xl/);
+    assert.match(content, /<div className="border-t border-white\/10 bg-brand-navy">\s*<div className="[^"]*max-w-\[1600px\]/);
 
     // desktop search wrapper uses max-w-[420px] and rejects max-w-[500px]
     assert.match(content, /<div className="hidden lg:block flex-1 min-w-\[200px\] max-w-\[420px\]">/);
