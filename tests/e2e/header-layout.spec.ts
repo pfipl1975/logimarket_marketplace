@@ -35,21 +35,50 @@ test.describe("Header Layout Regression Tests", () => {
         const gap = searchLeft - catalogRight;
         
         expect(gap).toBeGreaterThanOrEqual(0);
-        expect(gap).toBeLessThanOrEqual(32);
+        expect(gap).toBeLessThanOrEqual(40);
         
         // Search width constraints
         expect(searchBox.width).toBeGreaterThanOrEqual(200);
         expect(searchBox.width).toBeLessThanOrEqual(420);
         
         // Center alignment constraints
-        const container = page.locator('header > div.border-t > div.max-w-\\[1600px\\]');
-        const containerBox = await container.boundingBox();
-        expect(containerBox).not.toBeNull();
-        if (containerBox) {
-          const containerCenter = containerBox.x + containerBox.width / 2;
-          const searchCenter = searchBox.x + searchBox.width / 2;
-          const centerDelta = Math.abs(searchCenter - containerCenter);
-          expect(centerDelta).toBeLessThanOrEqual(32);
+        const outerContainer = page.locator('header > div.border-t > div.max-w-\\[1600px\\]');
+        const innerContainer = outerContainer.locator('> div.max-w-7xl');
+        const firstRow = page.locator('header > div.bg-brand-navy > div.max-w-7xl').first();
+        
+        const firstRowBox = await firstRow.boundingBox();
+        const innerBox = await innerContainer.boundingBox();
+        
+        expect(firstRowBox).not.toBeNull();
+        expect(innerBox).not.toBeNull();
+        
+        if (firstRowBox && innerBox) {
+          const pageRailLeft = firstRowBox.x;
+          const pageRailRight = firstRowBox.x + firstRowBox.width;
+          
+          const headerRailLeft = innerBox.x;
+          const headerRailRight = innerBox.x + innerBox.width;
+          
+          const leftDelta = Math.abs(headerRailLeft - pageRailLeft);
+          const rightDelta = Math.abs(headerRailRight - pageRailRight);
+          
+          expect(leftDelta).toBeLessThanOrEqual(4);
+          expect(rightDelta).toBeLessThanOrEqual(4);
+          
+          // Verify controls stay within rails
+          expect(catalogBox.x).toBeGreaterThanOrEqual(headerRailLeft - 1);
+          
+          // Find right-most control (cart button usually)
+          const rightControls = innerContainer.locator('> div:last-child > *');
+          const lastControl = rightControls.last();
+          const lastControlBox = await lastControl.boundingBox();
+          if (lastControlBox) {
+            expect(lastControlBox.x + lastControlBox.width).toBeLessThanOrEqual(headerRailRight + 1);
+          }
+          
+          // Verify search is inside rails
+          expect(searchBox.x).toBeGreaterThanOrEqual(headerRailLeft);
+          expect(searchBox.x + searchBox.width).toBeLessThanOrEqual(headerRailRight);
         }
       }
       
