@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { ArrowLeft, Building2, Package, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Building2, ShieldCheck } from "lucide-react";
 import { getOfferById } from "@/app/actions";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -10,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice } from "@/lib/utils";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "@/components/OfferAction";
+import { PublicOfferMediaGallery } from "@/components/offers/PublicOfferMediaGallery";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getCategoryFilterPath, getOfferLocaleLinks, getPrivacyPolicyPath } from "@/lib/i18n/paths";
@@ -49,11 +49,6 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
   const isArchived = offer.publicationStatus === "archived";
   const isOperationallyUnavailable =
     offer.publicationStatus === "published" && !offer.isActive;
-
-  const offerImageUrl =
-    typeof offer.imageUrl === "string" && offer.imageUrl.trim().length > 0
-      ? offer.imageUrl.trim()
-      : null;
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -122,23 +117,13 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
         </header>
 
         <div className="mt-6 grid grid-cols-1 items-start gap-5 lg:grid-cols-12 lg:gap-6">
-          <div className="relative order-2 aspect-[4/3] min-w-0 overflow-hidden rounded-lg border border-border bg-white lg:order-1 lg:col-span-7">
-            {offerImageUrl ? (
-              <Image
-                src={offerImageUrl}
-                alt={offer.title}
-                fill
-                sizes="(min-width: 1280px) 720px, (min-width: 1024px) 58vw, 100vw"
-                className="object-contain p-3 sm:p-5"
-                unoptimized
-                preload
-              />
-            ) : (
-              <div className="flex h-full w-full flex-col items-center justify-center gap-3 bg-brand-light-gray text-muted-foreground">
-                <Package className="h-14 w-14" aria-hidden="true" />
-                <span className="text-sm">{dict.offers.imageUnavailable}</span>
-              </div>
-            )}
+          <div className="order-2 min-w-0 lg:order-1 lg:col-span-7">
+            <PublicOfferMediaGallery
+              key={offer.id}
+              media={offer.media}
+              offerTitle={offer.title}
+              imageUnavailableLabel={dict.offers.imageUnavailable}
+            />
           </div>
 
           <div className="order-1 min-w-0 rounded-lg border border-border bg-white p-5 shadow-sm sm:p-6 lg:order-2 lg:col-span-5">

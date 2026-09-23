@@ -90,7 +90,12 @@ export type FilterQueryResult =
     }
   | { ok: false; errors: FilterValidationError[] };
 
-import { resolvePublicOfferImage } from "@/lib/offers/public-media-resolver";
+import {
+  resolvePublicOfferGallery,
+  resolvePublicOfferImage,
+  selectInitialPublicOfferMedia,
+} from "@/lib/offers/public-media-resolver";
+import type { PublicOfferMediaItem } from "@/lib/offers/public-media-resolver";
 
 function rowToOffer(row: {
   offer: typeof offers.$inferSelect;
@@ -268,10 +273,14 @@ export async function getOffers(
   return hydrateOffersWithAttributes(rows.map(rowToOffer), locale);
 }
 
+export type PublicOfferDetail = CatalogOffer & {
+  media: PublicOfferMediaItem[];
+};
+
 export async function getOfferById(
   id: number,
   locale: Locale = defaultLocale,
-): Promise<CatalogOffer | null> {
+): Promise<PublicOfferDetail | null> {
   const rows = await db
     .select({ offer: offers, category: categories, partner: partners, primaryMedia: offerMedia })
     .from(offers)
@@ -286,9 +295,31 @@ export async function getOfferById(
     )
     .limit(1);
   if (rows.length === 0) return null;
-  const offer = rowToOffer(rows[0]);
+
+  const mediaRows = await db
+    .select({
+      id: offerMedia.id,
+      storageBucket: offerMedia.storageBucket,
+      objectPath: offerMedia.objectPath,
+      altText: offerMedia.altText,
+      isPrimary: offerMedia.isPrimary,
+      sortOrder: offerMedia.sortOrder,
+    })
+    .from(offerMedia)
+    .where(eq(offerMedia.offerId, rows[0].offer.id))
+    .orderBy(asc(offerMedia.sortOrder), asc(offerMedia.id));
+  const media = resolvePublicOfferGallery(
+    rows[0].offer.imageUrl,
+    rows[0].offer.title,
+    mediaRows,
+  );
+  const initialMedia = selectInitialPublicOfferMedia(media);
+  const offer = {
+    ...rowToOffer(rows[0]),
+    imageUrl: initialMedia?.url ?? null,
+  };
   const hydrated = await hydrateOffersWithAttributes([offer], locale);
-  return hydrated[0];
+  return { ...hydrated[0], media };
 }
 
 export type CartItemWithOffer = {
