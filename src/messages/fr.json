@@ -862,7 +862,21 @@
     "blocker_active_agreement_missing": "Accord partenaire actif manquant",
     "blocker_active_agreement_ambiguous": "Plusieurs accords partenaires actifs détectés",
     "blocker_agreement_execution_missing": "Preuve d’acceptation de l’accord manquante",
-    "blocker_agreement_execution_invalidated": "Preuve d’acceptation de l’accord invalidée"
+    "blocker_agreement_execution_invalidated": "Preuve d’acceptation de l’accord invalidée",
+    "verifyAction": "Verify",
+    "verifySuccess": "Verified successfully",
+    "verifyErrorSystem": "System error during verification",
+    "verifyErrorConflict": "Verification conflict - please refresh",
+    "verifyErrorNotFound": "Verification subject not found",
+    "sourceTypeLabel": "Evidence Source",
+    "sourceNameLabel": "Source Name",
+    "sourceReferenceLabel": "Source Reference",
+    "sourceTypeAdminManual": "Manual Verification (Admin)",
+    "sourceTypePublicRegistry": "Public Registry",
+    "sourceTypePartnerDocument": "Partner Document",
+    "cancelAction": "Cancel",
+    "sourceNamePlaceholder": "e.g. CEIDG, VIES, KRS",
+    "sourceReferencePlaceholder": "e.g. registry lookup ID, PDF checksum"
   },
   "adminOfferDetail": {
     "errorTitle": "Erreur de chargement",

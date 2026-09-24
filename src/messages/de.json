@@ -862,7 +862,21 @@
     "blocker_active_agreement_missing": "Aktive Partnervereinbarung fehlt",
     "blocker_active_agreement_ambiguous": "Mehrere aktive Vereinbarungen gefunden",
     "blocker_agreement_execution_missing": "Nachweis über den Abschluss der Vereinbarung fehlt",
-    "blocker_agreement_execution_invalidated": "Nachweis über den Abschluss der Vereinbarung ungültig"
+    "blocker_agreement_execution_invalidated": "Nachweis über den Abschluss der Vereinbarung ungültig",
+    "verifyAction": "Verify",
+    "verifySuccess": "Verified successfully",
+    "verifyErrorSystem": "System error during verification",
+    "verifyErrorConflict": "Verification conflict - please refresh",
+    "verifyErrorNotFound": "Verification subject not found",
+    "sourceTypeLabel": "Evidence Source",
+    "sourceNameLabel": "Source Name",
+    "sourceReferenceLabel": "Source Reference",
+    "sourceTypeAdminManual": "Manual Verification (Admin)",
+    "sourceTypePublicRegistry": "Public Registry",
+    "sourceTypePartnerDocument": "Partner Document",
+    "cancelAction": "Cancel",
+    "sourceNamePlaceholder": "e.g. CEIDG, VIES, KRS",
+    "sourceReferencePlaceholder": "e.g. registry lookup ID, PDF checksum"
   },
   "adminOfferDetail": {
     "errorTitle": "Fehler beim Laden der Daten",

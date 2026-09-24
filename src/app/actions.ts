@@ -1783,7 +1783,7 @@ export async function deletePartnerOfferMedia(partnerId: number, offerId: number
 export async function submitPartnerOfferAction(partnerId: number, offerId: number, locale: string) {
   if (!Number.isSafeInteger(partnerId) || partnerId <= 0) return { ok: false as const, code: "VALIDATION_ERROR" };
   if (!Number.isSafeInteger(offerId) || offerId <= 0) return { ok: false as const, code: "VALIDATION_ERROR" };
-  
+
   try {
     const { requirePartnerMembership } = await import("@/lib/auth/partner-membership");
     await requirePartnerMembership(partnerId);
@@ -1794,7 +1794,7 @@ export async function submitPartnerOfferAction(partnerId: number, offerId: numbe
   const { db } = await import("@/lib/db");
   const { executePartnerOfferSubmit } = await import("@/lib/partner-offers/submit-core");
   const result = await executePartnerOfferSubmit(db, partnerId, offerId);
-  
+
   if (result.ok) {
     const { revalidatePath } = await import("next/cache");
     if (locale === "pl") {
@@ -1807,6 +1807,25 @@ export async function submitPartnerOfferAction(partnerId: number, offerId: numbe
       revalidatePath(`/${locale}/partner/${partnerId}/offers/${offerId}/edit`, "page");
     }
   }
-  
+
+  return result;
+}
+export async function verifyAdminSellerIdentityAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const adminUser = await requireAdmin();
+
+  const { AdminSellerVerificationInputSchema, executeAdminSellerVerification } = await import("@/lib/admin/seller-verification-core");
+
+  const parsed = AdminSellerVerificationInputSchema.safeParse(rawInput);
+  if (!parsed.success) {
+    return { ok: false as const, code: "INVALID_INPUT" as const };
+  }
+
+  const { db } = await import("@/lib/db");
+  const result = await executeAdminSellerVerification(db, parsed.data, { actorUserId: adminUser.id });
+
+  if (result.ok) {
+    revalidatePath("/admin/partnerzy/[id]", "page");
+  }
   return result;
 }

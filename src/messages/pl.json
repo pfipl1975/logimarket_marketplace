@@ -862,7 +862,21 @@
     "blocker_active_agreement_missing": "Brak aktywnego regulaminu partnera",
     "blocker_active_agreement_ambiguous": "Znaleziono wiele aktywnych regulaminów",
     "blocker_agreement_execution_missing": "Brak dowodu akceptacji regulaminu",
-    "blocker_agreement_execution_invalidated": "Dowód akceptacji regulaminu unieważniony"
+    "blocker_agreement_execution_invalidated": "Dowód akceptacji regulaminu unieważniony",
+    "verifyAction": "Zweryfikuj",
+    "verifySuccess": "Zweryfikowano pomyślnie",
+    "verifyErrorSystem": "Błąd systemu podczas weryfikacji",
+    "verifyErrorConflict": "Konflikt weryfikacji - odśwież stronę",
+    "verifyErrorNotFound": "Nie znaleziono obiektu weryfikacji",
+    "sourceTypeLabel": "Źródło dowodu",
+    "sourceNameLabel": "Nazwa źródła",
+    "sourceReferenceLabel": "Referencja / ID dowodu",
+    "sourceTypeAdminManual": "Weryfikacja ręczna (Admin)",
+    "sourceTypePublicRegistry": "Publiczny Rejestr (np. KRS, VIES)",
+    "sourceTypePartnerDocument": "Dokument od Partnera",
+    "cancelAction": "Anuluj",
+    "sourceNamePlaceholder": "np. CEIDG, VIES, KRS",
+    "sourceReferencePlaceholder": "np. ID wpisu, suma kontrolna PDF"
   },
   "adminOfferDetail": {
     "errorTitle": "Błąd pobierania danych",

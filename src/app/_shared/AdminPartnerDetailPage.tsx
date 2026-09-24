@@ -9,6 +9,7 @@ import { AdminSellerLegalIdentityForm } from "@/components/admin/AdminSellerLega
 import { AdminSellerTaxIdentifiersForm } from "@/components/admin/AdminSellerTaxIdentifiersForm";
 import { AdminSellerRegistryIdentifiersForm } from "@/components/admin/AdminSellerRegistryIdentifiersForm";
 import { AdminPartnerAgreementSection } from "@/components/admin/AdminPartnerAgreementSection";
+import { AdminSellerVerificationControl } from "@/components/admin/AdminSellerVerificationControl";
 
 
 export async function AdminPartnerDetailPage({
@@ -230,6 +231,12 @@ export async function AdminPartnerDetailPage({
                   <p className="text-sm font-medium text-brand-navy break-all font-mono text-xs">{renderFieldValue(legalIdentity.verificationReference)}</p>
                 </div>
               </div>
+              <AdminSellerVerificationControl 
+                partnerId={partner.id} 
+                subjectType="legal_identity" 
+                currentStatus={legalIdentity.verificationStatus} 
+                dictionary={dict} 
+              />
             </div>
           )}
         </section>
@@ -271,8 +278,7 @@ export async function AdminPartnerDetailPage({
                 placeholderCountry: dict.placeholderCountry,
               }}
               emptyValue={dict.emptyValue}
-              locale={locale}
-            />
+              locale={locale} />
           </div>
         </section>
 
