@@ -862,7 +862,21 @@
     "blocker_active_agreement_missing": "缺少有效的合作伙伴协议",
     "blocker_active_agreement_ambiguous": "检测到多个有效的合作伙伴协议",
     "blocker_agreement_execution_missing": "缺少协议接受证明",
-    "blocker_agreement_execution_invalidated": "协议接受证明已作废"
+    "blocker_agreement_execution_invalidated": "协议接受证明已作废",
+    "verifyAction": "Verify",
+    "verifySuccess": "Verified successfully",
+    "verifyErrorSystem": "System error during verification",
+    "verifyErrorConflict": "Verification conflict - please refresh",
+    "verifyErrorNotFound": "Verification subject not found",
+    "sourceTypeLabel": "Evidence Source",
+    "sourceNameLabel": "Source Name",
+    "sourceReferenceLabel": "Source Reference",
+    "sourceTypeAdminManual": "Manual Verification (Admin)",
+    "sourceTypePublicRegistry": "Public Registry",
+    "sourceTypePartnerDocument": "Partner Document",
+    "cancelAction": "Cancel",
+    "sourceNamePlaceholder": "e.g. CEIDG, VIES, KRS",
+    "sourceReferencePlaceholder": "e.g. registry lookup ID, PDF checksum"
   },
   "adminOfferDetail": {
     "errorTitle": "加载数据出错",

@@ -862,7 +862,21 @@
     "blocker_active_agreement_missing": "Відсутня активна партнерська угода",
     "blocker_active_agreement_ambiguous": "Виявлено кілька активних партнерських угод",
     "blocker_agreement_execution_missing": "Відсутній доказ прийняття угоди",
-    "blocker_agreement_execution_invalidated": "Доказ прийняття угоди анульовано"
+    "blocker_agreement_execution_invalidated": "Доказ прийняття угоди анульовано",
+    "verifyAction": "Verify",
+    "verifySuccess": "Verified successfully",
+    "verifyErrorSystem": "System error during verification",
+    "verifyErrorConflict": "Verification conflict - please refresh",
+    "verifyErrorNotFound": "Verification subject not found",
+    "sourceTypeLabel": "Evidence Source",
+    "sourceNameLabel": "Source Name",
+    "sourceReferenceLabel": "Source Reference",
+    "sourceTypeAdminManual": "Manual Verification (Admin)",
+    "sourceTypePublicRegistry": "Public Registry",
+    "sourceTypePartnerDocument": "Partner Document",
+    "cancelAction": "Cancel",
+    "sourceNamePlaceholder": "e.g. CEIDG, VIES, KRS",
+    "sourceReferencePlaceholder": "e.g. registry lookup ID, PDF checksum"
   },
   "adminOfferDetail": {
     "errorTitle": "Помилка завантаження даних",
