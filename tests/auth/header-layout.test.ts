@@ -14,17 +14,17 @@ test("Header Layout Regression Tests", async (t) => {
     // 1. desktop auth links are NOT injected into primary desktopNavItems
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.partnerUrl/);
     assert.doesNotMatch(content, /desktopNavItems\.push.*navState\.loginUrl/);
-    
+
     // 7. second-row container no longer uses restrictive max-w-7xl contract for the navigation row
     assert.doesNotMatch(content, /<div className="border-t border-white\/10 bg-brand-navy">\s*<div className="[^"]*max-w-7xl/);
     assert.match(content, /<div className="border-t border-white\/10 bg-brand-navy">\s*<div className="[^"]*max-w-\[1600px\]/);
 
     // desktop search wrapper uses max-w-[420px] and rejects max-w-[500px]
-    assert.match(content, /<div className="hidden lg:block flex-1 min-w-\[200px\] max-w-\[420px\]">/);
+    assert.match(content, /<div className="hidden lg:flex shrink w-full min-w-\[200px\] max-w-\[420px\]">/);
     assert.doesNotMatch(content, /max-w-\[500px\]/);
 
     // 3-5. desktop controls expose appropriate links aligned to >=1600 (min-[1600px]) breakpoint
-    assert.match(content, /<div className="flex shrink-0 items-center gap-2 lg:gap-3 ml-auto">/);
+    assert.match(content, /<div className="flex shrink-0 justify-end items-center gap-2 lg:gap-3">/);
     assert.match(content, /navState\.showLogin && navLabels\.login/);
     assert.match(content, /<Link href=\{navState\.loginUrl\} className="hidden min-\[1600px\]:flex/);
     assert.match(content, /navState\.showPartnerPanel && navLabels\.partnerPanel/);
@@ -44,6 +44,10 @@ test("Header Layout Regression Tests", async (t) => {
     // 1. HeaderDesktopNavigation uses min-[1600px]:flex, not xl:flex
     assert.match(content, /className="hidden min-\[1600px\]:flex/);
     assert.doesNotMatch(content, /className="hidden xl:flex/);
+
+    // desktop navigation does not grow to consume space (caused LM-BASELINE-HEADER-LAYOUT-02 visual regression)
+    assert.match(content, /shrink-0/);
+    assert.doesNotMatch(content, /flex-1/);
   });
 
   await t.test("CatalogSearchSuggestions.tsx is responsive on desktop", async () => {
