@@ -106,6 +106,10 @@ async function run() {
     for (const fixture of Object.values(E2E_BUYER_FIXTURES)) {
       await insertBuyerFixture(client, fixture);
     }
+
+    const { insertOfferMediaFixtures } = await import("./public-offer-media-fixtures");
+    await insertOfferMediaFixtures(client);
+
     await client.query("COMMIT");
     console.log("E2E fixtures applied successfully.");
   } catch (error) {

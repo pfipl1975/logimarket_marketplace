@@ -13,13 +13,13 @@ test("Public Media Integration SPRINT MEDIA-06", async (t) => {
   process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY = "test-key";
 
   await t.test("CASE A: canonical + legacy -> canonical", () => {
-    const result = resolvePublicOfferImage("legacy.jpg", "bucket1", "path1");
-    assert.strictEqual(result, "https://test.supabase.co/storage/v1/object/public/bucket1/path1");
+    const result = resolvePublicOfferImage("legacy.jpg", "offer-media", "path1");
+    assert.strictEqual(result, "https://test.supabase.co/storage/v1/object/public/offer-media/path1");
   });
 
   await t.test("CASE B: canonical + legacy NULL -> canonical", () => {
-    const result = resolvePublicOfferImage(null, "bucket1", "path1");
-    assert.strictEqual(result, "https://test.supabase.co/storage/v1/object/public/bucket1/path1");
+    const result = resolvePublicOfferImage(null, "offer-media", "path1");
+    assert.strictEqual(result, "https://test.supabase.co/storage/v1/object/public/offer-media/path1");
   });
 
   await t.test("Supabase config unavailable + legacy -> legacy", () => {
@@ -27,7 +27,7 @@ test("Public Media Integration SPRINT MEDIA-06", async (t) => {
     const urlBefore = process.env.NEXT_PUBLIC_SUPABASE_URL;
     process.env.NEXT_PUBLIC_SUPABASE_URL = "";
     
-    const result = resolvePublicOfferImage("legacy.jpg", "bucket1", "path1");
+    const result = resolvePublicOfferImage("legacy.jpg", "offer-media", "path1");
     assert.strictEqual(result, "legacy.jpg");
     
     // restore config

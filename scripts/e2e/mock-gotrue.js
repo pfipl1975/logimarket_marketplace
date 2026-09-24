@@ -1,4 +1,4 @@
-﻿/* eslint-disable */
+/* eslint-disable */
 const http = require('http');
 const crypto = require('crypto');
 const fs = require('fs');
@@ -88,6 +88,34 @@ const server = http.createServer((req, res) => {
       logSync("JWT Verification failed: " + e.message);
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message || 'bad_jwt', error_code: e.message || 'bad_jwt', code: 401, msg: e.message || 'bad_jwt' }));
+    }
+    return;
+  }
+
+  const allowedMockImages = new Set([
+    '/storage/v1/object/public/offer-media/multi/1.jpg',
+    '/storage/v1/object/public/offer-media/multi/2.jpg',
+    '/storage/v1/object/public/offer-media/multi/3.jpg',
+    '/storage/v1/object/public/offer-media/single/1.jpg',
+    '/storage/v1/object/public/offer-media/archived/1.jpg'
+  ]);
+
+  if (req.method === 'GET' && allowedMockImages.has(req.url)) {
+    logSync("Got request for mock image: " + req.url);
+    const path = require('path');
+    const imagePath = path.join(__dirname, '../../tests/e2e/fixtures/public-offer-media/promo_tshirt_full.jpg');
+
+    try {
+      const imageBuffer = fs.readFileSync(imagePath);
+      res.writeHead(200, {
+        'Content-Type': 'image/jpeg',
+        'Content-Length': imageBuffer.length
+      });
+      res.end(imageBuffer);
+    } catch (err) {
+      logSync("Failed to read fixture image: " + err.message);
+      res.writeHead(500);
+      res.end();
     }
     return;
   }
