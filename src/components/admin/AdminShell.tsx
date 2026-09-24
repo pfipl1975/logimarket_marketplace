@@ -14,13 +14,14 @@ export async function AdminShell({
 }) {
   const dictionary = await getDictionary(locale);
   const adminDict = dictionary.admin;
-  
+
   const homePath = locale === "pl" ? "/" : `/${locale}`;
   const dashboardPath = locale === "pl" ? "/admin" : `/${locale}/admin`;
   const offersPath = locale === "pl" ? "/admin/oferty" : `/${locale}/admin/offers`;
   const partnersPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
   const rfqPath = locale === "pl" ? "/admin/zapytania" : `/${locale}/admin/rfq`;
   const buyersPath = locale === "pl" ? "/admin/kupujacy" : `/${locale}/admin/buyers`;
+  const partnerAgreementsPath = locale === "pl" ? "/admin/umowy-partnerskie" : `/${locale}/admin/partner-agreements`;
 
   const navLabels = {
     navigationLabel: adminDict.navigationLabel,
@@ -29,6 +30,7 @@ export async function AdminShell({
     partnersNav: adminDict.partnersNav,
     buyersNav: adminDict.buyersNav,
     rfqNav: adminDict.rfqNav,
+    partnerAgreementsNav: adminDict.partnerAgreementsNav,
     taxonomyNav: adminDict.taxonomyNav,
     plannedLabel: adminDict.plannedLabel,
   };
@@ -56,6 +58,7 @@ export async function AdminShell({
               partnersPath={partnersPath}
               buyersPath={buyersPath}
               rfqPath={rfqPath}
+              partnerAgreementsPath={partnerAgreementsPath}
               labels={navLabels}
             />
           </div>
@@ -84,7 +87,7 @@ export async function AdminShell({
             <span className="block text-xs text-muted-foreground mt-1">{adminDict.readOnlyLabel}</span>
           </div>
         </div>
-        
+
         <div className="flex-1 p-4 overflow-y-auto">
           <AdminNavigation
             variant="desktop"
@@ -93,6 +96,7 @@ export async function AdminShell({
             partnersPath={partnersPath}
             buyersPath={buyersPath}
             rfqPath={rfqPath}
+            partnerAgreementsPath={partnerAgreementsPath}
             labels={navLabels}
           />
         </div>

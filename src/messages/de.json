@@ -455,7 +455,8 @@
     "plannedLabel": "Geplant",
     "moduleReadOnlyStatus": "Verfügbar",
     "nextModuleLabel": "nächstes Modul",
-    "moduleAvailabilityHeading": "Modulverfügbarkeit"
+    "moduleAvailabilityHeading": "Modulverfügbarkeit",
+    "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
     "metaTitle": "Angebote | LogiMarket Admin",
@@ -1564,5 +1565,38 @@
       "DB_ERROR": "Datenbankfehler.",
       "DB_ERROR_CLEANUP_FAILED": "Datenbankfehler."
     }
+  },
+  "adminPartnerAgreements": {
+    "pageTitle": "Partner Agreements",
+    "pageDescription": "Manage Partner Agreement versions. The active version is visible to Partners.",
+    "noActiveAgreementWarning": "No active Partner Agreement",
+    "activeAgreementAlreadyExistsWarning": "An active agreement already exists. Changing the active version requires the rollover procedure.",
+    "createDraftHeader": "Create new version (Draft)",
+    "versionLabel": "Version",
+    "hashLabel": "Canonical Template SHA-256 hash",
+    "createAction": "Create",
+    "activateAction": "Activate",
+    "statusDraft": "Draft",
+    "statusActive": "Active",
+    "historyHeader": "Version history",
+    "createdCol": "Created",
+    "effectiveFromCol": "Effective from",
+    "publishedAtCol": "Published at",
+    "errorInvalidInput": "Invalid input.",
+    "errorVersionExists": "Provided version already exists.",
+    "errorHashExists": "Provided SHA-256 hash already exists.",
+    "errorNotFound": "Agreement version not found.",
+    "errorInvalidType": "Invalid agreement type.",
+    "errorNotDraft": "Only Draft versions can be activated.",
+    "errorActiveExists": "An active version already exists. Changing requires the rollover procedure.",
+    "errorSystem": "System error.",
+    "statusCol": "Status",
+    "actionCol": "Action",
+    "noVersions": "No agreement versions found",
+    "effectiveToCol": "Effective to",
+    "statusSuperseded": "Superseded",
+    "statusArchived": "Archived",
+    "createSuccess": "Successfully created new version.",
+    "activateSuccess": "Successfully activated version."
   }
 }
