@@ -58,6 +58,10 @@ export interface AdminPartnerDetailDto {
     registryType: string;
     registryValue: string;
     jurisdictionCountry: string;
+    verificationStatus: string;
+    verifiedAt: string | null;
+    verificationSource: string | null;
+    verificationReference: string | null;
   }>;
   eligibility: {
     eligibilityStatus: string;
@@ -203,6 +207,10 @@ export async function getAdminPartnerDetailReadModel<TSchema extends Record<stri
         registryType: row.registryType,
         registryValue: row.registryValue,
         jurisdictionCountry: row.jurisdictionCountry,
+        verificationStatus: row.verificationStatus ?? "unverified",
+        verifiedAt: row.verifiedAt?.toISOString() ?? null,
+        verificationSource: row.verificationSource,
+        verificationReference: row.verificationReference,
       })),
       eligibility: eligibilityRows.length > 0 ? {
         eligibilityStatus: eligibilityRows[0].eligibilityStatus,

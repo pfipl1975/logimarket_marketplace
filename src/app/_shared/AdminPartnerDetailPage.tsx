@@ -276,6 +276,20 @@ export async function AdminPartnerDetailPage({
                 confirmDelete: dict.confirmDelete,
                 placeholderVat: dict.placeholderVat,
                 placeholderCountry: dict.placeholderCountry,
+                verifySuccess: dict.verifySuccess,
+                verifyErrorConflict: dict.verifyErrorConflict,
+                verifyErrorNotFound: dict.verifyErrorNotFound,
+                verifyErrorSystem: dict.verifyErrorSystem,
+                verifyAction: dict.verifyAction,
+                sourceTypeLabel: dict.sourceTypeLabel,
+                sourceTypeAdminManual: dict.sourceTypeAdminManual,
+                sourceTypePublicRegistry: dict.sourceTypePublicRegistry,
+                sourceTypePartnerDocument: dict.sourceTypePartnerDocument,
+                sourceNameLabel: dict.sourceNameLabel,
+                sourceNamePlaceholder: dict.sourceNamePlaceholder,
+                sourceReferenceLabel: dict.sourceReferenceLabel,
+                sourceReferencePlaceholder: dict.sourceReferencePlaceholder,
+                cancelAction: dict.cancelAction
               }}
               emptyValue={dict.emptyValue}
               locale={locale} />
@@ -311,8 +325,28 @@ export async function AdminPartnerDetailPage({
             verificationHistoryExists: dict.verificationHistoryExists,
                 addRegistryIdentifierTitle: dict.addRegistryIdentifierTitle,
                 confirmDelete: dict.confirmDelete,
-                placeholderRegistry: "123456"
+                placeholderRegistry: "123456",
+                verificationStatusLabel: dict.verificationStatusLabel,
+                verifiedAtLabel: dict.verifiedAtLabel,
+                verificationSourceLabel: dict.verificationSourceLabel,
+                verificationReferenceLabel: dict.verificationReferenceLabel,
+                verifySuccess: dict.verifySuccess,
+                verifyErrorConflict: dict.verifyErrorConflict,
+                verifyErrorNotFound: dict.verifyErrorNotFound,
+                verifyErrorSystem: dict.verifyErrorSystem,
+                verifyAction: dict.verifyAction,
+                sourceTypeLabel: dict.sourceTypeLabel,
+                sourceTypeAdminManual: dict.sourceTypeAdminManual,
+                sourceTypePublicRegistry: dict.sourceTypePublicRegistry,
+                sourceTypePartnerDocument: dict.sourceTypePartnerDocument,
+                sourceNameLabel: dict.sourceNameLabel,
+                sourceNamePlaceholder: dict.sourceNamePlaceholder,
+                sourceReferenceLabel: dict.sourceReferenceLabel,
+                sourceReferencePlaceholder: dict.sourceReferencePlaceholder,
+                cancelAction: dict.cancelAction
               }}
+              emptyValue={dict.emptyValue}
+              locale={locale}
             />
           </div>
         </section>

@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addAdminSellerRegistryIdentifier, deleteAdminSellerRegistryIdentifier } from "@/app/actions";
+import { AdminSellerVerificationControl } from "@/components/admin/AdminSellerVerificationControl";
 import { Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
 
 export type AdminSellerRegistryIdentifiersFormProps = {
@@ -13,6 +14,10 @@ export type AdminSellerRegistryIdentifiersFormProps = {
     registryType: string;
     registryValue: string;
     jurisdictionCountry: string;
+    verificationStatus: string;
+    verifiedAt: string | null;
+    verificationSource: string | null;
+    verificationReference: string | null;
   }>;
   dictionary: {
     registryTypeLabel: string;
@@ -33,8 +38,28 @@ export type AdminSellerRegistryIdentifiersFormProps = {
     addRegistryIdentifierTitle: string;
     confirmDelete: string;
         placeholderRegistry: string;
-  
+    verificationStatusLabel: string;
+    verifiedAtLabel: string;
+    verificationSourceLabel: string;
+    verificationReferenceLabel: string;
+    verifySuccess: string;
+    verifyErrorConflict: string;
+    verifyErrorNotFound: string;
+    verifyErrorSystem: string;
+    verifyAction: string;
+    sourceTypeLabel: string;
+    sourceTypeAdminManual: string;
+    sourceTypePublicRegistry: string;
+    sourceTypePartnerDocument: string;
+    sourceNameLabel: string;
+    sourceNamePlaceholder: string;
+    sourceReferenceLabel: string;
+    sourceReferencePlaceholder: string;
+    cancelAction: string;
+
           };
+  emptyValue: string;
+  locale: string;
 };
 
 export function AdminSellerRegistryIdentifiersForm({
@@ -42,10 +67,21 @@ export function AdminSellerRegistryIdentifiersForm({
   hasLegalIdentity,
   registryIdentifiers,
   dictionary,
+  emptyValue,
+  locale,
 }: AdminSellerRegistryIdentifiersFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const renderFieldValue = (val: string | null | undefined) => {
+    return val ? val : <span className="text-muted-foreground italic">{emptyValue}</span>;
+  };
+
+  const formatDate = (isoStr: string | null) => {
+    if (!isoStr) return <span className="text-muted-foreground italic">{emptyValue}</span>;
+    return new Date(isoStr).toLocaleString(locale);
+  };
 
   const handleAdd = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -149,10 +185,8 @@ export function AdminSellerRegistryIdentifiersForm({
       ) : (
         <div className="space-y-4">
           {registryIdentifiers.map((identifier) => (
-            <div
-              key={identifier.id}
-              className="flex items-center justify-between p-4 bg-white border border-border-industrial rounded-industrial shadow-soft"
-            >
+            <div key={identifier.id} className="space-y-3">
+              <div className="flex items-center justify-between p-4 bg-white border border-border-industrial rounded-industrial shadow-soft">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 flex-1">
                 <div>
                   <span className="block text-xs font-medium text-brand-navy/60 mb-1">
@@ -185,6 +219,49 @@ export function AdminSellerRegistryIdentifiersForm({
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
+            </div>
+            <div className="w-full">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 mt-2 bg-brand-light-gray/10 rounded-industrial border border-border-industrial/50">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.verificationStatusLabel}</p>
+                <p className="text-sm font-medium text-brand-navy">{renderFieldValue(identifier.verificationStatus)}</p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.verifiedAtLabel}</p>
+                <p className="text-sm font-medium text-brand-navy">{formatDate(identifier.verifiedAt)}</p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.verificationSourceLabel}</p>
+                <p className="text-sm font-medium text-brand-navy">{renderFieldValue(identifier.verificationSource)}</p>
+              </div>
+              <div className="sm:col-span-2">
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.verificationReferenceLabel}</p>
+                <p className="text-sm font-medium text-brand-navy break-all font-mono text-xs">{renderFieldValue(identifier.verificationReference)}</p>
+              </div>
+            </div>
+            <AdminSellerVerificationControl
+              partnerId={partnerId}
+              subjectType="registry_identifier"
+              subjectId={identifier.id}
+              currentStatus={identifier.verificationStatus}
+              dictionary={{
+                verifySuccess: dictionary.verifySuccess,
+                verifyErrorConflict: dictionary.verifyErrorConflict,
+                verifyErrorNotFound: dictionary.verifyErrorNotFound,
+                verifyErrorSystem: dictionary.verifyErrorSystem,
+                verifyAction: dictionary.verifyAction,
+                sourceTypeLabel: dictionary.sourceTypeLabel,
+                sourceTypeAdminManual: dictionary.sourceTypeAdminManual,
+                sourceTypePublicRegistry: dictionary.sourceTypePublicRegistry,
+                sourceTypePartnerDocument: dictionary.sourceTypePartnerDocument,
+                sourceNameLabel: dictionary.sourceNameLabel,
+                sourceNamePlaceholder: dictionary.sourceNamePlaceholder,
+                sourceReferenceLabel: dictionary.sourceReferenceLabel,
+                sourceReferencePlaceholder: dictionary.sourceReferencePlaceholder,
+                cancelAction: dictionary.cancelAction
+              }}
+            />
+            </div>
             </div>
           ))}
         </div>

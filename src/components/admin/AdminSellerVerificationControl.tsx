@@ -4,14 +4,28 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { verifyAdminSellerIdentityAction } from "@/app/actions";
 import { Loader2, ShieldCheck, AlertCircle, CheckCircle2 } from "lucide-react";
-import type { Dictionary } from "@/lib/i18n/types";
 
 export type AdminSellerVerificationControlProps = {
   partnerId: number;
   subjectType: "legal_identity" | "tax_identifier" | "registry_identifier";
   subjectId?: number;
   currentStatus: string;
-  dictionary: Dictionary["adminPartnerDetail"];
+  dictionary: {
+    verifySuccess: string;
+    verifyErrorConflict: string;
+    verifyErrorNotFound: string;
+    verifyErrorSystem: string;
+    verifyAction: string;
+    sourceTypeLabel: string;
+    sourceTypeAdminManual: string;
+    sourceTypePublicRegistry: string;
+    sourceTypePartnerDocument: string;
+    sourceNameLabel: string;
+    sourceNamePlaceholder: string;
+    sourceReferenceLabel: string;
+    sourceReferencePlaceholder: string;
+    cancelAction: string;
+  };
 };
 
 export function AdminSellerVerificationControl({

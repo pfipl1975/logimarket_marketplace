@@ -19,13 +19,13 @@ import {
 import type * as schema from "@/lib/schema";
 
 export const AdminSellerVerificationInputSchema = z.object({
-  partnerId: z.number(),
+  partnerId: z.number().int().positive().safe(),
   subjectType: z.enum(["legal_identity", "tax_identifier", "registry_identifier"]),
-  subjectId: z.number().optional(),
-  expectedStatus: z.enum(["unverified", "verified", "rejected"]),
+  subjectId: z.number().int().positive().safe().optional(),
+  expectedStatus: z.enum(["unverified", "rejected"]),
   sourceType: z.enum(["admin_manual", "public_registry_manual", "partner_document"]),
-  sourceName: z.string().min(1).max(100),
-  sourceReference: z.string().min(1).max(255),
+  sourceName: z.string().trim().min(1).max(100),
+  sourceReference: z.string().trim().min(1).max(255),
 });
 
 export type AdminSellerVerificationInput = z.infer<typeof AdminSellerVerificationInputSchema>;
@@ -39,6 +39,10 @@ export async function executeAdminSellerVerification(
   input: AdminSellerVerificationInput,
   deps: { actorUserId: string }
 ): Promise<AdminSellerVerificationResult> {
+  if (!deps.actorUserId.trim()) {
+    return { ok: false, code: "UNAUTHORIZED" };
+  }
+
   try {
     return await db.transaction(async (tx) => {
       let snapshotData: Record<string, unknown> | null = null;
@@ -47,7 +51,7 @@ export async function executeAdminSellerVerification(
       let previousSource: string | null = null;
       let previousReference: string | null = null;
 
-      const derivedVerificationSource = input.sourceName ?? input.sourceType;
+      const derivedVerificationSource = input.sourceName;
       const derivedVerificationReference = input.sourceReference;
 
       if (input.subjectType === "legal_identity") {

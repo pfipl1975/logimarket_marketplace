@@ -1,14 +1,14 @@
 import { test, describe, before, after } from "node:test";
 import * as assert from "node:assert";
 import { db } from "@/lib/db";
-import { 
-  partners, 
-  sellerLegalIdentities, 
-  sellerTaxIdentifiers, 
-  sellerRegistryIdentifiers, 
-  sellerVerificationEvents 
+import {
+  partners,
+  sellerLegalIdentities,
+  sellerTaxIdentifiers,
+  sellerRegistryIdentifiers,
+  sellerVerificationEvents
 } from "@/lib/schema";
-import { executeAdminSellerVerification } from "@/lib/admin/seller-verification-core";
+import { AdminSellerVerificationInputSchema, executeAdminSellerVerification } from "@/lib/admin/seller-verification-core";
 import { eq } from "drizzle-orm";
 
 describe("Admin Seller Identity Verification", () => {
@@ -23,7 +23,7 @@ describe("Admin Seller Identity Verification", () => {
       { companyName: "Test Partner 1", contactEmail: "test1@example.com" },
       { companyName: "Test Partner 2", contactEmail: "test2@example.com" }
     ]).returning({ id: partners.id });
-    
+
     partnerId1 = p1.id;
     partnerId2 = p2.id;
 
@@ -56,7 +56,7 @@ describe("Admin Seller Identity Verification", () => {
     const result = await executeAdminSellerVerification(db, {
       partnerId: partnerId1,
       subjectType: "legal_identity",
-      decision: "verified",
+
       expectedStatus: "unverified",
       sourceType: "admin_manual",
       sourceName: "Test Admin",
@@ -67,7 +67,7 @@ describe("Admin Seller Identity Verification", () => {
 
     const [legal] = await db.select().from(sellerLegalIdentities).where(eq(sellerLegalIdentities.partnerId, partnerId1));
     assert.strictEqual(legal.verificationStatus, "verified");
-    assert.strictEqual(legal.verificationSource, "admin_manual");
+    assert.strictEqual(legal.verificationSource, "Test Admin");
     assert.strictEqual(legal.verificationReference, "Ref123");
     assert.notStrictEqual(legal.currentVerificationEventId, null);
 
@@ -75,6 +75,19 @@ describe("Admin Seller Identity Verification", () => {
     assert.strictEqual(event.subjectType, "legal_identity");
     assert.strictEqual(event.eventType, "verified");
     assert.strictEqual(event.actorUserId, "admin-1");
+    assert.strictEqual(event.sourceType, "admin_manual");
+    assert.strictEqual(event.sourceName, "Test Admin");
+    assert.strictEqual(event.sourceReference, "Ref123");
+    assert.deepStrictEqual(event.subjectSnapshot, {
+      legalName: "Test Legal 1",
+      jurisdictionCountry: "PL",
+      registeredAddressLine1: null,
+      registeredAddressLine2: null,
+      registeredPostalCode: null,
+      registeredCity: null,
+      registeredRegion: null,
+      registeredCountryCode: null
+    });
   });
 
   test("Tax Identifier verify success", async () => {
@@ -82,7 +95,7 @@ describe("Admin Seller Identity Verification", () => {
       partnerId: partnerId1,
       subjectType: "tax_identifier",
       subjectId: taxId1,
-      decision: "verified",
+
       expectedStatus: "unverified",
       sourceType: "public_registry_manual",
       sourceName: "VIES",
@@ -100,7 +113,7 @@ describe("Admin Seller Identity Verification", () => {
       partnerId: partnerId1,
       subjectType: "registry_identifier",
       subjectId: registryId1,
-      decision: "verified",
+
       expectedStatus: "unverified",
       sourceType: "partner_document",
       sourceName: "KRS PDF",
@@ -118,9 +131,11 @@ describe("Admin Seller Identity Verification", () => {
       partnerId: partnerId2, // Wrong partner
       subjectType: "tax_identifier",
       subjectId: taxId1,
-      decision: "verified",
+
       expectedStatus: "unverified",
-      sourceType: "admin_manual"
+      sourceType: "admin_manual",
+      sourceName: "Manual Admin Check",
+      sourceReference: "REF-123"
     }, { actorUserId: "admin-1" });
 
     assert.strictEqual(result.ok, false);
@@ -133,14 +148,83 @@ describe("Admin Seller Identity Verification", () => {
     const result = await executeAdminSellerVerification(db, {
       partnerId: partnerId1,
       subjectType: "legal_identity",
-      decision: "verified",
+
       expectedStatus: "unverified", // Already verified in first test
-      sourceType: "admin_manual"
+      sourceType: "admin_manual",
+      sourceName: "Manual Admin Check",
+      sourceReference: "REF-123"
     }, { actorUserId: "admin-1" });
 
     assert.strictEqual(result.ok, false);
     if (!result.ok) {
       assert.strictEqual(result.code, "VERIFICATION_CONFLICT");
     }
+  });
+  test("Registry Identifier cannot be verified through another Partner", async () => {
+    const result = await executeAdminSellerVerification(db, {
+      partnerId: partnerId2,
+      subjectType: "registry_identifier",
+      subjectId: registryId1,
+      expectedStatus: "unverified",
+      sourceType: "admin_manual",
+      sourceName: "Manual Admin Check",
+      sourceReference: "REGISTRY-CROSS-OWNER"
+    }, { actorUserId: "admin-1" });
+
+    assert.strictEqual(result.ok, false);
+    if (!result.ok) {
+      assert.strictEqual(result.code, "OWNERSHIP_MISMATCH");
+    }
+  });
+
+  test("Empty actor user id is rejected before mutation", async () => {
+    const result = await executeAdminSellerVerification(db, {
+      partnerId: partnerId2,
+      subjectType: "legal_identity",
+      expectedStatus: "unverified",
+      sourceType: "admin_manual",
+      sourceName: "Manual Admin Check",
+      sourceReference: "EMPTY-ACTOR"
+    }, { actorUserId: "   " });
+
+    assert.strictEqual(result.ok, false);
+    if (!result.ok) {
+      assert.strictEqual(result.code, "UNAUTHORIZED");
+    }
+
+    const [legal] = await db
+      .select()
+      .from(sellerLegalIdentities)
+      .where(eq(sellerLegalIdentities.partnerId, partnerId2));
+
+    assert.strictEqual(legal.verificationStatus, "unverified");
+    assert.strictEqual(legal.currentVerificationEventId, null);
+  });
+
+  test("Input schema rejects blank verification evidence", () => {
+    const result = AdminSellerVerificationInputSchema.safeParse({
+      partnerId: partnerId1,
+      subjectType: "legal_identity",
+      expectedStatus: "unverified",
+      sourceType: "admin_manual",
+      sourceName: "   ",
+      sourceReference: "   "
+    });
+
+    assert.strictEqual(result.success, false);
+  });
+
+  test("Input schema rejects non-positive identifiers", () => {
+    const result = AdminSellerVerificationInputSchema.safeParse({
+      partnerId: 0,
+      subjectType: "tax_identifier",
+      subjectId: 0,
+      expectedStatus: "unverified",
+      sourceType: "admin_manual",
+      sourceName: "Manual Admin Check",
+      sourceReference: "INVALID-ID"
+    });
+
+    assert.strictEqual(result.success, false);
   });
 });

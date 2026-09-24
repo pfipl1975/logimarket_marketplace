@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { addAdminSellerTaxIdentifier, deleteAdminSellerTaxIdentifier } from "@/app/actions";
+import { AdminSellerVerificationControl } from "@/components/admin/AdminSellerVerificationControl";
 import { Loader2, Plus, Trash2, AlertCircle } from "lucide-react";
 
 export type AdminSellerTaxIdentifiersFormProps = {
@@ -41,9 +42,22 @@ export type AdminSellerTaxIdentifiersFormProps = {
     addTaxIdentifierTitle: string;
     confirmDelete: string;
         placeholderVat: string;
-    placeholderCountry: string;
-  
-          };
+        placeholderCountry: string;
+    verifySuccess: string;
+    verifyErrorConflict: string;
+    verifyErrorNotFound: string;
+    verifyErrorSystem: string;
+    verifyAction: string;
+    sourceTypeLabel: string;
+    sourceTypeAdminManual: string;
+    sourceTypePublicRegistry: string;
+    sourceTypePartnerDocument: string;
+    sourceNameLabel: string;
+    sourceNamePlaceholder: string;
+    sourceReferenceLabel: string;
+    sourceReferencePlaceholder: string;
+    cancelAction: string;
+  };
   emptyValue: string;
   locale: string;
 };
@@ -173,8 +187,30 @@ export function AdminSellerTaxIdentifiersForm({
                 <div className="sm:col-span-2">
                   <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.verificationReferenceLabel}</p>
                   <p className="text-sm font-medium text-brand-navy break-all font-mono text-xs">{renderFieldValue(tax.verificationReference)}</p>
+                  </div>
                 </div>
-              </div>
+                <AdminSellerVerificationControl
+                  partnerId={partnerId}
+                  subjectType="tax_identifier"
+                  subjectId={tax.id}
+                  currentStatus={tax.verificationStatus}
+                  dictionary={{
+                    verifySuccess: dictionary.verifySuccess,
+                    verifyErrorConflict: dictionary.verifyErrorConflict,
+                    verifyErrorNotFound: dictionary.verifyErrorNotFound,
+                    verifyErrorSystem: dictionary.verifyErrorSystem,
+                    verifyAction: dictionary.verifyAction,
+                    sourceTypeLabel: dictionary.sourceTypeLabel,
+                    sourceTypeAdminManual: dictionary.sourceTypeAdminManual,
+                    sourceTypePublicRegistry: dictionary.sourceTypePublicRegistry,
+                    sourceTypePartnerDocument: dictionary.sourceTypePartnerDocument,
+                    sourceNameLabel: dictionary.sourceNameLabel,
+                    sourceNamePlaceholder: dictionary.sourceNamePlaceholder,
+                    sourceReferenceLabel: dictionary.sourceReferenceLabel,
+                    sourceReferencePlaceholder: dictionary.sourceReferencePlaceholder,
+                    cancelAction: dictionary.cancelAction
+                  }}
+                />
               <button
                 type="button"
                 title={dictionary.removeAction}
