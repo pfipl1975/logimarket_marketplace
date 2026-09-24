@@ -455,7 +455,8 @@
     "plannedLabel": "Planowane",
     "moduleReadOnlyStatus": "Dostępny",
     "nextModuleLabel": "następny moduł",
-    "moduleAvailabilityHeading": "Dostępność modułów"
+    "moduleAvailabilityHeading": "Dostępność modułów",
+    "partnerAgreementsNav": "Umowy Partnerskie"
   },
   "adminOffers": {
     "metaTitle": "Oferty | LogiMarket Admin",
@@ -1564,5 +1565,38 @@
       "DB_ERROR": "Błąd bazy danych.",
       "DB_ERROR_CLEANUP_FAILED": "Błąd bazy danych (częściowy zapis)."
     }
+  },
+  "adminPartnerAgreements": {
+    "pageTitle": "Umowy Partnerskie",
+    "pageDescription": "Zarządzanie wersjami Umów Partnerskich. Aktywna wersja jest widoczna dla Partnerów.",
+    "noActiveAgreementWarning": "Brak aktywnej Umowy Partnerskiej",
+    "activeAgreementAlreadyExistsWarning": "W systemie istnieje już aktywna umowa. Zmiana wersji wymaga procedury rollover.",
+    "createDraftHeader": "Utwórz nową wersję (Draft)",
+    "versionLabel": "Wersja",
+    "hashLabel": "Odcisk SHA-256 (Canonical Template)",
+    "createAction": "Utwórz",
+    "activateAction": "Aktywuj",
+    "statusDraft": "Szkic",
+    "statusActive": "Aktywna",
+    "historyHeader": "Historia wersji",
+    "createdCol": "Utworzono",
+    "effectiveFromCol": "Obowiązuje od",
+    "publishedAtCol": "Opublikowano",
+    "errorInvalidInput": "Nieprawidłowe dane wejściowe.",
+    "errorVersionExists": "Podana wersja już istnieje.",
+    "errorHashExists": "Podany odcisk SHA-256 już istnieje.",
+    "errorNotFound": "Nie znaleziono wersji umowy.",
+    "errorInvalidType": "Nieprawidłowy typ umowy.",
+    "errorNotDraft": "Tylko wersje w statusie Draft mogą być aktywowane.",
+    "errorActiveExists": "Aktywna wersja już istnieje. Zmiana wymaga procedury rollover.",
+    "errorSystem": "Błąd systemu.",
+    "statusCol": "Status",
+    "actionCol": "Akcja",
+    "noVersions": "Brak wersji umów",
+    "effectiveToCol": "Obowiązuje do",
+    "statusSuperseded": "Zastąpiona",
+    "statusArchived": "Zarchiwizowana",
+    "createSuccess": "Pomyślnie utworzono nową wersję.",
+    "activateSuccess": "Pomyślnie aktywowano wersję."
   }
 }

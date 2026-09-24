@@ -1829,3 +1829,51 @@ export async function verifyAdminSellerIdentityAction(rawInput: unknown) {
   }
   return result;
 }
+
+export async function createAdminAgreementVersionAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { createAgreementVersionCore, CreateDraftSchema } = await import("@/lib/admin/agreement-version-core");
+  const parsed = CreateDraftSchema.safeParse(rawInput);
+
+  if (!parsed.success) {
+    return { type: "INVALID_INPUT" as const, issues: parsed.error.format() };
+  }
+
+  const { getDb } = await import("@/lib/db");
+  const db = getDb();
+  const result = await createAgreementVersionCore(db, parsed.data);
+
+  if (result.type === "AGREEMENT_VERSION_CREATED") {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/admin/umowy-partnerskie", "page");
+    revalidatePath("/[locale]/admin/partner-agreements", "page");
+  }
+
+  return result;
+}
+
+export async function activateAdminAgreementVersionAction(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { activateAgreementVersionCore, ActivateSchema } = await import("@/lib/admin/agreement-version-core");
+  const parsed = ActivateSchema.safeParse(rawInput);
+
+  if (!parsed.success) {
+    return { type: "INVALID_INPUT" as const, issues: parsed.error.format() };
+  }
+
+  const { getDb } = await import("@/lib/db");
+  const db = getDb();
+  const result = await activateAgreementVersionCore(db, parsed.data);
+
+  if (result.type === "AGREEMENT_VERSION_ACTIVATED") {
+    const { revalidatePath } = await import("next/cache");
+    revalidatePath("/admin/umowy-partnerskie", "page");
+    revalidatePath("/[locale]/admin/partner-agreements", "page");
+  }
+
+  return result;
+}

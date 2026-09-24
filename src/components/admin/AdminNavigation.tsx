@@ -10,6 +10,7 @@ export interface AdminNavigationProps {
   partnersPath: string;
   buyersPath: string;
   rfqPath: string;
+  partnerAgreementsPath: string;
   labels: {
     navigationLabel: string;
     dashboardNav: string;
@@ -17,6 +18,7 @@ export interface AdminNavigationProps {
     partnersNav: string;
     buyersNav: string;
     rfqNav: string;
+    partnerAgreementsNav: string;
     taxonomyNav: string;
     plannedLabel: string;
   };
@@ -29,6 +31,7 @@ export function AdminNavigation({
   partnersPath,
   buyersPath,
   rfqPath,
+  partnerAgreementsPath,
   labels,
 }: AdminNavigationProps) {
   const pathname = usePathname();
@@ -38,6 +41,7 @@ export function AdminNavigation({
   const isPartnersActive = pathname === partnersPath || pathname.startsWith(`${partnersPath}/`);
   const isBuyersActive = pathname === buyersPath || pathname.startsWith(`${buyersPath}/`);
   const isRfqActive = pathname === rfqPath || pathname.startsWith(`${rfqPath}/`);
+  const isPartnerAgreementsActive = pathname === partnerAgreementsPath || pathname.startsWith(`${partnerAgreementsPath}/`);
 
   const linkClassBase = "px-4 rounded-industrial transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex justify-between items-center";
   const linkClassSize = variant === "mobile" ? "py-2" : "py-3";
@@ -87,6 +91,15 @@ export function AdminNavigation({
       >
         {labels.rfqNav}
       </Link>
+
+      <Link
+        href={partnerAgreementsPath}
+        className={`${linkClassBase} ${linkClassSize} ${isPartnerAgreementsActive ? activeClass : inactiveClass}`}
+        aria-current={isPartnerAgreementsActive ? "page" : undefined}
+      >
+        {labels.partnerAgreementsNav}
+      </Link>
+
       <span aria-disabled="true" className={disabledClass}>
         {labels.taxonomyNav} <span className="text-xs uppercase tracking-wider bg-white/10 px-2 py-0.5 rounded">{labels.plannedLabel}</span>
       </span>
