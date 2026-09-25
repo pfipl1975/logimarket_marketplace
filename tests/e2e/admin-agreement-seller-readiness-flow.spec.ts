@@ -2,6 +2,7 @@ import { test } from "./fixtures/auth";
 import { expect } from "@playwright/test";
 import { Pool } from "pg";
 import { requireIsolatedE2EDatabaseUrl } from "../../scripts/e2e/buyer-trust-fixtures";
+import * as crypto from "crypto";
 
 const databaseUrl = requireIsolatedE2EDatabaseUrl();
 const database = new Pool({ connectionString: databaseUrl });
@@ -10,29 +11,40 @@ test.afterAll(async () => {
   await database.end();
 });
 
-test.beforeEach(async () => {
-  // Retry-safe cleanup
-  const partnerCheck = await database.query("SELECT id FROM partners WHERE company_name = 'PFConsulting - Partner testowy'");
-  if (partnerCheck.rows.length > 0) {
-    const pId = partnerCheck.rows[0].id;
-    await database.query("DELETE FROM partner_agreement_evidence_invalidations WHERE execution_evidence_id IN (SELECT id FROM partner_agreement_execution_evidence WHERE partner_id = $1)", [pId]);
-    await database.query("DELETE FROM partner_agreement_execution_evidence WHERE partner_id = $1", [pId]);
-    await database.query("DELETE FROM offers WHERE partner_id = $1", [pId]);
-    await database.query("DELETE FROM seller_eligibility WHERE partner_id = $1", [pId]);
-    await database.query("DELETE FROM seller_registry_identifiers WHERE partner_id = $1", [pId]);
-    await database.query("DELETE FROM seller_tax_identifiers WHERE partner_id = $1", [pId]);
-    await database.query("DELETE FROM seller_legal_identities WHERE partner_id = $1", [pId]);
-    await database.query("DELETE FROM partners WHERE id = $1", [pId]);
-  }
-
-  const result = await database.query("SELECT count(*)::int AS count FROM partner_agreement_execution_evidence");
-  const count = result.rows[0].count;
-  if (count > 0) {
+test.beforeEach(async ({}, testInfo) => {
+  // A. Check for non-E2E evidence
+  const checkRes = await database.query("SELECT count(*)::int AS count FROM partner_agreement_execution_evidence WHERE external_platform != 'LM_E2E_TEST'");
+  if (checkRes.rows[0].count > 0) {
     throw new Error("STOP_TEST_FIXTURE_CONFLICT: non-test agreement evidence exists");
   }
-  await database.query("DELETE FROM agreement_versions");
 
-  // Setup synthetic partner
+  // B. Delete UNREFERENCED agreement versions
+  await database.query(`
+    DELETE FROM agreement_versions av
+    WHERE NOT EXISTS (
+      SELECT 1 FROM partner_agreement_execution_evidence e
+      WHERE e.agreement_version_id = av.id
+    )
+  `);
+
+  // C. Archive referenced E2E versions
+  await database.query(`
+    UPDATE agreement_versions
+    SET
+      status = 'archived',
+      effective_to = COALESCE(effective_to, CURRENT_TIMESTAMP + interval '1 minute')
+    WHERE status = 'active'
+    AND id IN (
+      SELECT agreement_version_id
+      FROM partner_agreement_execution_evidence
+      WHERE external_platform = 'LM_E2E_TEST'
+    )
+  `);
+
+  // Setup synthetic partner specific to this retry
+  const retry = testInfo.retry;
+  const companyName = `PFConsulting - Partner testowy - retry-${retry}`;
+
   const catRes = await database.query("SELECT id FROM categories LIMIT 1");
   let catId = 1;
   if (catRes.rows.length > 0) {
@@ -43,13 +55,14 @@ test.beforeEach(async () => {
   }
 
   const partnerRes = await database.query(
-    "INSERT INTO partners (company_name, contact_email) VALUES ('PFConsulting - Partner testowy', 'test-only@example.com') RETURNING id"
+    "INSERT INTO partners (company_name, contact_email) VALUES ($1, 'test-only@example.com') RETURNING id",
+    [companyName]
   );
   const partnerId = partnerRes.rows[0].id;
 
   await database.query(
-    "INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, verification_status, registered_address_line1, registered_postal_code, registered_city, registered_country_code) VALUES ($1, 'PFConsulting - Partner testowy', 'PL', 'verified', 'Testowa 1', '00-000', 'Test City', 'PL')",
-    [partnerId]
+    "INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, verification_status, registered_address_line1, registered_postal_code, registered_city, registered_country_code) VALUES ($1, $2, 'PL', 'verified', 'Testowa 1', '00-000', 'Test City', 'PL')",
+    [partnerId, companyName]
   );
   await database.query(
     "INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status) VALUES ($1, 'tax_id', '0000000000', 'PL', 'PL:NIP', '0000000000', 'verified')",
@@ -75,7 +88,7 @@ test.beforeEach(async () => {
 });
 
 test.describe("Admin Agreement Seller Readiness Flow", () => {
-  test("E2E Integration Proof", async ({ adminPage }) => {
+  test("E2E Integration Proof", async ({ adminPage }, testInfo) => {
     const errors: Error[] = [];
     adminPage.on("pageerror", (err) => errors.push(err));
     adminPage.on("console", (msg) => {
@@ -84,10 +97,16 @@ test.describe("Admin Agreement Seller Readiness Flow", () => {
       }
     });
 
-    const partnerRes = await database.query("SELECT id FROM partners WHERE company_name = 'PFConsulting - Partner testowy'");
+    const retry = testInfo.retry;
+    const companyName = `PFConsulting - Partner testowy - retry-${retry}`;
+    const versionName = `v99.${retry}`;
+    const txId = `lm-e2e-agreement-flow-${retry}`;
+    const testHash = crypto.createHash('sha256').update(txId).digest('hex');
+
+    const partnerRes = await database.query("SELECT id FROM partners WHERE company_name = $1", [companyName]);
     const partnerId = partnerRes.rows[0].id;
 
-    const offerARes = await database.query("SELECT id FROM offers WHERE title = 'Test Offer A'");
+    const offerARes = await database.query("SELECT id FROM offers WHERE title = 'Test Offer A' AND partner_id = $1", [partnerId]);
     const offerIdA = offerARes.rows[0].id;
 
     // A. Go to partner page
@@ -102,18 +121,17 @@ test.describe("Admin Agreement Seller Readiness Flow", () => {
     const resB = await adminPage.goto("/admin/umowy-partnerskie");
     expect(resB?.status()).toBe(200);
 
-    const testHash = "f".repeat(64);
-    await adminPage.getByLabel("Wersja").fill("v1.0");
+    await adminPage.getByLabel("Wersja").fill(versionName);
     await adminPage.getByLabel("Odcisk SHA-256 (Canonical Template)").fill(testHash);
     await adminPage.getByRole("button", { name: "Utwórz" }).click();
 
     // Activate
-    const activeRow = adminPage.locator("tr", { hasText: "v1.0" });
+    const activeRow = adminPage.locator("tr", { hasText: versionName });
     await activeRow.getByRole("button", { name: "Aktywuj" }).click();
     await expect(adminPage.getByRole("status").filter({ hasText: "Pomyślnie aktywowano wersję" })).toBeVisible();
 
     // Read timestamps from DB for E2E Signed At
-    const versionRes = await database.query("SELECT published_at, effective_from FROM agreement_versions WHERE version = 'v1.0'");
+    const versionRes = await database.query("SELECT published_at, effective_from FROM agreement_versions WHERE version = $1", [versionName]);
     const pubAt = versionRes.rows[0].published_at;
     const effFrom = versionRes.rows[0].effective_from;
     expect(pubAt).not.toBeNull();
@@ -142,11 +160,11 @@ test.describe("Admin Agreement Seller Readiness Flow", () => {
     await adminPage.locator('input[name="signatoryRole"]').fill("Owner");
     await adminPage.locator('input[name="signatoryEmail"]').fill("test-only@example.com");
     await adminPage.locator('input[name="externalPlatform"]').fill("LM_E2E_TEST");
-    await adminPage.locator('input[name="externalTransactionId"]').fill("txn-e2e-12345");
-    await adminPage.locator('input[name="signedPdfSha256"]').fill("1".repeat(64));
+    await adminPage.locator('input[name="externalTransactionId"]').fill(txId);
+    await adminPage.locator('input[name="signedPdfSha256"]').fill(testHash);
 
     await adminPage.getByRole("button", { name: "Zarejestruj dowód" }).click();
-    await expect(adminPage.getByText("Dowód zawarcia umowy został zarejestrowany.", { exact: true })).toBeVisible();
+    await expect(adminPage.getByRole("status").filter({ hasText: "Dowód zawarcia umowy został zarejestrowany" })).toBeVisible();
 
     // E. See READY
     await expect(adminPage.getByText("Brak dowodu akceptacji regulaminu")).not.toBeVisible();
@@ -157,7 +175,7 @@ test.describe("Admin Agreement Seller Readiness Flow", () => {
     expect(resF?.status()).toBe(200);
 
     // Find publish button
-    const publishButton = adminPage.getByRole("button", { name: "Opublikuj" });
+    const publishButton = adminPage.getByRole("button", { name: "Publikuj" });
     await expect(publishButton).toBeEnabled();
     await publishButton.click();
 

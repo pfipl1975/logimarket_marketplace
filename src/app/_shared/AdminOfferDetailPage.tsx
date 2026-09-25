@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getAdminOfferDetail, getAdminOfferMedia } from "@/app/actions";
+import { getAdminOfferDetail, getAdminOfferMedia, getAdminOfferPublishSellerReadiness } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { ArrowLeft, Box, Info, Settings, FileText, List, HardDrive, Eye } from "lucide-react";
@@ -67,6 +67,8 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
     ? `/oferta/${offer.id}`
     : `/${locale}/oferta/${offer.id}`;
 
+  const sellerReadiness = await getAdminOfferPublishSellerReadiness(offer.partnerId);
+
   const eligibility = evaluateOfferPublishEligibility({
     isActive: offer.isActive,
     title: offer.title,
@@ -75,6 +77,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
     priceOnRequest: offer.priceOnRequest,
     normalizedPrice: offer.priceBrutto,
     outboundUrl: offer.outboundUrl,
+    sellerReadiness,
   });
 
   const getStatusLabel = (status: string) => {

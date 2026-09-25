@@ -11,12 +11,29 @@ test.afterAll(async () => {
 });
 
 test.beforeEach(async () => {
-  const result = await database.query("SELECT count(*)::int AS count FROM partner_agreement_execution_evidence");
-  const count = result.rows[0].count;
-  if (count > 0) {
-    throw new Error("STOP_TEST_FIXTURE_CONFLICT: agreement execution evidence exists");
+  const checkRes = await database.query("SELECT count(*)::int AS count FROM partner_agreement_execution_evidence WHERE external_platform != 'LM_E2E_TEST'");
+  if (checkRes.rows[0].count > 0) {
+    throw new Error("STOP_TEST_FIXTURE_CONFLICT: non-test agreement evidence exists");
   }
-  await database.query("DELETE FROM agreement_versions");
+
+  await database.query(`UPDATE agreement_versions
+    SET
+      status = 'archived',
+      effective_to = COALESCE(effective_to, CURRENT_TIMESTAMP + interval '1 minute')
+    WHERE status = 'active'
+    AND id IN (
+      SELECT agreement_version_id
+      FROM partner_agreement_execution_evidence
+      WHERE external_platform = 'LM_E2E_TEST'
+    )
+  `);
+
+  await database.query(`DELETE FROM agreement_versions av
+    WHERE NOT EXISTS (
+      SELECT 1 FROM partner_agreement_execution_evidence e
+      WHERE e.agreement_version_id = av.id
+    )
+  `);
 });
 
 test.describe("Admin Agreement Version Lifecycle", () => {

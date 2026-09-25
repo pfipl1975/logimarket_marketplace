@@ -1877,3 +1877,17 @@ export async function activateAdminAgreementVersionAction(rawInput: unknown) {
 
   return result;
 }
+
+export async function getAdminOfferPublishSellerReadiness(partnerId: number): Promise<"ready" | "not_ready"> {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  try {
+    const { querySellerReadiness } = await import("@/lib/admin/seller-readiness-query");
+    const result = await querySellerReadiness(db, partnerId);
+    return result.status;
+  } catch (err) {
+    console.error("[getAdminOfferPublishSellerReadiness] failed.", err);
+    return "not_ready";
+  }
+}
