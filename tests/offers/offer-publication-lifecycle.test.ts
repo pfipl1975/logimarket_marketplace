@@ -440,3 +440,17 @@ describe("Auth Function-Scoped Contract Test", () => {
   });
 });
 
+
+  test("AdminOfferDetailPage passes server-authoritative sellerReadiness to evaluateOfferPublishEligibility", () => {
+    const pageSource = fs.readFileSync("src/app/_shared/AdminOfferDetailPage.tsx", "utf8");
+
+    assert.ok(
+      pageSource.includes("getAdminOfferPublishSellerReadiness"),
+      "AdminOfferDetailPage must call getAdminOfferPublishSellerReadiness"
+    );
+
+    assert.ok(
+      pageSource.includes("sellerReadiness,"),
+      "AdminOfferDetailPage must pass sellerReadiness to evaluateOfferPublishEligibility"
+    );
+  });
