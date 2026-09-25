@@ -61,3 +61,15 @@ jobs:
           RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
           RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
           RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
+
+      - name: Run Agreement Seller Readiness Flow Test
+        run: npx tsx --test tests/database/agreement-seller-readiness-flow.test.ts
+        env:
+          TEST_DATABASE_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          ALLOW_DESTRUCTIVE_DB_TESTS: "1"
+          NODE_ENV: test
+          RUNTIME_MIGRATION_TARGET: development
+          RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: localhost
+          RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
+          RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
+          RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
