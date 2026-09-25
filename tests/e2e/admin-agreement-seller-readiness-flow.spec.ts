@@ -44,6 +44,7 @@ test.beforeEach(async ({}, testInfo) => {
   // Setup synthetic partner specific to this retry
   const retry = testInfo.retry;
   const companyName = `PFConsulting - Partner testowy - retry-${retry}`;
+  const taxValue = `900000000${retry}`;
 
   const catRes = await database.query("SELECT id FROM categories LIMIT 1");
   let catId = 1;
@@ -65,8 +66,8 @@ test.beforeEach(async ({}, testInfo) => {
     [partnerId, companyName]
   );
   await database.query(
-    "INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status) VALUES ($1, 'tax_id', '0000000000', 'PL', 'PL:NIP', '0000000000', 'verified')",
-    [partnerId]
+    "INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code, canonical_identity_class, canonical_identifier_value, verification_status) VALUES ($1, 'tax_id', $2, 'PL', 'PL:NIP', $2, 'verified')",
+    [partnerId, taxValue]
   );
   await database.query(
     "INSERT INTO seller_registry_identifiers (partner_id, registry_type, registry_value, jurisdiction_country, verification_status) VALUES ($1, 'krs', '0000000000', 'PL', 'verified')",
@@ -164,7 +165,7 @@ test.describe("Admin Agreement Seller Readiness Flow", () => {
     await adminPage.locator('input[name="signedPdfSha256"]').fill(testHash);
 
     await adminPage.getByRole("button", { name: "Zarejestruj dowód" }).click();
-    await expect(adminPage.getByRole("status").filter({ hasText: "Dowód zawarcia umowy został zarejestrowany" })).toBeVisible();
+    await expect(adminPage.getByText("Dowód zawarcia umowy został zarejestrowany.", { exact: true })).toBeVisible();
 
     // E. See READY
     await expect(adminPage.getByText("Brak dowodu akceptacji regulaminu")).not.toBeVisible();
