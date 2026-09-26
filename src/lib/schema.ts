@@ -15,6 +15,7 @@ import {
   check,
   unique,
   uniqueIndex,
+  primaryKey,
   foreignKey,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
@@ -1233,6 +1234,80 @@ export const sellerAcceptanceDecisions = pgTable("seller_acceptance_decisions", 
 // -----------------------------------------------------------------------------
 // Agreement Versions (Canonical Template Registry)
 // -----------------------------------------------------------------------------
+// Legal Document Registry
+// -----------------------------------------------------------------------------
+export const legalDocuments = pgTable("legal_documents", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull(),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  titlePl: varchar("title_pl", { length: 255 }).notNull(),
+  documentType: varchar("document_type", { length: 50 }).notNull().default("informational"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, (t) => [
+  unique("uq_legal_documents_code").on(t.code),
+  check("chk_legal_documents_type", sql`document_type IN ('public_legal', 'partner_legal_pack', 'informational')`),
+]);
+
+export const legalDocumentVersions = pgTable("legal_document_versions", {
+  id: serial("id").primaryKey(),
+  legalDocumentId: integer("legal_document_id").notNull().references(() => legalDocuments.id, { onDelete: "restrict" }),
+  version: varchar("version", { length: 50 }).notNull(),
+  language: varchar("language", { length: 10 }).notNull().default("pl"),
+  status: varchar("status", { length: 30 }).notNull().default("draft"),
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }),
+  effectiveUntil: timestamp("effective_until", { withTimezone: true }),
+  fileName: varchar("file_name", { length: 255 }),
+  mimeType: varchar("mime_type", { length: 100 }),
+  storageReference: varchar("storage_reference", { length: 1024 }),
+  sha256: varchar("sha256", { length: 64 }),
+  fileSizeBytes: bigint("file_size_bytes", { mode: "number" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  activatedAt: timestamp("activated_at", { withTimezone: true }),
+  supersededAt: timestamp("superseded_at", { withTimezone: true }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+}, (t) => [
+  check("chk_legal_doc_versions_status", sql`status IN ('draft', 'active', 'superseded', 'archived')`),
+  check("chk_legal_doc_versions_hash_format", sql`sha256 IS NULL OR sha256 ~ '^[0-9a-f]{64}$'`),
+  check("chk_legal_doc_versions_active_integrity", sql`((status)::text <> 'active'::text) OR (sha256 IS NOT NULL AND storage_reference IS NOT NULL AND file_name IS NOT NULL AND file_size_bytes IS NOT NULL AND effective_from IS NOT NULL)`),
+  uniqueIndex("uq_legal_doc_versions_active").on(t.legalDocumentId, t.language).where(sql`status = 'active'`),
+  unique("uq_legal_doc_versions_ver").on(t.legalDocumentId, t.language, t.version),
+]);
+
+export const legalPackVersions = pgTable("legal_pack_versions", {
+  id: serial("id").primaryKey(),
+  code: varchar("code", { length: 50 }).notNull(),
+  version: varchar("version", { length: 50 }).notNull(),
+  language: varchar("language", { length: 10 }).notNull().default("pl"),
+  status: varchar("status", { length: 30 }).notNull().default("draft"),
+  effectiveFrom: timestamp("effective_from", { withTimezone: true }),
+  effectiveUntil: timestamp("effective_until", { withTimezone: true }),
+  hashAlgorithm: varchar("hash_algorithm", { length: 20 }).notNull().default("sha256"),
+  canonicalizationScheme: varchar("canonicalization_scheme", { length: 50 }).notNull().default("RFC8785-JCS"),
+  rootSha256: varchar("root_sha256", { length: 64 }),
+  manifestJson: jsonb("manifest_json"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  activatedAt: timestamp("activated_at", { withTimezone: true }),
+  supersededAt: timestamp("superseded_at", { withTimezone: true }),
+  archivedAt: timestamp("archived_at", { withTimezone: true }),
+}, (t) => [
+  check("chk_legal_pack_versions_status", sql`status IN ('draft', 'active', 'superseded', 'archived')`),
+  check("chk_legal_pack_versions_hash_format", sql`root_sha256 IS NULL OR root_sha256 ~ '^[0-9a-f]{64}$'`),
+  uniqueIndex("uq_legal_pack_versions_active").on(t.code, t.language).where(sql`status = 'active'`),
+  unique("uq_legal_pack_versions_ver").on(t.code, t.language, t.version),
+]);
+
+export const legalPackDocuments = pgTable("legal_pack_documents", {
+  legalPackVersionId: integer("legal_pack_version_id").notNull().references(() => legalPackVersions.id, { onDelete: "restrict" }),
+  legalDocumentVersionId: integer("legal_document_version_id").notNull().references(() => legalDocumentVersions.id, { onDelete: "restrict" }),
+  ordinal: integer("ordinal").notNull(),
+  acceptanceRequired: boolean("acceptance_required").notNull().default(true),
+}, (t) => [
+  primaryKey({ columns: [t.legalPackVersionId, t.legalDocumentVersionId] }),
+  unique("uq_legal_pack_doc_ordinal").on(t.legalPackVersionId, t.ordinal),
+]);
+
+// -----------------------------------------------------------------------------
 export const agreementVersions = pgTable("agreement_versions", {
   id: serial("id").primaryKey(),
   agreementType: varchar("agreement_type", { length: 50 }).notNull(),
@@ -1271,6 +1346,8 @@ export const partnerAgreementExecutionEvidence = pgTable("partner_agreement_exec
   signedPdfSha256: varchar("signed_pdf_sha256", { length: 64 }).notNull(),
   recordedAt: timestamp("recorded_at", { withTimezone: true }).notNull().defaultNow(),
   recordedByAdminUserId: varchar("recorded_by_admin_user_id", { length: 255 }).notNull(),
+  acceptedLegalPackVersionId: integer("accepted_legal_pack_version_id").references(() => legalPackVersions.id, { onDelete: "restrict" }),
+  acceptedPackRootSha256: varchar("accepted_pack_root_sha256", { length: 64 }),
 }, (t) => [
   check("chk_partner_agreement_evidence_status", sql`status = 'accepted'`),
   check("chk_partner_agreement_evidence_method", sql`execution_method IN ('platform_documentary_electronic', 'qualified_electronic_signature', 'advanced_electronic_signature')`),
@@ -1281,6 +1358,7 @@ export const partnerAgreementExecutionEvidence = pgTable("partner_agreement_exec
   check("chk_partner_agreement_evidence_external_platform", sql`length(btrim((external_platform)::text)) > 0`),
   check("chk_partner_agreement_evidence_external_tx", sql`length(btrim((external_transaction_id)::text)) > 0`),
   check("chk_partner_agreement_evidence_recorded_by", sql`length(btrim((recorded_by_admin_user_id)::text)) > 0`),
+  check("chk_partner_agreement_evidence_pack_hash", sql`accepted_pack_root_sha256 IS NULL OR accepted_pack_root_sha256 ~ '^[0-9a-f]{64}$'`),
   index("idx_partner_agreement_evidence_partner_id").on(t.partnerId),
   index("idx_partner_agreement_evidence_version_id").on(t.agreementVersionId),
 ]);
