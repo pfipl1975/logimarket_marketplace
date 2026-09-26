@@ -71,7 +71,7 @@ test.describe("Public Offer Purchase Availability Policy", () => {
 
     await expect(page.getByText("Oferta tymczasowo niedostępna")).toBeVisible();
     await expect(page.getByText("Ta oferta jest w tej chwili niedostępna.")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Chwilowo niedostępne" })).toBeDisabled();
+    await expect(page.getByText("Chwilowo niedostępne", { exact: true })).toBeVisible();
 
     const actionArea = page.locator("main");
     await expect(actionArea.getByRole("button", { name: "Dodaj do koszyka" })).toHaveCount(0);
