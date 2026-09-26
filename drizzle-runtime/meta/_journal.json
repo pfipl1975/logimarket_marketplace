@@ -134,6 +134,13 @@
       "when": 1789840000000,
       "tag": "0018_buyer_internal_trust_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790446918000,
+      "tag": "0019_legal_document_registry",
+      "breakpoints": true
     }
   ]
 }

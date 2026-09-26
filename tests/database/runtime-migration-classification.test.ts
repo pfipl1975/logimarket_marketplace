@@ -233,10 +233,10 @@ test("TARGET_EXACT_POST_0015", () => {
   assert.strictEqual(result.state, "EXACT_EXISTING_POST_0015");
 });
 
-test("TARGET_EXACT_POST_0018", () => {
+test("TARGET_EXACT_POST_0019", () => {
   const actual = buildSide(PRODUCTION_FINGERPRINT);
   const result = classifyRuntimeTarget(actual, EXPECTED_BASELINE_TABLES, POST_0018_SECURITY_CONTRACT);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0018");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0019");
 });
 
 test("TARGET_EXACT_POST_0017_EXPLICIT_FINGERPRINT", () => {

@@ -3,8 +3,21 @@ import assert from "node:assert";
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { validateDestructiveTestEnvironment, resetDisposableTestDatabase } from "./helpers/destructive-db-safety";
+import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import * as schema from "@/lib/schema";
 import { eq } from "drizzle-orm";
+
+async function assertDbError(promise: Promise<unknown>, regex: RegExp) {
+  try {
+    await promise;
+    assert.fail("Expected promise to reject, but it resolved.");
+  } catch (error: unknown) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const err = error as any;
+    const message = err.cause?.message || err.message || String(err);
+    assert.match(message, regex, `Expected error message to match ${regex}. Actual: ${message}`);
+  }
+}
 
 test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
   const guard = validateDestructiveTestEnvironment(process.env);
@@ -12,12 +25,36 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
     t.skip(guard.reason);
     return;
   }
+  if (guard.type === "FAIL") {
+    throw new Error(`Destructive DB guard failed: ${guard.reason}`);
+  }
 
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  const testDatabaseUrl = guard.url;
+  const originalDbUrl = process.env.DATABASE_URL;
+
+  const safetyEnv = {
+    ...process.env,
+    TEST_DATABASE_URL: testDatabaseUrl,
+    DATABASE_URL: originalDbUrl,
+  };
+
+  process.env.DATABASE_URL = testDatabaseUrl;
+
+  const pool = new Pool({ connectionString: testDatabaseUrl });
   const db = drizzle(pool, { schema });
 
+  t.after(async () => {
+    if (originalDbUrl === undefined) {
+      delete process.env.DATABASE_URL;
+    } else {
+      process.env.DATABASE_URL = originalDbUrl;
+    }
+    await pool.end();
+  });
+
   try {
-    await resetDisposableTestDatabase(db, pool);
+    await resetDisposableTestDatabase(pool, safetyEnv);
+    await runMigrations(process.env);
 
     await t.test("1. Can create a legal document and multiple versions", async () => {
       const [doc] = await db.insert(schema.legalDocuments).values({
@@ -68,7 +105,7 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
 
       await db.insert(schema.legalDocumentVersions).values({ ...baseVersion, version: "v1.0" });
 
-      await assert.rejects(
+      await assertDbError(
         db.insert(schema.legalDocumentVersions).values({ ...baseVersion, version: "v2.0" }),
         /uq_legal_doc_versions_active/
       );
@@ -81,7 +118,7 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
         titlePl: "Test",
       }).returning();
 
-      await assert.rejects(
+      await assertDbError(
         db.insert(schema.legalDocumentVersions).values({
           legalDocumentId: doc.id,
           version: "v1.0",
@@ -98,7 +135,7 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
         titlePl: "Test",
       }).returning();
 
-      await assert.rejects(
+      await assertDbError(
         db.insert(schema.legalDocumentVersions).values({
           legalDocumentId: doc.id,
           version: "v1.0",
@@ -126,7 +163,7 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
         effectiveFrom: new Date(),
       }).returning();
 
-      await assert.rejects(
+      await assertDbError(
         db.update(schema.legalDocumentVersions).set({ sha256: "c".repeat(64) }).where(eq(schema.legalDocumentVersions.id, v.id)),
         /Cannot modify frozen fields/
       );
@@ -135,7 +172,7 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
       await db.update(schema.legalDocumentVersions).set({ status: "superseded" }).where(eq(schema.legalDocumentVersions.id, v.id));
       
       // And we cannot unarchive/unsupersede
-      await assert.rejects(
+      await assertDbError(
         db.update(schema.legalDocumentVersions).set({ status: "active" }).where(eq(schema.legalDocumentVersions.id, v.id)),
         /Superseded legal document version can only become archived/
       );
@@ -171,7 +208,7 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
       }).where(eq(schema.legalPackVersions.id, packVer.id));
 
       // Attempt to modify membership
-      await assert.rejects(
+      await assertDbError(
         db.insert(schema.legalPackDocuments).values({
           legalPackVersionId: packVer.id,
           legalDocumentVersionId: docVer.id,
@@ -180,13 +217,13 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
         /Cannot insert or move membership into a frozen legal pack/
       );
 
-      await assert.rejects(
+      await assertDbError(
         db.delete(schema.legalPackDocuments).where(eq(schema.legalPackDocuments.legalPackVersionId, packVer.id)),
         /Cannot modify or delete membership of a frozen legal pack/
       );
     });
 
   } finally {
-    await pool.end();
+    // pool is closed in t.after()
   }
 });
