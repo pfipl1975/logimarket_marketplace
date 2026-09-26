@@ -109,11 +109,13 @@ export function OfferProcurementListRow({
             title: offer.title,
             offerModel: offer.offerModel,
             partnerName: offer.partnerName,
+            purchaseAvailability: offer.purchaseAvailability,
           }}
           ctaLabels={ctaLabels}
           rfqLabels={rfqLabels}
           formLabels={formLabels}
           systemLabels={systemLabels}
+          unavailableCtaDisabled={offerLabels.unavailableCtaDisabled}
           closeLabel={closeLabel}
           externalOfferLabel={offerLabels.externalOffer}
           verificationRequiredLabel={offerLabels.verificationRequired}

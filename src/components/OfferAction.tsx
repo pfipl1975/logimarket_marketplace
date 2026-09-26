@@ -6,6 +6,7 @@ import { AddToCartButton } from "@/components/AddToCartButton";
 import { RfqDialog } from "@/components/RfqDialog";
 import { useCart } from "@/hooks/useCart";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
+import type { PurchaseAvailability } from "@/lib/catalog/purchase-availability";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface OfferActionProps {
@@ -14,6 +15,7 @@ interface OfferActionProps {
     title: string;
     offerModel: CanonicalOfferModelResolution;
     partnerName: string;
+    purchaseAvailability: PurchaseAvailability;
   };
   ctaLabels: Pick<Dictionary["cta"], "addToCart" | "requestQuote" | "sendRequest">;
   rfqLabels: Dictionary["rfq"];
@@ -24,6 +26,7 @@ interface OfferActionProps {
   verificationRequiredLabel: string;
   privacyPolicyHref: string;
   variant?: "card" | "detail";
+  unavailableCtaDisabled: string;
 }
 
 export function OfferAction({
@@ -37,11 +40,19 @@ export function OfferAction({
   verificationRequiredLabel,
   privacyPolicyHref,
   variant = "card",
+  unavailableCtaDisabled,
 }: OfferActionProps) {
   const { addToCart } = useCart();
 
   // 1. E-Commerce
   if (offer.offerModel === "ecommerce") {
+    if (offer.purchaseAvailability !== "available") {
+      return (
+        <Button disabled className="w-full gap-2 font-semibold bg-gray-100 text-gray-500 border-gray-300">
+          {unavailableCtaDisabled}
+        </Button>
+      );
+    }
     if (variant === "detail") {
       return <AddToCartButton offerId={offer.id} label={ctaLabels.addToCart} />;
     }
