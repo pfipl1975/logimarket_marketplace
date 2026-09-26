@@ -1,4 +1,5 @@
 "use server";
+import { assignPurchaseAvailability, type PurchaseAvailability } from "@/lib/catalog/purchase-availability";
 import { acceptSellerOrder, rejectSellerOrder } from "@/lib/seller-order/seller-order-workflow";
 
 import { revalidatePath } from "next/cache";
@@ -71,6 +72,7 @@ export type CatalogOffer = {
   attributes?: import("@/lib/catalog/offer-attributes-read-model").PublicOfferAttribute[];
   categoryId: number;
   categoryName: string;
+  purchaseAvailability: PurchaseAvailability;
   categorySlug: string;
   partnerId: number;
   partnerName: string;
@@ -135,6 +137,10 @@ function rowToOffer(row: {
     partnerWebsite: row.partner?.websiteUrl ?? null,
     partnerEmail: row.partner?.contactEmail ?? "",
     publicationStatus: row.offer.publicationStatus,
+    purchaseAvailability: (resolveCanonicalOfferModel(
+      row.offer.offerModel,
+      row.offer.conversionType,
+    ) === "ecommerce" ? "temporarily_unavailable" : "not_applicable") satisfies PurchaseAvailability,
   };
 }
 
@@ -193,7 +199,7 @@ export async function getCategoryOffers(
     )
     .orderBy(...catalogOfferOrder());
 
-  return rows.map(rowToOffer);
+  return assignPurchaseAvailability(db, rows.map(rowToOffer));
 }
 
 /** Publiczny, cienki Server Action: parser → normalizacja → rdzeń DB → istniejąca projekcja. */
@@ -210,10 +216,7 @@ export async function getFilteredCategoryOffers(
   if (!result.ok) return result;
   return {
     ok: true,
-    items: await hydrateOffersWithAttributes(
-      result.rows.map(rowToOffer),
-      locale,
-    ),
+    items: await assignPurchaseAvailability(db, await hydrateOffersWithAttributes(result.rows.map(rowToOffer), locale)),
     total: result.total,
     page: normalized.value.page ?? null,
     pageSize: normalized.value.pageSize ?? null,
@@ -270,7 +273,7 @@ export async function getOffers(
     .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(and(...conditions))
     .orderBy(...catalogOfferOrder());
-  return hydrateOffersWithAttributes(rows.map(rowToOffer), locale);
+  return assignPurchaseAvailability(db, await hydrateOffersWithAttributes(rows.map(rowToOffer), locale));
 }
 
 export type PublicOfferDetail = CatalogOffer & {
@@ -318,7 +321,7 @@ export async function getOfferById(
     ...rowToOffer(rows[0]),
     imageUrl: initialMedia?.url ?? null,
   };
-  const hydrated = await hydrateOffersWithAttributes([offer], locale);
+  const hydrated = await assignPurchaseAvailability(db, await hydrateOffersWithAttributes([offer], locale));
   return { ...hydrated[0], media };
 }
 
@@ -406,6 +409,7 @@ export async function addToCart(offerId: number, quantity = 1) {
       offerModel: offers.offerModel,
       conversionType: offers.conversionType,
       priceOnRequest: offers.priceOnRequest,
+      partnerId: offers.partnerId,
       normalizedPrice: sql<
         string | null
       >`ROUND(${offers.priceBrutto}, 2)::text`,
@@ -440,6 +444,11 @@ export async function addToCart(offerId: number, quantity = 1) {
     parseDecimalToMinorUnits(o.normalizedPrice);
   } catch {
     throw new Error("Oferta nie ma prawidłowej ceny.");
+  }
+
+  const { checkPurchaseEligibilityGuard } = await import("@/lib/catalog/purchase-availability");
+  if (!(await checkPurchaseEligibilityGuard(db, o.partnerId))) {
+    throw new Error("Przepraszamy, ten Partner jest tymczasowo niedostępny.");
   }
 
   const sessionHash = await getOrCreateSessionHash();

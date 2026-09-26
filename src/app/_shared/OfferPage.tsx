@@ -47,8 +47,12 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
   );
 
   const isArchived = offer.publicationStatus === "archived";
-  const isOperationallyUnavailable =
-    offer.publicationStatus === "published" && !offer.isActive;
+  const isOperationallyUnavailable = offer.publicationStatus === "published" && !offer.isActive;
+
+  const isSellerTemporarilyUnavailable =
+    offer.publicationStatus === "published" &&
+    offer.offerModel === "ecommerce" &&
+    offer.purchaseAvailability === "temporarily_unavailable";
 
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -85,7 +89,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
           </div>
         )}
 
-        {isOperationallyUnavailable && (
+        {(isOperationallyUnavailable || isSellerTemporarilyUnavailable) && (
           <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-800">
             <p className="font-semibold text-base">
               {dict.offers.unavailableTitle}
@@ -147,6 +151,10 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                 <div className="flex h-12 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-base font-semibold text-gray-500 cursor-not-allowed">
                   {dict.offers.unavailableCtaDisabled}
                 </div>
+              ) : isSellerTemporarilyUnavailable ? (
+                <div className="flex h-12 w-full items-center justify-center rounded-md border border-gray-300 bg-gray-100 text-base font-semibold text-gray-500 cursor-not-allowed">
+                  {dict.offers.unavailableCtaDisabled}
+                </div>
               ) : (
                 <OfferAction
                   offer={{
@@ -154,7 +162,9 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
                     title: offer.title,
                     offerModel: offer.offerModel,
                     partnerName: offer.partnerName,
-                  }}
+                      purchaseAvailability: offer.purchaseAvailability,
+                    }}
+                    unavailableCtaDisabled={dict.offers.unavailableCtaDisabled}
                   ctaLabels={dict.cta}
                   rfqLabels={dict.rfq}
                   formLabels={dict.form}
