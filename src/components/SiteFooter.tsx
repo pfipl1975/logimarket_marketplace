@@ -45,6 +45,9 @@ export function SiteFooter({
                 {footerLabels.privacyPolicy}
               </Link>
             </li>
+            {locale === "pl" && (
+              <li><Link className="hover:text-white transition-colors" href="/dokumenty-prawne">Dokumenty prawne</Link></li>
+            )}
           </ul>
         </div>
         <div>

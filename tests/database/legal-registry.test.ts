@@ -6,6 +6,7 @@ import { validateDestructiveTestEnvironment, resetDisposableTestDatabase } from 
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import * as schema from "@/lib/schema";
 import { eq } from "drizzle-orm";
+import { getPublicLegalCenter, PUBLIC_CORE_LEGAL_PACK_CODE } from "@/lib/legal/public-legal-center";
 
 async function assertDbError(promise: Promise<unknown>, regex: RegExp) {
   try {
@@ -221,6 +222,60 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
         db.delete(schema.legalPackDocuments).where(eq(schema.legalPackDocuments.legalPackVersionId, packVer.id)),
         /Cannot modify or delete membership of a frozen legal pack/
       );
+    });
+
+    await t.test("7. Public Legal Center read model filters registry rows", async () => {
+      const now = new Date("2026-09-27T12:00:00.000Z");
+      const past = new Date("2026-09-01T00:00:00.000Z");
+      const older = new Date("2026-08-01T00:00:00.000Z");
+      const future = new Date("2026-10-01T00:00:00.000Z");
+      const sha256 = "d".repeat(64);
+      const rootSha256 = "e".repeat(64);
+
+      for (const [code, documentType, status, effectiveFrom, version] of [
+        ["CENTER_ACTIVE", "public_legal", "active", past, "center-active"],
+        ["CENTER_DRAFT", "public_legal", "draft", past, "center-draft"],
+        ["CENTER_FUTURE", "public_legal", "active", future, "center-future"],
+        ["CENTER_PRIVATE", "partner_legal_pack", "active", past, "center-private"],
+        ["CENTER_SUPERSEDED", "public_legal", "superseded", past, "center-superseded"],
+        ["CENTER_ARCHIVED", "public_legal", "archived", older, "center-archived"],
+      ] as const) {
+        const [document] = await db.insert(schema.legalDocuments).values({
+          code,
+          slug: code.toLowerCase().replaceAll("_", "-"),
+          titlePl: code,
+          documentType,
+        }).returning({ id: schema.legalDocuments.id });
+        await db.insert(schema.legalDocumentVersions).values({
+          legalDocumentId: document.id,
+          version,
+          language: "pl",
+          status,
+          effectiveFrom,
+          sha256,
+          fileName: `${code}.pdf`,
+          fileSizeBytes: 100,
+          storageReference: "s3://private-bucket/internal.pdf",
+        });
+      }
+
+      await db.insert(schema.legalPackVersions).values([
+        { code: PUBLIC_CORE_LEGAL_PACK_CODE, version: "center-current", language: "en", status: "active", effectiveFrom: past, rootSha256, manifestJson: { internal: "secret" } },
+        { code: PUBLIC_CORE_LEGAL_PACK_CODE, version: "center-future", language: "de", status: "active", effectiveFrom: future, rootSha256 },
+        { code: PUBLIC_CORE_LEGAL_PACK_CODE, version: "center-draft", language: "fr", status: "draft", effectiveFrom: past, rootSha256 },
+        { code: "OTHER_PACK", version: "center-other", language: "pl", status: "active", effectiveFrom: past, rootSha256 },
+      ]);
+
+      const center = await getPublicLegalCenter(db, now);
+      assert.deepStrictEqual(center.currentDocuments.map((row) => row.version), ["center-active"]);
+      assert.deepStrictEqual(center.history.map((row) => row.version), ["center-superseded", "center-archived"]);
+      assert.strictEqual(center.currentDocuments[0].sha256, sha256);
+      assert.deepStrictEqual(center.packs.map((row) => row.version), ["center-current"]);
+      assert.strictEqual(center.packs[0].rootSha256, rootSha256);
+      assert.ok(!JSON.stringify(center).includes("storageReference"));
+      assert.ok(!JSON.stringify(center).includes("manifestJson"));
+      assert.ok(!JSON.stringify(center).includes("private-bucket"));
+      assert.ok(!JSON.stringify(center).includes("secret"));
     });
 
   } finally {
