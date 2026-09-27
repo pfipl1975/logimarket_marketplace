@@ -168,6 +168,7 @@ export function getCoreSitemapEntries(): MetadataRoute.Sitemap {
   return deduplicateAndSort([
     ...homepageEntries,
     ...catalogRootEntries,
+    { url: absoluteUrl("/dokumenty-prawne"), changeFrequency: "monthly", priority: 0.5 },
     ...solutionsIndexEntries,
     ...landingEntries,
     ...glossaryEntries,

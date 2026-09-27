@@ -8,6 +8,10 @@ test("isDatabaseUnavailableError handles EMAXCONNSESSION", () => {
   assert.equal(isDatabaseUnavailableError(emaxError), true);
 });
 
+test("core sitemap includes the public Legal Center", () => {
+  assert.ok(getCoreSitemapEntries().some((entry) => entry.url.endsWith("/dokumenty-prawne")));
+});
+
 test("isDatabaseUnavailableError ignores unrelated XX000", () => {
   const unrelatedError = new Error("Some other postgres internal error");
   (unrelatedError as Error & { code?: string }).code = "XX000";
