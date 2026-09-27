@@ -88,6 +88,25 @@ for (const count of [18, 11, 20]) {
   });
 }
 
+test("CARDINALITY: POST_0019 accepts exactly 20 canonical rows", () => {
+  assert.doesNotThrow(() =>
+    validate("EXACT_EXISTING_POST_0019", canonicalRows),
+  );
+});
+
+for (const count of [19, 21, 10, 0]) {
+  test(`CARDINALITY: POST_0019 rejects ${count} rows`, () => {
+    const rows =
+      count <= canonicalRows.length
+        ? canonicalRows.slice(0, count)
+        : [...canonicalRows, canonicalRows[canonicalRows.length - 1]];
+    assert.throws(
+      () => validate("EXACT_EXISTING_POST_0019", rows),
+      new RegExp(`schema is POST_0019 but journal has ${count} rows`),
+    );
+  });
+}
+
 test("CARDINALITY: current live-style POST_0017 with 11 rows fails before hash validation", () => {
   const liveStyleRows = canonicalRows.slice(0, 11).map((row, index) =>
     index === 0
@@ -112,10 +131,11 @@ test("CARDINALITY: current live-style POST_0017 with 11 rows fails before hash v
   assert.strictEqual(migrationReadAttempted, false);
 });
 
-test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 and POST_0018", () => {
+test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017, POST_0018 and POST_0019", () => {
   for (const state of [
     "EXACT_EXISTING_POST_0017",
     "EXACT_EXISTING_POST_0018",
+    "EXACT_EXISTING_POST_0019",
   ]) {
     assert.strictEqual(
       isLegacyDev0000Exception(

@@ -43,6 +43,13 @@
       "when": 1788029753104,
       "tag": "0005_hard_venom",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1790443997593,
+      "tag": "0006_nervous_spitfire",
+      "breakpoints": true
     }
   ]
 }

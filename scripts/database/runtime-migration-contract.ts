@@ -80,7 +80,15 @@ export const EXPECTED_POST_0018_TABLES = [
   "buyer_organization_verification_events"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0018_TABLES;
+export const EXPECTED_POST_0019_TABLES = [
+  ...EXPECTED_POST_0018_TABLES,
+  "legal_documents",
+  "legal_document_versions",
+  "legal_pack_versions",
+  "legal_pack_documents"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0019_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1598,6 +1606,130 @@ export const FINAL_POST_0018_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0017_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0018_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0019_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0018_PRODUCTION_FINGERPRINT,
+  "legal_documents": {
+    name: "legal_documents",
+    columns: [
+      { name: "id", type: "integer", nullable: false, defaultVal: "nextval('legal_documents_id_seq'::regclass)", sequenceName: "legal_documents_id_seq" },
+      { name: "code", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "slug", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "title_pl", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "document_type", type: "character varying(50)", nullable: false, defaultVal: "'informational'::character varying", sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "legal_documents_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "legal_documents_slug_unique", type: "UNIQUE", definition: "UNIQUE (slug)" },
+      { name: "uq_legal_documents_code", type: "UNIQUE", definition: "UNIQUE (code)" },
+      { name: "chk_legal_documents_type", type: "CHECK", definition: "CHECK (((document_type)::text = ANY ((ARRAY['public_legal'::character varying, 'partner_legal_pack'::character varying, 'informational'::character varying])::text[])))" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: false,
+    policyCount: 0,
+    triggerCount: 0
+  },
+  "legal_document_versions": {
+    name: "legal_document_versions",
+    columns: [
+      { name: "id", type: "integer", nullable: false, defaultVal: "nextval('legal_document_versions_id_seq'::regclass)", sequenceName: "legal_document_versions_id_seq" },
+      { name: "legal_document_id", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "version", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "language", type: "character varying(10)", nullable: false, defaultVal: "'pl'::character varying", sequenceName: null },
+      { name: "status", type: "character varying(30)", nullable: false, defaultVal: "'draft'::character varying", sequenceName: null },
+      { name: "effective_from", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "effective_until", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "file_name", type: "character varying(255)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "mime_type", type: "character varying(100)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "storage_reference", type: "character varying(1024)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "sha256", type: "character varying(64)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "file_size_bytes", type: "bigint", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "activated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "superseded_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "archived_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "legal_document_versions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_legal_doc_versions_ver", type: "UNIQUE", definition: "UNIQUE (legal_document_id, language, version)" },
+      { name: "chk_legal_doc_versions_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'superseded'::character varying, 'archived'::character varying])::text[])))" },
+      { name: "chk_legal_doc_versions_hash_format", type: "CHECK", definition: "CHECK (((sha256 IS NULL) OR ((sha256)::text ~ '^[0-9a-f]{64}$'::text)))" },
+      { name: "chk_legal_doc_versions_active_integrity", type: "CHECK", definition: "CHECK ((((status)::text <> 'active'::text) OR ((sha256 IS NOT NULL) AND (storage_reference IS NOT NULL) AND (file_name IS NOT NULL) AND (file_size_bytes IS NOT NULL) AND (effective_from IS NOT NULL))))" },
+      { name: "legal_document_versions_legal_document_id_legal_documents_id_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (legal_document_id) REFERENCES legal_documents(id) ON DELETE RESTRICT" }
+    ],
+    explicitIndexes: [
+      { name: "uq_legal_doc_versions_active", method: "btree", expressions: "legal_document_id, language" }
+    ],
+    rlsEnabled: false,
+    policyCount: 0,
+    triggerCount: 1
+  },
+  "legal_pack_versions": {
+    name: "legal_pack_versions",
+    columns: [
+      { name: "id", type: "integer", nullable: false, defaultVal: "nextval('legal_pack_versions_id_seq'::regclass)", sequenceName: "legal_pack_versions_id_seq" },
+      { name: "code", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "version", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "language", type: "character varying(10)", nullable: false, defaultVal: "'pl'::character varying", sequenceName: null },
+      { name: "status", type: "character varying(30)", nullable: false, defaultVal: "'draft'::character varying", sequenceName: null },
+      { name: "effective_from", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "effective_until", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "hash_algorithm", type: "character varying(20)", nullable: false, defaultVal: "'sha256'::character varying", sequenceName: null },
+      { name: "canonicalization_scheme", type: "character varying(50)", nullable: false, defaultVal: "'RFC8785-JCS'::character varying", sequenceName: null },
+      { name: "root_sha256", type: "character varying(64)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "manifest_json", type: "jsonb", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "activated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "superseded_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "archived_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      { name: "legal_pack_versions_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "uq_legal_pack_versions_ver", type: "UNIQUE", definition: "UNIQUE (code, language, version)" },
+      { name: "chk_legal_pack_versions_status", type: "CHECK", definition: "CHECK (((status)::text = ANY ((ARRAY['draft'::character varying, 'active'::character varying, 'superseded'::character varying, 'archived'::character varying])::text[])))" },
+      { name: "chk_legal_pack_versions_hash_format", type: "CHECK", definition: "CHECK (((root_sha256 IS NULL) OR ((root_sha256)::text ~ '^[0-9a-f]{64}$'::text)))" }
+    ],
+    explicitIndexes: [
+      { name: "uq_legal_pack_versions_active", method: "btree", expressions: "code, language" }
+    ],
+    rlsEnabled: false,
+    policyCount: 0,
+    triggerCount: 1
+  },
+  "legal_pack_documents": {
+    name: "legal_pack_documents",
+    columns: [
+      { name: "legal_pack_version_id", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "legal_document_version_id", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "ordinal", type: "integer", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "acceptance_required", type: "boolean", nullable: false, defaultVal: "true", sequenceName: null }
+    ],
+    constraints: [
+      { name: "legal_pack_documents_legal_pack_version_id_legal_document_versi", type: "PRIMARY KEY", definition: "PRIMARY KEY (legal_pack_version_id, legal_document_version_id)" },
+      { name: "uq_legal_pack_doc_ordinal", type: "UNIQUE", definition: "UNIQUE (legal_pack_version_id, ordinal)" },
+      { name: "legal_pack_documents_legal_document_version_id_legal_document_v", type: "FOREIGN KEY", definition: "FOREIGN KEY (legal_document_version_id) REFERENCES legal_document_versions(id) ON DELETE RESTRICT" },
+      { name: "legal_pack_documents_legal_pack_version_id_legal_pack_versions_", type: "FOREIGN KEY", definition: "FOREIGN KEY (legal_pack_version_id) REFERENCES legal_pack_versions(id) ON DELETE RESTRICT" }
+    ],
+    explicitIndexes: [],
+    rlsEnabled: false,
+    policyCount: 0,
+    triggerCount: 1
+  },
+  "partner_agreement_execution_evidence": {
+    ...FINAL_POST_0018_PRODUCTION_FINGERPRINT["partner_agreement_execution_evidence"],
+    columns: [
+      ...FINAL_POST_0018_PRODUCTION_FINGERPRINT["partner_agreement_execution_evidence"].columns,
+      { name: "accepted_legal_pack_version_id", type: "integer", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "accepted_pack_root_sha256", type: "character varying(64)", nullable: true, defaultVal: null, sequenceName: null }
+    ],
+    constraints: [
+      ...FINAL_POST_0018_PRODUCTION_FINGERPRINT["partner_agreement_execution_evidence"].constraints,
+      { name: "partner_agreement_execution_evidence_accepted_legal_pack_versio", type: "FOREIGN KEY", definition: "FOREIGN KEY (accepted_legal_pack_version_id) REFERENCES legal_pack_versions(id) ON DELETE RESTRICT" }
+    ]
+  }
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0018_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0019_PRODUCTION_FINGERPRINT;
 
