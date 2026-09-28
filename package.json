@@ -14,6 +14,7 @@
     "db:runtime:verify-grants": "tsx scripts/database/verify-runtime-data-api-grants.ts",
     "db:runtime:migrate": "tsx scripts/database/run-runtime-migrations.ts",
     "db:runtime:reconcile-post0016-journal": "tsx scripts/database/reconcile-runtime-journal-post0016.ts",
+    "db:legal:publish-core-pack-v1": "tsx scripts/database/publish-core-legal-pack-v1.ts",
     "db:runtime:rollback-empty-dev": "tsx scripts/database/rollback-empty-development-baseline.ts",
     "test:database": "tsx --test tests/database/*.test.ts",
     "test:integration": "tsx --conditions react-server --test tests/database/ci-integration.test.ts",
