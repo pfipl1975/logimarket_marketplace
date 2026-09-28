@@ -6,6 +6,7 @@ import {
   type LegalDocumentRow,
   type LegalPackRow,
 } from "@/lib/legal/public-legal-center";
+import { selectPrivacyPolicyPresentation } from "@/lib/legal/privacy-policy-transition";
 
 const now = new Date("2026-09-27T12:00:00.000Z");
 const past = new Date("2026-09-01T00:00:00.000Z");
@@ -54,6 +55,7 @@ test("public legal center includes only effective public documents and separates
 
   const result = selectPublicLegalCenter(rows, [], now);
   assert.deepEqual(result.currentDocuments.map((item) => item.title), ["Regulamin", "Warunki korzystania"]);
+  assert.deepEqual(result.upcomingDocuments.map((item) => item.code), ["FUTURE"]);
   assert.deepEqual(result.history.map((item) => item.version), ["v1.5", "v1"]);
   assert.equal(result.currentDocuments[0].sha256, documentHash);
   assert.equal(result.history[0].sha256, documentHash);
@@ -73,7 +75,7 @@ test("public Core pack uses the Owner-approved code and current lifecycle", () =
   ];
 
   const result = selectPublicLegalCenter([], rows, now);
-  assert.deepEqual(result.packs, [{
+  assert.deepEqual(result.currentPacks, [{
     version: packBase.version,
     language: packBase.language,
     effectiveFrom: past,
@@ -81,12 +83,13 @@ test("public Core pack uses the Owner-approved code and current lifecycle", () =
     hashAlgorithm: "sha256",
     canonicalizationScheme: "RFC8785-JCS",
   }]);
+  assert.deepEqual(result.upcomingPacks.map((item) => item.version), ["2026-09"]);
   assert.deepEqual(selectPublicLegalCenter([], [...rows].reverse(), now), result);
 });
 
 test("missing publications are safe and internal fields never enter the public result", () => {
   const empty = selectPublicLegalCenter([], [], now);
-  assert.deepEqual(empty, { currentDocuments: [], history: [], packs: [] });
+  assert.deepEqual(empty, { currentDocuments: [], upcomingDocuments: [], history: [], currentPacks: [], upcomingPacks: [] });
 
   const internalDocument = { ...documentBase, storageReference: "s3://private-bucket/internal.pdf", id: 123 };
   const internalPack = { ...packBase, manifestJson: { privateKey: "secret" }, id: 456 };
@@ -97,4 +100,29 @@ test("missing publications are safe and internal fields never enter the public r
   assert.ok(!serialized.includes("private-bucket"));
   assert.ok(!serialized.includes("secret"));
   assert.ok(!serialized.includes('"id"'));
+});
+
+test("canonical Core pack and seven public documents switch at the exact UTC instant", () => {
+  const effectiveFrom = new Date("2026-09-30T22:00:00.000Z");
+  const rows: LegalDocumentRow[] = [
+    "MARKETPLACE_TERMS", "COMMISSION_RULES", "RETURNS_COMPLAINTS", "CONTENT_MODERATION",
+    "RESTRICTED_PRODUCTS", "PRIVACY_POLICY", "COOKIE_NOTICE",
+  ].map((code) => ({ ...documentBase, code, effectiveFrom }));
+  rows.push({ ...documentBase, code: "PARTNER_AGREEMENT", documentType: "partner_legal_pack", effectiveFrom });
+  const packs = [{ ...packBase, effectiveFrom }];
+  const before = selectPublicLegalCenter(rows, packs, new Date("2026-09-30T21:59:59.999Z"));
+  assert.equal(before.currentDocuments.length, 0);
+  assert.equal(before.upcomingDocuments.length, 7);
+  assert.equal(before.history.length, 0);
+  assert.equal(before.currentPacks.length, 0);
+  assert.equal(before.upcomingPacks.length, 1);
+  assert.ok(!before.upcomingDocuments.some((item) => item.code === "PARTNER_AGREEMENT"));
+  const at = selectPublicLegalCenter(rows, packs, effectiveFrom);
+  assert.equal(at.currentDocuments.length, 7);
+  assert.equal(at.upcomingDocuments.length, 0);
+  assert.equal(at.currentPacks.length, 1);
+  assert.equal(at.upcomingPacks.length, 0);
+  assert.ok(!at.currentDocuments.some((item) => item.code === "PARTNER_AGREEMENT"));
+  assert.equal(selectPrivacyPolicyPresentation(new Date("2026-09-30T21:59:59.999Z")), "legacy");
+  assert.equal(selectPrivacyPolicyPresentation(effectiveFrom), "canonical");
 });

@@ -12,6 +12,13 @@ test("core sitemap includes the public Legal Center", () => {
   assert.ok(getCoreSitemapEntries().some((entry) => entry.url.endsWith("/dokumenty-prawne")));
 });
 
+test("core sitemap includes exactly seven public legal details", () => {
+  const details = getCoreSitemapEntries().filter((entry) => entry.url.includes("/dokumenty-prawne/"));
+  assert.equal(details.length, 7);
+  assert.ok(details.some((entry) => entry.url.endsWith("/dokumenty-prawne/polityka-prywatnosci")));
+  assert.ok(!details.some((entry) => entry.url.includes("partner-agreement")));
+});
+
 test("isDatabaseUnavailableError ignores unrelated XX000", () => {
   const unrelatedError = new Error("Some other postgres internal error");
   (unrelatedError as Error & { code?: string }).code = "XX000";

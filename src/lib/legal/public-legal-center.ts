@@ -1,10 +1,12 @@
-import { and, asc, desc, eq, gt, inArray, isNull, lte, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { legalDocuments, legalDocumentVersions, legalPackVersions } from "@/lib/schema";
 
 export const PUBLIC_CORE_LEGAL_PACK_CODE = "CORE_PARTNER_LEGAL_PACK";
 
 export interface PublicLegalDocument {
+  code: string;
+  status: string;
   title: string;
   version: string;
   language: string;
@@ -23,8 +25,10 @@ export interface PublicLegalPackSummary {
 
 export interface PublicLegalCenter {
   currentDocuments: PublicLegalDocument[];
+  upcomingDocuments: PublicLegalDocument[];
   history: PublicLegalDocument[];
-  packs: PublicLegalPackSummary[];
+  currentPacks: PublicLegalPackSummary[];
+  upcomingPacks: PublicLegalPackSummary[];
 }
 
 export interface LegalDocumentRow {
@@ -61,14 +65,14 @@ export function selectPublicLegalCenter(
   now: Date,
 ): PublicLegalCenter {
   const currentDocuments: PublicLegalDocument[] = [];
+  const upcomingDocuments: PublicLegalDocument[] = [];
   const history: PublicLegalDocument[] = [];
 
   const eligibleDocuments = documentRows
     .filter((row) =>
       row.documentType === "public_legal" &&
-      row.effectiveFrom !== null && row.effectiveFrom <= now &&
-      (row.status === "active" || row.status === "superseded" || row.status === "archived") &&
-      (row.status !== "active" || row.effectiveUntil === null || row.effectiveUntil > now),
+      row.effectiveFrom !== null &&
+      (row.status === "active" || ((row.status === "superseded" || row.status === "archived") && row.effectiveFrom <= now)),
     )
     .sort((a, b) =>
       b.effectiveFrom!.getTime() - a.effectiveFrom!.getTime() ||
@@ -79,37 +83,45 @@ export function selectPublicLegalCenter(
 
   for (const row of eligibleDocuments) {
     const item: PublicLegalDocument = {
+      code: row.code,
+      status: row.status,
       title: row.title,
       version: row.version,
       language: row.language,
       effectiveFrom: row.effectiveFrom!,
       sha256: row.sha256,
     };
-    if (row.status === "active") currentDocuments.push(item);
-    else history.push(item);
+    if (row.status !== "active") history.push(item);
+    else if (row.effectiveFrom! > now) upcomingDocuments.push(item);
+    else if (row.effectiveUntil === null || row.effectiveUntil > now) currentDocuments.push(item);
   }
 
-  const packs = packRows
+  const eligiblePacks = packRows
     .filter((row) =>
       row.code === PUBLIC_CORE_LEGAL_PACK_CODE && row.status === "active" &&
-      row.effectiveFrom !== null && row.effectiveFrom <= now &&
-      (row.effectiveUntil === null || row.effectiveUntil > now) &&
+      row.effectiveFrom !== null &&
       row.rootSha256 !== null,
     )
     .sort((a, b) =>
       b.effectiveFrom!.getTime() - a.effectiveFrom!.getTime() ||
       compareText(a.language, b.language) || compareText(a.version, b.version),
     )
-    .map((row): PublicLegalPackSummary => ({
+  const currentPacks: PublicLegalPackSummary[] = [];
+  const upcomingPacks: PublicLegalPackSummary[] = [];
+  for (const row of eligiblePacks) {
+    const item: PublicLegalPackSummary = {
       version: row.version,
       language: row.language,
       effectiveFrom: row.effectiveFrom!,
       rootSha256: row.rootSha256!,
       hashAlgorithm: row.hashAlgorithm,
       canonicalizationScheme: row.canonicalizationScheme,
-    }));
+    };
+    if (row.effectiveFrom! > now) upcomingPacks.push(item);
+    else if (row.effectiveUntil === null || row.effectiveUntil > now) currentPacks.push(item);
+  }
 
-  return { currentDocuments, history, packs };
+  return { currentDocuments, upcomingDocuments, history, currentPacks, upcomingPacks };
 }
 
 export async function getPublicLegalCenter(
@@ -133,12 +145,7 @@ export async function getPublicLegalCenter(
       .where(and(
         eq(legalDocuments.documentType, "public_legal"),
         inArray(legalDocumentVersions.status, ["active", "superseded", "archived"]),
-        lte(legalDocumentVersions.effectiveFrom, now),
-        or(
-          ne(legalDocumentVersions.status, "active"),
-          isNull(legalDocumentVersions.effectiveUntil),
-          gt(legalDocumentVersions.effectiveUntil, now),
-        ),
+        isNotNull(legalDocumentVersions.effectiveFrom),
       ))
       .orderBy(
         desc(legalDocumentVersions.effectiveFrom),
@@ -161,8 +168,8 @@ export async function getPublicLegalCenter(
       .where(and(
         eq(legalPackVersions.code, PUBLIC_CORE_LEGAL_PACK_CODE),
         eq(legalPackVersions.status, "active"),
-        lte(legalPackVersions.effectiveFrom, now),
-        or(isNull(legalPackVersions.effectiveUntil), gt(legalPackVersions.effectiveUntil, now)),
+        isNotNull(legalPackVersions.effectiveFrom),
+        isNotNull(legalPackVersions.rootSha256),
       ))
       .orderBy(desc(legalPackVersions.effectiveFrom), asc(legalPackVersions.language), asc(legalPackVersions.version)),
   ]);

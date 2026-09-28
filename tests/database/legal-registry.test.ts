@@ -270,8 +270,9 @@ test("LEGAL_REGISTRY_IMMUTABILITY_CONTRACT", async (t) => {
       assert.deepStrictEqual(center.currentDocuments.map((row) => row.version), ["center-active"]);
       assert.deepStrictEqual(center.history.map((row) => row.version), ["center-superseded", "center-archived"]);
       assert.strictEqual(center.currentDocuments[0].sha256, sha256);
-      assert.deepStrictEqual(center.packs.map((row) => row.version), ["center-current"]);
-      assert.strictEqual(center.packs[0].rootSha256, rootSha256);
+      assert.deepStrictEqual(center.currentPacks.map((row) => row.version), ["center-current"]);
+      assert.deepStrictEqual(center.upcomingPacks.map((row) => row.version), ["center-future"]);
+      assert.strictEqual(center.currentPacks[0].rootSha256, rootSha256);
       assert.ok(!JSON.stringify(center).includes("storageReference"));
       assert.ok(!JSON.stringify(center).includes("manifestJson"));
       assert.ok(!JSON.stringify(center).includes("private-bucket"));

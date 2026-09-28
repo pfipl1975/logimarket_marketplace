@@ -187,11 +187,15 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   const db = drizzle(adminPool, { schema });
   const before = await getPublicLegalCenter(db, new Date("2026-09-30T21:59:59.000Z"));
   assert.equal(before.currentDocuments.length, 0);
-  assert.equal(before.packs.length, 0);
+  assert.equal(before.upcomingDocuments.length, 7);
+  assert.equal(before.currentPacks.length, 0);
+  assert.equal(before.upcomingPacks.length, 1);
   const at = await getPublicLegalCenter(db, new Date(EXPECTED.effectiveInstant));
   assert.equal(at.currentDocuments.length, 7);
-  assert.equal(at.packs.length, 1);
-  assert.equal(at.packs[0].rootSha256, EXPECTED.root);
+  assert.equal(at.upcomingDocuments.length, 0);
+  assert.equal(at.currentPacks.length, 1);
+  assert.equal(at.upcomingPacks.length, 0);
+  assert.equal(at.currentPacks[0].rootSha256, EXPECTED.root);
   assert.ok(!at.currentDocuments.some((document) => document.title === "Umowa o świadczenie usług i pośrednictwa agencyjnego"));
   const publicJson = JSON.stringify(at);
   assert.ok(!publicJson.includes("drive.google.com"));
