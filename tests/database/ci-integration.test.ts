@@ -12,6 +12,13 @@ import { mutateRfqStatusCore } from "@/lib/rfq/admin-core";
 import type { RfqStatus } from "@/lib/schema";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
+import {
+  POST_0016_JOURNAL_RECONCILIATION_AUTHORIZATION,
+  POST_0016_JOURNAL_RECONCILIATION_MODE,
+  POST_0016_RECOVERY_HISTORY,
+  reconcileRuntimeJournalPost0016,
+  verifyPost0016ReconciliationTarget,
+} from "../../scripts/database/reconcile-runtime-journal-post0016";
 import type { BuyerLegalContextInput } from "@/lib/marketplace/buyer-legal-context";
 import {
   POST_0007_RECONCILIATION_AUTHORIZATION,
@@ -804,6 +811,169 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
     },
   );
+
+  await t.test("POST0016 absent runtime journal reconciliation: guarded disposable PostgreSQL proof", async () => {
+    const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    const reconciliationEnv = {
+      ...process.env,
+      DATABASE_URL: testDatabaseUrl,
+      RUNTIME_MIGRATION_TARGET: "production",
+      RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "localhost",
+      RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "prodref",
+      RUNTIME_MIGRATION_RECONCILIATION: POST_0016_JOURNAL_RECONCILIATION_MODE,
+      RUNTIME_MIGRATION_WRITE_AUTHORIZATION: POST_0016_JOURNAL_RECONCILIATION_AUTHORIZATION,
+    };
+    const runReconciliation = (afterJournalCreated?: () => Promise<void>) =>
+      reconcileRuntimeJournalPost0016(reconciliationEnv, { afterJournalCreated });
+    const runtimeExists = async () => {
+      const result = await pool.query<{ exists: boolean }>(
+        `SELECT EXISTS (SELECT 1 FROM pg_namespace WHERE nspname = 'drizzle_runtime') AS exists`,
+      );
+      return result.rows[0].exists;
+    };
+    const physicalState = async () => {
+      const metadata = await fetchLiveSchemaMetadata(pool);
+      return {
+        state: classifyRuntimeTarget(metadata.fingerprint, metadata.publicTables, metadata.security).state,
+        signature: JSON.stringify(metadata),
+      };
+    };
+    const setupPhysicalPrefix = async (count: number) => {
+      await cleanDB();
+      for (const migration of diskMigrations.slice(0, count)) {
+        for (const statement of migration.sql) await pool.query(statement);
+      }
+      await pool.query(`CREATE SCHEMA IF NOT EXISTS supabase_migrations`);
+      await pool.query(`CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version varchar(14) PRIMARY KEY, name text NOT NULL)`);
+      await pool.query(`TRUNCATE supabase_migrations.schema_migrations`);
+      for (const [version, name] of POST_0016_RECOVERY_HISTORY) {
+        await pool.query(
+          `INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ($1, $2)`,
+          [version, name],
+        );
+      }
+    };
+    const assertNoRuntimeWrite = async () => assert.strictEqual(await runtimeExists(), false);
+
+    assert.strictEqual(POST_0016_RECOVERY_HISTORY.length, 17);
+    assert.strictEqual(POST_0016_RECOVERY_HISTORY[0][0], "20260917074408");
+    assert.strictEqual(POST_0016_RECOVERY_HISTORY[16][1], "emergency_recovery_runtime_0016_buyer_order_ownership");
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "otherref" }),
+      /BLOCKED_DATABASE_REF_MISMATCH/,
+    );
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "localhost" }),
+      /BLOCKED_FORBIDDEN_DATABASE_TARGET/,
+    );
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "localhost", RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "localhost" }),
+      /BLOCKED_EXPECTED_REF_IS_FORBIDDEN_REF/,
+    );
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_WRITE_AUTHORIZATION: "wrong" }),
+      /BLOCKED_RECONCILIATION_AUTHORIZATION_INVALID/,
+    );
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_WRITE_AUTHORIZATION: undefined }),
+      /BLOCKED_RECONCILIATION_AUTHORIZATION_INVALID/,
+    );
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_TARGET: "development" }),
+      /BLOCKED_TARGET_NOT_PRODUCTION/,
+    );
+    assert.throws(
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_RECONCILIATION: "wrong" }),
+      /BLOCKED_RECONCILIATION_MODE_INVALID/,
+    );
+
+    await setupPhysicalPrefix(17);
+    const before = await physicalState();
+    assert.strictEqual(before.state, "EXACT_EXISTING_POST_0016");
+    await assertNoRuntimeWrite();
+    await pool.query(
+      `INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ('20200101000000', 'unrelated_older_migration')`,
+    );
+    assert.strictEqual(await runReconciliation(), "RECONCILED");
+    const after = await physicalState();
+    assert.strictEqual(after.state, "EXACT_EXISTING_POST_0016");
+    assert.strictEqual(after.signature, before.signature, "public fingerprint must remain identical");
+    const journal = await pool.query<{ hash: string; created_at: string }>(
+      `SELECT hash, created_at FROM drizzle_runtime.__drizzle_migrations ORDER BY created_at`,
+    );
+    assert.strictEqual(journal.rows.length, 17);
+    for (let i = 0; i < 17; i++) {
+      assert.strictEqual(journal.rows[i].hash, diskMigrations[i].hash);
+      assert.strictEqual(String(journal.rows[i].created_at), String(diskMigrations[i].folderMillis));
+    }
+    assert.strictEqual(await runReconciliation(), "ALREADY_RECONCILED");
+    const replayCount = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(replayCount.rows[0].count, 17);
+    await runMigrations(process.env);
+    assert.strictEqual((await physicalState()).state, "EXACT_EXISTING_POST_0019");
+    const terminalCount = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(terminalCount.rows[0].count, 20);
+
+    for (const [count, expectedState] of [[16, "EXACT_EXISTING_POST_0015"], [18, "EXACT_EXISTING_POST_0017"]] as const) {
+      await setupPhysicalPrefix(count);
+      assert.strictEqual((await physicalState()).state, expectedState);
+      await assert.rejects(runReconciliation, /BLOCKED_PHYSICAL_STATE_/);
+      await assertNoRuntimeWrite();
+    }
+
+    await setupPhysicalPrefix(17);
+    await pool.query(`ALTER TABLE public.offers ADD COLUMN reconciliation_drift text`);
+    assert.strictEqual((await physicalState()).state, "PARTIAL_OR_DRIFTED");
+    await assert.rejects(runReconciliation, /BLOCKED_PHYSICAL_STATE_PARTIAL_OR_DRIFTED/);
+    await assertNoRuntimeWrite();
+
+    await setupPhysicalPrefix(17);
+    await pool.query(`DELETE FROM supabase_migrations.schema_migrations WHERE version = $1`, [POST_0016_RECOVERY_HISTORY[8][0]]);
+    await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_COUNT/);
+    await assertNoRuntimeWrite();
+
+    await setupPhysicalPrefix(17);
+    await pool.query(
+      `UPDATE supabase_migrations.schema_migrations SET name = 'emergency_recovery_runtime_0010_wrong' WHERE version = $1`,
+      [POST_0016_RECOVERY_HISTORY[10][0]],
+    );
+    await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_MISMATCH/);
+    await assertNoRuntimeWrite();
+    await pool.query(
+      `UPDATE supabase_migrations.schema_migrations
+          SET name = CASE version WHEN $1 THEN $3 WHEN $2 THEN $4 ELSE name END
+        WHERE version IN ($1, $2)`,
+      [POST_0016_RECOVERY_HISTORY[10][0], POST_0016_RECOVERY_HISTORY[11][0], POST_0016_RECOVERY_HISTORY[11][1], POST_0016_RECOVERY_HISTORY[10][1]],
+    );
+    await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_MISMATCH/);
+    await assertNoRuntimeWrite();
+
+    await setupPhysicalPrefix(17);
+    await pool.query(`CREATE SCHEMA drizzle_runtime`);
+    await pool.query(`CREATE TABLE drizzle_runtime.__drizzle_migrations (id SERIAL PRIMARY KEY, hash text NOT NULL, created_at bigint)`);
+    await assert.rejects(runReconciliation, /BLOCKED_EXISTING_RUNTIME_JOURNAL/);
+    const emptyJournal = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(emptyJournal.rows[0].count, 0);
+    for (const migration of diskMigrations.slice(0, 17)) {
+      await pool.query(
+        `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+        [migration.hash, migration.folderMillis],
+      );
+    }
+    await pool.query(`UPDATE drizzle_runtime.__drizzle_migrations SET hash = 'wrong' WHERE created_at = $1`, [diskMigrations[8].folderMillis]);
+    await assert.rejects(runReconciliation, /BLOCKED_EXISTING_RUNTIME_JOURNAL/);
+    const badJournal = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
+    assert.strictEqual(badJournal.rows[0].count, 17);
+
+    await setupPhysicalPrefix(17);
+    const rollbackBefore = await physicalState();
+    await assert.rejects(
+      () => runReconciliation(async () => { throw new Error("INJECTED_PRE_COMMIT_FAILURE"); }),
+      /INJECTED_PRE_COMMIT_FAILURE/,
+    );
+    await assertNoRuntimeWrite();
+    assert.deepStrictEqual(await physicalState(), rollbackBefore);
+  });
 
   await t.test("PATH B: CURRENT POST-0002 -> terminal POST-0014", async () => {
     await setupPost0002();
