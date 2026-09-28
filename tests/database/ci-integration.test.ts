@@ -15,7 +15,6 @@ import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import {
   POST_0016_JOURNAL_RECONCILIATION_AUTHORIZATION,
   POST_0016_JOURNAL_RECONCILIATION_MODE,
-  POST_0016_RECOVERY_HISTORY,
   reconcileRuntimeJournalPost0016,
   verifyPost0016ReconciliationTarget,
 } from "../../scripts/database/reconcile-runtime-journal-post0016";
@@ -814,6 +813,26 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
   await t.test("POST0016 absent runtime journal reconciliation: guarded disposable PostgreSQL proof", async () => {
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
+    // Independent Owner-reviewed production evidence, never imported from the reconciler.
+    const OWNER_REVIEWED_POST0016_RECOVERY_HISTORY = [
+      ["20260917074408", "emergency_recovery_0000_runtime_baseline"],
+      ["20260917074429", "emergency_recovery_0001_rfq_workflow_hardening"],
+      ["20260917074446", "emergency_recovery_0002_seller_identity_56b1"],
+      ["20260917085410", "emergency_recovery_runtime_0003_prod_legacy_offer_reconciliation"],
+      ["20260917085417", "emergency_recovery_runtime_0004_seller_registered_address"],
+      ["20260917085458", "emergency_recovery_runtime_0005_marketplace_order_56b2a"],
+      ["20260917085516", "emergency_recovery_runtime_0006_seller_verification_evidence"],
+      ["20260917085523", "emergency_recovery_runtime_0007_marketplace_order_rls_hardening"],
+      ["20260917085537", "emergency_recovery_runtime_0008_verification_event_function_search_path_hardening"],
+      ["20260917085615", "emergency_recovery_runtime_0009_partner_agreement_evidence"],
+      ["20260917085624", "emergency_recovery_runtime_0010_offer_media_foundation"],
+      ["20260917085639", "emergency_recovery_runtime_0011_partner_tax_canonical"],
+      ["20260917085646", "emergency_recovery_runtime_0012_marketplace_order_buyer_contact_snapshot"],
+      ["20260917085657", "emergency_recovery_runtime_0013_partner_membership"],
+      ["20260917085709", "emergency_recovery_runtime_0014_seller_acceptance_sla"],
+      ["20260917085718", "emergency_recovery_runtime_0015_notification_outbox"],
+      ["20260917085725", "emergency_recovery_runtime_0016_buyer_order_ownership"],
+    ] as const;
     const reconciliationEnv = {
       ...process.env,
       DATABASE_URL: testDatabaseUrl,
@@ -846,7 +865,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       await pool.query(`CREATE SCHEMA IF NOT EXISTS supabase_migrations`);
       await pool.query(`CREATE TABLE IF NOT EXISTS supabase_migrations.schema_migrations (version varchar(14) PRIMARY KEY, name text NOT NULL)`);
       await pool.query(`TRUNCATE supabase_migrations.schema_migrations`);
-      for (const [version, name] of POST_0016_RECOVERY_HISTORY) {
+      for (const [version, name] of OWNER_REVIEWED_POST0016_RECOVERY_HISTORY) {
         await pool.query(
           `INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ($1, $2)`,
           [version, name],
@@ -855,9 +874,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     };
     const assertNoRuntimeWrite = async () => assert.strictEqual(await runtimeExists(), false);
 
-    assert.strictEqual(POST_0016_RECOVERY_HISTORY.length, 17);
-    assert.strictEqual(POST_0016_RECOVERY_HISTORY[0][0], "20260917074408");
-    assert.strictEqual(POST_0016_RECOVERY_HISTORY[16][1], "emergency_recovery_runtime_0016_buyer_order_ownership");
+    const diskJournal = JSON.parse(fs.readFileSync(`${MIGRATIONS_DIR}/meta/_journal.json`, "utf8")) as { entries: { tag: string }[] };
+    assert.strictEqual(OWNER_REVIEWED_POST0016_RECOVERY_HISTORY.length, 17);
+    assert.strictEqual(OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[0][1], "emergency_recovery_0000_runtime_baseline");
+    assert.strictEqual(diskJournal.entries[0].tag, "0000_production_runtime_baseline");
+    assert.notStrictEqual(OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[0][1], `emergency_recovery_${diskJournal.entries[0].tag}`);
     assert.throws(
       () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "otherref" }),
       /BLOCKED_DATABASE_REF_MISMATCH/,
@@ -891,6 +912,16 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const before = await physicalState();
     assert.strictEqual(before.state, "EXACT_EXISTING_POST_0016");
     await assertNoRuntimeWrite();
+    await pool.query(
+      `UPDATE supabase_migrations.schema_migrations SET name = 'emergency_recovery_0000_production_runtime_baseline' WHERE version = $1`,
+      [OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[0][0]],
+    );
+    await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_MISMATCH/);
+    await assertNoRuntimeWrite();
+    await pool.query(
+      `UPDATE supabase_migrations.schema_migrations SET name = $2 WHERE version = $1`,
+      [...OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[0]],
+    );
     await pool.query(
       `INSERT INTO supabase_migrations.schema_migrations (version, name) VALUES ('20200101000000', 'unrelated_older_migration')`,
     );
@@ -928,14 +959,14 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await assertNoRuntimeWrite();
 
     await setupPhysicalPrefix(17);
-    await pool.query(`DELETE FROM supabase_migrations.schema_migrations WHERE version = $1`, [POST_0016_RECOVERY_HISTORY[8][0]]);
+    await pool.query(`DELETE FROM supabase_migrations.schema_migrations WHERE version = $1`, [OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[8][0]]);
     await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_COUNT/);
     await assertNoRuntimeWrite();
 
     await setupPhysicalPrefix(17);
     await pool.query(
       `UPDATE supabase_migrations.schema_migrations SET name = 'emergency_recovery_runtime_0010_wrong' WHERE version = $1`,
-      [POST_0016_RECOVERY_HISTORY[10][0]],
+      [OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[10][0]],
     );
     await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_MISMATCH/);
     await assertNoRuntimeWrite();
@@ -943,7 +974,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       `UPDATE supabase_migrations.schema_migrations
           SET name = CASE version WHEN $1 THEN $3 WHEN $2 THEN $4 ELSE name END
         WHERE version IN ($1, $2)`,
-      [POST_0016_RECOVERY_HISTORY[10][0], POST_0016_RECOVERY_HISTORY[11][0], POST_0016_RECOVERY_HISTORY[11][1], POST_0016_RECOVERY_HISTORY[10][1]],
+      [OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[10][0], OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[11][0], OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[11][1], OWNER_REVIEWED_POST0016_RECOVERY_HISTORY[10][1]],
     );
     await assert.rejects(runReconciliation, /BLOCKED_RECOVERY_HISTORY_MISMATCH/);
     await assertNoRuntimeWrite();

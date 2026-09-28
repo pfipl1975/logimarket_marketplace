@@ -23,23 +23,23 @@ export const POST_0016_JOURNAL_RECONCILIATION_AUTHORIZATION =
 // These versions and names are the Owner-reviewed Supabase recovery evidence.
 // Migration hashes and timestamps always come from the checked-out runtime files.
 export const POST_0016_RECOVERY_HISTORY = [
-  ["20260917074408", "emergency_recovery_0000_production_runtime_baseline"],
-  ["20260917074429", "emergency_recovery_0001_rfq_workflow_hardening"],
-  ["20260917074446", "emergency_recovery_0002_seller_identity_56b1"],
-  ["20260917085410", "emergency_recovery_runtime_0003_prod_legacy_offer_reconciliation"],
-  ["20260917085417", "emergency_recovery_runtime_0004_seller_registered_address"],
-  ["20260917085458", "emergency_recovery_runtime_0005_marketplace_order_56b2a"],
-  ["20260917085516", "emergency_recovery_runtime_0006_seller_verification_evidence"],
-  ["20260917085523", "emergency_recovery_runtime_0007_marketplace_order_rls_hardening"],
-  ["20260917085537", "emergency_recovery_runtime_0008_verification_event_function_search_path_hardening"],
-  ["20260917085615", "emergency_recovery_runtime_0009_partner_agreement_evidence"],
-  ["20260917085624", "emergency_recovery_runtime_0010_offer_media_foundation"],
-  ["20260917085639", "emergency_recovery_runtime_0011_partner_tax_canonical"],
-  ["20260917085646", "emergency_recovery_runtime_0012_marketplace_order_buyer_contact_snapshot"],
-  ["20260917085657", "emergency_recovery_runtime_0013_partner_membership"],
-  ["20260917085709", "emergency_recovery_runtime_0014_seller_acceptance_sla"],
-  ["20260917085718", "emergency_recovery_runtime_0015_notification_outbox"],
-  ["20260917085725", "emergency_recovery_runtime_0016_buyer_order_ownership"],
+  { recoveryVersion: "20260917074408", recoveryName: "emergency_recovery_0000_runtime_baseline", runtimeTag: "0000_production_runtime_baseline" },
+  { recoveryVersion: "20260917074429", recoveryName: "emergency_recovery_0001_rfq_workflow_hardening", runtimeTag: "0001_rfq_workflow_hardening" },
+  { recoveryVersion: "20260917074446", recoveryName: "emergency_recovery_0002_seller_identity_56b1", runtimeTag: "0002_seller_identity_56b1" },
+  { recoveryVersion: "20260917085410", recoveryName: "emergency_recovery_runtime_0003_prod_legacy_offer_reconciliation", runtimeTag: "0003_prod_legacy_offer_reconciliation" },
+  { recoveryVersion: "20260917085417", recoveryName: "emergency_recovery_runtime_0004_seller_registered_address", runtimeTag: "0004_seller_registered_address" },
+  { recoveryVersion: "20260917085458", recoveryName: "emergency_recovery_runtime_0005_marketplace_order_56b2a", runtimeTag: "0005_marketplace_order_56b2a" },
+  { recoveryVersion: "20260917085516", recoveryName: "emergency_recovery_runtime_0006_seller_verification_evidence", runtimeTag: "0006_seller_verification_evidence" },
+  { recoveryVersion: "20260917085523", recoveryName: "emergency_recovery_runtime_0007_marketplace_order_rls_hardening", runtimeTag: "0007_marketplace_order_rls_hardening" },
+  { recoveryVersion: "20260917085537", recoveryName: "emergency_recovery_runtime_0008_verification_event_function_search_path_hardening", runtimeTag: "0008_verification_event_function_search_path_hardening" },
+  { recoveryVersion: "20260917085615", recoveryName: "emergency_recovery_runtime_0009_partner_agreement_evidence", runtimeTag: "0009_partner_agreement_evidence" },
+  { recoveryVersion: "20260917085624", recoveryName: "emergency_recovery_runtime_0010_offer_media_foundation", runtimeTag: "0010_offer_media_foundation" },
+  { recoveryVersion: "20260917085639", recoveryName: "emergency_recovery_runtime_0011_partner_tax_canonical", runtimeTag: "0011_partner_tax_canonical" },
+  { recoveryVersion: "20260917085646", recoveryName: "emergency_recovery_runtime_0012_marketplace_order_buyer_contact_snapshot", runtimeTag: "0012_marketplace_order_buyer_contact_snapshot" },
+  { recoveryVersion: "20260917085657", recoveryName: "emergency_recovery_runtime_0013_partner_membership", runtimeTag: "0013_partner_membership" },
+  { recoveryVersion: "20260917085709", recoveryName: "emergency_recovery_runtime_0014_seller_acceptance_sla", runtimeTag: "0014_seller_acceptance_sla" },
+  { recoveryVersion: "20260917085718", recoveryName: "emergency_recovery_runtime_0015_notification_outbox", runtimeTag: "0015_notification_outbox" },
+  { recoveryVersion: "20260917085725", recoveryName: "emergency_recovery_runtime_0016_buyer_order_ownership", runtimeTag: "0016_buyer_order_ownership" },
 ] as const;
 
 const EXPECTED_PREFIX_LENGTH = POST_0016_RECOVERY_HISTORY.length;
@@ -112,7 +112,7 @@ function readCanonicalDiskChain(): {
     tags.add(entry.tag);
     previousWhen = entry.when;
     if (i < EXPECTED_PREFIX_LENGTH) {
-      const expectedTag = POST_0016_RECOVERY_HISTORY[i][1].replace(/^emergency_recovery_(?:runtime_)?/, "");
+      const expectedTag = POST_0016_RECOVERY_HISTORY[i].runtimeTag;
       if (entry.tag !== expectedTag) blocked("DISK_PREFIX_INVALID");
     }
   }
@@ -168,7 +168,7 @@ async function validateRecoveryHistory(client: PoolClient): Promise<void> {
   );
   if (result.rows.length !== EXPECTED_PREFIX_LENGTH) blocked("RECOVERY_HISTORY_COUNT");
   for (let i = 0; i < EXPECTED_PREFIX_LENGTH; i++) {
-    if (String(result.rows[i].version) !== POST_0016_RECOVERY_HISTORY[i][0] || result.rows[i].name !== POST_0016_RECOVERY_HISTORY[i][1]) {
+    if (String(result.rows[i].version) !== POST_0016_RECOVERY_HISTORY[i].recoveryVersion || result.rows[i].name !== POST_0016_RECOVERY_HISTORY[i].recoveryName) {
       blocked("RECOVERY_HISTORY_MISMATCH");
     }
   }
