@@ -110,6 +110,9 @@ async function run() {
     const { insertOfferMediaFixtures } = await import("./public-offer-media-fixtures");
     await insertOfferMediaFixtures(client);
 
+    const { insertPublicLegalFixtures } = await import("./public-legal-fixtures");
+    await insertPublicLegalFixtures(client);
+
     await client.query("COMMIT");
     console.log("E2E fixtures applied successfully.");
   } catch (error) {

@@ -9,9 +9,10 @@ import type { Locale } from "@/lib/i18n/types";
 
 interface PrivacyPolicyPageProps {
   locale: Locale;
+  showCanonicalNotice?: boolean;
 }
 
-export async function PrivacyPolicyPage({ locale }: PrivacyPolicyPageProps) {
+export async function PrivacyPolicyPage({ locale, showCanonicalNotice = false }: PrivacyPolicyPageProps) {
   const dict = await getDictionary(locale);
   const homePath = getHomePath(locale);
   const privacyPath = getPrivacyPolicyPath(locale);
@@ -71,6 +72,13 @@ export async function PrivacyPolicyPage({ locale }: PrivacyPolicyPageProps) {
             </h1>
             <p className="mt-2 text-xs text-muted-foreground">{p.lastUpdated}</p>
           </div>
+
+          {showCanonicalNotice && locale === "pl" && (
+            <p className="mt-6 border border-[#d9dde2] bg-white p-5 text-sm leading-relaxed text-brand-navy">
+              Nowa Polityka Prywatności v1.0 została opublikowana i zacznie obowiązywać 1 października 2026 r.{" "}
+              <Link href="/dokumenty-prawne/polityka-prywatnosci" className="font-semibold text-brand-teal hover:underline">Zobacz nową wersję</Link>
+            </p>
+          )}
 
           {/* Quick Table of Contents */}
           <div className="mt-6 border border-[#d9dde2] bg-[#f8f9fa] p-5">

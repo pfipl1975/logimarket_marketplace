@@ -7,6 +7,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getHomeLocaleLinks, getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import { getPublicLegalCenter, type PublicLegalDocument } from "@/lib/legal/public-legal-center";
+import { getMatchingPublicLegalDelivery } from "@/lib/legal/public-legal-documents";
 import { absoluteUrl } from "@/lib/seo/urls";
 
 export const dynamic = "force-dynamic";
@@ -32,10 +33,16 @@ function Hash({ value }: { value: string }) {
   return <code className="block min-w-0 break-all font-mono text-xs leading-relaxed text-brand-navy select-text">{value}</code>;
 }
 
-function DocumentCard({ document }: { document: PublicLegalDocument }) {
+function DocumentCard({ document, state }: { document: PublicLegalDocument; state: "current" | "upcoming" | "history" }) {
+  const delivery = getMatchingPublicLegalDelivery(document);
   return (
     <li className="min-w-0 border border-[#d9dde2] bg-white p-5 sm:p-6">
-      <h3 className="text-base font-bold text-brand-navy">{document.title}</h3>
+      <h3 className="text-base font-bold text-brand-navy">
+        {delivery ? <Link href={`/dokumenty-prawne/${delivery.slug}`} className="hover:text-brand-teal hover:underline">{document.title}</Link> : document.title}
+      </h3>
+      <p className="mt-2 text-sm font-semibold text-brand-navy">
+        {state === "current" ? "Obowiązuje" : state === "upcoming" ? <>Obowiązuje od <EffectiveDate value={document.effectiveFrom} /></> : document.status === "archived" ? "Archiwalna wersja" : "Zastąpiona wersja"}
+      </p>
       <dl className="mt-4 grid gap-x-6 gap-y-3 text-sm sm:grid-cols-3">
         <div><dt className="text-muted-foreground">Wersja</dt><dd className="font-medium text-brand-navy">{document.version}</dd></div>
         <div><dt className="text-muted-foreground">Obowiązuje od</dt><dd className="font-medium text-brand-navy"><EffectiveDate value={document.effectiveFrom} /></dd></div>
@@ -45,6 +52,12 @@ function DocumentCard({ document }: { document: PublicLegalDocument }) {
           <dd className="mt-1 min-w-0">{document.sha256 ? <Hash value={document.sha256} /> : <span className="text-muted-foreground">Niedostępny</span>}</dd>
         </div>
       </dl>
+      {delivery && (
+        <div className="mt-5 flex flex-wrap gap-3 text-sm font-semibold">
+          <a href={delivery.pdfPath} target="_blank" rel="noopener noreferrer" className="bg-brand-teal px-4 py-2.5 text-white hover:bg-brand-navy">Otwórz dokument</a>
+          <a href={delivery.pdfPath} download className="border border-brand-teal px-4 py-2.5 text-brand-teal hover:bg-brand-light-gray">Pobierz PDF</a>
+        </div>
+      )}
     </li>
   );
 }
@@ -74,7 +87,11 @@ export default async function Page() {
           <section aria-labelledby="current-heading">
             <h2 id="current-heading" className="text-xl font-bold text-brand-navy">Aktualne dokumenty</h2>
             {center.currentDocuments.length > 0 ? (
-              <ul className="mt-4 space-y-4">{center.currentDocuments.map((document) => <DocumentCard key={`${document.title}:${document.language}:${document.version}`} document={document} />)}</ul>
+              <ul className="mt-4 space-y-4">{center.currentDocuments.map((document) => <DocumentCard key={`${document.code}:${document.language}:${document.version}`} document={document} state="current" />)}</ul>
+            ) : center.upcomingDocuments.length > 0 ? (
+              <p className="mt-4 border border-[#d9dde2] bg-white p-5 text-sm text-brand-navy">
+                Pakiet dokumentów prawnych v{center.upcomingPacks[0]?.version ?? center.upcomingDocuments[0].version} został opublikowany i zacznie obowiązywać <EffectiveDate value={center.upcomingDocuments[0].effectiveFrom} />.
+              </p>
             ) : (
               <div className="mt-4 border border-[#d9dde2] bg-white p-6">
                 <FileText aria-hidden="true" className="h-7 w-7 text-brand-teal" />
@@ -85,21 +102,29 @@ export default async function Page() {
             )}
           </section>
 
+          <section aria-labelledby="upcoming-heading">
+            <h2 id="upcoming-heading" className="text-xl font-bold text-brand-navy">Nadchodzące dokumenty</h2>
+            {center.upcomingDocuments.length > 0 ? (
+              <ul className="mt-4 space-y-4">{center.upcomingDocuments.map((document) => <DocumentCard key={`${document.code}:${document.language}:${document.version}`} document={document} state="upcoming" />)}</ul>
+            ) : <p className="mt-4 border border-[#d9dde2] bg-white p-5 text-sm text-muted-foreground">Nie ma obecnie nadchodzących dokumentów.</p>}
+          </section>
+
           <section aria-labelledby="history-heading">
             <h2 id="history-heading" className="text-xl font-bold text-brand-navy">Historia wersji</h2>
             {center.history.length > 0 ? (
               <details className="mt-4 border border-[#d9dde2] bg-white p-5 sm:p-6">
                 <summary className="cursor-pointer text-sm font-semibold text-brand-teal">Pokaż wcześniejsze wersje ({center.history.length})</summary>
-                <ul className="mt-5 space-y-4">{center.history.map((document) => <DocumentCard key={`${document.title}:${document.language}:${document.version}`} document={document} />)}</ul>
+                <ul className="mt-5 space-y-4">{center.history.map((document) => <DocumentCard key={`${document.code}:${document.language}:${document.version}`} document={document} state="history" />)}</ul>
               </details>
             ) : <p className="mt-4 border border-[#d9dde2] bg-white p-5 text-sm text-muted-foreground">Nie ma jeszcze wcześniejszych publicznych wersji dokumentów.</p>}
           </section>
 
           <section aria-labelledby="pack-heading">
             <h2 id="pack-heading" className="text-xl font-bold text-brand-navy">Integralność / pakiet dokumentów</h2>
-            {center.packs.length > 0 ? (
-              <ul className="mt-4 space-y-4">{center.packs.map((pack) => (
+            {center.currentPacks.length + center.upcomingPacks.length > 0 ? (
+              <ul className="mt-4 space-y-4">{[...center.currentPacks.map((pack) => ({ pack, state: "current" as const })), ...center.upcomingPacks.map((pack) => ({ pack, state: "upcoming" as const }))].map(({ pack, state }) => (
                 <li key={`${pack.language}:${pack.version}`} className="min-w-0 border border-[#d9dde2] bg-white p-5 sm:p-6">
+                  <p className="mb-4 text-sm font-semibold text-brand-navy">{state === "current" ? "Pakiet obowiązuje" : <>Pakiet obowiązuje od <EffectiveDate value={pack.effectiveFrom} /></>}</p>
                   <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
                     <div><dt className="text-muted-foreground">Wersja pakietu</dt><dd className="font-medium text-brand-navy">{pack.version}</dd></div>
                     <div><dt className="text-muted-foreground">Język</dt><dd className="font-medium text-brand-navy">{pack.language}</dd></div>

@@ -8,6 +8,7 @@ import {
   absoluteUrl,
 } from "@/lib/seo/urls";
 import { getGlossaryTerms } from "@/lib/glossary";
+import { PUBLIC_LEGAL_DOCUMENTS } from "@/lib/legal/public-legal-documents";
 import {
   getLandingSitemapEntries,
   getLandingLanguageLinks,
@@ -165,10 +166,17 @@ export function getCoreSitemapEntries(): MetadataRoute.Sitemap {
     ...deTerms.map((term) => ({ url: absoluteUrl(`/de/logistik-lexikon/${term.slug}`), changeFrequency: "monthly" as const, priority: 0.6 })),
   ];
 
+  const publicLegalEntries: MetadataRoute.Sitemap = PUBLIC_LEGAL_DOCUMENTS.map((document) => ({
+    url: absoluteUrl(`/dokumenty-prawne/${document.slug}`),
+    changeFrequency: "monthly",
+    priority: 0.5,
+  }));
+
   return deduplicateAndSort([
     ...homepageEntries,
     ...catalogRootEntries,
     { url: absoluteUrl("/dokumenty-prawne"), changeFrequency: "monthly", priority: 0.5 },
+    ...publicLegalEntries,
     ...solutionsIndexEntries,
     ...landingEntries,
     ...glossaryEntries,

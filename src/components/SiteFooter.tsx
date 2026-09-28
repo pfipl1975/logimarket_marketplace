@@ -2,6 +2,7 @@ import Link from "next/link";
 import Logo from "@/components/Logo";
 import type { Locale } from "@/lib/i18n/config";
 import { getHomePath, getGlossaryPath, getPrivacyPolicyPath } from "@/lib/i18n/paths";
+import { getPublicLegalDeliveryByCode } from "@/lib/legal/public-legal-documents";
 import type { Dictionary } from "@/lib/i18n/types";
 
 interface SiteFooterProps {
@@ -40,14 +41,16 @@ export function SiteFooter({
                 </Link>
               </li>
             )}
-            <li>
-              <Link className="hover:text-white transition-colors" href={privacyHref}>
-                {footerLabels.privacyPolicy}
-              </Link>
-            </li>
             {locale === "pl" && (
-              <li><Link className="hover:text-white transition-colors" href="/dokumenty-prawne">Dokumenty prawne</Link></li>
+              <>
+                <li><Link className="hover:text-white transition-colors" href={`/dokumenty-prawne/${getPublicLegalDeliveryByCode("MARKETPLACE_TERMS")!.slug}`}>Regulamin Marketplace</Link></li>
+                <li><Link className="hover:text-white transition-colors" href={privacyHref}>{footerLabels.privacyPolicy}</Link></li>
+                <li><Link className="hover:text-white transition-colors" href={`/dokumenty-prawne/${getPublicLegalDeliveryByCode("COOKIE_NOTICE")!.slug}`}>Cookies</Link></li>
+                <li><Link className="hover:text-white transition-colors" href={`/dokumenty-prawne/${getPublicLegalDeliveryByCode("RETURNS_COMPLAINTS")!.slug}`}>Reklamacje i zwroty</Link></li>
+                <li><Link className="hover:text-white transition-colors" href="/dokumenty-prawne">Dokumenty prawne</Link></li>
+              </>
             )}
+            {locale !== "pl" && <li><Link className="hover:text-white transition-colors" href={privacyHref}>{footerLabels.privacyPolicy}</Link></li>}
           </ul>
         </div>
         <div>
