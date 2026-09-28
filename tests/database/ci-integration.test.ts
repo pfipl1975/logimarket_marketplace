@@ -863,7 +863,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       /BLOCKED_DATABASE_REF_MISMATCH/,
     );
     assert.throws(
-      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "localhost" }),
+      () => verifyPost0016ReconciliationTarget({ ...reconciliationEnv, RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: "otherref", RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: "localhost" }),
       /BLOCKED_FORBIDDEN_DATABASE_TARGET/,
     );
     assert.throws(
