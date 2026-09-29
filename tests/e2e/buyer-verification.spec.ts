@@ -112,6 +112,11 @@ test("Admin dashboard shows Buyer KPI and opens Buyer list", async ({ adminPage 
   await buyerKpi.click();
   await expect(adminPage).toHaveURL(/\/admin\/kupujacy$/);
   await expect(adminPage.getByRole("row", { name: /E2E Synthetic Buyer Detail/ })).toBeVisible();
+  await adminPage.goto("/admin");
+  const pendingStatus = adminPage.getByRole("link", { name: /Dane zadeklarowane.*3/ });
+  await expect(pendingStatus).toHaveAttribute("href", "/admin/kupujacy");
+  await pendingStatus.click();
+  await expect(adminPage).toHaveURL(/\/admin\/kupujacy$/);
 });
 
 test("Buyer detail distinguishes declared identifiers from trusted evidence and renders history", async ({ adminPage }) => {

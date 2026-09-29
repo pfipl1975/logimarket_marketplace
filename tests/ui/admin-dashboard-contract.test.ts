@@ -109,6 +109,7 @@ test("Buyer dashboard KPI and locale routes", () => {
   const localized = fs.readFileSync("src/app/(localized)/[locale]/admin/page.tsx", "utf8");
   assert.match(page, /counts\.buyers\.total/);
   assert.match(page, /t\.buyerStatus\[status\]/);
+  assert.match(page, /\(\["pending", "verified", "rejected", "revoked"\] as const\)\.map\(\(status\) => \(\s*<Link key=\{status\} href=\{routes\.buyers\}/);
   assert.match(pl, /buyers: "\/admin\/kupujacy"/);
   assert.match(localized, /buyers: `\/\$\{p\.locale\}\/admin\/buyers`/);
 });

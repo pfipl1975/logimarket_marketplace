@@ -181,10 +181,10 @@ export async function AdminDashboardPage({
           </h3>
           <div className="space-y-2 text-sm text-brand-navy">
             {(["pending", "verified", "rejected", "revoked"] as const).map((status) => (
-              <div key={status} className="flex justify-between gap-3">
+              <Link key={status} href={routes.buyers} className="flex justify-between gap-3 hover:text-brand-teal focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-teal">
                 <span>{t.buyerStatus[status]}</span>
                 <span className="font-medium">{counts.buyers[status]}</span>
-              </div>
+              </Link>
             ))}
           </div>
         </div>
