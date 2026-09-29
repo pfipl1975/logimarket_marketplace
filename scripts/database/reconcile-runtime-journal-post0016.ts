@@ -92,10 +92,23 @@ function readCanonicalDiskChain(): {
   const folder = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER);
   const journal = JSON.parse(fs.readFileSync(path.join(folder, "meta", "_journal.json"), "utf8")) as DiskJournal;
   const migrations = readMigrationFiles({ migrationsFolder: folder });
-  if (!Array.isArray(journal.entries) || journal.entries.length !== 20 || migrations.length !== 20) {
+  const getBuffer = (tag: string) => fs.readFileSync(path.join(folder, `${tag}.sql`));
+  validateCanonicalDiskChain(journal, migrations, getBuffer);
+  return { journal, migrations, getBuffer };
+}
+
+export function validateCanonicalDiskChain(
+  journal: DiskJournal,
+  migrations: DiskMigration[],
+  getBuffer: (tag: string) => Buffer,
+): void {
+  if (
+    !Array.isArray(journal.entries) ||
+    journal.entries.length !== migrations.length ||
+    journal.entries.length < EXPECTED_PREFIX_LENGTH
+  ) {
     blocked("DISK_CHAIN_LENGTH");
   }
-  const getBuffer = (tag: string) => fs.readFileSync(path.join(folder, `${tag}.sql`));
   const tags = new Set<string>();
   let previousWhen = -1;
   for (let i = 0; i < journal.entries.length; i++) {
@@ -116,7 +129,6 @@ function readCanonicalDiskChain(): {
       if (entry.tag !== expectedTag) blocked("DISK_PREFIX_INVALID");
     }
   }
-  return { journal, migrations, getBuffer };
 }
 
 async function readRuntimePresence(client: PoolClient): Promise<{ schema: boolean; journal: boolean }> {
