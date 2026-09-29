@@ -3,7 +3,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { AccountLifecycleForm } from "@/components/auth/AccountLifecycleForm";
 import { getCurrentUser } from "@/lib/auth/session";
-import { accountPath, safeAccountNext } from "@/lib/auth/account-paths";
+import { accountPath } from "@/lib/auth/account-paths";
+import { accountLandingPath } from "@/lib/buyer-account/paths";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 
@@ -11,7 +12,7 @@ type Kind = "register" | "forgot-password" | "reset-password";
 
 export async function AccountLifecyclePage({ kind, locale, next }: { kind: Kind; locale: Locale; next: string | null }) {
   const user = await getCurrentUser();
-  if (kind !== "reset-password" && user.status === "authenticated") redirect(safeAccountNext(next, locale));
+  if (kind !== "reset-password" && user.status === "authenticated") redirect(accountLandingPath(next, locale));
   const labels = (await getDictionary(locale)).auth;
   const copy = labels.account;
   const validRecovery = kind === "reset-password" && user.status === "authenticated" &&

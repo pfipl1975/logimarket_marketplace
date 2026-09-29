@@ -415,7 +415,41 @@ export const buyerTaxIdentifiers = pgTable("buyer_tax_identifiers", {
   check("chk_buyer_tax_identifier_value", sql`length(btrim(identifier_value)) > 0`),
   check("chk_buyer_tax_identifier_trust_retirement", sql`trusted_by_verification_event_id IS NULL OR retired_at IS NULL`),
   index("idx_buyer_tax_identifiers_active_org").on(t.buyerOrganizationId).where(sql`retired_at IS NULL`),
-  index("idx_buyer_tax_identifiers_active_canonical").on(t.canonicalIdentityClass, t.canonicalIdentifierValue).where(sql`retired_at IS NULL`),
+  uniqueIndex("uq_buyer_tax_identifiers_active_canonical").on(t.canonicalIdentityClass, t.canonicalIdentifierValue).where(sql`retired_at IS NULL`),
+]);
+
+export const buyerOrganizationAddresses = pgTable("buyer_organization_addresses", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  buyerOrganizationId: bigint("buyer_organization_id", { mode: "number" }).notNull(),
+  addressType: varchar("address_type", { length: 20 }).notNull(),
+  street: varchar("street", { length: 255 }).notNull(),
+  buildingNumber: varchar("building_number", { length: 30 }).notNull(),
+  unitNumber: varchar("unit_number", { length: 30 }),
+  postalCode: varchar("postal_code", { length: 6 }).notNull(),
+  city: varchar("city", { length: 100 }).notNull(),
+  countryCode: varchar("country_code", { length: 2 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+  retiredAt: timestamp("retired_at", { withTimezone: true }),
+}, (t) => [
+  foreignKey({ name: "buyer_organization_addresses_organization_fk", columns: [t.buyerOrganizationId], foreignColumns: [buyerOrganizations.id] }).onDelete("restrict").onUpdate("no action"),
+  check("chk_buyer_address_type", sql`address_type = 'registered'`),
+  check("chk_buyer_address_country", sql`country_code ~ '^[A-Z]{2}$'`),
+  check("chk_buyer_address_required", sql`length(btrim(street)) > 0 AND length(btrim(building_number)) > 0 AND length(btrim(city)) > 0`),
+  check("chk_buyer_address_postal_code", sql`postal_code ~ '^[0-9]{2}-[0-9]{3}$'`),
+  uniqueIndex("uq_buyer_address_active_registered").on(t.buyerOrganizationId, t.addressType).where(sql`retired_at IS NULL`),
+]);
+
+export const buyerUserProfiles = pgTable("buyer_user_profiles", {
+  authUserId: uuid("auth_user_id").primaryKey(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  contactEmail: varchar("contact_email", { length: 320 }).notNull(),
+  phone: varchar("phone", { length: 32 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }),
+}, () => [
+  check("chk_buyer_user_profile_required", sql`length(btrim(first_name)) > 0 AND length(btrim(last_name)) > 0 AND length(btrim(contact_email)) > 0 AND length(btrim(phone)) > 0`),
 ]);
 
 export const buyerRegistryIdentifiers = pgTable("buyer_registry_identifiers", {

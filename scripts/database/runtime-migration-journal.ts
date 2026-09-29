@@ -123,6 +123,14 @@ export function validateAppliedMigrationPrefix(
     if (appliedRows.length !== 19) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0018 but journal has ${appliedRows.length} rows)`);
     }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0019") {
+    if (appliedRows.length !== 20) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0019 but journal has ${appliedRows.length} rows)`);
+    }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0020") {
+    if (appliedRows.length !== 21) {
+      throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0020 but journal has ${appliedRows.length} rows)`);
+    }
   } else if (schemaClassificationState === "EXACT_EXISTING") {
     if (appliedRows.length !== diskJournal.entries.length) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is EXACT_EXISTING but journal has ${appliedRows.length} rows)`);

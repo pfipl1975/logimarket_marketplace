@@ -13,6 +13,7 @@ test("public auth navigation state", async (t) => {
     assert.equal(state.showLogin, true);
     assert.equal(state.showPartnerPanel, false);
     assert.equal(state.showLogout, false);
+    assert.equal(state.showAccount, false);
   });
 
   await t.test("authenticated active Partner: Partner Panel visible, logout visible", () => {
@@ -20,6 +21,8 @@ test("public auth navigation state", async (t) => {
     assert.equal(state.showLogin, false);
     assert.equal(state.showPartnerPanel, true);
     assert.equal(state.showLogout, true);
+    assert.equal(state.showAccount, true);
+    assert.equal(state.accountUrl, "/konto");
   });
 
   await t.test("authenticated non-Partner: Partner Panel hidden, logout visible", () => {
@@ -36,6 +39,7 @@ test("public auth navigation state", async (t) => {
 
     const stateEn = getPublicAuthNavigationState(true, true, "en");
     assert.equal(stateEn.partnerUrl, "/en/partner");
+    assert.equal(stateEn.accountUrl, "/en/account");
     assert.doesNotMatch(stateEn.partnerUrl, /\/partner\/\d+/);
   });
 

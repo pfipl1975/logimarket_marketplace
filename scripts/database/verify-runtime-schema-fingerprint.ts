@@ -27,6 +27,7 @@ import {
   FINAL_POST_0016_PRODUCTION_FINGERPRINT,
   FINAL_POST_0017_PRODUCTION_FINGERPRINT,
   FINAL_POST_0018_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0019_PRODUCTION_FINGERPRINT,
   PRODUCTION_FINGERPRINT,
   ColumnContract,
   ConstraintContract,
@@ -80,6 +81,7 @@ export type Queryable = {
 
 export type RuntimeTargetState =
   | "EMPTY"
+  | "EXACT_EXISTING_POST_0020"
   | "EXACT_EXISTING_POST_0019"
   | "EXACT_EXISTING_POST_0018"
   | "EXACT_EXISTING_POST_0017"
@@ -360,7 +362,23 @@ export function normalizeConstraintDefinition(def: string | null | undefined): s
 }
 
 export function normalizeIndexDefinition(expr: string): string {
-  return expr.trim().replace(/\s+/g, " ").toLowerCase();
+  let normalized = expr.trim().replace(/\s+/g, " ").toLowerCase();
+  while (normalized.startsWith("(") && normalized.endsWith(")")) {
+    let depth = 0;
+    let wrapsWholeExpression = true;
+    for (let index = 0; index < normalized.length; index += 1) {
+      const character = normalized[index];
+      if (character === "(") depth += 1;
+      if (character === ")") depth -= 1;
+      if (depth === 0 && index < normalized.length - 1) {
+        wrapsWholeExpression = false;
+        break;
+      }
+    }
+    if (!wrapsWholeExpression || depth !== 0) break;
+    normalized = normalized.slice(1, -1).trim();
+  }
+  return normalized;
 }
 
 // ---------------------------------------------------------------------------
@@ -502,6 +520,12 @@ function compareTableContract(
           `Table ${tableName} index ${ei.name} expressions mismatch`
         );
       }
+      if (ei.isUnique !== undefined && ei.isUnique !== gi.isUnique) {
+        reasons.push(`Table ${tableName} index ${ei.name} uniqueness mismatch`);
+      }
+      if (ei.predicate !== undefined && normalizeIndexDefinition(ei.predicate ?? "") !== normalizeIndexDefinition(gi.predicate ?? "")) {
+        reasons.push(`Table ${tableName} index ${ei.name} predicate mismatch`);
+      }
     }
   }
 }
@@ -587,6 +611,14 @@ export function classifyRuntimeTarget(
   const matchFinal = compareRuntimeFingerprint(actual, allPublicTables, PRODUCTION_FINGERPRINT);
 
   if (matchFinal.isExactMatch) {
+    if (JSON.stringify(effectiveSecurity) === JSON.stringify(POST_0018_SECURITY_CONTRACT)) {
+      return { state: "EXACT_EXISTING_POST_0020", publicTableCount, differences: [] };
+    }
+    return { state: "PARTIAL_OR_DRIFTED", publicTableCount, differences: ["Function security configuration drifted"] };
+  }
+
+  const matchPost0019 = compareRuntimeFingerprint(actual, allPublicTables, FINAL_POST_0019_PRODUCTION_FINGERPRINT);
+  if (matchPost0019.isExactMatch) {
     if (JSON.stringify(effectiveSecurity) === JSON.stringify(POST_0018_SECURITY_CONTRACT)) {
       return { state: "EXACT_EXISTING_POST_0019", publicTableCount, differences: [] };
     }
@@ -887,6 +919,8 @@ export async function fetchLiveSchemaMetadata(
     SELECT t.relname AS table_name,
            i.relname AS index_name,
            am.amname AS index_method,
+           ix.indisunique AS is_unique,
+           pg_get_expr(ix.indpred, ix.indrelid, true) AS index_predicate,
            pg_get_expr(ix.indexprs, ix.indrelid, true) AS index_expressions_expr,
            (SELECT string_agg(a.attname, ', ' ORDER BY x.pos)
             FROM unnest(ix.indkey) WITH ORDINALITY AS x(attnum, pos)
@@ -911,6 +945,8 @@ export async function fetchLiveSchemaMetadata(
     table_name: string;
     index_name: string;
     index_method: string;
+    is_unique: boolean;
+    index_predicate: string | null;
     index_expressions_expr: string | null;
     index_columns: string | null;
   };
@@ -958,6 +994,8 @@ export async function fetchLiveSchemaMetadata(
       name: row.index_name,
       method: row.index_method,
       expressions: row.index_columns || row.index_expressions_expr || "",
+      isUnique: row.is_unique,
+      predicate: row.index_predicate,
     });
   }
 

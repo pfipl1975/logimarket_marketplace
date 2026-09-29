@@ -141,6 +141,13 @@
       "when": 1790446918000,
       "tag": "0019_legal_document_registry",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1790712000000,
+      "tag": "0020_buyer_profile_and_identity_uniqueness",
+      "breakpoints": true
     }
   ]
 }

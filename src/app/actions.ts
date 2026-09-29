@@ -753,8 +753,9 @@ export async function loginUser(
     return { success: false, code: "AUTH_UNAVAILABLE" };
   }
 
-  const { getSafeRedirectUrl } = await import("@/lib/auth/safe-redirect");
-  const redirectUrl = getSafeRedirectUrl(nextPath, locale);
+  const { accountLandingPath } = await import("@/lib/buyer-account/paths");
+  const { accountLocale } = await import("@/lib/auth/account-paths");
+  const redirectUrl = accountLandingPath(nextPath, accountLocale(locale));
 
   revalidatePath("/", "layout");
   redirect(redirectUrl);

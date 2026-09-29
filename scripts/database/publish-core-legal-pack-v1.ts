@@ -230,10 +230,10 @@ export async function publishCoreLegalPackV1(env: Record<string, string | undefi
 
       const before = await fetchLiveSchemaMetadata(client);
       const state = classifyRuntimeTarget(before.fingerprint, before.publicTables, before.security).state;
-      if (state !== "EXACT_EXISTING_POST_0019") blocked(`PHYSICAL_STATE_${state}`);
+      if (state !== "EXACT_EXISTING_POST_0019" && state !== "EXACT_EXISTING_POST_0020") blocked(`PHYSICAL_STATE_${state}`);
       await client.query("LOCK TABLE public.legal_documents, public.legal_document_versions, public.legal_pack_versions, public.legal_pack_documents IN SHARE ROW EXCLUSIVE MODE");
       const applied = await readJournal(client);
-      if (applied.length !== 20) blocked("RUNTIME_JOURNAL_NOT_20");
+      if (applied.length !== (state === "EXACT_EXISTING_POST_0020" ? 21 : 20)) blocked("RUNTIME_JOURNAL_CARDINALITY");
       try {
         validateAppliedMigrationPrefix("production", state, journal, migrations, applied, getBuffer);
       } catch {
@@ -290,7 +290,7 @@ export async function publishCoreLegalPackV1(env: Record<string, string | undefi
       await assertExactPublishedRegistry(client);
       const after = await fetchLiveSchemaMetadata(client);
       if (
-        classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state !== "EXACT_EXISTING_POST_0019" ||
+        classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state !== state ||
         !isDeepStrictEqual(before, after) || !isDeepStrictEqual(applied, await readJournal(client))
       ) blocked("POSTCONDITION_SCHEMA_OR_JOURNAL_CHANGED");
       await client.query("COMMIT");

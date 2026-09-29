@@ -3,7 +3,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
-import { safeAccountNext } from "@/lib/auth/account-paths";
+import { accountLandingPath } from "@/lib/buyer-account/paths";
 
 export const metadata: Metadata = { robots: { index: false, follow: false, nocache: true } };
 
@@ -14,7 +14,7 @@ export default async function LoginPage({
 }) {
   const dictionary = await getDictionary("pl");
   const sp = await searchParams;
-  if ((await getCurrentUser()).status === "authenticated") redirect(safeAccountNext(sp.next, "pl"));
+  if ((await getCurrentUser()).status === "authenticated") redirect(accountLandingPath(sp.next, "pl"));
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">
