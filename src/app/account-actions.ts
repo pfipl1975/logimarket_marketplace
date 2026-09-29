@@ -4,7 +4,8 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { accountLocale, accountPath, safeAccountNext } from "@/lib/auth/account-paths";
+import { accountLocale, accountPath } from "@/lib/auth/account-paths";
+import { accountLandingPath } from "@/lib/buyer-account/paths";
 import { emailSchema, validateNewPassword, type AccountActionResult } from "@/lib/auth/account-lifecycle-core";
 import { trustedAccountCallbackUrl } from "@/lib/auth/account-origin";
 
@@ -24,7 +25,7 @@ export async function registerAccount(_previous: AccountActionResult, form: Form
   if (passwordError) return { code: passwordError };
 
   const locale = accountLocale(form.get("locale")?.toString());
-  const next = safeAccountNext(form.get("next")?.toString(), locale);
+  const next = accountLandingPath(form.get("next")?.toString(), locale);
   const emailRedirectTo = trustedAccountCallbackUrl({ flow: "signup", locale, next });
   if (!emailRedirectTo) return unavailable;
   const supabase = await createClient();

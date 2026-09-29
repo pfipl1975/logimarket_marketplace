@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/auth/session";
-import { safeAccountNext } from "@/lib/auth/account-paths";
+import { accountLandingPath } from "@/lib/buyer-account/paths";
 
 export const metadata: Metadata = { robots: { index: false, follow: false, nocache: true } };
 
@@ -23,7 +23,7 @@ export default async function LocalizedLoginPage({
 
   const dictionary = await getDictionary(p.locale);
   const sp = await searchParams;
-  if ((await getCurrentUser()).status === "authenticated") redirect(safeAccountNext(sp.next, p.locale));
+  if ((await getCurrentUser()).status === "authenticated") redirect(accountLandingPath(sp.next, p.locale));
 
   return (
     <div className="min-h-[80vh] flex flex-col justify-center py-12 sm:px-6 lg:px-8">

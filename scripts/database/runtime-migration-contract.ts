@@ -88,7 +88,13 @@ export const EXPECTED_POST_0019_TABLES = [
   "legal_pack_documents"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0019_TABLES;
+export const EXPECTED_POST_0020_TABLES = [
+  ...EXPECTED_POST_0019_TABLES,
+  "buyer_organization_addresses",
+  "buyer_user_profiles"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0020_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -165,6 +171,8 @@ export type IndexContract = {
   name: string;
   method: string;
   expressions: string;
+  isUnique?: boolean;
+  predicate?: string | null;
 };
 
 export type TableContract = {
@@ -1730,6 +1738,68 @@ export const FINAL_POST_0019_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   }
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0018_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0019_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0020_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0019_PRODUCTION_FINGERPRINT,
+  "buyer_tax_identifiers": {
+    ...FINAL_POST_0019_PRODUCTION_FINGERPRINT["buyer_tax_identifiers"],
+    explicitIndexes: [
+      { name: "idx_buyer_tax_identifiers_active_org", method: "btree", expressions: "buyer_organization_id" },
+      { name: "uq_buyer_tax_identifiers_active_canonical", method: "btree", expressions: "canonical_identity_class, canonical_identifier_value", isUnique: true, predicate: "retired_at IS NULL" },
+    ],
+  },
+  "buyer_organization_addresses": {
+    name: "buyer_organization_addresses",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('buyer_organization_addresses_id_seq'::regclass)", sequenceName: "buyer_organization_addresses_id_seq" },
+      { name: "buyer_organization_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "address_type", type: "character varying(20)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "street", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "building_number", type: "character varying(30)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "unit_number", type: "character varying(30)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "postal_code", type: "character varying(6)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "city", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "country_code", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "retired_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+    ],
+    constraints: [
+      { name: "buyer_organization_addresses_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "buyer_organization_addresses_organization_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (buyer_organization_id) REFERENCES buyer_organizations(id) ON DELETE RESTRICT" },
+      { name: "chk_buyer_address_type", type: "CHECK", definition: "CHECK (((address_type)::text = 'registered'::text))" },
+      { name: "chk_buyer_address_country", type: "CHECK", definition: "CHECK (((country_code)::text ~ '^[A-Z]{2}$'::text))" },
+      { name: "chk_buyer_address_required", type: "CHECK", definition: "CHECK (((length(btrim((street)::text)) > 0) AND (length(btrim((building_number)::text)) > 0) AND (length(btrim((city)::text)) > 0)))" },
+      { name: "chk_buyer_address_postal_code", type: "CHECK", definition: "CHECK (((postal_code)::text ~ '^[0-9]{2}-[0-9]{3}$'::text))" },
+    ],
+    explicitIndexes: [
+      { name: "uq_buyer_address_active_registered", method: "btree", expressions: "buyer_organization_id, address_type", isUnique: true, predicate: "retired_at IS NULL" },
+    ],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0,
+  },
+  "buyer_user_profiles": {
+    name: "buyer_user_profiles",
+    columns: [
+      { name: "auth_user_id", type: "uuid", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "first_name", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "last_name", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "contact_email", type: "character varying(320)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "phone", type: "character varying(32)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+      { name: "updated_at", type: "timestamp with time zone", nullable: true, defaultVal: null, sequenceName: null },
+    ],
+    constraints: [
+      { name: "buyer_user_profiles_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (auth_user_id)" },
+      { name: "chk_buyer_user_profile_required", type: "CHECK", definition: "CHECK (((length(btrim((first_name)::text)) > 0) AND (length(btrim((last_name)::text)) > 0) AND (length(btrim((contact_email)::text)) > 0) AND (length(btrim((phone)::text)) > 0)))" },
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0,
+  },
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0019_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0020_PRODUCTION_FINGERPRINT;
 

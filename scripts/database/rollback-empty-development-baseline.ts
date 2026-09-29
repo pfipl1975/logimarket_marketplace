@@ -37,11 +37,17 @@ import {
 // ---------------------------------------------------------------------------
 
 const REVERSE_DROP_ORDER: readonly string[] = [
+  "buyer_user_profiles",
+  "buyer_organization_addresses",
   "buyer_organization_verification_events",
   "buyer_registry_identifiers",
   "buyer_tax_identifiers",
   "buyer_organization_memberships",
   "buyer_organizations",
+  "legal_pack_documents",
+  "legal_pack_versions",
+  "legal_document_versions",
+  "legal_documents",
   "partner_agreement_evidence_invalidations",
   "partner_agreement_execution_evidence",
   "agreement_versions",
@@ -229,10 +235,10 @@ export async function verifyRollbackPreconditions(
     }
   }
 
-  // 5. Full fingerprint must be the authoritative post-0018 state
+  // 5. Full fingerprint must be the authoritative latest runtime state
   const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-  if (classification.state !== "EXACT_EXISTING_POST_0018") {
+  if (classification.state !== "EXACT_EXISTING_POST_0020") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,

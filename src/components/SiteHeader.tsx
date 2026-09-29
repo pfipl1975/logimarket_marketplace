@@ -117,6 +117,11 @@ export async function SiteHeader({
                         {navLabels.register}
                       </a>
                     )}
+                    {navState.showAccount && (
+                      <Link key="mobile-account" href={navState.accountUrl} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-brand-teal">
+                        {navLabels.myAccount}
+                      </Link>
+                    )}
                     {isAuth && navLabels.myOrders && (
                       <Link key="mobile-orders" href={buyerOrdersHref} className="flex min-h-[44px] w-full items-center rounded-md px-3 py-2.5 text-sm transition-colors text-white/90 hover:bg-white/5 hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-teal">
                         {navLabels.myOrders}
@@ -153,6 +158,11 @@ export async function SiteHeader({
                 <a href={navState.registerUrl} className="hidden xl:flex shrink-0 whitespace-nowrap rounded-md border border-white/60 px-2.5 py-1.5 text-sm font-medium text-white transition-colors hover:border-brand-teal hover:bg-brand-teal focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
                   {navLabels.register}
                 </a>
+              )}
+              {navState.showAccount && (
+                <Link href={navState.accountUrl} className="hidden xl:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">
+                  {navLabels.myAccount}
+                </Link>
               )}
               {isAuth && navLabels.myOrders && (
                 <Link href={buyerOrdersHref} className="hidden min-[1600px]:flex shrink-0 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium transition-colors hover:bg-white/10 hover:text-white text-white/80 focus:outline-none focus:ring-2 focus:ring-brand-teal focus:ring-offset-2 focus:ring-offset-brand-navy">

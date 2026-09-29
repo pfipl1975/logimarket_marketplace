@@ -97,20 +97,35 @@ function verifyFrozenSource(): void {
 
 function readCanonicalJournal() {
   const folder = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER);
-  const journal = JSON.parse(fs.readFileSync(path.join(folder, "meta", "_journal.json"), "utf8")) as {
-    entries: { idx: number; tag: string; when: number }[];
-  };
+  const journal = JSON.parse(fs.readFileSync(path.join(folder, "meta", "_journal.json"), "utf8")) as DiskJournal;
   const migrations = readMigrationFiles({ migrationsFolder: folder });
-  if (journal.entries.length !== 20 || migrations.length !== 20) blocked("DISK_JOURNAL_NOT_20");
-  for (let index = 0; index < 20; index++) {
-    if (
-      journal.entries[index].idx !== index ||
-      !journal.entries[index].tag.startsWith(String(index).padStart(4, "0") + "_") ||
-      journal.entries[index].when !== migrations[index].folderMillis
-    ) blocked("DISK_JOURNAL_INVALID");
-  }
+  validateCanonicalDiskJournal(journal, migrations);
   const getBuffer = (tag: string) => fs.readFileSync(path.join(folder, `${tag}.sql`));
   return { journal, migrations, getBuffer };
+}
+
+type DiskJournal = { entries: { idx: number; tag: string; when: number }[] };
+type DiskMigration = { folderMillis: number };
+// POST_0019 is the publisher's earliest explicitly supported physical state.
+const MIN_CANONICAL_JOURNAL_LENGTH = 20;
+
+export function validateCanonicalDiskJournal(journal: DiskJournal, migrations: DiskMigration[]): void {
+  if (
+    !journal || !Array.isArray(journal.entries) ||
+    journal.entries.length !== migrations.length ||
+    journal.entries.length < MIN_CANONICAL_JOURNAL_LENGTH
+  ) blocked("DISK_JOURNAL_LENGTH_INVALID");
+  let previousWhen = -1;
+  for (let index = 0; index < journal.entries.length; index++) {
+    const entry = journal.entries[index];
+    if (
+      entry.idx !== index ||
+      !entry.tag.startsWith(String(index).padStart(4, "0") + "_") ||
+      entry.when !== migrations[index].folderMillis ||
+      entry.when <= previousWhen
+    ) blocked("DISK_JOURNAL_INVALID");
+    previousWhen = entry.when;
+  }
 }
 
 async function readJournal(client: PoolClient): Promise<JournalRow[]> {
@@ -230,10 +245,10 @@ export async function publishCoreLegalPackV1(env: Record<string, string | undefi
 
       const before = await fetchLiveSchemaMetadata(client);
       const state = classifyRuntimeTarget(before.fingerprint, before.publicTables, before.security).state;
-      if (state !== "EXACT_EXISTING_POST_0019") blocked(`PHYSICAL_STATE_${state}`);
+      if (state !== "EXACT_EXISTING_POST_0019" && state !== "EXACT_EXISTING_POST_0020") blocked(`PHYSICAL_STATE_${state}`);
       await client.query("LOCK TABLE public.legal_documents, public.legal_document_versions, public.legal_pack_versions, public.legal_pack_documents IN SHARE ROW EXCLUSIVE MODE");
       const applied = await readJournal(client);
-      if (applied.length !== 20) blocked("RUNTIME_JOURNAL_NOT_20");
+      if (applied.length !== (state === "EXACT_EXISTING_POST_0020" ? 21 : 20)) blocked("RUNTIME_JOURNAL_CARDINALITY");
       try {
         validateAppliedMigrationPrefix("production", state, journal, migrations, applied, getBuffer);
       } catch {
@@ -290,7 +305,7 @@ export async function publishCoreLegalPackV1(env: Record<string, string | undefi
       await assertExactPublishedRegistry(client);
       const after = await fetchLiveSchemaMetadata(client);
       if (
-        classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state !== "EXACT_EXISTING_POST_0019" ||
+        classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state !== state ||
         !isDeepStrictEqual(before, after) || !isDeepStrictEqual(applied, await readJournal(client))
       ) blocked("POSTCONDITION_SCHEMA_OR_JOURNAL_CHANGED");
       await client.query("COMMIT");

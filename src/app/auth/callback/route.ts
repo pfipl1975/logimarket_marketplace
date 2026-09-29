@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { cookies } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
-import { accountLocale, accountPath, safeAccountNext } from "@/lib/auth/account-paths";
+import { accountLocale, accountPath } from "@/lib/auth/account-paths";
 import { trustedAccountCallbackUrl } from "@/lib/auth/account-origin";
+import { accountLandingPath } from "@/lib/buyer-account/paths";
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -39,7 +40,7 @@ export async function GET(request: NextRequest) {
         httpOnly: true, secure: new URL(origin).protocol === "https:", sameSite: "lax", path: "/", maxAge: 15 * 60,
       });
     }
-    const path = flow === "recovery" ? accountPath(locale, "reset-password") : safeAccountNext(params.get("next"), locale);
+    const path = flow === "recovery" ? accountPath(locale, "reset-password") : accountLandingPath(params.get("next"), locale);
     return redirectResponse(path);
   } catch {
     return failure();

@@ -1,10 +1,14 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import fs from "node:fs";
+import path from "node:path";
 import { Pool, type PoolClient } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import * as schema from "@/lib/schema";
 import { getPublicLegalCenter } from "@/lib/legal/public-legal-center";
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
+import { RUNTIME_MIGRATIONS_FOLDER } from "../../scripts/database/runtime-migration-contract";
 import {
   CORE_LEGAL_PACK_V1_DOCUMENTS,
   CORE_LEGAL_PACK_V1_EFFECTIVE_FROM,
@@ -15,6 +19,7 @@ import {
 import {
   LEGAL_PUBLICATION_AUTHORIZATION,
   publishCoreLegalPackV1,
+  validateCanonicalDiskJournal,
   verifyCoreLegalPackPublicationTarget,
 } from "../../scripts/database/publish-core-legal-pack-v1";
 import { resetDisposableTestDatabase, validateDestructiveTestEnvironment } from "./helpers/destructive-db-safety";
@@ -65,6 +70,42 @@ const authorizedEnv = {
   LEGAL_PUBLICATION_FORBIDDEN_PROJECT_REF: "oczllhpiicrngbcbxndu",
   LEGAL_PUBLICATION_WRITE_AUTHORIZATION: LEGAL_PUBLICATION_AUTHORIZATION,
 };
+
+const migrationsFolder = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER);
+const diskJournal = JSON.parse(fs.readFileSync(path.join(migrationsFolder, "meta", "_journal.json"), "utf8")) as {
+  entries: { idx: number; tag: string; when: number }[];
+};
+const diskMigrations = readMigrationFiles({ migrationsFolder });
+
+test("Core Pack publisher validates the complete appendable disk chain", () => {
+  assert.ok(diskJournal.entries.length > 20);
+  assert.doesNotThrow(() => validateCanonicalDiskJournal(diskJournal, diskMigrations));
+  const appendedWhen = diskJournal.entries.at(-1)!.when + 1;
+  assert.doesNotThrow(() => validateCanonicalDiskJournal(
+    { entries: [...diskJournal.entries, { idx: diskJournal.entries.length, tag: "0021_future_append", when: appendedWhen }] },
+    [...diskMigrations, { folderMillis: appendedWhen }],
+  ));
+  assert.throws(
+    () => validateCanonicalDiskJournal({ entries: diskJournal.entries.slice(0, -1) }, diskMigrations),
+    /BLOCKED_DISK_JOURNAL_LENGTH_INVALID/,
+  );
+  assert.throws(
+    () => validateCanonicalDiskJournal({ entries: diskJournal.entries.slice(0, 19) }, diskMigrations.slice(0, 19)),
+    /BLOCKED_DISK_JOURNAL_LENGTH_INVALID/,
+  );
+  for (const change of [
+    { idx: -1 },
+    { tag: "0001_wrong_runtime_baseline" },
+    { when: diskJournal.entries[0].when + 1 },
+  ]) {
+    const entries = diskJournal.entries.map((entry) => ({ ...entry }));
+    Object.assign(entries[0], change);
+    assert.throws(
+      () => validateCanonicalDiskJournal({ entries }, diskMigrations),
+      /BLOCKED_DISK_JOURNAL_INVALID/,
+    );
+  }
+});
 
 test("Core Pack v1 frozen metadata and dedicated target guards", () => {
   assert.equal(CORE_LEGAL_PACK_V1_REGISTRY_CODE, EXPECTED.packCode);
@@ -129,14 +170,15 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   const agreementBefore = await snapshot("agreement_versions");
   const evidenceBefore = await snapshot("partner_agreement_execution_evidence");
   const journalBefore = await journal();
-  assert.equal(journalBefore.length, 20);
+  assert.equal(journalBefore.length, diskMigrations.length);
+  const lastApplied = journalBefore[journalBefore.length - 1];
 
   await adminPool.query(`ALTER TABLE public.legal_documents ADD COLUMN publication_test_drift text`);
   await assert.rejects(run(), /BLOCKED_PHYSICAL_STATE_PARTIAL_OR_DRIFTED/);
   await adminPool.query(`ALTER TABLE public.legal_documents DROP COLUMN publication_test_drift`);
-  await adminPool.query(`UPDATE drizzle_runtime.__drizzle_migrations SET hash = 'wrong' WHERE created_at = $1`, [journalBefore[19].created_at]);
+  await adminPool.query(`UPDATE drizzle_runtime.__drizzle_migrations SET hash = 'wrong' WHERE created_at = $1`, [lastApplied.created_at]);
   await assert.rejects(run(), /BLOCKED_RUNTIME_JOURNAL_NONCANONICAL/);
-  await adminPool.query(`UPDATE drizzle_runtime.__drizzle_migrations SET hash = $1 WHERE created_at = $2`, [journalBefore[19].hash, journalBefore[19].created_at]);
+  await adminPool.query(`UPDATE drizzle_runtime.__drizzle_migrations SET hash = $1 WHERE created_at = $2`, [lastApplied.hash, lastApplied.created_at]);
   await adminPool.query(`INSERT INTO public.legal_documents (code, slug, title_pl) VALUES ('UNEXPECTED', 'unexpected', 'Unexpected')`);
   await assert.rejects(run(), /BLOCKED_EXISTING_LEGAL_REGISTRY_STATE/);
   await adminPool.query(`DELETE FROM public.legal_documents WHERE code = 'UNEXPECTED'`);

@@ -38,14 +38,16 @@ function validate(
   );
 }
 
-test("CARDINALITY: canonical disk journal maps POST_0017 to 18 rows and POST_0018 to 19 rows", () => {
-  assert.strictEqual(journal.entries.length, 19);
-  assert.strictEqual(diskMigrations.length, 19);
+test("CARDINALITY: canonical disk journal maps POST_0017 to 18 rows and POST_0020 to 21 rows", () => {
+  assert.strictEqual(journal.entries.length, 21);
+  assert.strictEqual(diskMigrations.length, 21);
   assert.deepStrictEqual(
     journal.entries.slice(17).map(({ idx, tag }) => ({ idx, tag })),
     [
       { idx: 17, tag: "0017_publication_status_pending_review" },
       { idx: 18, tag: "0018_buyer_internal_trust_foundation" },
+      { idx: 19, tag: "0019_legal_document_registry" },
+      { idx: 20, tag: "0020_buyer_profile_and_identity_uniqueness" },
     ],
   );
 });
@@ -71,7 +73,7 @@ for (const count of [17, 11, 19]) {
 
 test("CARDINALITY: POST_0018 accepts exactly 19 canonical rows", () => {
   assert.doesNotThrow(() =>
-    validate("EXACT_EXISTING_POST_0018", canonicalRows),
+    validate("EXACT_EXISTING_POST_0018", canonicalRows.slice(0, 19)),
   );
 });
 
@@ -90,7 +92,7 @@ for (const count of [18, 11, 20]) {
 
 test("CARDINALITY: POST_0019 accepts exactly 20 canonical rows", () => {
   assert.doesNotThrow(() =>
-    validate("EXACT_EXISTING_POST_0019", canonicalRows),
+    validate("EXACT_EXISTING_POST_0019", canonicalRows.slice(0, 20)),
   );
 });
 
@@ -103,6 +105,22 @@ for (const count of [19, 21, 10, 0]) {
     assert.throws(
       () => validate("EXACT_EXISTING_POST_0019", rows),
       new RegExp(`schema is POST_0019 but journal has ${count} rows`),
+    );
+  });
+}
+
+test("CARDINALITY: POST_0020 accepts exactly 21 canonical rows", () => {
+  assert.doesNotThrow(() =>
+    validate("EXACT_EXISTING_POST_0020", canonicalRows),
+  );
+});
+
+for (const count of [20, 19, 0]) {
+  test(`CARDINALITY: POST_0020 rejects ${count} rows`, () => {
+    const rows = canonicalRows.slice(0, count);
+    assert.throws(
+      () => validate("EXACT_EXISTING_POST_0020", rows),
+      new RegExp(`schema is POST_0020 but journal has ${count} rows`),
     );
   });
 }
@@ -131,11 +149,12 @@ test("CARDINALITY: current live-style POST_0017 with 11 rows fails before hash v
   assert.strictEqual(migrationReadAttempted, false);
 });
 
-test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017, POST_0018 and POST_0019", () => {
+test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_0020", () => {
   for (const state of [
     "EXACT_EXISTING_POST_0017",
     "EXACT_EXISTING_POST_0018",
     "EXACT_EXISTING_POST_0019",
+    "EXACT_EXISTING_POST_0020",
   ]) {
     assert.strictEqual(
       isLegacyDev0000Exception(

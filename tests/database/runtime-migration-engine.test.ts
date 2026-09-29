@@ -67,14 +67,17 @@ const exactJournalEntries = [
   { tag: "fake_tag_0014", when: 1789255000000 },
   { tag: "fake_tag_0015", when: 1789320414668 },
   { tag: "fake_tag_0016", when: 1789321000000 },
-    { tag: "fake_tag_0017", when: 1789322000000 },
+  { tag: "fake_tag_0017", when: 1789322000000 },
+  { tag: "fake_tag_0018", when: 1789840000000 },
+  { tag: "fake_tag_0019", when: 1790446918000 },
+  { tag: "fake_tag_0020", when: 1790712000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const previousJournalEntries = exactJournalEntries.slice(0, 17);
+const previousJournalEntries = exactJournalEntries.slice(0, 20);
 const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const prevFakeReadFn = () => ({
   text: JSON.stringify({ entries: previousJournalEntries }),
@@ -185,6 +188,8 @@ function metadataRouter(options?: MetadataOptions): Router {
             table_name: tableName,
             index_name: idx.name,
             index_method: idx.method,
+            is_unique: idx.isUnique ?? false,
+            index_predicate: idx.predicate ?? null,
             index_expressions_expr: null,
             index_columns: idx.expressions,
           });
@@ -445,7 +450,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0019");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0020");
 });
 
 test("TARGET: EXACT_EXISTING_POST_0015 for the historical POST_0015 fingerprint", () => {
