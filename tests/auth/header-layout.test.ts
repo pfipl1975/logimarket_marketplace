@@ -23,10 +23,11 @@ test("Header Layout Regression Tests", async (t) => {
     assert.match(content, /<div className="hidden lg:flex shrink w-full min-w-\[200px\] max-w-\[420px\]">/);
     assert.doesNotMatch(content, /max-w-\[500px\]/);
 
-    // 3-5. desktop controls expose appropriate links aligned to >=1600 (min-[1600px]) breakpoint
+    // Generic login and registration remain visible at 1280px; contextual controls retain their breakpoint.
     assert.match(content, /<div className="flex shrink-0 justify-end items-center gap-2 lg:gap-3">/);
     assert.match(content, /navState\.showLogin && navLabels\.login/);
-    assert.match(content, /<Link href=\{navState\.loginUrl\} className="hidden min-\[1600px\]:flex/);
+    assert.match(content, /<Link href=\{navState\.loginUrl\} className="hidden xl:flex/);
+    assert.match(content, /<a href=\{navState\.registerUrl\} className="hidden xl:flex/);
     assert.match(content, /navState\.showPartnerPanel && navLabels\.partnerPanel/);
     assert.match(content, /<Link href=\{navState\.partnerUrl\} className="hidden min-\[1600px\]:flex/);
     assert.match(content, /navState\.showLogout && navLabels\.logout/);

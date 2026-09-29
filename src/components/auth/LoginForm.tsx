@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { loginUser, type LoginActionResult } from "@/app/actions";
+import Link from "next/link";
+import { accountLinkWithNext, accountPath } from "@/lib/auth/account-paths";
 import type { Locale } from "@/lib/i18n/config";
 
 export function LoginForm({ 
@@ -17,6 +19,10 @@ export function LoginForm({
     pendingButton: string;
     invalidCredentials: string;
     unavailableError: string;
+    noAccount: string;
+    registerLink: string;
+    forgotPrompt: string;
+    forgotLink: string;
   };
   locale: Locale;
 }) {
@@ -83,6 +89,10 @@ export function LoginForm({
         >
           {isPending ? translations.pendingButton : translations.submitButton}
         </button>
+      </div>
+      <div className="space-y-2 text-center text-sm text-text-secondary">
+        <p>{translations.noAccount} <Link className="font-semibold text-brand-teal underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-brand-teal" href={accountLinkWithNext(locale, "register", nextUrl)}>{translations.registerLink}</Link></p>
+        <p>{translations.forgotPrompt} <Link className="font-semibold text-brand-teal underline underline-offset-2 focus:outline-none focus:ring-2 focus:ring-brand-teal" href={accountPath(locale, "forgot-password")}>{translations.forgotLink}</Link></p>
       </div>
     </form>
   );

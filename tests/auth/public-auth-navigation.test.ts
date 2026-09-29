@@ -39,15 +39,18 @@ test("public auth navigation state", async (t) => {
     assert.doesNotMatch(stateEn.partnerUrl, /\/partner\/\d+/);
   });
 
-  await t.test("PL paths: login next /partner, Partner /partner", () => {
+  await t.test("PL generic auth paths do not force Partner", () => {
     const state = getPublicAuthNavigationState(false, false, "pl");
-    assert.equal(state.loginUrl, "/login?next=/partner");
+    assert.equal(state.loginUrl, "/login");
+    assert.equal(state.registerUrl, "/register");
+    assert.equal(state.showRegister, true);
     assert.equal(state.partnerUrl, "/partner");
   });
 
-  await t.test("localized paths: login next /en/partner, Partner /en/partner", () => {
+  await t.test("localized generic auth paths do not force Partner", () => {
     const state = getPublicAuthNavigationState(false, false, "en");
-    assert.equal(state.loginUrl, "/en/login?next=/en/partner");
+    assert.equal(state.loginUrl, "/en/login");
+    assert.equal(state.registerUrl, "/en/register");
     assert.equal(state.partnerUrl, "/en/partner");
   });
 });
