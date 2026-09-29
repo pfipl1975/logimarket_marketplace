@@ -6,6 +6,7 @@ import { getRfqStatusLabel } from "@/lib/admin/rfq-status-label";
 
 export interface AdminDashboardRoutes {
   partners: string;
+  buyers: string;
   offers: string;
   rfq: string;
   rfqDetail: (id: number) => string;
@@ -43,7 +44,7 @@ export async function AdminDashboardPage({
       </div>
 
       {/* PRIMARY KPI GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         <Link href={routes.offers} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors">
           <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
             {t.sections.offers}
@@ -64,6 +65,16 @@ export async function AdminDashboardPage({
           </div>
         </Link>
 
+        <Link href={routes.buyers} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors focus-visible:ring-2 focus-visible:ring-brand-teal">
+          <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
+            {t.sections.buyers}
+          </h2>
+          <div className="mb-4">
+            <span className="text-sm text-muted-foreground tracking-wider">{t.labels.total}</span>
+            <div className="text-3xl font-bold text-brand-navy">{counts.buyers.total}</div>
+          </div>
+        </Link>
+
         <Link href={routes.rfq} className="block bg-white shadow rounded-industrial p-6 border border-industrial hover:border-brand-teal transition-colors">
           <h2 className="text-lg font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
             {t.sections.rfq}
@@ -76,7 +87,7 @@ export async function AdminDashboardPage({
       </div>
 
       {/* STATUS PANELS */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
         {/* OFFER STATUS PANEL */}
         <div className="bg-white shadow rounded-industrial p-6 border border-industrial">
           <h3 className="text-md font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
@@ -161,6 +172,20 @@ export async function AdminDashboardPage({
               <span>{getRfqStatusLabel("closed", dictRfq)}</span>
               <span className="font-medium">{counts.rfq.closed}</span>
             </Link>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-industrial p-6 border border-industrial">
+          <h3 className="text-md font-semibold text-brand-navy border-b border-industrial pb-2 mb-4">
+            <Link href={routes.buyers} className="hover:text-brand-teal">{t.sections.buyers}</Link>
+          </h3>
+          <div className="space-y-2 text-sm text-brand-navy">
+            {(["pending", "verified", "rejected", "revoked"] as const).map((status) => (
+              <div key={status} className="flex justify-between gap-3">
+                <span>{t.buyerStatus[status]}</span>
+                <span className="font-medium">{counts.buyers[status]}</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>

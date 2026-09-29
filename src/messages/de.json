@@ -1168,6 +1168,77 @@
     "optionalOutboundHelp": "Der externe Link bleibt für diese Angebotsart optional.",
     "errorInvalidCurrentOfferType": "Die aktuelle Angebotskonfiguration ist ungültig. Wählen Sie eine gültige Angebotsart aus, um fortzufahren."
   },
+  "adminBuyers": {
+    "title": "Käufer",
+    "subtitle": "Käuferorganisationen und Betriebsdaten.",
+    "emptyList": "Noch keine Käuferorganisationen vorhanden.",
+    "back": "Zurück zur Liste",
+    "registeredAddress": "Registrierte Anschrift",
+    "identifiers": "Kennungen",
+    "taxIdentifiers": "Steuerkennungen",
+    "registryIdentifiers": "Registerkennungen",
+    "users": "Benutzer und Mitgliedschaften",
+    "history": "Prüfverlauf",
+    "emptyAddress": "Keine registrierte Anschrift vorhanden.",
+    "emptyUsers": "Keine Benutzer zugeordnet.",
+    "emptyIdentifiers": "Keine Kennungen vorhanden.",
+    "emptyHistory": "Noch keine Prüfereignisse.",
+    "country": "Land",
+    "statusLabel": "Status",
+    "createdAt": "Erstellt",
+    "verifiedAt": "Verifiziert",
+    "phone": "Telefon",
+    "roleLabel": "Rolle",
+    "membershipStatusLabel": "Mitgliedschaftsstatus",
+    "memberSince": "Mitglied seit",
+    "declaredLabel": "Angegeben",
+    "trustedLabel": "Bestätigt",
+    "eventOutcome": "Ergebnis",
+    "eventActor": "Akteur",
+    "eventSource": "Quelle",
+    "eventReason": "Grund",
+    "table": {
+      "company": "Unternehmen",
+      "taxIdentifier": "NIP / Steuernummer",
+      "city": "Stadt",
+      "contact": "Hauptkontakt",
+      "email": "E-Mail",
+      "status": "Status",
+      "createdAt": "Erstellt",
+      "details": "Details"
+    },
+    "status": {
+      "pending": "Angaben erfasst",
+      "verified": "Verifiziert",
+      "rejected": "Abgelehnt",
+      "revoked": "Prüfung widerrufen"
+    },
+    "roles": {
+      "organization_admin": "Organisationsadmin",
+      "authorized_buyer": "Autorisierter Käufer"
+    },
+    "membershipStatus": {
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "revoked": "Widerrufen"
+    },
+    "controls": {
+      "title": "Organisationsprüfung",
+      "reasonLabel": "Grund für Ablehnung oder Widerruf",
+      "reasonPlaceholder": "Grundcode eingeben",
+      "verify": "Verifizieren",
+      "reject": "Ablehnen",
+      "revoke": "Prüfung widerrufen",
+      "missingIdentifier": "Für die Prüfung ist eine Steuer- oder Registerkennung nötig.",
+      "reasonRequired": "Geben Sie einen Grund an.",
+      "verifiedSuccess": "Organisation verifiziert.",
+      "rejectedSuccess": "Organisation abgelehnt.",
+      "revokedSuccess": "Prüfung widerrufen.",
+      "failedVerify": "Verifizierung fehlgeschlagen",
+      "failedReject": "Ablehnung fehlgeschlagen",
+      "failedRevoke": "Widerruf fehlgeschlagen"
+    }
+  },
   "adminDashboard": {
     "metaTitle": "LogiMarket Admin Dashboard",
     "metaDescription": "LogiMarket operativer Überblick.",
@@ -1176,11 +1247,18 @@
     "sections": {
       "offers": "Angebote",
       "partners": "Partner",
+      "buyers": "Käufer",
       "rfq": "RFQ Operationen",
       "recentRfq": "Aktuelle RFQs"
     },
     "labels": {
       "total": "Gesamt"
+    },
+    "buyerStatus": {
+      "pending": "Angaben erfasst",
+      "verified": "Verifiziert",
+      "rejected": "Abgelehnt",
+      "revoked": "Prüfung widerrufen"
     },
     "eligibility": {
       "none": "Nicht festgelegt",

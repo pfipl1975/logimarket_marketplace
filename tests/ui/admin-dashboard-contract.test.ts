@@ -37,6 +37,7 @@ test("Admin Dashboard I18N parity", () => {
   for (const locale of locales) {
     const data = JSON.parse(fs.readFileSync(path.join("src", "messages", `${locale}.json`), "utf8"));
     dictionaries[locale] = data.adminDashboard;
+    assert.deepStrictEqual(getDeepKeys(data.adminBuyers).sort(), getDeepKeys(JSON.parse(fs.readFileSync(path.join("src", "messages", "en.json"), "utf8")).adminBuyers).sort());
   }
 
   const enKeys = getDeepKeys(dictionaries.en).sort();
@@ -75,9 +76,10 @@ test("Dashboard Invariants Logic", () => {
   const basePartners = { total: 10 };
   const baseEligibility = { total: 4, pending: 1, eligible: 1, ineligible: 1, suspended: 1 };
   const baseRfq = { total: 0, new: 0, inProgress: 0, responded: 0, closed: 0 };
+  const baseBuyers = { total: 4, pending: 1, verified: 1, rejected: 1, revoked: 1 };
 
   // Valid
-  const res = validateDashboardInvariants(baseOffers, basePartners, baseEligibility, baseRfq);
+  const res = validateDashboardInvariants(baseOffers, basePartners, baseEligibility, baseRfq, baseBuyers);
   assert.strictEqual(res.noneEligibility, 6);
 
   assert.doesNotThrow(() => validateDashboardInvariants(
@@ -95,7 +97,18 @@ test("Dashboard Invariants Logic", () => {
 
   // Invalid: unknown eligibility status
   assert.throws(() => validateDashboardInvariants(baseOffers, basePartners, { ...baseEligibility, total: 5 }, baseRfq), /unknown eligibility status present/);
+  assert.throws(() => validateDashboardInvariants(baseOffers, basePartners, baseEligibility, baseRfq, { ...baseBuyers, total: 5 }), /unknown buyer status present/);
   
   // Invalid: eligibilityTotal > partnersTotal
   assert.throws(() => validateDashboardInvariants(baseOffers, { total: 3 }, baseEligibility, baseRfq), /storedEligibilityTotal > partnersTotal/);
+});
+
+test("Buyer dashboard KPI and locale routes", () => {
+  const page = fs.readFileSync("src/app/_shared/AdminDashboardPage.tsx", "utf8");
+  const pl = fs.readFileSync("src/app/(pl)/admin/page.tsx", "utf8");
+  const localized = fs.readFileSync("src/app/(localized)/[locale]/admin/page.tsx", "utf8");
+  assert.match(page, /counts\.buyers\.total/);
+  assert.match(page, /t\.buyerStatus\[status\]/);
+  assert.match(pl, /buyers: "\/admin\/kupujacy"/);
+  assert.match(localized, /buyers: `\/\$\{p\.locale\}\/admin\/buyers`/);
 });

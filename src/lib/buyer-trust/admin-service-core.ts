@@ -1,10 +1,15 @@
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, isNull } from "drizzle-orm";
 import { db as defaultDb } from "../db";
 import {
   buyerOrganizations,
+  buyerOrganizationAddresses,
+  buyerOrganizationMemberships,
   buyerOrganizationVerificationEvents,
   buyerRegistryIdentifiers,
   buyerTaxIdentifiers,
+  buyerUserProfiles,
+  type BuyerOrganizationMembershipRole,
+  type BuyerOrganizationMembershipStatus,
   type BuyerOrganizationVerificationStatus,
 } from "../schema";
 import type { BuyerTrustDb } from "./service-core";
@@ -14,11 +19,38 @@ export type AdminBuyerOrganizationListItem = {
   legalName: string;
   countryCode: string;
   verificationStatus: BuyerOrganizationVerificationStatus;
-  verifiedAt: Date | string | null;
+  createdAt: Date | string;
   taxIdentifier: string | null;
-  registryIdentifier: string | null;
-  lastEventDate: Date | string | null;
+  city: string | null;
+  primaryContactName: string | null;
+  primaryContactEmail: string | null;
 };
+
+export type AdminBuyerMembership = {
+  id: number;
+  buyerOrganizationId: number;
+  role: BuyerOrganizationMembershipRole;
+  status: BuyerOrganizationMembershipStatus;
+  createdAt: Date | string;
+  firstName: string | null;
+  lastName: string | null;
+  contactEmail: string | null;
+  phone: string | null;
+};
+
+export function selectPrimaryBuyerContact(memberships: AdminBuyerMembership[]) {
+  const selected = memberships
+    .filter((member) => member.status === "active")
+    .sort((a, b) =>
+      Number(b.role === "organization_admin") - Number(a.role === "organization_admin") ||
+      new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime() ||
+      a.id - b.id
+    )[0];
+  return {
+    name: selected?.firstName && selected?.lastName ? `${selected.firstName} ${selected.lastName}` : null,
+    email: selected?.contactEmail ?? null,
+  };
+}
 
 export async function listAdminBuyerOrganizations(
   database: BuyerTrustDb = defaultDb,
@@ -30,59 +62,73 @@ export async function listAdminBuyerOrganizations(
         legalName: buyerOrganizations.legalName,
         countryCode: buyerOrganizations.jurisdictionCountry,
         verificationStatus: buyerOrganizations.verificationStatus,
-        verifiedAt: buyerOrganizations.verifiedAt,
-        currentVerificationEventId: buyerOrganizations.currentVerificationEventId,
+        createdAt: buyerOrganizations.createdAt,
       })
       .from(buyerOrganizations)
       .orderBy(desc(buyerOrganizations.createdAt));
+    if (orgs.length === 0) return [];
 
-    const result: AdminBuyerOrganizationListItem[] = [];
+    const [taxRows, addressRows, membershipRows] = await Promise.all([
+      database.select({
+        organizationId: buyerTaxIdentifiers.buyerOrganizationId,
+        value: buyerTaxIdentifiers.identifierValue,
+        canonicalClass: buyerTaxIdentifiers.canonicalIdentityClass,
+      }).from(buyerTaxIdentifiers).where(isNull(buyerTaxIdentifiers.retiredAt))
+        .orderBy(asc(buyerTaxIdentifiers.createdAt), asc(buyerTaxIdentifiers.id)),
+      database.select({
+        organizationId: buyerOrganizationAddresses.buyerOrganizationId,
+        city: buyerOrganizationAddresses.city,
+      }).from(buyerOrganizationAddresses).where(and(
+        eq(buyerOrganizationAddresses.addressType, "registered"),
+        isNull(buyerOrganizationAddresses.retiredAt),
+      )),
+      database.select({
+        id: buyerOrganizationMemberships.id,
+        buyerOrganizationId: buyerOrganizationMemberships.buyerOrganizationId,
+        role: buyerOrganizationMemberships.membershipRole,
+        status: buyerOrganizationMemberships.membershipStatus,
+        createdAt: buyerOrganizationMemberships.createdAt,
+        firstName: buyerUserProfiles.firstName,
+        lastName: buyerUserProfiles.lastName,
+        contactEmail: buyerUserProfiles.contactEmail,
+        phone: buyerUserProfiles.phone,
+      }).from(buyerOrganizationMemberships)
+        .leftJoin(buyerUserProfiles, eq(buyerOrganizationMemberships.authUserId, buyerUserProfiles.authUserId))
+        .where(eq(buyerOrganizationMemberships.membershipStatus, "active")),
+    ]);
 
-    for (const org of orgs) {
-      const taxRow = await database
-        .select({ value: buyerTaxIdentifiers.identifierValue })
-        .from(buyerTaxIdentifiers)
-        .where(
-          and(
-            eq(buyerTaxIdentifiers.buyerOrganizationId, org.id),
-            isNull(buyerTaxIdentifiers.retiredAt)
-          )
-        )
-        .limit(1)
-        .then((r) => r[0]);
+    const taxes = new Map<number, { value: string; canonicalClass: string }>();
+    for (const row of taxRows) {
+      const orgId = Number(row.organizationId);
+      const existing = taxes.get(orgId);
+      if (!existing || (existing.canonicalClass !== "PL:NIP" && row.canonicalClass === "PL:NIP")) {
+        taxes.set(orgId, { value: row.value, canonicalClass: row.canonicalClass });
+      }
+    }
+    const cities = new Map(addressRows.map((row) => [Number(row.organizationId), row.city]));
+    const memberships = new Map<number, AdminBuyerMembership[]>();
+    for (const row of membershipRows) {
+      const orgId = Number(row.buyerOrganizationId);
+      const group = memberships.get(orgId) ?? [];
+      group.push({ ...row, id: Number(row.id), buyerOrganizationId: orgId });
+      memberships.set(orgId, group);
+    }
 
-      const regRow = await database
-        .select({ value: buyerRegistryIdentifiers.registryValue })
-        .from(buyerRegistryIdentifiers)
-        .where(
-          and(
-            eq(buyerRegistryIdentifiers.buyerOrganizationId, org.id),
-            isNull(buyerRegistryIdentifiers.retiredAt)
-          )
-        )
-        .limit(1)
-        .then((r) => r[0]);
-
-      const eventRow = org.currentVerificationEventId ? await database
-        .select({ occurredAt: buyerOrganizationVerificationEvents.occurredAt })
-        .from(buyerOrganizationVerificationEvents)
-        .where(eq(buyerOrganizationVerificationEvents.id, org.currentVerificationEventId))
-        .limit(1)
-        .then((r) => r[0]) : null;
-
-      result.push({
-        id: org.id,
+    return orgs.map((org) => {
+      const id = Number(org.id);
+      const contact = selectPrimaryBuyerContact(memberships.get(id) ?? []);
+      return {
+        id,
         legalName: org.legalName,
         countryCode: org.countryCode,
         verificationStatus: org.verificationStatus,
-        verifiedAt: org.verifiedAt,
-        taxIdentifier: taxRow?.value ?? null,
-        registryIdentifier: regRow?.value ?? null,
-        lastEventDate: eventRow?.occurredAt ?? null,
-      });
-    }
-
-    return result;
+        createdAt: org.createdAt,
+        taxIdentifier: taxes.get(id)?.value ?? null,
+        city: cities.get(id) ?? null,
+        primaryContactName: contact.name,
+        primaryContactEmail: contact.email,
+      };
+    });
   } catch (error) {
     console.error("Failed to list admin buyer orgs", error);
     return [];
@@ -94,7 +140,17 @@ export type AdminBuyerOrganizationDetail = {
   legalName: string;
   countryCode: string;
   verificationStatus: BuyerOrganizationVerificationStatus;
+  createdAt: Date | string;
   verifiedAt: Date | string | null;
+  registeredAddress: {
+    street: string;
+    buildingNumber: string;
+    unitNumber: string | null;
+    postalCode: string;
+    city: string;
+    countryCode: string;
+  } | null;
+  memberships: AdminBuyerMembership[];
   taxIdentifiers: {
     id: number;
     type: string;
@@ -132,6 +188,7 @@ export async function getAdminBuyerOrganizationDetail(
         legalName: buyerOrganizations.legalName,
         countryCode: buyerOrganizations.jurisdictionCountry,
         verificationStatus: buyerOrganizations.verificationStatus,
+        createdAt: buyerOrganizations.createdAt,
         verifiedAt: buyerOrganizations.verifiedAt,
       })
       .from(buyerOrganizations)
@@ -140,6 +197,34 @@ export async function getAdminBuyerOrganizationDetail(
       .then((r) => r[0]);
 
     if (!org) return null;
+
+    const address = await database.select({
+      street: buyerOrganizationAddresses.street,
+      buildingNumber: buyerOrganizationAddresses.buildingNumber,
+      unitNumber: buyerOrganizationAddresses.unitNumber,
+      postalCode: buyerOrganizationAddresses.postalCode,
+      city: buyerOrganizationAddresses.city,
+      countryCode: buyerOrganizationAddresses.countryCode,
+    }).from(buyerOrganizationAddresses).where(and(
+      eq(buyerOrganizationAddresses.buyerOrganizationId, org.id),
+      eq(buyerOrganizationAddresses.addressType, "registered"),
+      isNull(buyerOrganizationAddresses.retiredAt),
+    )).limit(1).then((rows) => rows[0] ?? null);
+
+    const members = await database.select({
+      id: buyerOrganizationMemberships.id,
+      buyerOrganizationId: buyerOrganizationMemberships.buyerOrganizationId,
+      role: buyerOrganizationMemberships.membershipRole,
+      status: buyerOrganizationMemberships.membershipStatus,
+      createdAt: buyerOrganizationMemberships.createdAt,
+      firstName: buyerUserProfiles.firstName,
+      lastName: buyerUserProfiles.lastName,
+      contactEmail: buyerUserProfiles.contactEmail,
+      phone: buyerUserProfiles.phone,
+    }).from(buyerOrganizationMemberships)
+      .leftJoin(buyerUserProfiles, eq(buyerOrganizationMemberships.authUserId, buyerUserProfiles.authUserId))
+      .where(eq(buyerOrganizationMemberships.buyerOrganizationId, org.id))
+      .orderBy(asc(buyerOrganizationMemberships.createdAt), asc(buyerOrganizationMemberships.id));
 
     const taxes = await database
       .select({
@@ -189,27 +274,34 @@ export async function getAdminBuyerOrganizationDetail(
       .orderBy(desc(buyerOrganizationVerificationEvents.occurredAt));
 
     return {
-      id: org.id,
+      id: Number(org.id),
       legalName: org.legalName,
       countryCode: org.countryCode,
       verificationStatus: org.verificationStatus,
+      createdAt: org.createdAt,
       verifiedAt: org.verifiedAt,
+      registeredAddress: address,
+      memberships: members.map((member) => ({
+        ...member,
+        id: Number(member.id),
+        buyerOrganizationId: Number(member.buyerOrganizationId),
+      })),
       taxIdentifiers: taxes.map((t) => ({
-        id: t.id,
+        id: Number(t.id),
         type: t.type,
         value: t.value,
         country: t.country,
         trusted: t.trustedByEvent !== null,
       })),
       registryIdentifiers: registries.map((r) => ({
-        id: r.id,
+        id: Number(r.id),
         type: r.type,
         value: r.value,
         country: r.country,
         trusted: r.trustedByEvent !== null,
       })),
       history: events.map((e) => ({
-        id: e.id,
+        id: Number(e.id),
         eventType: e.eventType,
         outcomeStatus: e.outcomeStatus,
         actorType: e.actorType,

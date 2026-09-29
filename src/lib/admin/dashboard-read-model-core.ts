@@ -15,6 +15,13 @@ export interface AdminDashboardCounts {
   partners: {
     total: number;
   };
+  buyers: {
+    total: number;
+    pending: number;
+    verified: number;
+    rejected: number;
+    revoked: number;
+  };
   sellerEligibility: {
     none: number;
     pending: number;
@@ -51,6 +58,7 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
   const [
     offersAgg,
     partnersAgg,
+    buyersAgg,
     eligibilityAgg,
     rfqAgg,
     recentRfqQueue
@@ -72,6 +80,16 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
         total: sql<number>`count(*)`,
       })
       .from(schema.partners),
+
+    db
+      .select({
+        total: sql<number>`count(*)`,
+        pending: sql<number>`count(*) filter (where ${schema.buyerOrganizations.verificationStatus} = 'pending')`,
+        verified: sql<number>`count(*) filter (where ${schema.buyerOrganizations.verificationStatus} = 'verified')`,
+        rejected: sql<number>`count(*) filter (where ${schema.buyerOrganizations.verificationStatus} = 'rejected')`,
+        revoked: sql<number>`count(*) filter (where ${schema.buyerOrganizations.verificationStatus} = 'revoked')`,
+      })
+      .from(schema.buyerOrganizations),
 
     db
       .select({
@@ -114,6 +132,7 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
 
   const offersData = offersAgg[0] || { total: 0, draft: 0, pendingReview: 0, published: 0, hidden: 0, archived: 0, deleted: 0 };
   const partnersData = partnersAgg[0] || { total: 0 };
+  const buyersData = buyersAgg[0] || { total: 0, pending: 0, verified: 0, rejected: 0, revoked: 0 };
   const eligibilityData = eligibilityAgg[0] || { total: 0, pending: 0, eligible: 0, ineligible: 0, suspended: 0 };
   const rfqData = rfqAgg[0] || { total: 0, new: 0, inProgress: 0, responded: 0, closed: 0 };
 
@@ -129,6 +148,14 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
 
   const parsedPartners = {
     total: Number(partnersData.total),
+  };
+
+  const parsedBuyers = {
+    total: Number(buyersData.total),
+    pending: Number(buyersData.pending),
+    verified: Number(buyersData.verified),
+    rejected: Number(buyersData.rejected),
+    revoked: Number(buyersData.revoked),
   };
 
   const parsedEligibility = {
@@ -147,12 +174,13 @@ export async function getAdminDashboardReadModel(db: NodePgDatabase<typeof schem
     closed: Number(rfqData.closed),
   };
 
-  const { noneEligibility } = validateDashboardInvariants(parsedOffers, parsedPartners, parsedEligibility, parsedRfq);
+  const { noneEligibility } = validateDashboardInvariants(parsedOffers, parsedPartners, parsedEligibility, parsedRfq, parsedBuyers);
 
   return {
     counts: {
       offers: parsedOffers,
       partners: parsedPartners,
+      buyers: parsedBuyers,
       sellerEligibility: {
         pending: parsedEligibility.pending,
         eligible: parsedEligibility.eligible,
@@ -179,7 +207,8 @@ export function validateDashboardInvariants(
   parsedOffers: { total: number, draft: number, pendingReview: number, published: number, hidden: number, archived: number, deleted: number },
   parsedPartners: { total: number },
   parsedEligibility: { total: number, pending: number, eligible: number, ineligible: number, suspended: number },
-  parsedRfq: { total: number, new: number, inProgress: number, responded: number, closed: number }
+  parsedRfq: { total: number, new: number, inProgress: number, responded: number, closed: number },
+  parsedBuyers?: { total: number, pending: number, verified: number, rejected: number, revoked: number }
 ) {
   const storedEligibilityTotal = parsedEligibility.pending + parsedEligibility.eligible + parsedEligibility.ineligible + parsedEligibility.suspended;
   if (parsedEligibility.total !== storedEligibilityTotal) {
@@ -199,6 +228,9 @@ export function validateDashboardInvariants(
   const storedRfqTotal = parsedRfq.new + parsedRfq.inProgress + parsedRfq.responded + parsedRfq.closed;
   if (parsedRfq.total !== storedRfqTotal) {
     throw new Error("Dashboard Invariant Violation: unknown rfq status present");
+  }
+  if (parsedBuyers && parsedBuyers.total !== parsedBuyers.pending + parsedBuyers.verified + parsedBuyers.rejected + parsedBuyers.revoked) {
+    throw new Error("Dashboard Invariant Violation: unknown buyer status present");
   }
   return { noneEligibility };
 }

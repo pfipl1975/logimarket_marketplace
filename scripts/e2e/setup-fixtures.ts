@@ -3,6 +3,7 @@ import {
   E2E_ADMIN_USER_ID,
   E2E_BUYER_FIXTURES,
   E2E_BUYER_USER_ID,
+  E2E_BUYER_CONTACT,
   requireIsolatedE2EDatabaseUrl,
   type E2EBuyerFixture,
 } from "./buyer-trust-fixtures";
@@ -23,6 +24,19 @@ async function insertBuyerFixture(
        id, auth_user_id, buyer_organization_id, membership_role, membership_status
      ) VALUES ($1, $2, $3, 'organization_admin', 'active')`,
     [fixture.membershipId, E2E_BUYER_USER_ID, fixture.organizationId],
+  );
+
+  await client.query(
+    `INSERT INTO buyer_organization_addresses (
+       buyer_organization_id, address_type, street, building_number, postal_code, city, country_code
+     ) VALUES ($1, 'registered', $2, '12', '00-001', $3, 'PL')`,
+    [fixture.organizationId, E2E_BUYER_CONTACT.street, E2E_BUYER_CONTACT.city],
+  );
+  await client.query(
+    `INSERT INTO buyer_organization_addresses (
+       buyer_organization_id, address_type, street, building_number, postal_code, city, country_code, retired_at
+     ) VALUES ($1, 'registered', 'Archived Street', '1', '00-002', 'Archived City', 'PL', CURRENT_TIMESTAMP)`,
+    [fixture.organizationId],
   );
 
   await client.query(
@@ -103,6 +117,11 @@ async function run() {
       INSERT INTO buyer_organizations (id, legal_name, jurisdiction_country, verification_status)
       VALUES (999999, 'E2E Smoke Test Organization', 'PL', 'pending')
     `);
+    await client.query(
+      `INSERT INTO buyer_user_profiles (auth_user_id, first_name, last_name, contact_email, phone)
+       VALUES ($1, 'E2E Buyer', 'Contact', $2, '+48123456789')`,
+      [E2E_BUYER_USER_ID, E2E_BUYER_CONTACT.email],
+    );
     for (const fixture of Object.values(E2E_BUYER_FIXTURES)) {
       await insertBuyerFixture(client, fixture);
     }

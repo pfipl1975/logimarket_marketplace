@@ -3,24 +3,27 @@
 import { useState } from "react";
 import { verifyBuyerOrganizationFromAnyStatusAction, rejectBuyerOrganizationAction, revokeBuyerOrganizationAction } from "@/lib/buyer-trust/admin-actions";
 import type { BuyerOrganizationVerificationStatus } from "@/lib/schema";
+import type { Dictionary } from "@/lib/i18n/types";
 
 export function BuyerVerificationControls({
   organizationId,
   currentStatus,
   taxIdentifierId,
   registryIdentifierId,
+  labels,
 }: {
   organizationId: number;
   currentStatus: BuyerOrganizationVerificationStatus;
   taxIdentifierId: number | null;
   registryIdentifierId: number | null;
+  labels: Dictionary["adminBuyers"]["controls"];
 }) {
   const [loading, setLoading] = useState(false);
   const [reasonCode, setReasonCode] = useState("");
 
   const handleVerify = async () => {
     if (!taxIdentifierId && !registryIdentifierId) {
-      alert("Cannot verify without at least one identifier (Tax or Registry)");
+      alert(labels.missingIdentifier);
       return;
     }
 
@@ -29,15 +32,15 @@ export function BuyerVerificationControls({
     setLoading(false);
 
     if (result.ok) {
-      alert("Organization verified successfully.");
+      alert(labels.verifiedSuccess);
     } else {
-      alert("Failed to verify: " + result.code);
+      alert(labels.failedVerify + ": " + result.code);
     }
   };
 
   const handleReject = async () => {
     if (!reasonCode) {
-      alert("Reason is required for rejection");
+      alert(labels.reasonRequired);
       return;
     }
 
@@ -52,15 +55,15 @@ export function BuyerVerificationControls({
     setLoading(false);
 
     if (result.ok) {
-      alert("Organization rejected.");
+      alert(labels.rejectedSuccess);
     } else {
-      alert("Failed to reject: " + result.code);
+      alert(labels.failedReject + ": " + result.code);
     }
   };
 
   const handleRevoke = async () => {
     if (!reasonCode) {
-      alert("Reason is required for revocation");
+      alert(labels.reasonRequired);
       return;
     }
 
@@ -69,23 +72,24 @@ export function BuyerVerificationControls({
     setLoading(false);
 
     if (result.ok) {
-      alert("Organization revoked.");
+      alert(labels.revokedSuccess);
     } else {
-      alert("Failed to revoke: " + result.code);
+      alert(labels.failedRevoke + ": " + result.code);
     }
   };
 
   return (
     <div className="bg-white p-6 border border-border-industrial rounded-industrial shadow-sm space-y-4">
-      <h3 className="font-semibold text-lg border-b border-border-industrial pb-2">Decyzja Administracyjna / Admin Decision</h3>
+      <h3 className="font-semibold text-lg border-b border-border-industrial pb-2">{labels.title}</h3>
 
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-1 text-muted-foreground">Powód (dla Reject/Revoke)</label>
+          <label htmlFor="buyer-decision-reason" className="block text-sm font-medium mb-1 text-muted-foreground">{labels.reasonLabel}</label>
           <input
+            id="buyer-decision-reason"
             type="text"
             className="w-full px-3 py-2 border border-border-industrial rounded-md focus:outline-none focus:ring-2 focus:ring-brand-teal"
-            placeholder="Np. dane_nieprawidlowe, brak_odpowiedzi..."
+            placeholder={labels.reasonPlaceholder}
             value={reasonCode}
             onChange={(e) => setReasonCode(e.target.value)}
             disabled={loading}
@@ -98,7 +102,7 @@ export function BuyerVerificationControls({
             disabled={loading || (!taxIdentifierId && !registryIdentifierId)}
             className="px-4 py-2 bg-emerald-600 text-white rounded-md font-medium hover:bg-emerald-700 disabled:opacity-50 transition-colors"
           >
-            VERIFY (Zatwierdź)
+            {labels.verify}
           </button>
 
           {currentStatus === "pending" && (
@@ -107,7 +111,7 @@ export function BuyerVerificationControls({
               disabled={loading || !reasonCode}
               className="px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 disabled:opacity-50 transition-colors"
             >
-              REJECT (Odrzuć)
+              {labels.reject}
             </button>
           )}
 
@@ -117,7 +121,7 @@ export function BuyerVerificationControls({
               disabled={loading || !reasonCode}
               className="px-4 py-2 bg-gray-800 text-white rounded-md font-medium hover:bg-gray-900 disabled:opacity-50 transition-colors"
             >
-              REVOKE (Cofnij)
+              {labels.revoke}
             </button>
           )}
         </div>

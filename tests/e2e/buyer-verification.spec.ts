@@ -3,6 +3,7 @@ import { Pool } from "pg";
 import {
   E2E_ADMIN_USER_ID,
   E2E_BUYER_FIXTURES,
+  E2E_BUYER_CONTACT,
   requireIsolatedE2EDatabaseUrl,
 } from "../../scripts/e2e/buyer-trust-fixtures";
 import { test } from "./fixtures/auth";
@@ -68,14 +69,14 @@ test("authorization denies unauthenticated and non-Admin users while authorizing
 
   await nonAdminPage.goto("/admin/kupujacy");
   await expect(nonAdminPage.locator("body")).toContainText("404");
-  await expect(nonAdminPage.getByRole("heading", { name: "Kupujący / Buyers" })).toHaveCount(0);
+  await expect(nonAdminPage.getByRole("heading", { name: "Kupujący" })).toHaveCount(0);
 
   await nonAdminPage.goto(`/admin/kupujacy/${E2E_BUYER_FIXTURES.detail.organizationId}`);
   await expect(nonAdminPage.locator("body")).toContainText("404");
 
   const listResponse = await adminPage.goto("/admin/kupujacy");
   expect(listResponse?.ok()).toBeTruthy();
-  await expect(adminPage.getByRole("heading", { name: "Kupujący / Buyers" })).toBeVisible();
+  await expect(adminPage.getByRole("heading", { name: "Kupujący" })).toBeVisible();
 
   const detailResponse = await adminPage.goto(`/admin/kupujacy/${E2E_BUYER_FIXTURES.detail.organizationId}`);
   expect(detailResponse?.ok()).toBeTruthy();
@@ -84,18 +85,33 @@ test("authorization denies unauthenticated and non-Admin users while authorizing
 
 test("Admin Buyer list renders deterministic statuses, identifiers, navigation and active state", async ({ adminPage }) => {
   await adminPage.goto("/admin/kupujacy");
-  await expect(adminPage.getByRole("heading", { name: "Kupujący / Buyers" })).toBeVisible();
+  await expect(adminPage.getByRole("heading", { name: "Kupujący" })).toBeVisible();
 
   for (const fixture of Object.values(E2E_BUYER_FIXTURES)) {
     const row = adminPage.getByRole("row", { name: new RegExp(fixture.legalName) });
     await expect(row).toBeVisible();
-    await expect(row).toContainText(fixture.initialStatus === "verified" ? "Verified" : "Pending");
+    await expect(row).toContainText(fixture.initialStatus === "verified" ? "Zweryfikowani" : "Dane zadeklarowane");
     await expect(row).toContainText(fixture.nip);
-    await expect(row).toContainText(fixture.registryValue);
+    await expect(row).toContainText(E2E_BUYER_CONTACT.city);
+    await expect(row).toContainText(E2E_BUYER_CONTACT.name);
+    await expect(row).toContainText(E2E_BUYER_CONTACT.email);
   }
 
   const activeBuyerLinks = adminPage.getByRole("link", { name: /Kupujący|Buyers/ });
   await expect(activeBuyerLinks.first()).toHaveAttribute("aria-current", "page");
+});
+
+test("Admin dashboard shows Buyer KPI and opens Buyer list", async ({ adminPage }) => {
+  await adminPage.setViewportSize({ width: 1280, height: 800 });
+  await adminPage.goto("/admin");
+  expect(await adminPage.evaluate(() => window.innerWidth)).toBe(1280);
+  const buyerKpi = adminPage.getByRole("link", { name: /Kupujący.*5/ });
+  await expect(buyerKpi).toBeVisible();
+  await expect(adminPage.getByText("Dane zadeklarowane", { exact: true }).locator("..")).toContainText("3");
+  await expect(adminPage.getByText("Zweryfikowani", { exact: true }).locator("..")).toContainText("2");
+  await buyerKpi.click();
+  await expect(adminPage).toHaveURL(/\/admin\/kupujacy$/);
+  await expect(adminPage.getByRole("row", { name: /E2E Synthetic Buyer Detail/ })).toBeVisible();
 });
 
 test("Buyer detail distinguishes declared identifiers from trusted evidence and renders history", async ({ adminPage }) => {
@@ -104,16 +120,21 @@ test("Buyer detail distinguishes declared identifiers from trusted evidence and 
   await expect(adminPage.getByRole("heading", { name: pending.legalName })).toBeVisible();
   await expect(adminPage.getByText(`PL${pending.nip}`, { exact: false })).toBeVisible();
   await expect(adminPage.getByText(`PL:${pending.registryValue}`, { exact: false })).toBeVisible();
-  await expect(adminPage.getByText("TRUSTED")).toHaveCount(0);
-  await expect(adminPage.getByText("Brak historii.")).toBeVisible();
+  await expect(adminPage.getByText("Potwierdzony")).toHaveCount(0);
+  await expect(adminPage.getByText("Brak zdarzeń weryfikacji.")).toBeVisible();
 
   const trusted = E2E_BUYER_FIXTURES.detail;
   await adminPage.goto(`/admin/kupujacy/${trusted.organizationId}`);
   await expect(adminPage.getByRole("heading", { name: trusted.legalName })).toBeVisible();
-  await expect(adminPage.getByText(`Status: ${trusted.initialStatus}`, { exact: false })).toBeVisible();
-  await expect(adminPage.getByText("TRUSTED")).toHaveCount(2);
+  await expect(adminPage.getByText("Status: Zweryfikowani", { exact: false })).toBeVisible();
+  await expect(adminPage.getByText("Potwierdzony")).toHaveCount(2);
+  await expect(adminPage.getByRole("heading", { name: "Adres rejestrowy" }).locator("..")).toContainText(`${E2E_BUYER_CONTACT.street} 12`);
+  await expect(adminPage.getByRole("heading", { name: "Adres rejestrowy" }).locator("..")).toContainText(E2E_BUYER_CONTACT.city);
+  await expect(adminPage.getByRole("heading", { name: "Adres rejestrowy" }).locator("..")).not.toContainText("Archived City");
+  await expect(adminPage.getByRole("heading", { name: "Użytkownicy i członkostwa" }).locator("..")).toContainText(E2E_BUYER_CONTACT.email);
+  await expect(adminPage.getByRole("heading", { name: "Użytkownicy i członkostwa" }).locator("..")).toContainText("Administrator organizacji");
 
-  const history = adminPage.getByRole("heading", { name: /Historia zdarzeń/ }).locator("..");
+  const history = adminPage.getByRole("heading", { name: /Historia weryfikacji/ }).locator("..");
   await expect(history).toContainText(/\bverified\b/i);
   await expect(history).toContainText("Aktor: admin");
   await expect(history).toContainText("Źródło: admin_manual");
@@ -125,12 +146,12 @@ test("VERIFY runs through the UI, records server authority and rejects a repeate
 
   await expectDecisionAlert(
     adminPage,
-    () => adminPage.getByRole("button", { name: "VERIFY (Zatwierdź)" }).click(),
-    "Organization verified successfully.",
+    () => adminPage.getByRole("button", { name: "Zweryfikuj" }).click(),
+    "Organizacja została zweryfikowana.",
   );
 
-  await expect(adminPage.getByText("Status: verified", { exact: false })).toBeVisible();
-  const history = adminPage.getByRole("heading", { name: /Historia zdarzeń/ }).locator("..");
+  await expect(adminPage.getByText("Status: Zweryfikowani", { exact: false })).toBeVisible();
+  const history = adminPage.getByRole("heading", { name: /Historia weryfikacji/ }).locator("..");
   await expect(history).toContainText(/\bverified\b/i);
   await expect(history).toContainText("Aktor: admin");
   await expect(history).toContainText("Źródło: admin_manual");
@@ -149,26 +170,26 @@ test("VERIFY runs through the UI, records server authority and rejects a repeate
 
   const repeatedTransitionMessage = await expectDecisionAlert(
     adminPage,
-    () => adminPage.getByRole("button", { name: "VERIFY (Zatwierdź)" }).click(),
-    "Failed to verify: BUYER_TRUST_INVALID_TRANSITION",
+    () => adminPage.getByRole("button", { name: "Zweryfikuj" }).click(),
+    "Nie udało się zweryfikować: BUYER_TRUST_INVALID_TRANSITION",
   );
   expect(repeatedTransitionMessage).not.toMatch(/SELECT |INSERT |UPDATE |DELETE |stack|at\s+\w+/i);
-  await expect(adminPage.getByText("Status: verified", { exact: false })).toBeVisible();
+  await expect(adminPage.getByText("Status: Zweryfikowani", { exact: false })).toBeVisible();
 });
 
 test("REJECT runs through the UI and preserves auditable identifier evidence", async ({ adminPage }) => {
   const fixture = E2E_BUYER_FIXTURES.reject;
   await adminPage.goto(`/admin/kupujacy/${fixture.organizationId}`);
-  await adminPage.getByPlaceholder("Np. dane_nieprawidlowe, brak_odpowiedzi...").fill("synthetic_data_rejected");
+  await adminPage.getByPlaceholder("Wpisz kod powodu").fill("synthetic_data_rejected");
 
   await expectDecisionAlert(
     adminPage,
-    () => adminPage.getByRole("button", { name: "REJECT (Odrzuć)" }).click(),
-    "Organization rejected.",
+    () => adminPage.getByRole("button", { name: "Odrzuć" }).click(),
+    "Organizacja została odrzucona.",
   );
 
-  await expect(adminPage.getByText("Status: rejected", { exact: false })).toBeVisible();
-  const history = adminPage.getByRole("heading", { name: /Historia zdarzeń/ }).locator("..");
+  await expect(adminPage.getByText("Status: Odrzuceni", { exact: false })).toBeVisible();
+  const history = adminPage.getByRole("heading", { name: /Historia weryfikacji/ }).locator("..");
   await expect(history).toContainText(/\brejected\b/i);
   await expect(history).toContainText("synthetic_data_rejected");
 
@@ -185,18 +206,18 @@ test("REJECT runs through the UI and preserves auditable identifier evidence", a
 test("REVOKE runs through the UI, fails closed and preserves prior verification history", async ({ adminPage }) => {
   const fixture = E2E_BUYER_FIXTURES.revoke;
   await adminPage.goto(`/admin/kupujacy/${fixture.organizationId}`);
-  await expect(adminPage.getByText("TRUSTED")).toHaveCount(2);
-  await adminPage.getByPlaceholder("Np. dane_nieprawidlowe, brak_odpowiedzi...").fill("synthetic_verification_revoked");
+  await expect(adminPage.getByText("Potwierdzony")).toHaveCount(2);
+  await adminPage.getByPlaceholder("Wpisz kod powodu").fill("synthetic_verification_revoked");
 
   await expectDecisionAlert(
     adminPage,
-    () => adminPage.getByRole("button", { name: "REVOKE (Cofnij)" }).click(),
-    "Organization revoked.",
+    () => adminPage.getByRole("button", { name: "Cofnij weryfikację" }).click(),
+    "Weryfikacja została cofnięta.",
   );
 
-  await expect(adminPage.getByText("Status: revoked", { exact: false })).toBeVisible();
-  await expect(adminPage.getByText("TRUSTED")).toHaveCount(0);
-  const history = adminPage.getByRole("heading", { name: /Historia zdarzeń/ }).locator("..");
+  await expect(adminPage.getByText("Status: Weryfikacja cofnięta", { exact: false })).toBeVisible();
+  await expect(adminPage.getByText("Potwierdzony")).toHaveCount(0);
+  const history = adminPage.getByRole("heading", { name: /Historia weryfikacji/ }).locator("..");
   await expect(history).toContainText(/\brevoked\b/i);
   await expect(history).toContainText(/\bverified\b/i);
   await expect(history).toContainText("synthetic_verification_revoked");
@@ -215,21 +236,28 @@ test("REVOKE runs through the UI, fails closed and preserves prior verification 
 });
 
 test("localized route and narrow viewport keep Buyer verification usable", async ({ adminPage }) => {
+  const browserErrors: string[] = [];
+  adminPage.on("console", (message) => { if (message.type() === "error") browserErrors.push(message.text()); });
+  adminPage.on("pageerror", (error) => browserErrors.push(error.message));
   const fixture = E2E_BUYER_FIXTURES.detail;
   await adminPage.goto("/en/admin/buyers");
-  await expect(adminPage.getByRole("heading", { name: "Kupujący / Buyers" })).toBeVisible();
+  await expect(adminPage.getByRole("heading", { name: "Buyers" })).toBeVisible();
+  await expect(adminPage.getByRole("columnheader", { name: "Primary contact" })).toBeVisible();
   await expect(adminPage.getByRole("row", { name: new RegExp(fixture.legalName) })).toBeVisible();
   await expect(adminPage.getByRole("link", { name: /Buyers/ }).first()).toHaveAttribute("aria-current", "page");
 
   await adminPage.setViewportSize({ width: 390, height: 844 });
   await adminPage.goto("/admin/kupujacy");
-  await expect(adminPage.getByRole("heading", { name: "Kupujący / Buyers" })).toBeVisible();
+  expect(await adminPage.evaluate(() => window.innerWidth)).toBe(390);
+  await expect(adminPage.getByRole("heading", { name: "Kupujący" })).toBeVisible();
   await expect(adminPage.getByRole("row", { name: new RegExp(fixture.legalName) })).toBeVisible();
+  await expect(adminPage.getByRole("region", { name: "Kupujący" })).toBeVisible();
   expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
 
   await adminPage.goto(`/admin/kupujacy/${fixture.organizationId}`);
   await expect(adminPage.getByRole("heading", { name: fixture.legalName })).toBeVisible();
-  await expect(adminPage.getByRole("button", { name: "VERIFY (Zatwierdź)" })).toBeVisible();
-  await expect(adminPage.getByPlaceholder("Np. dane_nieprawidlowe, brak_odpowiedzi...")).toBeVisible();
+  await expect(adminPage.getByRole("button", { name: "Zweryfikuj" })).toBeVisible();
+  await expect(adminPage.getByPlaceholder("Wpisz kod powodu")).toBeVisible();
   expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+  expect(browserErrors).toEqual([]);
 });

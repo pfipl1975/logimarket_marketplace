@@ -46,12 +46,29 @@ test("Admin Buyer Trust Manual Verification Contract", async (t) => {
 
     // Has links to details
     assert.match(page, /<Link/);
-    assert.match(page, /Szczegóły/);
+    assert.match(page, /t\.table\.details/);
 
     // Shows verification statuses
-    assert.match(page, /Pending/i);
-    assert.match(page, /Verified/i);
+    assert.match(page, /t\.status\[buyer\.verificationStatus\]/);
     // Detail shows VerificationControls
     assert.match(detail, /BuyerVerificationControls/);
   });
+});
+
+test("Primary Buyer contact is deterministic and excludes inactive memberships", async () => {
+  const { selectPrimaryBuyerContact } = await import("../../src/lib/buyer-trust/admin-service-core");
+  const membership = (id: number, role: "organization_admin" | "authorized_buyer", status: "active" | "inactive" | "revoked", createdAt: string, firstName: string | null) => ({
+    id, buyerOrganizationId: 1, role, status, createdAt, firstName, lastName: firstName ? "Contact" : null,
+    contactEmail: firstName ? `${firstName.toLowerCase()}@example.invalid` : null, phone: null,
+  });
+  const members = [
+    membership(4, "organization_admin", "inactive", "2023-01-01", "Inactive"),
+    membership(3, "authorized_buyer", "active", "2023-01-01", "Buyer"),
+    membership(2, "organization_admin", "active", "2024-01-01", "Later"),
+    membership(1, "organization_admin", "active", "2024-01-01", "First"),
+  ];
+  assert.deepStrictEqual(selectPrimaryBuyerContact(members), { name: "First Contact", email: "first@example.invalid" });
+  assert.deepStrictEqual(selectPrimaryBuyerContact(members.filter((m) => m.role !== "organization_admin")), { name: "Buyer Contact", email: "buyer@example.invalid" });
+  assert.deepStrictEqual(selectPrimaryBuyerContact([membership(1, "organization_admin", "active", "2024-01-01", null)]), { name: null, email: null });
+  assert.deepStrictEqual(selectPrimaryBuyerContact([membership(1, "organization_admin", "revoked", "2024-01-01", "Revoked")]), { name: null, email: null });
 });
