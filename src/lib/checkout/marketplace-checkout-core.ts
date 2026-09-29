@@ -5,6 +5,7 @@ import {
   buyerLegalContextSnapshots,
   marketplaceOrders,
   marketplaceOrderBuyerContactSnapshots,
+  marketplaceOrderBuyerInvoiceSnapshots,
   marketplaceOrderSellerDisclosures,
   sellerOrders,
   sellerOrderSellerSnapshots,
@@ -17,8 +18,7 @@ import {
   sellerRegistryIdentifiers,
   sellerEligibility,
 } from "@/lib/schema";
-import { evaluateBuyerCheckoutReadiness } from "@/lib/marketplace/buyer-legal-context";
-import type { BuyerLegalContextInput } from "@/lib/marketplace/buyer-legal-context";
+import { evaluateBuyerOrderIntentReadiness, type BuyerOrderIntentContext } from "./buyer-order-intent";
 import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
 import { validateSellerSourceForSnapshot } from "@/lib/marketplace/seller-snapshot";
 import type { SellerEligibilityStatus, SellerSourceInput } from "@/lib/marketplace/seller-snapshot";
@@ -36,13 +36,6 @@ import {
   REFUND_FINANCIAL_LIABILITY,
   ECOMMERCE_MVP_CURRENCY,
 } from "@/lib/marketplace/policy-constants";
-
-export interface BuyerContactInput {
-  contactName: string;
-  email: string;
-  phone?: string | null;
-  message?: string | null;
-}
 
 export type MarketplaceCheckoutResult =
   | { ok: true; marketplaceOrderId: number }
@@ -78,12 +71,14 @@ function requireValidatedString(value: string | null, field: string): string {
 export async function executeMarketplaceCheckout(
   db: MarketplaceDatabase,
   sessionHash: string,
-  buyerLegalContext: BuyerLegalContextInput,
-  buyerContact: BuyerContactInput,
-  buyerAuthUserId: string | null = null
+  context: BuyerOrderIntentContext,
 ): Promise<MarketplaceCheckoutResult> {
   try {
     return await db.transaction(async (tx) => {
+      if (!evaluateBuyerOrderIntentReadiness(context)) {
+        return { ok: false, reason: "CHECKOUT_BUYER_NOT_READY" };
+      }
+      const { legal: buyerLegalContext, contact: buyerContact, invoice: buyerInvoice, authUserId: buyerAuthUserId } = context;
       await tx.execute(sql`SELECT pg_advisory_xact_lock(hashtext('marketplace_checkout'), hashtext(${sessionHash}))`);
 
       const cartRows = await tx
@@ -129,11 +124,6 @@ export async function executeMarketplaceCheckout(
           linesByPartner.set(offer.partnerId, lines);
         }
         lines.push({ cartRow: row, offer });
-      }
-
-      const buyerReadiness = evaluateBuyerCheckoutReadiness(buyerLegalContext);
-      if (buyerReadiness !== "VALID_CONTEXT") {
-        return { ok: false, reason: "CHECKOUT_BUYER_NOT_READY" };
       }
 
       const sellerDisclosures = new Map<number, SellerSourceInput>();
@@ -222,6 +212,19 @@ export async function executeMarketplaceCheckout(
         buyerAuthUserId,
       }).returning({ id: marketplaceOrders.id });
       const mOrderId = moInsert.id;
+
+      await tx.insert(marketplaceOrderBuyerInvoiceSnapshots).values({
+        marketplaceOrderId: mOrderId,
+        legalName: buyerInvoice.legalName,
+        taxIdentifierType: buyerInvoice.taxIdentifierType,
+        taxIdentifierValue: buyerInvoice.taxIdentifierValue,
+        street: buyerInvoice.street,
+        buildingNumber: buyerInvoice.buildingNumber,
+        unitNumber: buyerInvoice.unitNumber,
+        postalCode: buyerInvoice.postalCode,
+        city: buyerInvoice.city,
+        countryCode: buyerInvoice.countryCode,
+      });
 
       await tx.insert(marketplaceOrderBuyerContactSnapshots).values({
         marketplaceOrderId: mOrderId,

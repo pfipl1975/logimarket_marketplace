@@ -7,7 +7,9 @@ import {
   sellerAcceptanceDecisions,
   sellerOrderItems,
   marketplaceOrderBuyerContactSnapshots,
+  marketplaceOrderBuyerInvoiceSnapshots,
 } from "@/lib/schema";
+import type { BuyerInvoiceSnapshotInput } from "@/lib/checkout/buyer-order-intent";
 import { eq, and, sql, asc } from "drizzle-orm";
 import { requirePartnerMembership } from "@/lib/auth/partner-membership";
 import {
@@ -161,6 +163,8 @@ export type PartnerOrderDetailDTO = {
   buyerContactName: string | null;
   buyerEmail: string | null;
   buyerPhone: string | null;
+  buyerInvoice: BuyerInvoiceSnapshotInput | null;
+  invoiceDataAvailable: boolean;
 
   customerPoNumber: string | null;
 
@@ -270,6 +274,7 @@ export async function getPartnerOrderDetail(
       buyerEmail: null as string | null,
       buyerPhone: null as string | null,
     };
+    let buyerInvoice: BuyerInvoiceSnapshotInput | null = null;
 
     const isCanonicalAccepted = (
       row.decisionStatus === "seller_accepted" &&
@@ -298,6 +303,23 @@ export async function getPartnerOrderDetail(
         contactInfo.buyerEmail = contactData[0].email;
         contactInfo.buyerPhone = contactData[0].phone;
       }
+      const invoiceRows = await db.select({
+        legalName: marketplaceOrderBuyerInvoiceSnapshots.legalName,
+        taxIdentifierType: marketplaceOrderBuyerInvoiceSnapshots.taxIdentifierType,
+        taxIdentifierValue: marketplaceOrderBuyerInvoiceSnapshots.taxIdentifierValue,
+        street: marketplaceOrderBuyerInvoiceSnapshots.street,
+        buildingNumber: marketplaceOrderBuyerInvoiceSnapshots.buildingNumber,
+        unitNumber: marketplaceOrderBuyerInvoiceSnapshots.unitNumber,
+        postalCode: marketplaceOrderBuyerInvoiceSnapshots.postalCode,
+        city: marketplaceOrderBuyerInvoiceSnapshots.city,
+        countryCode: marketplaceOrderBuyerInvoiceSnapshots.countryCode,
+      }).from(marketplaceOrderBuyerInvoiceSnapshots)
+        .innerJoin(sellerOrders, eq(sellerOrders.marketplaceOrderId, marketplaceOrderBuyerInvoiceSnapshots.marketplaceOrderId))
+        .where(and(eq(sellerOrders.id, sellerOrderId), eq(sellerOrders.partnerId, partnerId)))
+        .limit(1);
+      if (invoiceRows.length === 1 && invoiceRows[0].taxIdentifierType === "tax_id" && invoiceRows[0].countryCode === "PL") {
+        buyerInvoice = invoiceRows[0] as BuyerInvoiceSnapshotInput;
+      }
     }
 
     return {
@@ -319,6 +341,8 @@ export async function getPartnerOrderDetail(
         buyerRegistryId: row.buyerRegistryId,
 
         ...contactInfo,
+        buyerInvoice,
+        invoiceDataAvailable: buyerInvoice !== null,
 
         customerPoNumber: row.customerPoNumber,
 
