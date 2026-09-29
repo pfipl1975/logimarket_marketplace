@@ -108,6 +108,11 @@ type DiskJournal = { entries: { idx: number; tag: string; when: number }[] };
 type DiskMigration = { folderMillis: number };
 // POST_0019 is the publisher's earliest explicitly supported physical state.
 const MIN_CANONICAL_JOURNAL_LENGTH = 20;
+const SUPPORTED_PHYSICAL_STATES: Record<string, number | undefined> = {
+  EXACT_EXISTING_POST_0019: 20,
+  EXACT_EXISTING_POST_0020: 21,
+  EXACT_EXISTING_POST_0021: 22,
+};
 
 export function validateCanonicalDiskJournal(journal: DiskJournal, migrations: DiskMigration[]): void {
   if (
@@ -245,10 +250,11 @@ export async function publishCoreLegalPackV1(env: Record<string, string | undefi
 
       const before = await fetchLiveSchemaMetadata(client);
       const state = classifyRuntimeTarget(before.fingerprint, before.publicTables, before.security).state;
-      if (state !== "EXACT_EXISTING_POST_0019" && state !== "EXACT_EXISTING_POST_0020") blocked(`PHYSICAL_STATE_${state}`);
+      const expectedJournalLength = SUPPORTED_PHYSICAL_STATES[state];
+      if (expectedJournalLength === undefined) blocked(`PHYSICAL_STATE_${state}`);
       await client.query("LOCK TABLE public.legal_documents, public.legal_document_versions, public.legal_pack_versions, public.legal_pack_documents IN SHARE ROW EXCLUSIVE MODE");
       const applied = await readJournal(client);
-      if (applied.length !== (state === "EXACT_EXISTING_POST_0020" ? 21 : 20)) blocked("RUNTIME_JOURNAL_CARDINALITY");
+      if (applied.length !== expectedJournalLength) blocked("RUNTIME_JOURNAL_CARDINALITY");
       try {
         validateAppliedMigrationPrefix("production", state, journal, migrations, applied, getBuffer);
       } catch {

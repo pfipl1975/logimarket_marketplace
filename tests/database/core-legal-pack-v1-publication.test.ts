@@ -80,9 +80,11 @@ const diskMigrations = readMigrationFiles({ migrationsFolder });
 test("Core Pack publisher validates the complete appendable disk chain", () => {
   assert.ok(diskJournal.entries.length > 20);
   assert.doesNotThrow(() => validateCanonicalDiskJournal(diskJournal, diskMigrations));
+  const nextIndex = diskJournal.entries.length;
+  const nextTag = `${String(nextIndex).padStart(4, "0")}_future_append`;
   const appendedWhen = diskJournal.entries.at(-1)!.when + 1;
   assert.doesNotThrow(() => validateCanonicalDiskJournal(
-    { entries: [...diskJournal.entries, { idx: diskJournal.entries.length, tag: "0021_future_append", when: appendedWhen }] },
+    { entries: [...diskJournal.entries, { idx: nextIndex, tag: nextTag, when: appendedWhen }] },
     [...diskMigrations, { folderMillis: appendedWhen }],
   ));
   assert.throws(
