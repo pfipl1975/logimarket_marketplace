@@ -97,20 +97,35 @@ function verifyFrozenSource(): void {
 
 function readCanonicalJournal() {
   const folder = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER);
-  const journal = JSON.parse(fs.readFileSync(path.join(folder, "meta", "_journal.json"), "utf8")) as {
-    entries: { idx: number; tag: string; when: number }[];
-  };
+  const journal = JSON.parse(fs.readFileSync(path.join(folder, "meta", "_journal.json"), "utf8")) as DiskJournal;
   const migrations = readMigrationFiles({ migrationsFolder: folder });
-  if (journal.entries.length !== 20 || migrations.length !== 20) blocked("DISK_JOURNAL_NOT_20");
-  for (let index = 0; index < 20; index++) {
-    if (
-      journal.entries[index].idx !== index ||
-      !journal.entries[index].tag.startsWith(String(index).padStart(4, "0") + "_") ||
-      journal.entries[index].when !== migrations[index].folderMillis
-    ) blocked("DISK_JOURNAL_INVALID");
-  }
+  validateCanonicalDiskJournal(journal, migrations);
   const getBuffer = (tag: string) => fs.readFileSync(path.join(folder, `${tag}.sql`));
   return { journal, migrations, getBuffer };
+}
+
+type DiskJournal = { entries: { idx: number; tag: string; when: number }[] };
+type DiskMigration = { folderMillis: number };
+// POST_0019 is the publisher's earliest explicitly supported physical state.
+const MIN_CANONICAL_JOURNAL_LENGTH = 20;
+
+export function validateCanonicalDiskJournal(journal: DiskJournal, migrations: DiskMigration[]): void {
+  if (
+    !journal || !Array.isArray(journal.entries) ||
+    journal.entries.length !== migrations.length ||
+    journal.entries.length < MIN_CANONICAL_JOURNAL_LENGTH
+  ) blocked("DISK_JOURNAL_LENGTH_INVALID");
+  let previousWhen = -1;
+  for (let index = 0; index < journal.entries.length; index++) {
+    const entry = journal.entries[index];
+    if (
+      entry.idx !== index ||
+      !entry.tag.startsWith(String(index).padStart(4, "0") + "_") ||
+      entry.when !== migrations[index].folderMillis ||
+      entry.when <= previousWhen
+    ) blocked("DISK_JOURNAL_INVALID");
+    previousWhen = entry.when;
+  }
 }
 
 async function readJournal(client: PoolClient): Promise<JournalRow[]> {
