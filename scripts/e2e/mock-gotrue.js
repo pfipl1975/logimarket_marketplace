@@ -47,7 +47,7 @@ function verifyJWT(token) {
 
 const server = http.createServer((req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'authorization, apikey, content-type');
 
   if (req.method === 'OPTIONS') {
@@ -58,7 +58,7 @@ const server = http.createServer((req, res) => {
 
   if (req.url === '/auth/v1/user' && req.method === 'GET') {
     const authHeader = req.headers.authorization || '';
-    logSync("Got request for /auth/v1/user with token: " + authHeader.substring(0, 30) + "...");
+    logSync("Got request for /auth/v1/user");
 
     if (!authHeader.startsWith('Bearer ')) {
       logSync("Rejecting invalid token header");
@@ -89,6 +89,36 @@ const server = http.createServer((req, res) => {
       res.writeHead(401, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ error: e.message || 'bad_jwt', error_code: e.message || 'bad_jwt', code: 401, msg: e.message || 'bad_jwt' }));
     }
+    return;
+  }
+
+  // Disposable Auth lifecycle endpoints. Never log request bodies or passwords.
+  const pathname = new URL(req.url, 'http://localhost:54321').pathname;
+  if (req.method === 'POST' && pathname === '/auth/v1/signup') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ user: null, session: null }));
+    return;
+  }
+  if (req.method === 'POST' && pathname === '/auth/v1/recover') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end('{}');
+    return;
+  }
+  if (req.method === 'PUT' && pathname === '/auth/v1/user') {
+    const token = (req.headers.authorization || '').replace('Bearer ', '');
+    try {
+      const user = verifyJWT(token);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ id: user.sub, email: 'e2e-' + user.sub + '@test.local', app_metadata: {}, user_metadata: {}, aud: 'authenticated', created_at: new Date().toISOString() }));
+    } catch {
+      res.writeHead(401, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'invalid_token' }));
+    }
+    return;
+  }
+  if (req.method === 'POST' && pathname === '/auth/v1/logout') {
+    res.writeHead(204);
+    res.end();
     return;
   }
 
