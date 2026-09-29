@@ -252,7 +252,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0020");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0021");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -640,7 +640,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 21, "journal count must be exactly 21");
+      assert.strictEqual(journalRows.length, 22, "journal count must be exactly 22");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -791,7 +791,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0020",
+        "EXACT_EXISTING_POST_0021",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -801,7 +801,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 21);
+      assert.strictEqual(post0010Journal.rows[0].count, 22);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -941,9 +941,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const replayCount = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
     assert.strictEqual(replayCount.rows[0].count, 17);
     await runMigrations(process.env);
-    assert.strictEqual((await physicalState()).state, "EXACT_EXISTING_POST_0020");
+    assert.strictEqual((await physicalState()).state, "EXACT_EXISTING_POST_0021");
     const terminalCount = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(terminalCount.rows[0].count, 21);
+    assert.strictEqual(terminalCount.rows[0].count, 22);
 
     for (const [count, expectedState] of [[16, "EXACT_EXISTING_POST_0015"], [18, "EXACT_EXISTING_POST_0017"]] as const) {
       await setupPhysicalPrefix(count);
@@ -1023,7 +1023,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Post-migration classification must be the current terminal state.
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0020");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0021");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -1037,7 +1037,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 21);
+    assert.strictEqual(journalRows.length, 22);
   });
 
   await t.test(
@@ -1203,7 +1203,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0020");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0021");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1217,7 +1217,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 21);
+      assert.strictEqual(journalRows.length, 22);
     },
   );
 
@@ -4116,7 +4116,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       businessName: "Buyer Corp",
       countryCode: "PL",
       taxIdentifierType: "tax_id",
-      taxIdentifierValue: "0987654321",
+      taxIdentifierValue: "1234563218",
       registryIdentifierType: null,
       registryIdentifierValue: null,
       businessVerificationStatus: "verified",
@@ -4131,13 +4131,39 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const defaultBuyerContact = {
       contactName: "John Doe",
       email: "john@buyer.com",
+      phone: "+48 501 234 567",
     };
+
+    function buyerContext(
+      legal: BuyerLegalContextInput = defaultBuyerLegal,
+      contact = defaultBuyerContact,
+    ): import("../../src/lib/checkout/buyer-order-intent").BuyerOrderIntentContext {
+      return {
+        authUserId: "11111111-1111-4111-8111-111111111111",
+        buyerOrganizationId: 1,
+        organizationStatus: "verified",
+        legal,
+        contact,
+        invoice: {
+          legalName: defaultBuyerLegal.businessName!,
+          taxIdentifierType: "tax_id",
+          taxIdentifierValue: defaultBuyerLegal.taxIdentifierValue!,
+          street: "Przemysłowa",
+          buildingNumber: "12",
+          unitNumber: null,
+          postalCode: "00-001",
+          city: "Warszawa",
+          countryCode: "PL",
+        },
+      };
+    }
 
     type CommerceCounts = {
       marketplaceOrders: number;
       sellerOrders: number;
       sellerOrderItems: number;
       buyerContactSnapshots: number;
+      buyerInvoiceSnapshots: number;
     };
 
     async function getCommerceCounts(): Promise<CommerceCounts> {
@@ -4146,7 +4172,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           (SELECT COUNT(*)::int FROM marketplace_orders) AS "marketplaceOrders",
           (SELECT COUNT(*)::int FROM seller_orders) AS "sellerOrders",
           (SELECT COUNT(*)::int FROM seller_order_items) AS "sellerOrderItems",
-          (SELECT COUNT(*)::int FROM marketplace_order_buyer_contact_snapshots) AS "buyerContactSnapshots"
+          (SELECT COUNT(*)::int FROM marketplace_order_buyer_contact_snapshots) AS "buyerContactSnapshots",
+          (SELECT COUNT(*)::int FROM marketplace_order_buyer_invoice_snapshots) AS "buyerInvoiceSnapshots"
       `);
       return result.rows[0];
     }
@@ -4159,7 +4186,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const legacyOrdersBefore = (await pool.query(`SELECT COUNT(*) as c FROM orders`)).rows[0].c;
       const legacyItemsBefore = (await pool.query(`SELECT COUNT(*) as c FROM order_items`)).rows[0].c;
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
       if (!res.ok) assert.fail(`Expected checkout success, got ${res.reason}`);
 
       const mOrderId = res.marketplaceOrderId;
@@ -4178,6 +4205,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(bcSnaps.length, 1);
       assert.strictEqual(bcSnaps[0].contactName, defaultBuyerContact.contactName);
       assert.strictEqual(bcSnaps[0].email, defaultBuyerContact.email);
+
+      const invoiceSnaps = await db.select().from(schemaModule.marketplaceOrderBuyerInvoiceSnapshots).where(eq(schemaModule.marketplaceOrderBuyerInvoiceSnapshots.marketplaceOrderId, mOrderId));
+      assert.strictEqual(invoiceSnaps.length, 1);
+      assert.strictEqual(invoiceSnaps[0].legalName, defaultBuyerLegal.businessName);
+      assert.strictEqual(invoiceSnaps[0].taxIdentifierValue, defaultBuyerLegal.taxIdentifierValue);
+      assert.strictEqual(invoiceSnaps[0].street, "Przemysłowa");
+      assert.strictEqual(invoiceSnaps[0].city, "Warszawa");
 
       const sOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, mOrderId));
       assert.strictEqual(sOrders.length, 1);
@@ -4225,7 +4259,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o1, quantity: 2 });
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: o2, quantity: 3 });
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
       if (!res.ok) assert.fail(`Expected multi-seller checkout success, got ${res.reason}`);
 
       const mOrderId = res.marketplaceOrderId;
@@ -4285,7 +4319,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       const badBuyer: BuyerLegalContextInput = { ...defaultBuyerLegal, businessName: null };
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, badBuyer, defaultBuyerContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext(badBuyer));
       if (res.ok) assert.fail("Buyer-not-ready checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "CHECKOUT_BUYER_NOT_READY");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
@@ -4303,7 +4337,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
       const countsBefore = await getCommerceCounts();
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
       if (res.ok) assert.fail("Seller-not-ready checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "CHECKOUT_SELLER_NOT_READY");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
@@ -4321,7 +4355,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
       const countsBefore = await getCommerceCounts();
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
       if (res.ok) assert.fail("Changed-offer checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "CHECKOUT_CART_CHANGED");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
@@ -4339,7 +4373,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const badContact = { ...defaultBuyerContact, email: "a".repeat(300) };
       const countsBefore = await getCommerceCounts();
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, badContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext(defaultBuyerLegal, badContact));
       if (res.ok) assert.fail("Rollback checkout unexpectedly succeeded");
       assert.strictEqual(res.reason, "SYSTEM_ERROR");
       assert.deepStrictEqual(await getCommerceCounts(), countsBefore);
@@ -4356,8 +4390,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       const moBefore = parseInt((await pool.query(`SELECT COUNT(*) as c FROM marketplace_orders`)).rows[0].c, 10);
 
-      const p1 = executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
-      const p2 = executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const p1 = executeMarketplaceCheckout(db, sessionHash, buyerContext());
+      const p2 = executeMarketplaceCheckout(db, sessionHash, buyerContext());
 
       const results = await Promise.all([p1, p2]);
 
@@ -4384,7 +4418,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
 
-      const res = await executeMarketplaceCheckout(db, sessionHash, defaultBuyerLegal, defaultBuyerContact);
+      const res = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
       if (!res.ok) assert.fail(`Expected legacy-isolation checkout success, got ${res.reason}`);
 
       const legacyOrdersAfter = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM orders`);
@@ -4439,7 +4473,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0020", "Must recognize the POST_0020 terminal state after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0021", "Must recognize the POST_0021 terminal state after migration");
   });
 
   await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
@@ -4465,13 +4499,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     await runMigrations(process.env);
     const after = await fetchLiveSchemaMetadata(pool);
-    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0020");
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0021");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 21);
+    assert.strictEqual(journalAfter.rows[0].count, 22);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 21);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 22);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
@@ -4493,7 +4527,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // ------------------------------------------------------------------
     await cleanDB();
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
-    assert.strictEqual(diskMigrations.length, 21);
+    assert.strictEqual(diskMigrations.length, 22);
     const post0015Migrations = diskMigrations.slice(0, 16);
     assert.strictEqual(post0015Migrations.length, 16);
     for (const migration of post0015Migrations) {
@@ -4532,21 +4566,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // ------------------------------------------------------------------
     await runMigrations(process.env);
 
-    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0020
+    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0021
     const post0016 = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(
       classifyRuntimeTarget(post0016.fingerprint, post0016.publicTables, post0016.security).state,
-      "EXACT_EXISTING_POST_0020",
+      "EXACT_EXISTING_POST_0021",
     );
 
     // RUNTIME D: journal has the complete current migration chain.
     const journalAfter0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter0016.rows[0].count, 21);
+    assert.strictEqual(journalAfter0016.rows[0].count, 22);
 
     // RUNTIME E: POST_0016 rerun is a terminal no-op
     await runMigrations(process.env);
     const journalAfterNoOp0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 21);
+    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 22);
 
     // ------------------------------------------------------------------
     // SCHEMA F: buyer_auth_user_id is a nullable uuid, not unique, no auth.users FK
@@ -4659,25 +4693,37 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const ownershipBuyerContact = {
       contactName: "Ownership Buyer",
       email: "ownership-buyer@corp.com",
+      phone: "+48 501 234 567",
     };
 
-    async function runOwnershipCheckout(offerId: number, quantity: number, buyerAuthUserId?: string) {
+    async function runOwnershipCheckout(offerId: number, quantity: number, buyerAuthUserId: string) {
       const sessionHash = randomUUID();
       await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity });
-      return buyerAuthUserId === undefined
-        ? executeMarketplaceCheckout(db, sessionHash, ownershipBuyerLegal, ownershipBuyerContact)
-        : executeMarketplaceCheckout(db, sessionHash, ownershipBuyerLegal, ownershipBuyerContact, buyerAuthUserId);
+      return executeMarketplaceCheckout(db, sessionHash, {
+        authUserId: buyerAuthUserId,
+        buyerOrganizationId: 1,
+        organizationStatus: "verified",
+        legal: ownershipBuyerLegal,
+        contact: ownershipBuyerContact,
+        invoice: {
+          legalName: "Ownership Buyer Corp",
+          taxIdentifierType: "tax_id",
+          taxIdentifierValue: "5555555555",
+          street: "Przemysłowa",
+          buildingNumber: "12",
+          unitNumber: null,
+          postalCode: "00-001",
+          city: "Warszawa",
+          countryCode: "PL",
+        },
+      });
     }
 
     const { offerId: ownershipOfferId } = await seedOwnershipPartnerAndOffer();
 
-    // CHECKOUT I: guest canonical checkout persists NULL
-    const guestResult = await runOwnershipCheckout(ownershipOfferId, 1);
-    assert.strictEqual(guestResult.ok, true);
-    if (!guestResult.ok) return;
-    const guestOrderId = guestResult.marketplaceOrderId;
-    const guestRow = await pool.query(`SELECT buyer_auth_user_id FROM marketplace_orders WHERE id = $1`, [guestOrderId]);
-    assert.strictEqual(guestRow.rows[0].buyer_auth_user_id, null);
+    // CHECKOUT I: guest canonical E2 is blocked; historical NULL-owned rows remain readable only by no owner.
+    const guestResult = await runOwnershipCheckout(ownershipOfferId, 1, "");
+    assert.deepStrictEqual(guestResult, { ok: false, reason: "CHECKOUT_BUYER_NOT_READY" });
 
     // CHECKOUT J: authenticated canonical checkout persists the exact trusted UUID
     const authResult = await runOwnershipCheckout(ownershipOfferId, 2, USER_A);
@@ -4755,7 +4801,6 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const ownedByA = await listOwnedOrders(ownershipDeps(USER_A));
     const ownedIds = ownedByA.map((order) => order.orderId).sort((a, b) => a - b);
     assert.deepStrictEqual(ownedIds, [authOrderId, authOrderId2].sort((a, b) => a - b));
-    assert.ok(!ownedIds.includes(guestOrderId), "unclaimed NULL-owned order must not appear");
     assert.ok(!ownedIds.includes(preOrderId), "pre-0016 NULL-owned order must not appear");
 
     const ownedByB = await listOwnedOrders(ownershipDeps(USER_B));
@@ -4801,7 +4846,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0020");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0021");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
       `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
@@ -4884,7 +4929,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0020");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0021");
 
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);

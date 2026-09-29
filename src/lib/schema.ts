@@ -1166,6 +1166,24 @@ export const marketplaceOrderBuyerContactSnapshots = pgTable("marketplace_order_
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const marketplaceOrderBuyerInvoiceSnapshots = pgTable("marketplace_order_buyer_invoice_snapshots", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  marketplaceOrderId: bigint("marketplace_order_id", { mode: "number" }).notNull().unique("uq_marketplace_order_buyer_invoice_snapshot").references(() => marketplaceOrders.id, { onDelete: "restrict" }),
+  legalName: varchar("legal_name", { length: 255 }).notNull(),
+  taxIdentifierType: varchar("tax_identifier_type", { length: 50 }).notNull(),
+  taxIdentifierValue: varchar("tax_identifier_value", { length: 100 }).notNull(),
+  street: varchar("street", { length: 255 }).notNull(),
+  buildingNumber: varchar("building_number", { length: 30 }).notNull(),
+  unitNumber: varchar("unit_number", { length: 30 }),
+  postalCode: varchar("postal_code", { length: 20 }).notNull(),
+  city: varchar("city", { length: 100 }).notNull(),
+  countryCode: varchar("country_code", { length: 2 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, () => [
+  check("chk_buyer_invoice_required", sql`length(btrim(legal_name)) > 0 AND length(btrim(tax_identifier_type)) > 0 AND length(btrim(tax_identifier_value)) > 0 AND length(btrim(street)) > 0 AND length(btrim(building_number)) > 0 AND length(btrim(postal_code)) > 0 AND length(btrim(city)) > 0`),
+  check("chk_buyer_invoice_country", sql`country_code ~ '^[A-Z]{2}$'`),
+]);
+
 export const marketplaceOrderSellerDisclosures = pgTable("marketplace_order_seller_disclosures", {
   id: bigserial("id", { mode: "number" }).primaryKey(),
   marketplaceOrderId: bigint("marketplace_order_id", { mode: "number" }).notNull().references(() => marketplaceOrders.id),

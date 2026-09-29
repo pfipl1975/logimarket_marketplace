@@ -94,7 +94,12 @@ export const EXPECTED_POST_0020_TABLES = [
   "buyer_user_profiles"
 ];
 
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0020_TABLES;
+export const EXPECTED_POST_0021_TABLES = [
+  ...EXPECTED_POST_0020_TABLES,
+  "marketplace_order_buyer_invoice_snapshots"
+];
+
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0021_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1800,6 +1805,38 @@ export const FINAL_POST_0020_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0019_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0020_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0021_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0020_PRODUCTION_FINGERPRINT,
+  "marketplace_order_buyer_invoice_snapshots": {
+    name: "marketplace_order_buyer_invoice_snapshots",
+    columns: [
+      { name: "id", type: "bigint", nullable: false, defaultVal: "nextval('marketplace_order_buyer_invoice_snapshots_id_seq'::regclass)", sequenceName: "marketplace_order_buyer_invoice_snapshots_id_seq" },
+      { name: "marketplace_order_id", type: "bigint", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "legal_name", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "tax_identifier_type", type: "character varying(50)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "tax_identifier_value", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "street", type: "character varying(255)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "building_number", type: "character varying(30)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "unit_number", type: "character varying(30)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "postal_code", type: "character varying(20)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "city", type: "character varying(100)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "country_code", type: "character varying(2)", nullable: false, defaultVal: null, sequenceName: null },
+      { name: "created_at", type: "timestamp with time zone", nullable: false, defaultVal: "now()", sequenceName: null },
+    ],
+    constraints: [
+      { name: "marketplace_order_buyer_invoice_snapshots_pkey", type: "PRIMARY KEY", definition: "PRIMARY KEY (id)" },
+      { name: "marketplace_order_buyer_invoice_snapshots_order_fk", type: "FOREIGN KEY", definition: "FOREIGN KEY (marketplace_order_id) REFERENCES marketplace_orders(id) ON DELETE RESTRICT" },
+      { name: "uq_marketplace_order_buyer_invoice_snapshot", type: "UNIQUE", definition: "UNIQUE (marketplace_order_id)" },
+      { name: "chk_buyer_invoice_required", type: "CHECK", definition: "CHECK (((length(btrim((legal_name)::text)) > 0) AND (length(btrim((tax_identifier_type)::text)) > 0) AND (length(btrim((tax_identifier_value)::text)) > 0) AND (length(btrim((street)::text)) > 0) AND (length(btrim((building_number)::text)) > 0) AND (length(btrim((postal_code)::text)) > 0) AND (length(btrim((city)::text)) > 0)))" },
+      { name: "chk_buyer_invoice_country", type: "CHECK", definition: "CHECK (((country_code)::text ~ '^[A-Z]{2}$'::text))" },
+    ],
+    explicitIndexes: [],
+    rlsEnabled: true,
+    policyCount: 0,
+    triggerCount: 0,
+  },
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0020_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0021_PRODUCTION_FINGERPRINT;
 
