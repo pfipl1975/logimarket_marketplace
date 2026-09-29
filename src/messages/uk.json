@@ -1168,6 +1168,77 @@
     "optionalOutboundHelp": "Зовнішнє посилання залишається необов’язковим для цього типу пропозиції.",
     "errorInvalidCurrentOfferType": "Поточна конфігурація пропозиції некоректна. Виберіть коректний тип пропозиції, щоб продовжити."
   },
+  "adminBuyers": {
+    "title": "Покупці",
+    "subtitle": "Організації покупців та операційні дані.",
+    "emptyList": "Організацій покупців поки немає.",
+    "back": "Повернутися до списку",
+    "registeredAddress": "Юридична адреса",
+    "identifiers": "Ідентифікатори",
+    "taxIdentifiers": "Податкові ідентифікатори",
+    "registryIdentifiers": "Реєстраційні ідентифікатори",
+    "users": "Користувачі та членство",
+    "history": "Історія перевірки",
+    "emptyAddress": "Юридичну адресу не вказано.",
+    "emptyUsers": "Немає пов’язаних користувачів.",
+    "emptyIdentifiers": "Ідентифікаторів немає.",
+    "emptyHistory": "Подій перевірки поки немає.",
+    "country": "Країна",
+    "statusLabel": "Статус",
+    "createdAt": "Створено",
+    "verifiedAt": "Перевірено",
+    "phone": "Телефон",
+    "roleLabel": "Роль",
+    "membershipStatusLabel": "Статус членства",
+    "memberSince": "Учасник з",
+    "declaredLabel": "Задекларовано",
+    "trustedLabel": "Підтверджено",
+    "eventOutcome": "Результат",
+    "eventActor": "Виконавець",
+    "eventSource": "Джерело",
+    "eventReason": "Причина",
+    "table": {
+      "company": "Компанія",
+      "taxIdentifier": "NIP / податковий номер",
+      "city": "Місто",
+      "contact": "Основний контакт",
+      "email": "Ел. пошта",
+      "status": "Статус",
+      "createdAt": "Створено",
+      "details": "Деталі"
+    },
+    "status": {
+      "pending": "Дані задекларовано",
+      "verified": "Перевірено",
+      "rejected": "Відхилено",
+      "revoked": "Перевірку відкликано"
+    },
+    "roles": {
+      "organization_admin": "Адміністратор організації",
+      "authorized_buyer": "Уповноважений покупець"
+    },
+    "membershipStatus": {
+      "active": "Активне",
+      "inactive": "Неактивне",
+      "revoked": "Відкликане"
+    },
+    "controls": {
+      "title": "Перевірка організації",
+      "reasonLabel": "Причина відхилення або відкликання",
+      "reasonPlaceholder": "Введіть код причини",
+      "verify": "Перевірити",
+      "reject": "Відхилити",
+      "revoke": "Відкликати перевірку",
+      "missingIdentifier": "Для перевірки потрібен податковий або реєстраційний ідентифікатор.",
+      "reasonRequired": "Укажіть причину рішення.",
+      "verifiedSuccess": "Організацію перевірено.",
+      "rejectedSuccess": "Організацію відхилено.",
+      "revokedSuccess": "Перевірку відкликано.",
+      "failedVerify": "Не вдалося перевірити",
+      "failedReject": "Не вдалося відхилити",
+      "failedRevoke": "Не вдалося відкликати перевірку"
+    }
+  },
   "adminDashboard": {
     "metaTitle": "Панель адміністратора LogiMarket",
     "metaDescription": "Оперативний огляд LogiMarket.",
@@ -1176,11 +1247,18 @@
     "sections": {
       "offers": "Пропозиції",
       "partners": "Партнери",
+      "buyers": "Покупці",
       "rfq": "Операції Запитів",
       "recentRfq": "Останні Запити"
     },
     "labels": {
       "total": "Всього"
+    },
+    "buyerStatus": {
+      "pending": "Дані задекларовано",
+      "verified": "Перевірено",
+      "rejected": "Відхилено",
+      "revoked": "Перевірку відкликано"
     },
     "eligibility": {
       "none": "Не встановлено",

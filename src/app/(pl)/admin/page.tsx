@@ -22,6 +22,7 @@ export default function AdminRootPl() {
     <AdminDashboardPage 
       locale="pl" 
       routes={{
+        buyers: "/admin/kupujacy",
         partners: "/admin/partnerzy",
         offers: "/admin/oferty",
         rfq: "/admin/zapytania",

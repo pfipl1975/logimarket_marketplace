@@ -1168,6 +1168,77 @@
     "optionalOutboundHelp": "The external link remains optional for this offer type.",
     "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue."
   },
+  "adminBuyers": {
+    "title": "Buyers",
+    "subtitle": "Buyer organizations and operational records.",
+    "emptyList": "No buyer organizations yet.",
+    "back": "Back to list",
+    "registeredAddress": "Registered address",
+    "identifiers": "Identifiers",
+    "taxIdentifiers": "Tax identifiers",
+    "registryIdentifiers": "Registry identifiers",
+    "users": "Users and memberships",
+    "history": "Verification history",
+    "emptyAddress": "No registered address on record.",
+    "emptyUsers": "No associated users.",
+    "emptyIdentifiers": "No identifiers on record.",
+    "emptyHistory": "No verification events yet.",
+    "country": "Country",
+    "statusLabel": "Status",
+    "createdAt": "Created",
+    "verifiedAt": "Verified",
+    "phone": "Phone",
+    "roleLabel": "Role",
+    "membershipStatusLabel": "Membership status",
+    "memberSince": "Member since",
+    "declaredLabel": "Declared",
+    "trustedLabel": "Trusted",
+    "eventOutcome": "Outcome",
+    "eventActor": "Actor",
+    "eventSource": "Source",
+    "eventReason": "Reason",
+    "table": {
+      "company": "Company",
+      "taxIdentifier": "NIP / tax ID",
+      "city": "City",
+      "contact": "Primary contact",
+      "email": "Email",
+      "status": "Status",
+      "createdAt": "Created",
+      "details": "Details"
+    },
+    "status": {
+      "pending": "Declared data",
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "revoked": "Verification revoked"
+    },
+    "roles": {
+      "organization_admin": "Organization admin",
+      "authorized_buyer": "Authorized buyer"
+    },
+    "membershipStatus": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "revoked": "Revoked"
+    },
+    "controls": {
+      "title": "Organization verification",
+      "reasonLabel": "Reason for rejection or revocation",
+      "reasonPlaceholder": "Enter a reason code",
+      "verify": "Verify",
+      "reject": "Reject",
+      "revoke": "Revoke verification",
+      "missingIdentifier": "A tax or registry identifier is required to verify.",
+      "reasonRequired": "Enter a reason for this decision.",
+      "verifiedSuccess": "Organization verified.",
+      "rejectedSuccess": "Organization rejected.",
+      "revokedSuccess": "Verification revoked.",
+      "failedVerify": "Could not verify",
+      "failedReject": "Could not reject",
+      "failedRevoke": "Could not revoke verification"
+    }
+  },
   "adminDashboard": {
     "metaTitle": "LogiMarket Admin Dashboard",
     "metaDescription": "LogiMarket marketplace operational overview.",
@@ -1176,11 +1247,18 @@
     "sections": {
       "offers": "Offers",
       "partners": "Partners",
+      "buyers": "Buyers",
       "rfq": "RFQ Operations",
       "recentRfq": "Recent RFQ Queue"
     },
     "labels": {
       "total": "Total"
+    },
+    "buyerStatus": {
+      "pending": "Declared data",
+      "verified": "Verified",
+      "rejected": "Rejected",
+      "revoked": "Verification revoked"
     },
     "eligibility": {
       "none": "Not Set",

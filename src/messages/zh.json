@@ -1168,6 +1168,77 @@
     "optionalOutboundHelp": "此优惠类型的外部链接为可选项。",
     "errorInvalidCurrentOfferType": "当前报价配置无效。请选择有效的报价类型以继续。"
   },
+  "adminBuyers": {
+    "title": "买方",
+    "subtitle": "买方企业及运营资料。",
+    "emptyList": "暂无买方企业。",
+    "back": "返回列表",
+    "registeredAddress": "注册地址",
+    "identifiers": "标识信息",
+    "taxIdentifiers": "税务标识",
+    "registryIdentifiers": "注册标识",
+    "users": "用户与成员关系",
+    "history": "验证历史",
+    "emptyAddress": "暂无注册地址。",
+    "emptyUsers": "暂无关联用户。",
+    "emptyIdentifiers": "暂无标识信息。",
+    "emptyHistory": "暂无验证记录。",
+    "country": "国家/地区",
+    "statusLabel": "状态",
+    "createdAt": "创建时间",
+    "verifiedAt": "验证时间",
+    "phone": "电话",
+    "roleLabel": "角色",
+    "membershipStatusLabel": "成员状态",
+    "memberSince": "加入时间",
+    "declaredLabel": "已申报",
+    "trustedLabel": "已确认",
+    "eventOutcome": "结果",
+    "eventActor": "操作人",
+    "eventSource": "来源",
+    "eventReason": "原因",
+    "table": {
+      "company": "公司",
+      "taxIdentifier": "NIP / 税号",
+      "city": "城市",
+      "contact": "主要联系人",
+      "email": "电子邮箱",
+      "status": "状态",
+      "createdAt": "创建时间",
+      "details": "详情"
+    },
+    "status": {
+      "pending": "资料已申报",
+      "verified": "已验证",
+      "rejected": "已拒绝",
+      "revoked": "验证已撤销"
+    },
+    "roles": {
+      "organization_admin": "企业管理员",
+      "authorized_buyer": "授权采购员"
+    },
+    "membershipStatus": {
+      "active": "有效",
+      "inactive": "无效",
+      "revoked": "已撤销"
+    },
+    "controls": {
+      "title": "企业验证",
+      "reasonLabel": "拒绝或撤销原因",
+      "reasonPlaceholder": "输入原因代码",
+      "verify": "验证",
+      "reject": "拒绝",
+      "revoke": "撤销验证",
+      "missingIdentifier": "验证需要税务或注册标识。",
+      "reasonRequired": "请填写决定原因。",
+      "verifiedSuccess": "企业已验证。",
+      "rejectedSuccess": "企业已拒绝。",
+      "revokedSuccess": "验证已撤销。",
+      "failedVerify": "验证失败",
+      "failedReject": "拒绝失败",
+      "failedRevoke": "撤销失败"
+    }
+  },
   "adminDashboard": {
     "metaTitle": "LogiMarket管理仪表板",
     "metaDescription": "LogiMarket操作概览",
@@ -1176,11 +1247,18 @@
     "sections": {
       "offers": "优惠",
       "partners": "合作伙伴",
+      "buyers": "买方",
       "rfq": "询价操作",
       "recentRfq": "近期询价"
     },
     "labels": {
       "total": "总计"
+    },
+    "buyerStatus": {
+      "pending": "资料已申报",
+      "verified": "已验证",
+      "rejected": "已拒绝",
+      "revoked": "验证已撤销"
     },
     "eligibility": {
       "none": "未设置",

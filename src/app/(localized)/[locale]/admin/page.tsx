@@ -41,6 +41,7 @@ export default async function AdminRootLocalized({
     <AdminDashboardPage 
       locale={p.locale} 
       routes={{
+        buyers: `/${p.locale}/admin/buyers`,
         partners: `/${p.locale}/admin/partners`,
         offers: `/${p.locale}/admin/offers`,
         rfq: `/${p.locale}/admin/rfq`,

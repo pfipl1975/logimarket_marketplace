@@ -1168,6 +1168,77 @@
     "optionalOutboundHelp": "Le lien externe reste facultatif pour ce type d’offre.",
     "errorInvalidCurrentOfferType": "La configuration actuelle de l’offre est invalide. Sélectionnez un type d’offre valide pour continuer."
   },
+  "adminBuyers": {
+    "title": "Acheteurs",
+    "subtitle": "Organisations acheteuses et données opérationnelles.",
+    "emptyList": "Aucune organisation acheteuse pour le moment.",
+    "back": "Retour à la liste",
+    "registeredAddress": "Adresse du siège",
+    "identifiers": "Identifiants",
+    "taxIdentifiers": "Identifiants fiscaux",
+    "registryIdentifiers": "Identifiants du registre",
+    "users": "Utilisateurs et adhésions",
+    "history": "Historique des vérifications",
+    "emptyAddress": "Aucune adresse enregistrée.",
+    "emptyUsers": "Aucun utilisateur associé.",
+    "emptyIdentifiers": "Aucun identifiant enregistré.",
+    "emptyHistory": "Aucun événement de vérification.",
+    "country": "Pays",
+    "statusLabel": "Statut",
+    "createdAt": "Créé le",
+    "verifiedAt": "Vérifié le",
+    "phone": "Téléphone",
+    "roleLabel": "Rôle",
+    "membershipStatusLabel": "Statut de l'adhésion",
+    "memberSince": "Membre depuis",
+    "declaredLabel": "Déclaré",
+    "trustedLabel": "Confirmé",
+    "eventOutcome": "Résultat",
+    "eventActor": "Acteur",
+    "eventSource": "Source",
+    "eventReason": "Motif",
+    "table": {
+      "company": "Entreprise",
+      "taxIdentifier": "NIP / identifiant fiscal",
+      "city": "Ville",
+      "contact": "Contact principal",
+      "email": "E-mail",
+      "status": "Statut",
+      "createdAt": "Créé le",
+      "details": "Détails"
+    },
+    "status": {
+      "pending": "Données déclarées",
+      "verified": "Vérifiés",
+      "rejected": "Rejetés",
+      "revoked": "Vérification révoquée"
+    },
+    "roles": {
+      "organization_admin": "Administrateur de l'organisation",
+      "authorized_buyer": "Acheteur autorisé"
+    },
+    "membershipStatus": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "revoked": "Révoquée"
+    },
+    "controls": {
+      "title": "Vérification de l'organisation",
+      "reasonLabel": "Motif du rejet ou de la révocation",
+      "reasonPlaceholder": "Saisir un code de motif",
+      "verify": "Vérifier",
+      "reject": "Rejeter",
+      "revoke": "Révoquer la vérification",
+      "missingIdentifier": "Un identifiant fiscal ou du registre est requis.",
+      "reasonRequired": "Indiquez le motif de cette décision.",
+      "verifiedSuccess": "Organisation vérifiée.",
+      "rejectedSuccess": "Organisation rejetée.",
+      "revokedSuccess": "Vérification révoquée.",
+      "failedVerify": "Échec de la vérification",
+      "failedReject": "Échec du rejet",
+      "failedRevoke": "Échec de la révocation"
+    }
+  },
   "adminDashboard": {
     "metaTitle": "Tableau de bord Admin LogiMarket",
     "metaDescription": "Aperçu opérationnel LogiMarket.",
@@ -1176,11 +1247,18 @@
     "sections": {
       "offers": "Offres",
       "partners": "Partenaires",
+      "buyers": "Acheteurs",
       "rfq": "Opérations RFQ",
       "recentRfq": "RFQs Récents"
     },
     "labels": {
       "total": "Total"
+    },
+    "buyerStatus": {
+      "pending": "Données déclarées",
+      "verified": "Vérifiés",
+      "rejected": "Rejetés",
+      "revoked": "Vérification révoquée"
     },
     "eligibility": {
       "none": "Non défini",

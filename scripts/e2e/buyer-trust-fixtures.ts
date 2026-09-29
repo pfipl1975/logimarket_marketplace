@@ -1,5 +1,11 @@
 export const E2E_ADMIN_USER_ID = "00000000-0000-0000-0000-000000000000";
 export const E2E_BUYER_USER_ID = "11111111-1111-1111-1111-111111111111";
+export const E2E_BUYER_CONTACT = {
+  name: "E2E Buyer Contact",
+  email: "buyer-e2e@example.invalid",
+  city: "Warszawa",
+  street: "Testowa",
+} as const;
 
 export type E2EBuyerFixture = {
   organizationId: number;
