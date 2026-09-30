@@ -302,7 +302,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfillmentInProgress, { exact: true }).first()).toBeVisible();
         await expectLifecycle(pl.BuyerOrders.fulfillmentInProgress);
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.markFulfilled, exact: true }).click();
-        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfilled, { exact: true }).first()).toBeVisible();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.tabCompleted, { exact: true }).first()).toBeVisible();
         await page.setViewportSize({ width: 375, height: 844 });
         await expectLifecycle(pl.BuyerOrders.fulfilled);
         await expect(buyerCard().locator("dl > div").filter({ has: page.getByText(pl.BuyerOrders.accepted, { exact: true }) }).locator("dd")).toHaveText("0");
