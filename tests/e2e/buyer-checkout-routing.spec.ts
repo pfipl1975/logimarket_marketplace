@@ -174,14 +174,15 @@ test.describe("isolated canonical Buyer checkout", () => {
       await expect(page.getByText(pl.checkoutFlow.sellerRole)).toBeVisible();
       await expect(page.getByText(pl.checkoutFlow.platformRole)).toBeVisible();
       await expect(page.getByText(pl.checkoutFlow.e2Notice, { exact: true })).toBeVisible();
-      await expect(page.getByRole("button", { name: pl.checkoutFlow.submit, exact: true })).toBeVisible();
+      const checkoutSubmit = page.getByRole("button", { name: pl.checkoutFlow.submit, exact: true });
+      await expect(checkoutSubmit).toBeVisible();
 
       await page.setViewportSize({ width: 375, height: 844 });
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
       await expect(page.getByRole("heading", { name: pl.checkoutFlow.buyer })).toBeVisible();
       await expect(page.getByRole("heading", { name: pl.checkoutFlow.sellers })).toBeVisible();
-      await expect(page.locator("form button[type=submit]")).toBeVisible();
+      await expect(checkoutSubmit).toBeVisible();
 
       const before = await database.query<{ count: number }>(
         "SELECT count(*)::int AS count FROM marketplace_orders WHERE buyer_auth_user_id = $1",
@@ -193,7 +194,7 @@ test.describe("isolated canonical Buyer checkout", () => {
       );
       expect(cartItem.rows).toHaveLength(1);
 
-      await page.locator("form button[type=submit]").click();
+      await checkoutSubmit.click();
       await expect(page).toHaveURL(/\/zamowienia(?:\?|$)/);
       await expect(page.getByText(pl.checkoutFlow.successNotice)).toBeVisible();
       await page.getByRole("button", { name: /koszyk/i }).first().click();
