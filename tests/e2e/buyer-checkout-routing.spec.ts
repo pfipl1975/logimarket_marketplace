@@ -176,9 +176,12 @@ test.describe("isolated canonical Buyer checkout", () => {
       await expect(page.getByText(pl.checkoutFlow.e2Notice, { exact: true })).toBeVisible();
       const checkoutSubmit = page.getByRole("button", { name: pl.checkoutFlow.submit, exact: true });
       await expect(checkoutSubmit).toBeVisible();
+      const cartButton = page.getByRole("button", { name: pl.nav.cart, exact: true });
+      await expect(cartButton).toHaveAccessibleName(pl.nav.cart);
 
       await page.setViewportSize({ width: 375, height: 844 });
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);
+      await expect(cartButton).toHaveAccessibleName(pl.nav.cart);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
       await expect(page.getByRole("heading", { name: pl.checkoutFlow.buyer })).toBeVisible();
       await expect(page.getByRole("heading", { name: pl.checkoutFlow.sellers })).toBeVisible();
@@ -197,7 +200,8 @@ test.describe("isolated canonical Buyer checkout", () => {
       await checkoutSubmit.click();
       await expect(page).toHaveURL(/\/zamowienia(?:\?|$)/);
       await expect(page.getByText(pl.checkoutFlow.successNotice)).toBeVisible();
-      await page.getByRole("button", { name: /koszyk/i }).first().click();
+      await expect(cartButton).toHaveText(pl.nav.cart);
+      await cartButton.click();
       await expect(page.getByText(pl.cart.emptyTitle)).toBeVisible();
 
       const orders = await database.query<{ id: string; buyer_auth_user_id: string; buyer_legal_context_snapshot_id: string }>(
