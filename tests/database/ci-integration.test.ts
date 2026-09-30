@@ -5426,8 +5426,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const actor = "00000000-0000-0000-0000-000000000031";
       const authorize = await resolvePartnerOrderDecisionAuthority(async () => ({ status: "authenticated", user: { id: actor, email: null } }));
       await pool.query(`DELETE FROM partner_user_memberships WHERE auth_user_id = $1 AND partner_id = $2`, [actor, pIdA]);
-      if (membershipStatus) await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
-        VALUES ($1, $2, $3, $4)`, [actor, pIdA, membershipStatus, canAccept]);
+      if (membershipStatus === "active") {
+        await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders, revoked_at)
+          VALUES ($1, $2, 'active', $3, NULL)`, [actor, pIdA, canAccept]);
+      } else if (membershipStatus === "revoked") {
+        await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders, revoked_at)
+          VALUES ($1, $2, 'revoked', $3, clock_timestamp())`, [actor, pIdA, canAccept]);
+      }
       const pending = await createRoutedSellerOrder(`auth-${suffix}`, pIdA);
       assert.deepStrictEqual(await acceptSellerOrderWithAuthority(pending.sellerOrderId, authorize), { ok: false, code: "FORBIDDEN" });
       const state = await pool.query(`SELECT so.status, d.decision_status, d.accepted_at, d.decided_by_auth_user_id
