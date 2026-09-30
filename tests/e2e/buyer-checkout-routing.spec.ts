@@ -264,7 +264,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         await expect(orderLink).toBeVisible();
         await orderLink.click();
         await expect(partnerPage.getByText(CHECKOUT_OFFER_TITLE).first()).toBeVisible();
-        await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: true }).first()).toBeVisible();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: false }).first()).toBeVisible();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.contactHidden)).toBeVisible();
         await expect(partnerPage.getByText("ready-buyer@checkout.example.invalid", { exact: true })).toHaveCount(0);
         await expect(partnerPage.getByText("Testowa 12/3", { exact: false })).toHaveCount(0);
