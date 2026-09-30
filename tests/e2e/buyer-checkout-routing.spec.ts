@@ -8,6 +8,7 @@ import {
   CHECKOUT_SELLER_NAME, CHECKOUT_SELLER_NIP, createBuyerCheckoutSellerFixture,
 } from "../../scripts/e2e/buyer-checkout-fixtures";
 import pl from "../../src/messages/pl.json";
+import de from "../../src/messages/de.json";
 
 function assertFixtureNip(value: string) {
   const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
@@ -151,7 +152,7 @@ test.describe("isolated canonical Buyer checkout", () => {
     assertPageClean();
   });
 
-  test("ready Buyer submits E2, Partner sees E6 and accepts E7, Buyer sees acceptance", async ({ browser }) => {
+  test("Buyer tracks E2, E6, E7 and real fulfillment, then clicks order details on desktop and mobile", async ({ browser }) => {
     const context = await browser.newContext();
     try {
       await context.addCookies([{
@@ -205,6 +206,7 @@ test.describe("isolated canonical Buyer checkout", () => {
       await expect(cartButton).toHaveText(pl.nav.cart);
       await cartButton.click();
       await expect(page.getByText(pl.cart.emptyTitle)).toBeVisible();
+      await page.keyboard.press("Escape");
 
       const orders = await database.query<{ id: string; buyer_auth_user_id: string; buyer_legal_context_snapshot_id: string }>(
         "SELECT id, buyer_auth_user_id, buyer_legal_context_snapshot_id FROM marketplace_orders WHERE buyer_auth_user_id = $1 ORDER BY id",
@@ -249,6 +251,15 @@ test.describe("isolated canonical Buyer checkout", () => {
         acceptedAt: null, resolvedAt: null, decidedByAuthUserId: null, decisionSource: null, outbox: 1 });
       expect(routed.expiresAt.getTime() - routed.routedAt.getTime()).toBe(24 * 60 * 60 * 1000);
 
+      const buyerCard = () => page.locator("article").filter({ has: page.getByRole("heading", { name: `${pl.BuyerOrders.order} #${order.id}`, exact: true }) });
+      const expectLifecycle = async (label: string) => {
+        await page.goto("/zamowienia");
+        await expect(buyerCard().locator("dl > div").filter({ has: page.getByText(label, { exact: true }) }).locator("dd")).toHaveText("1");
+      };
+      const detailsCta = () => buyerCard().getByRole("link", { name: `${pl.BuyerOrders.viewDetails} — ${pl.BuyerOrders.order} #${order.id}`, exact: true });
+      await expectLifecycle(pl.BuyerOrders.awaiting);
+      await expect(detailsCta()).toBeVisible();
+
       const partnerContext = await browser.newContext({ viewport: { width: 375, height: 844 } });
       try {
         const partnerPage = await partnerContext.newPage();
@@ -280,9 +291,57 @@ test.describe("isolated canonical Buyer checkout", () => {
           decidedByAuthUserId: E2E_NON_ADMIN_USER_ID, decisionSource: "partner_portal" });
         expect(accepted.rows[0].acceptedAt).toBeInstanceOf(Date);
         expect(accepted.rows[0].resolvedAt).toBeInstanceOf(Date);
-        await page.goto(`/zamowienia/${order.id}`);
+        await page.setViewportSize({ width: 1280, height: 844 });
+        await expectLifecycle(pl.BuyerOrders.accepted);
+        await detailsCta().click();
+        await expect(page).toHaveURL(new RegExp(`/zamowienia/${order.id}$`));
         await expect(page.getByText(pl.BuyerOrderDetail.statusAccepted, { exact: true })).toBeVisible();
         await expect(page.getByText(pl.BuyerOrderDetail.decisionAccepted, { exact: true })).toBeVisible();
+
+        await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.startFulfillment, exact: true }).click();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfillmentInProgress, { exact: true }).first()).toBeVisible();
+        await expectLifecycle(pl.BuyerOrders.fulfillmentInProgress);
+        await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.markFulfilled, exact: true }).click();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfilled, { exact: true }).first()).toBeVisible();
+        await page.setViewportSize({ width: 375, height: 844 });
+        await expectLifecycle(pl.BuyerOrders.fulfilled);
+        await expect(buyerCard().locator("dl > div").filter({ has: page.getByText(pl.BuyerOrders.accepted, { exact: true }) }).locator("dd")).toHaveText("0");
+        expect(await page.evaluate(() => window.innerWidth)).toBe(375);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        const cta = detailsCta();
+        await expect(cta).toBeVisible();
+        const ctaBox = await cta.boundingBox();
+        expect(ctaBox!.height).toBeGreaterThanOrEqual(44);
+        await buyerCard().getByRole("link", { name: `${pl.BuyerOrders.order} #${order.id}`, exact: true }).focus();
+        await page.keyboard.press("Tab");
+        await expect(cta).toBeFocused();
+        expect(await cta.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+        await cta.click();
+        await expect(page).toHaveURL(new RegExp(`/zamowienia/${order.id}$`));
+        await expect(page.getByRole("heading", { name: `${pl.BuyerOrderDetail.order} #${order.id}`, exact: true })).toBeVisible();
+        await expect(page.getByText(pl.BuyerOrderDetail.statusFulfilled, { exact: true })).toBeVisible();
+        await expect(page.getByText(CHECKOUT_OFFER_TITLE, { exact: true })).toBeVisible();
+        await expect(page.getByText(CHECKOUT_SELLER_NAME, { exact: true }).first()).toBeVisible();
+        const finalState = await database.query<{ status: string; decision_status: string; quantity: number; unit_price: string; currency: string }>(
+          `SELECT so.status, d.decision_status, si.quantity, si.unit_price, si.currency FROM seller_orders so
+           JOIN seller_acceptance_decisions d ON d.seller_order_id=so.id JOIN seller_order_items si ON si.seller_order_id=so.id WHERE so.id=$1`, [routed.id]);
+        expect(finalState.rows).toHaveLength(1);
+        const item = finalState.rows[0];
+        expect(item).toMatchObject({ status: "fulfilled", decision_status: "seller_accepted", quantity: 1, currency: "PLN" });
+        await expect(page.locator("dl > div").filter({ has: page.getByText(pl.BuyerOrderDetail.quantity, { exact: true }) }).locator("dd")).toHaveText(String(item.quantity));
+        await expect(page.locator("dl > div").filter({ has: page.getByText(pl.BuyerOrderDetail.unitPrice, { exact: true }) }).locator("dd")).toHaveText(`${item.unit_price} ${item.currency}`);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+        // Longer localized lifecycle labels and localized detail navigation at 375px.
+        await page.goto("/de/orders");
+        const germanCard = page.locator("article").filter({ has: page.getByRole("heading", { name: `${de.BuyerOrders.order} #${order.id}`, exact: true }) });
+        await expect(germanCard.getByText(de.BuyerOrders.accepted, { exact: true })).toBeVisible();
+        await expect(germanCard.getByText(de.BuyerOrders.fulfilled, { exact: true })).toBeVisible();
+        expect(await page.evaluate(() => window.innerWidth)).toBe(375);
+        expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        await germanCard.getByRole("link", { name: `${de.BuyerOrders.viewDetails} — ${de.BuyerOrders.order} #${order.id}`, exact: true }).click();
+        await expect(page).toHaveURL(new RegExp(`/de/orders/${order.id}$`));
+        await expect(page.getByText(de.BuyerOrderDetail.statusFulfilled, { exact: true })).toBeVisible();
         assertPartnerClean();
       } finally { await partnerContext.close(); }
       assertPageClean();

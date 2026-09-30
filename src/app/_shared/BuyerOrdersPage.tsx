@@ -8,7 +8,7 @@ import { locales, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getPrivacyPolicyPath } from "@/lib/i18n/paths";
 import { loadBuyerOrders } from "@/lib/buyer-orders/read-model";
-import type { SellerDecisionSummaryKey } from "@/lib/buyer-orders/read-model-core";
+import { BUYER_SELLER_LIFECYCLE_STATUSES, type BuyerSellerLifecycleStatus } from "@/lib/buyer-orders/read-model-core";
 
 function ordersPath(locale: Locale): string {
   return locale === "pl" ? "/zamowienia" : '/' + locale + '/orders';
@@ -30,11 +30,14 @@ export async function BuyerOrdersPage({ locale, submitted = false }: { locale: L
   const labels = dict.BuyerOrders;
   const languageLinks = Object.fromEntries(locales.map((language) => [language, ordersPath(language)])) as Record<Locale, string>;
   const catalogPath = locale === "pl" ? "/katalog" : '/' + locale + '/katalog';
-  const decisionLabels: Record<SellerDecisionSummaryKey, string> = {
+  const lifecycleLabels: Record<BuyerSellerLifecycleStatus, string> = {
     pending_seller_review: labels.awaiting,
     seller_accepted: labels.accepted,
+    fulfillment_in_progress: labels.fulfillmentInProgress,
+    fulfilled: labels.fulfilled,
     seller_rejected: labels.rejected,
     expired: labels.expired,
+    cancelled: labels.cancelled,
     not_routed: labels.notRouted,
     unavailable: labels.unavailable,
   };
@@ -66,8 +69,7 @@ export async function BuyerOrdersPage({ locale, submitted = false }: { locale: L
                     <h2 id={'order-' + order.orderId} className="text-lg font-semibold text-brand-navy">
                       <Link
                         href={orderDetailPath(locale, order.orderId)}
-                        className="text-brand-navy hover:text-brand-teal hover:underline focus:outline-none focus:ring-2 focus:ring-brand-teal"
-                        aria-label={labels.viewDetails}
+                        className="text-brand-navy hover:text-brand-teal hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2"
                       >
                         {labels.order} #{order.orderId}
                       </Link>
@@ -77,16 +79,24 @@ export async function BuyerOrdersPage({ locale, submitted = false }: { locale: L
                       <time dateTime={order.createdAt.toISOString()}>{dateFormatter.format(order.createdAt)}</time>
                     </p>
                   </div>
-                  <h3 className="mt-4 text-sm font-semibold text-brand-navy">{labels.sellerDecisions}</h3>
+                  <h3 className="mt-4 text-sm font-semibold text-brand-navy">{labels.sellerOrderStatuses}</h3>
                   <p className="mt-1 text-sm text-[#2c3e50]">{labels.sellerOrders}: {order.sellerOrderCount}</p>
                   <dl className="mt-3 grid grid-cols-2 gap-2 text-sm sm:grid-cols-3">
-                    {(Object.keys(decisionLabels) as SellerDecisionSummaryKey[]).map((status) => (
+                    {BUYER_SELLER_LIFECYCLE_STATUSES.map((status) => (
                       <div key={status} className="min-w-0 rounded-md bg-brand-light-gray px-3 py-2">
-                        <dt className="break-words text-[#2c3e50]">{decisionLabels[status]}</dt>
-                        <dd className="mt-1 font-semibold tabular-nums text-brand-navy">{order.decisions[status]}</dd>
+                        <dt className="break-words text-[#2c3e50]">{lifecycleLabels[status]}</dt>
+                        <dd className="mt-1 font-semibold tabular-nums text-brand-navy">{order.lifecycle[status]}</dd>
                       </div>
                     ))}
                   </dl>
+                  <div className="mt-5 flex border-t border-[#d9dde2] pt-4 sm:justify-end">
+                    <Link
+                      href={orderDetailPath(locale, order.orderId)}
+                      className="inline-flex min-h-11 w-full items-center justify-center rounded-industrial bg-brand-teal px-4 py-3 text-center text-sm font-semibold text-white transition-colors hover:bg-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2 sm:w-auto"
+                    >
+                      <span>{labels.viewDetails}<span className="sr-only"> — {labels.order} #{order.orderId}</span></span>
+                    </Link>
+                  </div>
                 </article>
               ))}
             </div>
