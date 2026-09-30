@@ -173,8 +173,8 @@ test.describe("isolated canonical Buyer checkout", () => {
       }
       await expect(page.getByText(pl.checkoutFlow.sellerRole)).toBeVisible();
       await expect(page.getByText(pl.checkoutFlow.platformRole)).toBeVisible();
-      await expect(page.getByText(/ofert[ęa] zakupu/i)).toBeVisible();
-      await expect(page.getByText(/akceptacj[aię].*Partnera/i)).toBeVisible();
+      await expect(page.getByText(pl.checkoutFlow.e2Notice, { exact: true })).toBeVisible();
+      await expect(page.getByRole("button", { name: pl.checkoutFlow.submit, exact: true })).toBeVisible();
 
       await page.setViewportSize({ width: 375, height: 844 });
       expect(await page.evaluate(() => window.innerWidth)).toBe(375);

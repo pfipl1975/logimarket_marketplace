@@ -102,20 +102,33 @@ test("Admin Buyer list renders deterministic statuses, identifiers, navigation a
 });
 
 test("Admin dashboard shows Buyer KPI and opens Buyer list", async ({ adminPage }) => {
+  const result = await database.query<{ total: number; pending: number; verified: number }>(`
+    SELECT count(*)::int AS total,
+           count(*) FILTER (WHERE verification_status = 'pending')::int AS pending,
+           count(*) FILTER (WHERE verification_status = 'verified')::int AS verified
+    FROM buyer_organizations
+  `);
+  const counts = result.rows[0];
   await adminPage.setViewportSize({ width: 1280, height: 800 });
   await adminPage.goto("/admin");
   expect(await adminPage.evaluate(() => window.innerWidth)).toBe(1280);
-  const buyerKpi = adminPage.getByRole("link", { name: /Kupujący.*5/ });
+  const buyerKpi = adminPage.getByRole("link", { name: /Kupujący/ }).filter({
+    has: adminPage.getByRole("heading", { name: "Kupujący", exact: true }),
+  });
   await expect(buyerKpi).toBeVisible();
-  await expect(adminPage.getByText("Dane zadeklarowane", { exact: true }).locator("..")).toContainText("3");
-  await expect(adminPage.getByText("Zweryfikowani", { exact: true }).locator("..")).toContainText("2");
+  await expect(buyerKpi.getByText(String(counts.total), { exact: true })).toBeVisible();
+  const pendingStatus = adminPage.getByRole("link", { name: /Dane zadeklarowane/ });
+  const verifiedStatus = adminPage.getByRole("link", { name: /Zweryfikowani/ });
+  await expect(pendingStatus.getByText(String(counts.pending), { exact: true })).toBeVisible();
+  await expect(verifiedStatus.getByText(String(counts.verified), { exact: true })).toBeVisible();
   await buyerKpi.click();
   await expect(adminPage).toHaveURL(/\/admin\/kupujacy$/);
   await expect(adminPage.getByRole("row", { name: /E2E Synthetic Buyer Detail/ })).toBeVisible();
   await adminPage.goto("/admin");
-  const pendingStatus = adminPage.getByRole("link", { name: /Dane zadeklarowane.*3/ });
-  await expect(pendingStatus).toHaveAttribute("href", "/admin/kupujacy");
-  await pendingStatus.click();
+  const pendingStatusAfterReturn = adminPage.getByRole("link", { name: /Dane zadeklarowane/ });
+  await expect(pendingStatusAfterReturn.getByText(String(counts.pending), { exact: true })).toBeVisible();
+  await expect(pendingStatusAfterReturn).toHaveAttribute("href", "/admin/kupujacy");
+  await pendingStatusAfterReturn.click();
   await expect(adminPage).toHaveURL(/\/admin\/kupujacy$/);
 });
 
