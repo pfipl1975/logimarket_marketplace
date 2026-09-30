@@ -33,7 +33,7 @@ test("A. route eligible (decision absent + timestamp null)", () => {
 
 test("B. route already-routed idempotent (decision pending + timestamp not null)", () => {
   const order = { status: "submitted", e6RoutedToSellerAt: routedAt };
-  const decision = { decisionStatus: "pending_seller_review", expiresAt };
+  const decision = { decisionStatus: "pending_seller_review", expiresAt, acceptedAt: null, resolvedAt: null, decidedByAuthUserId: null, decisionSource: null };
   const res = evaluateSellerOrderRoutingState(order, decision);
   assert.equal(res.ok, true);
 });
@@ -43,6 +43,18 @@ test("C. accept before E6 blocked (timestamp null)", () => {
   const decision = { decisionStatus: "pending_seller_review", expiresAt, acceptedAt: null, resolvedAt: null, decidedByAuthUserId: null, decisionSource: null };
   const res = evaluateSellerOrderDecisionState(order, decision, "seller_accepted", beforeDeadline);
   assert.deepEqual(res, { ok: false, code: "SELLER_ORDER_NOT_ROUTED" });
+});
+
+test("Routing rejects malformed partial state and conflicting existing decisions", () => {
+  const pending = { decisionStatus: "pending_seller_review", expiresAt, acceptedAt: null, resolvedAt: null, decidedByAuthUserId: null, decisionSource: null };
+  for (const [order, decision] of [
+    [{ status: "submitted", e6RoutedToSellerAt: null }, { ...pending, expiresAt: null }],
+    [{ status: "submitted", e6RoutedToSellerAt: routedAt }, undefined],
+    [{ status: "submitted", e6RoutedToSellerAt: routedAt }, { ...pending, decisionStatus: "seller_accepted" }],
+    [{ status: "submitted", e6RoutedToSellerAt: routedAt }, { ...pending, decidedByAuthUserId: "conflicting-actor" }],
+  ] as const) {
+    assert.deepEqual(evaluateSellerOrderRoutingState(order, decision), { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" });
+  }
 });
 
 test("D. accept pending + E6 succeeds", () => {

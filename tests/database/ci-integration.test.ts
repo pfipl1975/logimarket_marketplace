@@ -4164,6 +4164,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       sellerOrderItems: number;
       buyerContactSnapshots: number;
       buyerInvoiceSnapshots: number;
+      legalSnapshots: number;
+      disclosures: number;
+      sellerSnapshots: number;
+      decisions: number;
+      outbox: number;
     };
 
     async function getCommerceCounts(): Promise<CommerceCounts> {
@@ -4173,9 +4178,34 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           (SELECT COUNT(*)::int FROM seller_orders) AS "sellerOrders",
           (SELECT COUNT(*)::int FROM seller_order_items) AS "sellerOrderItems",
           (SELECT COUNT(*)::int FROM marketplace_order_buyer_contact_snapshots) AS "buyerContactSnapshots",
-          (SELECT COUNT(*)::int FROM marketplace_order_buyer_invoice_snapshots) AS "buyerInvoiceSnapshots"
+          (SELECT COUNT(*)::int FROM marketplace_order_buyer_invoice_snapshots) AS "buyerInvoiceSnapshots",
+          (SELECT COUNT(*)::int FROM buyer_legal_context_snapshots) AS "legalSnapshots",
+          (SELECT COUNT(*)::int FROM marketplace_order_seller_disclosures) AS disclosures,
+          (SELECT COUNT(*)::int FROM seller_order_seller_snapshots) AS "sellerSnapshots",
+          (SELECT COUNT(*)::int FROM seller_acceptance_decisions) AS decisions,
+          (SELECT COUNT(*)::int FROM notification_outbox_events) AS outbox
       `);
       return result.rows[0];
+    }
+
+    async function assertCanonicalE6(sellerOrderId: number) {
+      const [order] = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.id, sellerOrderId));
+      const decisions = await db.select().from(schemaModule.sellerAcceptanceDecisions).where(eq(schemaModule.sellerAcceptanceDecisions.sellerOrderId, sellerOrderId));
+      assert.strictEqual(decisions.length, 1);
+      const decision = decisions[0];
+      assert.strictEqual(order.status, "submitted");
+      assert.ok(order.e6RoutedToSellerAt);
+      assert.ok(decision.expiresAt);
+      assert.strictEqual(decision.expiresAt.getTime() - order.e6RoutedToSellerAt.getTime(), 24 * 60 * 60 * 1000);
+      assert.strictEqual(decision.decisionStatus, "pending_seller_review");
+      assert.strictEqual(decision.acceptedAt, null);
+      assert.strictEqual(decision.resolvedAt, null);
+      assert.strictEqual(decision.decidedByAuthUserId, null);
+      assert.strictEqual(decision.decisionSource, null);
+      const { isSellerOrderContractFormed } = await import("../../src/lib/seller-order/seller-order-workflow");
+      assert.strictEqual(isSellerOrderContractFormed(order, decision), false);
+      const events = await pool.query(`SELECT event_type FROM notification_outbox_events WHERE seller_order_id = $1`, [sellerOrderId]);
+      assert.deepStrictEqual(events.rows, [{ event_type: "seller_order.routed_to_seller" }]);
     }
 
     await tt.test("PATH COMMERCE-A: Single Seller successful E2", async () => {
@@ -4217,7 +4247,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.strictEqual(sOrders.length, 1);
       assert.strictEqual(sOrders[0].partnerId, partnerId);
       assert.strictEqual(sOrders[0].status, "submitted");
-      assert.strictEqual(sOrders[0].e6RoutedToSellerAt, null);
+      await assertCanonicalE6(sOrders[0].id);
 
       const sItems = await db.select().from(schemaModule.sellerOrderItems).where(eq(schemaModule.sellerOrderItems.sellerOrderId, sOrders[0].id));
       assert.strictEqual(sItems.length, 1);
@@ -4296,6 +4326,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
 
       for (const so of sOrders) {
+        await assertCanonicalE6(so.id);
         const ss = await db.select().from(schemaModule.sellerOrderSellerSnapshots).where(eq(schemaModule.sellerOrderSellerSnapshots.sellerOrderId, so.id));
         assert.strictEqual(ss.length, 1);
 
@@ -4407,8 +4438,86 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
       const sessionOrders = await db.select().from(schemaModule.marketplaceOrders).where(eq(schemaModule.marketplaceOrders.sessionHash, sessionHash));
       assert.strictEqual(sessionOrders.length, 1);
+      const submittedSellerOrders = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, sessionOrders[0].id));
+      assert.strictEqual(submittedSellerOrders.length, 1);
+      await assertCanonicalE6(submittedSellerOrders[0].id);
       const cItems = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
       assert.strictEqual(cItems.length, 0);
+    });
+
+    await tt.test("E2/E6: second Seller outbox failure rolls back every checkout record", async () => {
+      const first = await seedPartnerAndOffer();
+      const second = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values([
+        { sessionHash, offerId: first.offerId, quantity: 2 },
+        { sessionHash, offerId: second.offerId, quantity: 3 },
+      ]);
+      const before = await getCommerceCounts();
+      // The second routed intent fails only after the first intent exists inside this transaction.
+      await pool.query(`CREATE FUNCTION test_checkout_second_route_failure() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          IF NEW.event_type = 'seller_order.routed_to_seller' AND EXISTS (
+            SELECT 1 FROM notification_outbox_events e JOIN seller_orders so ON so.id = e.seller_order_id
+            WHERE so.marketplace_order_id = (SELECT marketplace_order_id FROM seller_orders WHERE id = NEW.seller_order_id)
+              AND e.event_type = 'seller_order.routed_to_seller'
+          ) THEN RAISE EXCEPTION 'TEST_SECOND_ROUTING_FAILURE'; END IF;
+          RETURN NEW;
+        END $$`);
+      await pool.query(`CREATE TRIGGER test_checkout_second_route_failure BEFORE INSERT ON notification_outbox_events
+        FOR EACH ROW EXECUTE FUNCTION test_checkout_second_route_failure()`);
+      try {
+        const result = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
+        assert.deepStrictEqual(result, { ok: false, reason: "SYSTEM_ERROR" });
+        assert.deepStrictEqual(await getCommerceCounts(), before);
+        const cart = await db.select().from(schemaModule.cartItems).where(eq(schemaModule.cartItems.sessionHash, sessionHash));
+        assert.deepStrictEqual(cart.map(row => [row.offerId, row.quantity]).sort(), [[first.offerId, 2], [second.offerId, 3]].sort());
+      } finally {
+        await pool.query(`DROP TRIGGER test_checkout_second_route_failure ON notification_outbox_events`);
+        await pool.query(`DROP FUNCTION test_checkout_second_route_failure()`);
+      }
+    });
+
+    await tt.test("E2/E6 recovery: exact orphan, fresh clock, idempotence and fail-closed states", async () => {
+      const { recoverSellerOrderRouting } = await import("../../src/lib/seller-order/routing-recovery");
+      const { partnerId, offerId } = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      await db.insert(schemaModule.cartItems).values({ sessionHash, offerId, quantity: 1 });
+      const result = await executeMarketplaceCheckout(db, sessionHash, buyerContext());
+      if (!result.ok) assert.fail(`Recovery fixture checkout failed: ${result.reason}`);
+      const marketplaceId = result.marketplaceOrderId;
+      const [order] = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.marketplaceOrderId, marketplaceId));
+      // This test database is disposable. Simulate the exact pre-fix orphan shape.
+      await pool.query(`DELETE FROM notification_outbox_events WHERE seller_order_id = $1`, [order.id]);
+      await pool.query(`DELETE FROM seller_acceptance_decisions WHERE seller_order_id = $1`, [order.id]);
+      await pool.query(`UPDATE seller_orders SET e6_routed_to_seller_at = NULL, created_at = clock_timestamp() - interval '7 days' WHERE id = $1`, [order.id]);
+      const before = await getCommerceCounts();
+      assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId, order.id)).status, "SAFE_TO_ROUTE");
+      assert.deepStrictEqual(await getCommerceCounts(), before);
+      assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId + 100000, order.id, true)).status, "CONFLICTING_STATE");
+      assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId, 2147483647, true)).status, "NOT_FOUND");
+      await pool.query(`UPDATE seller_eligibility SET eligibility_status = 'suspended' WHERE partner_id = $1`, [partnerId]);
+      assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId, order.id, true)).status, "NOT_ELIGIBLE");
+      await pool.query(`UPDATE seller_eligibility SET eligibility_status = 'eligible' WHERE partner_id = $1`, [partnerId]);
+      const recoveryStart = (await pool.query<{ now: Date }>(`SELECT clock_timestamp() AS now`)).rows[0].now;
+      assert.deepStrictEqual(await recoverSellerOrderRouting(db, marketplaceId, order.id, true), { status: "ALREADY_ROUTED", changed: true, partnerId });
+      await assertCanonicalE6(order.id);
+      const [routed] = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.id, order.id));
+      assert.ok(routed.e6RoutedToSellerAt!.getTime() >= recoveryStart.getTime());
+      const routedCounts = await getCommerceCounts();
+      assert.deepStrictEqual(await recoverSellerOrderRouting(db, marketplaceId, order.id, true), { status: "ALREADY_ROUTED", changed: false, partnerId });
+      assert.deepStrictEqual(await getCommerceCounts(), routedCounts);
+      const [unchanged] = await db.select().from(schemaModule.sellerOrders).where(eq(schemaModule.sellerOrders.id, order.id));
+      assert.deepStrictEqual(unchanged.e6RoutedToSellerAt, routed.e6RoutedToSellerAt);
+      await pool.query(`UPDATE seller_acceptance_decisions SET expires_at = expires_at + interval '1 second' WHERE seller_order_id = $1`, [order.id]);
+      assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId, order.id, true)).status, "CONFLICTING_STATE");
+      const partial = await db.select().from(schemaModule.sellerAcceptanceDecisions).where(eq(schemaModule.sellerAcceptanceDecisions.sellerOrderId, order.id));
+      assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId, order.id, true)).changed, false);
+      assert.deepStrictEqual(await db.select().from(schemaModule.sellerAcceptanceDecisions).where(eq(schemaModule.sellerAcceptanceDecisions.sellerOrderId, order.id)), partial);
+      for (const status of ["seller_accepted", "seller_rejected", "expired"] as const) {
+        await pool.query(`UPDATE seller_orders SET status = $2 WHERE id = $1`, [order.id, status]);
+        assert.strictEqual((await recoverSellerOrderRouting(db, marketplaceId, order.id, true)).status, "NOT_ELIGIBLE");
+      }
     });
 
     await tt.test("PATH COMMERCE-H: Legacy isolation", async () => {
@@ -5108,7 +5217,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // S/T. Accept Workflow
     const user1Id = "00000000-0000-0000-0000-000000000021";
-    const authorizePartnerValid1 = async () => ({ id: user1Id });
+    const { resolvePartnerOrderDecisionAuthority } = await import("../../src/lib/auth/partner-membership");
+    assert.strictEqual(Number(process.env.DATABASE_POOL_MAX ?? 1), 1, "this proof requires the application's one-connection pool");
+    await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
+      VALUES ($1, $2, 'active', true), ($1, $3, 'active', true)`, [user1Id, pIdA, pIdB]);
+    const authorizePartnerValid1 = await resolvePartnerOrderDecisionAuthority(async () => ({
+      status: "authenticated", user: { id: user1Id, email: null },
+    }));
     const acceptRes1 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
     assert.equal(acceptRes1.ok, true);
 
@@ -5303,6 +5418,51 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(mktStatus3.rows[0].status, 'checkout_submitted');
 
     // === 01C-B Outbox Integration & Atomicity Proofs ===
+
+    // R2: identity is resolved before the transaction, but current membership is checked on tx.
+    for (const [suffix, membershipStatus, canAccept] of [
+      ["no-capability", "active", false], ["revoked", "revoked", true], ["missing", null, false],
+    ] as const) {
+      const actor = "00000000-0000-0000-0000-000000000031";
+      const authorize = await resolvePartnerOrderDecisionAuthority(async () => ({ status: "authenticated", user: { id: actor, email: null } }));
+      await pool.query(`DELETE FROM partner_user_memberships WHERE auth_user_id = $1 AND partner_id = $2`, [actor, pIdA]);
+      if (membershipStatus === "active") {
+        await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders, revoked_at)
+          VALUES ($1, $2, 'active', $3, NULL)`, [actor, pIdA, canAccept]);
+      } else if (membershipStatus === "revoked") {
+        await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders, revoked_at)
+          VALUES ($1, $2, 'revoked', $3, clock_timestamp())`, [actor, pIdA, canAccept]);
+      }
+      const pending = await createRoutedSellerOrder(`auth-${suffix}`, pIdA);
+      assert.deepStrictEqual(await acceptSellerOrderWithAuthority(pending.sellerOrderId, authorize), { ok: false, code: "FORBIDDEN" });
+      const state = await pool.query(`SELECT so.status, d.decision_status, d.accepted_at, d.decided_by_auth_user_id
+        FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id WHERE so.id = $1`, [pending.sellerOrderId]);
+      assert.deepStrictEqual(state.rows[0], { status: "submitted", decision_status: "pending_seller_review", accepted_at: null, decided_by_auth_user_id: null });
+    }
+
+    // Capability revocation cannot race past the membership read before E7 commits.
+    const observer = await pool.connect();
+    try {
+      await observer.query(`SET lock_timeout = '200ms'`);
+      await getDb().transaction(async tx => {
+        assert.strictEqual((await authorizePartnerValid1(pIdA, tx)).id, user1Id);
+        await assert.rejects(observer.query(`UPDATE partner_user_memberships SET can_accept_orders = false
+          WHERE auth_user_id = $1 AND partner_id = $2`, [user1Id, pIdA]), (error: unknown) =>
+          typeof error === "object" && error !== null && "code" in error && error.code === "55P03");
+      });
+    } finally {
+      await observer.query(`RESET lock_timeout`);
+      observer.release();
+    }
+
+    const lifecycleOrder = await createRoutedSellerOrder("transactional-fulfillment", pIdA);
+    assert.deepStrictEqual(await acceptSellerOrderWithAuthority(lifecycleOrder.sellerOrderId, authorizePartnerValid1), { ok: true });
+    const { markSellerOrderFulfillmentInProgressWithAuthority, markSellerOrderFulfilledWithAuthority } = await import("../../src/lib/seller-order/seller-order-workflow");
+    assert.deepStrictEqual(await markSellerOrderFulfillmentInProgressWithAuthority(lifecycleOrder.sellerOrderId, authorizePartnerValid1), { ok: true });
+    assert.deepStrictEqual(await markSellerOrderFulfilledWithAuthority(lifecycleOrder.sellerOrderId, authorizePartnerValid1), { ok: true });
+    const lifecycleState = await pool.query(`SELECT so.status, d.decision_status, d.decided_by_auth_user_id, d.decision_source
+      FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id WHERE so.id = $1`, [lifecycleOrder.sellerOrderId]);
+    assert.deepStrictEqual(lifecycleState.rows[0], { status: "fulfilled", decision_status: "seller_accepted", decided_by_auth_user_id: user1Id, decision_source: "partner_portal" });
 
     // Setup an order for Atomicity proofs
     const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer D1', 'PL', 'NIP', '1234567895', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);

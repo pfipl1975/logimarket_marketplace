@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
 import { Pool } from "pg";
-import { test, createDummySupabaseCookie } from "./fixtures/auth";
+import { test, createDummySupabaseCookie, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
 import { requireIsolatedE2EDatabaseUrl } from "../../scripts/e2e/buyer-trust-fixtures";
 import {
   CHECKOUT_NEW_BUYER_ID, CHECKOUT_NEW_BUYER_NIP, CHECKOUT_OFFER_TITLE,
@@ -87,6 +87,8 @@ test.describe("isolated canonical Buyer checkout", () => {
       assertFixtureNip(nip);
     }
     seller = await createBuyerCheckoutSellerFixture(database);
+    await database.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
+      VALUES ($1, $2, 'active', true)`, [E2E_NON_ADMIN_USER_ID, seller.partnerId]);
   });
   test.afterAll(async () => { if (database) await database.end(); });
 
@@ -149,7 +151,7 @@ test.describe("isolated canonical Buyer checkout", () => {
     assertPageClean();
   });
 
-  test("ready Buyer reviews Seller disclosure and submits one canonical E2", async ({ browser }) => {
+  test("ready Buyer submits E2, Partner sees E6 and accepts E7, Buyer sees acceptance", async ({ browser }) => {
     const context = await browser.newContext();
     try {
       await context.addCookies([{
@@ -230,6 +232,59 @@ test.describe("isolated canonical Buyer checkout", () => {
         seller_snapshot: 1, seller_item: 1, remaining_cart: 0,
         legacy: legacyBefore.rows[0].count,
       });
+      const routing = await database.query<{
+        id: string; status: string; decisionStatus: string; acceptedAt: Date | null;
+        resolvedAt: Date | null; decidedByAuthUserId: string | null; decisionSource: string | null;
+        routedAt: Date; expiresAt: Date; outbox: number;
+      }>(`SELECT so.id, so.status, d.decision_status AS "decisionStatus", d.accepted_at AS "acceptedAt",
+        d.resolved_at AS "resolvedAt", d.decided_by_auth_user_id AS "decidedByAuthUserId", d.decision_source AS "decisionSource",
+        so.e6_routed_to_seller_at AS "routedAt", d.expires_at AS "expiresAt",
+        (SELECT count(*)::int FROM notification_outbox_events e WHERE e.seller_order_id = so.id
+          AND e.event_type = 'seller_order.routed_to_seller') AS outbox
+        FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id
+        WHERE so.marketplace_order_id = $1 AND so.partner_id = $2`, [order.id, seller.partnerId]);
+      expect(routing.rows).toHaveLength(1);
+      const routed = routing.rows[0];
+      expect(routed).toMatchObject({ status: "submitted", decisionStatus: "pending_seller_review",
+        acceptedAt: null, resolvedAt: null, decidedByAuthUserId: null, decisionSource: null, outbox: 1 });
+      expect(routed.expiresAt.getTime() - routed.routedAt.getTime()).toBe(24 * 60 * 60 * 1000);
+
+      const partnerContext = await browser.newContext({ viewport: { width: 375, height: 844 } });
+      try {
+        const partnerPage = await partnerContext.newPage();
+        await addAuthCookie(partnerPage, E2E_NON_ADMIN_USER_ID);
+        const assertPartnerClean = watchBrowserErrors(partnerPage);
+        const list = await partnerPage.goto(`/partner/${seller.partnerId}/zamowienia`);
+        expect(list?.status()).toBe(200);
+        await expect(partnerPage.getByText(CHECKOUT_READY_BUYER_LEGAL_NAME).first()).toBeVisible();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusPending, { exact: true }).first()).toBeVisible();
+        await expect(partnerPage.getByText(`ORD-SO-${routed.id}`, { exact: true }).first()).toBeVisible();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: true }).first()).toBeVisible();
+        const orderLink = partnerPage.getByRole("link", { name: `ORD-SO-${routed.id}`, exact: true }).filter({ visible: true });
+        await expect(orderLink).toBeVisible();
+        await orderLink.click();
+        await expect(partnerPage.getByText(CHECKOUT_OFFER_TITLE).first()).toBeVisible();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: false }).first()).toBeVisible();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.contactHidden)).toBeVisible();
+        await expect(partnerPage.getByText("ready-buyer@checkout.example.invalid", { exact: true })).toHaveCount(0);
+        await expect(partnerPage.getByText("Testowa 12/3", { exact: false })).toHaveCount(0);
+        expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
+        await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.acceptOrder, exact: true }).click();
+        await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.confirmAcceptButton, exact: true }).click();
+        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusAccepted, { exact: true }).first()).toBeVisible();
+        const accepted = await database.query<typeof routed>(`SELECT so.status, d.decision_status AS "decisionStatus",
+          d.accepted_at AS "acceptedAt", d.resolved_at AS "resolvedAt", d.decided_by_auth_user_id AS "decidedByAuthUserId",
+          d.decision_source AS "decisionSource" FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id
+          WHERE so.id = $1`, [routed.id]);
+        expect(accepted.rows[0]).toMatchObject({ status: "seller_accepted", decisionStatus: "seller_accepted",
+          decidedByAuthUserId: E2E_NON_ADMIN_USER_ID, decisionSource: "partner_portal" });
+        expect(accepted.rows[0].acceptedAt).toBeInstanceOf(Date);
+        expect(accepted.rows[0].resolvedAt).toBeInstanceOf(Date);
+        await page.goto(`/zamowienia/${order.id}`);
+        await expect(page.getByText(pl.BuyerOrderDetail.statusAccepted, { exact: true })).toBeVisible();
+        await expect(page.getByText(pl.BuyerOrderDetail.decisionAccepted, { exact: true })).toBeVisible();
+        assertPartnerClean();
+      } finally { await partnerContext.close(); }
       assertPageClean();
     } finally {
       await context.close();

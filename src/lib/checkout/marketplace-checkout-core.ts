@@ -20,6 +20,7 @@ import {
 } from "@/lib/schema";
 import { evaluateBuyerOrderIntentReadiness, type BuyerOrderIntentContext } from "./buyer-order-intent";
 import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
+import { routeSellerOrderToPartnerInTransaction } from "@/lib/seller-order/seller-order-workflow";
 import { validateSellerSourceForSnapshot } from "@/lib/marketplace/seller-snapshot";
 import type { SellerEligibilityStatus, SellerSourceInput } from "@/lib/marketplace/seller-snapshot";
 import { validateCheckoutLine } from "./eligibility";
@@ -314,6 +315,8 @@ export async function executeMarketplaceCheckout(
             currency: ECOMMERCE_MVP_CURRENCY,
           });
         }
+        const routing = await routeSellerOrderToPartnerInTransaction(tx, sOrderId);
+        if (!routing.ok) throw new Error("CHECKOUT_E6_ROUTING_FAILED");
       }
 
       await tx.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));

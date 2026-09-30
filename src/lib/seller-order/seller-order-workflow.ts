@@ -1,7 +1,7 @@
 import { db } from "@/lib/db";
 import { sellerOrders, sellerAcceptanceDecisions } from "@/lib/schema";
 import { and, asc, eq, lte, sql } from "drizzle-orm";
-import { requirePartnerOrderDecisionAuthority } from "@/lib/auth/partner-membership";
+import { resolvePartnerOrderDecisionAuthority } from "@/lib/auth/partner-membership";
 import { enqueueNotificationIntent } from "@/lib/notifications/outbox";
 import {
   UnauthorizedError,
@@ -141,7 +141,7 @@ function isCanonicalExpired(order: SellerOrderState, decision: SellerDecisionSta
 
 export function evaluateSellerOrderRoutingState(
   order: SellerOrderState,
-  decision: Pick<SellerDecisionState, "decisionStatus" | "expiresAt"> | undefined
+  decision: SellerDecisionState | undefined
 ): RouteSellerOrderResult {
   if (order.status !== "submitted") {
     return { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" };
@@ -152,12 +152,11 @@ export function evaluateSellerOrderRoutingState(
   if (decision?.decisionStatus !== "pending_seller_review") {
     return { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" };
   }
-  if (order.e6RoutedToSellerAt === null && decision.expiresAt === null) {
-    return { ok: true };
-  }
   if (
     order.e6RoutedToSellerAt !== null &&
     decision.expiresAt !== null &&
+    decision.acceptedAt === null && decision.resolvedAt === null &&
+    decision.decidedByAuthUserId === null && decision.decisionSource === null &&
     hasCanonicalDeadline(order.e6RoutedToSellerAt, decision.expiresAt)
   ) {
     return { ok: true };
@@ -298,46 +297,50 @@ async function readSellerAcceptanceClock(
 
 export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<RouteSellerOrderResult> {
   try {
-    return await db.transaction(async (tx) => {
-      const [order] = await tx.select().from(sellerOrders).where(eq(sellerOrders.id, sellerOrderId)).for("update");
-      if (!order) return { ok: false, code: "SELLER_ORDER_NOT_FOUND" };
-
-      const [existingDecision] = await tx.select().from(sellerAcceptanceDecisions).where(eq(sellerAcceptanceDecisions.sellerOrderId, sellerOrderId)).for("update");
-      const stateResult = evaluateSellerOrderRoutingState(order, existingDecision);
-      if (!stateResult.ok) return stateResult;
-
-      if (!existingDecision && order.e6RoutedToSellerAt === null) {
-        const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
-        await tx.insert(sellerAcceptanceDecisions).values({
-          sellerOrderId,
-          decisionStatus: "pending_seller_review",
-          expiresAt,
-        });
-        await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
-        const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
-        if (!outbox.ok) throw new Error("OUTBOX_FAIL");
-      } else if (
-        existingDecision &&
-        existingDecision.decisionStatus === "pending_seller_review" &&
-        order.e6RoutedToSellerAt === null &&
-        existingDecision.expiresAt === null
-      ) {
-        const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
-        await tx.update(sellerAcceptanceDecisions).set({
-          expiresAt,
-        }).where(eq(sellerAcceptanceDecisions.id, existingDecision.id));
-        await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
-        const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
-        if (!outbox.ok) throw new Error("OUTBOX_FAIL");
-      }
-      return { ok: true };
-    });
+    return await db.transaction(tx => routeSellerOrderToPartnerInTransaction(tx, sellerOrderId));
   } catch {
     return { ok: false, code: "SYSTEM_ERROR" };
   }
 }
 
-type AuthorizeFn = (partnerId: number) => Promise<{ id: string }>;
+/** Throws on persistence failure so the caller's entire transaction rolls back. */
+export async function routeSellerOrderToPartnerInTransaction(
+  tx: SellerOrderTransaction,
+  sellerOrderId: number
+): Promise<RouteSellerOrderResult> {
+  const [order] = await tx.select().from(sellerOrders).where(eq(sellerOrders.id, sellerOrderId)).for("update");
+  if (!order) return { ok: false, code: "SELLER_ORDER_NOT_FOUND" };
+
+  const [existingDecision] = await tx.select().from(sellerAcceptanceDecisions).where(eq(sellerAcceptanceDecisions.sellerOrderId, sellerOrderId)).for("update");
+  const stateResult = evaluateSellerOrderRoutingState(order, existingDecision);
+  if (!stateResult.ok) return stateResult;
+
+  if (!existingDecision && order.e6RoutedToSellerAt === null) {
+    const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
+    await tx.insert(sellerAcceptanceDecisions).values({
+      sellerOrderId,
+      decisionStatus: "pending_seller_review",
+      expiresAt,
+    });
+    await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
+    const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
+    if (!outbox.ok) throw new Error("OUTBOX_FAIL");
+  }
+  return { ok: true };
+}
+
+type AuthorizeFn = (partnerId: number, tx: SellerOrderTransaction) => Promise<{ id: string }>;
+
+async function withResolvedPartnerOrderAuthority<T>(execute: (authorizePartner: AuthorizeFn) => Promise<T>): Promise<
+  T | { ok: false; code: "UNAUTHORIZED" | "SYSTEM_ERROR" }
+> {
+  try {
+    // This awaits session identity before execute can acquire the transaction connection.
+    return await execute(await resolvePartnerOrderDecisionAuthority());
+  } catch (error) {
+    return { ok: false, code: error instanceof UnauthorizedError ? "UNAUTHORIZED" : "SYSTEM_ERROR" };
+  }
+}
 
 async function decideSellerOrderWithAuthority(
   sellerOrderId: number,
@@ -351,7 +354,7 @@ async function decideSellerOrderWithAuthority(
 
       let identity;
       try {
-        identity = await authorizePartner(order.partnerId);
+        identity = await authorizePartner(order.partnerId, tx);
       } catch (err) {
         if (err instanceof UnauthorizedError) return { ok: false, code: "UNAUTHORIZED" };
         if (err instanceof ForbiddenError) return { ok: false, code: "FORBIDDEN" };
@@ -471,11 +474,11 @@ export async function expireDueSellerOrders(limit = 100): Promise<
 }
 
 export async function acceptSellerOrder(sellerOrderId: number): Promise<AcceptRejectResult> {
-  return acceptSellerOrderWithAuthority(sellerOrderId, requirePartnerOrderDecisionAuthority);
+  return withResolvedPartnerOrderAuthority(authorize => acceptSellerOrderWithAuthority(sellerOrderId, authorize));
 }
 
 export async function rejectSellerOrder(sellerOrderId: number): Promise<AcceptRejectResult> {
-  return rejectSellerOrderWithAuthority(sellerOrderId, requirePartnerOrderDecisionAuthority);
+  return withResolvedPartnerOrderAuthority(authorize => rejectSellerOrderWithAuthority(sellerOrderId, authorize));
 }
 
 export type FulfillmentResult =
@@ -516,19 +519,19 @@ async function transitionSellerOrderFulfillmentWithAuthority(
       const [order] = await tx.select().from(sellerOrders).where(eq(sellerOrders.id, sellerOrderId)).for("update");
       if (!order) return { ok: false, code: "SELLER_ORDER_NOT_FOUND" };
 
-      const [decision] = await tx
-        .select()
-        .from(sellerAcceptanceDecisions)
-        .where(eq(sellerAcceptanceDecisions.sellerOrderId, sellerOrderId))
-        .for("update");
-
       try {
-        await authorizePartner(order.partnerId);
+        await authorizePartner(order.partnerId, tx);
       } catch (err) {
         if (err instanceof UnauthorizedError) return { ok: false, code: "UNAUTHORIZED" };
         if (err instanceof ForbiddenError) return { ok: false, code: "FORBIDDEN" };
         return { ok: false, code: "SYSTEM_ERROR" };
       }
+
+      const [decision] = await tx
+        .select()
+        .from(sellerAcceptanceDecisions)
+        .where(eq(sellerAcceptanceDecisions.sellerOrderId, sellerOrderId))
+        .for("update");
 
       const stateResult = evaluateSellerOrderFulfillmentTransition(order, decision, target);
       if (!stateResult.ok) return stateResult;
@@ -567,9 +570,9 @@ export async function markSellerOrderFulfilledWithAuthority(sellerOrderId: numbe
 }
 
 export async function markSellerOrderFulfillmentInProgress(sellerOrderId: number): Promise<FulfillmentResult> {
-  return markSellerOrderFulfillmentInProgressWithAuthority(sellerOrderId, requirePartnerOrderDecisionAuthority);
+  return withResolvedPartnerOrderAuthority(authorize => markSellerOrderFulfillmentInProgressWithAuthority(sellerOrderId, authorize));
 }
 
 export async function markSellerOrderFulfilled(sellerOrderId: number): Promise<FulfillmentResult> {
-  return markSellerOrderFulfilledWithAuthority(sellerOrderId, requirePartnerOrderDecisionAuthority);
+  return withResolvedPartnerOrderAuthority(authorize => markSellerOrderFulfilledWithAuthority(sellerOrderId, authorize));
 }
