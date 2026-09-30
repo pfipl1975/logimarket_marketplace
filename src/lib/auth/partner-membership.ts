@@ -7,10 +7,12 @@ import { eq, and } from "drizzle-orm";
 
 type GetCurrentUserFn = () => Promise<CurrentUserResult>;
 type GetMembershipFn = (userId: string, partnerId: number) => Promise<{ membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined>;
+type MembershipDatabase = Pick<typeof db, "select">;
+type MembershipTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
-export async function getDbMembership(userId: string, partnerId: number): Promise<{ membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined> {
+async function readDbMembership(database: MembershipDatabase, userId: string, partnerId: number, lockMembership: boolean): Promise<Awaited<ReturnType<GetMembershipFn>>> {
   try {
-    return await db
+    const query = database
       .select({ membershipStatus: partnerUserMemberships.membershipStatus, canAcceptOrders: partnerUserMemberships.canAcceptOrders })
       .from(partnerUserMemberships)
       .where(
@@ -20,11 +22,36 @@ export async function getDbMembership(userId: string, partnerId: number): Promis
           eq(partnerUserMemberships.membershipStatus, "active")
         )
       )
-      .limit(1)
-      .then(res => res[0] as { membershipStatus: "active" | "revoked", canAcceptOrders: boolean } | undefined);
+      .limit(1);
+    // Keep the authoritative capability stable until the Seller Order transaction commits.
+    const rows = lockMembership ? await query.for("share") : await query;
+    const membership = rows[0];
+    if (!membership) return undefined;
+    if (membership.membershipStatus !== "active" && membership.membershipStatus !== "revoked") throw new AuthInfrastructureError();
+    return { membershipStatus: membership.membershipStatus, canAcceptOrders: membership.canAcceptOrders };
   } catch {
     throw new AuthInfrastructureError();
   }
+}
+
+export async function getDbMembership(userId: string, partnerId: number) {
+  return readDbMembership(db, userId, partnerId, false);
+}
+
+export async function getDbMembershipInTransaction(tx: MembershipTransaction, userId: string, partnerId: number) {
+  return readDbMembership(tx, userId, partnerId, true);
+}
+
+export async function requirePartnerSessionIdentityCore(getUser: GetCurrentUserFn): Promise<AuthenticatedIdentity> {
+  let result;
+  try {
+    result = await getUser();
+  } catch {
+    throw new AuthInfrastructureError();
+  }
+  if (result.status === "unavailable") throw new AuthInfrastructureError();
+  if (result.status !== "authenticated") throw new UnauthorizedError();
+  return result.user;
 }
 
 export async function requirePartnerMembershipCore(
@@ -69,23 +96,18 @@ export async function requirePartnerOrderDecisionAuthorityCore(
   getMembership: GetMembershipFn,
   partnerId: number
 ): Promise<AuthenticatedIdentity> {
-  let result;
-  try {
-    result = await getUser();
-  } catch {
-    throw new AuthInfrastructureError();
-  }
+  const identity = await requirePartnerSessionIdentityCore(getUser);
+  return requirePartnerOrderDecisionAuthorityForIdentityCore(identity, getMembership, partnerId);
+}
 
-  if (result.status === "unavailable") {
-    throw new AuthInfrastructureError();
-  }
-  if (result.status !== "authenticated") {
-    throw new UnauthorizedError();
-  }
-
+export async function requirePartnerOrderDecisionAuthorityForIdentityCore(
+  identity: AuthenticatedIdentity,
+  getMembership: GetMembershipFn,
+  partnerId: number
+): Promise<AuthenticatedIdentity> {
   let membership;
   try {
-    membership = await getMembership(result.user.id, partnerId);
+    membership = await getMembership(identity.id, partnerId);
   } catch {
     throw new AuthInfrastructureError();
   }
@@ -94,7 +116,17 @@ export async function requirePartnerOrderDecisionAuthorityCore(
     throw new ForbiddenError();
   }
 
-  return result.user;
+  return identity;
+}
+
+/** Resolve only session identity now; authorize the locked order's Partner later on its tx. */
+export async function resolvePartnerOrderDecisionAuthority(getUser: GetCurrentUserFn = getCurrentUser) {
+  const identity = await requirePartnerSessionIdentityCore(getUser);
+  return (partnerId: number, tx: MembershipTransaction) => requirePartnerOrderDecisionAuthorityForIdentityCore(
+    identity,
+    (userId, id) => getDbMembershipInTransaction(tx, userId, id),
+    partnerId
+  );
 }
 
 export async function requirePartnerOrderDecisionAuthority(partnerId: number): Promise<AuthenticatedIdentity> {

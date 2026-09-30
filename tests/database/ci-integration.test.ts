@@ -5217,7 +5217,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // S/T. Accept Workflow
     const user1Id = "00000000-0000-0000-0000-000000000021";
-    const authorizePartnerValid1 = async () => ({ id: user1Id });
+    const { resolvePartnerOrderDecisionAuthority } = await import("../../src/lib/auth/partner-membership");
+    assert.strictEqual(Number(process.env.DATABASE_POOL_MAX ?? 1), 1, "this proof requires the application's one-connection pool");
+    await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
+      VALUES ($1, $2, 'active', true), ($1, $3, 'active', true)`, [user1Id, pIdA, pIdB]);
+    const authorizePartnerValid1 = await resolvePartnerOrderDecisionAuthority(async () => ({
+      status: "authenticated", user: { id: user1Id, email: null },
+    }));
     const acceptRes1 = await acceptSellerOrderWithAuthority(sOrderId1, authorizePartnerValid1);
     assert.equal(acceptRes1.ok, true);
 
@@ -5412,6 +5418,46 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     assert.equal(mktStatus3.rows[0].status, 'checkout_submitted');
 
     // === 01C-B Outbox Integration & Atomicity Proofs ===
+
+    // R2: identity is resolved before the transaction, but current membership is checked on tx.
+    for (const [suffix, membershipStatus, canAccept] of [
+      ["no-capability", "active", false], ["revoked", "revoked", true], ["missing", null, false],
+    ] as const) {
+      const actor = "00000000-0000-0000-0000-000000000031";
+      const authorize = await resolvePartnerOrderDecisionAuthority(async () => ({ status: "authenticated", user: { id: actor, email: null } }));
+      await pool.query(`DELETE FROM partner_user_memberships WHERE auth_user_id = $1 AND partner_id = $2`, [actor, pIdA]);
+      if (membershipStatus) await pool.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
+        VALUES ($1, $2, $3, $4)`, [actor, pIdA, membershipStatus, canAccept]);
+      const pending = await createRoutedSellerOrder(`auth-${suffix}`, pIdA);
+      assert.deepStrictEqual(await acceptSellerOrderWithAuthority(pending.sellerOrderId, authorize), { ok: false, code: "FORBIDDEN" });
+      const state = await pool.query(`SELECT so.status, d.decision_status, d.accepted_at, d.decided_by_auth_user_id
+        FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id WHERE so.id = $1`, [pending.sellerOrderId]);
+      assert.deepStrictEqual(state.rows[0], { status: "submitted", decision_status: "pending_seller_review", accepted_at: null, decided_by_auth_user_id: null });
+    }
+
+    // Capability revocation cannot race past the membership read before E7 commits.
+    const observer = await pool.connect();
+    try {
+      await observer.query(`SET lock_timeout = '200ms'`);
+      await getDb().transaction(async tx => {
+        assert.strictEqual((await authorizePartnerValid1(pIdA, tx)).id, user1Id);
+        await assert.rejects(observer.query(`UPDATE partner_user_memberships SET can_accept_orders = false
+          WHERE auth_user_id = $1 AND partner_id = $2`, [user1Id, pIdA]), (error: unknown) =>
+          typeof error === "object" && error !== null && "code" in error && error.code === "55P03");
+      });
+    } finally {
+      await observer.query(`RESET lock_timeout`);
+      observer.release();
+    }
+
+    const lifecycleOrder = await createRoutedSellerOrder("transactional-fulfillment", pIdA);
+    assert.deepStrictEqual(await acceptSellerOrderWithAuthority(lifecycleOrder.sellerOrderId, authorizePartnerValid1), { ok: true });
+    const { markSellerOrderFulfillmentInProgressWithAuthority, markSellerOrderFulfilledWithAuthority } = await import("../../src/lib/seller-order/seller-order-workflow");
+    assert.deepStrictEqual(await markSellerOrderFulfillmentInProgressWithAuthority(lifecycleOrder.sellerOrderId, authorizePartnerValid1), { ok: true });
+    assert.deepStrictEqual(await markSellerOrderFulfilledWithAuthority(lifecycleOrder.sellerOrderId, authorizePartnerValid1), { ok: true });
+    const lifecycleState = await pool.query(`SELECT so.status, d.decision_status, d.decided_by_auth_user_id, d.decision_source
+      FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id WHERE so.id = $1`, [lifecycleOrder.sellerOrderId]);
+    assert.deepStrictEqual(lifecycleState.rows[0], { status: "fulfilled", decision_status: "seller_accepted", decided_by_auth_user_id: user1Id, decision_source: "partner_portal" });
 
     // Setup an order for Atomicity proofs
     const buyerD1 = await pool.query<{ id: string }>(`INSERT INTO buyer_legal_context_snapshots (business_name, country_code, tax_identifier_type, tax_identifier_value, business_verification_status, category_b_status, legal_context_review_state) VALUES ('Test Buyer D1', 'PL', 'NIP', '1234567895', 'unknown', 'unknown', 'no_review_needed') RETURNING id`);
