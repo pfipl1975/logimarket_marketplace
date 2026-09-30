@@ -7,6 +7,8 @@ import { PublicLogoutForm } from "@/components/auth/PublicLogoutForm";
 import { BuyerOnboardingForm } from "@/components/buyer-account/BuyerOnboardingForm";
 import { getCurrentUser } from "@/lib/auth/session";
 import { buyerAccountPath, buyerOrdersPath, accountLoginPath } from "@/lib/buyer-account/paths";
+import { accountLandingPath } from "@/lib/buyer-account/paths";
+import { accountLinkWithNext } from "@/lib/auth/account-paths";
 import { loadBuyerAccountOrganizations } from "@/lib/buyer-account/service";
 import { locales, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -24,9 +26,10 @@ function statusLabel(organization: BuyerAccountOrganization, labels: Dictionary[
   return status[organization.verificationStatus];
 }
 
-export async function BuyerAccountPage({ locale, created }: { locale: Locale; created: boolean }) {
+export async function BuyerAccountPage({ locale, created, next }: { locale: Locale; created: boolean; next?: string }) {
+  const safeNext = accountLandingPath(next, locale);
   const user = await getCurrentUser();
-  if (user.status === "unauthenticated") redirect(accountLoginPath(locale));
+  if (user.status === "unauthenticated") redirect(next ? accountLinkWithNext(locale, "login", safeNext) : accountLoginPath(locale));
   const dict = await getDictionary(locale);
   const labels = dict.buyerAccount;
   const languageLinks = Object.fromEntries(locales.map((language) => [language, buyerAccountPath(language)])) as Record<Locale, string>;
@@ -58,7 +61,7 @@ export async function BuyerAccountPage({ locale, created }: { locale: Locale; cr
             : organizations.length === 0 ? <div className="mt-4">
               <h3 className="text-lg font-semibold text-brand-navy">{labels.emptyTitle}</h3>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-[#2c3e50]">{labels.emptyDescription}</p>
-              <BuyerOnboardingForm locale={locale} labels={labels} authEmail={user.status === "authenticated" ? user.user.email : null} />
+              <BuyerOnboardingForm locale={locale} labels={labels} authEmail={user.status === "authenticated" ? user.user.email : null} next={safeNext} />
             </div>
               : <div className="mt-5 space-y-4">{organizations.map((organization) => <article key={organization.id} className="rounded-md border border-[#d9dde2] bg-brand-light-gray p-4 sm:p-5">
                 <h3 className="break-words text-lg font-semibold text-brand-navy">{organization.legalName}</h3>

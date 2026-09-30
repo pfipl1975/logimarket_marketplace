@@ -6,7 +6,7 @@ import { getDictionary } from "@/lib/i18n/dictionaries";
 
 export const dynamic = "force-dynamic";
 
-type PageProps = { params: Promise<{ locale: string }>; searchParams: Promise<{ created?: string }> };
+type PageProps = { params: Promise<{ locale: string }>; searchParams: Promise<{ created?: string; next?: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale } = await params;
@@ -18,6 +18,6 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 export default async function LocalizedAccountRoute({ params, searchParams }: PageProps) {
   const { locale } = await params;
   if (!isLocale(locale) || locale === "pl") notFound();
-  const { created } = await searchParams;
-  return <BuyerAccountPage locale={locale} created={created === "1"} />;
+  const { created, next } = await searchParams;
+  return <BuyerAccountPage locale={locale} created={created === "1"} next={next} />;
 }

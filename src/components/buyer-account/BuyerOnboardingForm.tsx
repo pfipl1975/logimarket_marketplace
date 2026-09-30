@@ -36,7 +36,7 @@ function SubmitButton({ labels }: { labels: Labels }) {
   </button>;
 }
 
-export function BuyerOnboardingForm({ locale, labels, authEmail }: { locale: Locale; labels: Labels; authEmail: string | null }) {
+export function BuyerOnboardingForm({ locale, labels, authEmail, next }: { locale: Locale; labels: Labels; authEmail: string | null; next: string }) {
   const [state, formAction] = useActionState(submitFirstBuyerOrganization, initialState);
   const fieldMessages: Record<FieldName, string> = {
     legalName: labels.invalidLegalName, nip: labels.invalidNip, street: labels.invalidStreet,
@@ -52,6 +52,7 @@ export function BuyerOnboardingForm({ locale, labels, authEmail }: { locale: Loc
 
   return <form action={formAction} className="mt-6 space-y-7" aria-label={labels.emptyTitle}>
     <input type="hidden" name="locale" value={locale} />
+    <input type="hidden" name="next" value={next} />
     <fieldset className="space-y-4 border-t border-[#d9dde2] pt-5">
       <legend className="text-base font-semibold text-brand-navy">1/3 · {labels.companyData}</legend>
       <div className="grid gap-4 sm:grid-cols-2">

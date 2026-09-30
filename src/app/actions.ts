@@ -48,13 +48,10 @@ import {
   getExistingSessionHash,
   getOrCreateSessionHash,
 } from "@/lib/session/session-hash";
-import { CheckoutContactSchema } from "@/lib/checkout/contact-schema";
-import { executeCheckout } from "@/lib/checkout/checkout-core";
 import {
   isValidCheckoutQuantity,
   parseDecimalToMinorUnits,
 } from "@/lib/checkout/money";
-import type { CheckoutActionResult } from "@/lib/checkout/checkout-types";
 
 export type CatalogOffer = {
   id: number;
@@ -334,6 +331,10 @@ export type CartItemWithOffer = {
   priceOnRequest: boolean;
   quantity: number;
   partnerName: string;
+  partnerId: number | null;
+  offerModel: CanonicalOfferModelResolution | "inconsistent";
+  isActive: boolean;
+  publicationStatus: OfferPublicationStatus;
   categoryName: string;
 };
 
@@ -382,6 +383,10 @@ export async function getCartItems(): Promise<CartItemWithOffer[]> {
       priceOnRequest: row.offer?.priceOnRequest ?? true,
       quantity: row.cartItem.quantity,
       partnerName: row.partner?.companyName ?? "",
+      partnerId: row.offer?.partnerId ?? null,
+      offerModel: row.offer ? resolveCanonicalOfferModel(row.offer.offerModel, row.offer.conversionType) : "inconsistent",
+      isActive: row.offer?.isActive ?? false,
+      publicationStatus: row.offer?.publicationStatus ?? "draft",
       categoryName: row.category?.name ?? "",
     };
   });
@@ -508,27 +513,6 @@ export async function clearCart() {
   if (!sessionHash) return;
   await db.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
   revalidatePath("/");
-}
-
-export async function submitCheckout(
-  rawInput: unknown,
-): Promise<CheckoutActionResult> {
-
-  const parsed = CheckoutContactSchema.safeParse(rawInput);
-  if (!parsed.success) {
-    return { ok: false, code: "CHECKOUT_VALIDATION_ERROR" };
-  }
-
-  const sessionHash = await getExistingSessionHash();
-  if (!sessionHash) {
-    return { ok: false, code: "CHECKOUT_CART_EMPTY" };
-  }
-  const result = await executeCheckout(db, sessionHash, parsed.data);
-
-  if (result.ok) {
-    revalidatePath("/");
-  }
-  return result;
 }
 
 import {

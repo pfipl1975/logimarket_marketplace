@@ -17,7 +17,7 @@ function orderDetailPath(locale: Locale, orderId: number): string {
   return ordersPath(locale) + '/' + orderId;
 }
 
-export async function BuyerOrdersPage({ locale }: { locale: Locale }) {
+export async function BuyerOrdersPage({ locale, submitted = false }: { locale: Locale; submitted?: boolean }) {
   const path = ordersPath(locale);
   const result = await loadBuyerOrders();
   if (result.status === "unauthenticated") {
@@ -46,6 +46,7 @@ export async function BuyerOrdersPage({ locale }: { locale: Locale }) {
         <div className="mx-auto w-full max-w-5xl px-4 sm:px-6 lg:px-8">
           <h1 className="text-2xl font-bold tracking-tight text-brand-navy sm:text-3xl">{labels.title}</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-[#2c3e50] sm:text-base">{labels.intro}</p>
+          {submitted && <p role="status" aria-live="polite" className="mt-6 border border-brand-teal bg-white px-4 py-3 text-sm font-medium text-brand-navy">{dict.checkoutFlow.successNotice}</p>}
 
           {result.orders.length === 0 ? (
             <section className="mt-8 border border-[#d9dde2] bg-white px-5 py-10 text-center sm:px-8" aria-labelledby="empty-orders-title">

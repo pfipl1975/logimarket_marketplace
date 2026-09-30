@@ -6,6 +6,14 @@ const actionsSource = readFileSync(
   new URL("../../src/app/actions.ts", import.meta.url),
   "utf8"
 );
+const publicCheckoutActionSource = readFileSync(
+  new URL("../../src/app/checkout-actions.ts", import.meta.url),
+  "utf8"
+);
+const publicCheckoutCoreSource = readFileSync(
+  new URL("../../src/lib/checkout/public-checkout-core.ts", import.meta.url),
+  "utf8"
+);
 
 const checkoutCoreSource = readFileSync(
   new URL("../../src/lib/checkout/checkout-core.ts", import.meta.url),
@@ -13,25 +21,28 @@ const checkoutCoreSource = readFileSync(
 );
 
 test("Checkout Action Contract", async (t) => {
-  await t.test("submitCheckout accepts only contact fields", () => {
-    // Look for the submitCheckout definition
-    const submitRegex = /export async function submitCheckout\(([^)]*)\)/;
-    const match = actionsSource.match(submitRegex);
-    assert.ok(match, "submitCheckout must exist");
-    
-    // It should just take rawInput: unknown
-    assert.match(match[1], /rawInput:\s*unknown/);
+  await t.test("public E2 action delegates to server auth, cart, Buyer resolver and canonical transaction", () => {
+    assert.match(publicCheckoutActionSource, /export async function submitMarketplaceCheckout\s*\(/);
+    assert.match(publicCheckoutActionSource, /currentUser:\s*getCurrentUser\b/);
+    assert.match(publicCheckoutActionSource, /sessionHash:\s*getExistingSessionHash\b/);
+    assert.match(publicCheckoutActionSource, /resolveBuyer:\s*resolveBuyerOrderIntentContext\b/);
+    assert.match(publicCheckoutActionSource, /executeMarketplaceCheckout\s*\(\s*db\s*,\s*sessionHash\s*,\s*context\s*\)/);
+    assert.doesNotMatch(publicCheckoutActionSource, /\bgetOrCreateSessionHash\b|\bexecuteCheckout\s*\(/);
   });
 
-  await t.test("submitCheckout uses CheckoutContactSchema for validation", () => {
-    assert.match(actionsSource, /CheckoutContactSchema\.safeParse/);
-    assert.match(actionsSource, /code:\s*"CHECKOUT_VALIDATION_ERROR"/);
+  await t.test("browser payload supplies only transaction notes and navigation locale", () => {
+    const fields = [...publicCheckoutActionSource.matchAll(/form\.get\(\s*["']([^"']+)["']\s*\)/g)].map(match => match[1]).sort();
+    assert.deepEqual(fields, ["locale", "message"]);
+    assert.match(publicCheckoutActionSource, /runPublicCheckout\s*\(\s*form\.get\(\s*"message"\s*\)/);
+    assert.match(publicCheckoutCoreSource, /deps\.currentUser\s*\(\s*\)/);
+    assert.match(publicCheckoutCoreSource, /deps\.resolveBuyer\s*\(\s*current\.user\.id\s*\)/);
+    assert.match(publicCheckoutCoreSource, /authUserId:\s*current\.user\.id/);
+    assert.match(publicCheckoutCoreSource, /contact:\s*\{\s*\.\.\.buyer\.context\.contact\s*,\s*message:\s*parsed\.data/);
   });
 
-  await t.test("submitCheckout does not take items, totalAmount, unitPrice, quantity from client", () => {
-    // Ensure no type definition inline that accepts items
-    assert.doesNotMatch(actionsSource, /items:\s*\{\s*offerId/);
-    assert.doesNotMatch(actionsSource, /totalAmount/);
+  await t.test("legacy orders action cannot be reached through the public checkout action", () => {
+    assert.doesNotMatch(actionsSource, /export async function submitCheckout\s*\(|\bexecuteCheckout\s*\(/);
+    assert.doesNotMatch(publicCheckoutActionSource, /\bsubmitCheckout\s*\(|\bexecuteCheckout\s*\(/);
   });
 });
 

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/session";
 import { accountLocale } from "@/lib/auth/account-paths";
-import { buyerAccountPath } from "@/lib/buyer-account/paths";
+import { accountLandingPath, buyerAccountPath } from "@/lib/buyer-account/paths";
 import { parseBuyerOnboardingInput } from "@/lib/buyer-account/core";
 import { createFirstBuyerOrganization } from "@/lib/buyer-account/service";
 
@@ -45,5 +45,6 @@ export async function submitFirstBuyerOrganization(
   }
   const path = buyerAccountPath(locale);
   revalidatePath(path);
-  redirect(`${path}?created=1`);
+  const next = accountLandingPath(form.get("next")?.toString(), locale);
+  redirect(next === path ? `${path}?created=1` : next);
 }
