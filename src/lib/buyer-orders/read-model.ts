@@ -30,6 +30,7 @@ export async function loadBuyerOrders(): Promise<BuyerOrdersReadResult> {
       sellerOrderId: sellerOrders.id,
       sellerOrderStatus: sellerOrders.status,
       decisionStatus: sellerAcceptanceDecisions.decisionStatus,
+      routedAt: sellerOrders.e6RoutedToSellerAt,
     })
     .from(marketplaceOrders)
     .leftJoin(sellerOrders, eq(sellerOrders.marketplaceOrderId, marketplaceOrders.id))

@@ -16,16 +16,22 @@ export const SELLER_DECISION_STATUSES = [
   "expired",
 ] as const;
 
-export const SELLER_DECISION_SUMMARY_KEYS = [
-  ...SELLER_DECISION_STATUSES,
+export const BUYER_SELLER_LIFECYCLE_STATUSES = [
+  "pending_seller_review",
+  "seller_accepted",
+  "fulfillment_in_progress",
+  "fulfilled",
+  "seller_rejected",
+  "expired",
+  "cancelled",
   "not_routed",
   "unavailable",
 ] as const;
 
 export type SellerOrderStatus = (typeof SELLER_ORDER_STATUSES)[number];
 export type SellerDecisionStatus = (typeof SELLER_DECISION_STATUSES)[number];
-export type SellerDecisionSummaryKey = (typeof SELLER_DECISION_SUMMARY_KEYS)[number];
-export type SellerDecisionCounts = Record<SellerDecisionSummaryKey, number>;
+export type BuyerSellerLifecycleStatus = (typeof BUYER_SELLER_LIFECYCLE_STATUSES)[number];
+export type BuyerSellerLifecycleCounts = Record<BuyerSellerLifecycleStatus, number>;
 
 /** Only these selected columns may cross from the DB adapter into the model. */
 export type BuyerOrderReadRow = {
@@ -34,13 +40,14 @@ export type BuyerOrderReadRow = {
   sellerOrderId: number | null;
   sellerOrderStatus: string | null;
   decisionStatus: string | null;
+  routedAt: Date | null;
 };
 
 export type BuyerOrderListItem = {
   orderId: number;
   createdAt: Date;
   sellerOrderCount: number;
-  decisions: SellerDecisionCounts;
+  lifecycle: BuyerSellerLifecycleCounts;
 };
 
 function isSellerOrderStatus(value: string): value is SellerOrderStatus {
@@ -51,22 +58,43 @@ function isSellerDecisionStatus(value: string): value is SellerDecisionStatus {
   return (SELLER_DECISION_STATUSES as readonly string[]).includes(value);
 }
 
-function emptyDecisionCounts(): SellerDecisionCounts {
+function emptyLifecycleCounts(): BuyerSellerLifecycleCounts {
   return {
     pending_seller_review: 0,
     seller_accepted: 0,
+    fulfillment_in_progress: 0,
+    fulfilled: 0,
     seller_rejected: 0,
     expired: 0,
+    cancelled: 0,
     not_routed: 0,
     unavailable: 0,
   };
 }
 
-/**
- * Decision records are authoritative even when SellerOrder later enters
- * fulfillment. A SellerOrder without a decision is shown explicitly, never
- * silently counted as accepted or rejected.
- */
+/** Current operational state, backed by canonical decision evidence. */
+export function deriveBuyerSellerOrderLifecycleStatus(
+  sellerOrderStatus: string,
+  decisionStatus: string | null,
+  routedAt: Date | null,
+): BuyerSellerLifecycleStatus {
+  if (!isSellerOrderStatus(sellerOrderStatus)) throw new Error("Unknown SellerOrder status in Buyer order read model");
+  if (decisionStatus !== null && !isSellerDecisionStatus(decisionStatus)) throw new Error("Unknown seller decision status in Buyer order read model");
+  if (sellerOrderStatus === "submitted") {
+    if (decisionStatus === null) return routedAt === null ? "not_routed" : "unavailable";
+    if (decisionStatus === "pending_seller_review") return routedAt === null ? "unavailable" : "pending_seller_review";
+    throw new Error("Conflicting submitted SellerOrder decision");
+  }
+  // Cancellation is already a canonical persisted state, independent of a
+  // prior decision (including no decision), as in the Partner read model.
+  if (sellerOrderStatus === "cancelled") return "cancelled";
+  const expectedDecision = sellerOrderStatus === "fulfillment_in_progress" || sellerOrderStatus === "fulfilled"
+    ? "seller_accepted" : sellerOrderStatus;
+  if (decisionStatus !== expectedDecision) throw new Error("Conflicting SellerOrder lifecycle and decision");
+  return sellerOrderStatus;
+}
+
+/** Each SellerOrder contributes exactly one current lifecycle count. */
 export function buildBuyerOrderList(rows: readonly BuyerOrderReadRow[]): BuyerOrderListItem[] {
   const grouped = new Map<number, { item: BuyerOrderListItem; seenSellerIds: Set<number> }>();
 
@@ -85,7 +113,7 @@ export function buildBuyerOrderList(rows: readonly BuyerOrderReadRow[]): BuyerOr
           orderId: row.orderId,
           createdAt: new Date(row.createdAt.getTime()),
           sellerOrderCount: 0,
-          decisions: emptyDecisionCounts(),
+          lifecycle: emptyLifecycleCounts(),
         },
         seenSellerIds: new Set<number>(),
       };
@@ -95,7 +123,7 @@ export function buildBuyerOrderList(rows: readonly BuyerOrderReadRow[]): BuyerOr
     }
 
     if (row.sellerOrderId === null) {
-      if (row.sellerOrderStatus !== null || row.decisionStatus !== null) {
+      if (row.sellerOrderStatus !== null || row.decisionStatus !== null || row.routedAt !== null) {
         throw new Error("Seller decision exists without a SellerOrder");
       }
       continue;
@@ -112,14 +140,8 @@ export function buildBuyerOrderList(rows: readonly BuyerOrderReadRow[]): BuyerOr
     }
 
     group.item.sellerOrderCount += 1;
-    if (row.decisionStatus === null) {
-      const key = row.sellerOrderStatus === "submitted" ? "not_routed" : "unavailable";
-      group.item.decisions[key] += 1;
-    } else if (isSellerDecisionStatus(row.decisionStatus)) {
-      group.item.decisions[row.decisionStatus] += 1;
-    } else {
-      throw new Error("Unknown seller decision status in Buyer order read model");
-    }
+    const status = deriveBuyerSellerOrderLifecycleStatus(row.sellerOrderStatus, row.decisionStatus, row.routedAt);
+    group.item.lifecycle[status] += 1;
   }
 
   return Array.from(grouped.values(), ({ item }) => item).sort(
