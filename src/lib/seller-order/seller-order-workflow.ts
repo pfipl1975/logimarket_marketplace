@@ -141,7 +141,7 @@ function isCanonicalExpired(order: SellerOrderState, decision: SellerDecisionSta
 
 export function evaluateSellerOrderRoutingState(
   order: SellerOrderState,
-  decision: Pick<SellerDecisionState, "decisionStatus" | "expiresAt"> | undefined
+  decision: SellerDecisionState | undefined
 ): RouteSellerOrderResult {
   if (order.status !== "submitted") {
     return { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" };
@@ -152,12 +152,11 @@ export function evaluateSellerOrderRoutingState(
   if (decision?.decisionStatus !== "pending_seller_review") {
     return { ok: false, code: "SELLER_ORDER_NOT_ELIGIBLE" };
   }
-  if (order.e6RoutedToSellerAt === null && decision.expiresAt === null) {
-    return { ok: true };
-  }
   if (
     order.e6RoutedToSellerAt !== null &&
     decision.expiresAt !== null &&
+    decision.acceptedAt === null && decision.resolvedAt === null &&
+    decision.decidedByAuthUserId === null && decision.decisionSource === null &&
     hasCanonicalDeadline(order.e6RoutedToSellerAt, decision.expiresAt)
   ) {
     return { ok: true };
@@ -298,43 +297,36 @@ async function readSellerAcceptanceClock(
 
 export async function routeSellerOrderToPartner(sellerOrderId: number): Promise<RouteSellerOrderResult> {
   try {
-    return await db.transaction(async (tx) => {
-      const [order] = await tx.select().from(sellerOrders).where(eq(sellerOrders.id, sellerOrderId)).for("update");
-      if (!order) return { ok: false, code: "SELLER_ORDER_NOT_FOUND" };
-
-      const [existingDecision] = await tx.select().from(sellerAcceptanceDecisions).where(eq(sellerAcceptanceDecisions.sellerOrderId, sellerOrderId)).for("update");
-      const stateResult = evaluateSellerOrderRoutingState(order, existingDecision);
-      if (!stateResult.ok) return stateResult;
-
-      if (!existingDecision && order.e6RoutedToSellerAt === null) {
-        const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
-        await tx.insert(sellerAcceptanceDecisions).values({
-          sellerOrderId,
-          decisionStatus: "pending_seller_review",
-          expiresAt,
-        });
-        await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
-        const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
-        if (!outbox.ok) throw new Error("OUTBOX_FAIL");
-      } else if (
-        existingDecision &&
-        existingDecision.decisionStatus === "pending_seller_review" &&
-        order.e6RoutedToSellerAt === null &&
-        existingDecision.expiresAt === null
-      ) {
-        const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
-        await tx.update(sellerAcceptanceDecisions).set({
-          expiresAt,
-        }).where(eq(sellerAcceptanceDecisions.id, existingDecision.id));
-        await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
-        const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
-        if (!outbox.ok) throw new Error("OUTBOX_FAIL");
-      }
-      return { ok: true };
-    });
+    return await db.transaction(tx => routeSellerOrderToPartnerInTransaction(tx, sellerOrderId));
   } catch {
     return { ok: false, code: "SYSTEM_ERROR" };
   }
+}
+
+/** Throws on persistence failure so the caller's entire transaction rolls back. */
+export async function routeSellerOrderToPartnerInTransaction(
+  tx: SellerOrderTransaction,
+  sellerOrderId: number
+): Promise<RouteSellerOrderResult> {
+  const [order] = await tx.select().from(sellerOrders).where(eq(sellerOrders.id, sellerOrderId)).for("update");
+  if (!order) return { ok: false, code: "SELLER_ORDER_NOT_FOUND" };
+
+  const [existingDecision] = await tx.select().from(sellerAcceptanceDecisions).where(eq(sellerAcceptanceDecisions.sellerOrderId, sellerOrderId)).for("update");
+  const stateResult = evaluateSellerOrderRoutingState(order, existingDecision);
+  if (!stateResult.ok) return stateResult;
+
+  if (!existingDecision && order.e6RoutedToSellerAt === null) {
+    const { routedAt, expiresAt } = await readSellerAcceptanceClock(tx);
+    await tx.insert(sellerAcceptanceDecisions).values({
+      sellerOrderId,
+      decisionStatus: "pending_seller_review",
+      expiresAt,
+    });
+    await tx.update(sellerOrders).set({ e6RoutedToSellerAt: routedAt, updatedAt: routedAt }).where(eq(sellerOrders.id, sellerOrderId));
+    const outbox = await enqueueNotificationIntent(tx, sellerOrderId, "seller_order.routed_to_seller");
+    if (!outbox.ok) throw new Error("OUTBOX_FAIL");
+  }
+  return { ok: true };
 }
 
 type AuthorizeFn = (partnerId: number) => Promise<{ id: string }>;
