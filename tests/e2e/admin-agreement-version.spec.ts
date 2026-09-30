@@ -5,6 +5,45 @@ import { requireIsolatedE2EDatabaseUrl } from "../../scripts/e2e/buyer-trust-fix
 
 const databaseUrl = requireIsolatedE2EDatabaseUrl();
 const database = new Pool({ connectionString: databaseUrl });
+const ownedVersions = [
+  { version: "v1.0", hash: "a".repeat(64) },
+  { version: "v1.1", hash: "b".repeat(64) },
+] as const;
+
+async function removeOwnedAgreementVersions() {
+  const client = await database.connect();
+  try {
+    await client.query("BEGIN");
+    const owned = await client.query<{ id: number }>(`
+      SELECT id FROM agreement_versions
+      WHERE agreement_type = 'partner_agreement_b2b'
+        AND ((version = $1 AND canonical_template_hash_sha256 = $2)
+          OR (version = $3 AND canonical_template_hash_sha256 = $4))
+      FOR UPDATE
+    `, [ownedVersions[0].version, ownedVersions[0].hash, ownedVersions[1].version, ownedVersions[1].hash]);
+    if (owned.rows.length > 0) {
+      const evidence = await client.query<{ count: number }>(`
+        SELECT count(*)::int AS count FROM partner_agreement_execution_evidence
+        WHERE agreement_version_id = ANY($1::int[])
+      `, [owned.rows.map(row => row.id)]);
+      if (evidence.rows[0].count !== 0) {
+        throw new Error("STOP_TEST_FIXTURE_CONFLICT: owned agreement version has execution evidence");
+      }
+      await client.query(`
+        DELETE FROM agreement_versions
+        WHERE agreement_type = 'partner_agreement_b2b'
+          AND ((version = $1 AND canonical_template_hash_sha256 = $2)
+            OR (version = $3 AND canonical_template_hash_sha256 = $4))
+      `, [ownedVersions[0].version, ownedVersions[0].hash, ownedVersions[1].version, ownedVersions[1].hash]);
+    }
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  } finally {
+    client.release();
+  }
+}
 
 test.afterAll(async () => {
   await database.end();
@@ -28,12 +67,11 @@ test.beforeEach(async () => {
     )
   `);
 
-  await database.query(`DELETE FROM agreement_versions av
-    WHERE NOT EXISTS (
-      SELECT 1 FROM partner_agreement_execution_evidence e
-      WHERE e.agreement_version_id = av.id
-    )
-  `);
+  await removeOwnedAgreementVersions();
+});
+
+test.afterEach(async () => {
+  await removeOwnedAgreementVersions();
 });
 
 test.describe("Admin Agreement Version Lifecycle", () => {
@@ -54,7 +92,7 @@ test.describe("Admin Agreement Version Lifecycle", () => {
     await expect(adminPage.getByText("Brak aktywnej Umowy Partnerskiej")).toBeVisible();
 
     // 3. tworzy: version=v1.0, valid SHA-A
-    const testHashA = "a".repeat(64);
+    const testHashA = ownedVersions[0].hash;
     await adminPage.getByLabel("Wersja").fill("v1.0");
     await adminPage.getByLabel("Odcisk SHA-256 (Canonical Template)").fill(testHashA);
 
@@ -84,7 +122,7 @@ test.describe("Admin Agreement Version Lifecycle", () => {
     await expect(publishedAtVal).not.toHaveText("-");
 
     // 8. tworzy v1.1 z SHA-B
-    const testHashB = "b".repeat(64);
+    const testHashB = ownedVersions[1].hash;
     await adminPage.getByLabel("Wersja").fill("v1.1");
     await adminPage.getByLabel("Odcisk SHA-256 (Canonical Template)").fill(testHashB);
     await adminPage.getByRole("button", { name: "Utwórz" }).click();

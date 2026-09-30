@@ -267,12 +267,12 @@ test("Admin Orders Read Contract", async (t) => {
     }
   });
 
-  await t.test("Scope wall - checkout files unchanged", async () => {
-    const checkoutModal = await fs.readFile(path.join(process.cwd(), "src/components/CheckoutModal.tsx"), "utf-8");
+  await t.test("Admin order read model remains separate from canonical public checkout", async () => {
     const cartDrawer = await fs.readFile(path.join(process.cwd(), "src/components/CartDrawer.tsx"), "utf-8");
     const useCart = await fs.readFile(path.join(process.cwd(), "src/hooks/useCart.tsx"), "utf-8");
 
-    assert.match(checkoutModal, /submitCheckout/);
+    assert.match(cartDrawer, /checkoutPath/);
+    assert.doesNotMatch(cartDrawer, /CheckoutModal/);
     assert.match(cartDrawer, /useCart/);
     assert.match(useCart, /CartProvider/);
 

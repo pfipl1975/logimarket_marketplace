@@ -144,7 +144,12 @@ test("Privacy Compliance - Lazy Session Hash Action Usage Static Audit", () => {
   assert.ok(clearCartBody.includes("getExistingSessionHash()"), "clearCart must use getExistingSessionHash");
   assert.ok(!clearCartBody.includes("getOrCreateSessionHash"), "clearCart must NOT use getOrCreateSessionHash");
 
-  const submitCheckoutBody = extractFunctionBody("submitCheckout");
-  assert.ok(submitCheckoutBody.includes("getExistingSessionHash()"), "submitCheckout must use getExistingSessionHash");
-  assert.ok(!submitCheckoutBody.includes("getOrCreateSessionHash"), "submitCheckout must NOT use getOrCreateSessionHash");
+  const checkoutAction = fs.readFileSync(path.join(process.cwd(), "src/app/checkout-actions.ts"), "utf8");
+  assert.match(checkoutAction, /export async function submitMarketplaceCheckout\s*\(/);
+  assert.match(checkoutAction, /sessionHash:\s*getExistingSessionHash\b/,
+    "Canonical public checkout must read the existing cart cookie");
+  assert.doesNotMatch(checkoutAction, /\bgetOrCreateSessionHash\b/,
+    "Canonical public checkout must never create a fresh cart identity");
+  assert.doesNotMatch(code, /export async function submitCheckout\s*\(/,
+    "Legacy public checkout must remain disconnected");
 });

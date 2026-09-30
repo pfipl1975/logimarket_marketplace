@@ -9,7 +9,7 @@ export async function generateMetadata(): Promise<Metadata> {
   return { title: dict.buyerAccount.title, robots: { index: false, follow: false, nocache: true } };
 }
 
-export default async function PolishAccountRoute({ searchParams }: { searchParams: Promise<{ created?: string }> }) {
-  const { created } = await searchParams;
-  return <BuyerAccountPage locale="pl" created={created === "1"} />;
+export default async function PolishAccountRoute({ searchParams }: { searchParams: Promise<{ created?: string; next?: string }> }) {
+  const { created, next } = await searchParams;
+  return <BuyerAccountPage locale="pl" created={created === "1"} next={next} />;
 }

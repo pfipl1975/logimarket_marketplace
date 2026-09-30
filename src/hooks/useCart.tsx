@@ -10,6 +10,7 @@ interface CartContextType {
   itemCount: number;
   items: CartItemWithOffer[];
   refresh: () => void;
+  resetAfterCheckout: () => Promise<void>;
   addToCart: (offerId: number, quantity?: number) => void;
   removeFromCart: (cartItemId: number) => void;
   updateQuantity: (cartItemId: number, quantity: number) => void;
@@ -54,9 +55,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     await refresh();
   }, [refresh]);
 
+  const resetAfterCheckout = useCallback(async () => {
+    setItems([]);
+    setItemCount(0);
+    setIsOpen(false);
+    await refresh();
+  }, [refresh]);
+
   return (
     <CartContext.Provider value={{
-      isOpen, setIsOpen, itemCount, items, refresh,
+      isOpen, setIsOpen, itemCount, items, refresh, resetAfterCheckout,
       addToCart: handleAdd, removeFromCart: handleRemove,
       updateQuantity: handleUpdateQty, clearCart: handleClear,
     }}>

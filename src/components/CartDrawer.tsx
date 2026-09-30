@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { useCart } from "@/hooks/useCart";
 import { Minus, Plus, Trash2, ShoppingCart, Package } from "lucide-react";
-import { CheckoutModal } from "./CheckoutModal";
 import Image from "next/image";
 import type { Dictionary } from "@/lib/i18n/types";
+import { isLocale, type Locale } from "@/lib/i18n/config";
+import { checkoutPath } from "@/lib/checkout/paths";
 
 interface CartDrawerProps {
   cartLabels: Dictionary["cart"];
@@ -23,15 +24,14 @@ interface CartDrawerProps {
 export function CartDrawer({
   cartLabels,
   ctaLabels,
-  checkoutLabels,
-  formLabels,
-  systemLabels,
   offerLabels,
   closeLabel,
-  privacyPolicyHref,
 }: CartDrawerProps) {
   const { isOpen, setIsOpen, removeFromCart, updateQuantity, items } = useCart();
-  const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const segment = pathname.split("/")[1];
+  const locale: Locale = isLocale(segment) ? segment : "pl";
 
   const total = items.reduce((sum, item) => {
     if (item.priceBrutto && !item.priceOnRequest) return sum + Number(item.priceBrutto) * item.quantity;
@@ -114,7 +114,7 @@ export function CartDrawer({
                   <span className="text-lg font-bold">{new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN", minimumFractionDigits: 2 }).format(total)}</span>
                 </div>
                 <Button
-                  onClick={() => { setIsOpen(false); setCheckoutOpen(true); }}
+                  onClick={() => { setIsOpen(false); router.push(checkoutPath(locale)); }}
                   className="w-full font-semibold gap-2 text-white border-0 bg-brand-teal hover:bg-[#0e5a6a]"
                 >
                   {ctaLabels.goToCheckout}
@@ -125,22 +125,6 @@ export function CartDrawer({
           )}
         </SheetContent>
       </Sheet>
-      {checkoutOpen && (
-        <CheckoutModal
-          open={checkoutOpen}
-          onClose={() => setCheckoutOpen(false)}
-          items={items}
-          total={total}
-          checkoutLabels={checkoutLabels}
-          formLabels={formLabels}
-          systemLabels={systemLabels}
-          ctaLabels={ctaLabels}
-          cartLabels={cartLabels}
-          offerLabels={offerLabels}
-          closeLabel={closeLabel}
-          privacyPolicyHref={privacyPolicyHref}
-        />
-      )}
     </>
   );
 }

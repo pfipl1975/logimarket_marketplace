@@ -12,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function PolishBuyerOrdersRoute() {
-  return <BuyerOrdersPage locale="pl" />;
+export default async function PolishBuyerOrdersRoute({ searchParams }: { searchParams: Promise<{ submitted?: string }> }) {
+  const { submitted } = await searchParams;
+  return <BuyerOrdersPage locale="pl" submitted={submitted === "1"} />;
 }
