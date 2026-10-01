@@ -172,7 +172,7 @@ test.describe("Partner RFQ inbox — public submission, shared workflow and tena
     await nonAdminPage.setViewportSize({ width: 375, height: 900 });
     await noOverflow(nonAdminPage);
 
-    await database.query("UPDATE partner_user_memberships SET membership_status='revoked' WHERE partner_id=$1 AND auth_user_id=$2", [partnerA, E2E_NON_ADMIN_USER_ID]);
+    await database.query("UPDATE partner_user_memberships SET membership_status='revoked', revoked_at=now() WHERE partner_id=$1 AND auth_user_id=$2", [partnerA, E2E_NON_ADMIN_USER_ID]);
     replayBody[0].partnerId = partnerA;
     const revoked = await nonAdminPage.request.post(`${base}/${rfqId}`, {
       headers: { "next-action": actionRequest.headers()["next-action"], "content-type": "text/plain;charset=UTF-8" },

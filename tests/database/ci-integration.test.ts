@@ -6941,7 +6941,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       assert.equal((await mutate(a, newRows[0].id, "responded", "closed")).code, "UPDATED");
       assert.equal((await mutate(a, newRows[0].id, "closed", "new")).code, "TRANSITION_NOT_ALLOWED");
       assert.equal((await mutate(a, newRows[0].id, "closed", "closed")).code, "UNCHANGED");
-      await database.update(schema.partnerUserMemberships).set({ membershipStatus: "revoked" }).where(eq(schema.partnerUserMemberships.partnerId, a));
+      await database.update(schema.partnerUserMemberships).set({ membershipStatus: "revoked", revokedAt: new Date() }).where(eq(schema.partnerUserMemberships.partnerId, a));
       await assert.rejects(mutate(a, newRows[1].id, "new", "closed"), ForbiddenError);
       assert.equal((await getPartnerRfqDetailCore(database, a, newRows[1].id))?.status, "new");
     } finally {
