@@ -14,6 +14,8 @@ import { eq, and, sql, asc } from "drizzle-orm";
 import { requirePartnerMembership } from "@/lib/auth/partner-membership";
 import {
   deriveEffectiveStatus,
+  canDisclosePartnerBuyerDetails,
+  projectPartnerBuyerInvoiceSnapshot,
   type PartnerOrderEffectiveStatus,
 } from "@/lib/partner-orders/read-model-core";
 
@@ -165,6 +167,7 @@ export type PartnerOrderDetailDTO = {
   buyerPhone: string | null;
   buyerInvoice: BuyerInvoiceSnapshotInput | null;
   invoiceDataAvailable: boolean;
+  buyerDetailsDisclosed: boolean;
 
   customerPoNumber: string | null;
 
@@ -276,14 +279,7 @@ export async function getPartnerOrderDetail(
     };
     let buyerInvoice: BuyerInvoiceSnapshotInput | null = null;
 
-    const isCanonicalAccepted = (
-      row.decisionStatus === "seller_accepted" &&
-      row.acceptedAt !== null &&
-      row.resolvedAt !== null &&
-      row.decidedByAuthUserId !== null &&
-      row.decisionSource === "partner_portal" &&
-      (row.status === "seller_accepted" || row.status === "fulfillment_in_progress" || row.status === "fulfilled")
-    );
+    const isCanonicalAccepted = canDisclosePartnerBuyerDetails(row);
 
     if (isCanonicalAccepted) {
       const contactData = await db
@@ -316,10 +312,8 @@ export async function getPartnerOrderDetail(
       }).from(marketplaceOrderBuyerInvoiceSnapshots)
         .innerJoin(sellerOrders, eq(sellerOrders.marketplaceOrderId, marketplaceOrderBuyerInvoiceSnapshots.marketplaceOrderId))
         .where(and(eq(sellerOrders.id, sellerOrderId), eq(sellerOrders.partnerId, partnerId)))
-        .limit(1);
-      if (invoiceRows.length === 1 && invoiceRows[0].taxIdentifierType === "tax_id" && invoiceRows[0].countryCode === "PL") {
-        buyerInvoice = invoiceRows[0] as BuyerInvoiceSnapshotInput;
-      }
+        .limit(2);
+      buyerInvoice = projectPartnerBuyerInvoiceSnapshot(row, invoiceRows);
     }
 
     return {
@@ -343,6 +337,7 @@ export async function getPartnerOrderDetail(
         ...contactInfo,
         buyerInvoice,
         invoiceDataAvailable: buyerInvoice !== null,
+        buyerDetailsDisclosed: isCanonicalAccepted,
 
         customerPoNumber: row.customerPoNumber,
 

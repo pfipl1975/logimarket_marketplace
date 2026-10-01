@@ -5,6 +5,7 @@ import { requireIsolatedE2EDatabaseUrl } from "../../scripts/e2e/buyer-trust-fix
 import {
   CHECKOUT_NEW_BUYER_ID, CHECKOUT_NEW_BUYER_NIP, CHECKOUT_OFFER_TITLE,
   CHECKOUT_READY_BUYER_ID, CHECKOUT_READY_BUYER_LEGAL_NAME, CHECKOUT_READY_BUYER_NIP,
+  CHECKOUT_READY_BUYER_INVOICE_ADDRESS,
   CHECKOUT_SELLER_NAME, CHECKOUT_SELLER_NIP, createBuyerCheckoutSellerFixture,
 } from "../../scripts/e2e/buyer-checkout-fixtures";
 import pl from "../../src/messages/pl.json";
@@ -81,6 +82,7 @@ test.describe("isolated canonical Buyer checkout", () => {
 
   let database: Pool;
   let seller: Awaited<ReturnType<typeof createBuyerCheckoutSellerFixture>>;
+  let foreignPartnerId: string;
 
   test.beforeAll(async () => {
     database = new Pool({ connectionString: requireIsolatedE2EDatabaseUrl() });
@@ -90,6 +92,13 @@ test.describe("isolated canonical Buyer checkout", () => {
     seller = await createBuyerCheckoutSellerFixture(database);
     await database.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
       VALUES ($1, $2, 'active', true)`, [E2E_NON_ADMIN_USER_ID, seller.partnerId]);
+    // A second authorized Partner context proves SellerOrder ownership, not only login.
+    const foreignPartner = await database.query<{ id: string }>(
+      "INSERT INTO partners (company_name, contact_email) VALUES ('E2E Foreign Invoice Partner', 'foreign@checkout.example.invalid') RETURNING id"
+    );
+    foreignPartnerId = foreignPartner.rows[0].id;
+    await database.query(`INSERT INTO partner_user_memberships (auth_user_id, partner_id, membership_status, can_accept_orders)
+      VALUES ($1, $2, 'active', true)`, [E2E_NON_ADMIN_USER_ID, foreignPartnerId]);
   });
   test.afterAll(async () => { if (database) await database.end(); });
 
@@ -167,9 +176,11 @@ test.describe("isolated canonical Buyer checkout", () => {
       await addCheckoutOfferToCart(page, seller.offerId);
       await page.goto("/zamowienie");
       await expect(page.getByRole("heading", { name: pl.checkoutFlow.title })).toBeVisible();
+      const invoiceAddress = CHECKOUT_READY_BUYER_INVOICE_ADDRESS;
+      const invoiceStreetLine = `${invoiceAddress.street} ${invoiceAddress.buildingNumber}/${invoiceAddress.unitNumber}`;
       for (const value of [
         CHECKOUT_READY_BUYER_LEGAL_NAME, CHECKOUT_READY_BUYER_NIP,
-        "Testowa 12/3", "00-001", "Warszawa", "E2E Ready Buyer",
+        invoiceStreetLine, invoiceAddress.postalCode, invoiceAddress.city, "E2E Ready Buyer",
         "ready-buyer@checkout.example.invalid", "+48123000000",
         CHECKOUT_SELLER_NAME, "Miasto Testowe", CHECKOUT_OFFER_TITLE,
       ]) {
@@ -266,6 +277,27 @@ test.describe("isolated canonical Buyer checkout", () => {
         const partnerPage = await partnerContext.newPage();
         await addAuthCookie(partnerPage, E2E_NON_ADMIN_USER_ID);
         const assertPartnerClean = watchBrowserErrors(partnerPage);
+        const expectPartnerInvoice = async (dict = pl.PartnerWorkspace) => {
+          const section = partnerPage.getByRole("region", { name: dict.invoiceDataTitle, exact: true });
+          await expect(section).toBeVisible();
+          await expect(section.getByRole("heading", { name: dict.invoiceDataTitle, exact: true })).toBeVisible();
+          await expect(section.getByText(dict.invoiceSnapshotNotice, { exact: true })).toBeVisible();
+          const value = (label: string) => section.locator("dl > div").filter({ has: partnerPage.getByText(label, { exact: true }) }).locator("dd");
+          await expect(value(dict.invoiceLegalName)).toHaveText(CHECKOUT_READY_BUYER_LEGAL_NAME);
+          await expect(value(dict.invoiceTaxId)).toHaveText(CHECKOUT_READY_BUYER_NIP);
+          await expect(value(dict.invoiceAddress).locator("span")).toHaveText([
+            invoiceStreetLine, `${invoiceAddress.postalCode} ${invoiceAddress.city}`, invoiceAddress.countryCode,
+          ]);
+          await expect(partnerPage.getByRole("heading", { name: dict.contactPerson, exact: true })).toBeVisible();
+          await expect(partnerPage.getByText("E2E Ready Buyer", { exact: true })).toBeVisible();
+          await expect(partnerPage.getByRole("link", { name: "ready-buyer@checkout.example.invalid", exact: true })).toBeVisible();
+          await expect(partnerPage.getByRole("link", { name: "+48123000000", exact: true })).toBeVisible();
+          expect(await partnerPage.evaluate(() => window.innerWidth)).toBe(375);
+          expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+          const box = await section.boundingBox();
+          expect(box!.x).toBeGreaterThanOrEqual(0);
+          expect(box!.x + box!.width).toBeLessThanOrEqual(375);
+        };
         const partnerListPath = `/partner/${seller.partnerId}/zamowienia`;
         const lifecycleLabels = {
           pending: pl.PartnerWorkspace.statusPending,
@@ -317,11 +349,23 @@ test.describe("isolated canonical Buyer checkout", () => {
         await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: false }).first()).toBeVisible();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.contactHidden)).toBeVisible();
         await expect(partnerPage.getByText("ready-buyer@checkout.example.invalid", { exact: true })).toHaveCount(0);
-        await expect(partnerPage.getByText("Testowa 12/3", { exact: false })).toHaveCount(0);
+        await expect(partnerPage.getByRole("heading", { name: pl.PartnerWorkspace.contactPerson, exact: true })).toHaveCount(0);
+        await expect(partnerPage.getByText("+48123000000", { exact: true })).toHaveCount(0);
+        await expect(partnerPage.getByRole("region", { name: pl.PartnerWorkspace.invoiceDataTitle, exact: true })).toHaveCount(0);
+        await expect(partnerPage.getByRole("heading", { name: pl.PartnerWorkspace.invoiceDataTitle, exact: true })).toHaveCount(0);
+        await expect(partnerPage.getByText(invoiceAddress.street, { exact: false })).toHaveCount(0);
+        await expect(partnerPage.getByText(invoiceAddress.postalCode, { exact: false })).toHaveCount(0);
         expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.acceptOrder, exact: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.confirmAcceptButton, exact: true }).click();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.statusAccepted, { exact: true }).first()).toBeVisible();
+        await expectPartnerInvoice();
+        const foreignResponse = await partnerContext.request.get(`/partner/${foreignPartnerId}/zamowienia/${routed.id}`);
+        expect(foreignResponse.status()).toBe(404);
+        const foreignHtml = await foreignResponse.text();
+        for (const privateValue of [invoiceAddress.street, invoiceAddress.postalCode, CHECKOUT_READY_BUYER_LEGAL_NAME, "ready-buyer@checkout.example.invalid"]) {
+          expect(foreignHtml).not.toContain(privateValue);
+        }
         const accepted = await database.query<typeof routed>(`SELECT so.status, d.decision_status AS "decisionStatus",
           d.accepted_at AS "acceptedAt", d.resolved_at AS "resolvedAt", d.decided_by_auth_user_id AS "decidedByAuthUserId",
           d.decision_source AS "decisionSource" FROM seller_orders so JOIN seller_acceptance_decisions d ON d.seller_order_id = so.id
@@ -341,6 +385,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.startFulfillment, exact: true }).click();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfillmentInProgress, { exact: true }).first()).toBeVisible();
+        await expectPartnerInvoice();
         await expectLifecycle(pl.BuyerOrders.fulfillmentInProgress);
         await expectPartnerLifecycle("in_progress");
         await expectExcluded("accepted");
@@ -348,6 +393,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.markFulfilled, exact: true }).click();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.tabCompleted, { exact: true }).first()).toBeVisible();
+        await expectPartnerInvoice();
         await expectPartnerLifecycle("fulfilled");
         await expectExcluded("accepted");
         await expectExcluded("in_progress");
@@ -392,6 +438,8 @@ test.describe("isolated canonical Buyer checkout", () => {
         await expect(germanFilters.locator('[aria-current="page"]')).toContainText(de.PartnerWorkspace.statusFulfilled);
         await expect(partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true })).toBeVisible();
         expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
+        await expectPartnerInvoice(de.PartnerWorkspace);
         await page.setViewportSize({ width: 375, height: 844 });
         await expectLifecycle(pl.BuyerOrders.fulfilled);
         await expect(buyerCard().locator("dl > div").filter({ has: page.getByText(pl.BuyerOrders.accepted, { exact: true }) }).locator("dd")).toHaveText("0");

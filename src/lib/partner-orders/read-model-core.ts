@@ -1,3 +1,5 @@
+import type { BuyerInvoiceSnapshotInput } from "@/lib/checkout/buyer-order-intent";
+
 export type PartnerOrderEffectiveStatus =
   | "pending_decision"
   | "accepted"
@@ -7,6 +9,64 @@ export type PartnerOrderEffectiveStatus =
   | "fulfilled"
   | "cancelled"
   | "invalid_order_state";
+
+export type PartnerAcceptanceEvidence = {
+  status: string;
+  decisionStatus: string | null;
+  acceptedAt: Date | null;
+  resolvedAt: Date | null;
+  decidedByAuthUserId: string | null;
+  decisionSource: string | null;
+};
+
+/** Disclosure requires the complete canonical E7 evidence, not status alone. */
+export function canDisclosePartnerBuyerDetails(evidence: PartnerAcceptanceEvidence): boolean {
+  return (
+    evidence.decisionStatus === "seller_accepted" &&
+    evidence.acceptedAt !== null &&
+    evidence.resolvedAt !== null &&
+    evidence.decidedByAuthUserId !== null &&
+    evidence.decisionSource === "partner_portal" &&
+    (evidence.status === "seller_accepted" || evidence.status === "fulfillment_in_progress" || evidence.status === "fulfilled")
+  );
+}
+
+/** Only immutable invoice rows may be passed here; historical absence is valid. */
+export function projectPartnerBuyerInvoiceSnapshot(
+  evidence: PartnerAcceptanceEvidence,
+  rows: readonly unknown[]
+): BuyerInvoiceSnapshotInput | null {
+  if (!canDisclosePartnerBuyerDetails(evidence) || rows.length === 0) return null;
+  const row = rows[0];
+  if (rows.length !== 1 || !row || typeof row !== "object") {
+    throw new Error("Buyer invoice snapshot is inconsistent");
+  }
+  const invoice = row as BuyerInvoiceSnapshotInput;
+  const meaningful = (value: unknown) => typeof value === "string" && value.trim().length > 0;
+  if (invoice.taxIdentifierType !== "tax_id" || invoice.countryCode !== "PL" ||
+      ![invoice.legalName, invoice.taxIdentifierValue, invoice.street, invoice.buildingNumber,
+        invoice.postalCode, invoice.city].every(meaningful) ||
+      !/^\d{10}$/.test(invoice.taxIdentifierValue) ||
+      !/^\d{2}-\d{3}$/.test(invoice.postalCode) ||
+      (invoice.unitNumber !== null && !meaningful(invoice.unitNumber))) {
+    throw new Error("Buyer invoice snapshot is inconsistent");
+  }
+  return {
+    legalName: invoice.legalName,
+    taxIdentifierType: "tax_id",
+    taxIdentifierValue: invoice.taxIdentifierValue,
+    street: invoice.street,
+    buildingNumber: invoice.buildingNumber,
+    unitNumber: invoice.unitNumber,
+    postalCode: invoice.postalCode,
+    city: invoice.city,
+    countryCode: "PL",
+  };
+}
+
+export function formatPartnerInvoiceStreetLine(invoice: BuyerInvoiceSnapshotInput): string {
+  return `${invoice.street} ${invoice.buildingNumber}${invoice.unitNumber === null ? "" : `/${invoice.unitNumber}`}`;
+}
 
 export function deriveEffectiveStatus(
   persistedOrderStatus: string,
