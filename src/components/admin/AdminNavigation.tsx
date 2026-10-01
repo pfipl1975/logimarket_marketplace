@@ -10,6 +10,7 @@ export interface AdminNavigationProps {
   partnersPath: string;
   buyersPath: string;
   rfqPath: string;
+  ordersPath: string;
   partnerAgreementsPath: string;
   labels: {
     navigationLabel: string;
@@ -18,6 +19,7 @@ export interface AdminNavigationProps {
     partnersNav: string;
     buyersNav: string;
     rfqNav: string;
+    ordersNav: string;
     partnerAgreementsNav: string;
     taxonomyNav: string;
     plannedLabel: string;
@@ -31,6 +33,7 @@ export function AdminNavigation({
   partnersPath,
   buyersPath,
   rfqPath,
+  ordersPath,
   partnerAgreementsPath,
   labels,
 }: AdminNavigationProps) {
@@ -40,10 +43,11 @@ export function AdminNavigation({
   const isOffersActive = pathname === offersPath || pathname.startsWith(`${offersPath}/`);
   const isPartnersActive = pathname === partnersPath || pathname.startsWith(`${partnersPath}/`);
   const isBuyersActive = pathname === buyersPath || pathname.startsWith(`${buyersPath}/`);
+  const isOrdersActive = pathname === ordersPath || pathname.startsWith(`${ordersPath}/`);
   const isRfqActive = pathname === rfqPath || pathname.startsWith(`${rfqPath}/`);
   const isPartnerAgreementsActive = pathname === partnerAgreementsPath || pathname.startsWith(`${partnerAgreementsPath}/`);
 
-  const linkClassBase = "px-4 rounded-industrial transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex justify-between items-center";
+  const linkClassBase = "min-h-11 px-4 rounded-industrial transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring flex justify-between items-center";
   const linkClassSize = variant === "mobile" ? "py-2" : "py-3";
   const activeClass = "bg-brand-teal text-primary-foreground font-medium";
   const inactiveClass = "text-muted-foreground hover:text-primary-foreground hover:bg-white/5";
@@ -90,6 +94,14 @@ export function AdminNavigation({
         aria-current={isRfqActive ? "page" : undefined}
       >
         {labels.rfqNav}
+      </Link>
+
+      <Link
+        href={ordersPath}
+        className={`${linkClassBase} ${linkClassSize} ${isOrdersActive ? activeClass : inactiveClass}`}
+        aria-current={isOrdersActive ? "page" : undefined}
+      >
+        {labels.ordersNav}
       </Link>
 
       <Link

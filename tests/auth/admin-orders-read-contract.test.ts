@@ -1,284 +1,78 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import fs from "fs/promises";
-import path from "path";
+import fs from "node:fs/promises";
+import path from "node:path";
+const read = (file: string) => fs.readFile(path.join(process.cwd(), file), "utf8");
 
-test("Admin Orders Read Contract", async (t) => {
-  await t.test("Routes exist and are dynamic", async () => {
-    const plRoute = await fs.readFile(path.join(process.cwd(), "src/app/(pl)/admin/zamowienia/page.tsx"), "utf-8");
-    const locRoute = await fs.readFile(path.join(process.cwd(), "src/app/(localized)/[locale]/admin/orders/page.tsx"), "utf-8");
-
-    // Both routes
-    assert.match(plRoute, /export const dynamic = "force-dynamic"/);
-    assert.match(locRoute, /export const dynamic = "force-dynamic"/);
-
-    assert.match(plRoute, /searchParams:\s*Promise<unknown>/);
-    assert.match(locRoute, /searchParams:\s*Promise<unknown>/);
-
-    assert.match(plRoute, /await searchParams/);
-    assert.match(locRoute, /await searchParams/);
-
-    assert.match(plRoute, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false,\s*nocache:\s*true\s*,?\s*\}/);
-    assert.match(locRoute, /robots:\s*\{\s*index:\s*false,\s*follow:\s*false,\s*nocache:\s*true\s*,?\s*\}/);
-
-    // Metadata uses adminOrders dictionary (RFQ pattern)
-    assert.match(plRoute, /export async function generateMetadata/);
-    assert.match(plRoute, /getDictionary\("pl"\)/);
-    assert.match(plRoute, /adminOrders\.metaTitle/);
-    assert.match(plRoute, /adminOrders\.metaDescription/);
-
-    assert.match(locRoute, /export async function generateMetadata/);
-    assert.match(locRoute, /getDictionary\(resolvedParams\.locale\)/);
-    assert.match(locRoute, /adminOrders\.metaTitle/);
-    assert.match(locRoute, /adminOrders\.metaDescription/);
-
-    // Localized specific
-    assert.match(locRoute, /params:\s*Promise<\{\s*locale:\s*string\s*}>/);
-    assert.match(locRoute, /await params/);
-    assert.match(locRoute, /isLocale/);
-    assert.match(locRoute, /notFound/);
-    assert.match(locRoute, /locale === "pl"/);
-  });
-
-  await t.test("Server Components have no client directives or direct DB imports", async () => {
-    const page = await fs.readFile(path.join(process.cwd(), "src/app/_shared/AdminOrdersPage.tsx"), "utf-8");
-    const table = await fs.readFile(path.join(process.cwd(), "src/components/admin/AdminOrdersTable.tsx"), "utf-8");
-
-    assert.doesNotMatch(page, /"use client"/);
-    assert.doesNotMatch(table, /"use client"/);
-
-    assert.doesNotMatch(page, /import \{ db \}/);
-    assert.doesNotMatch(table, /import \{ db \}/);
-
-    assert.doesNotMatch(page, /useEffect/);
-    assert.doesNotMatch(table, /useEffect/);
-  });
-
-  await t.test("Server Action - Auth First ordering", async () => {
-    const actions = await fs.readFile(path.join(process.cwd(), "src/app/actions.ts"), "utf-8");
-
-    assert.match(actions, /export async function getAdminOrdersPage/);
-
-    const actionMatch = actions.match(/export async function getAdminOrdersPage[\s\S]*?(catch[\s\S]*?ADMIN_ORDERS_UNAVAILABLE[\s\S]*?})/);
-    assert.ok(actionMatch, "getAdminOrdersPage must be present");
-    const actionBody = actionMatch[0];
-
-    assert.match(actionBody, /getAdminOrdersPage\s*\(\s*rawInput\s*:\s*unknown\s*\)/);
-    assert.match(actionBody, /requireAdmin/);
-
-    const requireAdminIdx = actionBody.indexOf("await requireAdmin()");
-    const tryIdx = actionBody.indexOf("try {");
-    assert.ok(requireAdminIdx !== -1 && tryIdx !== -1 && requireAdminIdx < tryIdx,
-      "requireAdmin must execute before try block");
-
-    const parseQueryIdx = actionBody.indexOf("parseAdminOrdersQuery");
-    assert.ok(parseQueryIdx > requireAdminIdx,
-      "parseAdminOrdersQuery must execute after requireAdmin");
-
-    const dbQueryIdx = actionBody.indexOf("getAdminOrdersReadModel");
-    assert.ok(dbQueryIdx > requireAdminIdx,
-      "getAdminOrdersReadModel must execute after requireAdmin");
-
-    assert.match(actionBody, /ADMIN_ORDERS_UNAVAILABLE/);
-
-    // Auth failure must NOT be caught as ADMIN_ORDERS_UNAVAILABLE
-    const catchRegex = /catch(?: \((.*?)\))? \{([\s\S]*?)\}/;
-    const catchBlock = actionBody.match(catchRegex);
-    assert.ok(catchBlock);
-    const errName = catchBlock[1];
-    const catchBody = catchBlock[2];
-
-    assert.doesNotMatch(catchBody, /error\.stack/);
-    assert.doesNotMatch(catchBody, /error\.message/);
-    if (errName) {
-      assert.doesNotMatch(catchBody, new RegExp(`console\\.error\\(${errName}\\)`));
+test("Canonical Admin Marketplace Orders read contract", async t => {
+  const core = await read("src/lib/admin/orders-read-model-core.ts");
+  const actions = await read("src/app/actions.ts");
+  await t.test("list and detail routes are dynamic, localized and noindex", async () => {
+    for (const route of ["src/app/(pl)/admin/zamowienia/page.tsx", "src/app/(localized)/[locale]/admin/orders/page.tsx", "src/app/(pl)/admin/zamowienia/[orderId]/page.tsx", "src/app/(localized)/[locale]/admin/orders/[orderId]/page.tsx"]) {
+      const source = await read(route);
+      assert.match(source, /dynamic = "force-dynamic"/);
+      assert.match(source, /index: false/); assert.match(source, /follow: false/); assert.match(source, /nocache: true/);
+      assert.match(source, /adminOrders.metaTitle/);
+      if (route.includes("localized")) { assert.match(source, /isLocale/); assert.match(source, /notFound/); }
     }
   });
-
-  await t.test("DTO minimization - allowed fields present", async () => {
-    const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-read-model-core.ts"), "utf-8");
-
-    assert.match(core, /id:/);
-    assert.match(core, /createdAt:/);
-    assert.match(core, /status:/);
-    assert.match(core, /companyName:/);
-    assert.match(core, /contactName:/);
-    assert.match(core, /email:/);
-    assert.match(core, /itemCount:/);
+  await t.test("both actions authorize before parsing and database access, outside catch", () => {
+    for (const [name, parser, query] of [
+      ["getAdminOrdersPage", "parseAdminOrdersQuery", "getAdminOrdersReadModel"],
+      ["getAdminMarketplaceOrderDetail", "isCanonicalPositiveInteger", "getAdminMarketplaceOrderDetailReadModel"],
+    ]) {
+      const start = actions.indexOf("export async function " + name + "(");
+      const next = actions.indexOf("export async function", start + 1);
+      const body = actions.slice(start, next);
+      const auth = body.indexOf("await requireAdmin()");
+      assert.ok(auth >= 0 && auth < body.indexOf(parser) && auth < body.indexOf(query) && auth < body.indexOf("try {"));
+      assert.doesNotMatch(body, /error\.stack|error\.message/);
+      assert.match(body, /ADMIN_ORDERS_UNAVAILABLE/);
+    }
   });
-
-  await t.test("DTO minimization - forbidden fields absent", async () => {
-    const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-read-model-core.ts"), "utf-8");
-
-    assert.doesNotMatch(core, /sessionHash/);
-    assert.doesNotMatch(core, /schema\.orders\.phone/);
-    assert.doesNotMatch(core, /schema\.orders\.message/);
-    assert.doesNotMatch(core, /totalAmount/);
-    assert.doesNotMatch(core, /unitPrice/);
-    assert.doesNotMatch(core, /totalPrice/);
+  await t.test("canonical immutable sources only, bounded grouping, read-only consistent transactions", () => {
+    for (const source of ["marketplaceOrders", "buyerLegalContextSnapshots", "sellerOrders", "sellerAcceptanceDecisions", "sellerOrderSellerSnapshots", "sellerOrderItems"]) assert.ok(core.includes("schema." + source));
+    assert.doesNotMatch(core, /schema\.(orders|orderItems|partners|buyerOrganizations|rfqLeads)\b/);
+    assert.doesNotMatch(core, /sessionHash|\bemail\b|\bphone\b|registeredAddress|buyerInvoice|\.insert\(|\.update\(|\.delete\(/);
+    assert.match(core, /accessMode: "read only"/); assert.match(core, /isolationLevel: "repeatable read"/);
+    assert.match(core, /inArray\(schema\.sellerOrders\.marketplaceOrderId, parentIds\)/);
+    assert.match(core, /desc\(schema\.marketplaceOrders\.createdAt\), desc\(schema\.marketplaceOrders\.id\)/);
+    assert.match(core, /limit\(ADMIN_ORDERS_PAGE_SIZE\)/);
   });
-
-  await t.test("Search privacy - allowed predicates only", async () => {
-    const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-read-model-core.ts"), "utf-8");
-
-    // Allowed search targets
-    assert.match(core, /schema\.orders\.id/);
-    assert.match(core, /schema\.orders\.companyName/);
-
-    // Forbidden PII search
-    assert.doesNotMatch(core, /ilike\(schema\.orders\.contactName/);
-    assert.doesNotMatch(core, /ilike\(schema\.orders\.email/);
-    assert.doesNotMatch(core, /ilike\(schema\.orders\.phone/);
-    assert.doesNotMatch(core, /ilike\(schema\.orders\.message/);
-    assert.doesNotMatch(core, /ilike\(schema\.orders\.sessionHash/);
-    assert.doesNotMatch(core, /ilike\(schema\.orders\.totalAmount/);
-    assert.doesNotMatch(core, /orderItems\.title/);
-    assert.doesNotMatch(core, /orderItems\.offerId/);
+  await t.test("primary navigation exposes Orders and active nested routes", async () => {
+    const nav = await read("src/components/admin/AdminNavigation.tsx");
+    const shell = await read("src/components/admin/AdminShell.tsx");
+    const entry = await read("src/app/_shared/AdminEntryPage.tsx");
+    assert.match(nav, /href=\{ordersPath\}/); assert.match(nav, /aria-current=\{isOrdersActive/);
+    assert.ok(nav.includes('pathname.startsWith(`${ordersPath}/`)'));
+    assert.match(nav, /focus-visible:ring-2/); assert.match(nav, /href=\{rfqPath\}/);
+    assert.equal((shell.match(/ordersPath=\{ordersPath\}/g) || []).length, 2);
+    assert.match(shell, /adminDict\.ordersNav/); assert.match(entry, /dictionary\.ordersNav/);
   });
-
-  await t.test("ItemCount strategy - correlated subquery prevents row multiplication", async () => {
-    const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-read-model-core.ts"), "utf-8");
-
-    // Must NOT use ordinary leftJoin on orderItems that would multiply rows
-    assert.doesNotMatch(core, /\.leftJoin\(schema\.orderItems,/);
-    assert.doesNotMatch(core, /\.leftJoin\(orderItems,/);
-
-    // Must reference orderItems table in a safe correlated context (raw sql or db.select subquery)
-    assert.match(core, /orderItems/);
-    assert.match(core, /itemCount/);
+  await t.test("server UI minimizes data and preserves semantic responsive navigation", async () => {
+    const table = await read("src/components/admin/AdminOrdersTable.tsx");
+    const detail = await read("src/app/_shared/AdminMarketplaceOrderDetailPage.tsx");
+    const page = await read("src/app/_shared/AdminOrdersPage.tsx");
+    for (const source of [table, detail, page]) {
+      assert.doesNotMatch(source, /"use client"|import \{ db \}|mailto:|tel:|style=\{\{|sessionHash/);
+    }
+    assert.match(table, /<article/); assert.match(table, /<table/); assert.match(table, /scope="col"/); assert.match(table, /scope="row"/);
+    assert.match(table, /aria-label=/); assert.match(table, /focus-visible/); assert.match(table, /min-h-11/);
+    assert.match(detail, /<h1/); assert.match(detail, /<h2/); assert.match(detail, /<h3/);
+    assert.match(detail, /notFound\(\)/);
   });
-
-  await t.test("Pagination contract", async () => {
-    const query = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-query.ts"), "utf-8");
-    assert.match(query, /ADMIN_ORDERS_PAGE_SIZE = 25/);
-  });
-
-  await t.test("Sorting contract", async () => {
-    const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-read-model-core.ts"), "utf-8");
-    assert.match(core, /DESC NULLS LAST/);
-    assert.match(core, /desc\(schema\.orders\.id\)/);
-  });
-
-  await t.test("Nullable createdAt handling", async () => {
-    const core = await fs.readFile(path.join(process.cwd(), "src/lib/admin/orders-read-model-core.ts"), "utf-8");
-    assert.match(core, /row\.createdAt \? row\.createdAt\.toISOString\(\) : null/);
-  });
-
-  await t.test("UI - forbidden patterns absent in Orders UI", async () => {
-    const page = await fs.readFile(path.join(process.cwd(), "src/app/_shared/AdminOrdersPage.tsx"), "utf-8");
-    const table = await fs.readFile(path.join(process.cwd(), "src/components/admin/AdminOrdersTable.tsx"), "utf-8");
-
-    assert.doesNotMatch(table, /mailto:/);
-    assert.doesNotMatch(table, /tel:/);
-    assert.doesNotMatch(table, /sessionHash/);
-    assert.doesNotMatch(table, /phone/);
-    assert.doesNotMatch(table, /message/);
-    assert.doesNotMatch(table, /totalAmount/);
-    assert.doesNotMatch(table, /style=\{\{/);
-    assert.doesNotMatch(page, /style=\{\{/);
-    assert.doesNotMatch(page, /tailwind\.config/);
-
-    assert.match(page, /rounded-industrial/);
-  });
-
-  await t.test("Navigation - Orders is removed from primary AdminNavigation", async () => {
-    const nav = await fs.readFile(path.join(process.cwd(), "src/components/admin/AdminNavigation.tsx"), "utf-8");
-
-    assert.doesNotMatch(nav, /ordersPath/);
-    assert.doesNotMatch(nav, /isOrdersActive/);
-    assert.doesNotMatch(nav, /<Link[^>]*href=\{ordersPath\}/);
-
-    // Primary modules remain
-    assert.match(nav, /dashboardPath/);
-    assert.match(nav, /offersPath/);
-    assert.match(nav, /partnersPath/);
-    assert.match(nav, /rfqPath/);
-
-    // Taxonomy remains planned/disabled
-    assert.match(nav, /\{labels\.taxonomyNav\} <span[^>]*>\{labels\.plannedLabel\}<\/span>/);
-  });
-
-  await t.test("AdminShell - ordersPath is not passed to primary AdminNavigation", async () => {
-    const shell = await fs.readFile(path.join(process.cwd(), "src/components/admin/AdminShell.tsx"), "utf-8");
-
-    assert.doesNotMatch(shell, /ordersPath=\{ordersPath\}/);
-    assert.doesNotMatch(shell, /ordersNav:/);
-  });
-
-  await t.test("AdminEntryPage - Orders is removed from primary module list", async () => {
-    const entry = await fs.readFile(path.join(process.cwd(), "src/app/_shared/AdminEntryPage.tsx"), "utf-8");
-
-    const rfqIdx = entry.indexOf("rfqNav");
-    const ordersIdx = entry.indexOf("ordersNav");
-
-    assert.ok(rfqIdx !== -1, "rfqNav must be present");
-    assert.equal(ordersIdx, -1, "ordersNav must not be present in primary entry list");
-  });
-
-  await t.test("i18n - all 7 locales have adminOrders with aligned keys", async () => {
+  await t.test("seven locale dictionaries have semantic parity and complete operational labels", async () => {
     const locales = ["pl", "en", "de", "fr", "uk", "es", "zh"];
-    const sections: Record<string, Record<string, unknown>> = {};
-
+    let keys: string[] | undefined;
     for (const locale of locales) {
-      const raw = JSON.parse(
-        await fs.readFile(path.join(process.cwd(), `src/messages/${locale}.json`), "utf-8")
-      );
-      assert.ok(raw.adminOrders, `${locale}.json must have adminOrders`);
-      sections[locale] = raw.adminOrders;
+      const dictionary = JSON.parse(await read("src/messages/" + locale + ".json"));
+      const section = dictionary.adminOrders;
+      const actual = Object.keys(section).sort(); keys ??= actual; assert.deepEqual(actual, keys);
+      for (const key of ["sellerCountColumn", "lifecycleColumn", "details", "routedAt", "acceptedAt", "recordState", "buyerCountry", "itemsTitle", "unitPrice", "noSellerOrders"]) assert.ok(section[key]);
+      assert.deepEqual(Object.keys(section.lifecycleLabels).sort(), ["not_routed", "pending_decision", "accepted", "fulfillment_in_progress", "fulfilled", "rejected", "expired", "cancelled", "invalid_order_state"].sort());
+      assert.equal(section.lifecycleLabels.fulfilled, dictionary.PartnerWorkspace.statusFulfilled);
+      assert.match(section.resultsCount, /\{count\}/); assert.match(section.paginationSummary, /\{current\}/);
+      assert.ok(!section.emailColumn);
     }
-
-    const requiredKeys = [
-      "metaTitle", "metaDescription", "eyebrow", "title", "description",
-      "searchLabel", "searchPlaceholder", "applyFilters", "clearFilters",
-      "tableCaption", "resultsCount",
-      "emptyTitle", "emptyDescription", "filteredEmptyTitle", "filteredEmptyDescription",
-      "errorTitle", "errorDescription",
-      "idColumn", "createdColumn", "statusColumn", "companyColumn", "emailColumn", "itemsColumn",
-      "paginationSummary", "paginationPrevious", "paginationNext"
-    ];
-
-    const en = sections["en"];
-    const enKeys = Object.keys(en as object).sort();
-
-    for (const key of requiredKeys) {
-      assert.ok(key in (en as object), `en adminOrders must have key: ${key}`);
-    }
-
-    for (const locale of locales) {
-      const section = sections[locale];
-      const keys = Object.keys(section as object).sort();
-      assert.deepEqual(keys, enKeys, `${locale} adminOrders keys must match en`);
-
-      // resultsCount must have {count} placeholder
-      assert.match(String((section as Record<string, unknown>).resultsCount), /\{count\}/);
-      // paginationSummary must have {current} and {total}
-      assert.match(String((section as Record<string, unknown>).paginationSummary), /\{current\}/);
-      assert.match(String((section as Record<string, unknown>).paginationSummary), /\{total\}/);
-    }
-
-    // No price-related labels
-    for (const locale of locales) {
-      const section = sections[locale];
-      const keys = Object.keys(section as object);
-      for (const key of keys) {
-        assert.doesNotMatch(key, /price|amount|total|financial/i,
-          `${locale} adminOrders must not have price key: ${key}`);
-      }
-    }
-  });
-
-  await t.test("Admin order read model remains separate from canonical public checkout", async () => {
-    const cartDrawer = await fs.readFile(path.join(process.cwd(), "src/components/CartDrawer.tsx"), "utf-8");
-    const useCart = await fs.readFile(path.join(process.cwd(), "src/hooks/useCart.tsx"), "utf-8");
-
-    assert.match(cartDrawer, /checkoutPath/);
-    assert.doesNotMatch(cartDrawer, /CheckoutModal/);
-    assert.match(cartDrawer, /useCart/);
-    assert.match(useCart, /CartProvider/);
-
-    // Schema not changed - verify schema file exists and has no NEW orders columns
-    const schema = await fs.readFile(path.join(process.cwd(), "src/lib/schema.ts"), "utf-8");
-    assert.match(schema, /orders/);
-    assert.doesNotMatch(schema, /adminOrdersReadModel/);
   });
 });

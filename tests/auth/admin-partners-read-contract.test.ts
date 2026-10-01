@@ -145,7 +145,7 @@ test("Admin Partners Read Contract", async (t) => {
     assert.match(nav, /<Link[^>]*href=\{partnersPath\}/);
 
     // Orders is removed from primary nav
-    assert.doesNotMatch(nav, /<Link[^>]*href=\{ordersPath\}/);
+    assert.match(nav, /<Link[^>]*href=\{ordersPath\}/);
 
     // Taxonomy remains disabled/planned
     assert.match(nav, /\{labels\.taxonomyNav\} <span[^>]*>\{labels\.plannedLabel\}<\/span>/);
