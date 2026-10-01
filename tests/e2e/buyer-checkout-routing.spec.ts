@@ -371,7 +371,7 @@ test.describe("isolated canonical Buyer checkout", () => {
             await link.click();
             await expect(filterNav().locator('[aria-current="page"]')).toHaveCount(1);
             await expect(filterLink(id)).toHaveAttribute("aria-current", "page");
-            expect(await filterLink(id).locator("span").first().evaluate(element => getComputedStyle(element).textDecorationLine)).toContain("underline");
+            expect(await filterLink(id).evaluate(element => getComputedStyle(element).textDecorationLine)).toContain("underline");
             expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
           }
           // Ordinary links retain DOM order and a visible keyboard focus ring.
