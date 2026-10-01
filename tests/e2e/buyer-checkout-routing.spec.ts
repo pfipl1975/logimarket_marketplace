@@ -282,7 +282,7 @@ test.describe("isolated canonical Buyer checkout", () => {
           await expect(section).toBeVisible();
           await expect(section.getByRole("heading", { name: dict.invoiceDataTitle, exact: true })).toBeVisible();
           await expect(section.getByText(dict.invoiceSnapshotNotice, { exact: true })).toBeVisible();
-          const value = (label: string) => section.locator("dl > div").filter({ has: section.getByText(label, { exact: true }) }).locator("dd");
+          const value = (label: string) => section.locator("dl > div").filter({ has: partnerPage.getByText(label, { exact: true }) }).locator("dd");
           await expect(value(dict.invoiceLegalName)).toHaveText(CHECKOUT_READY_BUYER_LEGAL_NAME);
           await expect(value(dict.invoiceTaxId)).toHaveText(CHECKOUT_READY_BUYER_NIP);
           await expect(value(dict.invoiceAddress).locator("span")).toHaveText([
