@@ -146,8 +146,11 @@ function getEmptyDescription(
   const descriptions: Record<PartnerOrderFilter, string> = {
     pending: dict.emptyPendingOrders,
     accepted: dict.emptyAcceptedOrders,
+    in_progress: dict.emptyInProgressOrders,
+    fulfilled: dict.emptyFulfilledOrders,
     rejected: dict.emptyRejectedOrders,
     expired: dict.emptyExpiredOrders,
+    cancelled: dict.emptyCancelledOrders,
     all: dict.emptyAllOrders,
   };
   return descriptions[filter];
@@ -181,8 +184,11 @@ export default async function PartnerOrdersPage({
   const filterTabs: Array<{ id: PartnerOrderFilter; label: string }> = [
     { id: "pending", label: dict.statusPending },
     { id: "accepted", label: dict.statusAccepted },
+    { id: "in_progress", label: dict.statusFulfillmentInProgress },
+    { id: "fulfilled", label: dict.statusFulfilled },
     { id: "rejected", label: dict.statusRejected },
     { id: "expired", label: dict.statusExpired },
+    { id: "cancelled", label: dict.statusCancelled },
     { id: "all", label: dict.tabAll },
   ];
 
@@ -196,7 +202,7 @@ export default async function PartnerOrdersPage({
       <section className="overflow-hidden border border-border-industrial bg-white shadow-soft">
         <nav
           aria-label={dict.orderFiltersLabel}
-          className="grid grid-cols-2 gap-2 border-b border-border-industrial bg-brand-light-gray/30 p-3 sm:grid-cols-5 sm:gap-1 sm:p-4"
+          className="grid grid-cols-2 gap-2 border-b border-border-industrial bg-brand-light-gray/30 p-3 sm:grid-cols-4 sm:p-4"
         >
           {filterTabs.map((tab) => {
             const isActive = listModel.activeFilter === tab.id;
@@ -205,16 +211,14 @@ export default async function PartnerOrdersPage({
                 key={tab.id}
                 href={`${basePath}?filter=${tab.id}`}
                 aria-current={isActive ? "page" : undefined}
-                className={`flex min-h-12 items-center justify-between gap-2 border px-3 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 ${
-                  tab.id === "all" ? "col-span-2 sm:col-span-1" : ""
-                } ${
+                className={`flex min-h-12 min-w-0 items-center justify-between gap-2 border px-3 py-2 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 ${
                   isActive
-                    ? "border-brand-teal bg-brand-teal/10 text-brand-navy"
+                    ? "border-brand-teal bg-brand-teal/10 text-brand-navy underline underline-offset-4"
                     : "border-border-industrial bg-white text-muted-foreground hover:border-brand-teal hover:text-brand-navy"
                 }`}
               >
-                <span>{tab.label}</span>
-                <span className="border-l border-current/20 pl-2 tabular-nums">
+                <span className="min-w-0 break-words">{tab.label}</span>
+                <span className="shrink-0 border-l border-current/20 pl-2 tabular-nums">
                   {listModel.counts[tab.id]}
                 </span>
               </Link>

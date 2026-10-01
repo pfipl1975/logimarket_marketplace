@@ -10,18 +10,24 @@ async function read(relativePath: string) {
   return fs.readFile(path.join(root, relativePath), "utf8");
 }
 
-test("mobile filters expose all five counted choices without horizontal scrolling", async () => {
+test("mobile filters expose all eight counted choices without horizontal scrolling", async () => {
   const source = await read("src/app/(pl)/partner/[partnerId]/zamowienia/page.tsx");
   const navStart = source.indexOf("<nav");
   const navEnd = source.indexOf("</nav>", navStart);
   const navigation = source.slice(navStart, navEnd);
 
   assert.match(navigation, /grid-cols-2/);
-  assert.match(navigation, /sm:grid-cols-5/);
+  assert.match(navigation, /sm:grid-cols-4/);
   assert.doesNotMatch(navigation, /overflow-x-auto|whitespace-nowrap/);
   assert.match(navigation, /aria-current=\{isActive \? "page" : undefined\}/);
+  assert.match(navigation, /aria-label=\{dict.orderFiltersLabel\}/);
+  assert.match(navigation, /min-h-12 min-w-0/);
+  assert.match(navigation, /focus-visible:ring-2/);
+  assert.match(navigation, /underline underline-offset-4/);
+  assert.match(navigation, /min-w-0 break-words/);
+  assert.match(navigation, /shrink-0/);
   assert.match(navigation, /listModel\.counts\[tab\.id\]/);
-  for (const filter of ["pending", "accepted", "rejected", "expired", "all"]) {
+  for (const filter of ["pending", "accepted", "in_progress", "fulfilled", "rejected", "expired", "cancelled", "all"]) {
     assert.match(source, new RegExp(`id: "${filter}"`));
   }
 });
@@ -59,10 +65,21 @@ test("contextual empty states and new strings exist in all seven locales", async
     "orderFiltersLabel",
     "emptyPendingOrders",
     "emptyAcceptedOrders",
+    "emptyInProgressOrders",
+    "emptyFulfilledOrders",
+    "emptyCancelledOrders",
     "emptyRejectedOrders",
     "emptyExpiredOrders",
     "emptyAllOrders",
     "viewAllOrders",
+    "statusPending",
+    "statusAccepted",
+    "statusFulfillmentInProgress",
+    "statusFulfilled",
+    "statusRejected",
+    "statusExpired",
+    "statusCancelled",
+    "tabAll",
   ];
 
   for (const locale of ["pl", "en", "de", "fr", "uk", "es", "zh"]) {
