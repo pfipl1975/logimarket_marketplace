@@ -6,8 +6,11 @@ import type {
 export const PARTNER_ORDER_FILTERS = [
   "pending",
   "accepted",
+  "in_progress",
+  "fulfilled",
   "rejected",
   "expired",
+  "cancelled",
   "all",
 ] as const;
 
@@ -49,20 +52,11 @@ export function matchesPartnerOrderFilter(
   status: PartnerOrderEffectiveStatus,
   filter: PartnerOrderFilter
 ): boolean {
-  if (status === "invalid_order_state") return false;
+  if (!VALID_STATUSES.has(status)) return false;
   if (filter === "all") return true;
   if (filter === "pending") return status === "pending_decision";
-  if (filter === "accepted") {
-    return (
-      status === "accepted" ||
-      status === "fulfillment_in_progress" ||
-      status === "fulfilled"
-    );
-  }
-  if (filter === "rejected") {
-    return status === "rejected" || status === "cancelled";
-  }
-  return status === "expired";
+  if (filter === "in_progress") return status === "fulfillment_in_progress";
+  return status === filter;
 }
 
 export function buildPartnerOrdersListModel(

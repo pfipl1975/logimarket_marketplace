@@ -153,6 +153,7 @@ test.describe("isolated canonical Buyer checkout", () => {
   });
 
   test("Buyer tracks E2, E6, E7 and real fulfillment, then clicks order details on desktop and mobile", async ({ browser }) => {
+    test.setTimeout(120_000);
     const context = await browser.newContext();
     try {
       await context.addCookies([{
@@ -265,12 +266,50 @@ test.describe("isolated canonical Buyer checkout", () => {
         const partnerPage = await partnerContext.newPage();
         await addAuthCookie(partnerPage, E2E_NON_ADMIN_USER_ID);
         const assertPartnerClean = watchBrowserErrors(partnerPage);
+        const partnerListPath = `/partner/${seller.partnerId}/zamowienia`;
+        const lifecycleLabels = {
+          pending: pl.PartnerWorkspace.statusPending,
+          accepted: pl.PartnerWorkspace.statusAccepted,
+          in_progress: pl.PartnerWorkspace.statusFulfillmentInProgress,
+          fulfilled: pl.PartnerWorkspace.statusFulfilled,
+          rejected: pl.PartnerWorkspace.statusRejected,
+          expired: pl.PartnerWorkspace.statusExpired,
+          cancelled: pl.PartnerWorkspace.statusCancelled,
+          all: pl.PartnerWorkspace.tabAll,
+        };
+        const filterNav = () => partnerPage.getByRole("navigation", { name: pl.PartnerWorkspace.orderFiltersLabel, exact: true });
+        const filterLink = (filter: keyof typeof lifecycleLabels) => filterNav().locator(`a[href$="?filter=${filter}"]`);
+        const reference = `ORD-SO-${routed.id}`;
+        const expectPartnerLifecycle = async (filter: "pending" | "accepted" | "in_progress" | "fulfilled") => {
+          await partnerPage.goto(partnerListPath);
+          let lifecycleSum = 0;
+          for (const [id, label] of Object.entries(lifecycleLabels)) {
+            const link = filterLink(id as keyof typeof lifecycleLabels);
+            const count = id === filter || id === "all" ? 1 : 0;
+            await expect(link.locator("span").nth(0)).toHaveText(label);
+            await expect(link.locator("span").nth(1)).toHaveText(String(count));
+            if (id !== "all") lifecycleSum += Number(await link.locator("span").nth(1).innerText());
+          }
+          expect(lifecycleSum).toBe(Number(await filterLink("all").locator("span").nth(1).innerText()));
+          await filterLink(filter).click();
+          await expect(partnerPage).toHaveURL(`${new URL(partnerPage.url()).origin}${partnerListPath}?filter=${filter}`);
+          await expect(filterLink(filter)).toHaveAttribute("aria-current", "page");
+          const row = partnerPage.locator("li, tr").filter({ has: partnerPage.getByRole("link", { name: reference, exact: true }) }).filter({ visible: true });
+          await expect(row).toHaveCount(1);
+          await expect(row.getByText(lifecycleLabels[filter], { exact: true })).toBeVisible();
+        };
+        const expectExcluded = async (filter: "accepted" | "in_progress") => {
+          await filterLink(filter).click();
+          await expect(filterLink(filter)).toHaveAttribute("aria-current", "page");
+          await expect(partnerPage.getByRole("link", { name: reference, exact: true })).toHaveCount(0);
+        };
         const list = await partnerPage.goto(`/partner/${seller.partnerId}/zamowienia`);
         expect(list?.status()).toBe(200);
         await expect(partnerPage.getByText(CHECKOUT_READY_BUYER_LEGAL_NAME).first()).toBeVisible();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.statusPending, { exact: true }).first()).toBeVisible();
         await expect(partnerPage.getByText(`ORD-SO-${routed.id}`, { exact: true }).first()).toBeVisible();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: true }).first()).toBeVisible();
+        await expectPartnerLifecycle("pending");
         const orderLink = partnerPage.getByRole("link", { name: `ORD-SO-${routed.id}`, exact: true }).filter({ visible: true });
         await expect(orderLink).toBeVisible();
         await orderLink.click();
@@ -298,11 +337,61 @@ test.describe("isolated canonical Buyer checkout", () => {
         await expect(page.getByText(pl.BuyerOrderDetail.statusAccepted, { exact: true })).toBeVisible();
         await expect(page.getByText(pl.BuyerOrderDetail.decisionAccepted, { exact: true })).toBeVisible();
 
+        await expectPartnerLifecycle("accepted");
+        await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.startFulfillment, exact: true }).click();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfillmentInProgress, { exact: true }).first()).toBeVisible();
         await expectLifecycle(pl.BuyerOrders.fulfillmentInProgress);
+        await expectPartnerLifecycle("in_progress");
+        await expectExcluded("accepted");
+        await filterLink("in_progress").click();
+        await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.markFulfilled, exact: true }).click();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.tabCompleted, { exact: true }).first()).toBeVisible();
+        await expectPartnerLifecycle("fulfilled");
+        await expectExcluded("accepted");
+        await expectExcluded("in_progress");
+        await filterLink("all").click();
+        await expect(filterLink("all").locator("span").nth(1)).toHaveText("1");
+        await expect(partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true })).toBeVisible();
+
+        for (const width of [375, 768, 1280]) {
+          await partnerPage.setViewportSize({ width, height: 844 });
+          expect(await partnerPage.evaluate(() => window.innerWidth)).toBe(width);
+          await expect(filterNav().getByRole("link")).toHaveCount(8);
+          for (const id of Object.keys(lifecycleLabels) as Array<keyof typeof lifecycleLabels>) {
+            const link = filterLink(id);
+            await link.scrollIntoViewIfNeeded();
+            await expect(link).toBeVisible();
+            const box = await link.boundingBox();
+            expect(box!.height).toBeGreaterThanOrEqual(44);
+            expect(box!.width).toBeGreaterThanOrEqual(44);
+            expect(box!.x).toBeGreaterThanOrEqual(0);
+            expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+            await link.click();
+            await expect(filterNav().locator('[aria-current="page"]')).toHaveCount(1);
+            await expect(filterLink(id)).toHaveAttribute("aria-current", "page");
+            expect(await filterLink(id).locator("span").first().evaluate(element => getComputedStyle(element).textDecorationLine)).toContain("underline");
+            expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+          }
+          // Ordinary links retain DOM order and a visible keyboard focus ring.
+          await filterLink("pending").focus();
+          for (const id of (Object.keys(lifecycleLabels) as Array<keyof typeof lifecycleLabels>).slice(1)) {
+            await partnerPage.keyboard.press("Tab");
+            await expect(filterLink(id)).toBeFocused();
+            expect(await filterLink(id).evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+          }
+          const row = partnerPage.locator("li, tr").filter({ has: partnerPage.getByRole("link", { name: reference, exact: true }) }).filter({ visible: true });
+          await expect(row.getByText(pl.PartnerWorkspace.statusFulfilled, { exact: true })).toBeVisible();
+        }
+        // Exercise longer translated labels against the same order at mobile width.
+        await partnerPage.setViewportSize({ width: 375, height: 844 });
+        await partnerPage.goto(`/de/partner/${seller.partnerId}/orders?filter=fulfilled`);
+        const germanFilters = partnerPage.getByRole("navigation", { name: de.PartnerWorkspace.orderFiltersLabel, exact: true });
+        await expect(germanFilters.getByRole("link")).toHaveCount(8);
+        await expect(germanFilters.locator('[aria-current="page"]')).toContainText(de.PartnerWorkspace.statusFulfilled);
+        await expect(partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true })).toBeVisible();
+        expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
         await page.setViewportSize({ width: 375, height: 844 });
         await expectLifecycle(pl.BuyerOrders.fulfilled);
         await expect(buyerCard().locator("dl > div").filter({ has: page.getByText(pl.BuyerOrders.accepted, { exact: true }) }).locator("dd")).toHaveText("0");
