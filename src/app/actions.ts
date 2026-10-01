@@ -1051,6 +1051,24 @@ export async function getAdminOrdersPage(rawInput: unknown) {
   }
 }
 
+export async function getAdminMarketplaceOrderDetail(rawId: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { isCanonicalPositiveInteger } = await import("@/lib/admin/orders-query");
+  if (typeof rawId !== "string" || !isCanonicalPositiveInteger(rawId)) {
+    return { ok: false as const, code: "ADMIN_ORDER_NOT_FOUND" as const };
+  }
+  try {
+    const { getAdminMarketplaceOrderDetailReadModel } = await import("@/lib/admin/orders-read-model-core");
+    const { db } = await import("@/lib/db");
+    const data = await getAdminMarketplaceOrderDetailReadModel(db, Number(rawId));
+    return data ? { ok: true as const, data } : { ok: false as const, code: "ADMIN_ORDER_NOT_FOUND" as const };
+  } catch {
+    console.error("Admin Marketplace order detail read failed.");
+    return { ok: false as const, code: "ADMIN_ORDERS_UNAVAILABLE" as const };
+  }
+}
+
 export async function changeAdminOfferPublicationState(rawInput: unknown) {
   const { requireAdmin } = await import("@/lib/auth/guards");
   await requireAdmin();

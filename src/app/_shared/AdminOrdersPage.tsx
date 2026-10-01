@@ -32,7 +32,7 @@ export async function AdminOrdersPage({
   const basePath = locale === "pl" ? "/admin/zamowienia" : `/${locale}/admin/orders`;
 
   return (
-    <div className="space-y-6 max-w-[1400px] mx-auto w-full">
+    <div className="space-y-6 max-w-[1400px] mx-auto w-full min-w-0">
       <div>
         <span className="text-brand-teal text-sm font-bold uppercase tracking-wider block mb-1">
           {dict.eyebrow}
@@ -58,17 +58,17 @@ export async function AdminOrdersPage({
             </div>
           </div>
           
-          <div className="flex gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
             <button
               type="submit"
-              className="px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
+              className="px-6 py-2 bg-brand-navy hover:bg-brand-teal text-white rounded-industrial text-sm font-medium transition-colors min-h-11 focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
             >
               {dict.applyFilters}
             </button>
             {hasFilters && (
               <Link
                 href={basePath}
-                className="px-6 py-2 bg-white border border-border-industrial text-brand-navy hover:bg-brand-light-gray rounded-industrial text-sm font-medium transition-colors whitespace-nowrap text-center focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
+                className="px-6 py-2 bg-white border border-border-industrial text-brand-navy hover:bg-brand-light-gray rounded-industrial text-sm font-medium transition-colors min-h-11 text-center focus:outline-none focus:ring-2 focus:ring-offset-1 focus:ring-brand-teal"
               >
                 {dict.clearFilters}
               </Link>
@@ -78,7 +78,7 @@ export async function AdminOrdersPage({
       </div>
 
       <div className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden flex flex-col min-h-[500px]">
-        <div className="px-6 py-4 border-b border-border-industrial flex justify-between items-center bg-brand-light-gray/30">
+        <div className="px-6 py-4 border-b border-border-industrial flex flex-wrap gap-3 justify-between items-center bg-brand-light-gray/30">
           <h2 className="font-medium text-brand-navy">{dict.tableCaption}</h2>
           <span className="text-sm text-muted-foreground font-medium bg-white px-3 py-1 border border-border-industrial/50">
             {dict.resultsCount.replace("{count}", totalCount.toString())}
@@ -104,12 +104,12 @@ export async function AdminOrdersPage({
           </div>
         ) : (
           <>
-            <div className="flex-1 overflow-x-auto">
-              <AdminOrdersTable items={items} dict={dict} locale={locale} />
+            <div className="flex-1 min-w-0">
+              <AdminOrdersTable items={items} dict={dict} locale={locale} basePath={basePath} />
             </div>
 
             {totalPages > 1 && (
-              <div className="px-6 py-4 border-t border-border-industrial bg-brand-light-gray/30 flex items-center justify-between">
+              <div className="px-6 py-4 border-t border-border-industrial bg-brand-light-gray/30 flex flex-wrap gap-3 items-center justify-between">
                 <p className="text-sm text-muted-foreground">
                   {dict.paginationSummary
                     .replace("{current}", query.page.toString())
@@ -119,7 +119,7 @@ export async function AdminOrdersPage({
                   {query.page > 1 ? (
                     <Link
                       href={buildAdminOrdersUrl(basePath, { page: query.page - 1 }, query)}
-                      className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
+                      className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors min-h-11 inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
                     >
                       {dict.paginationPrevious}
                     </Link>
@@ -132,7 +132,7 @@ export async function AdminOrdersPage({
                   {query.page < totalPages ? (
                     <Link
                       href={buildAdminOrdersUrl(basePath, { page: query.page + 1 }, query)}
-                      className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors"
+                      className="px-4 py-2 border border-border-industrial bg-white rounded-industrial text-sm font-medium text-brand-navy hover:bg-brand-light-gray transition-colors min-h-11 inline-flex items-center focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
                     >
                       {dict.paginationNext}
                     </Link>

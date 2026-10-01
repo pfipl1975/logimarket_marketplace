@@ -6,20 +6,20 @@ import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-test("LM-ADMIN-MVP-02: Admin IA and 56B2 Boundary Cleanup Contract", async (t) => {
+test("Canonical Admin Marketplace Orders IA contract", async (t) => {
   const root = path.join(__dirname, "../..");
   const navPath = path.join(root, "src/components/admin/AdminNavigation.tsx");
   const shellPath = path.join(root, "src/components/admin/AdminShell.tsx");
   const entryPath = path.join(root, "src/app/_shared/AdminEntryPage.tsx");
   const locales = ["pl", "en", "de", "fr", "uk", "es", "zh"];
 
-  await t.test("AdminNavigation: Orders removed, primary MVP modules intact", async () => {
+  await t.test("AdminNavigation: Canonical Orders visible, primary MVP modules intact", async () => {
     const navContent = await fs.readFile(navPath, "utf-8");
 
     // Negative assertions for orders
-    assert.doesNotMatch(navContent, /ordersPath/i, "AdminNavigation must not define or use ordersPath");
-    assert.doesNotMatch(navContent, /isOrdersActive/, "AdminNavigation must not check isOrdersActive");
-    assert.doesNotMatch(navContent, /ordersNav/, "AdminNavigation labels contract must not contain ordersNav");
+    assert.match(navContent, /ordersPath/i, "AdminNavigation must define or use ordersPath");
+    assert.match(navContent, /isOrdersActive/, "AdminNavigation must check isOrdersActive");
+    assert.match(navContent, /ordersNav/, "AdminNavigation labels contract must contain ordersNav");
 
     // Positive assertions for MVP modules
     assert.match(navContent, /dashboardPath:\s*string/);
@@ -37,12 +37,12 @@ test("LM-ADMIN-MVP-02: Admin IA and 56B2 Boundary Cleanup Contract", async (t) =
     assert.match(navContent, /<span[^>]*aria-disabled="true"/);
   });
 
-  await t.test("AdminShell: Does not construct or pass ordersPath to AdminNavigation", async () => {
+  await t.test("AdminShell: Constructs and passes ordersPath to AdminNavigation", async () => {
     const shellContent = await fs.readFile(shellPath, "utf-8");
 
-    assert.doesNotMatch(shellContent, /const ordersPath/);
-    assert.doesNotMatch(shellContent, /ordersPath=\{/);
-    assert.doesNotMatch(shellContent, /ordersNav:/);
+    assert.match(shellContent, /const ordersPath/);
+    assert.match(shellContent, /ordersPath=\{/);
+    assert.match(shellContent, /ordersNav:/);
 
     // Passes expected paths
     assert.match(shellContent, /dashboardPath=\{dashboardPath\}/);
@@ -54,10 +54,10 @@ test("LM-ADMIN-MVP-02: Admin IA and 56B2 Boundary Cleanup Contract", async (t) =
     assert.match(shellContent, /<AdminLogoutForm/);
   });
 
-  await t.test("AdminEntryPage: Orders removed from module availability list", async () => {
+  await t.test("AdminEntryPage: Canonical Orders visible from module availability list", async () => {
     const entryContent = await fs.readFile(entryPath, "utf-8");
 
-    assert.doesNotMatch(entryContent, /dictionary\.ordersNav/);
+    assert.match(entryContent, /dictionary\.ordersNav/);
     assert.match(entryContent, /dictionary\.dashboardNav/);
     assert.match(entryContent, /dictionary\.offersNav/);
     assert.match(entryContent, /dictionary\.partnersNav/);
@@ -87,7 +87,7 @@ test("LM-ADMIN-MVP-02: Admin IA and 56B2 Boundary Cleanup Contract", async (t) =
     }
   });
 
-  await t.test("Preservation: Legacy Orders routes and models remain completely intact", async () => {
+  await t.test("Preservation: Orders routes and models remain available", async () => {
     const plOrdersRoute = path.join(root, "src/app/(pl)/admin/zamowienia/page.tsx");
     const locOrdersRoute = path.join(root, "src/app/(localized)/[locale]/admin/orders/page.tsx");
     const sharedOrdersPage = path.join(root, "src/app/_shared/AdminOrdersPage.tsx");

@@ -161,7 +161,7 @@ test.describe("isolated canonical Buyer checkout", () => {
     assertPageClean();
   });
 
-  test("Buyer tracks E2, E6, E7 and real fulfillment, then clicks order details on desktop and mobile", async ({ browser }) => {
+  test("Buyer tracks E2, E6, E7 and real fulfillment, then Buyer and Admin click canonical details", async ({ browser, adminPage }) => {
     test.setTimeout(120_000);
     const context = await browser.newContext();
     try {
@@ -207,6 +207,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         [CHECKOUT_READY_BUYER_ID],
       );
       const legacyBefore = await database.query<{ count: number }>("SELECT count(*)::int AS count FROM orders");
+      const rfqBefore = await database.query<{ count: number }>("SELECT count(*)::int AS count FROM rfq_leads");
       const cartItem = await database.query<{ id: string }>(
         "SELECT id FROM cart_items WHERE offer_id = $1 ORDER BY id DESC LIMIT 1", [seller.offerId],
       );
@@ -479,6 +480,76 @@ test.describe("isolated canonical Buyer checkout", () => {
         await germanCard.getByRole("link", { name: `${de.BuyerOrders.viewDetails} — ${de.BuyerOrders.order} #${order.id}`, exact: true }).click();
         await expect(page).toHaveURL(new RegExp(`/de/orders/${order.id}$`));
         await expect(page.getByText(de.BuyerOrderDetail.statusFulfilled, { exact: true })).toBeVisible();
+
+        // Canonical Admin operations: real parent list -> detail click, after real E7/fulfillment.
+        const assertAdminClean = watchBrowserErrors(adminPage);
+        await adminPage.setViewportSize({ width: 375, height: 844 });
+        const listResponse = await adminPage.goto(`/admin/zamowienia?q=${order.id}`);
+        expect(listResponse?.status()).toBe(200);
+        const adminCard = adminPage.getByRole("article").filter({ has: adminPage.getByRole("heading", { name: `${pl.adminOrders.orderLabel} #${order.id}`, exact: true }) });
+        await expect(adminCard).toHaveCount(1);
+        await expect(adminCard.getByText(CHECKOUT_READY_BUYER_LEGAL_NAME, { exact: true })).toBeVisible();
+        await expect(adminCard.getByText(pl.adminOrders.lifecycleLabels.fulfilled, { exact: false })).toBeVisible();
+        const cardValue = (label: string) => adminCard.locator("dl > div").filter({ has: adminPage.getByText(label, { exact: true }) }).locator("dd");
+        await expect(cardValue(pl.adminOrders.sellerCountColumn)).toHaveText("1");
+        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        const adminDetails = adminCard.getByRole("link", { name: `${pl.adminOrders.details} — ${pl.adminOrders.orderLabel} #${order.id}`, exact: true });
+        expect((await adminDetails.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+        await adminDetails.focus();
+        await adminPage.keyboard.press("Shift+Tab");
+        await adminPage.keyboard.press("Tab");
+        await expect(adminDetails).toBeFocused();
+        expect(await adminDetails.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+        if (await adminPage.locator("details").getAttribute("open") === null) {
+          await adminPage.locator("summary").filter({ hasText: pl.admin.navigationLabel }).click();
+        }
+        await expect(adminPage.getByRole("navigation", { name: pl.admin.navigationLabel }).filter({ visible: true }).getByRole("link", { name: pl.admin.ordersNav, exact: true })).toHaveAttribute("aria-current", "page");
+        await adminDetails.click();
+        await expect(adminPage).toHaveURL(new RegExp(`/admin/zamowienia/${order.id}$`));
+        await expect(adminPage.getByRole("heading", { name: `${pl.adminOrders.orderLabel} #${order.id}`, exact: true })).toBeVisible();
+        const buyerSection = adminPage.getByRole("region", { name: pl.adminOrders.buyerTitle, exact: true });
+        await expect(buyerSection.getByText(CHECKOUT_READY_BUYER_LEGAL_NAME, { exact: true })).toBeVisible();
+        await expect(buyerSection.getByText(CHECKOUT_READY_BUYER_NIP, { exact: true })).toBeVisible();
+        const sellerSection = adminPage.getByRole("article", { name: `ORD-SO-${routed.id}`, exact: true });
+        await expect(sellerSection.getByRole("heading", { name: `ORD-SO-${routed.id}`, exact: true })).toBeVisible();
+        const detailValue = (label: string) => sellerSection.locator("dl > div").filter({ has: adminPage.getByText(label, { exact: true }) }).locator("dd");
+        await expect(detailValue(pl.adminOrders.sellerLegalName)).toHaveText(CHECKOUT_SELLER_NAME);
+        await expect(detailValue(pl.adminOrders.sellerDisplayName)).toHaveText(CHECKOUT_SELLER_NAME);
+        await expect(detailValue(pl.adminOrders.partnerId)).toHaveText(seller.partnerId);
+        await expect(detailValue(pl.adminOrders.lifecycleColumn)).toHaveText(pl.adminOrders.lifecycleLabels.fulfilled);
+        await expect(detailValue(pl.adminOrders.decisionState)).toHaveText(pl.adminOrders.decisionLabels.seller_accepted);
+        for (const label of [pl.adminOrders.routedAt, pl.adminOrders.expiresAt, pl.adminOrders.resolvedAt, pl.adminOrders.acceptedAt]) {
+          await expect(detailValue(label)).not.toHaveText("—");
+        }
+        await expect(sellerSection.getByText(CHECKOUT_OFFER_TITLE, { exact: true })).toBeVisible();
+        await expect(detailValue(pl.adminOrders.quantity)).toHaveText(String(item.quantity));
+        await expect(detailValue(pl.adminOrders.unitPrice)).toHaveText(item.unit_price);
+        await expect(detailValue(pl.adminOrders.currency)).toHaveText(item.currency);
+        await expect(adminPage.getByText(pl.adminOrders.recordStates.checkout_submitted, { exact: true })).toBeVisible();
+        await expect(adminPage.getByText(CHECKOUT_READY_BUYER_INVOICE_ADDRESS.street, { exact: true })).toHaveCount(0);
+        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        if (await adminPage.locator("details").getAttribute("open") === null) {
+          await adminPage.locator("summary").filter({ hasText: pl.admin.navigationLabel }).click();
+        }
+        await expect(adminPage.getByRole("navigation", { name: pl.admin.navigationLabel }).filter({ visible: true }).getByRole("link", { name: pl.admin.ordersNav, exact: true })).toHaveAttribute("aria-current", "page");
+        // Stress long immutable identity/offer text on the rendered page only, with no DB mutation.
+        await sellerSection.locator("dd").first().evaluate(element => { element.textContent = "LongImmutableSellerIdentity".repeat(12); });
+        await buyerSection.locator("dd").first().evaluate(element => { element.textContent = "LongImmutableBuyerIdentity".repeat(12); });
+        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        await adminPage.goto(`/de/admin/orders?q=${order.id}`);
+        const localizedAdminCard = adminPage.getByRole("article").filter({ has: adminPage.getByRole("heading", { name: `${de.adminOrders.orderLabel} #${order.id}`, exact: true }) });
+        await localizedAdminCard.getByRole("link", { name: `${de.adminOrders.details} — ${de.adminOrders.orderLabel} #${order.id}`, exact: true }).click();
+        await expect(adminPage).toHaveURL(new RegExp(`/de/admin/orders/${order.id}$`));
+        await expect(adminPage.getByRole("article", { name: `ORD-SO-${routed.id}`, exact: true }).getByText(de.adminOrders.lifecycleLabels.fulfilled, { exact: true })).toBeVisible();
+        expect(await adminPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+        // Authorization proof: both Buyer and Partner contexts are denied without order-existence disclosure.
+        expect((await context.request.get(`/admin/zamowienia/${order.id}`)).status()).toBe(404);
+        expect((await partnerContext.request.get(`/admin/zamowienia/${order.id}`)).status()).toBe(404);
+        expect((await adminPage.request.get("/admin/zamowienia/invalid")).status()).toBe(404);
+        expect((await adminPage.request.get("/admin/zamowienia/9007199254740991")).status()).toBe(404);
+        const rfqAfter = await database.query<{ count: number }>("SELECT count(*)::int AS count FROM rfq_leads");
+        expect(rfqAfter.rows[0].count).toBe(rfqBefore.rows[0].count);
+        assertAdminClean();
         assertPartnerClean();
       } finally { await partnerContext.close(); }
       assertPageClean();
