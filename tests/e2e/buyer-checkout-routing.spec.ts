@@ -313,6 +313,78 @@ test.describe("isolated canonical Buyer checkout", () => {
         const filterNav = () => partnerPage.getByRole("navigation", { name: pl.PartnerWorkspace.orderFiltersLabel, exact: true });
         const filterLink = (filter: keyof typeof lifecycleLabels) => filterNav().locator(`a[href$="?filter=${filter}"]`);
         const reference = `ORD-SO-${routed.id}`;
+        const partnerHeader = (dict = pl.PartnerWorkspace) => partnerPage.locator("header").filter({
+          has: partnerPage.getByRole("heading", { name: `${dict.orderRef} ${reference}`, exact: true }),
+        });
+        const expectPartnerDetail = async (state: "pending" | "accepted" | "in_progress" | "fulfilled", dict = pl.PartnerWorkspace) => {
+          const expected = {
+            pending: { badge: dict.statusPending, steps: [dict.progressRouted, dict.awaitingDecision] },
+            accepted: { badge: dict.statusAccepted, steps: [dict.progressRouted, dict.progressAccepted] },
+            in_progress: { badge: dict.statusFulfillmentInProgress, steps: [dict.progressRouted, dict.progressAccepted, dict.statusFulfillmentInProgress] },
+            fulfilled: { badge: dict.statusFulfilled, steps: [dict.progressRouted, dict.progressAccepted, dict.statusFulfillmentInProgress, dict.statusFulfilled] },
+          }[state];
+          await expect(partnerHeader(dict).getByRole("status", { name: dict.currentStatus, exact: true })).toHaveText(expected.badge);
+          const progress = partnerPage.getByRole("region", { name: dict.orderProgress, exact: true });
+          await expect(progress).toBeVisible();
+          await expect(progress.locator("ol > li")).toHaveCount(expected.steps.length);
+          for (const [index, label] of expected.steps.entries()) {
+            await expect(progress.locator("ol > li").nth(index).getByText(label, { exact: true })).toBeVisible();
+          }
+          await expect(progress.locator('li[aria-current="step"]')).toHaveCount(1);
+          await expect(progress.locator('li[aria-current="step"]')).toContainText(expected.steps.at(-1)!);
+          await expect(progress.locator("ol > li").first().locator("time")).toHaveAttribute("datetime", routed.routedAt.toISOString());
+          for (const index of state === "in_progress" ? [2] : state === "fulfilled" ? [2, 3] : []) {
+            await expect(progress.locator("ol > li").nth(index).locator("time")).toHaveCount(0);
+          }
+          if (state === "fulfilled" && dict.tabCompleted !== dict.statusFulfilled) {
+            await expect(partnerPage.getByText(dict.tabCompleted, { exact: true })).toHaveCount(0);
+          }
+        };
+        const expectPartnerDetailLayout = async (disclosed: boolean) => {
+          const items = partnerPage.getByRole("region", { name: pl.PartnerWorkspace.orderItems, exact: true });
+          const progress = partnerPage.getByRole("region", { name: pl.PartnerWorkspace.orderProgress, exact: true });
+          const buyer = partnerPage.getByRole("region", { name: pl.PartnerWorkspace.colBuyer, exact: true });
+          const invoice = partnerPage.getByRole("region", { name: pl.PartnerWorkspace.invoiceDataTitle, exact: true });
+          for (const width of [375, 1280]) {
+            await partnerPage.setViewportSize({ width, height: 844 });
+            expect(await partnerPage.evaluate(() => window.innerWidth)).toBe(width);
+            expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+            const [headerBox, itemsBox, progressBox, buyerBox] = await Promise.all([
+              partnerHeader().boundingBox(), items.boundingBox(), progress.boundingBox(), buyer.boundingBox(),
+            ]);
+            for (const box of [headerBox, itemsBox, progressBox, buyerBox]) {
+              expect(box!.x).toBeGreaterThanOrEqual(0);
+              expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+            }
+            if (width === 1280) {
+              expect(Math.abs(itemsBox!.y - progressBox!.y)).toBeLessThanOrEqual(1);
+              expect(itemsBox!.width / progressBox!.width).toBeGreaterThan(1.4);
+              expect(itemsBox!.width / progressBox!.width).toBeLessThan(1.8);
+              expect(itemsBox!.height).toBeLessThan(320);
+              if (disclosed) {
+                const invoiceBox = (await invoice.boundingBox())!;
+                expect(Math.abs(buyerBox!.y - invoiceBox.y)).toBeLessThanOrEqual(1);
+                expect(Math.abs(buyerBox!.width - invoiceBox.width)).toBeLessThanOrEqual(1);
+                expect(buyerBox!.y).toBeGreaterThan(progressBox!.y + progressBox!.height);
+              } else {
+                await expect(invoice).toHaveCount(0);
+                expect(buyerBox!.width).toBeGreaterThan(itemsBox!.width);
+              }
+            } else {
+              expect(itemsBox!.y).toBeGreaterThan(headerBox!.y);
+              expect(progressBox!.y).toBeGreaterThan(itemsBox!.y);
+              expect(buyerBox!.y).toBeGreaterThan(progressBox!.y);
+              if (disclosed) expect((await invoice.boundingBox())!.y).toBeGreaterThan(buyerBox!.y);
+            }
+            for (const button of await progress.locator("..").getByRole("button").all()) {
+              const box = (await button.boundingBox())!;
+              expect(box.height).toBeGreaterThanOrEqual(44);
+              expect(box.x).toBeGreaterThanOrEqual(0);
+              expect(box.x + box.width).toBeLessThanOrEqual(width);
+            }
+          }
+          await partnerPage.setViewportSize({ width: 375, height: 844 });
+        };
         const expectPartnerLifecycle = async (filter: "pending" | "accepted" | "in_progress" | "fulfilled") => {
           await partnerPage.goto(partnerListPath);
           let lifecycleSum = 0;
@@ -346,6 +418,10 @@ test.describe("isolated canonical Buyer checkout", () => {
         const orderLink = partnerPage.getByRole("link", { name: `ORD-SO-${routed.id}`, exact: true }).filter({ visible: true });
         await expect(orderLink).toBeVisible();
         await orderLink.click();
+        await expectPartnerDetail("pending");
+        await expectPartnerDetailLayout(false);
+        await expect(partnerPage.getByRole("button", { name: pl.PartnerWorkspace.acceptOrder, exact: true })).toBeVisible();
+        await expect(partnerPage.getByRole("button", { name: pl.PartnerWorkspace.rejectOrder, exact: true })).toBeVisible();
         await expect(partnerPage.getByText(CHECKOUT_OFFER_TITLE).first()).toBeVisible();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.decisionDeadline, { exact: false }).first()).toBeVisible();
         await expect(partnerPage.getByText(pl.PartnerWorkspace.contactHidden)).toBeVisible();
@@ -359,7 +435,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1)).toBe(true);
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.acceptOrder, exact: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.confirmAcceptButton, exact: true }).click();
-        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusAccepted, { exact: true }).first()).toBeVisible();
+        await expectPartnerDetail("accepted");
         await expectPartnerInvoice();
         const foreignResponse = await partnerContext.request.get(`/partner/${foreignPartnerId}/zamowienia/${routed.id}`);
         expect(foreignResponse.status()).toBe(404);
@@ -375,6 +451,7 @@ test.describe("isolated canonical Buyer checkout", () => {
           decidedByAuthUserId: E2E_NON_ADMIN_USER_ID, decisionSource: "partner_portal" });
         expect(accepted.rows[0].acceptedAt).toBeInstanceOf(Date);
         expect(accepted.rows[0].resolvedAt).toBeInstanceOf(Date);
+        await expect(partnerPage.getByRole("region", { name: pl.PartnerWorkspace.orderProgress, exact: true }).locator("ol > li").nth(1).locator("time")).toHaveAttribute("datetime", accepted.rows[0].resolvedAt!.toISOString());
         await page.setViewportSize({ width: 1280, height: 844 });
         await expectLifecycle(pl.BuyerOrders.accepted);
         await detailsCta().click();
@@ -385,7 +462,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         await expectPartnerLifecycle("accepted");
         await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.startFulfillment, exact: true }).click();
-        await expect(partnerPage.getByText(pl.PartnerWorkspace.statusFulfillmentInProgress, { exact: true }).first()).toBeVisible();
+        await expectPartnerDetail("in_progress");
         await expectPartnerInvoice();
         await expectLifecycle(pl.BuyerOrders.fulfillmentInProgress);
         await expectPartnerLifecycle("in_progress");
@@ -393,8 +470,15 @@ test.describe("isolated canonical Buyer checkout", () => {
         await filterLink("in_progress").click();
         await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await partnerPage.getByRole("button", { name: pl.PartnerWorkspace.markFulfilled, exact: true }).click();
-        await expect(partnerPage.getByText(pl.PartnerWorkspace.tabCompleted, { exact: true }).first()).toBeVisible();
+        await expectPartnerDetail("fulfilled");
         await expectPartnerInvoice();
+        await expectPartnerDetailLayout(true);
+        const email = partnerPage.getByRole("link", { name: "ready-buyer@checkout.example.invalid", exact: true });
+        await email.focus();
+        await partnerPage.keyboard.press("Shift+Tab");
+        await partnerPage.keyboard.press("Tab");
+        await expect(email).toBeFocused();
+        expect(await email.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
         await expectPartnerLifecycle("fulfilled");
         await expectExcluded("accepted");
         await expectExcluded("in_progress");
@@ -441,6 +525,7 @@ test.describe("isolated canonical Buyer checkout", () => {
         expect(await partnerPage.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
         await partnerPage.getByRole("link", { name: reference, exact: true }).filter({ visible: true }).click();
         await expectPartnerInvoice(de.PartnerWorkspace);
+        await expectPartnerDetail("fulfilled", de.PartnerWorkspace);
         await page.setViewportSize({ width: 375, height: 844 });
         await expectLifecycle(pl.BuyerOrders.fulfilled);
         await expect(buyerCard().locator("dl > div").filter({ has: page.getByText(pl.BuyerOrders.accepted, { exact: true }) }).locator("dd")).toHaveText("0");
@@ -466,6 +551,11 @@ test.describe("isolated canonical Buyer checkout", () => {
         expect(finalState.rows).toHaveLength(1);
         const item = finalState.rows[0];
         expect(item).toMatchObject({ status: "fulfilled", decision_status: "seller_accepted", quantity: 1, currency: "PLN" });
+        const partnerItems = partnerPage.getByRole("region", { name: de.PartnerWorkspace.orderItems, exact: true });
+        await expect(partnerItems.getByText(CHECKOUT_OFFER_TITLE, { exact: true })).toBeVisible();
+        await expect(partnerItems.getByText(String(item.quantity), { exact: true })).toBeVisible();
+        await expect(partnerItems.getByText(`${item.unit_price} ${item.currency}`, { exact: true }).first()).toBeVisible();
+        await expect(partnerHeader(de.PartnerWorkspace).getByText(`${item.unit_price} ${item.currency}`, { exact: true })).toBeVisible();
         await expect(page.locator("dl > div").filter({ has: page.getByText(pl.BuyerOrderDetail.quantity, { exact: true }) }).locator("dd")).toHaveText(String(item.quantity));
         await expect(page.locator("dl > div").filter({ has: page.getByText(pl.BuyerOrderDetail.unitPrice, { exact: true }) }).locator("dd")).toHaveText(`${item.unit_price} ${item.currency}`);
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
