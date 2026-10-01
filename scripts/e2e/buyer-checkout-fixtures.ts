@@ -8,7 +8,15 @@ export const CHECKOUT_READY_BUYER_NIP = "0000000069";
 export const CHECKOUT_NEW_BUYER_NIP = "0000000075";
 export const CHECKOUT_SELLER_NIP = "0000000081";
 export const CHECKOUT_OFFER_TITLE = "Checkout Synthetic Offer";
-export const CHECKOUT_READY_BUYER_LEGAL_NAME = "LM Checkout Ready Buyer Sp. z o.o.";
+export const CHECKOUT_READY_BUYER_LEGAL_NAME = "LM Checkout Ready Buyer Przedsiębiorstwo Testowych Rozwiązań Magazynowych Sp. z o.o.";
+export const CHECKOUT_READY_BUYER_INVOICE_ADDRESS = {
+  street: "Testowa Aleja Przemysłowych Rozwiązań Magazynowych i Logistycznych",
+  buildingNumber: "12",
+  unitNumber: "3",
+  postalCode: "00-001",
+  city: "Warszawa",
+  countryCode: "PL",
+} as const;
 export const CHECKOUT_SELLER_NAME = "LM Checkout Synthetic Seller";
 
 /** These rows belong exclusively to the classified, disposable Browser E2E database. */
@@ -104,8 +112,11 @@ export async function createBuyerCheckoutSellerFixture(database: Pool) {
       INSERT INTO buyer_organization_addresses
         (buyer_organization_id, address_type, street, building_number, unit_number,
          postal_code, city, country_code)
-      VALUES ($1, 'registered', 'Testowa', '12', '3', '00-001', 'Warszawa', 'PL')
-    `, [organizationId]);
+      VALUES ($1, 'registered', $2, $3, $4, $5, $6, $7)
+    `, [organizationId, CHECKOUT_READY_BUYER_INVOICE_ADDRESS.street,
+      CHECKOUT_READY_BUYER_INVOICE_ADDRESS.buildingNumber, CHECKOUT_READY_BUYER_INVOICE_ADDRESS.unitNumber,
+      CHECKOUT_READY_BUYER_INVOICE_ADDRESS.postalCode, CHECKOUT_READY_BUYER_INVOICE_ADDRESS.city,
+      CHECKOUT_READY_BUYER_INVOICE_ADDRESS.countryCode]);
     await client.query(`
       INSERT INTO buyer_user_profiles
         (auth_user_id, first_name, last_name, contact_email, phone)

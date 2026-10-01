@@ -6,6 +6,7 @@ import { ArrowLeft, Clock, Info } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
 import { PartnerOrderDecisionPanel } from "@/components/partner-orders/PartnerOrderDecisionPanel";
 import { PartnerOrderFulfillmentPanel } from "@/components/partner-orders/PartnerOrderFulfillmentPanel";
+import { formatPartnerInvoiceStreetLine } from "@/lib/partner-orders/read-model-core";
 
 type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
 
@@ -152,7 +153,7 @@ export default async function PartnerOrderDetailPage({
         </div>
 
         {/* Sidebar */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
             <h2 className="font-semibold text-brand-navy mb-4">{dict.orderStatus}</h2>
             <div className="space-y-4">
@@ -192,7 +193,7 @@ export default async function PartnerOrderDetailPage({
             <div className="space-y-4">
               <div>
                 <div className="text-xs text-muted-foreground mb-1">{dict.companyName}</div>
-                <div className="font-medium text-brand-navy">{order.buyerBusinessName}</div>
+                <div className="break-words font-medium text-brand-navy">{order.buyerBusinessName}</div>
                 <div className="text-sm text-muted-foreground mt-0.5">
                   {dict.registrationCountry} {order.buyerCountryCode}
                 </div>
@@ -252,6 +253,36 @@ export default async function PartnerOrderDetailPage({
             </div>
           </div>
 
+          {order.buyerDetailsDisclosed && (
+            <section aria-labelledby="buyer-invoice-title" className="min-w-0 border border-border-industrial bg-white p-4 shadow-soft sm:p-6">
+              <h2 id="buyer-invoice-title" className="font-semibold text-brand-navy">{dict.invoiceDataTitle}</h2>
+              {order.invoiceDataAvailable && order.buyerInvoice ? (
+                <>
+                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{dict.invoiceSnapshotNotice}</p>
+                  <dl className="mt-4 space-y-4 text-sm">
+                    <div>
+                      <dt className="text-xs text-muted-foreground">{dict.invoiceLegalName}</dt>
+                      <dd className="mt-1 break-words font-medium text-brand-navy">{order.buyerInvoice.legalName}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">{dict.invoiceTaxId}</dt>
+                      <dd className="mt-1 break-words font-medium tabular-nums text-brand-navy">{order.buyerInvoice.taxIdentifierValue}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-xs text-muted-foreground">{dict.invoiceAddress}</dt>
+                      <dd className="mt-1 break-words leading-6 text-brand-navy">
+                        <span className="block">{formatPartnerInvoiceStreetLine(order.buyerInvoice)}</span>
+                        <span className="block">{order.buyerInvoice.postalCode} {order.buyerInvoice.city}</span>
+                        <span className="block">{order.buyerInvoice.countryCode}</span>
+                      </dd>
+                    </div>
+                  </dl>
+                </>
+              ) : (
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">{dict.invoiceUnavailable}</p>
+              )}
+            </section>
+          )}
         </div>
       </div>
     </div>

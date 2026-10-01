@@ -39,13 +39,26 @@ test("unauthorized and forbidden reads fail closed", () => {
 });
 
 test("E7 buyer contact gate remains canonical", () => {
+  const core = readFileSync(
+    new URL("../../src/lib/partner-orders/read-model-core.ts", import.meta.url), "utf8"
+  );
+  assert.match(source, /const isCanonicalAccepted = canDisclosePartnerBuyerDetails\(row\);/);
   assert.match(
-    source,
-    /row\.decisionStatus === "seller_accepted" &&\s*row\.acceptedAt !== null &&\s*row\.resolvedAt !== null &&\s*row\.decidedByAuthUserId !== null &&\s*row\.decisionSource === "partner_portal"/
+    core,
+    /evidence\.decisionStatus === "seller_accepted" &&\s*evidence\.acceptedAt !== null &&\s*evidence\.resolvedAt !== null &&\s*evidence\.decidedByAuthUserId !== null &&\s*evidence\.decisionSource === "partner_portal"/
   );
   assert.match(
-    source,
-    /row\.status === "seller_accepted" \|\| row\.status === "fulfillment_in_progress" \|\| row\.status === "fulfilled"/
+    core,
+    /evidence\.status === "seller_accepted" \|\| evidence\.status === "fulfillment_in_progress" \|\| evidence\.status === "fulfilled"/
   );
   assert.match(source, /if \(isCanonicalAccepted\) \{/);
+});
+
+test("immutable invoice query proves both Partner ownership and exact row cardinality", () => {
+  const invoiceQuery = source.slice(source.indexOf("const invoiceRows"), source.indexOf("return {\n      ok: true", source.indexOf("const invoiceRows")));
+  assert.match(invoiceQuery, /from\(marketplaceOrderBuyerInvoiceSnapshots\)/);
+  assert.match(invoiceQuery, /eq\(sellerOrders\.id, sellerOrderId\), eq\(sellerOrders\.partnerId, partnerId\)/);
+  assert.match(invoiceQuery, /\.limit\(2\)/);
+  assert.match(invoiceQuery, /projectPartnerBuyerInvoiceSnapshot\(row, invoiceRows\)/);
+  assert.doesNotMatch(invoiceQuery, /buyerOrganizations|buyerUserProfiles|buyerLegalContextSnapshots/);
 });
