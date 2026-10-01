@@ -14,6 +14,7 @@ export function PartnerWorkspaceShell({
   partnerName,
   dashboardHref,
   ordersHref,
+  rfqHref,
   offersHref,
   dict,
 }: {
@@ -22,6 +23,7 @@ export function PartnerWorkspaceShell({
   partnerName: string;
   dashboardHref: string;
   ordersHref: string;
+  rfqHref: string;
   offersHref: string;
   dict: PartnerWorkspaceDictionary;
 }) {
@@ -47,17 +49,19 @@ export function PartnerWorkspaceShell({
             <PartnerWorkspaceNavigation
               dashboardHref={dashboardHref}
               ordersHref={ordersHref}
+              rfqHref={rfqHref}
               offersHref={offersHref}
               labels={{
                 navigationLabel: dict.navigationLabel,
                 dashboard: dict.dashboard,
                 orders: dict.orders,
+                rfq: dict.rfq,
                 offers: dict.offers,
               }}
             />
             <Link
               href={marketplaceHref}
-              className="flex min-h-10 items-center gap-2 border-t border-white/10 px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-inset md:ml-auto md:min-h-11 md:border-l md:border-t-0 md:px-4"
+              className="flex min-h-11 items-center gap-2 border-t border-white/10 px-3 text-sm font-medium text-white/70 transition-colors hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-inset md:ml-auto md:min-h-11 md:border-l md:border-t-0 md:px-4"
             >
               <ArrowLeft className="size-4 shrink-0" aria-hidden="true" />
               <span>{dict.backToMarketplace}</span>

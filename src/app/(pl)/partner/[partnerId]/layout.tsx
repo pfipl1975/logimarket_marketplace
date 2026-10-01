@@ -37,6 +37,7 @@ export default async function PartnerLayout({
 
   const dashboardHref = `/partner/${parsedPartnerId}`;
   const ordersHref = `${dashboardHref}/zamowienia`;
+  const rfqHref = `${dashboardHref}/zapytania`;
   const offersHref = `${dashboardHref}/oferty`;
 
   return (
@@ -46,6 +47,7 @@ export default async function PartnerLayout({
       dict={dictionary.PartnerWorkspace}
       dashboardHref={dashboardHref}
       ordersHref={ordersHref}
+      rfqHref={rfqHref}
       offersHref={offersHref}
     >
       {children}
