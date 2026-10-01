@@ -1,37 +1,14 @@
-import { getPartnerOrderDetail, PartnerOrderEffectiveStatus } from "@/lib/partner-orders/read-model";
+import { getPartnerOrderDetail } from "@/lib/partner-orders/read-model";
 import { requirePartnerOrderDecisionAuthority } from "@/lib/auth/partner-membership";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Clock, Info } from "lucide-react";
-import type { Dictionary } from "@/lib/i18n/types";
+import { ArrowLeft, CheckCircle2, Circle, Clock, Info } from "lucide-react";
 import { PartnerOrderDecisionPanel } from "@/components/partner-orders/PartnerOrderDecisionPanel";
 import { PartnerOrderFulfillmentPanel } from "@/components/partner-orders/PartnerOrderFulfillmentPanel";
 import { formatPartnerInvoiceStreetLine } from "@/lib/partner-orders/read-model-core";
 
-type PartnerWorkspaceDictionary = Dictionary["PartnerWorkspace"];
-
-function getStatusLabel(status: PartnerOrderEffectiveStatus, dict: PartnerWorkspaceDictionary) {
-  switch (status) {
-    case "pending_decision": return dict.statusPending;
-    case "accepted": return dict.statusAccepted;
-    case "fulfillment_in_progress": return dict.tabInProgress;
-    case "fulfilled": return dict.tabCompleted;
-    case "rejected": return dict.statusRejected;
-    case "cancelled": return dict.statusCancelled;
-    case "expired": return dict.statusExpired;
-    case "invalid_order_state": return dict.statusInvalid;
-  }
-}
-
-function formatRemainingTime(expiresAt: Date | null, serverNow: Date, dict: PartnerWorkspaceDictionary) {
-  if (!expiresAt) return null;
-  const diff = expiresAt.getTime() - serverNow.getTime();
-  if (diff <= 0) return dict.timeExpired;
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  return `${hours}${dict.h} ${minutes}${dict.m}`;
-}
-
+import { formatPartnerOrderRemainingTime } from "@/lib/partner-orders/presentation";
+import { buildPartnerOrderDetailProgress, getPartnerOrderDetailStatusLabel } from "@/lib/partner-orders/detail-presentation";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLocale } from "@/lib/i18n/config";
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
@@ -76,214 +53,134 @@ export default async function PartnerOrderDetailPage({
   const order = result.data;
   const showContact = order.buyerContactName || order.buyerEmail || order.buyerPhone;
 
+  const statusLabel = getPartnerOrderDetailStatusLabel(order.effectiveStatus, dict);
+  const progress = buildPartnerOrderDetailProgress(order);
+  const date = (value: Date) => value.toLocaleString(resolvedLocale, { dateStyle: "medium", timeStyle: "short" });
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Link 
-          href={`${basePath}`}
-          className="p-2 -ml-2 rounded-industrial text-muted-foreground hover:bg-white hover:text-brand-navy transition-colors focus:outline-none focus:ring-2 focus:ring-brand-teal"
-          aria-label={dict.backToListAria}
-        >
-          <ArrowLeft className="w-5 h-5" />
+    <div className="min-w-0 space-y-6">
+      <header className="min-w-0 rounded-industrial border border-border-industrial bg-white p-4 shadow-soft sm:p-6">
+        <Link href={basePath} aria-label={dict.backToListAria} className="inline-flex min-h-11 items-center gap-2 rounded-industrial text-sm font-medium text-brand-teal hover:text-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">
+          <ArrowLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+          {dict.backToListAria}
         </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-brand-navy">
-            {dict.orderRef} {order.publicOrderReference}
-          </h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {dict.placedOnDate} {order.createdAt.toLocaleString(resolvedLocale)}
-          </p>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          <div className="bg-white rounded-industrial border border-border-industrial shadow-soft overflow-hidden">
-            <div className="px-6 py-4 border-b border-border-industrial bg-brand-light-gray/30">
-              <h2 className="font-semibold text-brand-navy">{dict.orderItems}</h2>
-            </div>
-            <div className="divide-y divide-border-industrial">
-              {order.items.map((item) => (
-                <div key={item.id} className="p-6 flex flex-col sm:flex-row gap-4 justify-between">
-                  <div>
-                    <h3 className="font-medium text-brand-navy">{item.offerTitle}</h3>
-                    {(item.manufacturer || item.model) && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {item.manufacturer} {item.model}
-                      </p>
-                    )}
-                    <div className="text-sm text-muted-foreground mt-2">
-                      {dict.unitPrice} {item.unitPrice} {item.currency}
-                    </div>
-                  </div>
-                  <div className="text-right flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-4">
-                    <span className="bg-brand-light-gray text-brand-navy px-3 py-1 rounded-industrial text-sm font-medium">
-                      {dict.quantity}: {item.quantity}
-                    </span>
-                    <span className="font-semibold text-brand-navy">
-                      {item.lineTotal} {item.currency}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="px-6 py-4 bg-brand-light-gray/30 flex justify-between items-center border-t border-border-industrial">
-              <span className="font-medium text-muted-foreground">{dict.totalToPay}</span>
-              <span className="text-xl font-bold text-brand-navy">
-                {order.orderTotal} {order.currency}
-              </span>
-            </div>
+        <div className="mt-3 flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="wrap-anywhere text-2xl font-bold text-brand-navy">{dict.orderRef} {order.publicOrderReference}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">{dict.placedOnDate} <time dateTime={order.createdAt.toISOString()}>{date(order.createdAt)}</time></p>
           </div>
+          <div className="min-w-0 space-y-2 sm:text-right">
+            <span role="status" aria-label={dict.currentStatus} className={`inline-flex max-w-full rounded-industrial border px-3 py-1.5 text-sm font-semibold ${order.effectiveStatus === "invalid_order_state" || order.effectiveStatus === "expired" ? "border-rose-200 bg-rose-50 text-rose-800" : order.effectiveStatus === "pending_decision" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border-industrial bg-brand-light-gray text-brand-navy"}`}>
+              {statusLabel}
+            </span>
+            <div><p className="text-xs text-muted-foreground">{dict.totalToPay}</p><p className="mt-1 wrap-anywhere text-2xl font-bold tabular-nums text-brand-navy">{order.orderTotal} {order.currency}</p></div>
+          </div>
+        </div>
+      </header>
 
+      <div className="grid min-w-0 grid-cols-1 items-start gap-6 xl:grid-cols-5">
+        <section aria-labelledby="order-items-title" className="min-w-0 overflow-hidden rounded-industrial border border-border-industrial bg-white shadow-soft xl:col-span-3">
+          <h2 id="order-items-title" className="border-b border-border-industrial bg-brand-light-gray/30 px-5 py-4 font-semibold text-brand-navy">{dict.orderItems}</h2>
+          <ul className="divide-y divide-border-industrial">
+            {order.items.map(item => (
+              <li key={item.id} className="min-w-0 p-5">
+                <h3 className="wrap-anywhere font-medium text-brand-navy">{item.offerTitle}</h3>
+                {(item.manufacturer || item.model) && <p className="mt-1 wrap-anywhere text-sm text-muted-foreground">{item.manufacturer} {item.model}</p>}
+                <div className="mt-3 flex flex-wrap items-baseline justify-between gap-3 text-sm">
+                  <p className="text-muted-foreground"><span className="sr-only">{dict.quantity}: </span><span>{item.quantity}</span> × <span className="sr-only">{dict.unitPrice} </span><span>{item.unitPrice} {item.currency}</span></p>
+                  <p className="wrap-anywhere font-semibold tabular-nums text-brand-navy">{item.lineTotal} {item.currency}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap items-baseline justify-between gap-3 border-t border-border-industrial bg-brand-light-gray/30 px-5 py-4">
+            <span className="text-sm font-medium text-muted-foreground">{dict.totalToPay}</span>
+            <span className="wrap-anywhere text-xl font-bold tabular-nums text-brand-navy">{order.orderTotal} {order.currency}</span>
+          </div>
+        </section>
+
+        <div className="min-w-0 space-y-4 xl:col-span-2 [&>div]:mt-0 [&_button]:min-h-11 [&_button]:min-w-0 [&_button]:wrap-anywhere">
+          <section aria-labelledby="order-progress-title" className="min-w-0 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft">
+            <h2 id="order-progress-title" className="font-semibold text-brand-navy">{dict.orderProgress}</h2>
+            {progress.length > 0 ? (
+              <ol className="mt-4 space-y-3">
+                {progress.map(step => (
+                  <li key={step.key} aria-current={step.current ? "step" : undefined} className="flex min-w-0 items-start gap-3">
+                    {step.current ? <Circle className="mt-1 h-5 w-5 shrink-0 text-brand-teal" aria-hidden="true" /> : <CheckCircle2 className="mt-1 h-5 w-5 shrink-0 text-brand-teal" aria-hidden="true" />}
+                    <div className="min-w-0">
+                      {step.current ? <p className="text-xs font-medium text-muted-foreground">{dict.currentStatus}</p> : <span className="sr-only">{dict.progressCompleted} </span>}
+                      <p className={step.current ? "wrap-anywhere font-semibold text-brand-navy" : "wrap-anywhere text-sm text-brand-navy"}>{dict[step.labelKey]}</p>
+                      {step.timestamp !== null && <time dateTime={step.timestamp.toISOString()} className="mt-0.5 block text-xs text-muted-foreground">{date(step.timestamp)}</time>}
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mt-4 flex items-start gap-2 rounded-industrial border border-border-industrial bg-brand-light-gray p-3 font-semibold text-brand-navy"><Info className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /><span className="wrap-anywhere">{statusLabel}</span></p>
+            )}
+            {order.effectiveStatus === "pending_decision" && order.expiresAt && (
+              <div className="mt-4 space-y-2 rounded-industrial border border-orange-200 bg-orange-50 p-4">
+                <p className="flex items-center gap-2 text-sm font-medium text-orange-800"><Clock className="h-4 w-4 shrink-0" aria-hidden="true" />{dict.awaitingDecision}</p>
+                <p className="text-xl font-bold text-orange-900">{formatPartnerOrderRemainingTime(order.expiresAt, order.serverNow, dict)}</p>
+                <p className="text-xs text-orange-700">{dict.decisionDeadline} {date(order.expiresAt)}</p>
+              </div>
+            )}
+            {order.effectiveStatus === "expired" && (
+              <div className="mt-4 space-y-2 rounded-industrial border border-red-200 bg-red-50 p-4 text-sm text-red-800">
+                <p className="font-medium">{dict.decisionExpired}</p>
+                {order.expiresAt && <p className="text-xs">{dict.decisionDeadline} {date(order.expiresAt)}</p>}
+              </div>
+            )}
+          </section>
           {order.effectiveStatus === "pending_decision" && order.decisionWindowOpen && (
             <PartnerOrderDecisionPanel sellerOrderId={order.sellerOrderId} dict={dict} canMakeDecision={canMakeDecision} />
           )}
-
           {(order.effectiveStatus === "accepted" || order.effectiveStatus === "fulfillment_in_progress") && (
-            <PartnerOrderFulfillmentPanel
-              sellerOrderId={order.sellerOrderId}
-              dict={dict}
-              canMakeDecision={canMakeDecision}
-              effectiveStatus={order.effectiveStatus}
-            />
-          )}
-
-        </div>
-
-        {/* Sidebar */}
-        <div className="min-w-0 space-y-6">
-          <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
-            <h2 className="font-semibold text-brand-navy mb-4">{dict.orderStatus}</h2>
-            <div className="space-y-4">
-              <div>
-                <div className="text-sm text-muted-foreground">{dict.currentStatus}</div>
-                <div className="font-medium text-lg mt-1">{getStatusLabel(order.effectiveStatus, dict)}</div>
-              </div>
-
-              {order.effectiveStatus === "pending_decision" && order.expiresAt && (
-                <div className="bg-orange-50 border border-orange-200 rounded-industrial p-4 flex flex-col gap-2">
-                  <div className="flex items-center gap-2 text-orange-800 font-medium text-sm">
-                    <Clock className="w-4 h-4" />
-                    {dict.awaitingDecision}
-                  </div>
-                  <div className="text-orange-900 font-bold text-xl">
-                    {formatRemainingTime(order.expiresAt, order.serverNow, dict)}
-                  </div>
-                  <div className="text-xs text-orange-700">
-                    {dict.decisionDeadline} {order.expiresAt.toLocaleString(resolvedLocale)}
-                  </div>
-                </div>
-              )}
-
-              {order.effectiveStatus === "expired" && (
-                <div className="bg-red-50 border border-red-200 rounded-industrial p-4 flex items-center gap-2">
-                  <Info className="w-5 h-5 text-red-600 shrink-0" />
-                  <span className="text-sm font-medium text-red-800">
-                    {dict.decisionExpired}
-                  </span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-6">
-            <h2 className="font-semibold text-brand-navy mb-4">{dict.buyerData}</h2>
-            <div className="space-y-4">
-              <div>
-                <div className="text-xs text-muted-foreground mb-1">{dict.companyName}</div>
-                <div className="break-words font-medium text-brand-navy">{order.buyerBusinessName}</div>
-                <div className="text-sm text-muted-foreground mt-0.5">
-                  {dict.registrationCountry} {order.buyerCountryCode}
-                </div>
-              </div>
-
-              {(order.buyerTaxId || order.buyerRegistryId) && (
-                <div>
-                  {order.buyerTaxId && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">{dict.vatLabel}</span> <span className="font-medium">{order.buyerTaxId}</span>
-                    </div>
-                  )}
-                  {order.buyerRegistryId && (
-                    <div className="text-sm mt-1">
-                      <span className="text-muted-foreground">{dict.registryIdLabel}</span> <span className="font-medium">{order.buyerRegistryId}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {order.customerPoNumber && (
-                <div className="pt-2 border-t border-border-industrial">
-                  <div className="text-xs text-muted-foreground mb-1">{dict.buyerPo}</div>
-                  <div className="font-medium text-brand-navy">{order.customerPoNumber}</div>
-                </div>
-              )}
-
-              {!showContact && order.effectiveStatus === "pending_decision" && (
-                <div className="pt-2 border-t border-border-industrial">
-                  <div className="text-xs text-muted-foreground bg-brand-light-gray p-3 rounded-industrial">
-                    {dict.contactHidden}
-                  </div>
-                </div>
-              )}
-
-              {showContact && (
-                <div className="pt-2 border-t border-border-industrial space-y-2">
-                  <h3 className="text-sm font-semibold text-brand-navy">{dict.contactPerson}</h3>
-                  {order.buyerContactName && (
-                    <div className="text-sm">
-                      {order.buyerContactName}
-                    </div>
-                  )}
-                  {order.buyerEmail && (
-                    <div className="text-sm text-brand-teal">
-                      <a href={`mailto:${order.buyerEmail}`}>{order.buyerEmail}</a>
-                    </div>
-                  )}
-                  {order.buyerPhone && (
-                    <div className="text-sm">
-                      <a href={`tel:${order.buyerPhone}`}>{order.buyerPhone}</a>
-                    </div>
-                  )}
-                </div>
-              )}
-
-            </div>
-          </div>
-
-          {order.buyerDetailsDisclosed && (
-            <section aria-labelledby="buyer-invoice-title" className="min-w-0 border border-border-industrial bg-white p-4 shadow-soft sm:p-6">
-              <h2 id="buyer-invoice-title" className="font-semibold text-brand-navy">{dict.invoiceDataTitle}</h2>
-              {order.invoiceDataAvailable && order.buyerInvoice ? (
-                <>
-                  <p className="mt-1 text-xs leading-5 text-muted-foreground">{dict.invoiceSnapshotNotice}</p>
-                  <dl className="mt-4 space-y-4 text-sm">
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{dict.invoiceLegalName}</dt>
-                      <dd className="mt-1 break-words font-medium text-brand-navy">{order.buyerInvoice.legalName}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{dict.invoiceTaxId}</dt>
-                      <dd className="mt-1 break-words font-medium tabular-nums text-brand-navy">{order.buyerInvoice.taxIdentifierValue}</dd>
-                    </div>
-                    <div>
-                      <dt className="text-xs text-muted-foreground">{dict.invoiceAddress}</dt>
-                      <dd className="mt-1 break-words leading-6 text-brand-navy">
-                        <span className="block">{formatPartnerInvoiceStreetLine(order.buyerInvoice)}</span>
-                        <span className="block">{order.buyerInvoice.postalCode} {order.buyerInvoice.city}</span>
-                        <span className="block">{order.buyerInvoice.countryCode}</span>
-                      </dd>
-                    </div>
-                  </dl>
-                </>
-              ) : (
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">{dict.invoiceUnavailable}</p>
-              )}
-            </section>
+            <PartnerOrderFulfillmentPanel sellerOrderId={order.sellerOrderId} dict={dict} canMakeDecision={canMakeDecision} effectiveStatus={order.effectiveStatus} />
           )}
         </div>
+      </div>
+
+      <div className={`grid min-w-0 grid-cols-1 items-start gap-6 ${order.buyerDetailsDisclosed ? "lg:grid-cols-2" : ""}`}>
+        <section aria-labelledby="order-buyer-title" className="min-w-0 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-6">
+          <h2 id="order-buyer-title" className="font-semibold text-brand-navy">{dict.colBuyer}</h2>
+          <p className="mt-4 wrap-anywhere font-medium text-brand-navy">{order.buyerBusinessName}</p>
+          <dl className="mt-3 space-y-2 text-sm">
+            {order.buyerTaxId && <div className="flex flex-wrap gap-x-2"><dt className="text-muted-foreground">{dict.vatLabel}</dt><dd className="wrap-anywhere font-medium">{order.buyerTaxId}</dd></div>}
+            {order.buyerRegistryId && <div className="flex flex-wrap gap-x-2"><dt className="text-muted-foreground">{dict.registryIdLabel}</dt><dd className="wrap-anywhere font-medium">{order.buyerRegistryId}</dd></div>}
+            {(!order.buyerInvoice || order.buyerCountryCode !== order.buyerInvoice.countryCode) && <div className="flex flex-wrap gap-x-2"><dt className="text-muted-foreground">{dict.registrationCountry}</dt><dd>{order.buyerCountryCode}</dd></div>}
+            {order.customerPoNumber && <div className="border-t border-border-industrial pt-3"><dt className="text-xs text-muted-foreground">{dict.buyerPo}</dt><dd className="mt-1 wrap-anywhere font-medium">{order.customerPoNumber}</dd></div>}
+          </dl>
+          {!showContact && order.effectiveStatus === "pending_decision" && <p className="mt-4 rounded-industrial bg-brand-light-gray p-3 text-xs leading-5 text-muted-foreground">{dict.contactHidden}</p>}
+          {showContact && (
+            <div className="mt-4 space-y-2 border-t border-border-industrial pt-4 text-sm">
+              <h3 className="font-semibold text-brand-navy">{dict.contactPerson}</h3>
+              {order.buyerContactName && <p className="wrap-anywhere">{order.buyerContactName}</p>}
+              {order.buyerEmail && <p><a href={`mailto:${order.buyerEmail}`} className="inline-block max-w-full wrap-anywhere rounded text-brand-teal underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal">{order.buyerEmail}</a></p>}
+              {order.buyerPhone && <p><a href={`tel:${order.buyerPhone}`} className="inline-block max-w-full wrap-anywhere rounded text-brand-navy underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal">{order.buyerPhone}</a></p>}
+            </div>
+          )}
+        </section>
+
+        {order.buyerDetailsDisclosed && (
+          <section aria-labelledby="buyer-invoice-title" className="min-w-0 rounded-industrial border border-border-industrial bg-white p-5 shadow-soft sm:p-6">
+            <h2 id="buyer-invoice-title" className="font-semibold text-brand-navy">{dict.invoiceDataTitle}</h2>
+            {order.invoiceDataAvailable && order.buyerInvoice ? (
+              <>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{dict.invoiceSnapshotNotice}</p>
+                <dl className="mt-4 space-y-4 text-sm">
+                  <div><dt className="text-xs text-muted-foreground">{dict.invoiceLegalName}</dt><dd className="mt-1 break-words wrap-anywhere font-medium text-brand-navy">{order.buyerInvoice.legalName}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">{dict.invoiceTaxId}</dt><dd className="mt-1 break-words wrap-anywhere font-medium tabular-nums text-brand-navy">{order.buyerInvoice.taxIdentifierValue}</dd></div>
+                  <div><dt className="text-xs text-muted-foreground">{dict.invoiceAddress}</dt><dd className="mt-1 break-words wrap-anywhere leading-6 text-brand-navy">
+                    <span className="block">{formatPartnerInvoiceStreetLine(order.buyerInvoice)}</span>
+                    <span className="block">{order.buyerInvoice.postalCode} {order.buyerInvoice.city}</span>
+                    <span className="block">{order.buyerInvoice.countryCode}</span>
+                  </dd></div>
+                </dl>
+              </>
+            ) : <p className="mt-3 text-sm leading-6 text-muted-foreground">{dict.invoiceUnavailable}</p>}
+          </section>
+        )}
       </div>
     </div>
   );
