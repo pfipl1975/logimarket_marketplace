@@ -6883,6 +6883,71 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     )).rows[0].count);
     assert.equal(finalSnapshotCount, legacySnapshotCount);
   });
+  await t.test("Partner RFQ inbox: scoped reads and tx membership with pool max=1", { timeout: 20000 }, async () => {
+    await cleanDB();
+    await runMigrations(process.env);
+    const schema = await import("../../src/lib/schema");
+    const { getPartnerRfqListCore, getPartnerRfqDetailCore } = await import("../../src/lib/partner-rfq/read-model-core");
+    const { mutatePartnerRfqStatusCore } = await import("../../src/lib/partner-rfq/mutation-core");
+    const { resolvePartnerMembership } = await import("../../src/lib/auth/partner-membership");
+    const { ForbiddenError } = await import("../../src/lib/auth/authorization-errors");
+    const singlePool = new Pool({ connectionString: testDatabaseUrl, max: 1 });
+    try {
+      const database = drizzle(singlePool, { schema });
+      const actorId = "11111111-1111-1111-1111-111111111111";
+      const partners = await database.insert(schema.partners).values([
+        { companyName: "RFQ Owner A", contactEmail: "a@example.invalid" },
+        { companyName: "RFQ Owner B", contactEmail: "b@example.invalid" },
+      ]).returning({ id: schema.partners.id });
+      const [a, b] = partners.map(row => row.id);
+      const [category] = await database.insert(schema.categories).values({ name: "RFQ Test", slug: "rfq-partner-test" }).returning({ id: schema.categories.id });
+      const [offer] = await database.insert(schema.offers).values({ partnerId: a, categoryId: category.id, title: "RFQ scoped offer", offerModel: "rfq", conversionType: "inbound" }).returning({ id: schema.offers.id });
+      await database.insert(schema.partnerUserMemberships).values([a, b].map(partnerId => ({ partnerId, authUserId: actorId, membershipStatus: "active" as const, canAcceptOrders: false })));
+      const newRows = await database.insert(schema.rfqLeads).values(Array.from({ length: 28 }, (_, index) => ({
+        offerId: offer.id, partnerId: a, companyName: "Buyer A " + index, contactName: "Contact A", email: "private@example.invalid",
+        phone: "123", message: "Buyer message", createdAt: index === 0 ? null : new Date("2026-01-01T12:00:00Z"),
+      }))).returning({ id: schema.rfqLeads.id });
+      await database.insert(schema.rfqLeads).values((["in_progress", "responded", "closed"] as const).map(status => ({ offerId: offer.id, partnerId: a, status, contactName: "A", email: "a@example.invalid", createdAt: new Date("2025-01-01T00:00:00Z") })));
+      const [foreign] = await database.insert(schema.rfqLeads).values({ offerId: offer.id, partnerId: b, contactName: "Foreign", email: "b@example.invalid", companyName: "Foreign Buyer" }).returning({ id: schema.rfqLeads.id });
+      const list = await getPartnerRfqListCore(database, a, { status: "new", page: 1 });
+      assert.deepEqual(list.counts, { new: 28, in_progress: 1, responded: 1, closed: 1, all: 31 });
+      assert.equal(list.items.length, 25);
+      assert.deepEqual(list.items.map(row => row.id), newRows.slice(3).reverse().map(row => row.id));
+      const pageTwo = await getPartnerRfqListCore(database, a, { status: "new", page: 99 });
+      assert.equal(pageTwo.currentPage, 2);
+      assert.equal(pageTwo.items.length, 3);
+      assert.equal(pageTwo.items.at(-1)?.createdAt, null);
+      for (const item of list.items) for (const key of ["email", "phone", "message", "contactName"]) assert.equal(key in item, false);
+      const listB = await getPartnerRfqListCore(database, b, { status: "all", page: 1 });
+      assert.deepEqual(listB.items.map(row => row.id), [foreign.id]);
+      assert.equal(listB.items[0].offerTitle, null, "cross-Partner offer must not be linked");
+      assert.equal(await getPartnerRfqDetailCore(database, b, newRows[0].id), null);
+      assert.equal(await getPartnerRfqDetailCore(database, a, foreign.id), null);
+      assert.equal(await getPartnerRfqDetailCore(database, a, 0), null);
+      assert.equal(await getPartnerRfqDetailCore(database, a, 900000000), null);
+      const detail = await getPartnerRfqDetailCore(database, a, newRows[0].id);
+      assert.equal(detail?.contactName, "Contact A");
+      assert.equal(detail?.email, "private@example.invalid");
+      assert.equal(detail?.phone, "123");
+      assert.equal(detail?.message, "Buyer message");
+      assert.equal(detail?.ownedOfferId, offer.id);
+      assert.equal(detail?.status, "new");
+      const authorize = await resolvePartnerMembership(async () => ({ status: "authenticated", user: { id: actorId, email: null } }));
+      const mutate = (partnerId: number, rfqId: number, expectedStatus: RfqStatus, targetStatus: RfqStatus) => database.transaction(tx => mutatePartnerRfqStatusCore(tx, { partnerId, rfqId, expectedStatus, targetStatus }, id => authorize(id, tx)));
+      assert.equal((await mutate(b, newRows[0].id, "new", "closed")).code, "NOT_FOUND");
+      assert.equal((await mutate(a, newRows[0].id, "new", "in_progress")).code, "UPDATED");
+      assert.equal((await mutate(a, newRows[0].id, "new", "closed")).code, "CONFLICT");
+      assert.equal((await mutate(a, newRows[0].id, "in_progress", "responded")).code, "UPDATED");
+      assert.equal((await mutate(a, newRows[0].id, "responded", "closed")).code, "UPDATED");
+      assert.equal((await mutate(a, newRows[0].id, "closed", "new")).code, "TRANSITION_NOT_ALLOWED");
+      assert.equal((await mutate(a, newRows[0].id, "closed", "closed")).code, "UNCHANGED");
+      await database.update(schema.partnerUserMemberships).set({ membershipStatus: "revoked", revokedAt: new Date() }).where(eq(schema.partnerUserMemberships.partnerId, a));
+      await assert.rejects(mutate(a, newRows[1].id, "new", "closed"), ForbiddenError);
+      assert.equal((await getPartnerRfqDetailCore(database, a, newRows[1].id))?.status, "new");
+    } finally {
+      await singlePool.end();
+    }
+  });
   await pool.end();
 });
 

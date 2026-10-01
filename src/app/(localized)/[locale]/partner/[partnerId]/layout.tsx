@@ -34,6 +34,7 @@ export default async function LocalizedPartnerLayout({ children, params }: { chi
 
   const dashboardHref = `/${locale}/partner/${parsedPartnerId}`;
   const ordersHref = `${dashboardHref}/orders`;
+  const rfqHref = `${dashboardHref}/rfq`;
   const offersHref = `${dashboardHref}/offers`;
 
   return (
@@ -43,6 +44,7 @@ export default async function LocalizedPartnerLayout({ children, params }: { chi
       dict={dictionary.PartnerWorkspace}
       dashboardHref={dashboardHref}
       ordersHref={ordersHref}
+      rfqHref={rfqHref}
       offersHref={offersHref}
     >
       {children}

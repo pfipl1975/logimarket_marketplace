@@ -59,23 +59,19 @@ export async function requirePartnerMembershipCore(
   getMembership: GetMembershipFn,
   partnerId: number
 ): Promise<AuthenticatedIdentity> {
-  let result;
-  try {
-    result = await getUser();
-  } catch {
-    throw new AuthInfrastructureError();
-  }
+  const identity = await requirePartnerSessionIdentityCore(getUser);
+  return requirePartnerMembershipForIdentityCore(identity, getMembership, partnerId);
+}
 
-  if (result.status === "unavailable") {
-    throw new AuthInfrastructureError();
-  }
-  if (result.status !== "authenticated") {
-    throw new UnauthorizedError();
-  }
+export async function requirePartnerMembershipForIdentityCore(
+  identity: AuthenticatedIdentity,
+  getMembership: GetMembershipFn,
+  partnerId: number
+): Promise<AuthenticatedIdentity> {
 
   let membership;
   try {
-    membership = await getMembership(result.user.id, partnerId);
+    membership = await getMembership(identity.id, partnerId);
   } catch {
     throw new AuthInfrastructureError();
   }
@@ -84,7 +80,17 @@ export async function requirePartnerMembershipCore(
     throw new ForbiddenError();
   }
 
-  return result.user;
+  return identity;
+}
+
+/** Resolve the session before acquiring a connection; recheck active membership on tx. */
+export async function resolvePartnerMembership(getUser: GetCurrentUserFn = getCurrentUser) {
+  const identity = await requirePartnerSessionIdentityCore(getUser);
+  return (partnerId: number, tx: MembershipTransaction) => requirePartnerMembershipForIdentityCore(
+    identity,
+    (userId, id) => getDbMembershipInTransaction(tx, userId, id),
+    partnerId
+  );
 }
 
 export async function requirePartnerMembership(partnerId: number): Promise<AuthenticatedIdentity> {

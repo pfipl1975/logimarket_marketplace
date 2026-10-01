@@ -594,6 +594,23 @@ export async function mutateRfqStatus(
   }
 }
 
+export async function mutatePartnerRfqStatus(rawInput: unknown): Promise<import("@/lib/partner-rfq/mutation-core").PartnerRfqMutationResult> {
+  try {
+    const { resolvePartnerMembership } = await import("@/lib/auth/partner-membership");
+    const authorize = await resolvePartnerMembership();
+    const { PartnerRfqMutationSchema, mutatePartnerRfqStatusCore } = await import("@/lib/partner-rfq/mutation-core");
+    const parsed = PartnerRfqMutationSchema.safeParse(rawInput);
+    if (!parsed.success) return { ok: false, code: "VALIDATION_ERROR" };
+    const result = await db.transaction(tx => mutatePartnerRfqStatusCore(tx, parsed.data, id => authorize(id, tx)));
+    if (result.ok && result.code === "UPDATED") revalidatePath("/", "layout");
+    return result;
+  } catch (error) {
+    const { ForbiddenError, UnauthorizedError } = await import("@/lib/auth/authorization-errors");
+    if (error instanceof ForbiddenError || error instanceof UnauthorizedError) return { ok: false, code: "FORBIDDEN" };
+    return { ok: false, code: "SYSTEM_ERROR" };
+  }
+}
+
 export async function getCategoryAttributeConfiguration(
   categoryId: number,
   locale: string,

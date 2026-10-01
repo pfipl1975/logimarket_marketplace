@@ -179,7 +179,8 @@ test("Partner navigation exposes Offers as a real active module", async () => {
   assert.match(navigation, /offersHref/);
   assert.match(navigation, /isOffersActive/);
   assert.match(navigation, /aria-current=\{isOffersActive \? "page" : undefined\}/);
-  assert.match(navigation, /grid-cols-3/);
+  assert.match(navigation, /grid-cols-2/);
+  assert.match(navigation, /md:grid-cols-4/);
   assert.match(shell, /offers: dict\.offers/);
   assert.match(shell, /dict\.backToMarketplace/);
   assert.match(shell, /PublicLogoutForm/);
