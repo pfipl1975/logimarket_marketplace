@@ -85,6 +85,7 @@ for (const width of [375, 1280]) {
     await expect(final.getByText(labels.contactProcessNotice, { exact: true })).toBeVisible();
     const direct = final.getByRole("region", { name: labels.directContactTitle, exact: true });
     await expect(direct.getByRole("heading", { name: "Kontakt bezpośredni", exact: true })).toBeVisible();
+    await contact.focus();
     for (const person of PARTNER_RECRUITMENT_CONTACTS) {
       const phone = direct.getByRole("link", { name: `${person.name} ${person.phoneDisplay}`, exact: true });
       await expect(phone).toBeVisible();
@@ -92,17 +93,17 @@ for (const width of [375, 1280]) {
       await expect(phone.getByText(person.name, { exact: true })).toBeVisible();
       await expect(phone.getByText(person.phoneDisplay, { exact: true })).toBeVisible();
       expect((await phone.boundingBox())!.height).toBeGreaterThanOrEqual(44);
-      await phone.focus();
+      await page.keyboard.press("Tab");
       await expect(phone).toBeFocused();
-      expect(await phone.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+      await expect.poll(() => phone.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
     }
     const email = direct.getByRole("link", { name: labels.contactEmail, exact: true });
     await expect(email).toHaveCount(1);
     await expect(email).toBeVisible();
     await expect(email).toHaveAttribute("href", "mailto:kontakt@logimarket.pl");
-    await email.focus();
+    await page.keyboard.press("Tab");
     await expect(email).toBeFocused();
-    expect(await email.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+    await expect.poll(() => email.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
     await expect(contact).toHaveAttribute("href", destination.href);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/dla-partnerow$/);
     await expect(page.locator('link[hreflang="en"]')).toHaveAttribute("href", /\/en\/for-partners$/);
