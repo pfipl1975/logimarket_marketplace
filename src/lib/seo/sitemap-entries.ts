@@ -15,6 +15,7 @@ import {
   solutionsIndexPaths,
 } from "@/lib/landing";
 import type { SitemapCategoryEntry, SitemapOfferEntry } from "@/lib/seo/repository";
+import { getPartnerRecruitmentLocaleLinks } from "@/lib/i18n/paths";
 
 export type SitemapDynamicData = {
   offers: SitemapOfferEntry[];
@@ -72,6 +73,14 @@ export function isDatabaseUnavailableError(error: unknown, depth = 0): boolean {
 }
 
 export function getCoreSitemapEntries(): MetadataRoute.Sitemap {
+  const partnerLinks = getPartnerRecruitmentLocaleLinks();
+  const partnerLanguages = Object.fromEntries(Object.entries(partnerLinks).map(([locale, path]) => [locale, absoluteUrl(path)]));
+  const partnerEntries = Object.values(partnerLinks).map(path => ({
+    url: absoluteUrl(path),
+    changeFrequency: "monthly" as const,
+    priority: 0.7,
+    alternates: { languages: { ...partnerLanguages, "x-default": absoluteUrl(partnerLinks.pl) } },
+  }));
   const homepageEntries = locales.map((locale) => ({
     url: getHomeCanonical(locale),
     changeFrequency: "weekly" as const,
@@ -174,6 +183,7 @@ export function getCoreSitemapEntries(): MetadataRoute.Sitemap {
 
   return deduplicateAndSort([
     ...homepageEntries,
+    ...partnerEntries,
     ...catalogRootEntries,
     { url: absoluteUrl("/dokumenty-prawne"), changeFrequency: "monthly", priority: 0.5 },
     ...publicLegalEntries,

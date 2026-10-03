@@ -85,7 +85,7 @@ export async function SiteHeader({
 
           <div className="min-w-0 flex-1 border-l border-white/15 pl-3 md:pl-4">
             <p className="text-[10px] font-semibold uppercase leading-snug tracking-[0.08em] text-white/70 sm:text-xs">
-              {navLabels.constructionNotice ?? "MARKETPLACE W BUDOWIE / MARKETPLACE UNDER CONSTRUCTION"}
+              {navLabels.marketplacePositioning}
             </p>
           </div>
         </div>

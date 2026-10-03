@@ -4,6 +4,22 @@ export function getHomePath(locale: Locale): string {
   return locale === defaultLocale ? "/" : `/${locale}`;
 }
 
+export function getPartnerRecruitmentPath(locale: Locale): string {
+  return locale === defaultLocale ? "/dla-partnerow" : `/${locale}/for-partners`;
+}
+
+export function getPartnerRecruitmentLocaleLinks(): Record<Locale, string> {
+  return {
+    pl: getPartnerRecruitmentPath("pl"),
+    en: getPartnerRecruitmentPath("en"),
+    de: getPartnerRecruitmentPath("de"),
+    fr: getPartnerRecruitmentPath("fr"),
+    uk: getPartnerRecruitmentPath("uk"),
+    es: getPartnerRecruitmentPath("es"),
+    zh: getPartnerRecruitmentPath("zh"),
+  };
+}
+
 export function getOfferPath(locale: Locale, offerId: string): string {
   return locale === defaultLocale
     ? `/oferta/${offerId}`
