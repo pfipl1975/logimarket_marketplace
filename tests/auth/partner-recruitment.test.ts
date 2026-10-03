@@ -5,12 +5,41 @@ import { locales } from "../../src/lib/i18n/config";
 import { getDictionary } from "../../src/lib/i18n/dictionaries";
 import { getPartnerRecruitmentLocaleLinks, getPartnerRecruitmentPath } from "../../src/lib/i18n/paths";
 import { isProtectedRoute } from "../../src/lib/auth/route-classification";
-import { getPartnerRecruitmentContactHref, getPartnerRecruitmentMetadata, PARTNER_RECRUITMENT_BENEFITS } from "../../src/lib/partner-recruitment";
+import { getPartnerRecruitmentContactHref, getPartnerRecruitmentMetadata, PARTNER_RECRUITMENT_BENEFITS, PARTNER_RECRUITMENT_CONTACTS } from "../../src/lib/partner-recruitment";
 import { getCoreSitemapEntries } from "../../src/lib/seo/sitemap-entries";
 import { absoluteUrl } from "../../src/lib/seo/urls";
 
 const branding = "MARKETPLACE B2B DLA LOGISTYKI / B2B LOGISTICS MARKETPLACE";
 const source = (path: string) => readFile(new URL(`../../${path}`, import.meta.url), "utf8");
+
+test("direct Partner contacts have one canonical source, semantic links and localized headings", async () => {
+  assert.deepEqual(PARTNER_RECRUITMENT_CONTACTS, [
+    { name: "Piotr Fiszer", phoneDisplay: "+48 604 904 150", phoneHref: "tel:+48604904150" },
+    { name: "Łukasz Antczak", phoneDisplay: "+48 788 750 273", phoneHref: "tel:+48788750273" },
+  ]);
+  const shared = await source("src/lib/partner-recruitment.ts");
+  const landing = await source("src/app/_shared/PartnerRecruitmentPage.tsx");
+  for (const person of PARTNER_RECRUITMENT_CONTACTS) {
+    assert.equal(person.phoneHref, `tel:${person.phoneDisplay.replaceAll(" ", "")}`);
+    for (const value of Object.values(person)) {
+      assert.equal(shared.split(value).length - 1, 1);
+      assert.equal(landing.includes(value), false);
+    }
+  }
+  assert.match(landing, /PARTNER_RECRUITMENT_CONTACTS.map/);
+  assert.match(landing, /<a href=\{person.phoneHref\}/);
+  assert.match(landing, /\{person.name\}/);
+  assert.match(landing, /\{person.phoneDisplay\}/);
+  assert.equal((landing.match(/href=\{`mailto:\$\{labels.contactEmail\}`\}/g) ?? []).length, 1);
+  assert.ok(landing.indexOf('id="partner-direct-contact-title"') > landing.indexOf('id="partner-final-contact-notice"'));
+  const titles = { pl: "Kontakt bezpośredni", en: "Direct contact", de: "Direkter Kontakt", fr: "Contact direct", uk: "Прямий контакт", es: "Contacto directo", zh: "直接联系" };
+  for (const locale of locales) {
+    const dict = await getDictionary(locale);
+    assert.equal(dict.partnerRecruitment.directContactTitle, titles[locale]);
+    const dictionarySource = await source(`src/messages/${locale}.json`);
+    for (const person of PARTNER_RECRUITMENT_CONTACTS) assert.equal(dictionarySource.includes(person.phoneDisplay), false);
+  }
+});
 
 test("all seven locales have permanent branding and complete localized recruitment copy", async () => {
   const pl = await getDictionary("pl");

@@ -6,7 +6,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
 import { getPartnerRecruitmentLocaleLinks, getPrivacyPolicyPath } from "@/lib/i18n/paths";
-import { getPartnerRecruitmentContactHref, PARTNER_RECRUITMENT_AUDIENCES, PARTNER_RECRUITMENT_BENEFITS, PARTNER_RECRUITMENT_STEPS } from "@/lib/partner-recruitment";
+import { getPartnerRecruitmentContactHref, PARTNER_RECRUITMENT_AUDIENCES, PARTNER_RECRUITMENT_BENEFITS, PARTNER_RECRUITMENT_CONTACTS, PARTNER_RECRUITMENT_STEPS } from "@/lib/partner-recruitment";
 
 const contactClass = "inline-flex min-h-11 w-full items-center justify-center gap-3 rounded-industrial bg-brand-teal px-5 py-3 text-center font-semibold text-white transition-colors hover:bg-brand-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-navy focus-visible:ring-offset-2 sm:w-fit";
 
@@ -62,7 +62,20 @@ export async function PartnerRecruitmentPage({ locale }: { locale: Locale }) {
           <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">{labels.finalDescription}</p>
           <a href={contactHref} aria-describedby="partner-final-contact-notice" className={`${contactClass} mt-6`}>{labels.becomePartner}<ArrowRight aria-hidden="true" className="size-4 shrink-0" /></a>
           <p id="partner-final-contact-notice" className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">{labels.contactProcessNotice}</p>
-          <a href={`mailto:${labels.contactEmail}`} className="mt-3 inline-flex min-h-11 max-w-full items-center rounded-industrial wrap-anywhere text-brand-teal underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">{labels.contactEmail}</a>
+          <section aria-labelledby="partner-direct-contact-title" className="mt-6 border-t border-border-industrial pt-5">
+            <h3 id="partner-direct-contact-title" className="text-sm font-semibold text-brand-navy">{labels.directContactTitle}</h3>
+            <ul className="mt-3 grid gap-3 sm:grid-cols-2">
+              {PARTNER_RECRUITMENT_CONTACTS.map(person => (
+                <li key={person.phoneHref} className="min-w-0">
+                  <a href={person.phoneHref} className="inline-flex min-h-11 w-full flex-col items-start rounded-industrial px-3 py-2 transition-colors hover:bg-brand-light-gray focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">
+                    <span className="font-medium text-brand-navy">{person.name}</span>
+                    <span className="mt-1 text-brand-teal underline underline-offset-4">{person.phoneDisplay}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <a href={`mailto:${labels.contactEmail}`} className="mt-3 inline-flex min-h-11 max-w-full items-center rounded-industrial wrap-anywhere text-brand-teal underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">{labels.contactEmail}</a>
+          </section>
         </section>
       </main>
       <SiteFooter locale={locale} navLabels={dict.nav} footerLabels={dict.footer} />

@@ -2,6 +2,7 @@ import { test, expect, type Page } from "@playwright/test";
 import pl from "../../src/messages/pl.json";
 import en from "../../src/messages/en.json";
 import de from "../../src/messages/de.json";
+import { PARTNER_RECRUITMENT_CONTACTS } from "../../src/lib/partner-recruitment";
 
 const branding = "MARKETPLACE B2B DLA LOGISTYKI / B2B LOGISTICS MARKETPLACE";
 const noOverflow = async (page: Page, width: number) => {
@@ -82,7 +83,27 @@ for (const width of [375, 1280]) {
     expect(destination.pathname).toBe("kontakt@logimarket.pl");
     expect(destination.searchParams.get("subject")).toBe("Współpraca partnerska — LogiMarket Marketplace");
     await expect(final.getByText(labels.contactProcessNotice, { exact: true })).toBeVisible();
-    await expect(final.getByRole("link", { name: labels.contactEmail, exact: true })).toBeVisible();
+    const direct = final.getByRole("region", { name: labels.directContactTitle, exact: true });
+    await expect(direct.getByRole("heading", { name: "Kontakt bezpośredni", exact: true })).toBeVisible();
+    for (const person of PARTNER_RECRUITMENT_CONTACTS) {
+      const phone = direct.getByRole("link", { name: `${person.name} ${person.phoneDisplay}`, exact: true });
+      await expect(phone).toBeVisible();
+      await expect(phone).toHaveAttribute("href", person.phoneHref);
+      await expect(phone.getByText(person.name, { exact: true })).toBeVisible();
+      await expect(phone.getByText(person.phoneDisplay, { exact: true })).toBeVisible();
+      expect((await phone.boundingBox())!.height).toBeGreaterThanOrEqual(44);
+      await phone.focus();
+      await expect(phone).toBeFocused();
+      expect(await phone.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+    }
+    const email = direct.getByRole("link", { name: labels.contactEmail, exact: true });
+    await expect(email).toHaveCount(1);
+    await expect(email).toBeVisible();
+    await expect(email).toHaveAttribute("href", "mailto:kontakt@logimarket.pl");
+    await email.focus();
+    await expect(email).toBeFocused();
+    expect(await email.evaluate(element => element.matches(":focus-visible") && getComputedStyle(element).boxShadow !== "none")).toBe(true);
+    await expect(contact).toHaveAttribute("href", destination.href);
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute("href", /\/dla-partnerow$/);
     await expect(page.locator('link[hreflang="en"]')).toHaveAttribute("href", /\/en\/for-partners$/);
     await expect(page.locator('form[action*="partner"]')).toHaveCount(0);
@@ -114,6 +135,7 @@ test("EN and DE recruitment routes and language switch retain the cooperation pa
     await page.getByRole("link", { name: dict.partnerRecruitment.checkConditions, exact: true }).click();
     await expect(page).toHaveURL(new RegExp(`/${locale}/for-partners$`));
     await expect(page.getByRole("heading", { level: 1 })).toHaveText(dict.partnerRecruitment.landingHeroTitle);
+    await expect(page.getByRole("heading", { name: dict.partnerRecruitment.directContactTitle, exact: true })).toBeVisible();
     await expect(page.locator("header").getByText(branding, { exact: true })).toBeVisible();
     await page.locator("header").getByRole("button", { name: new RegExp(dict.nav.languageSwitcherAria) }).click();
     await expect(page.locator('#language-menu a[href="/dla-partnerow"]')).toBeVisible();

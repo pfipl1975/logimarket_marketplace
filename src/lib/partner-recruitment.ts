@@ -11,6 +11,10 @@ export const PARTNER_RECRUITMENT_BENEFITS = [
 
 export const PARTNER_RECRUITMENT_STEPS = ["stepContact", "stepAccount", "stepOffers", "stepOperations"] as const;
 export const PARTNER_RECRUITMENT_AUDIENCES = ["audienceEquipment", "audienceManufacturers", "audienceOperators", "audienceSolutions"] as const;
+export const PARTNER_RECRUITMENT_CONTACTS = [
+  { name: "Piotr Fiszer", phoneDisplay: "+48 604 904 150", phoneHref: "tel:+48604904150" },
+  { name: "Łukasz Antczak", phoneDisplay: "+48 788 750 273", phoneHref: "tel:+48788750273" },
+] as const;
 export type PartnerRecruitmentLabels = Dictionary["partnerRecruitment"];
 
 export function getPartnerRecruitmentContactHref(labels: PartnerRecruitmentLabels): string {
