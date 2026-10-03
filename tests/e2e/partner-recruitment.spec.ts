@@ -100,7 +100,7 @@ for (const width of [375, 1280]) {
     const register = page.locator('a[href^="/register"]').first();
     await expect(register).toBeVisible();
     await register.click();
-    expect(new URL(page.url()).pathname).toBe("/register");
+    await expect(page).toHaveURL(/\/register(?:\?.*)?$/);
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
     expect(errors).toEqual([]);
   });
