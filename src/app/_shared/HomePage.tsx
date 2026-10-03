@@ -15,6 +15,7 @@ import {
 } from "@/lib/i18n/paths";
 import { HomepageSolutionsDiscovery } from "@/components/home/HomepageSolutionsDiscovery";
 import { ProductGroupTiles } from "@/components/home/ProductGroupTiles";
+import { PartnerRecruitmentBanner } from "@/components/home/PartnerRecruitmentBanner";
 import type { Locale } from "@/lib/i18n/types";
 
 const VIEW_OFFER_LABELS: Record<Locale, string> = {
@@ -149,6 +150,7 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
       </section>
 
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-6">
+        <PartnerRecruitmentBanner locale={locale} labels={dict.partnerRecruitment} />
         <ProductGroupTiles locale={locale} />
 
         <div className="flex flex-col gap-2">
