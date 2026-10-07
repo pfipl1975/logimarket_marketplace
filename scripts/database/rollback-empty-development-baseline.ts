@@ -239,7 +239,7 @@ export async function verifyRollbackPreconditions(
   // 5. Full fingerprint must be the authoritative latest runtime state
   const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(q);
   const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-  if (classification.state !== "EXACT_EXISTING_POST_0021") {
+  if (classification.state !== "EXACT_EXISTING_POST_0022") {
     return {
       allowed: false,
       reason: `Schema is not EXACT_EXISTING: ${classification.state}. Differences: ${classification.differences.join("; ")}`,
