@@ -155,6 +155,13 @@
       "when": 1790798400000,
       "tag": "0021_buyer_invoice_snapshot",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1791359275626,
+      "tag": "0022_legal_document_registry_rls",
+      "breakpoints": true
     }
   ]
 }
