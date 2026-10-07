@@ -49,6 +49,7 @@ test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0023", () 
       { idx: 19, tag: "0019_legal_document_registry" },
       { idx: 20, tag: "0020_buyer_profile_and_identity_uniqueness" },
       { idx: 21, tag: "0021_buyer_invoice_snapshot" },
+        { idx: 22, tag: "0022_legal_document_registry_rls" },
     ],
   );
 });
