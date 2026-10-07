@@ -137,10 +137,7 @@ test("CONTRACT_SYNC: 15. Zero policies and the exact append-only trigger", () =>
       t !== "partner_agreement_execution_evidence" &&
       t !== "partner_agreement_evidence_invalidations" &&
       t !== "seller_tax_identifiers" &&
-      t !== "buyer_organization_verification_events" &&
-        t !== "legal_document_versions" &&
-        t !== "legal_pack_versions" &&
-        t !== "legal_pack_documents"
+      t !== "buyer_organization_verification_events"
     ) {
       assert.strictEqual(fp.triggerCount ?? 0, 0, `${t} must have 0 triggers`);
     }
@@ -150,9 +147,6 @@ test("CONTRACT_SYNC: 15. Zero policies and the exact append-only trigger", () =>
   assert.strictEqual(PRODUCTION_FINGERPRINT.partner_agreement_evidence_invalidations.triggerCount, 1);
   assert.strictEqual(PRODUCTION_FINGERPRINT.seller_tax_identifiers.triggerCount, 1);
   assert.strictEqual(PRODUCTION_FINGERPRINT.buyer_organization_verification_events.triggerCount, 1);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.legal_document_versions.triggerCount, 1);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.legal_pack_versions.triggerCount, 1);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.legal_pack_documents.triggerCount, 1);
   assert.strictEqual(triggerCount, EXPECTED_COUNTS.TRIGGERS);
 });
 

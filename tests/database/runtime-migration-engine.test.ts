@@ -67,18 +67,19 @@ const exactJournalEntries = [
   { tag: "fake_tag_0014", when: 1789255000000 },
   { tag: "fake_tag_0015", when: 1789320414668 },
   { tag: "fake_tag_0016", when: 1789321000000 },
-  { tag: "fake_tag_0017", when: 1789323000000 },
+  { tag: "fake_tag_0017", when: 1789322000000 },
   { tag: "fake_tag_0018", when: 1789840000000 },
   { tag: "fake_tag_0019", when: 1790446918000 },
   { tag: "fake_tag_0020", when: 1790712000000 },
   { tag: "fake_tag_0021", when: 1790798400000 },
+  { tag: "fake_tag_0022", when: 1791800000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const previousJournalEntries = exactJournalEntries.slice(0, 21);
+const previousJournalEntries = exactJournalEntries.slice(0, 22);
 const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const prevFakeReadFn = () => ({
   text: JSON.stringify({ entries: previousJournalEntries }),
@@ -451,7 +452,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0023");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0022");
 });
 
 test("TARGET: EXACT_EXISTING_POST_0015 for the historical POST_0015 fingerprint", () => {
@@ -1312,7 +1313,7 @@ test("GRANT_SEQUENCE_ACL_TEST: grant verifier counts sequence grants per role", 
           rows: [
             { oid: 20, rolname: "anon" },
             { oid: 21, rolname: "authenticated" },
-            { oid: 23, rolname: "service_role" },
+            { oid: 22, rolname: "service_role" },
           ],
         };
       }
@@ -1322,7 +1323,7 @@ test("GRANT_SEQUENCE_ACL_TEST: grant verifier counts sequence grants per role", 
           rows: [
             { object_name: "offers_id_seq", grantee_oid: 20, privilege: "USAGE" },
             { object_name: "partners_id_seq", grantee_oid: 21, privilege: "USAGE" },
-            { object_name: "categories_id_seq", grantee_oid: 23, privilege: "USAGE" },
+            { object_name: "categories_id_seq", grantee_oid: 22, privilege: "USAGE" },
           ],
         };
       }

@@ -38,7 +38,7 @@ function validate(
   );
 }
 
-test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0023", () => {
+test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0022", () => {
   assert.strictEqual(journal.entries.length, 23);
   assert.strictEqual(diskMigrations.length, 23);
   assert.deepStrictEqual(
@@ -49,7 +49,7 @@ test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0023", () 
       { idx: 19, tag: "0019_legal_document_registry" },
       { idx: 20, tag: "0020_buyer_profile_and_identity_uniqueness" },
       { idx: 21, tag: "0021_buyer_invoice_snapshot" },
-        { idx: 22, tag: "0022_legal_document_registry_rls" },
+      { idx: 22, tag: "0022_legal_document_registry_rls" },
     ],
   );
 });
@@ -117,7 +117,7 @@ test("CARDINALITY: POST_0020 accepts exactly 21 canonical rows", () => {
   );
 });
 
-for (const count of [23, 20, 19, 0]) {
+for (const count of [22, 20, 19, 0]) {
   test(`CARDINALITY: POST_0020 rejects ${count} rows`, () => {
     const rows = canonicalRows.slice(0, count);
     assert.throws(
@@ -127,15 +127,15 @@ for (const count of [23, 20, 19, 0]) {
   });
 }
 
-test("CARDINALITY: POST_0023 accepts exactly 23 canonical rows", () => {
-  assert.doesNotThrow(() => validate("EXACT_EXISTING_POST_0023", canonicalRows));
+test("CARDINALITY: POST_0021 accepts exactly 22 canonical rows", () => {
+  assert.doesNotThrow(() => validate("EXACT_EXISTING_POST_0022", canonicalRows));
 });
 
-for (const count of [21, 20, 0]) {
-  test(`CARDINALITY: POST_0023 rejects ${count} rows`, () => {
+for (const count of [22, 21, 20, 0]) {
+  test(`CARDINALITY: POST_0022 rejects ${count} rows`, () => {
     assert.throws(
-      () => validate("EXACT_EXISTING_POST_0023", canonicalRows.slice(0, count)),
-      new RegExp(`schema is POST_0023 but journal has ${count} rows`),
+      () => validate("EXACT_EXISTING_POST_0022", canonicalRows.slice(0, count)),
+      new RegExp(`schema is POST_0022 but journal has ${count} rows`),
     );
   });
 }
@@ -164,13 +164,13 @@ test("CARDINALITY: current live-style POST_0017 with 11 rows fails before hash v
   assert.strictEqual(migrationReadAttempted, false);
 });
 
-test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_0023", () => {
+test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_0022", () => {
   for (const state of [
     "EXACT_EXISTING_POST_0017",
     "EXACT_EXISTING_POST_0018",
     "EXACT_EXISTING_POST_0019",
     "EXACT_EXISTING_POST_0020",
-    "EXACT_EXISTING_POST_0023",
+    "EXACT_EXISTING_POST_0021",
   ]) {
     assert.strictEqual(
       isLegacyDev0000Exception(

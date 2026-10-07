@@ -45,7 +45,7 @@ test("journal exists and is valid", () => {
   assert.strictEqual(journal.entries[16].tag, "0016_buyer_order_ownership");
   assert.strictEqual(journal.entries[16].when, 1789321000000);
   assert.strictEqual(journal.entries[17].tag, "0017_publication_status_pending_review");
-  assert.strictEqual(journal.entries[17].when, 1789323000000);
+  assert.strictEqual(journal.entries[17].when, 1789322000000);
   assert.strictEqual(journal.entries[18].tag, "0018_buyer_internal_trust_foundation");
   assert.strictEqual(journal.entries[18].when, 1789840000000);
 });
