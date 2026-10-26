@@ -228,6 +228,7 @@ export function PartnerOfferEditForm({
               <p className="text-xs text-muted-foreground">{dict.rfqNetPriceHelp}</p>
             </div>
           ) : (
+          <>
           <fieldset className="space-y-4" disabled={isPending || (busyDomain !== null && busyDomain !== "core")}>
             <legend className="block text-sm font-semibold text-brand-navy mb-3">
               {dict.offerEditPriceModeLabel || "Sposób prezentacji ceny"}
@@ -293,6 +294,7 @@ export function PartnerOfferEditForm({
               </p>
             </div>
           )}
+          </>
           )}
         </section>
 
