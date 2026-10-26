@@ -7,7 +7,7 @@ export type RfqNetPriceFields = {
 };
 
 /** Numeric(18,2): at most 16 digits before the decimal point. */
-const MAX_MINOR_UNITS = 999999999999999999n;
+const MAX_MINOR_UNITS = BigInt("999999999999999999");
 
 export function normalizeRfqNetPrice(value: unknown): string | null {
   if (value === null || value === "") return null;
@@ -54,6 +54,6 @@ export function formatRfqNetPrice(value: string, locale: string): string {
   const formatter = new Intl.NumberFormat(locale);
   const decimal = new Intl.NumberFormat(locale, { minimumFractionDigits: 1 })
     .formatToParts(1.1).find((part) => part.type === "decimal")?.value ?? ",";
-  return formatter.format(minor / 100n) + decimal +
-    (minor % 100n).toString().padStart(2, "0") + " PLN";
+  return formatter.format(minor / BigInt(100)) + decimal +
+    (minor % BigInt(100)).toString().padStart(2, "0") + " PLN";
 }
