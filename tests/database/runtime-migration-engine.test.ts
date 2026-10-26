@@ -73,13 +73,14 @@ const exactJournalEntries = [
   { tag: "fake_tag_0020", when: 1790712000000 },
   { tag: "fake_tag_0021", when: 1790798400000 },
   { tag: "fake_tag_0022", when: 1791800000000 },
+  { tag: "fake_tag_0023", when: 1793026000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
   text: JSON.stringify({ entries: exactJournalEntries }),
   parsed: { entries: exactJournalEntries },
 });
-const previousJournalEntries = exactJournalEntries.slice(0, 22);
+const previousJournalEntries = exactJournalEntries.slice(0, 23);
 const prevFakeRead = () => previousJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const prevFakeReadFn = () => ({
   text: JSON.stringify({ entries: previousJournalEntries }),
@@ -452,7 +453,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0022");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0023");
 });
 
 test("TARGET: EXACT_EXISTING_POST_0015 for the historical POST_0015 fingerprint", () => {
