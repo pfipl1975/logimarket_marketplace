@@ -801,7 +801,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 23);
+      assert.strictEqual(post0010Journal.rows[0].count, 24);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -4582,7 +4582,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0023", "Must recognize the POST_0022 terminal state after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0023", "Must recognize the POST_0023 terminal state after migration");
   });
 
   await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
@@ -4610,11 +4610,11 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const after = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0023");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 23);
+    assert.strictEqual(journalAfter.rows[0].count, 24);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 23);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 24);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
@@ -4636,7 +4636,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // ------------------------------------------------------------------
     await cleanDB();
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
-    assert.strictEqual(diskMigrations.length, 23);
+    assert.strictEqual(diskMigrations.length, 24);
     const post0015Migrations = diskMigrations.slice(0, 16);
     assert.strictEqual(post0015Migrations.length, 16);
     for (const migration of post0015Migrations) {
@@ -4675,7 +4675,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // ------------------------------------------------------------------
     await runMigrations(process.env);
 
-    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0022
+    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0023
     const post0016 = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(
       classifyRuntimeTarget(post0016.fingerprint, post0016.publicTables, post0016.security).state,
@@ -4684,12 +4684,12 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     // RUNTIME D: journal has the complete current migration chain.
     const journalAfter0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter0016.rows[0].count, 23);
+    assert.strictEqual(journalAfter0016.rows[0].count, 24);
 
     // RUNTIME E: POST_0016 rerun is a terminal no-op
     await runMigrations(process.env);
     const journalAfterNoOp0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 23);
+    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 24);
 
     // ------------------------------------------------------------------
     // SCHEMA F: buyer_auth_user_id is a nullable uuid, not unique, no auth.users FK
