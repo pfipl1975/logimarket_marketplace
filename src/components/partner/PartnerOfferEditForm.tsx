@@ -201,6 +201,33 @@ export function PartnerOfferEditForm({
           <h2 className="text-lg font-bold text-brand-navy border-b border-border-industrial pb-2">
             {dict.offerEditSectionPrice || "Cena"}
           </h2>
+          {isRfq ? (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="priceNetto" className="block text-sm font-semibold text-brand-navy">
+                  {dict.rfqNetPriceLabel}
+                </label>
+                <input
+                  id="priceNetto" name="priceNetto" type="text" inputMode="decimal"
+                  pattern={PRICE_INPUT_PATTERN} value={netPrice}
+                  onChange={(e) => setNetPrice(e.target.value)}
+                  disabled={isPending || (busyDomain !== null && busyDomain !== "core")}
+                  placeholder="18000.00"
+                  className="mt-1 block w-full border-border-industrial focus:border-brand-teal focus:ring-brand-teal sm:max-w-xs sm:text-sm"
+                />
+              </div>
+              <label htmlFor="rfqNetPriceVisible" className="flex items-center gap-2 text-sm font-medium text-brand-navy">
+                <input
+                  id="rfqNetPriceVisible" name="rfqNetPriceVisible" type="checkbox"
+                  checked={showNetPrice} onChange={(e) => setShowNetPrice(e.target.checked)}
+                  disabled={isPending || (busyDomain !== null && busyDomain !== "core")}
+                  className="size-4 border-border-industrial text-brand-teal focus:ring-brand-teal"
+                />
+                {dict.rfqNetPriceVisibleLabel}
+              </label>
+              <p className="text-xs text-muted-foreground">{dict.rfqNetPriceHelp}</p>
+            </div>
+          ) : (
           <fieldset className="space-y-4" disabled={isPending || (busyDomain !== null && busyDomain !== "core")}>
             <legend className="block text-sm font-semibold text-brand-navy mb-3">
               {dict.offerEditPriceModeLabel || "Sposób prezentacji ceny"}
@@ -265,6 +292,7 @@ export function PartnerOfferEditForm({
                 {dict.offerEditPriceRequestHelp || "Kwota nie będzie wyświetlana. Oferta będzie prezentowana jako „Cena na zapytanie”."}
               </p>
             </div>
+          )}
           )}
         </section>
 
