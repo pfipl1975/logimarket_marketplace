@@ -100,7 +100,8 @@ export const EXPECTED_POST_0021_TABLES = [
 ];
 
 export const EXPECTED_POST_0022_TABLES = [...EXPECTED_POST_0021_TABLES];
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0022_TABLES;
+export const EXPECTED_POST_0023_TABLES = [...EXPECTED_POST_0022_TABLES];
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0023_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1846,6 +1847,18 @@ export const FINAL_POST_0022_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   "legal_pack_documents": { ...FINAL_POST_0021_PRODUCTION_FINGERPRINT["legal_pack_documents"], rlsEnabled: true },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0021_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0022_PRODUCTION_FINGERPRINT;
+export const FINAL_POST_0023_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0022_PRODUCTION_FINGERPRINT,
+  "offers": {
+    ...FINAL_POST_0022_PRODUCTION_FINGERPRINT["offers"],
+    columns: [
+      ...FINAL_POST_0022_PRODUCTION_FINGERPRINT["offers"].columns,
+      { name: "price_netto", type: "numeric(18,2)", nullable: true, defaultVal: null, sequenceName: null },
+      { name: "rfq_net_price_visible", type: "boolean", nullable: false, defaultVal: "false", sequenceName: null },
+    ],
+  },
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0022_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0023_PRODUCTION_FINGERPRINT;
 
