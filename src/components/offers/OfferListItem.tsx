@@ -3,9 +3,10 @@ import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import type { CatalogOffer } from "@/app/actions";
-import type { Dictionary } from "@/lib/i18n/types";
+import type { Dictionary, Locale } from "@/lib/i18n/types";
 
 interface OfferListItemProps {
+  locale: Locale;
   offer: CatalogOffer;
   detailHref: string;
   offerLabels: Dictionary["offers"];
@@ -13,7 +14,8 @@ interface OfferListItemProps {
   viewOfferLabel: string;
 }
 
-export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, viewOfferLabel }: OfferListItemProps) {
+export function OfferListItem({
+  locale, offer, detailHref, offerLabels, categoryLabels, viewOfferLabel }: OfferListItemProps) {
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
 
   return (
@@ -60,7 +62,7 @@ export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, 
 
       {/* Price + action column */}
       <div className="flex shrink-0 flex-col items-end gap-2 pl-2">
-        <PublicOfferPrice offer={offer} labels={offerLabels} className="text-sm font-bold text-brand-navy tabular-nums text-right" />
+        <PublicOfferPrice locale={locale} offer={offer} labels={offerLabels} className="text-sm font-bold text-brand-navy tabular-nums text-right" />
         <Link
           href={detailHref}
           className="inline-flex items-center rounded border border-brand-navy px-3 py-1.5 text-xs font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"

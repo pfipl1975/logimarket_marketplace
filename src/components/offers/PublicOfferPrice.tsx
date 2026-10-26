@@ -1,18 +1,18 @@
 import { formatPrice } from "@/lib/utils";
 import { formatRfqNetPrice, getPublicRfqNetPrice } from "@/lib/offers/rfq-net-price";
 import type { CatalogOffer } from "@/app/actions";
-import type { Dictionary } from "@/lib/i18n/types";
+import type { Dictionary, Locale } from "@/lib/i18n/types";
 
 export function PublicOfferPrice({
   offer,
   labels,
   className = "",
-  locale = "pl",
+  locale,
 }: {
   offer: Pick<CatalogOffer, "offerModel" | "priceBrutto" | "priceOnRequest" | "priceNetto" | "rfqNetPriceVisible">;
   labels: Dictionary["offers"];
   className?: string;
-  locale?: string;
+  locale: Locale;
 }) {
   if (offer.offerModel === "rfq") {
     const value = getPublicRfqNetPrice(offer);

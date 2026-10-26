@@ -4,9 +4,10 @@ import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import type { CatalogOffer } from "@/app/actions";
-import type { Dictionary } from "@/lib/i18n/types";
+import type { Dictionary, Locale } from "@/lib/i18n/types";
 
 interface OfferProcurementListRowProps {
+  locale: Locale;
   offer: CatalogOffer;
   detailHref: string;
   offerLabels: Dictionary["offers"];
@@ -23,6 +24,7 @@ interface OfferProcurementListRowProps {
 }
 
 export function OfferProcurementListRow({
+  locale,
   offer,
   detailHref,
   offerLabels,
@@ -97,7 +99,7 @@ export function OfferProcurementListRow({
       </div>
 
       <div className="flex min-w-0 flex-col justify-between gap-3 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-        <PublicOfferPrice offer={offer} labels={offerLabels} className="text-base font-bold text-brand-navy" />
+        <PublicOfferPrice locale={locale} offer={offer} labels={offerLabels} className="text-base font-bold text-brand-navy" />
         <OfferAction
           offer={{
             id: offer.id,

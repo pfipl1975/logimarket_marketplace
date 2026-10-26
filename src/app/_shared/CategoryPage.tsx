@@ -686,6 +686,7 @@ export async function CategoryPage({
                 <div className="mt-5 flex flex-col gap-3">
                   {renderedOffers.map((offer) => (
                     <OfferProcurementListRow
+                      locale={locale}
                       key={offer.id}
                       offer={offer}
                       detailHref={getOfferPath(locale, String(offer.id))}
@@ -704,6 +705,7 @@ export async function CategoryPage({
                 <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                   {renderedOffers.map((offer) => (
                     <OfferCard
+                      locale={locale}
                       key={offer.id}
                       offer={offer}
                       detailHref={getOfferPath(locale, String(offer.id))}
