@@ -6,7 +6,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/utils";
+import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "@/components/OfferAction";
 import { PublicOfferMediaGallery } from "@/components/offers/PublicOfferMediaGallery";
@@ -134,13 +134,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
             <p className="text-sm font-medium text-muted-foreground">
               {dict.offers.price}
             </p>
-            <p className="mt-1 break-words text-2xl font-bold leading-tight text-brand-navy sm:text-3xl">
-              {formatPrice(
-                offer.priceBrutto,
-                offer.priceOnRequest,
-                dict.offers.priceOnRequest,
-              )}
-            </p>
+            <PublicOfferPrice offer={offer} labels={dict.offers} locale={locale} className="mt-1 break-words text-2xl font-bold leading-tight text-brand-navy sm:text-3xl" />
 
             <div className="mt-5">
               {isArchived ? (
