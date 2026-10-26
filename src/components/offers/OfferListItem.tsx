@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatPrice } from "@/lib/utils";
+import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import type { CatalogOffer } from "@/app/actions";
@@ -15,7 +15,6 @@ interface OfferListItemProps {
 
 export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, viewOfferLabel }: OfferListItemProps) {
   const categoryLabel = getLocalizedCategoryLabel(categoryLabels, offer.categorySlug, offer.categoryName);
-  const priceLabel = formatPrice(offer.priceBrutto, offer.priceOnRequest, offerLabels.priceOnRequest);
 
   return (
     <article className="flex items-start gap-4 rounded-lg border border-border bg-white px-4 py-4 shadow-sm transition-shadow hover:shadow-md">
@@ -61,9 +60,7 @@ export function OfferListItem({ offer, detailHref, offerLabels, categoryLabels, 
 
       {/* Price + action column */}
       <div className="flex shrink-0 flex-col items-end gap-2 pl-2">
-        <p className="text-sm font-bold text-brand-navy tabular-nums">
-          {priceLabel}
-        </p>
+        <PublicOfferPrice offer={offer} labels={offerLabels} className="text-sm font-bold text-brand-navy tabular-nums text-right" />
         <Link
           href={detailHref}
           className="inline-flex items-center rounded border border-brand-navy px-3 py-1.5 text-xs font-semibold text-brand-navy transition-colors hover:border-brand-teal hover:text-brand-teal"
