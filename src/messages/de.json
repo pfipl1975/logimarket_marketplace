@@ -357,7 +357,9 @@
     "unavailableTitle": "Angebot vorübergehend nicht verfügbar",
     "unavailableDescription": "Dieses Angebot ist derzeit nicht verfügbar.",
     "archivedCtaDisabled": "Archiviertes Angebot",
-    "unavailableCtaDisabled": "Vorübergehend nicht verfügbar"
+    "unavailableCtaDisabled": "Vorübergehend nicht verfügbar",
+    "netPriceLabel": "Unverbindlicher Nettopreis",
+    "netPriceVat": "zzgl. MwSt. zum geltenden Satz"
   },
   "cta": {
     "addToCart": "In den Warenkorb",
@@ -1258,7 +1260,10 @@
     "externalUrlHelp": "Ein veröffentlichtes externes Angebot erfordert einen gültigen Link zur Partner-Website.",
     "rfqOutboundHelp": "Für eine Standard-Angebotsanfrage ist kein externer Link erforderlich.",
     "optionalOutboundHelp": "Der externe Link bleibt für diese Angebotsart optional.",
-    "errorInvalidCurrentOfferType": "Die aktuelle Angebotskonfiguration ist ungültig. Wählen Sie eine gültige Angebotsart aus, um fortzufahren."
+    "errorInvalidCurrentOfferType": "Die aktuelle Angebotskonfiguration ist ungültig. Wählen Sie eine gültige Angebotsart aus, um fortzufahren.",
+    "fieldNetPrice": "Unverbindlicher Nettopreis (PLN)",
+    "fieldNetPriceVisible": "Unverbindlichen Nettopreis öffentlich anzeigen",
+    "rfqNetPriceHelp": "Richtpreis. Ohne Freigabe wird „Preis auf Anfrage“ angezeigt."
   },
   "adminBuyers": {
     "title": "Käufer",
@@ -1747,7 +1752,10 @@
     "statusUpdating": "Aktualisierung...",
     "startFulfillment": "Bearbeitung starten",
     "markFulfilled": "Als erfüllt markieren",
-    "rfq": "Anfragen"
+    "rfq": "Anfragen",
+    "rfqNetPriceLabel": "Unverbindlicher Nettopreis (PLN)",
+    "rfqNetPriceVisibleLabel": "Unverbindlichen Nettopreis öffentlich anzeigen",
+    "rfqNetPriceHelp": "Richtpreis. Ohne Freigabe wird „Preis auf Anfrage“ angezeigt."
   },
   "BuyerOrders": {
     "title": "Meine Bestellungen",

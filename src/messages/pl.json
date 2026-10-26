@@ -357,7 +357,9 @@
     "unavailableTitle": "Oferta tymczasowo niedostępna",
     "unavailableDescription": "Ta oferta jest w tej chwili niedostępna.",
     "archivedCtaDisabled": "Oferta archiwalna",
-    "unavailableCtaDisabled": "Chwilowo niedostępne"
+    "unavailableCtaDisabled": "Chwilowo niedostępne",
+    "netPriceLabel": "Cena orientacyjna netto",
+    "netPriceVat": "VAT według właściwej stawki"
   },
   "cta": {
     "addToCart": "Dodaj do koszyka",
@@ -1258,7 +1260,10 @@
     "externalUrlHelp": "Opublikowana oferta zewnętrzna wymaga prawidłowego linku do strony Partnera.",
     "rfqOutboundHelp": "Link zewnętrzny nie jest potrzebny w standardowym zapytaniu ofertowym.",
     "optionalOutboundHelp": "Link zewnętrzny pozostaje opcjonalny dla tego rodzaju oferty.",
-    "errorInvalidCurrentOfferType": "Bieżąca konfiguracja rodzaju oferty jest nieprawidłowa. Wybierz poprawny rodzaj oferty, aby kontynuować."
+    "errorInvalidCurrentOfferType": "Bieżąca konfiguracja rodzaju oferty jest nieprawidłowa. Wybierz poprawny rodzaj oferty, aby kontynuować.",
+    "fieldNetPrice": "Cena orientacyjna netto (PLN)",
+    "fieldNetPriceVisible": "Pokaż cenę orientacyjną netto publicznie",
+    "rfqNetPriceHelp": "Kwota orientacyjna. Jeśli nie zaznaczysz widoczności, oferta będzie prezentowana jako „Cena na zapytanie”."
   },
   "adminBuyers": {
     "title": "Kupujący",
@@ -1747,7 +1752,10 @@
     "moderationNotice": "Ta oferta oczekuje na weryfikację przez administratora i nie może być w tej chwili edytowana.",
     "startFulfillment": "Rozpocznij realizację",
     "markFulfilled": "Oznacz jako zrealizowane",
-    "rfq": "Zapytania"
+    "rfq": "Zapytania",
+    "rfqNetPriceLabel": "Cena orientacyjna netto (PLN)",
+    "rfqNetPriceVisibleLabel": "Pokaż cenę orientacyjną netto publicznie",
+    "rfqNetPriceHelp": "Kwota orientacyjna. Jeśli nie zaznaczysz widoczności, oferta będzie prezentowana jako „Cena na zapytanie”."
   },
   "BuyerOrders": {
     "title": "Moje zamówienia",

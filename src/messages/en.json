@@ -357,7 +357,9 @@
     "unavailableTitle": "Offer Temporarily Unavailable",
     "unavailableDescription": "This offer is currently unavailable.",
     "archivedCtaDisabled": "Archived Offer",
-    "unavailableCtaDisabled": "Temporarily Unavailable"
+    "unavailableCtaDisabled": "Temporarily Unavailable",
+    "netPriceLabel": "Indicative net price",
+    "netPriceVat": "VAT at the applicable rate"
   },
   "cta": {
     "addToCart": "Add to cart",
@@ -1258,7 +1260,10 @@
     "externalUrlHelp": "A published external offer requires a valid link to the Partner's website.",
     "rfqOutboundHelp": "An external link is not needed for a standard request for quotation.",
     "optionalOutboundHelp": "The external link remains optional for this offer type.",
-    "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue."
+    "errorInvalidCurrentOfferType": "The current offer configuration is invalid. Select a valid offer type to continue.",
+    "fieldNetPrice": "Indicative net price (PLN)",
+    "fieldNetPriceVisible": "Show indicative net price publicly",
+    "rfqNetPriceHelp": "Indicative amount. If visibility is disabled, the offer will display “Price on request”."
   },
   "adminBuyers": {
     "title": "Buyers",
@@ -1747,7 +1752,10 @@
     "statusUpdating": "Updating...",
     "startFulfillment": "Start fulfillment",
     "markFulfilled": "Mark as fulfilled",
-    "rfq": "RFQs"
+    "rfq": "RFQs",
+    "rfqNetPriceLabel": "Indicative net price (PLN)",
+    "rfqNetPriceVisibleLabel": "Show indicative net price publicly",
+    "rfqNetPriceHelp": "Indicative amount. If visibility is disabled, the offer will display “Price on request”."
   },
   "BuyerOrders": {
     "title": "My Orders",

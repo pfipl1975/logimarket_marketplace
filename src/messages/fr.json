@@ -357,7 +357,9 @@
     "unavailableTitle": "Offre temporairement indisponible",
     "unavailableDescription": "Cette offre est actuellement indisponible.",
     "archivedCtaDisabled": "Offre archivée",
-    "unavailableCtaDisabled": "Temporairement indisponible"
+    "unavailableCtaDisabled": "Temporairement indisponible",
+    "netPriceLabel": "Prix net indicatif",
+    "netPriceVat": "TVA au taux applicable"
   },
   "cta": {
     "addToCart": "Ajouter au panier",
@@ -1258,7 +1260,10 @@
     "externalUrlHelp": "Une offre externe publiée exige un lien valide vers le site du partenaire.",
     "rfqOutboundHelp": "Un lien externe n’est pas nécessaire pour une demande de devis standard.",
     "optionalOutboundHelp": "Le lien externe reste facultatif pour ce type d’offre.",
-    "errorInvalidCurrentOfferType": "La configuration actuelle de l’offre est invalide. Sélectionnez un type d’offre valide pour continuer."
+    "errorInvalidCurrentOfferType": "La configuration actuelle de l’offre est invalide. Sélectionnez un type d’offre valide pour continuer.",
+    "fieldNetPrice": "Prix net indicatif (PLN)",
+    "fieldNetPriceVisible": "Afficher publiquement le prix net indicatif",
+    "rfqNetPriceHelp": "Montant indicatif. Sans autorisation d'affichage, l'offre indiquera « Prix sur demande »."
   },
   "adminBuyers": {
     "title": "Acheteurs",
@@ -1747,7 +1752,10 @@
     "statusUpdating": "Mise à jour...",
     "startFulfillment": "Commencer le traitement",
     "markFulfilled": "Marquer comme traitée",
-    "rfq": "Demandes"
+    "rfq": "Demandes",
+    "rfqNetPriceLabel": "Prix net indicatif (PLN)",
+    "rfqNetPriceVisibleLabel": "Afficher publiquement le prix net indicatif",
+    "rfqNetPriceHelp": "Montant indicatif. Sans autorisation d'affichage, l'offre indiquera « Prix sur demande »."
   },
   "BuyerOrders": {
     "title": "Mes commandes",
