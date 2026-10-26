@@ -2,7 +2,7 @@ import Link from "next/link";
 import { OfferAction } from "@/components/OfferAction";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
-import { formatPrice } from "@/lib/utils";
+import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary } from "@/lib/i18n/types";
 
@@ -38,11 +38,6 @@ export function OfferProcurementListRow({
     categoryLabels,
     offer.categorySlug,
     offer.categoryName,
-  );
-  const priceLabel = formatPrice(
-    offer.priceBrutto,
-    offer.priceOnRequest,
-    offerLabels.priceOnRequest,
   );
   const highlights = (offer.attributes || []).slice(0, 3);
 
@@ -102,7 +97,7 @@ export function OfferProcurementListRow({
       </div>
 
       <div className="flex min-w-0 flex-col justify-between gap-3 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-4 lg:pt-0">
-        <p className="text-base font-bold text-brand-navy">{priceLabel}</p>
+        <PublicOfferPrice offer={offer} labels={offerLabels} className="text-base font-bold text-brand-navy" />
         <OfferAction
           offer={{
             id: offer.id,
