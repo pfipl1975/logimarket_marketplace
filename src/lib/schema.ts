@@ -51,6 +51,8 @@ export const offers = pgTable("offers", {
   categoryId: bigint("category_id", { mode: "number" }).notNull(),
   title: varchar("title", { length: 255 }).notNull(),
   priceBrutto: numeric("price_brutto"),
+  priceNetto: numeric("price_netto", { precision: 18, scale: 2 }),
+  rfqNetPriceVisible: boolean("rfq_net_price_visible").notNull().default(false),
   outboundUrl: varchar("outbound_url", { length: 512 }),
   technicalAttributes: jsonb("technical_attributes").notNull().default({}),
   offerModel: varchar("offer_model", { length: 20 }).notNull().default("rfq"),
