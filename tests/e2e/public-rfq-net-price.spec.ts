@@ -76,7 +76,7 @@ test("RFQ cards, net-price sorting, and English detail never disclose hidden gro
   await expect(visible).toBeVisible();
   await expect(hidden).toBeVisible();
   await expect(lower.getByText("Cena orientacyjna netto")).toBeVisible();
-  await expect(visible.getByText(/18\\s*000,00 PLN/)).toBeVisible();
+  await expect(visible.getByText(/18\s*000,00 PLN/)).toBeVisible();
   await expect(visible.getByText(/VAT według właściwej stawki/)).toBeVisible();
   await expect(hidden.getByText("Cena na zapytanie")).toBeVisible();
   await expect(hidden.getByText("1,00 PLN")).toHaveCount(0);
