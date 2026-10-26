@@ -149,7 +149,7 @@ export function AdminSellerEligibilityControl({ partnerId, eligibility, dictiona
           <button
             type="submit"
             disabled={isPending}
-            className="w-full sm:w-auto h-10 px-6 bg-brand-blue text-white rounded-industrial text-sm font-semibold hover:bg-brand-blue/90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue focus-visible:ring-offset-2 whitespace-nowrap"
+            className="w-full sm:w-auto h-10 px-6 bg-brand-navy text-white rounded-industrial text-sm font-semibold hover:bg-brand-navy/90 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 whitespace-nowrap"
           >
             {isPending ? dictionary.pendingMessage : dictionary.saveStatus}
           </button>
