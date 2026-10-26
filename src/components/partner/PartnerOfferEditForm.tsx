@@ -34,6 +34,10 @@ export function PartnerOfferEditForm({
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [priceMode, setPriceMode] = useState<PriceMode>(() => getInitialPriceMode(offer.priceOnRequest));
   const [priceValue, setPriceValue] = useState<string>(() => offer.priceBrutto ?? "");
+  const [offerType, setOfferType] = useState(offer.partnerOfferType);
+  const [netPrice, setNetPrice] = useState(offer.priceNetto ?? "");
+  const [showNetPrice, setShowNetPrice] = useState(offer.rfqNetPriceVisible);
+  const isRfq = offerType === "rfq";
 
   const backHref = `${basePath}/${offer.offerId}`;
 
@@ -50,9 +54,10 @@ export function PartnerOfferEditForm({
       expectedUpdatedAt: offer.expectedUpdatedAt,
       title: formData.get("title") as string,
       description: formData.get("description") as string,
-      partnerOfferType: formData.get("partnerOfferType") as string,
-      priceBrutto,
-      priceOnRequest,
+      partnerOfferType: offerType,
+      ...(isRfq ? { priceNetto: netPrice, rfqNetPriceVisible: showNetPrice } : {}),
+      priceBrutto: isRfq ? offer.priceBrutto : priceBrutto,
+      priceOnRequest: isRfq ? offer.priceOnRequest : priceOnRequest,
       outboundUrl: formData.get("outboundUrl") as string,
       locale,
     };
@@ -178,7 +183,8 @@ export function PartnerOfferEditForm({
                   name="partnerOfferType"
                   type="radio"
                   value={type}
-                  defaultChecked={offer.partnerOfferType === type}
+                  checked={offerType === type}
+                  onChange={() => setOfferType(type)}
                   className="size-4 border-border-industrial text-brand-teal focus:ring-brand-teal"
                 />
                 <label htmlFor={`type-${type}`} className="ml-3 block text-sm font-medium text-brand-navy">
