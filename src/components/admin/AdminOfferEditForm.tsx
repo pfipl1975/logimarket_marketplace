@@ -239,7 +239,6 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
                 </div>
               ) : (
               <>
-          <>
               <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
                 <div>
                   <label htmlFor="priceBrutto" className="mb-1 block text-sm font-medium text-brand-navy">
