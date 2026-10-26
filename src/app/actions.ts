@@ -59,6 +59,8 @@ export type CatalogOffer = {
   description: string | null;
   imageUrl: string | null;
   priceBrutto: string | null;
+  priceNetto: string | null;
+  rfqNetPriceVisible: boolean;
   priceOnRequest: boolean;
   conversionType: string;
   offerModel: CanonicalOfferModelResolution;
@@ -114,6 +116,8 @@ function rowToOffer(row: {
     description: row.offer.description,
     imageUrl: resolvedImageUrl,
     priceBrutto: row.offer.priceBrutto,
+    priceNetto: row.offer.priceNetto,
+    rfqNetPriceVisible: row.offer.rfqNetPriceVisible,
     priceOnRequest: row.offer.priceOnRequest,
     conversionType: row.offer.conversionType,
     offerModel: resolveCanonicalOfferModel(
