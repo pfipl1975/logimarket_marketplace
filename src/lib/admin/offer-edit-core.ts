@@ -6,6 +6,7 @@ import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import { resolveAdminEditTargetStorage, isAdminOfferType } from "@/lib/admin/offer-type";
 import { parseDecimalToMinorUnits, minorUnitsToDecimalString } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
+import { parseRfqNetPriceFields } from "@/lib/offers/rfq-net-price";
 
 export type EditTargetInvalidReason = "MODEL_UNKNOWN" | "ECOMMERCE_PRICE_INVALID" | "OUTBOUND_URL_INVALID" | "TITLE_INVALID" | "PRICE_INVALID";
 
@@ -23,6 +24,8 @@ export interface AdminOfferEditInput {
   imageUrl: string | null;
   priceBrutto: string | null;
   priceOnRequest: boolean;
+  priceNetto?: string | null;
+  rfqNetPriceVisible?: boolean;
   adminOfferType: import("@/lib/admin/offer-type").AdminOfferType;
   outboundUrl: string | null;
   isFeatured: boolean;
@@ -41,6 +44,8 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
     imageUrl,
     priceBrutto,
     priceOnRequest,
+    priceNetto,
+    rfqNetPriceVisible,
     adminOfferType,
     outboundUrl,
     isFeatured,
@@ -124,6 +129,13 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
+  let rfqFields: ReturnType<typeof parseRfqNetPriceFields>;
+  try {
+    rfqFields = parseRfqNetPriceFields(priceNetto, rfqNetPriceVisible);
+  } catch {
+    return { ok: false, code: "OFFER_TARGET_INVALID", reason: "PRICE_INVALID" };
+  }
+
   // adminOfferType
     if (!isAdminOfferType(adminOfferType)) {
       return { ok: false, code: "OFFER_INVALID_INPUT" };
@@ -160,6 +172,7 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
       imageUrl: normalizedImageUrl,
       priceBrutto: normalizedPriceBrutto,
       priceOnRequest,
+      ...(rfqFields ?? {}),
       adminOfferType: adminOfferType as import("@/lib/admin/offer-type").AdminOfferType,
       outboundUrl: normalizedOutboundUrl,
       isFeatured,
@@ -213,6 +226,8 @@ export async function executeAdminOfferEdit(
           description: offers.description,
           imageUrl: offers.imageUrl,
           priceBrutto: sql<string | null>`${offers.priceBrutto}::text`,
+          priceNetto: sql<string | null>`${offers.priceNetto}::text`,
+          rfqNetPriceVisible: offers.rfqNetPriceVisible,
           priceOnRequest: offers.priceOnRequest,
           offerModel: offers.offerModel,
           conversionType: offers.conversionType,
@@ -243,6 +258,16 @@ export async function executeAdminOfferEdit(
       const derived = resolveAdminEditTargetStorage(current.offerModel, current.conversionType, input.adminOfferType);
       const targetOfferModel = derived.offerModel;
       const targetConversionType = derived.conversionType;
+      const isTargetRfq = resolveCanonicalOfferModel(targetOfferModel, targetConversionType) === "rfq";
+      const submittedRfqPrice = input.priceNetto !== undefined || input.rfqNetPriceVisible !== undefined;
+      if (!isTargetRfq && submittedRfqPrice) {
+        return { ok: false, code: "OFFER_TARGET_INVALID", reason: "PRICE_INVALID" };
+      }
+      const rfqPriceUpdate = isTargetRfq && submittedRfqPrice
+        ? { priceNetto: input.priceNetto ?? null, rfqNetPriceVisible: input.rfqNetPriceVisible ?? false }
+        : null;
+      const hidePreviousRfqPrice = !isTargetRfq && current.rfqNetPriceVisible;
+
 
         const rulesCheck = validateOfferEditBusinessRules(targetOfferModel, targetConversionType, input, current.publicationStatus as string);
       if (!rulesCheck.valid) {
@@ -264,6 +289,11 @@ export async function executeAdminOfferEdit(
         current.imageUrl === input.imageUrl &&
         currentNormalizedPrice === input.priceBrutto &&
         current.priceOnRequest === input.priceOnRequest &&
+        !hidePreviousRfqPrice &&
+        (!rfqPriceUpdate || (
+          current.priceNetto === rfqPriceUpdate.priceNetto &&
+          current.rfqNetPriceVisible === rfqPriceUpdate.rfqNetPriceVisible
+        )) &&
         current.offerModel === targetOfferModel &&
           current.conversionType === targetConversionType &&
         current.outboundUrl === input.outboundUrl &&
@@ -280,6 +310,7 @@ export async function executeAdminOfferEdit(
           imageUrl: input.imageUrl,
           priceBrutto: input.priceBrutto,
           priceOnRequest: input.priceOnRequest,
+          ...(rfqPriceUpdate ?? (hidePreviousRfqPrice ? { rfqNetPriceVisible: false } : {})),
           offerModel: targetOfferModel,
           conversionType: targetConversionType,
           outboundUrl: input.outboundUrl,
