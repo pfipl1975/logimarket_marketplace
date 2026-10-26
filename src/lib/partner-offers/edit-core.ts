@@ -4,6 +4,8 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { parseDecimalToMinorUnits, minorUnitsToDecimalString } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
+import { parseRfqNetPriceFields } from "@/lib/offers/rfq-net-price";
+import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import {
   type PartnerFacingOfferType,
   isPartnerFacingOfferType,
@@ -20,6 +22,8 @@ export interface PartnerOfferEditInput {
   partnerOfferType: string;
   priceBrutto: string | null;
   priceOnRequest: boolean;
+  priceNetto?: string | null;
+  rfqNetPriceVisible?: boolean;
   outboundUrl: string | null;
 }
 
@@ -33,7 +37,7 @@ export function parsePartnerOfferEditInput(raw: unknown): { ok: true; data: Part
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
-  const { partnerId, offerId, expectedUpdatedAt, title, description, partnerOfferType, priceBrutto, priceOnRequest, outboundUrl } = raw as Record<string, unknown>;
+  const { partnerId, offerId, expectedUpdatedAt, title, description, partnerOfferType, priceBrutto, priceOnRequest, priceNetto, rfqNetPriceVisible, outboundUrl } = raw as Record<string, unknown>;
 
   if (
     typeof partnerId !== "number" ||
@@ -100,6 +104,13 @@ export function parsePartnerOfferEditInput(raw: unknown): { ok: true; data: Part
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
+  let rfqFields: ReturnType<typeof parseRfqNetPriceFields>;
+  try {
+    rfqFields = parseRfqNetPriceFields(priceNetto, rfqNetPriceVisible);
+  } catch {
+    return { ok: false, code: "OFFER_TARGET_INVALID", reason: "PRICE_INVALID" };
+  }
+
   let normalizedOutboundUrl: string | null = null;
   if (outboundUrl !== null && outboundUrl !== undefined) {
     if (typeof outboundUrl !== "string") {
@@ -126,6 +137,7 @@ export function parsePartnerOfferEditInput(raw: unknown): { ok: true; data: Part
       partnerOfferType,
       priceBrutto: normalizedPriceBrutto,
       priceOnRequest,
+      ...(rfqFields ?? {}),
       outboundUrl: normalizedOutboundUrl,
     }
   };
@@ -140,6 +152,8 @@ export interface CurrentPartnerOfferState {
   description: string | null;
   priceBrutto: string | null;
   priceOnRequest: boolean;
+  priceNetto?: string | null;
+  rfqNetPriceVisible?: boolean;
   outboundUrl: string | null;
 }
 
@@ -154,6 +168,8 @@ export function evaluatePartnerOfferEditCore(
     description: string | null;
     priceBrutto: string | null;
     priceOnRequest: boolean;
+    priceNetto?: string | null;
+    rfqNetPriceVisible?: boolean;
     offerModel: "rfq" | "marketplace";
     conversionType: "inbound" | "outbound";
     outboundUrl: string | null;
@@ -190,6 +206,16 @@ export function evaluatePartnerOfferEditCore(
   );
   const targetOfferModel = derived.offerModel;
   const targetConversionType = derived.conversionType;
+  const isTargetRfq = resolveCanonicalOfferModel(targetOfferModel, targetConversionType) === "rfq";
+  const suppliedNet = input.priceNetto !== undefined || input.rfqNetPriceVisible !== undefined;
+  if (!isTargetRfq && suppliedNet) {
+    return { ok: false, code: "OFFER_TARGET_INVALID", reason: "PRICE_INVALID" };
+  }
+  const netUpdate = isTargetRfq && suppliedNet
+    ? { priceNetto: input.priceNetto ?? null, rfqNetPriceVisible: input.rfqNetPriceVisible ?? false }
+    : null;
+  const clearVisibility = !isTargetRfq && current.rfqNetPriceVisible;
+
 
   let currentNormalizedPrice: string | null = null;
   if (current.priceBrutto !== null) {
@@ -205,6 +231,9 @@ export function evaluatePartnerOfferEditCore(
     current.description === input.description &&
     currentNormalizedPrice === input.priceBrutto &&
     current.priceOnRequest === input.priceOnRequest &&
+    !clearVisibility &&
+    (!netUpdate || (current.priceNetto === netUpdate.priceNetto &&
+      current.rfqNetPriceVisible === netUpdate.rfqNetPriceVisible)) &&
     current.offerModel === targetOfferModel &&
     current.conversionType === targetConversionType &&
     current.outboundUrl === input.outboundUrl
@@ -220,6 +249,7 @@ export function evaluatePartnerOfferEditCore(
       description: input.description,
       priceBrutto: input.priceBrutto,
       priceOnRequest: input.priceOnRequest,
+      ...(netUpdate ?? (clearVisibility ? { rfqNetPriceVisible: false } : {})),
       offerModel: targetOfferModel,
       conversionType: targetConversionType,
       outboundUrl: input.outboundUrl,
@@ -242,6 +272,8 @@ export async function executePartnerOfferEdit(
           title: schema.offers.title,
           description: schema.offers.description,
           priceBrutto: sql<string | null>`${schema.offers.priceBrutto}::text`,
+          priceNetto: sql<string | null>`${schema.offers.priceNetto}::text`,
+          rfqNetPriceVisible: schema.offers.rfqNetPriceVisible,
           priceOnRequest: schema.offers.priceOnRequest,
           offerModel: schema.offers.offerModel,
           conversionType: schema.offers.conversionType,
