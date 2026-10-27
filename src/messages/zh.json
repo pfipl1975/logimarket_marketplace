@@ -81,6 +81,17 @@
     "securityTitle": "账户安全",
     "securityDescription": "如需更改密码，请退出登录，并在登录页面使用密码找回功能。"
   },
+  "draftDeletion": {
+    "deleteButton": "删除草稿",
+    "confirmTitle": "删除此报价草稿？",
+    "confirmBody": "该报价将从草稿列表中消失，但其数据和媒体文件仍会保存在系统中。",
+    "cancel": "取消",
+    "confirm": "删除草稿",
+    "deleting": "正在删除…",
+    "conflict": "报价已更改或无法再删除。请刷新页面。",
+    "forbidden": "您无权删除此草稿。",
+    "error": "无法删除草稿，请重试。"
+  },
   "common": {
     "close": "关闭"
   },
