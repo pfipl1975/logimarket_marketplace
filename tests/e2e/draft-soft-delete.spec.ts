@@ -160,7 +160,7 @@ test.describe("Draft-only soft deletion (Admin and Partner)", () => {
     await database!.query("UPDATE offers SET updated_at = now() + interval '1 minute' WHERE id=$1", [staleId]);
     await adminPage.getByRole("button", { name: pl.draftDeletion.deleteButton, exact: true }).click();
     await adminPage.getByRole("button", { name: pl.draftDeletion.confirm, exact: true }).click();
-    await expect(adminPage.getByRole("alert")).toContainText(pl.draftDeletion.conflict);
+    await expect(adminPage.getByRole("alert").filter({ hasText: pl.draftDeletion.conflict })).toBeVisible();
     expect((await getOffer(staleId)).publication_status).toBe("draft");
 
     for (const status of ["published", "archived", "pending_review", "hidden"]) {
