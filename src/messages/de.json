@@ -81,6 +81,17 @@
     "securityTitle": "Kontosicherheit",
     "securityDescription": "Um Ihr Passwort zu ändern, melden Sie sich ab und nutzen Sie die Passwortwiederherstellung auf der Anmeldeseite."
   },
+  "draftDeletion": {
+    "deleteButton": "Entwurf löschen",
+    "confirmTitle": "Diesen Angebotsentwurf löschen?",
+    "confirmBody": "Das Angebot verschwindet aus der Entwurfsliste. Daten und Medien bleiben im System gespeichert.",
+    "cancel": "Abbrechen",
+    "confirm": "Entwurf löschen",
+    "deleting": "Wird gelöscht…",
+    "conflict": "Das Angebot wurde geändert oder kann nicht mehr gelöscht werden. Bitte aktualisieren Sie die Seite.",
+    "forbidden": "Sie sind nicht berechtigt, diesen Entwurf zu löschen.",
+    "error": "Der Entwurf konnte nicht gelöscht werden. Bitte versuchen Sie es erneut."
+  },
   "common": {
     "close": "Schließen"
   },
