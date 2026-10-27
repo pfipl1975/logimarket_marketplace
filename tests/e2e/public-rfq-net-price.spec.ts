@@ -31,7 +31,7 @@ test.beforeAll(async () => {
   for (const row of [
     { title: visibleTitle, net: "18000.00", gross: "250000.00", visible: true },
     { title: lowerTitle, net: "1000.00", gross: "300000.00", visible: true },
-    { title: hiddenTitle, net: "10.00", gross: "1.00", visible: false },
+    { title: hiddenTitle, net: "876543210.77", gross: "987654321.55", visible: false },
   ]) {
     const inserted = await database.query(
       `INSERT INTO offers
@@ -79,7 +79,12 @@ test("RFQ cards, net-price sorting, and English detail never disclose hidden gro
   await expect(visible.getByText(/18\s*000,00 PLN/)).toBeVisible();
   await expect(visible.getByText(/VAT według właściwej stawki/)).toBeVisible();
   await expect(hidden.getByText("Cena na zapytanie")).toBeVisible();
-  await expect(hidden.getByText("1,00 PLN")).toHaveCount(0);
+  await expect(hidden.getByText("987 654 321,55 PLN")).toHaveCount(0);
+  // The browser's serialized RSC payload must not contain hidden prices.
+  const catalogHtml = await page.content();
+  for (const privatePrice of ["876543210.77", "987654321.55", "250000.00", "300000.00"]) {
+    expect(catalogHtml).not.toContain(privatePrice);
+  }
 
   const offerCards = await page.locator("article").allTextContents();
   const lowerPosition = offerCards.findIndex((text) => text.includes(lowerTitle));
@@ -95,5 +100,13 @@ test("RFQ cards, net-price sorting, and English detail never disclose hidden gro
   await expect(page.getByText("18,000.00 PLN")).toBeVisible();
   await expect(page.getByText(/VAT at the applicable rate/)).toBeVisible();
   await expect(page.getByText("250,000.00 PLN")).toHaveCount(0);
+  expect((await page.content())).not.toContain("250000.00");
+
+  const hiddenDetail = await page.goto(`/oferta/${offerIds[2]}`);
+  expect(hiddenDetail?.status()).toBe(200);
+  await expect(page.getByText("Cena na zapytanie").first()).toBeVisible();
+  const hiddenHtml = await page.content();
+  expect(hiddenHtml).not.toContain("876543210.77");
+  expect(hiddenHtml).not.toContain("987654321.55");
   expect(errors).toEqual([]);
 });

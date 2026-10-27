@@ -5,6 +5,7 @@ import {
   parseRfqNetPriceFields,
   getPublicRfqNetPrice,
   formatRfqNetPrice,
+  projectPublicOfferPrices,
 } from "../../src/lib/offers/rfq-net-price";
 
 test("RFQ net prices retain exact cents and reject invalid or overflow input", () => {
@@ -36,4 +37,39 @@ test("Public amount is visible only for canonical RFQ and explicit consent", () 
 test("RFQ amounts format accurately in local currency without Number()", () => {
   assert.match(formatRfqNetPrice("18000.00","pl-PL"), /18.?000,00 PLN/);
   assert.match(formatRfqNetPrice("9999999999999999.99","en-US"), /9,999,999,999,999,999\.99 PLN/);
+});
+
+test("Public projection serializes neither hidden RFQ net nor legacy gross", () => {
+  const rfq = {
+    offerModel: "rfq" as const,
+    publicationStatus: "published",
+    isActive: true,
+    priceBrutto: "987654321.55",
+    priceNetto: "876543210.77",
+    rfqNetPriceVisible: false,
+  };
+  const hidden = projectPublicOfferPrices(rfq);
+  assert.deepEqual(hidden, { priceBrutto: null, priceNetto: null, rfqNetPriceVisible: false });
+  const payload = JSON.stringify(hidden);
+  assert.equal(payload.includes("987654321.55"), false);
+  assert.equal(payload.includes("876543210.77"), false);
+
+  const visible = projectPublicOfferPrices({ ...rfq, rfqNetPriceVisible: true });
+  assert.deepEqual(visible, { priceBrutto: null, priceNetto: "876543210.77", rfqNetPriceVisible: true });
+  assert.equal(JSON.stringify(visible).includes("987654321.55"), false);
+
+  for (const change of [
+    { publicationStatus: "archived" },
+    { isActive: false },
+    { priceNetto: "invalid" },
+  ]) {
+    assert.deepEqual(projectPublicOfferPrices({ ...rfq, rfqNetPriceVisible: true, ...change }), hidden);
+  }
+
+  for (const nonRfqModel of ["ecommerce", "outbound"] as const) {
+    assert.deepEqual(
+      projectPublicOfferPrices({ ...rfq, offerModel: nonRfqModel, rfqNetPriceVisible: true }),
+      { priceBrutto: "987654321.55", priceNetto: null, rfqNetPriceVisible: false }
+    );
+  }
 });

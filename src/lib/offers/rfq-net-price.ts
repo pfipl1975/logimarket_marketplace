@@ -48,6 +48,29 @@ export function getPublicRfqNetPrice(offer: {
   }
 }
 
+/**
+ * Sanitize server-side public CatalogOffer values before Server Actions and
+ * React Server Components can serialize them for the browser.
+ * Private admin/partner read models remain untouched.
+ */
+export function projectPublicOfferPrices(offer: {
+  offerModel: CanonicalOfferModelResolution;
+  publicationStatus: string;
+  isActive: boolean;
+  priceBrutto: string | null;
+  priceNetto: string | null;
+  rfqNetPriceVisible: boolean;
+}): RfqNetPriceFields & { priceBrutto: string | null } {
+  if (offer.offerModel !== "rfq") {
+    return { priceBrutto: offer.priceBrutto, priceNetto: null, rfqNetPriceVisible: false };
+  }
+  const priceNetto =
+    offer.publicationStatus === "published" && offer.isActive
+      ? getPublicRfqNetPrice(offer)
+      : null;
+  return { priceBrutto: null, priceNetto, rfqNetPriceVisible: priceNetto !== null };
+}
+
 /** Exact BigInt formatting: no JS floating-point conversion. */
 export function formatRfqNetPrice(value: string, locale: string): string {
   const minor = parseDecimalToMinorUnits(value);
