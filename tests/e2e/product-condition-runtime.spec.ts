@@ -144,9 +144,36 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     const adminEdit = "/admin/oferty/" + partnerId + "/edytuj";
     expect((await adminPage.goto(adminEdit))?.status()).toBe(200);
     await adminPage.locator("#productCondition").selectOption("");
-    await adminPage.locator("form").filter({ has: adminPage.locator("#productCondition") })
-      .locator('button[type="submit"]').click();
-    await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
+    const adminForm = adminPage.locator("form").filter({ has: adminPage.locator("#productCondition") });
+    const invalidControls = await adminForm.evaluate(form =>
+      Array.from(form.querySelectorAll("input, select, textarea"))
+        .filter(element => element instanceof HTMLInputElement ||
+          element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)
+        .filter(element => !element.checkValidity())
+        .map(element => ({ name: element.name, type: element.type, message: element.validationMessage })),
+    );
+    expect(invalidControls, "Admin form must be natively valid before saving condition=NULL").toEqual([]);
+    const postStatuses: number[] = [];
+    const trackPost = (response: import("@playwright/test").Response) => {
+      if (response.request().method() === "POST") postStatuses.push(response.status());
+    };
+    adminPage.on("response", trackPost);
+    try {
+      await adminForm.locator('button[type="submit"]').click();
+      await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toBeVisible({ timeout: 10_000 });
+    } catch (error) {
+      const evidence = {
+        dbCondition: (await stored(partnerId)).product_condition,
+        selectedCondition: await adminPage.locator("#productCondition").inputValue().catch(() => "<unavailable>"),
+        postStatuses,
+        conflictVisible: await adminPage.getByText(pl.adminOfferEdit.conflictTitle).isVisible().catch(() => false),
+        unchangedVisible: await adminPage.getByText(pl.adminOfferEdit.successUnchanged).isVisible().catch(() => false),
+        errorMessages: await adminPage.locator("form .border-red-200").allTextContents(),
+      };
+      throw new Error("Admin condition=NULL save diagnostic: " + JSON.stringify(evidence), { cause: error });
+    } finally {
+      adminPage.off("response", trackPost);
+    }
     expect((await stored(partnerId)).product_condition).toBeNull();
     await adminPage.goto(adminEdit);
     await adminPage.locator("#productCondition").selectOption("refurbished");
