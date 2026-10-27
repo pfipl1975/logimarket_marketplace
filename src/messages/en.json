@@ -81,6 +81,17 @@
     "securityTitle": "Account security",
     "securityDescription": "To change your password, sign out and use password recovery on the sign-in page."
   },
+  "draftDeletion": {
+    "deleteButton": "Delete draft",
+    "confirmTitle": "Delete this offer draft?",
+    "confirmBody": "The offer will disappear from the draft list. Its data and media will remain stored in the system.",
+    "cancel": "Cancel",
+    "confirm": "Delete draft",
+    "deleting": "Deleting…",
+    "conflict": "The offer has changed or can no longer be deleted. Refresh the page.",
+    "forbidden": "You do not have permission to delete this draft.",
+    "error": "Could not delete the draft. Please try again."
+  },
   "common": {
     "close": "Close"
   },
