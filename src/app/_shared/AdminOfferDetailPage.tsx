@@ -7,6 +7,7 @@ import { ArrowLeft, Box, Info, Settings, FileText, List, HardDrive, Eye } from "
 import { AdminOfferLifecycleAction } from "@/components/admin/AdminOfferLifecycleAction";
 import { AdminOfferDetailMediaGallery } from "@/components/admin/AdminOfferDetailMediaGallery";
 import { evaluateOfferPublishEligibility } from "@/lib/admin/offer-publication-core";
+import { getAdminOfferDetailPricing } from "@/lib/admin/offer-detail-pricing";
 
 interface AdminOfferDetailPageProps {
   id: string;
@@ -58,6 +59,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
   }
 
   const offer = result.data;
+  const pricing = getAdminOfferDetailPricing(offer, locale);
   const mediaResult = await getAdminOfferMedia(offer.id);
   const backUrl = locale === "pl" ? "/admin/oferty" : `/${locale}/admin/offers`;
   const partnerUrl = locale === "pl"
@@ -234,25 +236,49 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
             <h2 className="font-medium text-brand-navy">{dict.sectionPricing}</h2>
           </div>
           <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPriceBrutto}</p>
-              {offer.priceBrutto !== null ? (
-                <>
-                  <p className="text-sm font-mono font-medium text-brand-navy" title={dict.fieldPriceBruttoRaw}>
-                    {offer.priceBrutto}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {formatPrice(offer.priceBrutto, locale)}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm font-mono font-medium text-brand-navy">—</p>
-              )}
-            </div>
-            <div>
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPriceOnRequest}</p>
-              <p className="text-sm font-medium text-brand-navy">{offer.priceOnRequest ? dict.booleanYes : dict.booleanNo}</p>
-            </div>
+            {pricing.kind === "rfq" ? (
+              <>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.adminOfferEdit.fieldNetPrice}</p>
+                  {pricing.priceNetto !== null ? (
+                    <>
+                      <p className="text-sm font-mono font-medium text-brand-navy">{pricing.priceNetto}</p>
+                      {pricing.formattedNetto !== null && (
+                        <p className="text-xs text-muted-foreground mt-0.5">{pricing.formattedNetto}</p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm font-mono font-medium text-brand-navy">—</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dictionary.adminOfferEdit.fieldNetPriceVisible}</p>
+                  <p className="text-sm font-medium text-brand-navy">{pricing.rfqNetPriceVisible ? dict.booleanYes : dict.booleanNo}</p>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPriceBrutto}</p>
+                  {pricing.priceBrutto !== null ? (
+                    <>
+                      <p className="text-sm font-mono font-medium text-brand-navy" title={dict.fieldPriceBruttoRaw}>
+                        {pricing.priceBrutto}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {formatPrice(pricing.priceBrutto, locale)}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="text-sm font-mono font-medium text-brand-navy">—</p>
+                  )}
+                </div>
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldPriceOnRequest}</p>
+                  <p className="text-sm font-medium text-brand-navy">{pricing.priceOnRequest ? dict.booleanYes : dict.booleanNo}</p>
+                </div>
+              </>
+            )}
             <div className="md:col-span-2">
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldOutboundUrl}</p>
               <div className="text-sm text-brand-navy bg-muted px-3 py-2 rounded-md font-mono break-all whitespace-pre-wrap">
