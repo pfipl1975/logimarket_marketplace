@@ -5,6 +5,7 @@ import * as schema from "@/lib/schema";
 import { parseDecimalToMinorUnits, minorUnitsToDecimalString } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
 import { parseRfqNetPriceFields } from "@/lib/offers/rfq-net-price";
+import { parseProductConditionInput, type ProductCondition } from "@/lib/offers/product-condition";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import {
   type PartnerFacingOfferType,
@@ -25,6 +26,7 @@ export interface PartnerOfferEditInput {
   priceNetto?: string | null;
   rfqNetPriceVisible?: boolean;
   outboundUrl: string | null;
+  productCondition?: ProductCondition | null;
 }
 
 export type PartnerOfferEditResult =
@@ -37,7 +39,9 @@ export function parsePartnerOfferEditInput(raw: unknown): { ok: true; data: Part
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
-  const { partnerId, offerId, expectedUpdatedAt, title, description, partnerOfferType, priceBrutto, priceOnRequest, priceNetto, rfqNetPriceVisible, outboundUrl } = raw as Record<string, unknown>;
+  const { partnerId, offerId, expectedUpdatedAt, title, description, partnerOfferType, priceBrutto, priceOnRequest, priceNetto, rfqNetPriceVisible, outboundUrl, productCondition } = raw as Record<string, unknown>;
+  const condition = parseProductConditionInput(productCondition);
+  if (!condition.ok) return { ok: false, code: "OFFER_INVALID_INPUT" };
 
   if (
     typeof partnerId !== "number" ||
@@ -139,6 +143,7 @@ export function parsePartnerOfferEditInput(raw: unknown): { ok: true; data: Part
       priceOnRequest,
       ...(rfqFields ?? {}),
       outboundUrl: normalizedOutboundUrl,
+      ...(condition.value !== undefined ? { productCondition: condition.value } : {}),
     }
   };
 }
@@ -148,6 +153,7 @@ export interface CurrentPartnerOfferState {
   updatedAt: Date | null;
   offerModel: string;
   conversionType: string;
+  productCondition?: ProductCondition | null;
   title: string;
   description: string | null;
   priceBrutto: string | null;
@@ -173,6 +179,7 @@ export function evaluatePartnerOfferEditCore(
     offerModel: "rfq" | "marketplace";
     conversionType: "inbound" | "outbound";
     outboundUrl: string | null;
+    productCondition?: ProductCondition | null;
   };
 } {
   if (!current) {
@@ -236,7 +243,8 @@ export function evaluatePartnerOfferEditCore(
       current.rfqNetPriceVisible === netUpdate.rfqNetPriceVisible)) &&
     current.offerModel === targetOfferModel &&
     current.conversionType === targetConversionType &&
-    current.outboundUrl === input.outboundUrl
+    current.outboundUrl === input.outboundUrl &&
+    (input.productCondition === undefined || current.productCondition === input.productCondition)
   ) {
     return { ok: true, code: "OFFER_UNCHANGED", changed: false };
   }
@@ -253,6 +261,7 @@ export function evaluatePartnerOfferEditCore(
       offerModel: targetOfferModel,
       conversionType: targetConversionType,
       outboundUrl: input.outboundUrl,
+      ...(input.productCondition !== undefined ? { productCondition: input.productCondition } : {}),
     }
   };
 }
@@ -278,6 +287,7 @@ export async function executePartnerOfferEdit(
           offerModel: schema.offers.offerModel,
           conversionType: schema.offers.conversionType,
           outboundUrl: schema.offers.outboundUrl,
+          productCondition: schema.offers.productCondition,
         })
         .from(schema.offers)
         .where(

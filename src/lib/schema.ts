@@ -55,6 +55,7 @@ export const offers = pgTable("offers", {
   rfqNetPriceVisible: boolean("rfq_net_price_visible").notNull().default(false),
   outboundUrl: varchar("outbound_url", { length: 512 }),
   technicalAttributes: jsonb("technical_attributes").notNull().default({}),
+  productCondition: varchar("product_condition", { length: 20 }).$type<"new" | "used" | "refurbished" | null>(),
   offerModel: varchar("offer_model", { length: 20 }).notNull().default("rfq"),
   description: text("description"),
   imageUrl: varchar("image_url", { length: 512 }),
@@ -71,6 +72,7 @@ export const offers = pgTable("offers", {
   contractModel: varchar("contract_model", { length: 30 }),
 }, () => [
   check("offers_contract_model_check", sql`((contract_model)::text = ANY ((ARRAY['partner_marketplace'::character varying, 'external_redirect'::character varying, 'logimarket_reseller'::character varying])::text[]))`),
+  check("offers_product_condition_check", sql`product_condition IS NULL OR product_condition IN ('new', 'used', 'refurbished')`),
   check("offers_publication_status_check", sql`((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[]))`)
 ]);
 
