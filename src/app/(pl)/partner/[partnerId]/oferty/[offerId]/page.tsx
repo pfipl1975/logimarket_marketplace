@@ -10,6 +10,7 @@ import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { getOfferPath } from "@/lib/i18n/paths";
 import { db } from "@/lib/db";
 import { PartnerOfferSubmitButton } from "@/components/partner/PartnerOfferSubmitButton";
+import { DraftDeleteAction } from "@/components/offers/DraftDeleteAction";
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
 import { getPartnerOfferDetailReadModel, type PartnerOfferDetailDto } from "@/lib/partner-offers/detail-read-model";
 import type { PartnerOfferPublicationStatus } from "@/lib/partner-offers/model-core";
@@ -150,6 +151,15 @@ export default async function PartnerOfferDetailPage({
               >
                 {dict.offerDetailEditDraft || "Edytuj ofertę"}
               </Link>
+              {offer.publishedAt === null && (
+                <DraftDeleteAction
+                  offerId={offer.offerId}
+                  partnerId={parsedPartnerId}
+                  expectedUpdatedAt={offer.updatedAt}
+                  returnHref={backHref}
+                  labels={dictionary.draftDeletion}
+                />
+              )}
               <PartnerOfferSubmitButton
                 partnerId={parsedPartnerId}
                 offerId={offer.offerId}
