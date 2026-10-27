@@ -81,6 +81,17 @@
     "securityTitle": "Seguridad de la cuenta",
     "securityDescription": "Para cambiar la contraseña, cierra sesión y usa la recuperación en la página de acceso."
   },
+  "draftDeletion": {
+    "deleteButton": "Eliminar borrador",
+    "confirmTitle": "¿Eliminar este borrador de oferta?",
+    "confirmBody": "La oferta desaparecerá de la lista de borradores. Sus datos y archivos multimedia permanecerán guardados en el sistema.",
+    "cancel": "Cancelar",
+    "confirm": "Eliminar borrador",
+    "deleting": "Eliminando…",
+    "conflict": "La oferta ha cambiado o ya no se puede eliminar. Actualiza la página.",
+    "forbidden": "No tienes permiso para eliminar este borrador.",
+    "error": "No se pudo eliminar el borrador. Inténtalo de nuevo."
+  },
   "common": {
     "close": "Cerrar"
   },
