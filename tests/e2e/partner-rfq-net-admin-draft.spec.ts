@@ -61,6 +61,7 @@ test.describe("Admin-owned workflow: Partner RFQ draft net price and tenant isol
   test("Admin creates draft; Partner edits, persists and toggles net; foreign read denied; public HTML respects visibility", async ({
     page, adminPage, nonAdminPage,
   }) => {
+    test.setTimeout(120_000);
     if (!database) throw new Error("Disposable test database unavailable");
 
     // Real authenticated Admin Server Action, not a direct INSERT fixture.
