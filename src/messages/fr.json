@@ -81,6 +81,17 @@
     "securityTitle": "Sécurité du compte",
     "securityDescription": "Pour changer votre mot de passe, déconnectez-vous puis utilisez la récupération sur la page de connexion."
   },
+  "draftDeletion": {
+    "deleteButton": "Supprimer le brouillon",
+    "confirmTitle": "Supprimer ce brouillon d’offre ?",
+    "confirmBody": "L’offre disparaîtra de la liste des brouillons. Ses données et médias resteront conservés dans le système.",
+    "cancel": "Annuler",
+    "confirm": "Supprimer le brouillon",
+    "deleting": "Suppression…",
+    "conflict": "L’offre a changé ou ne peut plus être supprimée. Actualisez la page.",
+    "forbidden": "Vous n’êtes pas autorisé à supprimer ce brouillon.",
+    "error": "Impossible de supprimer le brouillon. Veuillez réessayer."
+  },
   "common": {
     "close": "Fermer"
   },
