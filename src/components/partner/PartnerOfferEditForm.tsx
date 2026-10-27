@@ -8,6 +8,7 @@ import { updatePartnerOfferDraft } from "@/app/actions";
 import { usePartnerOfferBusy } from "./PartnerOfferBusyContext";
 import type { PartnerOfferEditDto } from "@/lib/partner-offers/edit-read-model";
 import { PARTNER_FACING_OFFER_TYPES } from "@/lib/offers/offer-type-mapping";
+import { ProductConditionSelect } from "@/components/offers/ProductConditionSelect";
 import {
   getInitialPriceMode,
   buildPricePayload,
@@ -55,6 +56,7 @@ export function PartnerOfferEditForm({
       title: formData.get("title") as string,
       description: formData.get("description") as string,
       partnerOfferType: offerType,
+      productCondition: formData.get("productCondition")?.toString() ?? "",
       ...(isRfq ? { priceNetto: netPrice, rfqNetPriceVisible: showNetPrice } : {}),
       priceBrutto: isRfq ? offer.priceBrutto : priceBrutto,
       priceOnRequest: isRfq ? offer.priceOnRequest : priceOnRequest,
@@ -172,7 +174,7 @@ export function PartnerOfferEditForm({
         </section>
 
         <section className="bg-white border border-border-industrial shadow-soft p-5 sm:p-8 space-y-6">
-          <h2 className="text-lg font-bold text-brand-navy border-b border-border-industrial pb-2">
+          <h2 className="text-lg font-bold text-brand-navy border-b border-industrial pb-2">
             {dict.offerEditSectionModel || "Model oferty"} <span className="text-red-500">*</span>
           </h2>
           <div className="space-y-4">

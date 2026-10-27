@@ -11,6 +11,7 @@ import { Check, AlertTriangle, Info } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
 import type { AdminOfferType } from "@/lib/admin/offer-type";
 import { AdminOfferTypeSelector } from "./AdminOfferTypeSelector";
+import { ProductConditionSelect } from "@/components/offers/ProductConditionSelect";
 import { AdminOfferImageManager } from "./AdminOfferImageManager";
 import type { getAdminOfferMedia } from "@/app/actions";
 
@@ -73,6 +74,7 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
       adminOfferType: fd.get("adminOfferType")?.toString() as import("@/lib/admin/offer-type").AdminOfferType,
       outboundUrl: fd.get("outboundUrl")?.toString() || null,
       isFeatured: fd.get("isFeatured") === "on",
+      productCondition: fd.get("productCondition")?.toString() ?? "",
     };
 
     const result = await updateAdminOffer(input);
@@ -202,6 +204,7 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
               onChange={setAdminOfferType}
               dict={dict}
             />
+            <ProductConditionSelect labels={dict} value={offer.productCondition} />
 
             <div
               className={`rounded-industrial border p-4 transition-colors ${
