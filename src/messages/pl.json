@@ -81,6 +81,17 @@
     "securityTitle": "Bezpieczeństwo konta",
     "securityDescription": "Aby zmienić hasło, wyloguj się i wybierz odzyskiwanie hasła na stronie logowania."
   },
+  "draftDeletion": {
+    "deleteButton": "Usuń szkic",
+    "confirmTitle": "Usunąć szkic oferty?",
+    "confirmBody": "Oferta zniknie z listy szkiców. Dane i multimedia pozostaną zachowane w systemie.",
+    "cancel": "Anuluj",
+    "confirm": "Usuń szkic",
+    "deleting": "Usuwanie…",
+    "conflict": "Oferta została zmieniona lub nie można jej już usunąć. Odśwież stronę.",
+    "forbidden": "Nie masz uprawnień do usunięcia tego szkicu.",
+    "error": "Nie udało się usunąć szkicu. Spróbuj ponownie."
+  },
   "common": {
     "close": "Zamknij"
   },

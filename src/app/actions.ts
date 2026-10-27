@@ -1292,6 +1292,39 @@ export async function getAdminDashboardPage(): Promise<AdminDashboardPageResult>
 import type { OfferDraftCreateResult } from "@/lib/offers/draft-core";
 import type { AdminCreateOptionsResult } from "@/lib/admin/create-options-read-model";
 
+export async function deleteAdminOfferDraft(raw: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+
+  const { parseDraftDeletionInput, executeDraftDeletion } = await import("@/lib/offers/draft-delete-core");
+  const input = parseDraftDeletionInput(raw, false);
+  if (!input) return { ok: false as const, code: "INVALID_INPUT" as const };
+
+  const result = await executeDraftDeletion(db, input);
+  if (result.ok) revalidatePath("/", "layout");
+  return result;
+}
+
+export async function deletePartnerOfferDraft(raw: unknown) {
+  const { parseDraftDeletionInput, executeDraftDeletion } = await import("@/lib/offers/draft-delete-core");
+  const input = parseDraftDeletionInput(raw, true);
+  if (!input || input.partnerId === null) return { ok: false as const, code: "INVALID_INPUT" as const };
+
+  // Identity is read before the transaction. Active Partner membership is
+  // checked again under FOR SHARE inside the deletion transaction.
+  const { resolvePartnerMembership } = await import("@/lib/auth/partner-membership");
+  let authorize;
+  try {
+    authorize = await resolvePartnerMembership();
+  } catch {
+    return { ok: false as const, code: "UNAUTHORIZED" as const };
+  }
+
+  const result = await executeDraftDeletion(db, input, (tx, partnerId) => authorize(partnerId, tx));
+  if (result.ok) revalidatePath("/", "layout");
+  return result;
+}
+
 export async function createAdminOfferDraft(
   rawInput: unknown,
 ): Promise<OfferDraftCreateResult> {
