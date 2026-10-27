@@ -194,7 +194,18 @@ for (const count of [23, 22, 0]) {
       new RegExp(`schema is POST_0023 but journal has ${count} rows`));
   });
 }
-test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_0023", () => {
+test("CARDINALITY: POST_0024 accepts exactly 25 canonical rows", () => {
+  assert.doesNotThrow(() => validate("EXACT_EXISTING_POST_0024", canonicalRows));
+});
+for (const count of [24, 23, 0]) {
+  test(`CARDINALITY: POST_0024 rejects ${count} rows`, () => {
+    assert.throws(
+      () => validate("EXACT_EXISTING_POST_0024", canonicalRows.slice(0, count)),
+      new RegExp(`schema is POST_0024 but journal has ${count} rows`),
+    );
+  });
+}
+test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_0024", () => {
   for (const state of [
     "EXACT_EXISTING_POST_0017",
     "EXACT_EXISTING_POST_0018",
@@ -203,6 +214,7 @@ test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_
     "EXACT_EXISTING_POST_0021",
     "EXACT_EXISTING_POST_0022",
     "EXACT_EXISTING_POST_0023",
+    "EXACT_EXISTING_POST_0024",
   ]) {
     assert.strictEqual(
       isLegacyDev0000Exception(

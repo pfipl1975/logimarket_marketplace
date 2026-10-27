@@ -101,7 +101,8 @@ export const EXPECTED_POST_0021_TABLES = [
 
 export const EXPECTED_POST_0022_TABLES = [...EXPECTED_POST_0021_TABLES];
 export const EXPECTED_POST_0023_TABLES = [...EXPECTED_POST_0022_TABLES];
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0023_TABLES;
+export const EXPECTED_POST_0024_TABLES = [...EXPECTED_POST_0023_TABLES];
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0024_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1859,6 +1860,22 @@ export const FINAL_POST_0023_PRODUCTION_FINGERPRINT: Record<string, TableContrac
   },
 };
 
-export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0022_PRODUCTION_FINGERPRINT;
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0023_PRODUCTION_FINGERPRINT;
+// LM-OFFER-CONDITION-01: additive, nullable product-condition migration.
+export const FINAL_POST_0024_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0023_PRODUCTION_FINGERPRINT,
+  "offers": {
+    ...FINAL_POST_0023_PRODUCTION_FINGERPRINT["offers"],
+    columns: [
+      ...FINAL_POST_0023_PRODUCTION_FINGERPRINT["offers"].columns,
+      { name: "product_condition", type: "character varying(20)", nullable: true, defaultVal: null, sequenceName: null },
+    ],
+    constraints: [
+      ...FINAL_POST_0023_PRODUCTION_FINGERPRINT["offers"].constraints,
+      { name: "offers_product_condition_check", type: "CHECK", definition: "CHECK (((product_condition IS NULL) OR ((product_condition)::text = ANY ((ARRAY['new'::character varying, 'used'::character varying, 'refurbished'::character varying])::text[]))))" },
+    ],
+  },
+};
+
+export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0023_PRODUCTION_FINGERPRINT;
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0024_PRODUCTION_FINGERPRINT;
 
