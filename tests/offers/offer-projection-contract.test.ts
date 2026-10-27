@@ -18,7 +18,11 @@ describe("rowToOffer projection contract", () => {
   test("projection maps the legacy pair through resolveCanonicalOfferModel", () => {
     assert.match(
       actionsSource,
-      /offerModel:\s*resolveCanonicalOfferModel\([\s\S]*?row\.offer\.conversionType[\s\S]*?\)/
+      /const\s+offerModel\s*=\s*resolveCanonicalOfferModel\(\s*row\.offer\.offerModel\s*,\s*row\.offer\.conversionType\s*\)/
+    );
+    assert.match(
+      actionsSource,
+      /\bofferModel,\s*\n\s*outboundUrl:\s*row\.offer\.outboundUrl/
     );
   });
 
