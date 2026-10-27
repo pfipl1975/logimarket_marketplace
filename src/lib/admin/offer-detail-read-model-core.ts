@@ -2,6 +2,7 @@ import { eq, inArray } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import type { TechnicalAttributes } from "@/lib/schema";
+import type { ProductCondition } from "@/lib/offers/product-condition";
 import {
   resolveCanonicalOfferModel,
   type CanonicalOfferModelResolution,
@@ -41,6 +42,7 @@ export interface AdminOfferDetailDto {
   priceNetto: string | null;
   rfqNetPriceVisible: boolean;
   priceOnRequest: boolean;
+  productCondition: ProductCondition | null;
 
   rawOfferModel: string;
   rawConversionType: string;
@@ -208,6 +210,7 @@ export async function getAdminOfferDetailReadModel(
       priceNetto: offer.priceNetto,
       rfqNetPriceVisible: offer.rfqNetPriceVisible,
       priceOnRequest: offer.priceOnRequest,
+      productCondition: offer.productCondition,
 
       rawOfferModel: offer.offerModel,
       rawConversionType: offer.conversionType,

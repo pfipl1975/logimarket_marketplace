@@ -38,9 +38,9 @@ function validate(
   );
 }
 
-test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0023", () => {
-  assert.strictEqual(journal.entries.length, 24);
-  assert.strictEqual(diskMigrations.length, 24);
+test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0024", () => {
+  assert.strictEqual(journal.entries.length, 25);
+  assert.strictEqual(diskMigrations.length, 25);
   assert.deepStrictEqual(
     journal.entries.slice(17).map(({ idx, tag }) => ({ idx, tag })),
     [
@@ -51,6 +51,7 @@ test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0023", () 
       { idx: 21, tag: "0021_buyer_invoice_snapshot" },
       { idx: 22, tag: "0022_legal_document_registry_rls" },
       { idx: 23, tag: "0023_rfq_net_price_foundation" },
+      { idx: 24, tag: "0024_product_condition" },
     ],
   );
 });
@@ -185,7 +186,7 @@ test("CARDINALITY: current live-style POST_0017 with 11 rows fails before hash v
 });
 
 test("CARDINALITY: POST_0023 accepts exactly 24 canonical rows", () => {
-  assert.doesNotThrow(() => validate("EXACT_EXISTING_POST_0023", canonicalRows));
+  assert.doesNotThrow(() => validate("EXACT_EXISTING_POST_0023", canonicalRows.slice(0,24)));
 });
 for (const count of [23, 22, 0]) {
   test(`CARDINALITY: POST_0023 rejects ${count} rows`, () => {

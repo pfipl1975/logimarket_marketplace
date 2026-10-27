@@ -1,4 +1,5 @@
 import type { FilterErrorCode, FilterQueryInput, OfferModelFilter, CatalogOfferSort } from "./types";
+import { isProductCondition } from "@/lib/offers/product-condition";
 
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -31,6 +32,11 @@ export function parseFilterQueryInput(raw: unknown): { ok: true; value: FilterQu
     } else {
       return { ok: false, errors: ["INVALID_OFFER_MODEL"] };
     }
+  }
+
+  if (raw.productCondition !== undefined) {
+    if (!isProductCondition(raw.productCondition)) return { ok: false, errors: ["INVALID_INPUT"] };
+    parsed.productCondition = raw.productCondition;
   }
 
   if (raw.featured !== undefined) {

@@ -1,4 +1,5 @@
 import type { OfferModelFilter, CatalogOfferSort } from "@/lib/filters/types";
+import { isProductCondition, type ProductCondition } from "@/lib/offers/product-condition";
 
 export type { OfferModelFilter, CatalogOfferSort } from "@/lib/filters/types";
 
@@ -9,12 +10,14 @@ export type AttributeQueryParams = Record<string, string[]>;
 export type CategoryOfferFilters = {
   model?: OfferModelFilter;
   featured?: true;
+  condition?: ProductCondition;
   attributeParams?: AttributeQueryParams;
 };
 
 export type CategorySearchParams = {
   view?: string | string[];
   model?: string | string[];
+  condition?: string | string[];
   featured?: string | string[];
   page?: string | string[];
   sort?: string | string[];
@@ -45,6 +48,7 @@ export type CategoryOfferQueryState = {
 export type CategoryOfferQueryPatch = {
   view?: OfferListingView;
   model?: OfferModelFilter | null;
+  condition?: ProductCondition | null;
   featured?: true | null;
   sort?: CatalogOfferSort | null;
   clearAttributeFilters?: boolean;
@@ -70,6 +74,7 @@ export function resolveCategoryOfferFilters(
 
   const model = firstParam(params.model);
   const featured = firstParam(params.featured);
+  const condition = firstParam(params.condition);
   return {
     model:
       model === "rfq" ||
@@ -78,12 +83,13 @@ export function resolveCategoryOfferFilters(
         ? model
         : undefined,
     featured: featured === "1" ? true : undefined,
+    condition: isProductCondition(condition) ? condition : undefined,
     ...(Object.keys(attributeParams).length > 0 ? { attributeParams } : {}),
   };
 }
 
 export function hasActiveCategoryOfferFilters(filters: CategoryOfferFilters): boolean {
-  return Boolean(filters.model || filters.featured || Object.keys(filters.attributeParams ?? {}).length > 0);
+  return Boolean(filters.model || filters.featured || filters.condition || Object.keys(filters.attributeParams ?? {}).length > 0);
 }
 
 export function buildCategoryOfferQueryHref(
@@ -103,6 +109,8 @@ export function buildCategoryOfferQueryHref(
     nextFilters.model = patch.model ?? undefined;
   }
 
+  if ("condition" in patch) nextFilters.condition = patch.condition ?? undefined;
+
   if ("featured" in patch) {
     nextFilters.featured = patch.featured ?? undefined;
   }
@@ -119,6 +127,8 @@ export function buildCategoryOfferQueryHref(
   if (nextFilters.model) {
     params.set("model", nextFilters.model);
   }
+
+  if (nextFilters.condition) params.set("condition", nextFilters.condition);
 
   if (nextFilters.featured) {
     params.set("featured", "1");
