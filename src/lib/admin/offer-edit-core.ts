@@ -31,7 +31,7 @@ export interface AdminOfferEditInput {
   outboundUrl: string | null;
   isFeatured: boolean;
   productCondition?: ProductCondition | null;
-
+}
 
 export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: AdminOfferEditInput } | { ok: false; code: "OFFER_INVALID_INPUT" } | { ok: false; code: "OFFER_TARGET_INVALID"; reason: EditTargetInvalidReason } {
   if (!rawInput || typeof rawInput !== "object" || Array.isArray(rawInput)) {

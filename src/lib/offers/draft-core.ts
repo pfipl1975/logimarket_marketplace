@@ -16,7 +16,7 @@ export interface OfferDraftCreateInput {
   title: string;
   adminOfferType: AdminOfferType;
   productCondition?: ProductCondition | null;
-
+}
 
 export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data: OfferDraftCreateInput } | { ok: false; code: "OFFER_INVALID_INPUT" } {
   if (!rawInput || typeof rawInput !== "object" || Array.isArray(rawInput)) {
