@@ -173,7 +173,21 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   const evidenceBefore = await snapshot("partner_agreement_execution_evidence");
   const journalBefore = await journal();
   assert.equal(journalBefore.length, diskMigrations.length);
+  assert.equal(journalBefore.length, 25, "POST_0024 requires exactly 25 canonical migrations");
+  assert.equal(diskJournal.entries[24]?.tag, "0024_product_condition");
   const lastApplied = journalBefore[journalBefore.length - 1];
+
+  // Fail closed on a physically POST_0024 schema with an incomplete runtime journal.
+  await adminPool.query(
+    `DELETE FROM drizzle_runtime.__drizzle_migrations WHERE created_at = $1`,
+    [lastApplied.created_at],
+  );
+  await assert.rejects(run(), /BLOCKED_RUNTIME_JOURNAL_CARDINALITY/);
+  await adminPool.query(
+    `INSERT INTO drizzle_runtime.__drizzle_migrations (hash, created_at) VALUES ($1, $2)`,
+    [lastApplied.hash, lastApplied.created_at],
+  );
+  assert.deepEqual(await journal(), journalBefore);
 
   await adminPool.query(`ALTER TABLE public.legal_documents ADD COLUMN publication_test_drift text`);
   await assert.rejects(run(), /BLOCKED_PHYSICAL_STATE_PARTIAL_OR_DRIFTED/);

@@ -114,6 +114,7 @@ const SUPPORTED_PHYSICAL_STATES: Record<string, number | undefined> = {
   EXACT_EXISTING_POST_0021: 22,
   EXACT_EXISTING_POST_0022: 23,
   EXACT_EXISTING_POST_0023: 24,
+  EXACT_EXISTING_POST_0024: 25,
 };
 
 export function validateCanonicalDiskJournal(journal: DiskJournal, migrations: DiskMigration[]): void {
