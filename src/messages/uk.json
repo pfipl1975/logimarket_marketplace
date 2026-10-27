@@ -103,6 +103,11 @@
     "modelDescription": "Гібридна модель: RFQ для важкої техніки, E-Commerce для типових товарів."
   },
   "catalog": {
+    "productConditionLabel": "Стан товару",
+    "productConditionUnspecified": "Не вказано",
+    "productConditionNew": "Новий",
+    "productConditionUsed": "Вживаний",
+    "productConditionRefurbished": "Відновлений",
     "allOffers": "Всі пропозиції",
     "allCategories": "Всі категорії",
     "categoriesAria": "Категорії",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "Стан товару",
+    "productConditionUnspecified": "Не вказано",
+    "productConditionNew": "Новий",
+    "productConditionUsed": "Вживаний",
+    "productConditionRefurbished": "Відновлений",
     "featured": "Рекомендовані",
     "price": "Ціна",
     "priceOnRequest": "B2B ціна за запитом",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
+    "productConditionLabel": "Стан товару",
+    "productConditionUnspecified": "Не вказано",
+    "productConditionNew": "Новий",
+    "productConditionUsed": "Вживаний",
+    "productConditionRefurbished": "Відновлений",
     "metaTitle": "Пропозиції | LogiMarket Admin",
     "metaDescription": "Панель пропозицій LogiMarket",
     "eyebrow": "Каталог",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "Повернути до чернетки"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "Стан товару",
+    "productConditionUnspecified": "Не вказано",
+    "productConditionNew": "Новий",
+    "productConditionUsed": "Вживаний",
+    "productConditionRefurbished": "Відновлений",
     "media": {
       "title": "Зображення пропозиції",
       "help": "JPEG, PNG, WEBP або AVIF. До 10 MiB на зображення. Зміни зображень зберігаються окремо.",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "Стан товару",
+    "productConditionUnspecified": "Не вказано",
+    "productConditionNew": "Новий",
+    "productConditionUsed": "Вживаний",
+    "productConditionRefurbished": "Відновлений",
     "title": "Портал партнера",
     "orders": "Замовлення",
     "offers": "Пропозиції",

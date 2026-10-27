@@ -103,6 +103,11 @@
     "modelDescription": "Model hybrydowy: RFQ dla ciężkiego sprzętu, E-Commerce dla artykułów powtarzalnych."
   },
   "catalog": {
+    "productConditionLabel": "Stan produktu",
+    "productConditionUnspecified": "Nie określono",
+    "productConditionNew": "Nowe",
+    "productConditionUsed": "Używane",
+    "productConditionRefurbished": "Odnowione",
     "allOffers": "Wszystkie oferty",
     "allCategories": "Wszystkie kategorie",
     "categoriesAria": "Kategorie",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "Stan produktu",
+    "productConditionUnspecified": "Nie określono",
+    "productConditionNew": "Nowe",
+    "productConditionUsed": "Używane",
+    "productConditionRefurbished": "Odnowione",
     "featured": "Wyróżnione",
     "price": "Cena",
     "priceOnRequest": "Cena na zapytanie B2B",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Umowy Partnerskie"
   },
   "adminOffers": {
+    "productConditionLabel": "Stan produktu",
+    "productConditionUnspecified": "Nie określono",
+    "productConditionNew": "Nowe",
+    "productConditionUsed": "Używane",
+    "productConditionRefurbished": "Odnowione",
     "metaTitle": "Oferty | LogiMarket Admin",
     "metaDescription": "Panel ofert LogiMarket",
     "eyebrow": "Katalog",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "Cofnij do edycji (Szkic)"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "Stan produktu",
+    "productConditionUnspecified": "Nie określono",
+    "productConditionNew": "Nowe",
+    "productConditionUsed": "Używane",
+    "productConditionRefurbished": "Odnowione",
     "media": {
       "title": "Zdjęcia oferty",
       "help": "JPEG, PNG, WEBP lub AVIF. Maksymalnie 10 MiB na zdjęcie. Zmiany zdjęć zapisują się osobno.",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "Stan produktu",
+    "productConditionUnspecified": "Nie określono",
+    "productConditionNew": "Nowe",
+    "productConditionUsed": "Używane",
+    "productConditionRefurbished": "Odnowione",
     "title": "LogiMarket Partner",
     "orders": "Zamówienia",
     "offers": "Oferty",

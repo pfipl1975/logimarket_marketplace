@@ -103,6 +103,11 @@
     "modelDescription": "Hybrides Modell: RFQ für Schwermaschinen, E-Commerce für wiederkehrende Artikel."
   },
   "catalog": {
+    "productConditionLabel": "Produktzustand",
+    "productConditionUnspecified": "Nicht angegeben",
+    "productConditionNew": "Neu",
+    "productConditionUsed": "Gebraucht",
+    "productConditionRefurbished": "Generalüberholt",
     "allOffers": "Alle Angebote",
     "allCategories": "Alle Kategorien",
     "categoriesAria": "Kategorien",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "Produktzustand",
+    "productConditionUnspecified": "Nicht angegeben",
+    "productConditionNew": "Neu",
+    "productConditionUsed": "Gebraucht",
+    "productConditionRefurbished": "Generalüberholt",
     "featured": "Hervorgehoben",
     "price": "Preis",
     "priceOnRequest": "B2B-Preis auf Anfrage",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
+    "productConditionLabel": "Produktzustand",
+    "productConditionUnspecified": "Nicht angegeben",
+    "productConditionNew": "Neu",
+    "productConditionUsed": "Gebraucht",
+    "productConditionRefurbished": "Generalüberholt",
     "metaTitle": "Angebote | LogiMarket Admin",
     "metaDescription": "LogiMarket-Angebotsverwaltung",
     "eyebrow": "Katalog",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "Zum Entwurf zurückkehren"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "Produktzustand",
+    "productConditionUnspecified": "Nicht angegeben",
+    "productConditionNew": "Neu",
+    "productConditionUsed": "Gebraucht",
+    "productConditionRefurbished": "Generalüberholt",
     "media": {
       "title": "Angebotsbilder",
       "help": "JPEG, PNG, WEBP oder AVIF. Bis zu 10 MiB pro Bild. Bildänderungen werden separat gespeichert.",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "Ungültige URL"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "Produktzustand",
+    "productConditionUnspecified": "Nicht angegeben",
+    "productConditionNew": "Neu",
+    "productConditionUsed": "Gebraucht",
+    "productConditionRefurbished": "Generalüberholt",
     "title": "Partnerportal",
     "orders": "Bestellungen",
     "offers": "Angebote",
