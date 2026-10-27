@@ -34,6 +34,10 @@ export function PartnerOfferEditForm({
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [priceMode, setPriceMode] = useState<PriceMode>(() => getInitialPriceMode(offer.priceOnRequest));
   const [priceValue, setPriceValue] = useState<string>(() => offer.priceBrutto ?? "");
+  const [offerType, setOfferType] = useState(offer.partnerOfferType);
+  const [netPrice, setNetPrice] = useState(offer.priceNetto ?? "");
+  const [showNetPrice, setShowNetPrice] = useState(offer.rfqNetPriceVisible);
+  const isRfq = offerType === "rfq";
 
   const backHref = `${basePath}/${offer.offerId}`;
 
@@ -50,9 +54,10 @@ export function PartnerOfferEditForm({
       expectedUpdatedAt: offer.expectedUpdatedAt,
       title: formData.get("title") as string,
       description: formData.get("description") as string,
-      partnerOfferType: formData.get("partnerOfferType") as string,
-      priceBrutto,
-      priceOnRequest,
+      partnerOfferType: offerType,
+      ...(isRfq ? { priceNetto: netPrice, rfqNetPriceVisible: showNetPrice } : {}),
+      priceBrutto: isRfq ? offer.priceBrutto : priceBrutto,
+      priceOnRequest: isRfq ? offer.priceOnRequest : priceOnRequest,
       outboundUrl: formData.get("outboundUrl") as string,
       locale,
     };
@@ -178,7 +183,8 @@ export function PartnerOfferEditForm({
                   name="partnerOfferType"
                   type="radio"
                   value={type}
-                  defaultChecked={offer.partnerOfferType === type}
+                  checked={offerType === type}
+                  onChange={() => setOfferType(type)}
                   className="size-4 border-border-industrial text-brand-teal focus:ring-brand-teal"
                 />
                 <label htmlFor={`type-${type}`} className="ml-3 block text-sm font-medium text-brand-navy">
@@ -195,6 +201,34 @@ export function PartnerOfferEditForm({
           <h2 className="text-lg font-bold text-brand-navy border-b border-border-industrial pb-2">
             {dict.offerEditSectionPrice || "Cena"}
           </h2>
+          {isRfq ? (
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="priceNetto" className="block text-sm font-semibold text-brand-navy">
+                  {dict.rfqNetPriceLabel}
+                </label>
+                <input
+                  id="priceNetto" name="priceNetto" type="text" inputMode="decimal"
+                  pattern={PRICE_INPUT_PATTERN} value={netPrice}
+                  onChange={(e) => setNetPrice(e.target.value)}
+                  disabled={isPending || (busyDomain !== null && busyDomain !== "core")}
+                  placeholder="18000.00"
+                  className="mt-1 block w-full border-border-industrial focus:border-brand-teal focus:ring-brand-teal sm:max-w-xs sm:text-sm"
+                />
+              </div>
+              <label htmlFor="rfqNetPriceVisible" className="flex items-center gap-2 text-sm font-medium text-brand-navy">
+                <input
+                  id="rfqNetPriceVisible" name="rfqNetPriceVisible" type="checkbox"
+                  checked={showNetPrice} onChange={(e) => setShowNetPrice(e.target.checked)}
+                  disabled={isPending || (busyDomain !== null && busyDomain !== "core")}
+                  className="size-4 border-border-industrial text-brand-teal focus:ring-brand-teal"
+                />
+                {dict.rfqNetPriceVisibleLabel}
+              </label>
+              <p className="text-xs text-muted-foreground">{dict.rfqNetPriceHelp}</p>
+            </div>
+          ) : (
+          <>
           <fieldset className="space-y-4" disabled={isPending || (busyDomain !== null && busyDomain !== "core")}>
             <legend className="block text-sm font-semibold text-brand-navy mb-3">
               {dict.offerEditPriceModeLabel || "Sposób prezentacji ceny"}
@@ -259,6 +293,8 @@ export function PartnerOfferEditForm({
                 {dict.offerEditPriceRequestHelp || "Kwota nie będzie wyświetlana. Oferta będzie prezentowana jako „Cena na zapytanie”."}
               </p>
             </div>
+          )}
+          </>
           )}
         </section>
 

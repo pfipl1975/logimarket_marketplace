@@ -44,6 +44,7 @@ import { buildLocalizedExplorerTree } from "@/lib/catalog/navigation";
 import { buildCategoryTree } from "@/lib/catalog/tree";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { CanonicalOfferModelResolution } from "@/lib/offers/model";
+import { projectPublicOfferPrices } from "@/lib/offers/rfq-net-price";
 import {
   getExistingSessionHash,
   getOrCreateSessionHash,
@@ -59,6 +60,8 @@ export type CatalogOffer = {
   description: string | null;
   imageUrl: string | null;
   priceBrutto: string | null;
+  priceNetto: string | null;
+  rfqNetPriceVisible: boolean;
   priceOnRequest: boolean;
   conversionType: string;
   offerModel: CanonicalOfferModelResolution;
@@ -107,19 +110,25 @@ function rowToOffer(row: {
     row.primaryMedia?.storageBucket,
     row.primaryMedia?.objectPath
   );
+  const offerModel = resolveCanonicalOfferModel(row.offer.offerModel, row.offer.conversionType);
+  const publicPrices = projectPublicOfferPrices({
+    offerModel,
+    publicationStatus: row.offer.publicationStatus,
+    isActive: row.offer.isActive,
+    priceBrutto: row.offer.priceBrutto,
+    priceNetto: row.offer.priceNetto,
+    rfqNetPriceVisible: row.offer.rfqNetPriceVisible,
+  });
 
   return {
     id: row.offer.id,
     title: row.offer.title,
     description: row.offer.description,
     imageUrl: resolvedImageUrl,
-    priceBrutto: row.offer.priceBrutto,
+    ...publicPrices,
     priceOnRequest: row.offer.priceOnRequest,
     conversionType: row.offer.conversionType,
-    offerModel: resolveCanonicalOfferModel(
-      row.offer.offerModel,
-      row.offer.conversionType,
-    ),
+    offerModel,
     outboundUrl: row.offer.outboundUrl,
     isFeatured: row.offer.isFeatured,
     isActive: row.offer.isActive,
@@ -134,10 +143,7 @@ function rowToOffer(row: {
     partnerWebsite: row.partner?.websiteUrl ?? null,
     partnerEmail: row.partner?.contactEmail ?? "",
     publicationStatus: row.offer.publicationStatus,
-    purchaseAvailability: (resolveCanonicalOfferModel(
-      row.offer.offerModel,
-      row.offer.conversionType,
-    ) === "ecommerce" ? "temporarily_unavailable" : "not_applicable") satisfies PurchaseAvailability,
+    purchaseAvailability: (offerModel === "ecommerce" ? "temporarily_unavailable" : "not_applicable") satisfies PurchaseAvailability,
   };
 }
 

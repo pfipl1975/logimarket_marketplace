@@ -357,7 +357,9 @@
     "unavailableTitle": "报价暂时不可用",
     "unavailableDescription": "此报价当前不可用。",
     "archivedCtaDisabled": "已归档的报价",
-    "unavailableCtaDisabled": "暂时不可用"
+    "unavailableCtaDisabled": "暂时不可用",
+    "netPriceLabel": "参考未税价",
+    "netPriceVat": "另加适用税率的增值税"
   },
   "cta": {
     "addToCart": "加入购物车",
@@ -1258,7 +1260,10 @@
     "externalUrlHelp": "已发布的外部优惠需要有效的合作伙伴网站链接。",
     "rfqOutboundHelp": "标准询价不需要外部链接。",
     "optionalOutboundHelp": "此优惠类型的外部链接为可选项。",
-    "errorInvalidCurrentOfferType": "当前报价配置无效。请选择有效的报价类型以继续。"
+    "errorInvalidCurrentOfferType": "当前报价配置无效。请选择有效的报价类型以继续。",
+    "fieldNetPrice": "参考未税价（PLN）",
+    "fieldNetPriceVisible": "公开显示参考未税价",
+    "rfqNetPriceHelp": "此为参考金额。如未启用公开显示，商品将显示“询价”。"
   },
   "adminBuyers": {
     "title": "买方",
@@ -1747,7 +1752,10 @@
     "statusUpdating": "正在更新...",
     "startFulfillment": "开始履约",
     "markFulfilled": "标记为已完成",
-    "rfq": "询价"
+    "rfq": "询价",
+    "rfqNetPriceLabel": "参考未税价（PLN）",
+    "rfqNetPriceVisibleLabel": "公开显示参考未税价",
+    "rfqNetPriceHelp": "此为参考金额。如未启用公开显示，商品将显示“询价”。"
   },
   "BuyerOrders": {
     "title": "我的订单",

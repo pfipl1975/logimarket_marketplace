@@ -5,13 +5,14 @@ import Image from "next/image";
 import { Wrench, Package } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
-import { formatPrice } from "@/lib/utils";
+import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
 import { OfferAction } from "./OfferAction";
 import type { CatalogOffer } from "@/app/actions";
-import type { Dictionary } from "@/lib/i18n/types";
+import type { Dictionary, Locale } from "@/lib/i18n/types";
 
 interface OfferCardProps {
+  locale: Locale;
   offer: CatalogOffer;
   detailHref?: string;
   offerLabels: Dictionary["offers"];
@@ -28,6 +29,7 @@ interface OfferCardProps {
 }
 
 export function OfferCard({
+  locale,
   offer,
   detailHref,
   offerLabels,
@@ -121,13 +123,7 @@ export function OfferCard({
 
         <div className="mt-auto">
           <div className="mt-4 flex flex-col gap-3 pt-3 border-t border-[#d9dde2]/60">
-            <p className="text-lg font-bold text-brand-navy">
-              {formatPrice(
-                offer.priceBrutto,
-                offer.priceOnRequest,
-                offerLabels.priceOnRequest,
-              )}
-            </p>
+            <PublicOfferPrice locale={locale} offer={offer} labels={offerLabels} className="text-lg font-bold text-brand-navy" />
             <OfferAction
               offer={{
                 id: offer.id,

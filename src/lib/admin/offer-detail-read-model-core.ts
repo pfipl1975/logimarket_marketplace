@@ -38,6 +38,8 @@ export interface AdminOfferDetailDto {
 
   /** Exact raw string from DB (numeric type), never Number()-converted */
   priceBrutto: string | null;
+  priceNetto: string | null;
+  rfqNetPriceVisible: boolean;
   priceOnRequest: boolean;
 
   rawOfferModel: string;
@@ -203,6 +205,8 @@ export async function getAdminOfferDetailReadModel(
 
       // priceBrutto: preserve exact raw DB string, do NOT convert through Number()
       priceBrutto: offer.priceBrutto,
+      priceNetto: offer.priceNetto,
+      rfqNetPriceVisible: offer.rfqNetPriceVisible,
       priceOnRequest: offer.priceOnRequest,
 
       rawOfferModel: offer.offerModel,

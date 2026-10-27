@@ -142,6 +142,7 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
               <div className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {offers.map((offer) => (
                   <OfferCard
+                    locale={locale}
                     key={offer.id}
                     offer={offer}
                     detailHref={getOfferPath(locale, String(offer.id))}

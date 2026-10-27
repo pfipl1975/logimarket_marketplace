@@ -18,6 +18,8 @@ export interface PartnerOfferEditDto {
   categorySlug: string;
 
   priceBrutto: string | null;
+  priceNetto: string | null;
+  rfqNetPriceVisible: boolean;
   priceOnRequest: boolean;
 
   partnerOfferType: PartnerFacingOfferType;
@@ -103,6 +105,8 @@ export async function getPartnerOfferEditReadModel(
       categoryName: category.name,
       categorySlug: category.slug,
       priceBrutto: offer.priceBrutto,
+      priceNetto: offer.priceNetto,
+      rfqNetPriceVisible: offer.rfqNetPriceVisible,
       priceOnRequest: offer.priceOnRequest,
       partnerOfferType,
       outboundUrl: offer.outboundUrl,

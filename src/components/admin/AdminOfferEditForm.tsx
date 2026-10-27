@@ -67,8 +67,9 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
       title: fd.get("title")?.toString() || "",
       description: fd.get("description")?.toString() || null,
       imageUrl: fd.get("imageUrl")?.toString() || null,
-      priceBrutto: fd.get("priceBrutto")?.toString() || null,
-      priceOnRequest: fd.get("priceOnRequest") === "on",
+      priceBrutto: adminOfferType === "rfq" ? offer.priceBrutto : fd.get("priceBrutto")?.toString() || null,
+      priceOnRequest: adminOfferType === "rfq" ? offer.priceOnRequest : fd.get("priceOnRequest") === "on",
+      ...(adminOfferType === "rfq" ? { priceNetto: fd.get("priceNetto")?.toString() ?? "", rfqNetPriceVisible: fd.get("rfqNetPriceVisible") === "on" } : {}),
       adminOfferType: fd.get("adminOfferType")?.toString() as import("@/lib/admin/offer-type").AdminOfferType,
       outboundUrl: fd.get("outboundUrl")?.toString() || null,
       isFeatured: fd.get("isFeatured") === "on",
@@ -209,6 +210,35 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
                   : "border-border-industrial bg-brand-light-gray/20"
               }`}
             >
+              {adminOfferType === "rfq" ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <label htmlFor="priceNetto" className="mb-1 block text-sm font-medium text-brand-navy">
+                      {dict.fieldNetPrice}
+                    </label>
+                    <input
+                      id="priceNetto" name="priceNetto" type="text" inputMode="decimal"
+                      placeholder="18000.00" defaultValue={offer.priceNetto ?? ""}
+                      aria-describedby="rfqNetPriceHelp"
+                      className="w-full rounded-md border border-input bg-white px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-brand-teal"
+                    />
+                  </div>
+                  <div className="flex items-center md:pt-7">
+                    <label htmlFor="rfqNetPriceVisible" className="flex cursor-pointer items-center gap-2 text-sm font-medium text-brand-navy">
+                      <input
+                        id="rfqNetPriceVisible" name="rfqNetPriceVisible" type="checkbox"
+                        defaultChecked={offer.rfqNetPriceVisible}
+                        className="rounded border-input text-brand-teal focus:ring-brand-teal"
+                      />
+                      {dict.fieldNetPriceVisible}
+                    </label>
+                  </div>
+                  <p id="rfqNetPriceHelp" className="text-xs text-muted-foreground md:col-span-2">
+                    {dict.rfqNetPriceHelp}
+                  </p>
+                </div>
+              ) : (
+              <>
               <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
                 <div>
                   <label htmlFor="priceBrutto" className="mb-1 block text-sm font-medium text-brand-navy">
@@ -244,6 +274,8 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
                   ? dict.marketplacePriceHelp
                   : dict.optionalPriceHelp}
               </p>
+              </>
+              )}
             </div>
 
             <div

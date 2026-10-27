@@ -357,7 +357,9 @@
     "unavailableTitle": "Oferta temporalmente no disponible",
     "unavailableDescription": "Esta oferta no está disponible actualmente.",
     "archivedCtaDisabled": "Oferta archivada",
-    "unavailableCtaDisabled": "Temporalmente no disponible"
+    "unavailableCtaDisabled": "Temporalmente no disponible",
+    "netPriceLabel": "Precio neto orientativo",
+    "netPriceVat": "IVA al tipo aplicable"
   },
   "cta": {
     "addToCart": "Añadir al carrito",
@@ -1258,7 +1260,10 @@
     "externalUrlHelp": "Una oferta externa publicada requiere un enlace válido al sitio web del socio.",
     "rfqOutboundHelp": "Un enlace externo no es necesario para una solicitud de presupuesto estándar.",
     "optionalOutboundHelp": "El enlace externo sigue siendo opcional para este tipo de oferta.",
-    "errorInvalidCurrentOfferType": "La configuración actual de la oferta no es válida. Selecciona un tipo de oferta válido para continuar."
+    "errorInvalidCurrentOfferType": "La configuración actual de la oferta no es válida. Selecciona un tipo de oferta válido para continuar.",
+    "fieldNetPrice": "Precio neto orientativo (PLN)",
+    "fieldNetPriceVisible": "Mostrar públicamente el precio neto orientativo",
+    "rfqNetPriceHelp": "Importe orientativo. Si no está visible, la oferta mostrará « Precio a consultar »."
   },
   "adminBuyers": {
     "title": "Compradores",
@@ -1747,7 +1752,10 @@
     "statusUpdating": "Actualizando...",
     "startFulfillment": "Iniciar preparación",
     "markFulfilled": "Marcar como completado",
-    "rfq": "Consultas"
+    "rfq": "Consultas",
+    "rfqNetPriceLabel": "Precio neto orientativo (PLN)",
+    "rfqNetPriceVisibleLabel": "Mostrar públicamente el precio neto orientativo",
+    "rfqNetPriceHelp": "Importe orientativo. Si no está visible, la oferta mostrará « Precio a consultar »."
   },
   "BuyerOrders": {
     "title": "Mis pedidos",
