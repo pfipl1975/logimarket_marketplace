@@ -139,6 +139,9 @@ export function PartnerOfferEditForm({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-8">
+        <section className="bg-white border border-border-industrial p-5 shadow-soft sm:p-8">
+          <ProductConditionSelect labels={dict} value={offer.productCondition} />
+        </section>
         <section className="bg-white border border-border-industrial shadow-soft p-5 sm:p-8 space-y-6">
           <h2 className="text-lg font-bold text-brand-navy border-b border-border-industrial pb-2">
             {dict.offerEditSectionBasic || "Podstawowe informacje"}
@@ -174,7 +177,7 @@ export function PartnerOfferEditForm({
         </section>
 
         <section className="bg-white border border-border-industrial shadow-soft p-5 sm:p-8 space-y-6">
-          <h2 className="text-lg font-bold text-brand-navy border-b border-industrial pb-2">
+          <h2 className="text-lg font-bold text-brand-navy border-b border-border-industrial pb-2">
             {dict.offerEditSectionModel || "Model oferty"} <span className="text-red-500">*</span>
           </h2>
           <div className="space-y-4">

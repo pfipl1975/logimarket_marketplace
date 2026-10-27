@@ -162,6 +162,7 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
   const clearHref = buildCategoryOfferQueryHref(basePath, { view, sort, filters }, { clearAttributeFilters: true });
   const hiddenModel = filters.model ? <input type="hidden" name="model" value={filters.model} /> : null;
   const hiddenFeatured = filters.featured ? <input type="hidden" name="featured" value="1" /> : null;
+  const hiddenCondition = filters.condition ? <input type="hidden" name="condition" value={filters.condition} /> : null;
   const hasActiveAttributeFilters = Object.keys(filters.attributeParams ?? {}).length > 0;
 
   return (
@@ -174,6 +175,7 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
           {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
+          {hiddenCondition}
           <div className="grid gap-4 items-start md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
             <AttributeControls definitions={definitions} filters={filters} labels={labels} idPrefix="desktop" />
             <div className="flex items-center gap-3 pt-6 xl:justify-start self-start">
@@ -204,6 +206,7 @@ export function CategoryAttributeFilters({ basePath, view, sort, filters, defini
           {sort !== "default" && <input type="hidden" name="sort" value={sort} />}
           {hiddenModel}
           {hiddenFeatured}
+          {hiddenCondition}
           <div className="grid gap-4 grid-cols-1">
             <AttributeControls definitions={definitions} filters={filters} labels={labels} idPrefix="mobile" />
           </div>

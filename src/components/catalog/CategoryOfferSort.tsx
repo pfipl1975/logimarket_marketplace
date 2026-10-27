@@ -20,6 +20,7 @@ export function CategoryOfferSort({ basePath, view, currentSort, filters, labels
     <form method="get" action={basePath} className="grid w-full grid-cols-[minmax(0,1fr)_auto] gap-2 sm:w-auto sm:grid-cols-[auto_auto_auto] sm:items-center">
       {view === "list" && <input type="hidden" name="view" value="list" />}
       {filters.model && <input type="hidden" name="model" value={filters.model} />}
+      {filters.condition && <input type="hidden" name="condition" value={filters.condition} />}
       {filters.featured && <input type="hidden" name="featured" value="1" />}
       {filters.attributeParams && Object.entries(filters.attributeParams).map(([key, values]) =>
         values.map((value, index) => (

@@ -8,6 +8,7 @@ import { CartDrawer } from "@/components/CartDrawer";
 import { Badge } from "@/components/ui/badge";
 import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
+import { ProductConditionBadge } from "@/components/offers/ProductConditionBadge";
 import { OfferAction } from "@/components/OfferAction";
 import { PublicOfferMediaGallery } from "@/components/offers/PublicOfferMediaGallery";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
@@ -114,6 +115,7 @@ export async function OfferPage({ locale, offerId }: OfferPageProps) {
               }}
               className="rounded px-2.5 py-1 text-[10px]"
             />
+            <ProductConditionBadge value={offer.productCondition} labels={dict.offers} />
           </div>
           <h1 className="mt-3 max-w-4xl break-words text-2xl font-bold leading-tight text-brand-navy sm:text-3xl">
             {offer.title}

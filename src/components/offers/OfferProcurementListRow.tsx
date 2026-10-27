@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { OfferAction } from "@/components/OfferAction";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
+import { ProductConditionBadge } from "@/components/offers/ProductConditionBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import type { CatalogOffer } from "@/app/actions";
@@ -60,6 +61,7 @@ export function OfferProcurementListRow({
             labels={offerLabels}
             className="rounded-md border-0 px-2.5 py-0.5 text-[10px]"
           />
+          <ProductConditionBadge value={offer.productCondition} labels={offerLabels} />
         </div>
 
         <h3 className="mt-2 text-base font-bold leading-snug text-brand-navy">
