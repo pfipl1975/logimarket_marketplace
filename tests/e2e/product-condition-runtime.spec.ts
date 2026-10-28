@@ -191,9 +191,15 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       path: string; status: number; resourceType: string; navigation: boolean;
       actionFingerprint: string | null; hasRscHeader: boolean; contentType: string;
     }> = [];
+    // Match only requests STARTED during this save. A response listener alone
+    // can pick up late responses from the CartProvider's mount-time Server Actions.
+    const startedDuringSave = new WeakSet<import("@playwright/test").Request>();
+    const trackPostStart = (request: import("@playwright/test").Request) => {
+      if (request.method() === "POST") startedDuringSave.add(request);
+    };
     const trackPost = (response: import("@playwright/test").Response) => {
       const request = response.request();
-      if (request.method() !== "POST") return;
+      if (!startedDuringSave.has(request)) return;
       postStatuses.push(response.status());
       const headers = request.headers();
       postEvidence.push({
@@ -208,6 +214,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
         contentType: (headers["content-type"] ?? "").split(";")[0],
       });
     };
+    adminPage.on("request", trackPostStart);
     adminPage.on("response", trackPost);
     try {
       await adminForm.locator('button[type="submit"]').click();
@@ -226,6 +233,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       throw new Error("Admin condition=NULL save diagnostic: " + JSON.stringify(evidence), { cause: error });
     } finally {
       adminPage.off("response", trackPost);
+      adminPage.off("request", trackPostStart);
     }
     const writeResult = await db.query<{ writes: string }>(
       `SELECT COUNT(*)::text AS writes FROM public.${auditTable} WHERE offer_id = $1`, [partnerId],
