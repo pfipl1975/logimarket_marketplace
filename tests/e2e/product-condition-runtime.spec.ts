@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import { test, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
@@ -21,6 +21,11 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
   let partnerB = 0;
   let categoryId = 0;
   const offerIds: number[] = [];
+  const auditSuffix = randomUUID().replace(/-/g, "");
+  const auditTable = `qa_condition_audit_${auditSuffix}`;
+  const auditFunction = `qa_condition_fn_${auditSuffix}`;
+  const auditTrigger = `qa_condition_trigger_${auditSuffix}`;
+  let auditSetupStarted = false;
 
   const stored = async (id: number) => {
     const result = await db!.query<{ product_condition: string | null; publication_status: string; partner_id: string }>(
@@ -75,6 +80,11 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
   test.afterAll(async () => {
     if (!db) return;
     try {
+      if (auditSetupStarted) {
+        await db.query(`DROP TRIGGER IF EXISTS ${auditTrigger} ON public.offers`);
+        await db.query(`DROP FUNCTION IF EXISTS public.${auditFunction}()`);
+        await db.query(`DROP TABLE IF EXISTS public.${auditTable}`);
+      }
       if (offerIds.length) {
         await db.query("DELETE FROM offers WHERE id = ANY($1::bigint[])", [offerIds]);
       }
@@ -165,9 +175,38 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
         .map(element => ({ name: element.name, type: element.type, message: element.validationMessage })),
     );
     expect(invalidControls, "Admin form must be natively valid before saving condition=NULL").toEqual([]);
+
+    // Disposable E2E DB only: count committed UPDATEs for this exact offer.
+    // Never execute fixture DDL against shared or production databases.
+    requireIsolatedE2EDatabaseUrl();
+    auditSetupStarted = true;
+    await db.query(`CREATE TABLE public.${auditTable} (offer_id bigint NOT NULL)`);
+    await db.query(`CREATE FUNCTION public.${auditFunction}() RETURNS trigger LANGUAGE plpgsql AS $
+      BEGIN INSERT INTO public.${auditTable} (offer_id) VALUES (NEW.id); RETURN NEW; END $`);
+    await db.query(`CREATE TRIGGER ${auditTrigger} AFTER UPDATE ON public.offers
+      FOR EACH ROW WHEN (NEW.id = ${partnerId}) EXECUTE FUNCTION public.${auditFunction}()`);
+
     const postStatuses: number[] = [];
+    const postEvidence: Array<{
+      path: string; status: number; resourceType: string; navigation: boolean;
+      actionFingerprint: string | null; hasRscHeader: boolean; contentType: string;
+    }> = [];
     const trackPost = (response: import("@playwright/test").Response) => {
-      if (response.request().method() === "POST") postStatuses.push(response.status());
+      const request = response.request();
+      if (request.method() !== "POST") return;
+      postStatuses.push(response.status());
+      const headers = request.headers();
+      postEvidence.push({
+        path: new URL(request.url()).pathname.replace(/\\/\\d+(?=\\/|$)/g, "/:id"),
+        status: response.status(),
+        resourceType: request.resourceType(),
+        navigation: request.isNavigationRequest(),
+        actionFingerprint: headers["next-action"]
+          ? createHash("sha256").update(headers["next-action"]).digest("hex").slice(0, 12)
+          : null,
+        hasRscHeader: "rsc" in headers,
+        contentType: (headers["content-type"] ?? "").split(";")[0],
+      });
     };
     adminPage.on("response", trackPost);
     try {
@@ -186,7 +225,17 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     } finally {
       adminPage.off("response", trackPost);
     }
-    expect((await stored(partnerId)).product_condition).toBeNull();
+    const writeResult = await db.query<{ writes: string }>(
+      `SELECT COUNT(*)::text AS writes FROM public.${auditTable} WHERE offer_id = $1`, [partnerId],
+    );
+    const committedUpdateCount = Number(writeResult.rows[0].writes);
+    const conditionAfterSave = (await stored(partnerId)).product_condition;
+    // Sanitized diagnostic: no URL query, raw action IDs, headers, cookies, tokens or payloads.
+    console.info("LM_PR38_SAFE_POST_DIAGNOSTIC=" + JSON.stringify({
+      postEvidence, committedUpdateCount, conditionAfterSave,
+    }));
+    expect(committedUpdateCount, "Exactly one committed offer UPDATE during Admin save").toBe(1);
+    expect(conditionAfterSave).toBeNull();
     expect(postStatuses).toEqual([200]);
     await expect(adminPage.getByRole("status").getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
     await expect(adminPage.locator("#productCondition")).toHaveCount(0);
