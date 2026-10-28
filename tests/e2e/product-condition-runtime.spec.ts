@@ -187,10 +187,10 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       adminPage.off("response", trackPost);
     }
     expect((await stored(partnerId)).product_condition).toBeNull();
-    await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionUnspecified);
     expect(postStatuses).toEqual([200]);
     await expect(adminPage.getByRole("status").getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
     await expect(adminPage.locator("#productCondition")).toHaveCount(0);
+    await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionUnspecified);
     await adminPage.goto(adminEdit);
     await expect(adminPage.locator("#productCondition")).toHaveValue("");
     await adminPage.locator("#productCondition").selectOption("refurbished");
