@@ -338,6 +338,7 @@ export type CartItemWithOffer = {
   priceBrutto: string | null;
   priceOnRequest: boolean;
   quantity: number;
+  isUnavailable?: boolean;
   partnerName: string;
   partnerId: number | null;
   offerModel: CanonicalOfferModelResolution | "inconsistent";
@@ -376,6 +377,20 @@ export async function getCartItems(): Promise<CartItemWithOffer[]> {
     .leftJoin(offerMedia, and(eq(offerMedia.offerId, offers.id), eq(offerMedia.isPrimary, true)))
     .where(eq(cartItems.sessionHash, sessionHash));
   return items.map((row) => {
+    const canonicalModel = row.offer ? resolveCanonicalOfferModel(row.offer.offerModel, row.offer.conversionType) : "unknown";
+    let available = row.offer?.publicationStatus === "published" && row.offer.isActive &&
+      canonicalModel === "ecommerce" && !row.offer.priceOnRequest;
+    if (available) {
+      try { parseDecimalToMinorUnits(row.offer?.priceBrutto); } catch { available = false; }
+    }
+    if (!available) {
+      return {
+        id: row.cartItem.id, offerId: row.cartItem.offerId, quantity: row.cartItem.quantity,
+        title: "", imageUrl: null, priceBrutto: null, priceOnRequest: true,
+        partnerName: "", partnerId: null, offerModel: "unknown" as const,
+        isActive: false, publicationStatus: "draft" as const, categoryName: "", isUnavailable: true,
+      };
+    }
     const resolvedImageUrl = resolvePublicOfferImage(
       row.offer?.imageUrl ?? null,
       row.primaryMedia?.storageBucket,
@@ -1419,14 +1434,16 @@ export async function getPartnerCreateOptions(partnerId: number): Promise<
   }
 }
 
-export async function hydrateOffersWithAttributes(
+async function hydrateOffersWithAttributes(
   offers: CatalogOffer[],
   locale: Locale,
 ): Promise<CatalogOffer[]> {
   if (offers.length === 0) return offers;
-  const mapped = await getOffersRelationalAttributes(db, offers, locale);
+  const publicOffers = offers.filter(o => o.publicationStatus === "published" && o.isActive);
+  const mapped = await getOffersRelationalAttributes(db, publicOffers, locale);
   return offers.map((o) => ({
     ...o,
+    technicalAttributes: o.publicationStatus === "published" && o.isActive ? o.technicalAttributes : {},
     attributes: mapped[o.id] || [],
   }));
 }
