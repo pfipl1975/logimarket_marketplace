@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { createContext, useContext, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { Locale } from "@/lib/i18n/config";
@@ -22,14 +22,57 @@ interface AdminOfferEditFormProps {
   initialMedia: Awaited<ReturnType<typeof getAdminOfferMedia>>;
 }
 
+type SaveSuccess = "updated" | "unchanged" | null;
+const SaveFeedbackContext = createContext<{
+  isPending: boolean;
+  setIsPending: Dispatch<SetStateAction<boolean>>;
+  setSuccess: Dispatch<SetStateAction<SaveSuccess>>;
+} | null>(null);
+
+/** Keep the save result and submission lock above the version-keyed form. */
+export function AdminOfferEditFeedback({ offerId, locale, dict, children }: {
+  offerId: number;
+  locale: Locale;
+  dict: Dictionary["adminOfferEdit"];
+  children: ReactNode;
+}) {
+  const [isPending, setIsPending] = useState(false);
+  const [success, setSuccess] = useState<SaveSuccess>(null);
+  const backUrl = locale === "pl" ? `/admin/oferty/${offerId}` : `/${locale}/admin/offers/${offerId}`;
+
+  return (
+    <SaveFeedbackContext.Provider value={{ isPending, setIsPending, setSuccess }}>
+      {success ? (
+        <div role="status" className="bg-white rounded-industrial border border-border-industrial shadow-soft p-12 text-center">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
+            <Check className="w-8 h-8" />
+          </div>
+          <h2 className="text-xl font-semibold text-brand-navy mb-2">
+            {success === "updated" ? dict.successUpdated : dict.successUnchanged}
+          </h2>
+          <div className="mt-8">
+            <Link
+              href={backUrl}
+              className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium rounded-industrial bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
+            >
+              {dict.backToOffer}
+            </Link>
+          </div>
+        </div>
+      ) : children}
+    </SaveFeedbackContext.Provider>
+  );
+}
+
 export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminOfferEditFormProps) {
   const router = useRouter();
+  const feedback = useContext(SaveFeedbackContext);
+  if (!feedback) throw new Error("AdminOfferEditForm requires AdminOfferEditFeedback");
+  const { isPending, setIsPending, setSuccess } = feedback;
 
-  const [isPending, setIsPending] = useState(false);
   const [mediaPending, setMediaPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflict, setConflict] = useState(false);
-  const [success, setSuccess] = useState<"updated" | "unchanged" | null>(null);
   const [adminOfferType, setAdminOfferType] = useState<AdminOfferType | "">(
     offer.adminOfferType ?? "",
   );
@@ -77,42 +120,26 @@ export function AdminOfferEditForm({ offer, locale, dict, initialMedia }: AdminO
       productCondition: fd.get("productCondition")?.toString() ?? "",
     };
 
-    const result = await updateAdminOffer(input);
+    try {
+      const result = await updateAdminOffer(input);
 
-    if (result.ok) {
-      setSuccess(result.changed ? "updated" : "unchanged");
-    } else {
-      if (result.code === "OFFER_CONFLICT") {
-        setConflict(true);
-      } else if (result.code === "OFFER_TARGET_INVALID") {
-        setError(dict.errors[result.reason as keyof typeof dict.errors]);
+      if (result.ok) {
+        setSuccess(result.changed ? "updated" : "unchanged");
       } else {
-        setError(dict.errors[result.code as keyof typeof dict.errors]);
+        if (result.code === "OFFER_CONFLICT") {
+          setConflict(true);
+        } else if (result.code === "OFFER_TARGET_INVALID") {
+          setError(dict.errors[result.reason as keyof typeof dict.errors]);
+        } else {
+          setError(dict.errors[result.code as keyof typeof dict.errors]);
+        }
       }
+    } catch {
+      setError(dict.errors.SYSTEM_ERROR);
+    } finally {
+      setIsPending(false);
     }
-    setIsPending(false);
   };
-
-  if (success) {
-    return (
-      <div className="bg-white rounded-industrial border border-border-industrial shadow-soft p-12 text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
-          <Check className="w-8 h-8" />
-        </div>
-        <h2 className="text-xl font-semibold text-brand-navy mb-2">
-          {success === "updated" ? dict.successUpdated : dict.successUnchanged}
-        </h2>
-        <div className="mt-8">
-          <Link
-            href={backUrl}
-            className="inline-flex items-center justify-center px-6 py-3 text-sm font-medium rounded-industrial bg-brand-navy text-white hover:bg-brand-navy/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal"
-          >
-            {dict.backToOffer}
-          </Link>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">

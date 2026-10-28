@@ -175,12 +175,71 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       adminPage.off("response", trackPost);
     }
     expect((await stored(partnerId)).product_condition).toBeNull();
+    expect(postStatuses).toEqual([200]);
+    await expect(adminPage.getByRole("status").getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
+    await expect(adminPage.locator("#productCondition")).toHaveCount(0);
     await adminPage.goto(adminEdit);
+    await expect(adminPage.locator("#productCondition")).toHaveValue("");
     await adminPage.locator("#productCondition").selectOption("refurbished");
     await adminPage.locator("form").filter({ has: adminPage.locator("#productCondition") })
       .locator('button[type="submit"]').click();
     await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
     expect((await stored(partnerId)).product_condition).toBe("refurbished");
+
+    // A fresh edit reads the persisted version; an unchanged save is not an update.
+    await adminPage.goto(adminEdit);
+    await expect(adminPage.locator("#productCondition")).toHaveValue("refurbished");
+    const adminSave = () => adminPage.locator("form").filter({ has: adminPage.locator("#productCondition") })
+      .locator('button[type="submit"]');
+    await adminSave().click();
+    await expect(adminPage.getByText(pl.adminOfferEdit.successUnchanged)).toBeVisible();
+    await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toHaveCount(0);
+    expect((await stored(partnerId)).product_condition).toBe("refurbished");
+
+    // Concurrent fixture mutation must surface a conflict, never a success receipt.
+    await adminPage.goto(adminEdit);
+    await expect(adminPage.locator("#productCondition")).toHaveValue("refurbished");
+    await db.query("UPDATE offers SET updated_at=clock_timestamp() + interval '1 second' WHERE id=$1", [partnerId]);
+    await adminPage.locator("#productCondition").selectOption("used");
+    await adminSave().click();
+    await expect(adminPage.getByText(pl.adminOfferEdit.conflictTitle)).toBeVisible();
+    await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toHaveCount(0);
+    await expect(adminPage.getByText(pl.adminOfferEdit.successUnchanged)).toHaveCount(0);
+    expect((await stored(partnerId)).product_condition).toBe("refurbished");
+
+    await adminPage.getByRole("button", { name: pl.adminOfferEdit.conflictReload }).click();
+    await expect(adminPage.getByText(pl.adminOfferEdit.conflictTitle)).toHaveCount(0);
+    await adminPage.locator("#productCondition").evaluate(element => {
+      const select = element as HTMLSelectElement;
+      const option = document.createElement("option");
+      option.value = "invalid-admin-state";
+      option.textContent = "Invalid Admin state";
+      select.add(option);
+      select.value = option.value;
+    });
+    await adminSave().click();
+    await expect(adminPage.getByText(pl.adminOfferEdit.errors.OFFER_INVALID_INPUT, { exact: true })).toBeVisible();
+    await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toHaveCount(0);
+    await expect(adminPage.getByText(pl.adminOfferEdit.successUnchanged)).toHaveCount(0);
+    expect((await stored(partnerId)).product_condition).toBe("refurbished");
+
+    // An interrupted Server Action must unlock the form and must not claim a DB write.
+    await adminPage.locator("#productCondition").selectOption("used");
+    const saveUrl = new URL(adminEdit, adminPage.url()).toString();
+    await adminPage.route(saveUrl, async route => {
+      if (route.request().method() === "POST") await route.abort("failed");
+      else await route.continue();
+    });
+    try {
+      await adminSave().click();
+      await expect(adminPage.getByText(pl.adminOfferEdit.errors.SYSTEM_ERROR, { exact: true })).toBeVisible();
+      await expect(adminSave()).toBeEnabled();
+      await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toHaveCount(0);
+      await expect(adminPage.getByText(pl.adminOfferEdit.successUnchanged)).toHaveCount(0);
+      expect((await stored(partnerId)).product_condition).toBe("refurbished");
+    } finally {
+      await adminPage.unroute(saveUrl);
+    }
 
     // No implicit 'new' default for an unclassified offer created through Partner UI.
     const unspecifiedId = await createDraft(
