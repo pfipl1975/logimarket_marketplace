@@ -94,10 +94,20 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     test.setTimeout(180_000);
     if (!db) throw new Error("Disposable E2E database unavailable");
 
+    const assertAdminDetailCondition = async (id: number, expectedLabel: string) => {
+      expect((await adminPage.goto("/admin/oferty/" + id))?.status()).toBe(200);
+      const identity = adminPage.locator("section").filter({
+        has: adminPage.getByRole("heading", { name: pl.adminOfferDetail.sectionIdentity, exact: true }),
+      });
+      await expect(identity.getByText(pl.adminOfferEdit.productConditionLabel, { exact: true })).toBeVisible();
+      await expect(identity.getByText(expectedLabel, { exact: true })).toBeVisible();
+    };
+
     // Create via the authenticated Admin Server Action (not via fixture INSERT).
     const adminId = await createDraft(adminPage, "/admin/oferty/nowa", titles.admin, "new", true);
     expect((await stored(adminId)).product_condition).toBe("new");
     expect((await stored(adminId)).publication_status).toBe("draft");
+    await assertAdminDetailCondition(adminId, pl.adminOfferEdit.productConditionNew);
     expect((await page.goto("/oferta/" + adminId))?.status()).toBe(404);
 
     const ownEdit = "/partner/" + partnerA + "/oferty/" + adminId + "/edytuj";
@@ -133,6 +143,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     await expect(nonAdminPage).toHaveURL("/partner/" + partnerA + "/oferty/" + adminId);
     expect((await stored(adminId)).product_condition).toBe("used");
     expect((await stored(adminId)).publication_status).toBe("draft");
+    await assertAdminDetailCondition(adminId, pl.adminOfferEdit.productConditionUsed);
     expect((await nonAdminPage.goto(foreignEdit))?.status()).toBe(404);
 
     // Partner create action persists refurbished, and Admin edit can clear/reassign to the same draft.
@@ -141,6 +152,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     );
     expect((await stored(partnerId)).product_condition).toBe("refurbished");
     expect((await stored(partnerId)).publication_status).toBe("draft");
+    await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionRefurbished);
     const adminEdit = "/admin/oferty/" + partnerId + "/edytuj";
     expect((await adminPage.goto(adminEdit))?.status()).toBe(200);
     await adminPage.locator("#productCondition").selectOption("");
@@ -175,6 +187,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       adminPage.off("response", trackPost);
     }
     expect((await stored(partnerId)).product_condition).toBeNull();
+    await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionUnspecified);
     expect(postStatuses).toEqual([200]);
     await expect(adminPage.getByRole("status").getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
     await expect(adminPage.locator("#productCondition")).toHaveCount(0);

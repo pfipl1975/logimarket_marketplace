@@ -7,6 +7,7 @@ import { ArrowLeft, Box, Info, Settings, FileText, List, HardDrive, Eye } from "
 import { AdminOfferLifecycleAction } from "@/components/admin/AdminOfferLifecycleAction";
 import { DraftDeleteAction } from "@/components/offers/DraftDeleteAction";
 import { AdminOfferDetailMediaGallery } from "@/components/admin/AdminOfferDetailMediaGallery";
+import { ProductConditionBadge } from "@/components/offers/ProductConditionBadge";
 import { evaluateOfferPublishEligibility } from "@/lib/admin/offer-publication-core";
 import { getAdminOfferDetailPricing } from "@/lib/admin/offer-detail-pricing";
 
@@ -192,6 +193,16 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
                 {offer.categoryName}{" "}
                 <span className="text-muted-foreground font-normal">({offer.categorySlug})</span>
               </p>
+            </div>
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
+                {dictionary.adminOfferEdit.productConditionLabel}
+              </p>
+              {offer.productCondition ? (
+                <ProductConditionBadge value={offer.productCondition} labels={dictionary.adminOfferEdit} />
+              ) : (
+                <p className="text-sm text-muted-foreground">{dictionary.adminOfferEdit.productConditionUnspecified}</p>
+              )}
             </div>
             <div>
               <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">{dict.fieldCreatedAt}</p>
