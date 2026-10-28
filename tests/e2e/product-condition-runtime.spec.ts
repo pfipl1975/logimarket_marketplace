@@ -181,8 +181,8 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     requireIsolatedE2EDatabaseUrl();
     auditSetupStarted = true;
     await db.query(`CREATE TABLE public.${auditTable} (offer_id bigint NOT NULL)`);
-    await db.query(`CREATE FUNCTION public.${auditFunction}() RETURNS trigger LANGUAGE plpgsql AS $
-      BEGIN INSERT INTO public.${auditTable} (offer_id) VALUES (NEW.id); RETURN NEW; END $`);
+    await db.query(`CREATE FUNCTION public.${auditFunction}() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN INSERT INTO public.${auditTable} (offer_id) VALUES (NEW.id); RETURN NEW; END $$`);
     await db.query(`CREATE TRIGGER ${auditTrigger} AFTER UPDATE ON public.offers
       FOR EACH ROW WHEN (NEW.id = ${partnerId}) EXECUTE FUNCTION public.${auditFunction}()`);
 
@@ -197,7 +197,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       postStatuses.push(response.status());
       const headers = request.headers();
       postEvidence.push({
-        path: new URL(request.url()).pathname.replace(/\\/\\d+(?=\\/|$)/g, "/:id"),
+        path: new URL(request.url()).pathname.split("/").map(segment => /^\d+$/.test(segment) ? ":id" : segment).join("/"),
         status: response.status(),
         resourceType: request.resourceType(),
         navigation: request.isNavigationRequest(),
