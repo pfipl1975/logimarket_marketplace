@@ -1,6 +1,6 @@
 import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { requireIsolatedE2EDatabaseUrl } from "../../../scripts/e2e/buyer-trust-fixtures";
@@ -56,14 +56,46 @@ function readActions(): Map<string, string> {
   return actions;
 }
 
-async function invoke(request: APIRequestContext, actions: Map<string, string>, name: string, args: unknown[]) {
+async function invoke(request: APIRequestContext, actions: Map<string, string>, name: string, args: unknown[], port = 3000) {
   const id = actions.get(name);
   expect(id, "BLOCKED_UNREGISTERED_REQUIRED_ACTION: " + name).toBeTruthy();
-  return request.post("http://localhost:3000/", {
-    headers: { "next-action": id!, "content-type": "text/plain;charset=UTF-8", origin: "http://localhost:3000" },
+  const origin = "http://localhost:" + port;
+  return request.post(origin + "/", {
+    headers: { "next-action": id!, "content-type": "text/plain;charset=UTF-8", origin },
     data: JSON.stringify(args),
     timeout: 20_000,
   });
+}
+
+
+/** A second process models independent serverless pools; it uses this same build and guarded CI DB. */
+async function startReplica() {
+  requireReproductionEnvironment();
+  const child = spawn(process.execPath, [
+    "node_modules/next/dist/bin/next", "start", "--hostname", "localhost", "--port", "3002",
+  ], { env: { ...process.env, NODE_ENV: "production" }, stdio: ["ignore", "pipe", "pipe"] });
+  const stop = async () => {
+    if (child.exitCode !== null || child.signalCode !== null) return;
+    await new Promise<void>(resolve => {
+      const timer = setTimeout(() => child.kill("SIGKILL"), 5_000);
+      child.once("exit", () => { clearTimeout(timer); resolve(); });
+      child.kill("SIGTERM");
+    });
+  };
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error("BLOCKED_REPLICA_START_TIMEOUT")), 15_000);
+      let output = "";
+      child.once("error", () => { clearTimeout(timer); reject(new Error("BLOCKED_REPLICA_START")); });
+      child.once("exit", () => { clearTimeout(timer); reject(new Error("BLOCKED_REPLICA_EARLY_EXIT")); });
+      child.stderr.on("data", () => {}); // Drain without printing environment/provider messages.
+      child.stdout.on("data", chunk => {
+        output = (output + chunk.toString()).slice(-4096).replace(/\x1b\[[0-9;]*m/g, "");
+        if (output.includes("Ready in")) { clearTimeout(timer); resolve(); }
+      });
+    });
+    return stop;
+  } catch (error) { await stop(); throw error; }
 }
 
 async function record(evidence: Evidence) {
@@ -229,14 +261,18 @@ export async function reproduceMarketplaceRisks({ database, seller, browser, non
           const flight = await context.request.get("http://localhost:3000/oferta/" + target.id + "?qa56i=rsc", {
             headers: { RSC: "1" },
           });
-          expect(flight.status()).toBe(variant.privateTitle ? 404 : 200);
+          expect([200, 404]).toContain(flight.status());
           expect(flight.headers()["content-type"], "BLOCKED_RSC_PROTOCOL").toContain("text/x-component");
           const flightBody = await flight.text();
+          if (variant.privateTitle) {
+            // Streaming RSC may commit HTTP 200 before rendering notFound().
+            expect(flightBody.includes("NEXT_HTTP_ERROR_FALLBACK;404"), "BLOCKED_MISSING_RSC_NOT_FOUND_BOUNDARY").toBe(true);
+          } else { expect(flight.status()).toBe(200); }
           const actionLeak = actionBody.includes("987654.37") || (variant.privateTitle && actionBody.includes(privateTitle));
           const htmlLeak = htmlBody.includes("987654.37");
           const rscLeak = flightBody.includes("987654.37");
           const netLeak = variant.label === "hidden-rfq" && [actionBody, htmlBody, flightBody].some(body => body.includes("765432.19"));
-          evidence.push({ variant: variant.label, actionLeak, htmlLeak, rscLeak, netLeak });
+          evidence.push({ variant: variant.label, htmlStatus: html.status(), rscStatus: flight.status(), actionLeak, htmlLeak, rscLeak, netLeak });
           expect.soft(actionLeak, "R02 " + variant.label + " private data in cart Action").toBe(false);
           expect.soft(htmlLeak || rscLeak || netLeak, "R02 " + variant.label + " private price in HTML/RSC").toBe(false);
         } finally { await context.close(); }
@@ -292,6 +328,7 @@ export async function reproduceMarketplaceRisks({ database, seller, browser, non
       const coordinator = await database.connect();
       const timeline: string[] = [];
       let locked = false;
+      let stopReplica: (() => Promise<void>) | undefined;
       try {
         const page = await context.newPage();
         await addUsingUI(page, first.id, first.title);
@@ -302,6 +339,7 @@ export async function reproduceMarketplaceRisks({ database, seller, browser, non
         const initial = await database.query("SELECT offer_id FROM cart_items WHERE session_hash=$1", [hash]);
         expect(initial.rows).toHaveLength(1);
         expect(String(initial.rows[0].offer_id)).toBe(first.id);
+        stopReplica = await startReplica();
         await coordinator.query("BEGIN");
         locked = true;
         await coordinator.query("SET LOCAL idle_in_transaction_session_timeout='60s'");
@@ -324,7 +362,7 @@ export async function reproduceMarketplaceRisks({ database, seller, browser, non
           return blocked.rows[0].count;
         }, { timeout: 12_000, intervals: [25, 50, 100], message: "BLOCKED_CHECKOUT_BARRIER_NOT_REACHED" }).toBe(1);
         timeline.push("checkout_snapshot_precedes_blocked_order_insert");
-        const addition = await invoke(context.request, actions, "addToCart", [Number(added.id), 1]);
+        const addition = await invoke(context.request, actions, "addToCart", [Number(added.id), 1], 3002);
         expect(addition.status()).toBe(200);
         const committed = await database.query<{ quantity: number }>(
           "SELECT quantity FROM cart_items WHERE session_hash=$1 AND offer_id=$2", [hash, added.id],
@@ -351,12 +389,13 @@ export async function reproduceMarketplaceRisks({ database, seller, browser, non
         const conserved = cartQuantity + orderedQuantity === 1;
         await record({ risk: "R04", result: conserved ? "PASS" : "FAIL", timeline,
           addedQuantity: 1, remainingCartQuantity: cartQuantity, orderedQuantity,
-          synchronization: "SQL_SHARE_LOCK_AND_PG_BLOCKING_PIDS", randomSchedulingDelays: false });
+          synchronization: "SQL_SHARE_LOCK_AND_PG_BLOCKING_PIDS", applicationProcesses: 2, randomSchedulingDelays: false });
         outcomes.add("R04");
         expect.soft(conserved, "R04 committed new cart position must remain in cart or be included exactly once in the order").toBe(true);
       } finally {
         if (locked) await coordinator.query("ROLLBACK");
         coordinator.release();
+        if (stopReplica) await stopReplica();
         await context.close();
       }
     });
