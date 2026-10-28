@@ -41,6 +41,7 @@ import {
   FINAL_POST_0004_PRODUCTION_FINGERPRINT,
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
   FINAL_POST_0015_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0023_PRODUCTION_FINGERPRINT,
   type TableContract,
 } from "../../scripts/database/runtime-migration-contract";
 
@@ -1396,16 +1397,16 @@ test("GRANT: verifier never issues write SQL", async () => {
 test("ROLLBACK_BAD_TOKEN_TEST: rejects missing authorization token", async () => {
   const env = emptyEnv();
   delete (env as Record<string, unknown>).RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION;
-  const q = new StrictFakeQueryable(metadataRouter());
-  const result = await verifyRollbackPreconditions(q, env, exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, env, prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION"));
 });
 
 test("ROLLBACK_BAD_TOKEN_TEST: rejects wrong authorization token", async () => {
   const env = { ...emptyEnv(), RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: "WRONG_TOKEN" };
-  const q = new StrictFakeQueryable(metadataRouter());
-  const result = await verifyRollbackPreconditions(q, env, exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, env, prevFakeRead());
   assert.strictEqual(result.allowed, false);
 });
 
@@ -1415,8 +1416,8 @@ test("ROLLBACK_PRODUCTION_REF_TEST: production ref is rejected by the ref guard"
   // production ref also fails the expected-ref check (guard order), so the
   // reason must reference the project-ref guard either way.
   const env = { ...emptyEnv(), DATABASE_URL: FAKE_PROD_URL };
-  const q = new StrictFakeQueryable(metadataRouter());
-  const result = await verifyRollbackPreconditions(q, env, exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, env, prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(
     result.reason?.includes("forbidden") || result.reason?.includes("expected DEV project ref"),
@@ -1430,81 +1431,81 @@ test("ROLLBACK: rejects when expected ref equals forbidden ref", async () => {
     RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: DEV_REF,
     RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: DEV_REF,
   };
-  const q = new StrictFakeQueryable(metadataRouter());
-  const result = await verifyRollbackPreconditions(q, env, exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, env, prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("equals forbidden ref"));
 });
 
 test("ROLLBACK_BAD_FINGERPRINT_TEST: rejects wrong fingerprint (PARTIAL schema)", async () => {
   const q = new StrictFakeQueryable(
-    metadataRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
+    historicalRollbackRouter({ tables: EXPECTED_BASELINE_TABLES.slice(0, 7) })
   );
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("EXACT_EXISTING"));
 });
 
 test("ROLLBACK_NONEMPTY_TEST: rejects non-empty table", async () => {
-  const q = new StrictFakeQueryable(metadataRouter({ tableCounts: { offers: 5 } }));
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter({ tableCounts: { offers: 5 } }));
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("row(s)"));
 });
 
 test("ROLLBACK_MISSING_JOURNAL_TEST: rejects empty journal", async () => {
-  const q = new StrictFakeQueryable(metadataRouter({ journalRows: [] }));
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter({ journalRows: [] }));
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("Journal is empty"));
 });
 
 test("ROLLBACK_BAD_HASH_TEST: rejects wrong hash in journal", async () => {
   const q = new StrictFakeQueryable(
-    metadataRouter({
-      journalRows: exactFakeRead().map((migration, index) => ({
+    historicalRollbackRouter({
+      journalRows: prevFakeRead().map((migration, index) => ({
         hash: index === 2 ? "wronghash" : migration.hash,
         created_at: String(migration.folderMillis),
       })),
     })
   );
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("hash mismatch"));
 });
 
 test("ROLLBACK_LATER_MIGRATION_TEST: rejects a journal entry beyond the expected chain", async () => {
   const q = new StrictFakeQueryable(
-    metadataRouter({
+    historicalRollbackRouter({
       journalRows: [
-        ...exactFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: String(folderMillis) })),
+        ...prevFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: String(folderMillis) })),
         { hash: "laterhash", created_at: "9999999999999" },
       ],
     })
   );
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, false);
-  assert.ok(result.reason?.includes(`${exactFakeRead().length + 1} entries`));
+  assert.ok(result.reason?.includes(`${prevFakeRead().length + 1} entries`));
 });
 
 test("ROLLBACK_JOURNAL_ORDER_TEST: rejects a timestamp mismatch within the migration chain", async () => {
   const q = new StrictFakeQueryable(
-    metadataRouter({
-      journalRows: exactFakeRead().map((migration, index) => ({
+    historicalRollbackRouter({
+      journalRows: prevFakeRead().map((migration, index) => ({
         hash: migration.hash,
         created_at: String(index === 3 ? migration.folderMillis + 1 : migration.folderMillis),
       })),
     })
   );
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, false);
   assert.ok(result.reason?.includes("created_at mismatch at entry 4"));
 });
 
 test("ROLLBACK: secrets do not appear in error reasons", async () => {
   const env = { ...emptyEnv(), RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: "WRONG" };
-  const q = new StrictFakeQueryable(metadataRouter());
-  const result = await verifyRollbackPreconditions(q, env, exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, env, prevFakeRead());
   assert.ok(!result.reason?.includes(FAKE_DEV_URL), "DATABASE_URL must not appear in reason");
   assert.ok(!result.reason?.includes(DEV_REF), "project ref must not appear in reason");
 });
@@ -1514,24 +1515,24 @@ test("ROLLBACK: secrets do not appear in error reasons", async () => {
 // ---------------------------------------------------------------------------
 
 test("COUNT_STRING_HANDLING_TEST: string counts are accepted", async () => {
-  const q = new StrictFakeQueryable(metadataRouter({ countsAsNumbers: false }));
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter({ countsAsNumbers: false }));
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, true, `expected allowed, got: ${result.reason}`);
 });
 
 test("COUNT_NUMBER_HANDLING_TEST: numeric counts are accepted", async () => {
   const q = new StrictFakeQueryable(
-    metadataRouter({
+    historicalRollbackRouter({
       countsAsNumbers: true,
-      journalRows: exactFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: folderMillis })),
+      journalRows: prevFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: folderMillis })),
     })
   );
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, true, `expected allowed, got: ${result.reason}`);
 });
 
 test("COUNT_NUMBER_HANDLING_TEST: numeric policy/trigger counts parse to numbers", async () => {
-  const q = new StrictFakeQueryable(metadataRouter({ countsAsNumbers: true }));
+  const q = new StrictFakeQueryable(historicalRollbackRouter({ countsAsNumbers: true }));
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
   assert.strictEqual(publicTables.length, EXPECTED_COUNTS.TABLES);
   for (const t of EXPECTED_BASELINE_TABLES) {
@@ -1546,7 +1547,7 @@ test("COUNT_NUMBER_HANDLING_TEST: numeric policy/trigger counts parse to numbers
 // ---------------------------------------------------------------------------
 
 test("FAKE: unknown query throws a safe explicit error", async () => {
-  const q = new StrictFakeQueryable(metadataRouter());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
   await assert.rejects(
     async () => q.query("SELECT * FROM public.offers"),
     (e: Error) => {
@@ -1559,8 +1560,8 @@ test("FAKE: unknown query throws a safe explicit error", async () => {
 });
 
 test("FAKE: unmatched metadata query count is zero for a full preflight", async () => {
-  const q = new StrictFakeQueryable(metadataRouter());
-  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
   assert.strictEqual(result.allowed, true, `expected allowed, got: ${result.reason}`);
   assert.strictEqual(q.unmatched.length, 0, "no metadata query may go unmatched");
 });
@@ -1658,9 +1659,9 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
 // ---------------------------------------------------------------------------
 
 test("ROLLBACK_FULL_WRAPPER_TEST: preflight + single client transaction + cleanup", async () => {
-  const { pool, statements, state } = fakeRollbackPool(metadataRouter());
+  const { pool, statements, state } = fakeRollbackPool(historicalRollbackRouter());
 
-  await rollbackEmptyDevBaseline(emptyEnv(), exactFakeRead(), (() => pool) as never);
+  await rollbackEmptyDevBaseline(emptyEnv(), prevFakeRead(), (() => pool) as never);
 
   assert.strictEqual(state.connects, 1, "exactly one client must be acquired");
   assert.strictEqual(statements[0], "BEGIN");
@@ -1676,10 +1677,10 @@ test("ROLLBACK_FULL_WRAPPER_TEST: preflight + single client transaction + cleanu
 
 test("ROLLBACK_FULL_WRAPPER_TEST: denied preflight acquires no client and runs no DDL", async () => {
   const env = { ...emptyEnv(), RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: "WRONG" };
-  const { pool, statements, state } = fakeRollbackPool(metadataRouter());
+  const { pool, statements, state } = fakeRollbackPool(historicalRollbackRouter());
 
   await assert.rejects(
-    async () => rollbackEmptyDevBaseline(env, exactFakeRead(), (() => pool) as never),
+    async () => rollbackEmptyDevBaseline(env, prevFakeRead(), (() => pool) as never),
     /ROLLBACK_ALLOWED=NO/
   );
   assert.strictEqual(state.connects, 0, "no client may be acquired on denied preflight");
@@ -1688,12 +1689,12 @@ test("ROLLBACK_FULL_WRAPPER_TEST: denied preflight acquires no client and runs n
 });
 
 test("ROLLBACK_FULL_WRAPPER_TEST: DDL error rolls back, releases client, closes pool", async () => {
-  const { pool, statements, state } = fakeRollbackPool(metadataRouter(), {
+  const { pool, statements, state } = fakeRollbackPool(historicalRollbackRouter(), {
     failOn: "DROP TABLE IF EXISTS public.offers",
   });
 
   await assert.rejects(
-    async () => rollbackEmptyDevBaseline(emptyEnv(), exactFakeRead(), (() => pool) as never),
+    async () => rollbackEmptyDevBaseline(emptyEnv(), prevFakeRead(), (() => pool) as never),
     /DDL_FAILURE/
   );
   assert.strictEqual(statements[statements.length - 1], "ROLLBACK");
@@ -1726,3 +1727,49 @@ test("NORM: normalizeConstraintDefinition lowercases", () => {
 
 
 
+
+// Rollback authorization is deliberately historical. POST_0024 is NOT authorized.
+// Keep the real guard and all positive transaction/drop-order tests intact.
+function historicalRollbackRouter(options: MetadataOptions = {}): Router {
+  return metadataRouter({
+    fingerprint: FINAL_POST_0023_PRODUCTION_FINGERPRINT,
+    journalRows: prevFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: String(folderMillis) })),
+    ...options,
+  });
+}
+
+test("ROLLBACK_POST0024: current exact target fails closed before any DDL", async () => {
+  const q = new StrictFakeQueryable(metadataRouter());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
+  assert.strictEqual(result.allowed, false);
+  assert.match(result.reason ?? "", /EXACT_EXISTING_POST_0024/);
+  const { pool, statements, state } = fakeRollbackPool(metadataRouter());
+  await assert.rejects(
+    () => rollbackEmptyDevBaseline(emptyEnv(), exactFakeRead(), (() => pool) as never),
+    /ROLLBACK_ALLOWED=NO/,
+  );
+  assert.strictEqual(state.connects, 0);
+  assert.deepStrictEqual(statements, []);
+  assert.strictEqual(state.ended, true);
+});
+
+test("ROLLBACK_POST0023: historical exact schema and 24-entry journal remain authorized", async () => {
+  const q = new StrictFakeQueryable(historicalRollbackRouter());
+  const result = await verifyRollbackPreconditions(q, emptyEnv(), prevFakeRead());
+  assert.strictEqual(result.allowed, true, result.reason);
+  assert.strictEqual(prevFakeRead().length, 24);
+});
+
+test("ROLLBACK_HISTORY: POST0024 changes only offers condition, not historical drop allowlists", () => {
+  assert.deepStrictEqual(Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT), Object.keys(PRODUCTION_FINGERPRINT));
+  for (const table of EXPECTED_BASELINE_TABLES) {
+    const current = structuredClone(PRODUCTION_FINGERPRINT[table]) as TableContract;
+    if (table === "offers") {
+      assert.strictEqual(current.columns.filter(column => column.name === "product_condition").length, 1);
+      assert.strictEqual(current.constraints.filter(constraint => constraint.name === "offers_product_condition_check").length, 1);
+      current.columns = current.columns.filter(column => column.name !== "product_condition");
+      current.constraints = current.constraints.filter(constraint => constraint.name !== "offers_product_condition_check");
+    }
+    assert.deepStrictEqual(current, FINAL_POST_0023_PRODUCTION_FINGERPRINT[table], table);
+  }
+});

@@ -123,30 +123,26 @@ test("CONTRACT_SYNC: 14. Exact RLS-enabled count", () => {
   assert.strictEqual(rlsCount, EXPECTED_COUNTS.RLS_ENABLED);
 });
 
-test("CONTRACT_SYNC: 15. Zero policies and the exact append-only trigger", () => {
+test("CONTRACT_SYNC: 15. Zero policies and exact approved trigger counts", () => {
+  // 0019_legal_document_registry creates the three frozen-document/pack triggers.
+  // They remain part of POST_0024; zero is not an approved expectation.
+  const expectedTriggers: Record<string, number> = {
+    seller_verification_events: 1,
+    partner_agreement_execution_evidence: 2,
+    partner_agreement_evidence_invalidations: 1,
+    seller_tax_identifiers: 1,
+    buyer_organization_verification_events: 1,
+    legal_document_versions: 1,
+    legal_pack_versions: 1,
+    legal_pack_documents: 1,
+  };
   let triggerCount = 0;
-  for (const t of EXPECTED_BASELINE_TABLES) {
-    const fp = PRODUCTION_FINGERPRINT[t] as unknown as {
-      policyCount?: number;
-      triggerCount?: number;
-    };
-    assert.strictEqual(fp.policyCount ?? 0, 0, `${t} must have 0 policies`);
+  for (const table of EXPECTED_BASELINE_TABLES) {
+    const fp = PRODUCTION_FINGERPRINT[table];
+    assert.strictEqual(fp.policyCount ?? 0, 0, table + " must have 0 policies");
+    assert.strictEqual(fp.triggerCount ?? 0, expectedTriggers[table] ?? 0, table + " exact triggers");
     triggerCount += fp.triggerCount ?? 0;
-    if (
-      t !== "seller_verification_events" &&
-      t !== "partner_agreement_execution_evidence" &&
-      t !== "partner_agreement_evidence_invalidations" &&
-      t !== "seller_tax_identifiers" &&
-      t !== "buyer_organization_verification_events"
-    ) {
-      assert.strictEqual(fp.triggerCount ?? 0, 0, `${t} must have 0 triggers`);
-    }
   }
-  assert.strictEqual(PRODUCTION_FINGERPRINT.seller_verification_events.triggerCount, 1);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.partner_agreement_execution_evidence.triggerCount, 2);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.partner_agreement_evidence_invalidations.triggerCount, 1);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.seller_tax_identifiers.triggerCount, 1);
-  assert.strictEqual(PRODUCTION_FINGERPRINT.buyer_organization_verification_events.triggerCount, 1);
   assert.strictEqual(triggerCount, EXPECTED_COUNTS.TRIGGERS);
 });
 
