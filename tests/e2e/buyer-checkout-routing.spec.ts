@@ -1,3 +1,4 @@
+import { reproduceMarketplaceRisks } from "./helpers/marketplace-risk-reproduction";
 import { expect, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import { test, createDummySupabaseCookie, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
@@ -647,4 +648,10 @@ test.describe("isolated canonical Buyer checkout", () => {
       await context.close();
     }
   });
+
+  test("LM-MARKETPLACE-QA-56I-CI-REPRO: R01-R04 on audited application", async ({ browser, nonAdminPage }) => {
+    test.setTimeout(120_000);
+    await reproduceMarketplaceRisks({ database, seller, browser, nonAdminPage });
+  });
+
 });
