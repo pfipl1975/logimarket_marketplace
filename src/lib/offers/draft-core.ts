@@ -3,6 +3,7 @@ import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { offers, partners, categories } from "@/lib/schema";
 import { resolveCanonicalOfferModel } from "@/lib/offers/model";
+import { parseProductConditionInput, type ProductCondition } from "@/lib/offers/product-condition";
 import { AdminOfferType, isAdminOfferType, deriveOfferStorageForCreate } from "@/lib/admin/offer-type";
 
 export type OfferDraftCreateResult =
@@ -14,6 +15,7 @@ export interface OfferDraftCreateInput {
   categoryId: number;
   title: string;
   adminOfferType: AdminOfferType;
+  productCondition?: ProductCondition | null;
 }
 
 export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data: OfferDraftCreateInput } | { ok: false; code: "OFFER_INVALID_INPUT" } {
@@ -21,7 +23,9 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
     return { ok: false, code: "OFFER_INVALID_INPUT" };
   }
 
-  const { partnerId, categoryId, title, adminOfferType } = rawInput as Record<string, unknown>;
+  const { partnerId, categoryId, title, adminOfferType, productCondition } = rawInput as Record<string, unknown>;
+  const condition = parseProductConditionInput(productCondition);
+  if (!condition.ok) return { ok: false, code: "OFFER_INVALID_INPUT" };
 
   // partnerId
   if (typeof partnerId !== "string" && typeof partnerId !== "number") return { ok: false, code: "OFFER_INVALID_INPUT" };
@@ -50,6 +54,7 @@ export function parseOfferDraftCreateInput(rawInput: unknown): { ok: true; data:
       categoryId: cid,
       title: trimmedTitle,
       adminOfferType,
+      ...(condition.value !== undefined ? { productCondition: condition.value } : {}),
     },
   };
 }
@@ -92,6 +97,7 @@ export async function createOfferDraftCore(
         title: input.title,
         offerModel,
         conversionType,
+        productCondition: input.productCondition ?? null,
         publicationStatus: "draft",
         contractModel: null,
       }).returning({ id: offers.id });

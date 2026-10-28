@@ -6,7 +6,7 @@ import {
 } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
-import { AdminOfferEditForm } from "@/components/admin/AdminOfferEditForm";
+import { AdminOfferEditFeedback, AdminOfferEditForm } from "@/components/admin/AdminOfferEditForm";
 import { AdminOfferTechnicalAttributesForm } from "@/components/admin/AdminOfferTechnicalAttributesForm";
 
 interface AdminOfferEditPageProps {
@@ -72,13 +72,15 @@ export async function AdminOfferEditPage({
           {dict.description}
         </p>
       </div>
-      <AdminOfferEditForm
-        key={offer.updatedAt ?? "never-updated"}
-        offer={offer}
-        locale={locale}
-        dict={dict}
-        initialMedia={media}
-      />
+      <AdminOfferEditFeedback key={offer.id} offerId={offer.id} locale={locale} dict={dict}>
+        <AdminOfferEditForm
+          key={offer.updatedAt ?? "never-updated"}
+          offer={offer}
+          locale={locale}
+          dict={dict}
+          initialMedia={media}
+        />
+      </AdminOfferEditFeedback>
 
       {attrsModel && attrsModel.attributes.length > 0 && (
         <AdminOfferTechnicalAttributesForm

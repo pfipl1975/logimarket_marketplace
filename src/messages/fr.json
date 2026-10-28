@@ -103,6 +103,11 @@
     "modelDescription": "Modèle hybride : RFQ pour les équipements lourds, E-Commerce pour les articles récurrents."
   },
   "catalog": {
+    "productConditionLabel": "État du produit",
+    "productConditionUnspecified": "Non précisé",
+    "productConditionNew": "Neuf",
+    "productConditionUsed": "D’occasion",
+    "productConditionRefurbished": "Reconditionné",
     "allOffers": "Toutes les offres",
     "allCategories": "Toutes les catégories",
     "categoriesAria": "Catégories",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "État du produit",
+    "productConditionUnspecified": "Non précisé",
+    "productConditionNew": "Neuf",
+    "productConditionUsed": "D’occasion",
+    "productConditionRefurbished": "Reconditionné",
     "featured": "À la une",
     "price": "Prix",
     "priceOnRequest": "Prix B2B sur demande",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
+    "productConditionLabel": "État du produit",
+    "productConditionUnspecified": "Non précisé",
+    "productConditionNew": "Neuf",
+    "productConditionUsed": "D’occasion",
+    "productConditionRefurbished": "Reconditionné",
     "metaTitle": "Offres | LogiMarket Admin",
     "metaDescription": "Panneau des offres LogiMarket",
     "eyebrow": "Catalogue",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "Retourner au brouillon"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "État du produit",
+    "productConditionUnspecified": "Non précisé",
+    "productConditionNew": "Neuf",
+    "productConditionUsed": "D’occasion",
+    "productConditionRefurbished": "Reconditionné",
     "media": {
       "title": "Images de l’offre",
       "help": "JPEG, PNG, WEBP ou AVIF. Jusqu’à 10 MiB par image. Les modifications des images sont enregistrées séparément.",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "URL invalide"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "État du produit",
+    "productConditionUnspecified": "Non précisé",
+    "productConditionNew": "Neuf",
+    "productConditionUsed": "D’occasion",
+    "productConditionRefurbished": "Reconditionné",
     "title": "Portail Partenaire",
     "orders": "Commandes",
     "offers": "Offres",

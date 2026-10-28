@@ -1,3 +1,4 @@
+import type { ProductCondition } from "@/lib/offers/product-condition";
 export type OfferModelFilter = "rfq" | "ecommerce" | "outbound";
 
 export type ControlledFilter = { attributeId: number; optionIds: number[] };
@@ -13,6 +14,7 @@ export type CatalogOfferSort =
 export type FilterQueryInput = {
   categoryId: number;
   offerModel?: OfferModelFilter;
+  productCondition?: ProductCondition;
   featured?: true;
   controlled?: ControlledFilter[];
   numbers?: RangeFilter[];
@@ -36,6 +38,7 @@ export type FilterValidationError = { code: FilterErrorCode; attributeId?: numbe
 export type NormalizedFilterQuery = {
   categoryId: number;
   offerModel?: OfferModelFilter;
+  productCondition?: ProductCondition;
   featured?: true;
   controlled: ControlledFilter[];
   numbers: RangeFilter[];

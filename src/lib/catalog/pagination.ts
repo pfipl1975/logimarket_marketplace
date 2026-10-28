@@ -66,6 +66,8 @@ export function buildCategoryPaginationHref(
     params.set("model", state.filters.model);
   }
 
+  if (state.filters.condition) params.set("condition", state.filters.condition);
+
   if (state.filters.featured) {
     params.set("featured", "1");
   }

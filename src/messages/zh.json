@@ -103,6 +103,11 @@
     "modelDescription": "混合模式：重型设备采用 RFQ 报价，常用标准件采用 E-Commerce 购物车。"
   },
   "catalog": {
+    "productConditionLabel": "商品状况",
+    "productConditionUnspecified": "未指定",
+    "productConditionNew": "全新",
+    "productConditionUsed": "二手",
+    "productConditionRefurbished": "翻新",
     "allOffers": "所有报价",
     "allCategories": "所有分类",
     "categoriesAria": "分类",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "商品状况",
+    "productConditionUnspecified": "未指定",
+    "productConditionNew": "全新",
+    "productConditionUsed": "二手",
+    "productConditionRefurbished": "翻新",
     "featured": "推荐",
     "price": "价格",
     "priceOnRequest": "B2B 询价",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
+    "productConditionLabel": "商品状况",
+    "productConditionUnspecified": "未指定",
+    "productConditionNew": "全新",
+    "productConditionUsed": "二手",
+    "productConditionRefurbished": "翻新",
     "metaTitle": "优惠 | LogiMarket 管理员",
     "metaDescription": "LogiMarket 报价面板",
     "eyebrow": "目录",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "返回草稿"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "商品状况",
+    "productConditionUnspecified": "未指定",
+    "productConditionNew": "全新",
+    "productConditionUsed": "二手",
+    "productConditionRefurbished": "翻新",
     "media": {
       "title": "商品图片",
       "help": "支持 JPEG、PNG、WEBP 或 AVIF，每张图片最多 10 MiB。图片更改单独保存。",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "URL 无效（必须以 http:// 或 https:// 开头）"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "商品状况",
+    "productConditionUnspecified": "未指定",
+    "productConditionNew": "全新",
+    "productConditionUsed": "二手",
+    "productConditionRefurbished": "翻新",
     "title": "合作伙伴门户",
     "orders": "订单",
     "offers": "商品方案",

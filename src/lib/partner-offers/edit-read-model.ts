@@ -1,4 +1,5 @@
 import "server-only";
+import type { ProductCondition } from "@/lib/offers/product-condition";
 import { eq, and, ne } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
@@ -21,6 +22,7 @@ export interface PartnerOfferEditDto {
   priceNetto: string | null;
   rfqNetPriceVisible: boolean;
   priceOnRequest: boolean;
+  productCondition: ProductCondition | null;
 
   partnerOfferType: PartnerFacingOfferType;
   outboundUrl: string | null;
@@ -108,6 +110,7 @@ export async function getPartnerOfferEditReadModel(
       priceNetto: offer.priceNetto,
       rfqNetPriceVisible: offer.rfqNetPriceVisible,
       priceOnRequest: offer.priceOnRequest,
+      productCondition: offer.productCondition,
       partnerOfferType,
       outboundUrl: offer.outboundUrl,
       publicationStatus: offer.publicationStatus,

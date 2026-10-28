@@ -10,6 +10,7 @@ import { AlertTriangle } from "lucide-react";
 import type { Dictionary } from "@/lib/i18n/types";
 import { AdminCategoryPicker } from "./AdminCategoryPicker";
 import { AdminOfferTypeSelector } from "./AdminOfferTypeSelector";
+import { ProductConditionSelect } from "@/components/offers/ProductConditionSelect";
 import type { AdminOfferType } from "@/lib/admin/offer-type";
 
 interface AdminOfferCreateFormProps {
@@ -43,6 +44,7 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
         partnerId: fd.get("partnerId")?.toString() || "",
         categoryId: fd.get("categoryId")?.toString() || "",
         title: fd.get("title")?.toString() || "",
+        productCondition: fd.get("productCondition")?.toString() ?? "",
         adminOfferType: fd.get("adminOfferType")?.toString() || "",
       };
 
@@ -113,6 +115,7 @@ export function AdminOfferCreateForm({ options, locale, dict }: AdminOfferCreate
         />
 
         <AdminCategoryPicker categories={options.categories} dict={dict} />
+        <ProductConditionSelect labels={dict} />
 
         <div>
           <label htmlFor="title" className="block text-sm font-medium text-brand-navy mb-1">{dict.createTitleLabel}</label>

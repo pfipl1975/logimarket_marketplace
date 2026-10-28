@@ -194,6 +194,7 @@ export async function CategoryPage({
   const filteredResult = await getFilteredCategoryOffers({
     categoryId: category.id,
     offerModel: effectiveFilters.model,
+    productCondition: effectiveFilters.condition,
     featured: effectiveFilters.featured,
     controlled: attributeState.input.controlled,
     numbers: attributeState.input.numbers,
@@ -607,6 +608,10 @@ export async function CategoryPage({
                   filtersModelEcommerce: dict.catalog.filtersModelEcommerce,
                   filtersModelOutbound: dict.catalog.filtersModelOutbound,
                   filtersFeaturedOnly: dict.catalog.filtersFeaturedOnly,
+                  productConditionLabel: dict.catalog.productConditionLabel,
+                  productConditionNew: dict.catalog.productConditionNew,
+                  productConditionUsed: dict.catalog.productConditionUsed,
+                  productConditionRefurbished: dict.catalog.productConditionRefurbished,
                 }}
               />
 

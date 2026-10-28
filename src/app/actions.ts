@@ -55,6 +55,7 @@ import {
 } from "@/lib/checkout/money";
 
 export type CatalogOffer = {
+  productCondition: import("@/lib/offers/product-condition").ProductCondition | null;
   id: number;
   title: string;
   description: string | null;
@@ -131,6 +132,7 @@ function rowToOffer(row: {
     offerModel,
     outboundUrl: row.offer.outboundUrl,
     isFeatured: row.offer.isFeatured,
+    productCondition: row.offer.productCondition,
     isActive: row.offer.isActive,
     technicalAttributes:
       (row.offer.technicalAttributes as TechnicalAttributes) ?? {},

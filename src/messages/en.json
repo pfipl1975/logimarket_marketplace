@@ -103,6 +103,11 @@
     "modelDescription": "Hybrid model: RFQ for heavy equipment, E-Commerce for repeatable items."
   },
   "catalog": {
+    "productConditionLabel": "Product condition",
+    "productConditionUnspecified": "Not specified",
+    "productConditionNew": "New",
+    "productConditionUsed": "Used",
+    "productConditionRefurbished": "Refurbished",
     "allOffers": "All offers",
     "allCategories": "All categories",
     "categoriesAria": "Categories",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "Product condition",
+    "productConditionUnspecified": "Not specified",
+    "productConditionNew": "New",
+    "productConditionUsed": "Used",
+    "productConditionRefurbished": "Refurbished",
     "featured": "Featured",
     "price": "Price",
     "priceOnRequest": "B2B price on request",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
+    "productConditionLabel": "Product condition",
+    "productConditionUnspecified": "Not specified",
+    "productConditionNew": "New",
+    "productConditionUsed": "Used",
+    "productConditionRefurbished": "Refurbished",
     "metaTitle": "Offers | LogiMarket Admin",
     "metaDescription": "LogiMarket offers panel",
     "eyebrow": "Catalog",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "Return to draft"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "Product condition",
+    "productConditionUnspecified": "Not specified",
+    "productConditionNew": "New",
+    "productConditionUsed": "Used",
+    "productConditionRefurbished": "Refurbished",
     "media": {
       "title": "Offer images",
       "help": "JPEG, PNG, WEBP or AVIF. Up to 10 MiB per image. Image changes are saved separately.",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "Invalid URL (must start with http:// or https://)"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "Product condition",
+    "productConditionUnspecified": "Not specified",
+    "productConditionNew": "New",
+    "productConditionUsed": "Used",
+    "productConditionRefurbished": "Refurbished",
     "title": "Partner Portal",
     "orders": "Orders",
     "offers": "Offers",

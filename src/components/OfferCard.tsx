@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
+import { ProductConditionBadge } from "@/components/offers/ProductConditionBadge";
 import { OfferAction } from "./OfferAction";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary, Locale } from "@/lib/i18n/types";
@@ -79,6 +80,7 @@ export function OfferCard({
             labels={offerLabels}
             className="rounded-md border-0 text-[10px] px-2.5 py-0.5"
           />
+          <ProductConditionBadge value={offer.productCondition} labels={offerLabels} />
         </div>
       </Link>
 

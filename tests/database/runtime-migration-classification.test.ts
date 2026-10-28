@@ -29,7 +29,8 @@ import {
   POST_0008_SECURITY_CONTRACT,
   POST_0009_SECURITY_CONTRACT,
   POST_0018_SECURITY_CONTRACT,
-  PRODUCTION_FINGERPRINT
+  PRODUCTION_FINGERPRINT,
+  FINAL_POST_0023_PRODUCTION_FINGERPRINT
 } from "../../scripts/database/runtime-migration-contract";
 import type { TableFingerprintSide } from "../../scripts/database/verify-runtime-schema-fingerprint";
 import fs from "node:fs";
@@ -101,6 +102,21 @@ test("POST_0007_PHYSICAL_METADATA accepts truncation and NOT VALID text but keep
 // ===========================================================================
 // 1. EMPTY
 // ===========================================================================
+test("POST_0024 terminal and POST_0023 predecessor are recognized without relaxing drift checks", () => {
+  const current = buildSide(PRODUCTION_FINGERPRINT);
+  assert.strictEqual(classifyRuntimeTarget(current, Object.keys(current), POST_0018_SECURITY_CONTRACT).state,
+    "EXACT_EXISTING_POST_0024");
+
+  const predecessor = buildSide(FINAL_POST_0023_PRODUCTION_FINGERPRINT);
+  assert.strictEqual(classifyRuntimeTarget(predecessor, Object.keys(predecessor), POST_0018_SECURITY_CONTRACT).state,
+    "EXACT_EXISTING_POST_0023");
+
+  const invalid = buildSide(PRODUCTION_FINGERPRINT);
+  invalid["offers"].constraints = invalid["offers"].constraints.filter((c) => c.name !== "offers_product_condition_check");
+  assert.strictEqual(classifyRuntimeTarget(invalid, Object.keys(invalid), POST_0018_SECURITY_CONTRACT).state,
+    "PARTIAL_OR_DRIFTED");
+});
+
 test("EMPTY", () => {
   const result = classifyRuntimeTarget({}, []);
   assert.strictEqual(result.state, "EMPTY");

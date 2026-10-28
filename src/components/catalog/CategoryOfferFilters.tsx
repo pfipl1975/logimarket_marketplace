@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PRODUCT_CONDITIONS } from "@/lib/offers/product-condition";
 import {
   buildCategoryOfferQueryHref,
   type CategoryOfferFilters,
@@ -17,6 +18,10 @@ type CategoryOfferFilterLabels = Pick<
   | "filtersModelEcommerce"
   | "filtersModelOutbound"
   | "filtersFeaturedOnly"
+  | "productConditionLabel"
+  | "productConditionNew"
+  | "productConditionUsed"
+  | "productConditionRefurbished"
 >;
 
 interface CategoryOfferFiltersProps {
@@ -96,6 +101,20 @@ export function CategoryOfferFilters({
                 }`}
               >
                 {option.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex flex-col items-start gap-2 sm:flex-row sm:flex-wrap sm:items-center md:border-l md:border-border md:pl-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{labels.productConditionLabel}</p>
+          <div className="flex flex-wrap gap-2">
+            {([null, ...PRODUCT_CONDITIONS] as const).map((condition) => (
+              <Link key={condition ?? "all"}
+                href={buildCategoryOfferQueryHref(basePath, state, { condition })}
+                aria-current={(filters.condition ?? null) === condition ? "page" : undefined}
+                className={`${chipBaseClass} ${(filters.condition ?? null) === condition ? activeChipClass : inactiveChipClass}`}>
+                {condition === null ? labels.filtersAll : condition === "new" ? labels.productConditionNew : condition === "used" ? labels.productConditionUsed : labels.productConditionRefurbished}
               </Link>
             ))}
           </div>

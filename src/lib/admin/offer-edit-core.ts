@@ -7,6 +7,7 @@ import { resolveAdminEditTargetStorage, isAdminOfferType } from "@/lib/admin/off
 import { parseDecimalToMinorUnits, minorUnitsToDecimalString } from "@/lib/checkout/money";
 import { parseOutboundDestination } from "@/lib/outbound/outbound-core";
 import { parseRfqNetPriceFields } from "@/lib/offers/rfq-net-price";
+import { parseProductConditionInput, type ProductCondition } from "@/lib/offers/product-condition";
 
 export type EditTargetInvalidReason = "MODEL_UNKNOWN" | "ECOMMERCE_PRICE_INVALID" | "OUTBOUND_URL_INVALID" | "TITLE_INVALID" | "PRICE_INVALID";
 
@@ -29,6 +30,7 @@ export interface AdminOfferEditInput {
   adminOfferType: import("@/lib/admin/offer-type").AdminOfferType;
   outboundUrl: string | null;
   isFeatured: boolean;
+  productCondition?: ProductCondition | null;
 }
 
 export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: AdminOfferEditInput } | { ok: false; code: "OFFER_INVALID_INPUT" } | { ok: false; code: "OFFER_TARGET_INVALID"; reason: EditTargetInvalidReason } {
@@ -49,7 +51,10 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
     adminOfferType,
     outboundUrl,
     isFeatured,
+    productCondition,
   } = rawInput as Record<string, unknown>;
+  const condition = parseProductConditionInput(productCondition);
+  if (!condition.ok) return { ok: false, code: "OFFER_INVALID_INPUT" };
 
   // offerId
   if (typeof offerId !== "string" || !/^[1-9]\d*$/.test(offerId)) {
@@ -176,6 +181,7 @@ export function parseAdminOfferEditInput(rawInput: unknown): { ok: true; data: A
       adminOfferType: adminOfferType as import("@/lib/admin/offer-type").AdminOfferType,
       outboundUrl: normalizedOutboundUrl,
       isFeatured,
+      ...(condition.value !== undefined ? { productCondition: condition.value } : {}),
     },
   };
 }
@@ -233,6 +239,7 @@ export async function executeAdminOfferEdit(
           conversionType: offers.conversionType,
           outboundUrl: offers.outboundUrl,
           isFeatured: offers.isFeatured,
+          productCondition: offers.productCondition,
         })
         .from(offers)
         .where(eq(offers.id, input.offerId))
@@ -297,7 +304,8 @@ export async function executeAdminOfferEdit(
         current.offerModel === targetOfferModel &&
           current.conversionType === targetConversionType &&
         current.outboundUrl === input.outboundUrl &&
-        current.isFeatured === input.isFeatured
+        current.isFeatured === input.isFeatured &&
+        (input.productCondition === undefined || current.productCondition === input.productCondition)
       ) {
         return { ok: true, code: "OFFER_UNCHANGED", changed: false };
       }
@@ -315,6 +323,7 @@ export async function executeAdminOfferEdit(
           conversionType: targetConversionType,
           outboundUrl: input.outboundUrl,
           isFeatured: input.isFeatured,
+          ...(input.productCondition !== undefined ? { productCondition: input.productCondition } : {}),
           updatedAt: sql`CURRENT_TIMESTAMP`,
         })
         .where(eq(offers.id, input.offerId));

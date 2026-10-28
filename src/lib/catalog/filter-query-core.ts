@@ -94,6 +94,7 @@ export function buildFilterPredicates(db: Db, input: NormalizedFilterQuery, cate
   if (input.offerModel) {
     predicates.push(eq(schema.offers.offerModel, input.offerModel));
   }
+  if (input.productCondition) predicates.push(eq(schema.offers.productCondition, input.productCondition));
   if (input.featured) {
     predicates.push(eq(schema.offers.isFeatured, true));
   }

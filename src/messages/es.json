@@ -103,6 +103,11 @@
     "modelDescription": "Modelo híbrido: RFQ para equipos pesados, E-Commerce para artículos repetitivos."
   },
   "catalog": {
+    "productConditionLabel": "Estado del producto",
+    "productConditionUnspecified": "Sin especificar",
+    "productConditionNew": "Nuevo",
+    "productConditionUsed": "Usado",
+    "productConditionRefurbished": "Reacondicionado",
     "allOffers": "Todas las ofertas",
     "allCategories": "Todas las categorías",
     "categoriesAria": "Categorías",
@@ -345,6 +350,11 @@
     }
   },
   "offers": {
+    "productConditionLabel": "Estado del producto",
+    "productConditionUnspecified": "Sin especificar",
+    "productConditionNew": "Nuevo",
+    "productConditionUsed": "Usado",
+    "productConditionRefurbished": "Reacondicionado",
     "featured": "Destacado",
     "price": "Precio",
     "priceOnRequest": "Precio B2B bajo petición",
@@ -596,6 +606,11 @@
     "partnerAgreementsNav": "Partner Agreements"
   },
   "adminOffers": {
+    "productConditionLabel": "Estado del producto",
+    "productConditionUnspecified": "Sin especificar",
+    "productConditionNew": "Nuevo",
+    "productConditionUsed": "Usado",
+    "productConditionRefurbished": "Reacondicionado",
     "metaTitle": "Ofertas | LogiMarket Admin",
     "metaDescription": "Panel de ofertas de LogiMarket",
     "eyebrow": "Catálogo",
@@ -1143,6 +1158,11 @@
     "actionReturnToDraft": "Volver al borrador"
   },
   "adminOfferEdit": {
+    "productConditionLabel": "Estado del producto",
+    "productConditionUnspecified": "Sin especificar",
+    "productConditionNew": "Nuevo",
+    "productConditionUsed": "Usado",
+    "productConditionRefurbished": "Reacondicionado",
     "media": {
       "title": "Imágenes de la oferta",
       "help": "JPEG, PNG, WEBP o AVIF. Hasta 10 MiB por imagen. Los cambios de imágenes se guardan por separado.",
@@ -1532,6 +1552,11 @@
     "invalidWebsite": "URL inválida"
   },
   "PartnerWorkspace": {
+    "productConditionLabel": "Estado del producto",
+    "productConditionUnspecified": "Sin especificar",
+    "productConditionNew": "Nuevo",
+    "productConditionUsed": "Usado",
+    "productConditionRefurbished": "Reacondicionado",
     "title": "Portal de Socios",
     "orders": "Pedidos",
     "offers": "Ofertas",
