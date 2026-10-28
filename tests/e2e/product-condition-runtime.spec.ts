@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import { test, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
@@ -21,6 +21,11 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
   let partnerB = 0;
   let categoryId = 0;
   const offerIds: number[] = [];
+  const auditSuffix = randomUUID().replace(/-/g, "");
+  const auditTable = `qa_condition_audit_${auditSuffix}`;
+  const auditFunction = `qa_condition_fn_${auditSuffix}`;
+  const auditTrigger = `qa_condition_trigger_${auditSuffix}`;
+  let auditSetupStarted = false;
 
   const stored = async (id: number) => {
     const result = await db!.query<{ product_condition: string | null; publication_status: string; partner_id: string }>(
@@ -75,6 +80,11 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
   test.afterAll(async () => {
     if (!db) return;
     try {
+      if (auditSetupStarted) {
+        await db.query(`DROP TRIGGER IF EXISTS ${auditTrigger} ON public.offers`);
+        await db.query(`DROP FUNCTION IF EXISTS public.${auditFunction}()`);
+        await db.query(`DROP TABLE IF EXISTS public.${auditTable}`);
+      }
       if (offerIds.length) {
         await db.query("DELETE FROM offers WHERE id = ANY($1::bigint[])", [offerIds]);
       }
@@ -94,10 +104,20 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     test.setTimeout(180_000);
     if (!db) throw new Error("Disposable E2E database unavailable");
 
+    const assertAdminDetailCondition = async (id: number, expectedLabel: string) => {
+      expect((await adminPage.goto("/admin/oferty/" + id))?.status()).toBe(200);
+      const identity = adminPage.locator("section").filter({
+        has: adminPage.getByRole("heading", { name: pl.adminOfferDetail.sectionIdentity, exact: true }),
+      });
+      await expect(identity.getByText(pl.adminOfferEdit.productConditionLabel, { exact: true })).toBeVisible();
+      await expect(identity.getByText(expectedLabel, { exact: true })).toBeVisible();
+    };
+
     // Create via the authenticated Admin Server Action (not via fixture INSERT).
     const adminId = await createDraft(adminPage, "/admin/oferty/nowa", titles.admin, "new", true);
     expect((await stored(adminId)).product_condition).toBe("new");
     expect((await stored(adminId)).publication_status).toBe("draft");
+    await assertAdminDetailCondition(adminId, pl.adminOfferEdit.productConditionNew);
     expect((await page.goto("/oferta/" + adminId))?.status()).toBe(404);
 
     const ownEdit = "/partner/" + partnerA + "/oferty/" + adminId + "/edytuj";
@@ -133,6 +153,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     await expect(nonAdminPage).toHaveURL("/partner/" + partnerA + "/oferty/" + adminId);
     expect((await stored(adminId)).product_condition).toBe("used");
     expect((await stored(adminId)).publication_status).toBe("draft");
+    await assertAdminDetailCondition(adminId, pl.adminOfferEdit.productConditionUsed);
     expect((await nonAdminPage.goto(foreignEdit))?.status()).toBe(404);
 
     // Partner create action persists refurbished, and Admin edit can clear/reassign to the same draft.
@@ -141,6 +162,7 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     );
     expect((await stored(partnerId)).product_condition).toBe("refurbished");
     expect((await stored(partnerId)).publication_status).toBe("draft");
+    await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionRefurbished);
     const adminEdit = "/admin/oferty/" + partnerId + "/edytuj";
     expect((await adminPage.goto(adminEdit))?.status()).toBe(200);
     await adminPage.locator("#productCondition").selectOption("");
@@ -153,31 +175,75 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
         .map(element => ({ name: element.name, type: element.type, message: element.validationMessage })),
     );
     expect(invalidControls, "Admin form must be natively valid before saving condition=NULL").toEqual([]);
+
+    // Disposable E2E DB only: count committed UPDATEs for this exact offer.
+    // Never execute fixture DDL against shared or production databases.
+    requireIsolatedE2EDatabaseUrl();
+    auditSetupStarted = true;
+    await db.query(`CREATE TABLE public.${auditTable} (offer_id bigint NOT NULL)`);
+    await db.query(`CREATE FUNCTION public.${auditFunction}() RETURNS trigger LANGUAGE plpgsql AS $$
+      BEGIN INSERT INTO public.${auditTable} (offer_id) VALUES (NEW.id); RETURN NEW; END $$`);
+    await db.query(`CREATE TRIGGER ${auditTrigger} AFTER UPDATE ON public.offers
+      FOR EACH ROW WHEN (NEW.id = ${partnerId}) EXECUTE FUNCTION public.${auditFunction}()`);
+
     const postStatuses: number[] = [];
+    const postEvidence: Array<{
+      path: string; status: number; resourceType: string; navigation: boolean;
+      actionFingerprint: string | null; hasRscHeader: boolean; contentType: string;
+    }> = [];
     const trackPost = (response: import("@playwright/test").Response) => {
-      if (response.request().method() === "POST") postStatuses.push(response.status());
+      const request = response.request();
+      if (request.method() !== "POST") return;
+      postStatuses.push(response.status());
+      const headers = request.headers();
+      postEvidence.push({
+        path: new URL(request.url()).pathname.split("/").map(segment => /^\d+$/.test(segment) ? ":id" : segment).join("/"),
+        status: response.status(),
+        resourceType: request.resourceType(),
+        navigation: request.isNavigationRequest(),
+        actionFingerprint: headers["next-action"]
+          ? createHash("sha256").update(headers["next-action"]).digest("hex").slice(0, 12)
+          : null,
+        hasRscHeader: "rsc" in headers,
+        contentType: (headers["content-type"] ?? "").split(";")[0],
+      });
     };
     adminPage.on("response", trackPost);
     try {
       await adminForm.locator('button[type="submit"]').click();
       await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toBeVisible({ timeout: 10_000 });
     } catch (error) {
+      const count = await db.query<{ writes: string }>(
+        `SELECT COUNT(*)::text AS writes FROM public.${auditTable} WHERE offer_id = $1`, [partnerId],
+      ).catch(() => null);
       const evidence = {
-        dbCondition: (await stored(partnerId)).product_condition,
-        selectedCondition: await adminPage.locator("#productCondition").inputValue().catch(() => "<unavailable>"),
-        postStatuses,
+        postEvidence,
+        committedUpdateCount: count ? Number(count.rows[0].writes) : null,
+        conditionAfterSave: (await stored(partnerId)).product_condition,
         conflictVisible: await adminPage.getByText(pl.adminOfferEdit.conflictTitle).isVisible().catch(() => false),
         unchangedVisible: await adminPage.getByText(pl.adminOfferEdit.successUnchanged).isVisible().catch(() => false),
-        errorMessages: await adminPage.locator("form .border-red-200").allTextContents(),
       };
       throw new Error("Admin condition=NULL save diagnostic: " + JSON.stringify(evidence), { cause: error });
     } finally {
       adminPage.off("response", trackPost);
     }
-    expect((await stored(partnerId)).product_condition).toBeNull();
-    expect(postStatuses).toEqual([200]);
+    const writeResult = await db.query<{ writes: string }>(
+      `SELECT COUNT(*)::text AS writes FROM public.${auditTable} WHERE offer_id = $1`, [partnerId],
+    );
+    const committedUpdateCount = Number(writeResult.rows[0].writes);
+    const conditionAfterSave = (await stored(partnerId)).product_condition;
+    // Failure-only evidence: no raw action IDs, headers, URL query, cookies or payloads.
+    const safeDiagnostic = JSON.stringify({ postEvidence, committedUpdateCount, conditionAfterSave });
+    expect(committedUpdateCount, `Admin save must commit exactly one UPDATE: ${safeDiagnostic}`).toBe(1);
+    expect(conditionAfterSave, `Admin save must persist NULL: ${safeDiagnostic}`).toBeNull();
+    expect(postStatuses, `Admin save must produce one successful POST: ${safeDiagnostic}`).toEqual([200]);
+    expect(
+      postEvidence.filter((entry) => entry.actionFingerprint !== null),
+      `Admin save must invoke exactly one Next.js Server Action: ${safeDiagnostic}`,
+    ).toHaveLength(1);
     await expect(adminPage.getByRole("status").getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
     await expect(adminPage.locator("#productCondition")).toHaveCount(0);
+    await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionUnspecified);
     await adminPage.goto(adminEdit);
     await expect(adminPage.locator("#productCondition")).toHaveValue("");
     await adminPage.locator("#productCondition").selectOption("refurbished");
