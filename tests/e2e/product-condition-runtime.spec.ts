@@ -213,13 +213,15 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
       await adminForm.locator('button[type="submit"]').click();
       await expect(adminPage.getByText(pl.adminOfferEdit.successUpdated)).toBeVisible({ timeout: 10_000 });
     } catch (error) {
+      const count = await db.query<{ writes: string }>(
+        `SELECT COUNT(*)::text AS writes FROM public.${auditTable} WHERE offer_id = $1`, [partnerId],
+      ).catch(() => null);
       const evidence = {
-        dbCondition: (await stored(partnerId)).product_condition,
-        selectedCondition: await adminPage.locator("#productCondition").inputValue().catch(() => "<unavailable>"),
-        postStatuses,
+        postEvidence,
+        committedUpdateCount: count ? Number(count.rows[0].writes) : null,
+        conditionAfterSave: (await stored(partnerId)).product_condition,
         conflictVisible: await adminPage.getByText(pl.adminOfferEdit.conflictTitle).isVisible().catch(() => false),
         unchangedVisible: await adminPage.getByText(pl.adminOfferEdit.successUnchanged).isVisible().catch(() => false),
-        errorMessages: await adminPage.locator("form .border-red-200").allTextContents(),
       };
       throw new Error("Admin condition=NULL save diagnostic: " + JSON.stringify(evidence), { cause: error });
     } finally {
@@ -230,13 +232,15 @@ test.describe("Product condition: Admin and Partner -> DB -> public catalog", ()
     );
     const committedUpdateCount = Number(writeResult.rows[0].writes);
     const conditionAfterSave = (await stored(partnerId)).product_condition;
-    // Sanitized diagnostic: no URL query, raw action IDs, headers, cookies, tokens or payloads.
-    console.info("LM_PR38_SAFE_POST_DIAGNOSTIC=" + JSON.stringify({
-      postEvidence, committedUpdateCount, conditionAfterSave,
-    }));
-    expect(committedUpdateCount, "Exactly one committed offer UPDATE during Admin save").toBe(1);
-    expect(conditionAfterSave).toBeNull();
-    expect(postStatuses).toEqual([200]);
+    // Failure-only evidence: no raw action IDs, headers, URL query, cookies or payloads.
+    const safeDiagnostic = JSON.stringify({ postEvidence, committedUpdateCount, conditionAfterSave });
+    expect(committedUpdateCount, `Admin save must commit exactly one UPDATE: ${safeDiagnostic}`).toBe(1);
+    expect(conditionAfterSave, `Admin save must persist NULL: ${safeDiagnostic}`).toBeNull();
+    expect(postStatuses, `Admin save must produce one successful POST: ${safeDiagnostic}`).toEqual([200]);
+    expect(
+      postEvidence.filter((entry) => entry.actionFingerprint !== null),
+      `Admin save must invoke exactly one Next.js Server Action: ${safeDiagnostic}`,
+    ).toHaveLength(1);
     await expect(adminPage.getByRole("status").getByText(pl.adminOfferEdit.successUpdated)).toBeVisible();
     await expect(adminPage.locator("#productCondition")).toHaveCount(0);
     await assertAdminDetailCondition(partnerId, pl.adminOfferEdit.productConditionUnspecified);
