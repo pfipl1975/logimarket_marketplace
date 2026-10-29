@@ -5,6 +5,8 @@ import { getCartItems, type CartItemWithOffer } from "@/app/actions";
 import { getSellerDisclosure } from "@/lib/legal/seller-disclosure-read-model";
 import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
 import type { SellerDisclosureDto } from "@/lib/legal/seller-disclosure";
+import { confirmationLine, issueCheckoutConfirmation, type ConfirmationContext } from "./confirmation";
+import { computeLineMinorUnits, isValidCheckoutQuantity, parseDecimalToMinorUnits } from "./money";
 
 export type CheckoutReviewSeller = {
   partnerId: number;
@@ -15,27 +17,29 @@ export type CheckoutReviewSeller = {
 
 export type CheckoutReview = {
   sellers: CheckoutReviewSeller[];
-  total: number;
+  total: bigint;
   cartChanged: boolean;
   sellerNotReady: boolean;
+  confirmation: string | null;
 };
 
-/** Display data is advisory. executeMarketplaceCheckout revalidates every line and seller in its transaction. */
-export async function loadCheckoutReview(): Promise<CheckoutReview> {
+/** The display and signed consent share these exact cart rows. The transaction revalidates under locks. */
+export async function loadCheckoutReview(context?: ConfirmationContext): Promise<CheckoutReview> {
   const items = await getCartItems();
   const groups = new Map<number, CartItemWithOffer[]>();
   let cartChanged = false;
-  let total = 0;
+  let total = BigInt(0);
   for (const item of items) {
-    const price = item.priceBrutto === null ? NaN : Number(item.priceBrutto);
+    let price: bigint;
+    try { price = parseDecimalToMinorUnits(item.priceBrutto); }
+    catch { cartChanged = true; continue; }
     if (item.partnerId === null || item.offerModel !== "ecommerce" || !item.isActive ||
         item.publicationStatus !== "published" || item.priceOnRequest ||
-        !Number.isSafeInteger(item.quantity) || item.quantity < 1 ||
-        !Number.isFinite(price) || price <= 0) {
+        !isValidCheckoutQuantity(item.quantity)) {
       cartChanged = true;
       continue;
     }
-    total += price * item.quantity;
+    total += computeLineMinorUnits(price, item.quantity);
     const group = groups.get(item.partnerId) ?? [];
     group.push(item);
     groups.set(item.partnerId, group);
@@ -52,5 +56,7 @@ export async function loadCheckoutReview(): Promise<CheckoutReview> {
       items: groupedItems,
     };
   }));
-  return { sellers, total, cartChanged, sellerNotReady: sellers.some(seller => !seller.ready) };
+  const confirmation = context && !cartChanged && items.length > 0 ? issueCheckoutConfirmation(items.map(item =>
+    confirmationLine({ ...item, partnerId: item.partnerId!, price: item.priceBrutto })), context) : null;
+  return { sellers, total, cartChanged, confirmation, sellerNotReady: sellers.some(seller => !seller.ready) };
 }

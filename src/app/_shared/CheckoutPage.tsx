@@ -13,6 +13,8 @@ import { checkoutPath } from "@/lib/checkout/paths";
 import { locales, type Locale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getPrivacyPolicyPath } from "@/lib/i18n/paths";
+import { getExistingSessionHash } from "@/lib/session/session-hash";
+import { computeLineMinorUnits, formatCheckoutMinorUnits, parseDecimalToMinorUnits } from "@/lib/checkout/money";
 
 export async function CheckoutPage({ locale }: { locale: Locale }) {
   const path = checkoutPath(locale);
@@ -27,17 +29,17 @@ export async function CheckoutPage({ locale }: { locale: Locale }) {
   let review: CheckoutReview | null = null;
   let buyer: Awaited<ReturnType<typeof resolveBuyerOrderIntentContext>> | null = null;
   if (current.status === "authenticated") {
+    buyer = await resolveBuyerOrderIntentContext(current.user.id);
+    if (!buyer.ok && buyer.code === "BUYER_PROFILE_REQUIRED") redirect(accountHref);
     try {
-      review = await loadCheckoutReview();
+      const sessionHash = await getExistingSessionHash();
+      review = await loadCheckoutReview(buyer.ok && sessionHash ? { authUserId: current.user.id,
+        buyerOrganizationId: buyer.context.buyerOrganizationId, sessionHash } : undefined);
     } catch {
       review = null;
     }
-    if (review && (review.sellers.length > 0 || review.cartChanged)) {
-      buyer = await resolveBuyerOrderIntentContext(current.user.id);
-      if (!buyer.ok && buyer.code === "BUYER_PROFILE_REQUIRED") redirect(accountHref);
-    }
   }
-  const currency = new Intl.NumberFormat(locale, { style: "currency", currency: "PLN" });
+  const currency = (minor: bigint) => formatCheckoutMinorUnits(minor, locale);
   const blocked = current.status === "unavailable" ? labels.unavailable
     : review === null ? labels.unavailable
     : review.cartChanged ? labels.cartChanged
@@ -88,8 +90,8 @@ export async function CheckoutPage({ locale }: { locale: Locale }) {
                 {!seller.ready && <p className="mt-2 text-sm font-semibold text-red-700">{labels.sellerNotReady}</p>}
                 <ul className="mt-4 divide-y divide-[#d9dde2] border-t border-[#d9dde2]">
                   {seller.items.map(item => <li key={item.id} className="flex min-w-0 items-start justify-between gap-3 py-3 text-sm">
-                    <span className="min-w-0 break-words text-brand-navy">{item.title} · {labels.quantity}: {item.quantity}</span>
-                    <span className="shrink-0 font-semibold text-brand-navy">{currency.format(Number(item.priceBrutto) * item.quantity)}</span>
+                    <span className="min-w-0 break-words text-brand-navy">{item.title} · {labels.quantity}: {item.quantity}<span className="block text-xs text-[#52606d]">{currency(parseDecimalToMinorUnits(item.priceBrutto))} × {item.quantity}</span></span>
+                    <span className="shrink-0 font-semibold text-brand-navy">{currency(computeLineMinorUnits(parseDecimalToMinorUnits(item.priceBrutto), item.quantity))}</span>
                   </li>)}
                 </ul>
               </article>)}
@@ -97,9 +99,9 @@ export async function CheckoutPage({ locale }: { locale: Locale }) {
           </div>
           <aside className="min-w-0 border border-[#d9dde2] bg-white p-5 sm:p-6 lg:sticky lg:top-6" aria-labelledby="checkout-summary-heading">
             <h2 id="checkout-summary-heading" className="text-xl font-semibold text-brand-navy">{labels.summary}</h2>
-            <p className="mt-4 flex items-center justify-between gap-3 border-b border-[#d9dde2] pb-4 text-sm text-brand-navy"><span>{labels.total}</span><strong className="text-lg">{currency.format(review.total)}</strong></p>
+            <p className="mt-4 flex items-center justify-between gap-3 border-b border-[#d9dde2] pb-4 text-sm text-brand-navy"><span>{labels.total}</span><strong className="text-lg">{currency(review.total)}</strong></p>
             <p className="mt-4 text-sm leading-6 text-[#2c3e50]">{labels.platformRole}</p>
-            {!blocked && readyBuyer && <div className="mt-5"><CheckoutSubmitForm locale={locale} labels={labels} accountHref={accountHref} loginHref={loginHref} /></div>}
+            {!blocked && readyBuyer && review.confirmation && <div className="mt-5"><CheckoutSubmitForm confirmation={review.confirmation} locale={locale} labels={labels} accountHref={accountHref} loginHref={loginHref} /></div>}
           </aside>
         </div>}
       </div>

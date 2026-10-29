@@ -24,6 +24,7 @@ import { routeSellerOrderToPartnerInTransaction } from "@/lib/seller-order/selle
 import { validateSellerSourceForSnapshot } from "@/lib/marketplace/seller-snapshot";
 import type { SellerEligibilityStatus, SellerSourceInput } from "@/lib/marketplace/seller-snapshot";
 import { validateCheckoutLine } from "./eligibility";
+import { confirmationLine, matchesCheckoutConfirmation, verifyCheckoutConfirmation } from "./confirmation";
 import { 
   CONTRACT_MODEL,
   SELLER_OF_RECORD,
@@ -42,6 +43,7 @@ export type MarketplaceCheckoutResult =
   | { ok: true; marketplaceOrderId: number }
   | { ok: false; reason: "CHECKOUT_CART_EMPTY" }
   | { ok: false; reason: "CHECKOUT_CART_CHANGED" }
+  | { ok: false; reason: "CHECKOUT_CONFIRMATION_STALE" }
   | { ok: false; reason: "CHECKOUT_BUYER_NOT_READY" }
   | { ok: false; reason: "CHECKOUT_SELLER_NOT_READY" }
   | { ok: false; reason: "SYSTEM_ERROR" };
@@ -73,6 +75,7 @@ export async function executeMarketplaceCheckout(
   db: MarketplaceDatabase,
   sessionHash: string,
   context: BuyerOrderIntentContext,
+  confirmation?: unknown,
 ): Promise<MarketplaceCheckoutResult> {
   try {
     return await db.transaction(async (tx) => {
@@ -86,6 +89,7 @@ export async function executeMarketplaceCheckout(
         .select({ id: cartItems.id, offerId: cartItems.offerId, quantity: cartItems.quantity })
         .from(cartItems)
         .where(eq(cartItems.sessionHash, sessionHash))
+        .orderBy(asc(cartItems.id))
         .for("update");
 
       if (cartRows.length === 0) {
@@ -106,7 +110,9 @@ export async function executeMarketplaceCheckout(
           partnerId: offers.partnerId,
         })
         .from(offers)
-        .where(inArray(offers.id, offerIds));
+        .where(inArray(offers.id, offerIds))
+        .orderBy(asc(offers.id))
+        .for("update");
 
       const offerMap = new Map<number, typeof offerRows[0]>();
       for (const o of offerRows) offerMap.set(o.id, o);
@@ -188,6 +194,18 @@ export async function executeMarketplaceCheckout(
         if (!val.ok) return { ok: false, reason: "CHECKOUT_SELLER_NOT_READY" };
         
         sellerDisclosures.set(partnerId, val.data);
+      }
+
+      // All prices/eligibility above are protected by offer row locks until commit.
+      // No order or related snapshot has been written at this point.
+      const accepted = verifyCheckoutConfirmation(confirmation, { sessionHash, authUserId: buyerAuthUserId,
+        buyerOrganizationId: context.buyerOrganizationId });
+      const actualLines = cartRows.map(row => {
+        const offer = offerMap.get(row.offerId)!;
+        return confirmationLine({ ...row, partnerId: offer.partnerId!, price: offer.normalizedPrice });
+      });
+      if (!accepted || !matchesCheckoutConfirmation(accepted, actualLines)) {
+        return { ok: false, reason: "CHECKOUT_CONFIRMATION_STALE" };
       }
 
       const [blcInsert] = await tx.insert(buyerLegalContextSnapshots).values({

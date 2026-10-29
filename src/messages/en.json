@@ -410,6 +410,7 @@
     "cartChanged": "The cart has changed or contains an unavailable item. Review the cart and try again."
   },
   "checkoutFlow": {
+    "confirmationStale": "Prices or cart contents have changed since you viewed the summary. Review the updated amounts and confirm your order again.",
     "step": "Step 3 of 3 · Review and submit",
     "title": "Review your B2B order",
     "intro": "Check the items and company details. The Partner will decide whether to accept your offer.",

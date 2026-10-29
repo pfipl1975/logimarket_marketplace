@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useFormStatus } from "react-dom";
 import { submitMarketplaceCheckout } from "@/app/checkout-actions";
 import type { PublicCheckoutCode, PublicCheckoutResult } from "@/lib/checkout/public-checkout-core";
@@ -10,20 +11,32 @@ import type { Locale } from "@/lib/i18n/config";
 
 const initialState: PublicCheckoutResult = { code: "IDLE" };
 
-function SubmitButton({ labels }: { labels: Dictionary["checkoutFlow"] }) {
+function SubmitButton({ labels, blocked }: { labels: Dictionary["checkoutFlow"]; blocked: boolean }) {
   const { pending } = useFormStatus();
-  return <button type="submit" disabled={pending} className="min-h-12 w-full rounded-md bg-brand-teal px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70">
+  return <button type="submit" disabled={pending || blocked} className="min-h-12 w-full rounded-md bg-brand-teal px-5 py-3 text-base font-semibold text-white transition-colors hover:bg-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-navy focus:ring-offset-2 disabled:cursor-wait disabled:opacity-70">
     {pending ? labels.submitting : labels.submit}
   </button>;
 }
 
-export function CheckoutSubmitForm({ locale, labels, accountHref, loginHref }: {
+export function CheckoutSubmitForm({ confirmation, locale, labels, accountHref, loginHref }: {
+  confirmation: string;
   locale: Locale;
   labels: Dictionary["checkoutFlow"];
   accountHref: string;
   loginHref: string;
 }) {
-  const [state, action] = useActionState(submitMarketplaceCheckout, initialState);
+  const router = useRouter();
+  const [rejected, setRejected] = useState<string | null>(null);
+  const alertRef = useRef<HTMLParagraphElement>(null);
+  const [state, action] = useActionState(async (previous: PublicCheckoutResult, form: FormData) => {
+    const result = await submitMarketplaceCheckout(previous, form);
+    if (["CHECKOUT_CONFIRMATION_STALE", "CHECKOUT_CART_CHANGED", "CHECKOUT_SELLER_NOT_READY"].includes(result.code)) {
+      setRejected(form.get("confirmation") as string);
+      router.refresh();
+    }
+    return result;
+  }, initialState);
+  useEffect(() => { if (state.code === "CHECKOUT_CONFIRMATION_STALE") alertRef.current?.focus(); }, [state]);
   const messages: Partial<Record<PublicCheckoutCode, string>> = {
     AUTH_REQUIRED: labels.authRequired,
     BUYER_PROFILE_REQUIRED: labels.buyerProfileRequired,
@@ -33,6 +46,7 @@ export function CheckoutSubmitForm({ locale, labels, accountHref, loginHref }: {
     CHECKOUT_VALIDATION_ERROR: labels.invalidMessage,
     CHECKOUT_CART_EMPTY: labels.cartEmpty,
     CHECKOUT_CART_CHANGED: labels.cartChanged,
+    CHECKOUT_CONFIRMATION_STALE: labels.confirmationStale,
     CHECKOUT_BUYER_NOT_READY: labels.buyerNotReady,
     CHECKOUT_SELLER_NOT_READY: labels.sellerNotReady,
     SYSTEM_ERROR: labels.unavailable,
@@ -40,6 +54,7 @@ export function CheckoutSubmitForm({ locale, labels, accountHref, loginHref }: {
   const message = messages[state.code];
   return <form action={action} className="space-y-4">
     <input type="hidden" name="locale" value={locale} />
+    <input type="hidden" name="confirmation" value={confirmation} />
     <div>
       <label htmlFor="checkout-message" className="block text-sm font-semibold text-brand-navy">{labels.message}</label>
       <textarea id="checkout-message" name="message" maxLength={2000} rows={3} placeholder={labels.messagePlaceholder}
@@ -48,8 +63,8 @@ export function CheckoutSubmitForm({ locale, labels, accountHref, loginHref }: {
     </div>
     <p className="border-l-4 border-brand-teal bg-brand-light-gray px-4 py-3 text-sm leading-6 text-brand-navy">{labels.e2Notice}</p>
     <div aria-live="assertive" className="min-h-6 text-sm text-red-700">
-      {message && <p role="alert">{message} {state.code === "AUTH_REQUIRED" ? <Link href={loginHref} className="underline">{labels.signIn}</Link> : state.code === "BUYER_PROFILE_REQUIRED" ? <Link href={accountHref} className="underline">{labels.completeProfile}</Link> : null}</p>}
+      {message && <p ref={alertRef} tabIndex={-1} role="alert">{message} {state.code === "AUTH_REQUIRED" ? <Link href={loginHref} className="underline">{labels.signIn}</Link> : state.code === "BUYER_PROFILE_REQUIRED" ? <Link href={accountHref} className="underline">{labels.completeProfile}</Link> : null}</p>}
     </div>
-    <SubmitButton labels={labels} />
+    <SubmitButton labels={labels} blocked={confirmation === rejected} />
   </form>;
 }

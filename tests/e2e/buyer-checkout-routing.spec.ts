@@ -1,4 +1,5 @@
 import { reproduceMarketplaceRisks } from "./helpers/security-offer-projection";
+import { proveCheckoutConfirmation } from "./helpers/checkout-confirmation";
 import { expect, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import { test, createDummySupabaseCookie, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
@@ -652,6 +653,11 @@ test.describe("isolated canonical Buyer checkout", () => {
   test("LM-SEC-57A: R01/R02 public projection regressions and final gates", async ({ browser, nonAdminPage }) => {
     test.setTimeout(300_000);
     await reproduceMarketplaceRisks({ database, seller, browser, nonAdminPage });
+  });
+
+  test("R03 HMAC price consent: real Action, DOM and persisted amounts", async ({ browser }) => {
+    test.setTimeout(300_000);
+    await proveCheckoutConfirmation(database, seller, browser);
   });
 
 });

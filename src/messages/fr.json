@@ -410,6 +410,7 @@
     "cartChanged": "Le panier a changé ou contient un article indisponible. Vérifiez le panier et réessayez."
   },
   "checkoutFlow": {
+    "confirmationStale": "Les prix ou le contenu du panier ont changé depuis l’affichage du récapitulatif. Vérifiez les montants actualisés et confirmez à nouveau votre commande.",
     "step": "Étape 3 sur 3 · Vérifier et envoyer",
     "title": "Vérifier la commande B2B",
     "intro": "Vérifiez les articles et les données de l’entreprise. Le Partenaire décidera d’accepter ou non votre offre.",

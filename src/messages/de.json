@@ -410,6 +410,7 @@
     "cartChanged": "Der Warenkorb hat sich geändert oder enthält einen nicht verfügbaren Artikel. Bitte überprüfen Sie den Warenkorb und versuchen Sie es erneut."
   },
   "checkoutFlow": {
+    "confirmationStale": "Preise oder Warenkorbinhalt haben sich seit der Zusammenfassung geändert. Prüfen Sie die aktuellen Beträge und bestätigen Sie Ihre Bestellung erneut.",
     "step": "Schritt 3 von 3 · Prüfen und senden",
     "title": "B2B-Bestellung prüfen",
     "intro": "Prüfen Sie Artikel und Firmendaten. Der Partner entscheidet über die Annahme Ihres Angebots.",

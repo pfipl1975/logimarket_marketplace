@@ -6,7 +6,7 @@ import type { MarketplaceCheckoutResult } from "./marketplace-checkout-core";
 export type PublicCheckoutCode =
   | "IDLE" | "AUTH_REQUIRED" | BuyerOrderIntentFailure | "CHECKOUT_VALIDATION_ERROR"
   | "CHECKOUT_CART_EMPTY" | "CHECKOUT_CART_CHANGED" | "CHECKOUT_BUYER_NOT_READY"
-  | "CHECKOUT_SELLER_NOT_READY" | "CHECKOUT_ORDER_CREATED" | "SYSTEM_ERROR";
+  | "CHECKOUT_SELLER_NOT_READY" | "CHECKOUT_CONFIRMATION_STALE" | "CHECKOUT_ORDER_CREATED" | "SYSTEM_ERROR";
 
 export type PublicCheckoutResult =
   | { code: "CHECKOUT_ORDER_CREATED"; orderId: number }

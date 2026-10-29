@@ -38,6 +38,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Create isolated checkout confirmation key
+        shell: bash
+        run: |
+          test "$GITHUB_ACTIONS" = "true" && test "$CI" = "true"
+          checkout_key=$(node -e 'process.stdout.write(require("node:crypto").randomBytes(32).toString("hex"))')
+          echo "::add-mask::$checkout_key"
+          echo "CHECKOUT_CONFIRMATION_SECRET=$checkout_key" >> "$GITHUB_ENV"
+
       - name: Run Integration Tests
         run: npm run test:integration
         env:
