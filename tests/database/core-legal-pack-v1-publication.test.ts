@@ -2,13 +2,19 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
+import os from "node:os";
+import crypto from "node:crypto";
 import { Pool, type PoolClient } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { readMigrationFiles } from "drizzle-orm/migrator";
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import * as schema from "@/lib/schema";
 import { getPublicLegalCenter } from "@/lib/legal/public-legal-center";
 import { runMigrations } from "../../scripts/database/run-runtime-migrations";
 import { RUNTIME_MIGRATIONS_FOLDER } from "../../scripts/database/runtime-migration-contract";
+import { createCanonicalRuntimeMigrationDirectory, cleanupCanonicalRuntimeMigrationDirectory } from "../../scripts/database/runtime-migration-temp-dir";
+import { classifyRuntimeTarget, fetchLiveSchemaMetadata } from "../../scripts/database/verify-runtime-schema-fingerprint";
+import { POST0024_APPROVED_CHAIN } from "./helpers/post0024-approved-chain";
 import {
   CORE_LEGAL_PACK_V1_DOCUMENTS,
   CORE_LEGAL_PACK_V1_EFFECTIVE_FROM,
@@ -76,6 +82,25 @@ const diskJournal = JSON.parse(fs.readFileSync(path.join(migrationsFolder, "meta
   entries: { idx: number; tag: string; when: number }[];
 };
 const diskMigrations = readMigrationFiles({ migrationsFolder });
+function verifiedPost0024FixtureJournal() {
+  validateCanonicalDiskJournal(diskJournal, diskMigrations);
+  const entries = diskJournal.entries.slice(0, POST0024_APPROVED_CHAIN.length);
+  assert.equal(entries.length, 25);
+  assert.deepEqual(entries, POST0024_APPROVED_CHAIN.map(({ blob, ...entry }) => { void blob; return entry; }));
+  POST0024_APPROVED_CHAIN.forEach((entry, index) => {
+    const raw = fs.readFileSync(path.join(migrationsFolder, `${entry.tag}.sql`));
+    assert.equal(crypto.createHash("sha1").update(`blob ${raw.length}\0`).update(raw).digest("hex"), entry.blob, `${entry.tag} approved bytes`);
+    assert.equal(diskMigrations[index].hash, crypto.createHash("sha256").update(raw).digest("hex"));
+    assert.equal(diskMigrations[index].folderMillis, entry.when);
+  });
+  return { ...diskJournal, entries };
+}
+
+test("Core Pack POST_0024 fixture is the approved prefix; POST_0025 remains in the full chain", () => {
+  assert.equal(verifiedPost0024FixtureJournal().entries.at(-1)?.tag, "0024_product_condition");
+  assert.equal(diskJournal.entries[25]?.tag, "0025_partner_applications");
+  assert.ok(diskMigrations.length >= 26);
+});
 
 test("Core Pack publisher validates the complete appendable disk chain", () => {
   assert.ok(diskJournal.entries.length > 20);
@@ -147,6 +172,7 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   const guard = validateDestructiveTestEnvironment(process.env);
   if (guard.type === "SKIP") return t.skip(guard.reason);
   if (guard.type === "FAIL") throw new Error(`Destructive DB guard failed: ${guard.reason}`);
+  const historicalJournal = verifiedPost0024FixtureJournal();
   const disposableUrl = guard.url;
   const originalUrl = process.env.DATABASE_URL;
   const adminPool = new Pool({ connectionString: disposableUrl });
@@ -168,11 +194,30 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   });
   await resetDisposableTestDatabase(adminPool, { ...process.env, DATABASE_URL: originalUrl, TEST_DATABASE_URL: disposableUrl });
   process.env.DATABASE_URL = disposableUrl;
-  await runMigrations(process.env);
+  // The publisher supports POST_0024, not the evolving runtime head. Use the
+  // existing Drizzle migrator on an independently verified historical fixture;
+  // the repository journal and the publisher still see the complete disk chain.
+  const historicalFolder = createCanonicalRuntimeMigrationDirectory(
+    JSON.stringify(historicalJournal), historicalJournal,
+    (tag) => fs.readFileSync(path.join(migrationsFolder, `${tag}.sql`)),
+  );
+  try {
+    await migrate(drizzle(adminPool), { migrationsFolder: historicalFolder, migrationsSchema: "drizzle_runtime", migrationsTable: "__drizzle_migrations" });
+  } finally {
+    assert.equal(path.dirname(path.resolve(historicalFolder)), path.resolve(os.tmpdir()));
+    assert.ok(path.basename(historicalFolder).startsWith("runtime-migrations-"));
+    cleanupCanonicalRuntimeMigrationDirectory(historicalFolder);
+  }
+  const physicalState = async () => {
+    const metadata = await fetchLiveSchemaMetadata(adminPool);
+    return classifyRuntimeTarget(metadata.fingerprint, metadata.publicTables, metadata.security).state;
+  };
+  assert.equal(await physicalState(), "EXACT_EXISTING_POST_0024");
   const agreementBefore = await snapshot("agreement_versions");
   const evidenceBefore = await snapshot("partner_agreement_execution_evidence");
   const journalBefore = await journal();
-  assert.equal(journalBefore.length, diskMigrations.length);
+  assert.equal(journalBefore.length, historicalJournal.entries.length);
+  assert.deepEqual(journalBefore.map(row => ({hash:row.hash,when:Number(row.created_at)})), diskMigrations.slice(0,25).map(migration => ({hash:migration.hash,when:migration.folderMillis})));
   assert.equal(journalBefore.length, 25, "POST_0024 requires exactly 25 canonical migrations");
   assert.equal(diskJournal.entries[24]?.tag, "0024_product_condition");
   const lastApplied = journalBefore[journalBefore.length - 1];
@@ -270,4 +315,20 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   await adminPool.query(`INSERT INTO public.legal_documents (code, slug, title_pl) VALUES ('UNEXPECTED', 'unexpected', 'Unexpected')`);
   await assert.rejects(run(), /BLOCKED_EXISTING_LEGAL_REGISTRY_STATE/);
   assert.deepEqual(await journal(), journalBefore);
+
+  // Upgrading the disposable fixture must not extend the publisher authorization.
+  await adminPool.query(`DELETE FROM public.legal_documents WHERE code = 'UNEXPECTED'`);
+  const registrySnapshot = () => Promise.all(["legal_documents","legal_document_versions","legal_pack_versions","legal_pack_documents"].map(async table =>
+    (await adminPool.query(`SELECT to_jsonb(t) AS row FROM public.${table} t ORDER BY to_jsonb(t)::text`)).rows));
+  const publishedBeforeUpgrade = await registrySnapshot();
+  await runMigrations(process.env);
+  assert.equal(await physicalState(), "EXACT_EXISTING_POST_0025");
+  const post0025Journal = await journal();
+  assert.equal(post0025Journal.length, diskMigrations.length);
+  assert.deepEqual(post0025Journal.map(row => ({hash:row.hash,when:Number(row.created_at)})), diskMigrations.map(migration => ({hash:migration.hash,when:migration.folderMillis})));
+  assert.deepEqual(await registrySnapshot(), publishedBeforeUpgrade);
+  await assert.rejects(run(), /BLOCKED_PHYSICAL_STATE_EXACT_EXISTING_POST_0025/);
+  assert.deepEqual(await registrySnapshot(), publishedBeforeUpgrade);
+  assert.deepEqual(await journal(), post0025Journal);
+  assert.equal(await physicalState(), "EXACT_EXISTING_POST_0025");
 });
