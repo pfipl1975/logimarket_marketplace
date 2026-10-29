@@ -337,7 +337,12 @@ export async function executeMarketplaceCheckout(
         if (!routing.ok) throw new Error("CHECKOUT_E6_ROUTING_FAILED");
       }
 
-      await tx.delete(cartItems).where(eq(cartItems.sessionHash, sessionHash));
+      // Consume only the rows locked and included in this confirmed order.
+      // A separately committed cart line added after the snapshot must survive checkout.
+      await tx.delete(cartItems).where(and(
+        eq(cartItems.sessionHash, sessionHash),
+        inArray(cartItems.id, cartRows.map(row => row.id)),
+      ));
 
       return { ok: true, marketplaceOrderId: mOrderId };
     });
