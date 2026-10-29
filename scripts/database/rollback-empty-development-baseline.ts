@@ -20,9 +20,9 @@
 
 import {
   normalizeProjectRef,
-  EXPECTED_BASELINE_TABLES,
-  EXPECTED_COUNTS,
-  PRODUCTION_FINGERPRINT,
+  EXPECTED_POST_0023_TABLES as EXPECTED_BASELINE_TABLES,
+
+  FINAL_POST_0023_PRODUCTION_FINGERPRINT as PRODUCTION_FINGERPRINT,
   RUNTIME_JOURNAL_SCHEMA,
   RUNTIME_JOURNAL_TABLE,
 } from "./runtime-migration-contract";
@@ -36,6 +36,8 @@ import {
 // Exact rollback constants — derived from the approved contract only
 // ---------------------------------------------------------------------------
 
+export const ROLLBACK_CONTRACT_COUNTS = {TABLES: Object.keys(PRODUCTION_FINGERPRINT).length, SEQUENCES: Object.values(PRODUCTION_FINGERPRINT).flatMap(t => t.columns.filter(c => c.sequenceName !== null)).length};
+const EXPECTED_COUNTS = ROLLBACK_CONTRACT_COUNTS;
 const REVERSE_DROP_ORDER: readonly string[] = [
   "buyer_user_profiles",
   "buyer_organization_addresses",

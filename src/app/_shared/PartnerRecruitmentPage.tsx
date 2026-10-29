@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { PartnerApplicationForm } from "@/components/partner-applications/PartnerApplicationForm";
+import { isLocalIntakeEnabled } from "@/lib/partner-applications/contract";
 import { ArrowRight } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -13,6 +15,7 @@ const contactClass = "inline-flex min-h-11 w-full items-center justify-center ga
 export async function PartnerRecruitmentPage({ locale }: { locale: Locale }) {
   const dict = await getDictionary(locale);
   const labels = dict.partnerRecruitment;
+  const intakeEnabled = isLocalIntakeEnabled(process.env);
   const contactHref = getPartnerRecruitmentContactHref(labels);
   return (
     <div className="flex min-h-screen flex-col bg-brand-light-gray">
@@ -23,7 +26,7 @@ export async function PartnerRecruitmentPage({ locale }: { locale: Locale }) {
           <h1 id="partner-recruitment-title" className="mt-4 max-w-3xl text-balance text-3xl font-bold leading-tight text-brand-navy md:text-5xl">{labels.landingHeroTitle}</h1>
           <p className="mt-5 max-w-2xl text-pretty text-lg leading-relaxed text-muted-foreground">{labels.landingHeroDescription}</p>
           <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
-            <a href={contactHref} aria-describedby="partner-hero-contact-notice" className={contactClass}>{labels.becomePartner}<ArrowRight aria-hidden="true" className="size-4 shrink-0" /></a>
+            <a href={intakeEnabled ? "#partner-application" : contactHref} aria-describedby="partner-hero-contact-notice" className={contactClass}>{labels.becomePartner}<ArrowRight aria-hidden="true" className="size-4 shrink-0" /></a>
             <a href="#jak-to-dziala" className="inline-flex min-h-11 items-center justify-center rounded-industrial border border-brand-navy px-5 py-3 text-center font-semibold text-brand-navy transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">{labels.seeHowItWorks}</a>
           </div>
           <p id="partner-hero-contact-notice" className="mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground">{labels.contactProcessNotice}</p>
@@ -57,6 +60,7 @@ export async function PartnerRecruitmentPage({ locale }: { locale: Locale }) {
           <Link href="/dokumenty-prawne" className="mt-5 inline-flex min-h-11 items-center rounded-industrial text-sm font-semibold text-brand-teal underline underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">{labels.publicLegalDocuments}</Link>
         </section>
 
+        {intakeEnabled && <section id="partner-application" aria-labelledby="partner-application-title" className="mt-10 max-w-2xl scroll-mt-40 border border-border-industrial bg-white p-5 sm:p-8"><h2 id="partner-application-title" className="text-2xl font-bold text-brand-navy">{dict.partnerApplications.title}</h2><PartnerApplicationForm locale={locale} labels={dict.partnerApplications} privacyHref={getPrivacyPolicyPath(locale)} /></section>}
         <section aria-labelledby="partner-contact-title" className="mt-10 border-t-4 border-brand-teal bg-white p-5 sm:p-8 md:mt-14">
           <h2 id="partner-contact-title" className="text-balance text-2xl font-bold text-brand-navy">{labels.finalTitle}</h2>
           <p className="mt-3 max-w-2xl leading-relaxed text-muted-foreground">{labels.finalDescription}</p>

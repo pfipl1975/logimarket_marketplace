@@ -3,7 +3,7 @@ import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { POST0024_APPROVED_CHAIN } from "./helpers/post0024-approved-chain";
+import { POST0025_CANDIDATE_CHAIN as POST0024_APPROVED_CHAIN } from "./helpers/post0025-candidate-chain";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { RUNTIME_MIGRATIONS_FOLDER } from "../../scripts/database/runtime-migration-contract";
 
@@ -13,7 +13,7 @@ test("journal exists and is valid", () => {
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
   assertApprovedJournal(journal);
-  assert.strictEqual(journal.entries.length, 25);
+  assert.strictEqual(journal.entries.length, 26);
   for (let i = 0; i < journal.entries.length; i++) {
     assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
     if (i > 0) {
@@ -83,7 +83,7 @@ function assertApprovedJournal(journal: { version: string; dialect: string; entr
   }));
 }
 
-test("POST_0024: exact SQL allowlist, approved raw blob hashes and migrator hashes", () => {
+test("POST_0025 candidate: exact SQL allowlist, approved raw blob hashes and migrator hashes", () => {
   const folder = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER);
   assert.deepStrictEqual(
     fs.readdirSync(folder).filter(name => name.endsWith(".sql")).sort(),
@@ -103,7 +103,7 @@ test("POST_0024: exact SQL allowlist, approved raw blob hashes and migrator hash
   });
 });
 
-test("POST_0024: reject missing, extra, reordered, reindexed, retimed or renamed entries", () => {
+test("POST_0025 candidate: reject missing, extra, reordered, reindexed, retimed or renamed entries", () => {
   const original = JSON.parse(fs.readFileSync(path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "meta", "_journal.json"), "utf8"));
   const mutations: ((journal: typeof original) => void)[] = [
     journal => { journal.entries.pop(); },

@@ -34,6 +34,9 @@ export async function runMigrations(
   getMigrationBufferFn?: (tag: string) => Buffer
 ): Promise<void> {
   verifyTarget(env);
+  if (env.RUNTIME_MIGRATION_TARGET === "production" && !env.RUNTIME_MIGRATION_RECONCILIATION) {
+    throw new Error("RUNNER: BLOCKED. Partner application 0025 requires separate Owner production migration approval");
+  }
 
   const url = env.DATABASE_URL!;
   const factory: PoolFactory =
@@ -148,7 +151,7 @@ export async function runMigrations(
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
     const expectedPostState = isReconciliation
       ? "EXACT_EXISTING_POST_0007"
-      : "EXACT_EXISTING_POST_0024";
+      : "EXACT_EXISTING_POST_0025";
     if (postClassification.state !== expectedPostState) {
       throw new Error(`RUNNER: post-check failed. State after migration: ${postClassification.state}. Differences:\n${postClassification.differences.join("\n")}`);
     }

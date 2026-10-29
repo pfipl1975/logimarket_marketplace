@@ -49,6 +49,7 @@ export async function AdminPartnersPage({
         </Link>
       </div>
 
+      <Link href={locale === "pl" ? "/admin/partner-applications" : `/${locale}/admin/partner-applications`} className="inline-flex min-h-11 items-center font-medium text-brand-teal underline">{dictionary.partnerApplications.title}</Link>
       <div className="bg-white p-4 rounded-industrial border border-border-industrial shadow-soft">
         <form method="GET" action={basePath} className="flex flex-col md:flex-row gap-4 items-end">
           <div className="w-full md:w-96 flex flex-col gap-1.5">

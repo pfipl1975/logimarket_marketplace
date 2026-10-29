@@ -1978,3 +1978,47 @@ export async function getAdminOfferPublishSellerReadiness(partnerId: number): Pr
     return "not_ready";
   }
 }
+
+// LM-PARTNER-APPLICATION-01. No public application lookup or domain conversion.
+export async function submitPartnerApplication(_previous: unknown, formData: FormData): Promise<import("@/lib/partner-applications/contract").ApplicationResult> {
+  const { headers } = await import("next/headers");
+  const { validApplicationOrigin } = await import("@/lib/partner-applications/contract");
+  if (!validApplicationOrigin((await headers()).get("origin"),process.env)) return {code:"unavailable"};
+  const allowed = new Set(["companyName","countryCode","contactEmail","businessType","taxIdentifier","locale","submissionKey","privacyNoticeVersion","website"]);
+  const input: Record<string,string> = {}; let size=0;
+  for (const [key,value] of formData.entries()) {
+    if (key.startsWith("$ACTION_")) continue;
+    if (!allowed.has(key) || typeof value !== "string" || key in input) return {code:"invalid"};
+    size += Buffer.byteLength(key)+Buffer.byteLength(value);
+    if(size > 8192) return {code:"invalid"}; input[key]=value;
+  }
+  const { submitApplication } = await import("@/lib/partner-applications/service");
+  return submitApplication(input);
+}
+/** Issues an authenticated closure only after Admin authorization and a fresh DB snapshot. */
+export async function prepareApplicationReviewAction(applicationId: string, expectedVersion: number) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  const actor = await requireAdmin();
+  const { reviewContextSchema } = await import("@/lib/partner-applications/contract");
+  if (!reviewContextSchema.safeParse({applicationId,expectedVersion,actorId:actor.id}).success) throw new Error("APPLICATION_REVIEW_CONTEXT_UNAVAILABLE");
+  const { getApplication } = await import("@/lib/partner-applications/service");
+  const detail = await getApplication(applicationId);
+  if (!detail || detail.application.version !== expectedVersion) throw new Error("APPLICATION_REVIEW_CONTEXT_UNAVAILABLE");
+  // Capture only these server-read primitives. Next authenticates/encrypts the closure;
+  // plain client bind arguments and hidden inputs never establish this context.
+  const targetId = detail.application.id;
+  const targetVersion = detail.application.version;
+  const actorId = actor.id;
+  return async function reviewBoundPartnerApplication(_previous: unknown, formData: FormData): Promise<import("@/lib/partner-applications/contract").ApplicationReviewState> {
+    "use server";
+    const { requireAdmin: requireCurrentAdmin } = await import("@/lib/auth/guards");
+    const currentActor = await requireCurrentAdmin();
+    const { parseBoundReviewForm } = await import("@/lib/partner-applications/contract");
+    const input = parseBoundReviewForm({applicationId:targetId,expectedVersion:targetVersion,actorId},currentActor.id,formData);
+    if (!input) return {code:"invalid"};
+    const { reviewApplication } = await import("@/lib/partner-applications/service");
+    const result = await reviewApplication(input);
+    if (result.code === "updated") revalidatePath("/admin/partner-applications");
+    return result;
+  };
+}

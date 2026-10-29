@@ -1459,3 +1459,39 @@ export const notificationOutboxEvents = pgTable("notification_outbox_events", {
   check("chk_outbox_event_type", sql`event_type IN ('seller_order.routed_to_seller', 'seller_order.accepted_for_buyer', 'seller_order.rejected_for_buyer', 'seller_order.expired_for_seller', 'seller_order.expired_for_buyer')`),
   unique("uq_notification_outbox_event").on(t.sellerOrderId, t.eventType)
 ]);
+
+// LM-PARTNER-APPLICATION-01: declarations only; no Partner/Seller/membership relation.
+export const partnerApplications = pgTable("partner_applications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  companyName: varchar("company_name", { length: 255 }).notNull(),
+  countryCode: varchar("country_code", { length: 2 }).notNull(),
+  contactEmail: varchar("contact_email", { length: 100 }).notNull(),
+  businessType: varchar("business_type", { length: 24 }).notNull(),
+  taxIdentifier: varchar("tax_identifier", { length: 100 }),
+  source: varchar("source", { length: 16 }).notNull().default("public"),
+  submittedAuthUserId: uuid("submitted_auth_user_id"),
+  status: varchar("status", { length: 32 }).notNull().default("submitted"),
+  version: integer("version").notNull().default(1),
+  submissionKeyHash: varchar("submission_key_hash", { length: 64 }).notNull().unique(),
+  requestDigest: varchar("request_digest", { length: 64 }).notNull(),
+  privacyNoticeVersion: varchar("privacy_notice_version", { length: 80 }).notNull(),
+  locale: varchar("locale", { length: 2 }).notNull(),
+  retentionPolicyStatus: varchar("retention_policy_status", { length: 32 }).notNull().default("LEGAL_REVIEW_REQUIRED"),
+  retentionDueAt: timestamp("retention_due_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, t => [index("idx_partner_applications_queue").on(t.status, t.createdAt), index("idx_partner_applications_contact").on(t.contactEmail), index("idx_partner_applications_tax").on(t.countryCode, t.taxIdentifier), index("idx_partner_applications_retention").on(t.retentionDueAt)]).enableRLS();
+
+export const partnerApplicationEvents = pgTable("partner_application_events", {
+  applicationId: uuid("application_id").notNull().references(() => partnerApplications.id),
+  version: integer("version").notNull(), fromStatus: varchar("from_status", { length: 32 }),
+  toStatus: varchar("to_status", { length: 32 }).notNull(), actorId: uuid("actor_id"),
+  reason: varchar("reason", { length: 100 }).notNull(), note: varchar("note", { length: 1000 }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, t => [primaryKey({ columns: [t.applicationId, t.version] })]).enableRLS();
+
+export const partnerApplicationLimits = pgTable("partner_application_limits", {
+  bucket: varchar("bucket", { length: 80 }).primaryKey(),
+  attempts: integer("attempts").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+}).enableRLS();
