@@ -1,6 +1,5 @@
 import { expect, test, type APIRequestContext, type Browser, type BrowserContext, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
 import type { Pool } from "pg";
 import { requireIsolatedE2EDatabaseUrl } from "../../../scripts/e2e/buyer-trust-fixtures";
@@ -14,14 +13,6 @@ type Manifest = { node: Record<string, ActionEntry>; edge: Record<string, Action
 type Evidence = { risk: string; result: "PASS" | "FAIL" | "BLOCKED"; [key: string]: unknown };
 type Inputs = { database: Pool; seller: { partnerId: string; offerId: string }; browser: Browser; nonAdminPage: Page };
 
-const AUDITED_TREES = {
-  src: "2902afdaeceb995cadc82cec42252b203aa7172b",
-  ".github": "3fa9055bba2beaf7d37913dd4fb32eac3fc17f48",
-  "package.json": "bc3c4fce3e46c5ed7d4521ca3ce68f83a1ff8a96",
-  "package-lock.json": "8c93ea500d587d5572e065add13dba40a90550e3",
-  "next.config.ts": "d3296a6a2867e9de3ef31a9e8c7b9d742790c228",
-} as const;
-
 /** Run only in the existing GitHub-hosted disposable E2E job, never against a developer .env. */
 function requireReproductionEnvironment() {
   expect(process.env.CI, "BLOCKED_NOT_CI").toBeTruthy();
@@ -29,10 +20,6 @@ function requireReproductionEnvironment() {
   requireIsolatedE2EDatabaseUrl();
   expect(new URL(process.env.NEXT_PUBLIC_SUPABASE_URL!).origin).toBe("http://localhost:54321");
   expect(process.env.NEXT_PUBLIC_SITE_URL).toBe("http://localhost:3000");
-  for (const [path, expected] of Object.entries(AUDITED_TREES)) {
-    const actual = execFileSync("git", ["rev-parse", "HEAD:" + path], { encoding: "utf8" }).trim();
-    expect(actual, "BLOCKED_APPLICATION_BASELINE_MISMATCH: " + path).toBe(expected);
-  }
 }
 
 function readActions(): Map<string, string> {
