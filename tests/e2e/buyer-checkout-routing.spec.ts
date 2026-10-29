@@ -1,5 +1,6 @@
 import { reproduceMarketplaceRisks } from "./helpers/security-offer-projection";
 import { proveCheckoutConfirmation } from "./helpers/checkout-confirmation";
+import { proveConcurrentCartConservation } from "./helpers/cart-concurrency";
 import { expect, type Page } from "@playwright/test";
 import { Pool } from "pg";
 import { test, createDummySupabaseCookie, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
@@ -658,6 +659,11 @@ test.describe("isolated canonical Buyer checkout", () => {
   test("R03 HMAC price consent: real Action, DOM and persisted amounts", async ({ browser }) => {
     test.setTimeout(300_000);
     await proveCheckoutConfirmation(database, seller, browser);
+  });
+
+  test("R04: concurrent new cart line survives a real checkout across two app processes", async ({ browser }) => {
+    test.setTimeout(180_000);
+    await proveConcurrentCartConservation(database, seller, browser);
   });
 
 });
