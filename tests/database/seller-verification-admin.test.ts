@@ -1,6 +1,10 @@
 import { test, describe, before, after } from "node:test";
 import * as assert from "node:assert";
-import { db } from "@/lib/db";
+import { Pool } from "pg";
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import * as schema from "@/lib/schema";
+import { requireIsolatedE2EDatabaseUrl } from "../../scripts/e2e/buyer-trust-fixtures";
+import { verifySqlIdentityBeforeDestructiveDdl } from "./helpers/destructive-db-safety";
 import {
   partners,
   sellerLegalIdentities,
@@ -12,12 +16,37 @@ import { AdminSellerVerificationInputSchema, executeAdminSellerVerification } fr
 import { eq } from "drizzle-orm";
 
 describe("Admin Seller Identity Verification", () => {
+  let db: NodePgDatabase<typeof schema>;
+  let pool: Pool | undefined;
+  let finish: (() => void) | undefined;
+  let completion: Promise<void> | undefined;
+  const rollbackFixture = new Error("ROLLBACK_SYNTHETIC_SELLER_FIXTURE");
   let partnerId1: number;
   let partnerId2: number;
   let taxId1: number;
   let registryId1: number;
 
   before(async () => {
+    // Fail before connecting unless the existing isolated GitHub CI contract is satisfied.
+    if (process.env.GITHUB_ACTIONS !== "true" || !process.env.CI) {
+      throw new Error("BLOCKED_NOT_GITHUB_CI");
+    }
+    const connectionString = requireIsolatedE2EDatabaseUrl();
+    pool = new Pool({ connectionString, max: 1 });
+    await verifySqlIdentityBeforeDestructiveDdl(pool);
+    let ready!: () => void;
+    const started = new Promise<void>(resolve => { ready = resolve; });
+    const release = new Promise<void>(resolve => { finish = resolve; });
+    completion = drizzle(pool, { schema }).transaction(async tx => {
+      // The core's transactions become savepoints inside this outer transaction.
+      db = tx;
+      ready();
+      await release;
+      throw rollbackFixture;
+    });
+    await Promise.race([started, completion]);
+
+    // Synthetic rows and evidence are rolled back together; protected registries are never cleaned with DELETE.
     // Create test partners
     const [p1, p2] = await db.insert(partners).values([
       { companyName: "Test Partner 1", contactEmail: "test1@example.com" },
@@ -44,12 +73,19 @@ describe("Admin Seller Identity Verification", () => {
   });
 
   after(async () => {
-    await db.delete(sellerVerificationEvents);
-    await db.delete(sellerRegistryIdentifiers);
-    await db.delete(sellerTaxIdentifiers);
-    await db.delete(sellerLegalIdentities);
-    await db.delete(partners).where(eq(partners.id, partnerId1));
-    await db.delete(partners).where(eq(partners.id, partnerId2));
+    finish?.();
+    try {
+      if (completion) {
+        await assert.rejects(completion, error => error === rollbackFixture);
+        const remaining = await pool!.query<{ count: string }>(
+          "SELECT count(*) FROM public.partners WHERE id = ANY($1::int[])",
+          [[partnerId1, partnerId2].filter(id => Number.isInteger(id))],
+        );
+        assert.strictEqual(Number(remaining.rows[0].count), 0, "fixture transaction must leave no partners");
+      }
+    } finally {
+      await pool?.end();
+    }
   });
 
   test("Legal Identity verify success", async () => {
@@ -88,6 +124,28 @@ describe("Admin Seller Identity Verification", () => {
       registeredRegion: null,
       registeredCountryCode: null
     });
+  });
+
+  test("Append-only evidence rejects UPDATE inside a savepoint and stays unchanged", async () => {
+    const [legal] = await db.select().from(sellerLegalIdentities).where(eq(sellerLegalIdentities.partnerId, partnerId1));
+    const eventId = legal.currentVerificationEventId!;
+    const before = await db.select().from(sellerVerificationEvents).where(eq(sellerVerificationEvents.id, eventId));
+    assert.strictEqual(before.length, 1);
+    await assert.rejects(
+      db.transaction(async tx => {
+        await tx.update(sellerVerificationEvents).set({ sourceName: "MUTATION_MUST_FAIL" })
+          .where(eq(sellerVerificationEvents.id, eventId));
+      }),
+      (error: unknown) => {
+        const failure = error as Error & { cause?: Error };
+        assert.match([failure.message, failure.cause?.message].join(" "), /append.only/i);
+        return true;
+      },
+    );
+    assert.deepStrictEqual(
+      await db.select().from(sellerVerificationEvents).where(eq(sellerVerificationEvents.id, eventId)),
+      before,
+    );
   });
 
   test("Tax Identifier verify success", async () => {

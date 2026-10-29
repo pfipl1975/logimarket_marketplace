@@ -35,7 +35,8 @@ test("invoice migration is one-to-one, address-complete, private and does not ba
   assert.match(migration, /ENABLE ROW LEVEL SECURITY/);
   assert.doesNotMatch(migration, /\bUPDATE\s+public\.marketplace_orders\b|\bINSERT\s+INTO\s+public\.marketplace_order_buyer_invoice_snapshots\b/i);
   const journal = JSON.parse(fs.readFileSync("drizzle-runtime/meta/_journal.json", "utf8"));
-  assert.equal(journal.entries.length, 24);
+  assert.equal(journal.entries.length, 25);
+  assert.equal(journal.entries[24].tag, "0024_product_condition");
   assert.equal(journal.entries[21].tag, "0021_buyer_invoice_snapshot");
 });
 

@@ -16,7 +16,7 @@ interface CartDrawerProps {
   checkoutLabels: Dictionary["checkout"];
   formLabels: Dictionary["form"];
   systemLabels: Dictionary["system"];
-  offerLabels: Pick<Dictionary["offers"], "onRequest">;
+  offerLabels: Pick<Dictionary["offers"], "onRequest" | "unavailableTitle" | "unavailableCtaDisabled">;
   closeLabel: Dictionary["common"]["close"];
   privacyPolicyHref: string;
 }
@@ -83,7 +83,7 @@ export function CartDrawer({
                     </div>
                     <div className="flex flex-1 flex-col justify-between">
                       <div>
-                        <p className="text-sm font-semibold leading-tight line-clamp-2">{item.title}</p>
+                        <p className="text-sm font-semibold leading-tight line-clamp-2">{item.isUnavailable ? offerLabels.unavailableTitle : item.title}</p>
                         <p className="text-xs text-muted-foreground mt-0.5">{item.partnerName}</p>
                       </div>
                       <div className="flex items-center justify-between mt-2">
@@ -93,13 +93,13 @@ export function CartDrawer({
                             {item.quantity > 1 ? <Minus className="h-3 w-3" /> : <Trash2 className="h-3 w-3 text-red-500" />}
                           </button>
                           <span className="w-8 text-center text-sm font-semibold">{item.quantity}</span>
-                          <button onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          <button disabled={item.isUnavailable} onClick={() => updateQuantity(item.id, item.quantity + 1)}
                             className="flex h-7 w-7 items-center justify-center rounded border hover:bg-gray-100 transition-colors border-[#d9dde2]">
                             <Plus className="h-3 w-3" />
                           </button>
                         </div>
                         <p className="text-sm font-bold">
-                          {item.priceBrutto && !item.priceOnRequest
+                          {item.isUnavailable ? offerLabels.unavailableCtaDisabled : item.priceBrutto && !item.priceOnRequest
                             ? new Intl.NumberFormat("pl-PL", { style: "currency", currency: "PLN" }).format(Number(item.priceBrutto) * item.quantity)
                             : offerLabels.onRequest}
                         </p>
