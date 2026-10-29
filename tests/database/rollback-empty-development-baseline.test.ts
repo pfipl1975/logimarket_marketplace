@@ -1,10 +1,10 @@
 import { test } from "node:test";
 import assert from "node:assert";
-import { executeRollback } from "../../scripts/database/rollback-empty-development-baseline";
+import { executeRollback, ROLLBACK_CONTRACT_COUNTS as EXPECTED_COUNTS } from "../../scripts/database/rollback-empty-development-baseline";
 import {
-  EXPECTED_BASELINE_TABLES,
-  EXPECTED_COUNTS,
-  PRODUCTION_FINGERPRINT,
+  EXPECTED_POST_0023_TABLES as EXPECTED_BASELINE_TABLES,
+
+  FINAL_POST_0023_PRODUCTION_FINGERPRINT as PRODUCTION_FINGERPRINT,
 } from "../../scripts/database/runtime-migration-contract";
 
 test("executeRollback drop order and statements", async () => {

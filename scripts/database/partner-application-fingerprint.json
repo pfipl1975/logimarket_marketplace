@@ -1,0 +1,324 @@
+{
+  "partner_applications": {
+    "name": "partner_applications",
+    "columns": [
+      {
+        "name": "id",
+        "type": "uuid",
+        "nullable": false,
+        "defaultVal": "gen_random_uuid()",
+        "sequenceName": null
+      },
+      {
+        "name": "company_name",
+        "type": "character varying(255)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "country_code",
+        "type": "character varying(2)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "contact_email",
+        "type": "character varying(100)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "business_type",
+        "type": "character varying(24)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "tax_identifier",
+        "type": "character varying(100)",
+        "nullable": true,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "source",
+        "type": "character varying(16)",
+        "nullable": false,
+        "defaultVal": "'public'::character varying",
+        "sequenceName": null
+      },
+      {
+        "name": "submitted_auth_user_id",
+        "type": "uuid",
+        "nullable": true,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "status",
+        "type": "character varying(32)",
+        "nullable": false,
+        "defaultVal": "'submitted'::character varying",
+        "sequenceName": null
+      },
+      {
+        "name": "version",
+        "type": "integer",
+        "nullable": false,
+        "defaultVal": "1",
+        "sequenceName": null
+      },
+      {
+        "name": "submission_key_hash",
+        "type": "character varying(64)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "request_digest",
+        "type": "character varying(64)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "privacy_notice_version",
+        "type": "character varying(80)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "locale",
+        "type": "character varying(2)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "retention_policy_status",
+        "type": "character varying(32)",
+        "nullable": false,
+        "defaultVal": "'LEGAL_REVIEW_REQUIRED'::character varying",
+        "sequenceName": null
+      },
+      {
+        "name": "retention_due_at",
+        "type": "timestamp with time zone",
+        "nullable": true,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "defaultVal": "now()",
+        "sequenceName": null
+      },
+      {
+        "name": "updated_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "defaultVal": "now()",
+        "sequenceName": null
+      }
+    ],
+    "constraints": [
+      {
+        "name": "partner_application_input_check",
+        "type": "CHECK",
+        "definition": "CHECK ((((length(btrim((company_name)::text)) >= 1) AND (length(btrim((company_name)::text)) <= 255)) AND ((country_code)::text ~ '^[A-Z]{2}$'::text) AND ((contact_email)::text = lower(btrim((contact_email)::text))) AND ((contact_email)::text ~ '^[^[:space:]@]+@[^[:space:]@]+\\.[^[:space:]@]+$'::text) AND ((business_type)::text = ANY ((ARRAY['manufacturer'::character varying, 'distributor'::character varying, 'service_provider'::character varying, 'other'::character varying])::text[])) AND ((source)::text = 'public'::text) AND (version > 0) AND ((submission_key_hash)::text ~ '^[a-f0-9]{64}$'::text) AND ((request_digest)::text ~ '^[a-f0-9]{64}$'::text) AND ((locale)::text = ANY ((ARRAY['pl'::character varying, 'en'::character varying, 'de'::character varying, 'fr'::character varying, 'uk'::character varying, 'es'::character varying, 'zh'::character varying])::text[])) AND ((privacy_notice_version)::text = 'LOCAL_FIXTURE_ONLY'::text) AND ((retention_policy_status)::text = 'LEGAL_REVIEW_REQUIRED'::text) AND (retention_due_at IS NULL)))",
+        "isValidated": true
+      },
+      {
+        "name": "partner_application_status_check",
+        "type": "CHECK",
+        "definition": "CHECK (((status)::text = ANY ((ARRAY['submitted'::character varying, 'under_review'::character varying, 'needs_information'::character varying, 'rejected'::character varying, 'accepted_for_onboarding'::character varying])::text[])))",
+        "isValidated": true
+      },
+      {
+        "name": "partner_applications_pkey",
+        "type": "PRIMARY KEY",
+        "definition": "PRIMARY KEY (id)",
+        "isValidated": true
+      },
+      {
+        "name": "partner_applications_submission_key_hash_key",
+        "type": "UNIQUE",
+        "definition": "UNIQUE (submission_key_hash)",
+        "isValidated": true
+      }
+    ],
+    "explicitIndexes": [
+      {
+        "name": "idx_partner_applications_contact",
+        "method": "btree",
+        "expressions": "contact_email",
+        "isUnique": false,
+        "predicate": null
+      },
+      {
+        "name": "idx_partner_applications_queue",
+        "method": "btree",
+        "expressions": "status, created_at",
+        "isUnique": false,
+        "predicate": null
+      },
+      {
+        "name": "idx_partner_applications_retention",
+        "method": "btree",
+        "expressions": "retention_due_at",
+        "isUnique": false,
+        "predicate": null
+      },
+      {
+        "name": "idx_partner_applications_tax",
+        "method": "btree",
+        "expressions": "country_code, tax_identifier",
+        "isUnique": false,
+        "predicate": null
+      }
+    ],
+    "rlsEnabled": true,
+    "rlsForced": false,
+    "policyCount": 0,
+    "triggerCount": 3
+  },
+  "partner_application_events": {
+    "name": "partner_application_events",
+    "columns": [
+      {
+        "name": "application_id",
+        "type": "uuid",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "version",
+        "type": "integer",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "from_status",
+        "type": "character varying(32)",
+        "nullable": true,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "to_status",
+        "type": "character varying(32)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "actor_id",
+        "type": "uuid",
+        "nullable": true,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "reason",
+        "type": "character varying(100)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "note",
+        "type": "character varying(1000)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "defaultVal": "now()",
+        "sequenceName": null
+      }
+    ],
+    "constraints": [
+      {
+        "name": "partner_application_event_check",
+        "type": "CHECK",
+        "definition": "CHECK (((version > 0) AND (length(btrim((reason)::text)) > 0) AND (((version = 1) AND (from_status IS NULL) AND ((to_status)::text = 'submitted'::text)) OR ((version > 1) AND (actor_id IS NOT NULL) AND (from_status IS NOT NULL)))))",
+        "isValidated": true
+      },
+      {
+        "name": "partner_application_events_application_id_fkey",
+        "type": "FOREIGN KEY",
+        "definition": "FOREIGN KEY (application_id) REFERENCES partner_applications(id) ON DELETE RESTRICT",
+        "isValidated": true
+      },
+      {
+        "name": "partner_application_events_pkey",
+        "type": "PRIMARY KEY",
+        "definition": "PRIMARY KEY (application_id, version)",
+        "isValidated": true
+      }
+    ],
+    "explicitIndexes": [],
+    "rlsEnabled": true,
+    "rlsForced": false,
+    "policyCount": 0,
+    "triggerCount": 2
+  },
+  "partner_application_limits": {
+    "name": "partner_application_limits",
+    "columns": [
+      {
+        "name": "bucket",
+        "type": "character varying(80)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "attempts",
+        "type": "integer",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "expires_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      }
+    ],
+    "constraints": [
+      {
+        "name": "partner_application_limits_attempts_check",
+        "type": "CHECK",
+        "definition": "CHECK ((attempts > 0))",
+        "isValidated": true
+      },
+      {
+        "name": "partner_application_limits_pkey",
+        "type": "PRIMARY KEY",
+        "definition": "PRIMARY KEY (bucket)",
+        "isValidated": true
+      }
+    ],
+    "explicitIndexes": [],
+    "rlsEnabled": true,
+    "rlsForced": false,
+    "policyCount": 0,
+    "triggerCount": 0
+  }
+}

@@ -105,7 +105,7 @@ test("POST_0007_PHYSICAL_METADATA accepts truncation and NOT VALID text but keep
 test("POST_0024 terminal and POST_0023 predecessor are recognized without relaxing drift checks", () => {
   const current = buildSide(PRODUCTION_FINGERPRINT);
   assert.strictEqual(classifyRuntimeTarget(current, Object.keys(current), POST_0018_SECURITY_CONTRACT).state,
-    "EXACT_EXISTING_POST_0024");
+    "EXACT_EXISTING_POST_0025");
 
   const predecessor = buildSide(FINAL_POST_0023_PRODUCTION_FINGERPRINT);
   assert.strictEqual(classifyRuntimeTarget(predecessor, Object.keys(predecessor), POST_0018_SECURITY_CONTRACT).state,

@@ -42,6 +42,7 @@ import {
   FINAL_POST_0005_PRODUCTION_FINGERPRINT,
   FINAL_POST_0015_PRODUCTION_FINGERPRINT,
   FINAL_POST_0023_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0024_PRODUCTION_FINGERPRINT,
   type TableContract,
 } from "../../scripts/database/runtime-migration-contract";
 
@@ -76,6 +77,7 @@ const exactJournalEntries = [
   { tag: "fake_tag_0022", when: 1791800000000 },
   { tag: "fake_tag_0023", when: 1793026000000 },
   { tag: "fake_tag_0024", when: 1793113200000 },
+{ tag: "fake_tag_0025", when: 1793280737565 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({
@@ -150,7 +152,7 @@ type MetadataOptions = {
  *  row-count queries of verifyRollbackPreconditions. Returns null for
  *  anything else so StrictFakeQueryable throws. */
 function metadataRouter(options?: MetadataOptions): Router {
-  const tables = options?.tables ?? [...EXPECTED_BASELINE_TABLES];
+  const tables = options?.tables ?? Object.keys(options?.fingerprint ?? PRODUCTION_FINGERPRINT);
   const journalRows = options?.journalRows ?? exactFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: String(folderMillis) }));
   const tableCounts = options?.tableCounts ?? {};
   const asNum = options?.countsAsNumbers ?? false;
@@ -455,7 +457,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0024");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0025");
 });
 
 test("TARGET: EXACT_EXISTING_POST_0015 for the historical POST_0015 fingerprint", () => {
@@ -1534,11 +1536,11 @@ test("COUNT_NUMBER_HANDLING_TEST: numeric counts are accepted", async () => {
 test("COUNT_NUMBER_HANDLING_TEST: numeric policy/trigger counts parse to numbers", async () => {
   const q = new StrictFakeQueryable(historicalRollbackRouter({ countsAsNumbers: true }));
   const { fingerprint, publicTables } = await fetchLiveSchemaMetadata(q);
-  assert.strictEqual(publicTables.length, EXPECTED_COUNTS.TABLES);
-  for (const t of EXPECTED_BASELINE_TABLES) {
+  assert.strictEqual(publicTables.length, Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT).length);
+  for (const t of Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT)) {
     assert.strictEqual(typeof fingerprint[t].policyCount, "number");
     assert.strictEqual(fingerprint[t].policyCount, 0);
-    assert.strictEqual(fingerprint[t].triggerCount, PRODUCTION_FINGERPRINT[t].triggerCount ?? 0);
+    assert.strictEqual(fingerprint[t].triggerCount, FINAL_POST_0023_PRODUCTION_FINGERPRINT[t].triggerCount ?? 0);
   }
 });
 
@@ -1633,8 +1635,8 @@ test("ROLLBACK: explicit reverse dependency order is preserved", async () => {
   const droppedTables = statements
     .map((s) => s.match(/DROP TABLE IF EXISTS public\.(\w+)/)?.[1])
     .filter(Boolean);
-  assert.strictEqual(droppedTables.length, EXPECTED_COUNTS.TABLES);
-  assert.deepStrictEqual([...droppedTables].sort(), [...EXPECTED_BASELINE_TABLES].sort());
+  assert.strictEqual(droppedTables.length, Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT).length);
+  assert.deepStrictEqual([...droppedTables].sort(), Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT).sort());
   const indexOf = (tableName: string) => droppedTables.indexOf(tableName);
   assert.ok(indexOf("partner_agreement_evidence_invalidations") < indexOf("partner_agreement_execution_evidence"));
   assert.ok(indexOf("partner_agreement_execution_evidence") < indexOf("agreement_versions"));
@@ -1667,7 +1669,7 @@ test("ROLLBACK_FULL_WRAPPER_TEST: preflight + single client transaction + cleanu
   assert.strictEqual(statements[0], "BEGIN");
   assert.strictEqual(statements[statements.length - 1], "COMMIT");
   assert.ok(
-    statements.filter((s) => s.startsWith("DROP TABLE IF EXISTS public.")).length === EXPECTED_COUNTS.TABLES,
+    statements.filter((s) => s.startsWith("DROP TABLE IF EXISTS public.")).length === Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT).length,
     "all tables must be dropped on the client"
   );
   assert.ok(!statements.some((s) => s.toUpperCase().includes("CASCADE")));
@@ -1733,6 +1735,7 @@ test("NORM: normalizeConstraintDefinition lowercases", () => {
 function historicalRollbackRouter(options: MetadataOptions = {}): Router {
   return metadataRouter({
     fingerprint: FINAL_POST_0023_PRODUCTION_FINGERPRINT,
+    tables: Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT),
     journalRows: prevFakeRead().map(({ hash, folderMillis }) => ({ hash, created_at: String(folderMillis) })),
     ...options,
   });
@@ -1742,7 +1745,7 @@ test("ROLLBACK_POST0024: current exact target fails closed before any DDL", asyn
   const q = new StrictFakeQueryable(metadataRouter());
   const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
   assert.strictEqual(result.allowed, false);
-  assert.match(result.reason ?? "", /EXACT_EXISTING_POST_0024/);
+  assert.match(result.reason ?? "", /EXACT_EXISTING_POST_0025/);
   const { pool, statements, state } = fakeRollbackPool(metadataRouter());
   await assert.rejects(
     () => rollbackEmptyDevBaseline(emptyEnv(), exactFakeRead(), (() => pool) as never),
@@ -1761,9 +1764,9 @@ test("ROLLBACK_POST0023: historical exact schema and 24-entry journal remain aut
 });
 
 test("ROLLBACK_HISTORY: POST0024 changes only offers condition, not historical drop allowlists", () => {
-  assert.deepStrictEqual(Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT), Object.keys(PRODUCTION_FINGERPRINT));
-  for (const table of EXPECTED_BASELINE_TABLES) {
-    const current = structuredClone(PRODUCTION_FINGERPRINT[table]) as TableContract;
+  assert.deepStrictEqual(Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT), Object.keys(FINAL_POST_0024_PRODUCTION_FINGERPRINT));
+  for (const table of Object.keys(FINAL_POST_0023_PRODUCTION_FINGERPRINT)) {
+    const current = structuredClone(FINAL_POST_0024_PRODUCTION_FINGERPRINT[table]) as TableContract;
     if (table === "offers") {
       assert.strictEqual(current.columns.filter(column => column.name === "product_condition").length, 1);
       assert.strictEqual(current.constraints.filter(constraint => constraint.name === "offers_product_condition_check").length, 1);
@@ -1772,4 +1775,11 @@ test("ROLLBACK_HISTORY: POST0024 changes only offers condition, not historical d
     }
     assert.deepStrictEqual(current, FINAL_POST_0023_PRODUCTION_FINGERPRINT[table], table);
   }
+});
+
+test("ROLLBACK_POST0024 remains refused with the historical drop contract",async()=>{
+ const fp=FINAL_POST_0024_PRODUCTION_FINGERPRINT;
+ const q=new StrictFakeQueryable(metadataRouter({fingerprint:fp,tables:Object.keys(fp)}));
+ const result=await verifyRollbackPreconditions(q,emptyEnv(),exactFakeRead().slice(0,25));
+ assert.strictEqual(result.allowed,false);assert.match(result.reason ?? "",/EXACT_EXISTING_POST_0024/);
 });

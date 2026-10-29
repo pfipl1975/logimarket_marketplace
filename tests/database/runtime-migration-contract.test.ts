@@ -127,6 +127,8 @@ test("CONTRACT_SYNC: 15. Zero policies and exact approved trigger counts", () =>
   // 0019_legal_document_registry creates the three frozen-document/pack triggers.
   // They remain part of POST_0024; zero is not an approved expectation.
   const expectedTriggers: Record<string, number> = {
+    partner_applications: 3,
+    partner_application_events: 2,
     seller_verification_events: 1,
     partner_agreement_execution_evidence: 2,
     partner_agreement_evidence_invalidations: 1,
