@@ -4561,7 +4561,8 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         await rejected();
         await pool.query("UPDATE offers SET publication_status='published',offer_model='marketplace',price_on_request=false WHERE id=$1", [first.offerId]);
       }
-      const extra = await pool.query("INSERT INTO cart_items(session_hash,offer_id,quantity) VALUES($1,$2,1) RETURNING id", [sessionHash, first.offerId]);
+      const additionalOffer = await seedPartnerAndOffer();
+      const extra = await pool.query("INSERT INTO cart_items(session_hash,offer_id,quantity) VALUES($1,$2,1) RETURNING id", [sessionHash, additionalOffer.offerId]);
       await rejected();
       await pool.query("DELETE FROM cart_items WHERE id=$1", [extra.rows[0].id]);
       for (const invalid of [undefined, "", "invalid", token.slice(0, -1) + (token.endsWith("A") ? "Q" : "A")]) await rejected(invalid === undefined ? null : invalid);

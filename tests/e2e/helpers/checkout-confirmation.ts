@@ -72,7 +72,10 @@ export async function proveCheckoutConfirmation(database: Pool, seller: { offerI
           await database.query("UPDATE offers SET price_brutto=101.00 WHERE id=$1", [second]);
         }
         if (variant === "quantity") await database.query("UPDATE cart_items SET quantity=2 WHERE session_hash=$1", [hash]);
-        if (variant === "composition") await database.query("INSERT INTO cart_items(session_hash,offer_id,quantity) VALUES($1,$2,1)", [hash, id]);
+        if (variant === "composition") {
+          const additionalOffer = await offer("composition-extra");
+          await database.query("INSERT INTO cart_items(session_hash,offer_id,quantity) VALUES($1,$2,1)", [hash, additionalOffer]);
+        }
         if (variant === "partner") {
           const foreign = await database.query("SELECT id FROM partners WHERE id<>$1 ORDER BY id LIMIT 1", [seller.partnerId]);
           await database.query("UPDATE offers SET partner_id=$2 WHERE id=$1", [id, foreign.rows[0].id]);

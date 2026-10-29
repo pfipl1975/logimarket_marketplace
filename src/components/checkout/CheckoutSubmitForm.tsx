@@ -27,6 +27,7 @@ export function CheckoutSubmitForm({ confirmation, locale, labels, accountHref, 
 }) {
   const router = useRouter();
   const [rejected, setRejected] = useState<string | null>(null);
+  const [messageInput, setMessageInput] = useState("");
   const alertRef = useRef<HTMLParagraphElement>(null);
   const [state, action] = useActionState(async (previous: PublicCheckoutResult, form: FormData) => {
     const result = await submitMarketplaceCheckout(previous, form);
@@ -58,6 +59,7 @@ export function CheckoutSubmitForm({ confirmation, locale, labels, accountHref, 
     <div>
       <label htmlFor="checkout-message" className="block text-sm font-semibold text-brand-navy">{labels.message}</label>
       <textarea id="checkout-message" name="message" maxLength={2000} rows={3} placeholder={labels.messagePlaceholder}
+        value={messageInput} onChange={event => setMessageInput(event.target.value)}
         className="mt-2 w-full rounded-md border border-[#9aa8b7] bg-white px-3 py-2 text-brand-navy focus:outline-none focus:ring-2 focus:ring-brand-teal" />
       <p className="mt-1 text-xs text-[#52606d]">{labels.messageHint}</p>
     </div>
