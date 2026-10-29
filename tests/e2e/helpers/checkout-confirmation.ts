@@ -1,5 +1,6 @@
 import { expect, type Browser, type Page } from "@playwright/test";
 import { createHmac, randomUUID } from "node:crypto";
+import { readFileSync } from "node:fs";
 import type { Pool } from "pg";
 import { requireIsolatedE2EDatabaseUrl } from "../../../scripts/e2e/buyer-trust-fixtures";
 import { CHECKOUT_READY_BUYER_ID } from "../../../scripts/e2e/buyer-checkout-fixtures";
@@ -15,6 +16,39 @@ export async function proveCheckoutConfirmation(database: Pool, seller: { offerI
   const prefix = "r03-" + randomUUID();
   const created: string[] = [];
   const errors: string[] = [];
+  // Inspect only action metadata; the manifest also contains a build encryption key.
+  const manifest = JSON.parse(readFileSync(".next/server/server-reference-manifest.json", "utf8")) as {
+    node: Record<string, { exportedName?: string }>; edge: Record<string, { exportedName?: string }>;
+  };
+  const checkoutActions = new Set(Object.entries({ ...manifest.node, ...manifest.edge })
+    .filter(([, entry]) => entry.exportedName === "submitMarketplaceCheckout").map(([id]) => id));
+  expect(checkoutActions.size, "Exactly one built checkout Action must be available").toBe(1);
+  const checkoutAction = [...checkoutActions][0];
+  let actionRequests = 0;
+  async function submitCheckout(page: Page) {
+    const pending = page.waitForResponse(response => {
+      const request = response.request();
+      const url = new URL(request.url());
+      return request.method() === "POST" && url.origin === "http://localhost:3000" &&
+        url.pathname === "/zamowienie" && request.headers()["next-action"] === checkoutAction;
+    });
+    await page.getByRole("button", { name: pl.checkoutFlow.submit, exact: true }).click();
+    const response = await pending;
+    const request = response.request();
+    expect(request.method()).toBe("POST");
+    expect(new URL(request.url()).origin).toBe("http://localhost:3000");
+    expect(new URL(request.url()).pathname).toBe("/zamowienie");
+    expect(request.headers()["next-action"] === checkoutAction).toBe(true);
+    expect([200, 303]).toContain(response.status());
+    actionRequests++;
+    console.log("R03_ACTION_REQUEST POST=true CHECKOUT_ENDPOINT=true EXPECTED_ACTION=true HTTP=" + response.status());
+    return response.status();
+  }
+  function watchErrors(page: Page) {
+    page.on("pageerror", () => errors.push("pageerror"));
+    page.on("console", entry => { if (entry.type() === "error") errors.push("console"); });
+    page.on("response", response => { if (response.status() >= 500) errors.push("HTTP_500"); });
+  }
   async function offer(label: string) {
     const result = await database.query<{ id: string }>(
       "INSERT INTO offers(partner_id,category_id,title,offer_model,conversion_type,price_brutto,price_on_request,is_active,publication_status) SELECT $1,category_id,$2,'marketplace','inbound',100.00,false,true,'published' FROM offers WHERE id=$3 RETURNING id",
@@ -40,16 +74,16 @@ export async function proveCheckoutConfirmation(database: Pool, seller: { offerI
       (SELECT count(*)::int FROM seller_order_seller_snapshots) AS seller_snapshots,
       (SELECT count(*)::int FROM seller_acceptance_decisions) AS decisions,
       (SELECT count(*)::int FROM notification_outbox_events) AS outbox`)).rows[0];
+  const variants = ["increase-desktop", "increase-mobile", "decrease", "same-total", "quantity", "composition",
+    "partner", "model", "unpublished", "on-request", "tampered", "missing", "expired", "foreign-buyer", "http-fields", "two-tabs"];
+  const completed: string[] = [];
   try {
-    for (const variant of ["increase-desktop", "increase-mobile", "decrease", "same-total", "quantity", "composition",
-      "partner", "model", "unpublished", "on-request", "tampered", "missing", "expired", "foreign-buyer", "http-fields", "two-tabs"]) {
+    for (const variant of variants) {
       const context = await browser.newContext({ viewport: { width: variant === "increase-mobile" ? 375 : 1280, height: 844 } });
       try {
         await context.addCookies([{ name: "sb-localhost-auth-token", value: createDummySupabaseCookie(CHECKOUT_READY_BUYER_ID), domain: "localhost", path: "/" }]);
         const page = await context.newPage();
-        page.on("pageerror", () => errors.push("pageerror"));
-        page.on("console", entry => { if (entry.type() === "error") errors.push("console"); });
-        page.on("response", response => { if (response.status() >= 500) errors.push("HTTP_500"); });
+        watchErrors(page);
         const id = await offer(variant);
         await add(page, id);
         let second: string | undefined;
@@ -61,7 +95,7 @@ export async function proveCheckoutConfirmation(database: Pool, seller: { offerI
         const originalToken = await tokenInput.inputValue();
         await form.locator("textarea").fill("Synthetic R03 buyer note");
         expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
-        if (variant === "increase-mobile") expect(await page.evaluate(() => window.innerWidth)).toBe(375);
+        expect(await page.evaluate(() => window.innerWidth)).toBe(variant === "increase-mobile" ? 375 : 1280);
         const hash = (await context.cookies()).find(cookie => cookie.name === "session_hash")!.value;
         const cart = async () => (await database.query("SELECT id,offer_id,quantity FROM cart_items WHERE session_hash=$1 ORDER BY id", [hash])).rows;
         const before = await counts();
@@ -104,51 +138,67 @@ export async function proveCheckoutConfirmation(database: Pool, seller: { offerI
           });
         }
         let other: Page | undefined;
-        if (variant === "two-tabs") { other = await context.newPage(); await other.goto("/zamowienie"); await expect(other.locator('input[name="confirmation"]')).toHaveCount(1); }
+        if (variant === "two-tabs") { other = await context.newPage(); watchErrors(other); await other.goto("/zamowienie"); await expect(other.locator('input[name="confirmation"]')).toHaveCount(1); }
         const beforeCart = await cart();
-        const responsePromise = page.waitForResponse(response => response.request().method() === "POST" && !!response.request().headers()["next-action"]);
-        await form.getByRole("button", { name: pl.checkoutFlow.submit, exact: true }).click();
-        const response = await responsePromise;
-        expect(response.status()).toBeLessThan(400);
+        const status = await submitCheckout(page);
         if (["http-fields", "two-tabs"].includes(variant)) {
           await expect(page).toHaveURL(/\/zamowienia(?:\?|$)/);
+          await expect(page.getByText(pl.checkoutFlow.successNotice, { exact: true })).toBeVisible();
           if (other) {
-            await other.getByRole("button", { name: pl.checkoutFlow.submit, exact: true }).click();
+            expect(await submitCheckout(other)).toBe(200);
             await expect(other.getByText(pl.checkoutFlow.cartEmpty, { exact: false }).first()).toBeVisible();
+            await expect(other).toHaveURL("http://localhost:3000/zamowienie");
+            await expect(other.getByText(pl.checkoutFlow.successNotice, { exact: true })).toHaveCount(0);
           }
           const written = await database.query("SELECT si.unit_price,si.quantity FROM seller_order_items si JOIN seller_orders so ON so.id=si.seller_order_id JOIN marketplace_orders mo ON mo.id=so.marketplace_order_id WHERE mo.session_hash=$1", [hash]);
           expect(written.rows).toEqual([{ unit_price: "100.00", quantity: 1 }]);
           expect((await counts()).orders).toBe(before.orders + 1);
+          expect(await cart()).toEqual([]);
         } else {
-          expect((await response.text()).includes("CHECKOUT_ORDER_CREATED")).toBe(false);
-          expect(page.url()).toContain("/zamowienie");
-          expect(await counts()).toEqual(before);
-          expect(await cart()).toEqual(beforeCart);
+          expect(status).toBe(200);
           if (!["partner", "model", "unpublished", "on-request"].includes(variant)) {
-            expect((await response.text()).includes("CHECKOUT_CONFIRMATION_STALE")).toBe(true);
             const alert = page.getByRole("alert").filter({ hasText: pl.checkoutFlow.confirmationStale });
             await expect(alert).toBeVisible();
             await expect(alert).toBeFocused();
             // Compare booleans, so a failed assertion never prints the consent token.
             await expect.poll(async () => (await tokenInput.inputValue()) !== originalToken).toBe(true);
             await expect(form.locator("textarea")).toHaveValue("Synthetic R03 buyer note");
+            await expect(page).toHaveURL("http://localhost:3000/zamowienie");
+            await expect(page.getByText(pl.checkoutFlow.successNotice, { exact: true })).toHaveCount(0);
+            expect(await counts()).toEqual(before);
+            expect(await cart()).toEqual(beforeCart);
             if (variant.startsWith("increase") || variant === "decrease") {
               const price = variant === "decrease" ? "80,01" : "135,79";
               await expect(page.getByText(new RegExp(price)).first()).toBeVisible();
               expect(await counts()).toEqual(before); // Refresh itself must not submit.
-              await form.getByRole("button", { name: pl.checkoutFlow.submit, exact: true }).click();
+              await submitCheckout(page);
               await expect(page).toHaveURL(/\/zamowienia(?:\?|$)/);
+              await expect(page.getByText(pl.checkoutFlow.successNotice, { exact: true })).toBeVisible();
               const written = await database.query("SELECT si.unit_price,si.quantity FROM seller_order_items si JOIN seller_orders so ON so.id=si.seller_order_id JOIN marketplace_orders mo ON mo.id=so.marketplace_order_id WHERE mo.session_hash=$1", [hash]);
               expect(written.rows).toEqual([{ unit_price: variant === "decrease" ? "80.01" : "135.79", quantity: 1 }]);
               expect((await counts()).orders).toBe(before.orders + 1);
+              expect(await cart()).toEqual([]);
               console.log("R03_RUNTIME " + variant + " OLD=100.00 REJECTION_WRITES=0 ACCEPTED_UNIT=" + (variant === "decrease" ? "80.01" : "135.79"));
             }
+          } else {
+            const changed = page.getByRole("alert").filter({ hasText: pl.checkoutFlow.cartChanged });
+            const blockedPartner = page.getByRole("alert").filter({ hasText: pl.checkoutFlow.sellerNotReady })
+              .or(page.getByRole("alert").filter({ hasText: pl.checkoutFlow.confirmationStale }));
+            await expect((variant === "partner" ? blockedPartner : changed).first()).toBeVisible();
+            await expect(page).toHaveURL("http://localhost:3000/zamowienie");
+            await expect(page.getByText(pl.checkoutFlow.successNotice, { exact: true })).toHaveCount(0);
+            expect(await counts()).toEqual(before);
+            expect(await cart()).toEqual(beforeCart);
           }
         }
         expect(errors).toEqual([]);
         console.log("R03_RUNTIME_CASE " + variant + " PASS");
+        completed.push(variant);
       } finally { await context.close(); }
     }
+    expect(completed).toEqual(variants);
+    expect(actionRequests).toBe(20);
+    console.log("R03_RUNTIME_COMPLETE VARIANTS=" + completed.length + " ACTION_REQUESTS=" + actionRequests + " DESKTOP=1280 MOBILE=375");
   } finally {
     if (created.length) await database.query("UPDATE offers SET is_active=false,publication_status='draft' WHERE id=ANY($1::bigint[])", [created]);
   }
