@@ -17,9 +17,6 @@
   "scripts/database/verify-runtime-migration-target.ts": {
     "@typescript-eslint/no-explicit-any": {
       "count": 1
-    },
-    "@typescript-eslint/no-unused-vars": {
-      "count": 1
     }
   },
   "scripts/lm44-deferred-fk-test.mjs": {

@@ -1,6 +1,6 @@
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { verifyTarget } from "./verify-runtime-migration-target";
+import { PROD_0025_WRITE_AUTHORIZATION, verifyTarget } from "./verify-runtime-migration-target";
 import {
   fetchLiveSchemaMetadata,
   classifyRuntimeTarget,
@@ -20,9 +20,12 @@ import {
   validateAppliedMigrationPrefix,
 } from "./runtime-migration-journal";
 
+import { readProduction0025Chain, runProduction0025, type Production0025Client } from "./production-partner-application-0025";
+
 export type PoolFactory = (connectionString: string) => {
   query(text: string, values?: unknown[]): Promise<{ rows: unknown[] }>;
   end(): Promise<void>;
+  connect?(): Promise<Production0025Client>;
 };
 
 export async function runMigrations(
@@ -34,7 +37,9 @@ export async function runMigrations(
   getMigrationBufferFn?: (tag: string) => Buffer
 ): Promise<void> {
   verifyTarget(env);
-  if (env.RUNTIME_MIGRATION_TARGET === "production" && !env.RUNTIME_MIGRATION_RECONCILIATION) {
+  const production0025 = env.RUNTIME_MIGRATION_TARGET === "production" && env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION === PROD_0025_WRITE_AUTHORIZATION;
+  const productionChain = production0025 ? readProduction0025Chain() : null;
+  if (env.RUNTIME_MIGRATION_TARGET === "production" && !env.RUNTIME_MIGRATION_RECONCILIATION && !production0025) {
     throw new Error("RUNNER: BLOCKED. Partner application 0025 requires separate Owner production migration approval");
   }
 
@@ -54,6 +59,10 @@ export async function runMigrations(
   let tempDir: string | null = null;
 
   try {
+    if (productionChain) {
+      await runProduction0025(pool, productionChain, migrateFn);
+      return;
+    }
     console.log("RUNNER: metadata preflight starting");
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
