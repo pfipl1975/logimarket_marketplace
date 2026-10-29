@@ -4019,7 +4019,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { drizzle } = await import("drizzle-orm/node-postgres");
     const schemaModule = await import("../../src/lib/schema");
     const db = drizzle(pool, { schema: schemaModule });
-    const { executeMarketplaceCheckout } = await import("../../src/lib/checkout/marketplace-checkout-core");
+    const { executeMarketplaceCheckout } = await import("./helpers/confirmed-checkout");
     const { randomUUID } = await import("crypto");
 
     await cleanDB();
@@ -4520,6 +4520,135 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       }
     });
 
+    await tt.test("R03 signed consent: atomic rejection, exact multi-seller amounts and replay", async () => {
+      const { executeMarketplaceCheckout: finalize } = await import("../../src/lib/checkout/marketplace-checkout-core");
+      const { confirmationForDatabase } = await import("./helpers/confirmed-checkout");
+      const first = await seedPartnerAndOffer();
+      const second = await seedPartnerAndOffer();
+      const sessionHash = randomUUID();
+      const context = buyerContext();
+      await db.insert(schemaModule.cartItems).values([
+        { sessionHash, offerId: first.offerId, quantity: 2 },
+        { sessionHash, offerId: second.offerId, quantity: 3 },
+      ]);
+      await pool.query("UPDATE offers SET price_brutto=100.00 WHERE id=ANY($1::bigint[])", [[first.offerId, second.offerId]]);
+      const token = await confirmationForDatabase(db, sessionHash, context);
+      const counts = await getCommerceCounts();
+      const cart = () => pool.query("SELECT id,offer_id,quantity FROM cart_items WHERE session_hash=$1 ORDER BY id", [sessionHash]);
+      async function rejected(value: unknown = token) {
+        const beforeCart = (await cart()).rows;
+        const result = await finalize(db, sessionHash, context, value);
+        assert.strictEqual(result.ok, false);
+        assert.deepStrictEqual(await getCommerceCounts(), counts, "no partial order/snapshot/E6/outbox writes");
+        assert.deepStrictEqual((await cart()).rows, beforeCart, "rejection preserves the actual cart");
+      }
+      for (const price of ["135.79", "80.01"]) {
+        await pool.query("UPDATE offers SET price_brutto=$2 WHERE id=$1", [first.offerId, price]);
+        await rejected();
+      }
+      // 2*103 + 3*98 = 500: total unchanged, both unit prices changed.
+      await pool.query("UPDATE offers SET price_brutto=CASE WHEN id=$1 THEN 103.00 ELSE 98.00 END WHERE id=ANY($2::bigint[])", [first.offerId, [first.offerId, second.offerId]]);
+      await rejected();
+      await pool.query("UPDATE offers SET price_brutto=100.00 WHERE id=ANY($1::bigint[])", [[first.offerId, second.offerId]]);
+      await pool.query("UPDATE cart_items SET quantity=4 WHERE session_hash=$1 AND offer_id=$2", [sessionHash, first.offerId]);
+      await rejected();
+      await pool.query("UPDATE cart_items SET quantity=2 WHERE session_hash=$1 AND offer_id=$2", [sessionHash, first.offerId]);
+      await pool.query("UPDATE offers SET partner_id=$2 WHERE id=$1", [first.offerId, second.partnerId]);
+      await rejected();
+      await pool.query("UPDATE offers SET partner_id=$2 WHERE id=$1", [first.offerId, first.partnerId]);
+      for (const change of ["publication_status='draft'", "offer_model='rfq'", "price_on_request=true"]) {
+        await pool.query("UPDATE offers SET " + change + " WHERE id=$1", [first.offerId]);
+        await rejected();
+        await pool.query("UPDATE offers SET publication_status='published',offer_model='marketplace',price_on_request=false WHERE id=$1", [first.offerId]);
+      }
+      const additionalOffer = await seedPartnerAndOffer();
+      const extra = await pool.query("INSERT INTO cart_items(session_hash,offer_id,quantity) VALUES($1,$2,1) RETURNING id", [sessionHash, additionalOffer.offerId]);
+      await rejected();
+      await pool.query("DELETE FROM cart_items WHERE id=$1", [extra.rows[0].id]);
+      for (const invalid of [undefined, "", "invalid", token.slice(0, -1) + (token.endsWith("A") ? "Q" : "A")]) await rejected(invalid === undefined ? null : invalid);
+      const { issueCheckoutConfirmation, verifyCheckoutConfirmation } = await import("../../src/lib/checkout/confirmation");
+      const accepted = verifyCheckoutConfirmation(token, { ...context, sessionHash })!;
+      const expired = issueCheckoutConfirmation(accepted.lines, { ...context, sessionHash }, undefined, Date.now() - 16 * 60 * 1000);
+      await rejected(expired);
+      const foreign = issueCheckoutConfirmation(accepted.lines, { ...context, sessionHash: "other-session" });
+      await rejected(foreign);
+      // A new displayed snapshot can be accepted. Both submissions use that same proof.
+      await pool.query("UPDATE offers SET price_brutto=0.07 WHERE id=$1", [first.offerId]);
+      await pool.query("UPDATE offers SET price_brutto=135.79 WHERE id=$1", [second.offerId]);
+      const refreshed = await confirmationForDatabase(db, sessionHash, context);
+      const results = await Promise.all([finalize(db, sessionHash, context, refreshed), finalize(db, sessionHash, context, refreshed)]);
+      assert.strictEqual(results.filter(result => result.ok).length, 1);
+      assert.strictEqual(results.filter(result => !result.ok && result.reason === "CHECKOUT_CART_EMPTY").length, 1);
+      const success = results.find(result => result.ok)!;
+      if (!success.ok) assert.fail("Expected one successful checkout");
+      const written = await pool.query("SELECT si.offer_id,si.quantity,si.unit_price,si.currency FROM seller_order_items si JOIN seller_orders so ON so.id=si.seller_order_id WHERE so.marketplace_order_id=$1 ORDER BY si.offer_id", [success.marketplaceOrderId]);
+      assert.deepStrictEqual(written.rows.map(row => ({ ...row, offer_id: String(row.offer_id) })), [
+        { offer_id: String(first.offerId), quantity: 2, unit_price: "0.07", currency: "PLN" },
+        { offer_id: String(second.offerId), quantity: 3, unit_price: "135.79", currency: "PLN" },
+      ]);
+      assert.strictEqual((await cart()).rows.length, 0);
+      console.log("R03_DB_PROOF MULTI_SELLER_TOTAL_MINOR=40751 DUPLICATE_ORDERS=0 PARTIAL_WRITES=0 CART_PRESERVED_ON_REJECTION=true");
+    });
+
+    await tt.test("R03 SQL barriers prove both price-update/checkout orderings", async () => {
+      const { executeMarketplaceCheckout: finalize } = await import("../../src/lib/checkout/marketplace-checkout-core");
+      const { confirmationForDatabase } = await import("./helpers/confirmed-checkout");
+      // Observe PostgreSQL lock ownership, never timing or sleeps.
+      async function waitForBlocked(blocker: number, queryPart: string) {
+        const deadline = Date.now() + 10000;
+        while (Date.now() < deadline) {
+          const result = await pool.query<{ pid: number }>("SELECT pid FROM pg_stat_activity WHERE $1=ANY(pg_blocking_pids(pid)) AND query ILIKE $2", [blocker, "%" + queryPart + "%"]);
+          if (result.rows.length) return result.rows[0].pid;
+        }
+        assert.fail("Expected PostgreSQL barrier was not observed");
+      }
+      for (const updateFirst of [true, false]) {
+        const fixture = await seedPartnerAndOffer();
+        const sessionHash = randomUUID();
+        const context = buyerContext();
+        await pool.query("UPDATE offers SET price_brutto=100.00 WHERE id=$1", [fixture.offerId]);
+        await db.insert(schemaModule.cartItems).values({ sessionHash, offerId: fixture.offerId, quantity: 1 });
+        const token = await confirmationForDatabase(db, sessionHash, context);
+        const before = await getCommerceCounts();
+        const barrier = await pool.connect();
+        const updater = await pool.connect();
+        let checkout: ReturnType<typeof finalize> | undefined;
+        let update: Promise<unknown> | undefined;
+        try {
+          await barrier.query("BEGIN");
+          const barrierPid = (await barrier.query("SELECT pg_backend_pid() AS pid")).rows[0].pid;
+          if (updateFirst) {
+            await barrier.query("UPDATE offers SET price_brutto=135.79 WHERE id=$1", [fixture.offerId]);
+            checkout = finalize(db, sessionHash, context, token);
+            await waitForBlocked(barrierPid, "offers");
+            await barrier.query("COMMIT");
+            assert.deepStrictEqual(await checkout, { ok: false, reason: "CHECKOUT_CONFIRMATION_STALE" });
+            assert.deepStrictEqual(await getCommerceCounts(), before);
+            assert.strictEqual((await pool.query("SELECT count(*)::int AS n FROM cart_items WHERE session_hash=$1", [sessionHash])).rows[0].n, 1);
+          } else {
+            await barrier.query("LOCK TABLE buyer_legal_context_snapshots IN SHARE MODE");
+            checkout = finalize(db, sessionHash, context, token);
+            const checkoutPid = await waitForBlocked(barrierPid, "buyer_legal_context_snapshots");
+            update = updater.query("UPDATE offers SET price_brutto=135.79 WHERE id=$1", [fixture.offerId]);
+            await waitForBlocked(checkoutPid, "UPDATE offers");
+            await barrier.query("COMMIT");
+            const result = await checkout;
+            assert.ok(result.ok);
+            if (!result.ok) assert.fail("Checkout holding the price lock must commit the accepted price");
+            await update;
+            const written = await pool.query("SELECT si.unit_price FROM seller_order_items si JOIN seller_orders so ON so.id=si.seller_order_id WHERE so.marketplace_order_id=$1", [result.marketplaceOrderId]);
+            assert.deepStrictEqual(written.rows, [{ unit_price: "100.00" }]);
+            assert.strictEqual((await pool.query("SELECT price_brutto::text AS price FROM offers WHERE id=$1", [fixture.offerId])).rows[0].price, "135.79");
+          }
+          console.log("R03_SQL_BARRIER " + (updateFirst ? "UPDATE_FIRST=REJECTED ZERO_WRITES=true CART_RETAINED=true" : "CHECKOUT_FIRST=COMMITTED ACCEPTED_UNIT=100.00 LATER_OFFER=135.79"));
+        } finally {
+          await barrier.query("ROLLBACK");
+          await Promise.allSettled([checkout, update]);
+          barrier.release(); updater.release();
+        }
+      }
+    });
+
     await tt.test("PATH COMMERCE-H: Legacy isolation", async () => {
       const legacyOrdersBefore = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM orders`);
       const legacyItemsBefore = await pool.query<{ count: number }>(`SELECT COUNT(*)::int AS count FROM order_items`);
@@ -4624,7 +4753,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const { eq, and } = await import("drizzle-orm");
     const schemaModule = await import("../../src/lib/schema");
     const db = drizzle(pool, { schema: schemaModule });
-    const { executeMarketplaceCheckout } = await import("../../src/lib/checkout/marketplace-checkout-core");
+    const { executeMarketplaceCheckout } = await import("./helpers/confirmed-checkout");
     const { getOwnedOrder, listOwnedOrders } = await import("../../src/lib/buyer-orders/ownership-core");
     const { randomUUID } = await import("crypto");
 

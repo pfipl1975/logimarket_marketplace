@@ -26,13 +26,13 @@ test("Checkout Action Contract", async (t) => {
     assert.match(publicCheckoutActionSource, /currentUser:\s*getCurrentUser\b/);
     assert.match(publicCheckoutActionSource, /sessionHash:\s*getExistingSessionHash\b/);
     assert.match(publicCheckoutActionSource, /resolveBuyer:\s*resolveBuyerOrderIntentContext\b/);
-    assert.match(publicCheckoutActionSource, /executeMarketplaceCheckout\s*\(\s*db\s*,\s*sessionHash\s*,\s*context\s*\)/);
+    assert.match(publicCheckoutActionSource, /executeMarketplaceCheckout\s*\(\s*db\s*,\s*sessionHash\s*,\s*context\s*,\s*form\.get\("confirmation"\)\)/);
     assert.doesNotMatch(publicCheckoutActionSource, /\bgetOrCreateSessionHash\b|\bexecuteCheckout\s*\(/);
   });
 
   await t.test("browser payload supplies only transaction notes and navigation locale", () => {
     const fields = [...publicCheckoutActionSource.matchAll(/form\.get\(\s*["']([^"']+)["']\s*\)/g)].map(match => match[1]).sort();
-    assert.deepEqual(fields, ["locale", "message"]);
+    assert.deepEqual(fields, ["confirmation", "locale", "message"]);
     assert.match(publicCheckoutActionSource, /runPublicCheckout\s*\(\s*form\.get\(\s*"message"\s*\)/);
     assert.match(publicCheckoutCoreSource, /deps\.currentUser\s*\(\s*\)/);
     assert.match(publicCheckoutCoreSource, /deps\.resolveBuyer\s*\(\s*current\.user\.id\s*\)/);

@@ -16,7 +16,7 @@ export async function submitMarketplaceCheckout(_previous: PublicCheckoutResult,
     currentUser: getCurrentUser,
     sessionHash: getExistingSessionHash,
     resolveBuyer: resolveBuyerOrderIntentContext,
-    execute: (sessionHash, context) => executeMarketplaceCheckout(db, sessionHash, context),
+    execute: (sessionHash, context) => executeMarketplaceCheckout(db, sessionHash, context, form.get("confirmation")),
   });
   if (result.code !== "CHECKOUT_ORDER_CREATED") return result;
   const locale = accountLocale(form.get("locale")?.toString());

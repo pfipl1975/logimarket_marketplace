@@ -410,6 +410,7 @@
     "cartChanged": "El carrito ha cambiado o contiene un artículo no disponible. Revise el carrito e inténtelo de nuevo."
   },
   "checkoutFlow": {
+    "confirmationStale": "Los precios o el contenido del carrito han cambiado desde que viste el resumen. Revisa los importes actualizados y vuelve a confirmar el pedido.",
     "step": "Paso 3 de 3 · Revisar y enviar",
     "title": "Revisar el pedido B2B",
     "intro": "Comprueba los artículos y los datos de la empresa. El Socio decidirá si acepta tu oferta.",

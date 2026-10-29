@@ -125,3 +125,12 @@ export function sumLineMinorUnits(lineTotals: bigint[]): bigint {
 export function isPriceSnapshotLengthValid(s: string): boolean {
   return s.length <= PRICE_SNAPSHOT_MAX_LENGTH;
 }
+
+/** Format the exact checkout amount; Intl receives BigInt whole PLN, never a floating amount. */
+export function formatCheckoutMinorUnits(minor: bigint, locale: string): string {
+  if (minor < BigInt(0)) throw new Error("INVALID_MINOR_UNITS");
+  const fraction = (minor % PLN_MINOR_UNITS).toString().padStart(2, "0");
+  return new Intl.NumberFormat(locale, { style: "currency", currency: "PLN" })
+    .formatToParts(minor / PLN_MINOR_UNITS)
+    .map(part => part.type === "fraction" ? fraction : part.value).join("");
+}

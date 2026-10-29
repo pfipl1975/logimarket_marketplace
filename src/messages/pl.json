@@ -410,6 +410,7 @@
     "cartChanged": "Koszyk uległ zmianie. Przejrzyj i spróbuj ponownie."
   },
   "checkoutFlow": {
+    "confirmationStale": "Cena lub zawartość koszyka zmieniła się od wyświetlenia podsumowania. Sprawdź aktualne kwoty i ponownie potwierdź zamówienie.",
     "step": "Krok 3 z 3 · Sprawdź i złóż",
     "title": "Sprawdź zamówienie B2B",
     "intro": "Potwierdź produkty i dane firmy. Po wysłaniu Partner podejmie decyzję o przyjęciu oferty.",
