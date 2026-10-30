@@ -8,6 +8,8 @@ export interface AdminNavigationProps {
   dashboardPath: string;
   offersPath: string;
   partnersPath: string;
+  applicationsPath: string;
+  submittedApplicationsCount: number | null;
   buyersPath: string;
   rfqPath: string;
   ordersPath: string;
@@ -17,6 +19,8 @@ export interface AdminNavigationProps {
     dashboardNav: string;
     offersNav: string;
     partnersNav: string;
+    applicationsNav: string;
+    submittedStatusLabel: string;
     buyersNav: string;
     rfqNav: string;
     ordersNav: string;
@@ -31,6 +35,8 @@ export function AdminNavigation({
   dashboardPath,
   offersPath,
   partnersPath,
+  applicationsPath,
+  submittedApplicationsCount,
   buyersPath,
   rfqPath,
   ordersPath,
@@ -42,6 +48,7 @@ export function AdminNavigation({
   const isDashboardActive = pathname === dashboardPath;
   const isOffersActive = pathname === offersPath || pathname.startsWith(`${offersPath}/`);
   const isPartnersActive = pathname === partnersPath || pathname.startsWith(`${partnersPath}/`);
+  const isApplicationsActive = pathname === applicationsPath || pathname.startsWith(`${applicationsPath}/`);
   const isBuyersActive = pathname === buyersPath || pathname.startsWith(`${buyersPath}/`);
   const isOrdersActive = pathname === ordersPath || pathname.startsWith(`${ordersPath}/`);
   const isRfqActive = pathname === rfqPath || pathname.startsWith(`${rfqPath}/`);
@@ -78,6 +85,20 @@ export function AdminNavigation({
         aria-current={isPartnersActive ? "page" : undefined}
       >
         {labels.partnersNav}
+      </Link>
+
+      <Link
+        href={applicationsPath}
+        className={`${linkClassBase} ${linkClassSize} ml-4 border-l-2 border-brand-teal/40 pl-4 text-sm ${isApplicationsActive ? activeClass : inactiveClass}`}
+        aria-current={isApplicationsActive ? "page" : undefined}
+      >
+        <span className="min-w-0 text-left">{labels.applicationsNav}</span>
+        {submittedApplicationsCount !== null && submittedApplicationsCount > 0 && (
+          <span className="ml-2 shrink-0 rounded-industrial bg-brand-teal px-2 py-0.5 text-xs font-bold text-white">
+            <span className="sr-only">{labels.submittedStatusLabel}: </span>
+            {submittedApplicationsCount}
+          </span>
+        )}
       </Link>
 
       <Link

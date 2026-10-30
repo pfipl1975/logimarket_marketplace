@@ -4,6 +4,7 @@ import Logo from "@/components/Logo";
 import { AdminLogoutForm } from "@/components/auth/AdminLogoutForm";
 import Link from "next/link";
 import { AdminNavigation } from "./AdminNavigation";
+import { countSubmittedApplications } from "@/lib/partner-applications/service";
 
 export async function AdminShell({
   locale,
@@ -23,12 +24,23 @@ export async function AdminShell({
   const ordersPath = locale === "pl" ? "/admin/zamowienia" : `/${locale}/admin/orders`;
   const buyersPath = locale === "pl" ? "/admin/kupujacy" : `/${locale}/admin/buyers`;
   const partnerAgreementsPath = locale === "pl" ? "/admin/umowy-partnerskie" : `/${locale}/admin/partner-agreements`;
+  const applicationsPath = locale === "pl" ? "/admin/partner-applications" : `/${locale}/admin/partner-applications`;
+
+  // An unavailable count must not block Admin navigation or impersonate zero.
+  let submittedApplicationsCount: number | null = null;
+  try {
+    submittedApplicationsCount = await countSubmittedApplications();
+  } catch {
+    console.warn("ADMIN_PARTNER_APPLICATION_COUNT_UNAVAILABLE");
+  }
 
   const navLabels = {
     navigationLabel: adminDict.navigationLabel,
     dashboardNav: adminDict.dashboardNav,
     offersNav: adminDict.offersNav,
     partnersNav: adminDict.partnersNav,
+    applicationsNav: adminDict.partnerApplicationsNav,
+    submittedStatusLabel: dictionary.partnerApplications.submitted,
     buyersNav: adminDict.buyersNav,
     rfqNav: adminDict.rfqNav,
     ordersNav: adminDict.ordersNav,
@@ -58,6 +70,8 @@ export async function AdminShell({
               dashboardPath={dashboardPath}
               offersPath={offersPath}
               partnersPath={partnersPath}
+              applicationsPath={applicationsPath}
+              submittedApplicationsCount={submittedApplicationsCount}
               buyersPath={buyersPath}
               rfqPath={rfqPath}
               ordersPath={ordersPath}
@@ -97,6 +111,8 @@ export async function AdminShell({
             dashboardPath={dashboardPath}
             offersPath={offersPath}
             partnersPath={partnersPath}
+            applicationsPath={applicationsPath}
+            submittedApplicationsCount={submittedApplicationsCount}
             buyersPath={buyersPath}
             rfqPath={rfqPath}
             ordersPath={ordersPath}

@@ -1,6 +1,6 @@
 import "server-only";
 import { createHmac } from "node:crypto";
-import { sql, eq, and, desc, asc } from "drizzle-orm";
+import { sql, eq, and, desc, asc, count } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { partnerApplications, partnerApplicationEvents } from "@/lib/schema";
 import { requireAdmin } from "@/lib/auth/guards";
@@ -84,4 +84,12 @@ export async function getApplication(id: string) {
   const duplicates = await db.select({id:partnerApplications.id}).from(partnerApplications).where(sql`${partnerApplications.id} <> ${id} AND
     (${partnerApplications.contactEmail} = ${application.contactEmail} OR (${application.taxIdentifier}::text IS NOT NULL AND ${partnerApplications.taxIdentifier} = ${application.taxIdentifier} AND ${partnerApplications.countryCode} = ${application.countryCode}))`).limit(10);
   return {application,history,duplicates};
+}
+
+/** Only new submissions awaiting the first Admin review; no applicant data returned. */
+export async function countSubmittedApplications(): Promise<number> {
+  await requireAdmin();
+  const [row] = await db.select({ total: count() }).from(partnerApplications)
+    .where(eq(partnerApplications.status, "submitted"));
+  return row?.total ?? 0;
 }
