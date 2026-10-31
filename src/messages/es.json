@@ -1622,6 +1622,7 @@
     "invalidWebsite": "URL inválida"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "El perfil de empresa está pendiente de la validación comercial completa y del contrato. Puedes preparar y enviar borradores de ofertas a revisión; las solicitudes y los pedidos siguen bloqueados.",
     "productConditionLabel": "Estado del producto",
     "productConditionUnspecified": "Sin especificar",
     "productConditionNew": "Nuevo",

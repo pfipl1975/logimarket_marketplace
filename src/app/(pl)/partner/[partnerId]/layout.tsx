@@ -3,6 +3,7 @@ import { PartnerWorkspaceShell } from "@/app/_shared/partner/PartnerWorkspaceShe
 import { notFound } from "next/navigation";
 import { ForbiddenError, UnauthorizedError } from "@/lib/auth/authorization-errors";
 import { db } from "@/lib/db";
+import { querySellerReadiness } from "@/lib/admin/seller-readiness-query";
 import { partners } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -28,6 +29,7 @@ export default async function PartnerLayout({
     throw err;
   }
 
+  const commercialReady = (await querySellerReadiness(db, parsedPartnerId)).status === "ready";
   const dictionary = await getDictionary("pl");
   let partnerName = dictionary.PartnerWorkspace.title;
   const partnerResult = await db.select({ companyName: partners.companyName }).from(partners).where(eq(partners.id, parsedPartnerId)).limit(1);
@@ -49,6 +51,7 @@ export default async function PartnerLayout({
       ordersHref={ordersHref}
       rfqHref={rfqHref}
       offersHref={offersHref}
+      commercialReady={commercialReady}
     >
       {children}
     </PartnerWorkspaceShell>

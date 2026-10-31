@@ -11,7 +11,7 @@ import {
 } from "@/lib/schema";
 import type { BuyerInvoiceSnapshotInput } from "@/lib/checkout/buyer-order-intent";
 import { eq, and, sql, asc } from "drizzle-orm";
-import { requirePartnerMembership } from "@/lib/auth/partner-membership";
+import { requirePartnerCommercialAccess } from "@/lib/auth/partner-commercial-access";
 import {
   deriveEffectiveStatus,
   canDisclosePartnerBuyerDetails,
@@ -43,7 +43,7 @@ export async function getPartnerOrdersList(
 ): Promise<{ ok: true; items: PartnerOrderListItem[] } | { ok: false; code: string }> {
   try {
     // Auth boundary constrain
-    await requirePartnerMembership(partnerId);
+    await requirePartnerCommercialAccess(partnerId);
 
     const rawData = await db
       .select({
@@ -184,7 +184,7 @@ export async function getPartnerOrderDetail(
 ): Promise<{ ok: true; data: PartnerOrderDetailDTO } | { ok: false; code: string }> {
   try {
     // Auth boundary constrain
-    await requirePartnerMembership(partnerId);
+    await requirePartnerCommercialAccess(partnerId);
 
     const orderData = await db
       .select({

@@ -1622,6 +1622,7 @@
     "invalidWebsite": "Некоректна URL-адреса (має починатися з http:// або https://)"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "Профіль компанії очікує повної комерційної готовності та підтвердження договору. Можна створювати й подавати чернетки пропозицій на перевірку; запити та замовлення недоступні.",
     "productConditionLabel": "Стан товару",
     "productConditionUnspecified": "Не вказано",
     "productConditionNew": "Новий",

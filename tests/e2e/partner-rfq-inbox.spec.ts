@@ -1,5 +1,6 @@
 import { expect, type Page, type Request } from "@playwright/test";
 import { Pool } from "pg";
+import { createHash } from "node:crypto";
 import { test, E2E_NON_ADMIN_USER_ID } from "./fixtures/auth";
 import { requireIsolatedE2EDatabaseUrl } from "../../scripts/e2e/buyer-trust-fixtures";
 import pl from "../../src/messages/pl.json";
@@ -34,6 +35,56 @@ test.describe("Partner RFQ inbox — public submission, shared workflow and tena
     );
     offerId = Number(offer.rows[0].id);
     await database.query("INSERT INTO partner_user_memberships (partner_id, auth_user_id, membership_status, can_accept_orders) VALUES ($1, $3, 'active', false), ($2, $3, 'active', false)", [partnerA, partnerB, E2E_NON_ADMIN_USER_ID]);
+    // Disposable CI fixture: real commercial readiness; no legal evidence ever written to production.
+    let activeVersion = await database.query<{ id: number }>(
+      "SELECT id FROM agreement_versions WHERE status='active' AND agreement_type='partner_agreement_b2b' LIMIT 1",
+    );
+    if (!activeVersion.rows.length) {
+      await database.query(
+        `INSERT INTO agreement_versions (agreement_type, version, canonical_template_hash_sha256, status, effective_from, published_at)
+         VALUES ('partner_agreement_b2b', $1, $2, 'active', NOW(), NOW()) ON CONFLICT DO NOTHING`,
+        [`rfq-ci-${tag}`, createHash("sha256").update(`version:${tag}`).digest("hex")],
+      );
+      activeVersion = await database.query<{ id: number }>(
+        "SELECT id FROM agreement_versions WHERE status='active' AND agreement_type='partner_agreement_b2b' LIMIT 1",
+      );
+    }
+    expect(activeVersion.rows).toHaveLength(1);
+    for (const [id, index] of [[partnerA, 0], [partnerB, 1]] as const) {
+      const weights = [6, 5, 7, 2, 3, 4, 5, 6, 7];
+      let tax: string | null = null;
+      for (let digit = 1; digit <= 8 && tax === null; digit++) {
+        const firstNine = String(digit * 100000000 + id).padStart(9, "0");
+        const checksum = firstNine.split("").reduce((n, value, pos) => n + Number(value) * weights[pos], 0) % 11;
+        if (checksum !== 10) tax = firstNine + String(checksum);
+      }
+      if (!tax) throw new Error("Synthetic tax identity unavailable");
+      await database.query(
+        `INSERT INTO seller_legal_identities (partner_id, legal_name, jurisdiction_country, verification_status,
+          registered_address_line1, registered_postal_code, registered_city, registered_country_code)
+         VALUES ($1, $2, 'PL', 'verified', 'Testowa 1', '00-001', 'Warszawa', 'PL')`,
+        [id, `Synthetic Ready Partner ${id}`],
+      );
+      await database.query(
+        `INSERT INTO seller_tax_identifiers (partner_id, identifier_type, identifier_value, country_code,
+          canonical_identity_class, canonical_identifier_value, verification_status)
+         VALUES ($1, 'tax_id', $2, 'PL', 'PL:NIP', $2, 'verified')`,
+        [id, tax],
+      );
+      await database.query(
+        "INSERT INTO seller_eligibility (partner_id, eligibility_status) VALUES ($1, 'eligible')",
+        [id],
+      );
+      await database.query(
+        `INSERT INTO partner_agreement_execution_evidence
+          (partner_id, agreement_version_id, signed_at, signatory_name, signatory_role, signatory_email,
+           external_platform, external_transaction_id, signed_pdf_sha256, recorded_by_admin_user_id)
+         VALUES ($1, $2, NOW(), 'Synthetic CI Signer', 'Owner', 'synthetic@example.invalid',
+                 'LM_E2E_TEST', $3, $4, 'LM_E2E_TEST')`,
+        [id, activeVersion.rows[0].id, `rfq-ci-${tag}-${index}`,
+          createHash("sha256").update(`signed:${tag}:${id}`).digest("hex")],
+      );
+    }
   });
 
   test.afterAll(async () => {
@@ -43,7 +94,7 @@ test.describe("Partner RFQ inbox — public submission, shared workflow and tena
       await database.query("DELETE FROM partner_user_memberships WHERE partner_id IN ($1, $2)", [partnerA, partnerB]);
       await database.query("DELETE FROM offers WHERE id = $1", [offerId]);
       await database.query("DELETE FROM categories WHERE id = $1", [categoryId]);
-      await database.query("DELETE FROM partners WHERE id IN ($1, $2)", [partnerA, partnerB]);
+      // Immutable CI agreement evidence retains synthetic partner rows until the disposable DB is destroyed.
     }
     await database.end();
   });

@@ -153,7 +153,7 @@ test("Partner RFQ read SQL is scoped, deterministic, minimized; auth precedes pa
   const wrapper = fs.readFileSync("src/lib/partner-rfq/read-model.ts", "utf8");
   for (const kind of ["List", "Detail"]) {
     const fn = wrapper.slice(wrapper.indexOf(`export async function getPartnerRfq${kind}`));
-    assert.ok(fn.indexOf("await requirePartnerMembership") < fn.indexOf(kind === "List" ? "const query" : "const rfqId"));
+    assert.ok(fn.indexOf("await requirePartnerCommercialAccess") < fn.indexOf(kind === "List" ? "const query" : "const rfqId"));
   }
   const actions = fs.readFileSync("src/app/actions.ts", "utf8");
   const action = actions.slice(actions.indexOf("export async function mutatePartnerRfqStatus"), actions.indexOf("export async function getCategoryAttributeConfiguration"));

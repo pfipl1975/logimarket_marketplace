@@ -1622,6 +1622,7 @@
     "invalidWebsite": "Ungültige URL"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "Das Unternehmensprofil wartet auf die vollständige geschäftliche Freigabe und Vertragsprüfung. Sie können Angebotsentwürfe bearbeiten und zur Prüfung einreichen; Anfragen und Bestellungen sind noch nicht verfügbar.",
     "productConditionLabel": "Produktzustand",
     "productConditionUnspecified": "Nicht angegeben",
     "productConditionNew": "Neu",

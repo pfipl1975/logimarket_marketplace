@@ -1,10 +1,11 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { PartnerDashboardPage } from "@/app/_shared/partner/PartnerDashboardPage";
 import { isLocale } from "@/lib/i18n/config";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { buildPartnerDashboardModel } from "@/lib/partner-dashboard/model-core";
 import { getPartnerOrdersList } from "@/lib/partner-orders/read-model";
 import { parseStrictIdOrNotFound } from "@/lib/partner-orders/route-params";
+import { requirePartnerMembership } from "@/lib/auth/partner-membership";
 
 export default async function LocalizedPartnerDashboardRoute({
   params,
@@ -18,7 +19,11 @@ export default async function LocalizedPartnerDashboardRoute({
   const { PartnerWorkspace: dict } = await getDictionary(locale);
   const result = await getPartnerOrdersList(parsedPartnerId);
 
-  if (!result.ok && result.code === "UNAUTHORIZED") notFound();
+  if (!result.ok && result.code === "UNAUTHORIZED") {
+    // Membership-only accounts see the existing draft workspace; no order data is rendered.
+    try { await requirePartnerMembership(parsedPartnerId); } catch { notFound(); }
+    redirect(`/${locale}/partner/${parsedPartnerId}/offers`);
+  }
 
   const model = result.ok
     ? buildPartnerDashboardModel(result.items, result.items[0]?.serverNow ?? new Date())

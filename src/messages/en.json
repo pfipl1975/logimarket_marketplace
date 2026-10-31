@@ -1622,6 +1622,7 @@
     "invalidWebsite": "Invalid URL (must start with http:// or https://)"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "The company profile awaits full commercial readiness and agreement verification. You can prepare and submit offer drafts for review; RFQs and orders remain unavailable.",
     "productConditionLabel": "Product condition",
     "productConditionUnspecified": "Not specified",
     "productConditionNew": "New",
