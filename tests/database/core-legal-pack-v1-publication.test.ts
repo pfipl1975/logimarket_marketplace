@@ -330,5 +330,5 @@ test("Core Pack v1 publishes atomically in disposable PostgreSQL only", async (t
   await assert.rejects(run(), /BLOCKED_PHYSICAL_STATE_EXACT_EXISTING_POST_0026/);
   assert.deepEqual(await registrySnapshot(), publishedBeforeUpgrade);
   assert.deepEqual(await journal(), post0025Journal);
-  assert.equal(await physicalState(), "EXACT_EXISTING_POST_0025");
+  assert.equal(await physicalState(), "EXACT_EXISTING_POST_0026");
 });
