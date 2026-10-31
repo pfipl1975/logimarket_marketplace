@@ -51,7 +51,7 @@ test("ADMIN moderation is atomic, auditable and Partner resubmission stays tenan
   assert.equal(await currentStatus(offerId),"draft");
   const firstEvents = await events(offerId);
   assert.equal(firstEvents.length,1);
-  assert.equal(firstEvents[0].partner_id,partnerId);
+  assert.equal(Number(firstEvents[0].partner_id),partnerId);
   assert.equal(firstEvents[0].admin_actor_id,actor);
   assert.equal(firstEvents[0].reason,"Update load capacity");
   assert.equal(firstEvents[0].decision,"returned_for_correction");

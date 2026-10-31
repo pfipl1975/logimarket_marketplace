@@ -163,7 +163,7 @@ describe("Offer Publication State Machine", () => {
     assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "hidden", targetStatus: "published" }));
     assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "deleted", targetStatus: "archived" }));
     assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "draft", targetStatus: "published" }));
-    assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "pending_review", targetStatus: "draft" }));
+    assert.ok(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "pending_review", targetStatus: "draft", rejectionReason: "Complete technical specifications" }));
 
     assert.equal(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "published", targetStatus: "hidden" }), null);
     assert.equal(parseAdminOfferPublicationInput({ offerId: "123", expectedStatus: "archived", targetStatus: "deleted" }), null);
