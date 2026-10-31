@@ -96,6 +96,32 @@ const server = http.createServer((req, res) => {
 
   // Disposable Auth lifecycle endpoints. Never log request bodies or passwords.
   const pathname = new URL(req.url, 'http://localhost:54321').pathname;
+  const adminUserLookup = /^\/auth\/v1\/admin\/users\/([0-9a-f-]{36})$/i.exec(pathname);
+  if (req.method === 'GET' && adminUserLookup) {
+    // Simulate Supabase Auth Admin only for the isolated CI service-role fixture.
+    if (req.headers.apikey !== 'e2e-fake-service-key' ||
+        req.headers.authorization !== 'Bearer e2e-fake-service-key') {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'forbidden' }));
+      return;
+    }
+    const userId = adminUserLookup[1];
+    if (!ALLOWED_USERS.has(userId)) {
+      res.writeHead(404, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: 'not_found' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      id: userId,
+      email: 'e2e-' + userId + '@test.local',
+      email_confirmed_at: new Date('2026-01-01T00:00:00.000Z').toISOString(),
+      aud: 'authenticated', role: 'authenticated',
+      app_metadata: { provider: 'email', providers: ['email'] },
+      user_metadata: {}, created_at: new Date('2026-01-01T00:00:00.000Z').toISOString()
+    }));
+    return;
+  }
   if (req.method === 'POST' && pathname === '/auth/v1/signup') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify({ user: null, session: null }));
