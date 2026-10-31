@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "Для цього статусу дії публікації та редагування недоступні.",
     "eligibilitySellerNotReady": "Продавець ще не відповідає вимогам готовності до продажу на маркетплейсі.",
     "statusPendingReview": "Очікує на розгляд",
-    "actionReturnToDraft": "Повернути до чернетки"
+    "actionReturnToDraft": "Повернути до чернетки",
+    "rejectionReasonLabel": "Причина повернення на доопрацювання (обов’язково)",
+    "rejectionReasonPlaceholder": "Вкажіть, що саме партнер має виправити…",
+    "rejectionReasonHelp": "Партнер побачить це повідомлення в чернетці пропозиції.",
+    "rejectionReasonRequired": "Вкажіть причину довжиною від 1 до 1000 символів.",
+    "returnedForCorrectionSuccess": "Пропозицію повернуто до чернетки із зазначенням причини.",
+    "actionConfirmReturnToDraft": "Повернути на доопрацювання"
   },
   "adminOfferEdit": {
     "productConditionLabel": "Стан товару",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "Профіль компанії очікує повної комерційної готовності та підтвердження договору. Можна створювати й подавати чернетки пропозицій на перевірку; запити та замовлення недоступні.",
+    "moderationReturnedTitle": "Пропозицію повернуто на доопрацювання",
+    "moderationReturnedInstruction": "Виправте зазначені недоліки та повторно надішліть чернетку на перевірку.",
     "productConditionLabel": "Стан товару",
     "productConditionUnspecified": "Не вказано",
     "productConditionNew": "Новий",

@@ -22,6 +22,8 @@ export function AdminOfferLifecycleAction({
   const router = useRouter();
   const [pending, setPending] = useState(false);
   const [showArchiveConfirm, setShowArchiveConfirm] = useState(false);
+  const [showReturnReason, setShowReturnReason] = useState(false);
+  const [rejectionReason, setRejectionReason] = useState("");
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   if (currentStatus !== "draft" && currentStatus !== "published" && currentStatus !== "pending_review") {
@@ -80,11 +82,45 @@ export function AdminOfferLifecycleAction({
     }
   };
 
+  const handleReturnToDraft = async () => {
+    const reason = rejectionReason.trim();
+    if (reason.length < 1 || reason.length > 1000) {
+      setMessage({ text: dict.rejectionReasonRequired, isError: true });
+      return;
+    }
+    setPending(true);
+    setMessage(null);
+    try {
+      const result = await changeAdminOfferPublicationState({
+        offerId: String(offerId), expectedStatus: "pending_review",
+        targetStatus: "draft", rejectionReason: reason,
+      });
+      if (result.ok) {
+        setMessage({ text: dict.returnedForCorrectionSuccess, isError: false });
+        setRejectionReason("");
+        setShowReturnReason(false);
+        if (result.changed) router.refresh();
+      } else {
+        setMessage({ text: getErrorText(result.code, result.reason), isError: true });
+      }
+    } catch {
+      setMessage({ text: dict.systemError, isError: true });
+    } finally {
+      setPending(false);
+    }
+  };
+
   const getErrorText = (code: string, reason?: string) => {
+    if (code === "OFFER_INVALID_INPUT") return dict.rejectionReasonRequired;
     if (code === "OFFER_TRANSITION_CONFLICT") return dict.transitionConflict;
     if (code === "OFFER_INVALID_TRANSITION") return dict.invalidTransition;
     if (code === "OFFER_PUBLISH_NOT_ELIGIBLE") {
       if (reason === "OFFER_INACTIVE") return dict.offerInactive;
+      if (reason === "TITLE_INVALID") return dict.eligibilityTitleInvalid;
+      if (reason === "MODEL_UNKNOWN") return dict.eligibilityModelUnknown;
+      if (reason === "ECOMMERCE_PRICE_INVALID") return dict.eligibilityPriceInvalid;
+      if (reason === "OUTBOUND_URL_INVALID") return dict.eligibilityOutboundInvalid;
+      if (reason === "SELLER_NOT_READY") return dict.eligibilitySellerNotReady;
       return dict.publishRejected;
     }
     return dict.systemError;
@@ -102,26 +138,47 @@ export function AdminOfferLifecycleAction({
             {pending ? (dict.publishing || "...") : (dict.publish || "Publikuj")}
           </button>
           <button
-            onClick={async () => {
-              setPending(true);
-              const { changeAdminOfferPublicationState } = await import("@/app/actions");
-              const result = await changeAdminOfferPublicationState({
-                offerId: String(offerId),
-                expectedStatus: "pending_review",
-                targetStatus: "draft",
-              });
-              if (result.ok) {
-                router.refresh();
-              } else {
-                setMessage({ text: dict.systemError || "Nie udało się cofnąć do edycji", isError: true });
-              }
-              setPending(false);
-            }}
+            type="button"
+            onClick={() => { setShowReturnReason((value) => !value); setMessage(null); }}
             disabled={pending}
+            aria-expanded={showReturnReason}
             className="inline-flex justify-center items-center px-4 py-2 border border-input text-foreground bg-background text-sm font-medium rounded-industrial hover:bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {dict.actionReturnToDraft || "Cofnij do edycji (Szkic)"}
+            {dict.actionReturnToDraft}
           </button>
+        </div>
+      )}
+      {currentStatus === "pending_review" && showReturnReason && (
+        <div className="border border-border-industrial bg-card p-4 space-y-3">
+          <label htmlFor="moderation-return-reason" className="block text-sm font-medium text-brand-navy">
+            {dict.rejectionReasonLabel}
+          </label>
+          <textarea
+            id="moderation-return-reason"
+            rows={4}
+            maxLength={1000}
+            value={rejectionReason}
+            onChange={(event) => setRejectionReason(event.target.value)}
+            disabled={pending}
+            placeholder={dict.rejectionReasonPlaceholder}
+            aria-required="true"
+            className="block w-full border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-brand-teal"
+          />
+          <p className="text-xs text-muted-foreground">{dict.rejectionReasonHelp} ({rejectionReason.length}/1000)</p>
+          <div className="flex flex-wrap gap-2 justify-end">
+            <button
+              type="button"
+              onClick={() => { setShowReturnReason(false); setMessage(null); }}
+              disabled={pending}
+              className="border border-input px-3 py-2 text-sm disabled:opacity-50"
+            >{dict.cancel}</button>
+            <button
+              type="button"
+              onClick={handleReturnToDraft}
+              disabled={pending || rejectionReason.trim().length === 0}
+              className="bg-brand-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+            >{dict.actionConfirmReturnToDraft}</button>
+          </div>
         </div>
       )}
 

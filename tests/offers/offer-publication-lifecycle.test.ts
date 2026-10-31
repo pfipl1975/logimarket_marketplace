@@ -51,11 +51,21 @@ describe("Offer Publication Parser", () => {
       offerId: "8",
       expectedStatus: "pending_review",
       targetStatus: "draft",
+      rejectionReason: "  Uzupełnij specyfikację.  ",
     }), {
       offerId: 8,
       expectedStatus: "pending_review",
       targetStatus: "draft",
+      rejectionReason: "Uzupełnij specyfikację.",
     });
+  });
+
+  test("requires a bounded rejection reason and rejects unrelated reason fields", () => {
+    const base = { offerId: "8", expectedStatus: "pending_review", targetStatus: "draft" };
+    for (const reason of [undefined, null, "", "   ", "x".repeat(1001), 12]) {
+      assert.equal(parseAdminOfferPublicationInput({ ...base, rejectionReason: reason }), null);
+    }
+    assert.equal(parseAdminOfferPublicationInput({offerId:"1",expectedStatus:"draft",targetStatus:"published",rejectionReason:"extra"}), null);
   });
 
   test("rejects offerId not being a string", () => {
