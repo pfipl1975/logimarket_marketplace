@@ -38,12 +38,12 @@ test("ADMIN links a confirmed existing Auth user, Partner enters own portal, rev
     await adminPage.locator('input[name="email"]').fill("wrong@example.invalid");
     await adminPage.locator('input[name="authorityConfirmed"]').check();
     await adminPage.getByRole("button", { name: pl.partnerAccess.grant, exact: true }).click();
-    await expect(adminPage.getByRole("alert")).toContainText(pl.partnerAccess.identityNotVerified);
+    await expect(adminPage.locator('section[aria-labelledby="partner-access-heading"] [role="alert"]')).toContainText(pl.partnerAccess.identityNotVerified);
     expect(await membership()).toBeNull();
 
     await adminPage.locator('input[name="email"]').fill(memberEmail);
     await adminPage.getByRole("button", { name: pl.partnerAccess.grant, exact: true }).click();
-    await expect(adminPage.getByRole("status")).toContainText(pl.partnerAccess.granted);
+    await expect(adminPage.locator('section[aria-labelledby="partner-access-heading"] [role="status"]')).toContainText(pl.partnerAccess.granted);
     await expect.poll(membership).toEqual({ status: "active", orders: false, revoked: false });
     await expect(adminPage.getByText(memberUserId, { exact: true })).toBeVisible();
 
