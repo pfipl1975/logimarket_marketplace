@@ -2022,3 +2022,49 @@ export async function prepareApplicationReviewAction(applicationId: string, expe
     return result;
   };
 }
+
+/** Existing confirmed Auth users only. No invitation, self-claim or seller-order authority. */
+export async function grantAdminPartnerAccess(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { grantVerifiedPartnerAccess } = await import("@/lib/admin/partner-access-service");
+  const result = await grantVerifiedPartnerAccess(rawInput);
+  if (result.ok) {
+    revalidatePath("/admin/partnerzy/[id]", "page");
+    revalidatePath("/[locale]/admin/partners/[id]", "page");
+  }
+  return result;
+}
+
+export async function revokeAdminPartnerAccess(rawInput: unknown) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  const { revokeVerifiedPartnerAccess } = await import("@/lib/admin/partner-access-service");
+  const result = await revokeVerifiedPartnerAccess(rawInput);
+  if (result.ok) {
+    revalidatePath("/admin/partnerzy/[id]", "page");
+    revalidatePath("/[locale]/admin/partners/[id]", "page");
+  }
+  return result;
+}
+
+export async function getAdminPartnerAccess(partnerId: number) {
+  const { requireAdmin } = await import("@/lib/auth/guards");
+  await requireAdmin();
+  if (!Number.isSafeInteger(partnerId) || partnerId < 1) {
+    return { ok: false as const, code: "INVALID_INPUT" as const };
+  }
+  try {
+    const { getPartnerAccessListCore } = await import("@/lib/admin/partner-access-core");
+    const rows = await getPartnerAccessListCore(db, partnerId);
+    return { ok: true as const, members: rows.map(row => ({
+      authUserId: row.authUserId,
+      membershipStatus: row.membershipStatus,
+      canAcceptOrders: row.canAcceptOrders,
+      createdAt: row.createdAt.toISOString(),
+      revokedAt: row.revokedAt?.toISOString() ?? null,
+    })) };
+  } catch {
+    return { ok: false as const, code: "SYSTEM_ERROR" as const };
+  }
+}
