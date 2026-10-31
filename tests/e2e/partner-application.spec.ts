@@ -75,7 +75,8 @@ async function postSecurityForm(page:Page){
 }
 
 test("accepted application handoff pre-fills declarations, keeps legal fields blank and never creates a Partner on navigation",async({adminPage})=>{
- const id=await securityFixture();
+ const contactEmail=`${randomUUID()}@example.test`;
+ const id=await securityFixture(contactEmail);
  await openSecurityForm(adminPage,id);
  await adminPage.locator('select[name="status"]').selectOption("under_review");
  await postSecurityForm(adminPage);
@@ -90,7 +91,7 @@ test("accepted application handoff pre-fills declarations, keeps legal fields bl
  const before=(await pool!.query("SELECT count(*)::int AS total FROM partners")).rows[0].total;
  await handoff.click();
  await expect(adminPage.locator('input[name="companyName"]')).toHaveValue(`R6 synthetic ${id}`);
- await expect(adminPage.locator('input[name="contactEmail"]')).toHaveValue("");
+ await expect(adminPage.locator('input[name="contactEmail"]')).toHaveValue(contactEmail);
  await expect(adminPage.locator('input[name="jurisdictionCountry"]')).toHaveValue("PL");
  await expect(adminPage.locator('input[name="registeredCountryCode"]')).toHaveValue("PL");
  await expect(adminPage.locator('input[name="legalName"]')).toHaveValue("");
