@@ -3,13 +3,14 @@ import { prepareApplicationReviewAction } from "@/app/actions";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { isLocale, type Locale } from "@/lib/i18n/config";
 import { requireAdminPageAccess } from "@/lib/auth/admin-page-access";
-import { APPLICATION_STATUSES, type ApplicationStatus } from "@/lib/partner-applications/contract";
+import { APPLICATION_STATUSES, adminPartnerHandoffPath, type ApplicationStatus } from "@/lib/partner-applications/contract";
 import { getApplication, listApplications } from "@/lib/partner-applications/service";
 import { ApplicationReviewForm } from "@/components/partner-applications/ApplicationReviewForm";
 
 export async function AdminApplicationsPage({locale,searchParams}:{locale:Locale;searchParams:Record<string,string|string[]|undefined>}) {
  await requireAdminPageAccess(locale);
- const labels=(await getDictionary(locale)).partnerApplications;
+ const dictionary=await getDictionary(locale);
+ const labels=dictionary.partnerApplications;
  const base=locale === "pl" ? "/admin/partner-applications" : `/${locale}/admin/partner-applications`;
  const id=typeof searchParams.id === "string" ? searchParams.id : undefined;
  const rawStatus=searchParams.status;
@@ -21,9 +22,11 @@ export async function AdminApplicationsPage({locale,searchParams}:{locale:Locale
  if(id) {
   if(!detail) return <div><p>{labels.empty}</p><Link href={base} className="underline">{labels.back}</Link></div>;
   const {application:a,history,duplicates}=detail;
+  const handoffHref=adminPartnerHandoffPath(locale,a.status as ApplicationStatus,a.id);
   const reviewAction = await prepareApplicationReviewAction(a.id,a.version);
   return <section className="min-w-0 space-y-6"><Link href={base} className="inline-flex min-h-11 items-center underline">{labels.back}</Link>
    <h1 className="break-words text-2xl font-semibold">{a.companyName}</h1><p className="border-l-4 border-brand-teal p-3 font-semibold">{labels.unverified}</p>
+   {handoffHref && <Link href={handoffHref} className="inline-flex min-h-11 items-center border border-brand-navy bg-brand-navy px-5 py-2 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2">{dictionary.adminPartnerCreate.title}</Link>}
    <dl className="grid gap-3 break-words sm:grid-cols-2">
     {([[labels.countryCode,a.countryCode],[labels.contactEmail,a.contactEmail],[labels.businessType,labels[a.businessType as "manufacturer"]],[labels.taxIdentifier,a.taxIdentifier ?? "—"],[labels.version,String(a.version)],[labels.details,labels[a.status as ApplicationStatus]]] as const).map(([label,value])=><div key={label}><dt className="font-medium">{label}</dt><dd className="wrap-anywhere">{value}</dd></div>)}
    </dl>
