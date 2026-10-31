@@ -43,6 +43,7 @@ import {
   FINAL_POST_0015_PRODUCTION_FINGERPRINT,
   FINAL_POST_0023_PRODUCTION_FINGERPRINT,
   FINAL_POST_0024_PRODUCTION_FINGERPRINT,
+  FINAL_POST_0025_PRODUCTION_FINGERPRINT,
   type TableContract,
 } from "../../scripts/database/runtime-migration-contract";
 
@@ -457,7 +458,7 @@ test("TARGET: EMPTY when zero public tables", () => {
 
 test("TARGET: EXACT_EXISTING when exact fingerprint copy", () => {
   const result = classifyRuntimeTarget(PRODUCTION_FINGERPRINT, EXPECTED_BASELINE_TABLES);
-  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0025");
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0026");
 });
 
 test("TARGET: EXACT_EXISTING_POST_0015 for the historical POST_0015 fingerprint", () => {
@@ -1745,7 +1746,7 @@ test("ROLLBACK_POST0024: current exact target fails closed before any DDL", asyn
   const q = new StrictFakeQueryable(metadataRouter());
   const result = await verifyRollbackPreconditions(q, emptyEnv(), exactFakeRead());
   assert.strictEqual(result.allowed, false);
-  assert.match(result.reason ?? "", /EXACT_EXISTING_POST_0025/);
+  assert.match(result.reason ?? "", /EXACT_EXISTING_POST_0026/);
   const { pool, statements, state } = fakeRollbackPool(metadataRouter());
   await assert.rejects(
     () => rollbackEmptyDevBaseline(emptyEnv(), exactFakeRead(), (() => pool) as never),
@@ -1782,4 +1783,9 @@ test("ROLLBACK_POST0024 remains refused with the historical drop contract",async
  const q=new StrictFakeQueryable(metadataRouter({fingerprint:fp,tables:Object.keys(fp)}));
  const result=await verifyRollbackPreconditions(q,emptyEnv(),exactFakeRead().slice(0,25));
  assert.strictEqual(result.allowed,false);assert.match(result.reason ?? "",/EXACT_EXISTING_POST_0024/);
+});
+
+test("POST_0025 remains an exact recognized pre-migration state", () => {
+  const result = classifyRuntimeTarget(FINAL_POST_0025_PRODUCTION_FINGERPRINT, Object.keys(FINAL_POST_0025_PRODUCTION_FINGERPRINT));
+  assert.strictEqual(result.state, "EXACT_EXISTING_POST_0025");
 });

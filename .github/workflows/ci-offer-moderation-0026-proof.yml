@@ -2,8 +2,10 @@ name: Offer Moderation 0026 Isolated Schema Proof
 on:
   pull_request:
     paths:
-      - 'tests/database/fixtures/offer-moderation-0026-candidate.sql'
+      - 'drizzle-runtime/0026_offer_moderation_events.sql'
       - 'tests/database/helpers/print-offer-moderation-fingerprint.ts'
+      - 'scripts/database/offer-moderation-0026-fingerprint.json'
+      - 'drizzle-runtime/meta/_journal.json'
       - '.github/workflows/ci-offer-moderation-0026-proof.yml'
 jobs:
   schema-proof:
@@ -43,10 +45,6 @@ jobs:
           RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
           RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
           RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
-      - name: Apply candidate 0026 DDL ONLY on disposable localhost
-        run: |
-          test "$CI" = "true" && test "$GITHUB_ACTIONS" = "true"
-          PGPASSWORD=password psql -h 127.0.0.1 -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -1 -f tests/database/fixtures/offer-moderation-0026-candidate.sql
       - name: Assert client isolation and emit actual schema fingerprint
         run: npx tsx tests/database/helpers/print-offer-moderation-fingerprint.ts
         env:

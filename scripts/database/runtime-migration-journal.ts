@@ -135,6 +135,10 @@ export function validateAppliedMigrationPrefix(
     if (appliedRows.length !== 22) {
       throw new Error(`RUNNER: BLOCKED. Journal states do not match exact canonical 0000 (schema is POST_0021 but journal has ${appliedRows.length} rows)`);
     }
+  } else if (schemaClassificationState === "EXACT_EXISTING_POST_0026") {
+    if (appliedRows.length !== 27) {
+      throw new Error("RUNNER: BLOCKED. POST_0026 requires canonical journal count 27");
+    }
   } else if (schemaClassificationState === "EXACT_EXISTING_POST_0025") {
     if (appliedRows.length !== 26) {
       throw new Error("RUNNER: BLOCKED. POST_0025 requires canonical journal count 26");
