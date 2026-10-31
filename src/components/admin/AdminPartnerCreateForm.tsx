@@ -10,6 +10,7 @@ import type { AdminPartnerCreateValidationCode } from "@/lib/admin/partners-crea
 
 type CreateDictionary = NonNullable<Dictionary["adminPartnerCreate"]>;
 type FieldErrors = Record<string, string>;
+type PartnerApplicationPrefill = { companyName: string; contactEmail: string; jurisdictionCountry: string; registeredCountryCode: string; taxIdValue: string };
 
 const inputClassName =
   "h-11 w-full rounded-industrial border border-border-industrial bg-white px-3 text-sm text-brand-navy outline-none transition focus:border-brand-teal focus:ring-2 focus:ring-brand-teal/25 disabled:cursor-not-allowed disabled:bg-brand-light-gray/60 disabled:opacity-70";
@@ -23,10 +24,12 @@ export function AdminPartnerCreateForm({
   dict,
   cancelUrl,
   successRedirectBase,
+  prefill,
 }: {
   dict: CreateDictionary;
   cancelUrl: string;
   successRedirectBase: string;
+  prefill?: PartnerApplicationPrefill;
 }) {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
@@ -160,10 +163,10 @@ export function AdminPartnerCreateForm({
       <fieldset disabled={isPending} className="space-y-6">
         <Section number="1" title={dict.partnerSection} description={dict.partnerSectionDescription}>
           <Field label={dict.companyNameLabel} name="companyName" required error={fieldErrors.companyName}>
-            <input id="companyName" name="companyName" required maxLength={255} autoComplete="organization" className={inputClassName} {...fieldProps("companyName")} />
+            <input id="companyName" name="companyName" required maxLength={255} autoComplete="organization" defaultValue={prefill?.companyName ?? ""} className={inputClassName} {...fieldProps("companyName")} />
           </Field>
           <Field label={dict.contactEmailLabel} name="contactEmail" required error={fieldErrors.contactEmail}>
-            <input id="contactEmail" name="contactEmail" type="email" required maxLength={100} autoComplete="email" className={inputClassName} {...fieldProps("contactEmail")} />
+            <input id="contactEmail" name="contactEmail" type="email" required maxLength={100} autoComplete="email" defaultValue={prefill?.contactEmail ?? ""} className={inputClassName} {...fieldProps("contactEmail")} />
           </Field>
           <Field label={dict.websiteUrlLabel} name="websiteUrl" error={fieldErrors.websiteUrl} wide>
             <input id="websiteUrl" name="websiteUrl" type="url" autoComplete="url" placeholder="https://" className={inputClassName} {...fieldProps("websiteUrl")} />
@@ -175,7 +178,7 @@ export function AdminPartnerCreateForm({
             <input id="legalName" name="legalName" required maxLength={255} autoComplete="organization" className={inputClassName} {...fieldProps("legalName")} />
           </Field>
           <Field label={dict.jurisdictionCountryLabel} name="jurisdictionCountry" required error={fieldErrors.jurisdictionCountry}>
-            <input id="jurisdictionCountry" name="jurisdictionCountry" required maxLength={2} defaultValue="PL" autoComplete="country" className={inputClassName} {...fieldProps("jurisdictionCountry")} />
+            <input id="jurisdictionCountry" name="jurisdictionCountry" required maxLength={2} defaultValue={prefill?.jurisdictionCountry ?? "PL"} autoComplete="country" className={inputClassName} {...fieldProps("jurisdictionCountry")} />
           </Field>
         </Section>
 
@@ -196,13 +199,13 @@ export function AdminPartnerCreateForm({
             <input id="registeredRegion" name="registeredRegion" maxLength={120} autoComplete="address-level1" className={inputClassName} {...fieldProps("registeredRegion")} />
           </Field>
           <Field label={dict.registeredCountryCodeLabel} name="registeredCountryCode" required error={fieldErrors.registeredCountryCode}>
-            <input id="registeredCountryCode" name="registeredCountryCode" required maxLength={2} defaultValue="PL" autoComplete="country" className={inputClassName} {...fieldProps("registeredCountryCode")} />
+            <input id="registeredCountryCode" name="registeredCountryCode" required maxLength={2} defaultValue={prefill?.registeredCountryCode ?? "PL"} autoComplete="country" className={inputClassName} {...fieldProps("registeredCountryCode")} />
           </Field>
         </Section>
 
         <Section number="4" title={dict.taxSection} description={dict.taxSectionDescription}>
           <Field label={dict.taxIdLabel} name="taxIdValue" error={fieldErrors.taxIdValue} hint={dict.taxIdHint}>
-            <input id="taxIdValue" name="taxIdValue" inputMode="numeric" maxLength={100} className={inputClassName} {...fieldProps("taxIdValue")} />
+            <input id="taxIdValue" name="taxIdValue" inputMode="numeric" maxLength={100} defaultValue={prefill?.taxIdValue ?? ""} className={inputClassName} {...fieldProps("taxIdValue")} />
           </Field>
           <Field label={dict.vatIdLabel} name="vatIdValue" error={fieldErrors.vatIdValue} hint={dict.vatIdHint}>
             <input id="vatIdValue" name="vatIdValue" maxLength={100} className={inputClassName} {...fieldProps("vatIdValue")} />
