@@ -1,7 +1,14 @@
 import { z } from "zod";
-import { locales } from "@/lib/i18n/config";
+import { locales, type Locale } from "@/lib/i18n/config";
 export const APPLICATION_STATUSES = ["submitted", "under_review", "needs_information", "rejected", "accepted_for_onboarding"] as const;
 export type ApplicationStatus = typeof APPLICATION_STATUSES[number];
+
+/** Admin-only navigation; applicant declarations are fetched server-side, never put in the URL. */
+export function adminPartnerHandoffPath(locale: Locale, status: ApplicationStatus, applicationId: string): string | null {
+  if (status !== "accepted_for_onboarding" || !z.uuid().safeParse(applicationId).success) return null;
+  const base = locale === "pl" ? "/admin/partnerzy/nowy" : `/${locale}/admin/partners/new`;
+  return `${base}?${new URLSearchParams({ applicationId })}`;
+}
 export const BUSINESS_TYPES = ["manufacturer", "distributor", "service_provider", "other"] as const;
 export const APPLICATION_TRANSITIONS: Record<ApplicationStatus, readonly ApplicationStatus[]> = {
   submitted: ["under_review"], under_review: ["needs_information", "rejected", "accepted_for_onboarding"],
