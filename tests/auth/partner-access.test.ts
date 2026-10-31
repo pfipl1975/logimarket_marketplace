@@ -6,7 +6,7 @@ import {
 } from "../../src/lib/admin/partner-access-core";
 
 const authUserId = "22222222-2222-4222-8222-222222222222";
-const valid = { partnerId: 25, authUserId, email: "partner@example.test", expectedStatus: "none" as const };
+const valid = { partnerId: 25, authUserId, email: "partner@example.test", expectedStatus: "none" as const, authorityConfirmed: true as const };
 
 test("ADMIN membership grant is strict, normalized and requires explicit intended state", () => {
   const result = grantPartnerAccessSchema.safeParse({ ...valid, email: "  PARTNER@EXAMPLE.TEST " });
