@@ -74,6 +74,35 @@ async function postSecurityForm(page:Page){
  await page.getByRole("button",{name:labels.update,exact:true}).click();return pending;
 }
 
+test("accepted application handoff pre-fills declarations, keeps legal fields blank and never creates a Partner on navigation",async({adminPage})=>{
+ const id=await securityFixture();
+ await openSecurityForm(adminPage,id);
+ await adminPage.locator('select[name="status"]').selectOption("under_review");
+ await postSecurityForm(adminPage);
+ await expect.poll(()=>securityState(id)).toEqual({status:"under_review",version:2,events:2});
+ await openSecurityForm(adminPage,id);
+ await adminPage.locator('select[name="status"]').selectOption("accepted_for_onboarding");
+ await postSecurityForm(adminPage);
+ await expect.poll(()=>securityState(id)).toEqual({status:"accepted_for_onboarding",version:3,events:3});
+ await adminPage.reload();
+ const handoff=adminPage.getByRole("link",{name:pl.adminPartnerCreate.title,exact:true});
+ await expect(handoff).toHaveAttribute("href",`/admin/partnerzy/nowy?applicationId=${id}`);
+ const before=(await pool!.query("SELECT count(*)::int AS total FROM partners")).rows[0].total;
+ await handoff.click();
+ await expect(adminPage.locator('input[name="companyName"]')).toHaveValue(`R6 synthetic ${id}`);
+ await expect(adminPage.locator('input[name="contactEmail"]')).toHaveValue("");
+ await expect(adminPage.locator('input[name="jurisdictionCountry"]')).toHaveValue("PL");
+ await expect(adminPage.locator('input[name="registeredCountryCode"]')).toHaveValue("PL");
+ await expect(adminPage.locator('input[name="legalName"]')).toHaveValue("");
+ await expect(adminPage.locator('input[name="registeredAddressLine1"]')).toHaveValue("");
+ await expect(adminPage.getByText(pl.partnerApplications.unverified,{exact:true})).toBeVisible();
+ const after=(await pool!.query("SELECT count(*)::int AS total FROM partners")).rows[0].total;
+ expect(after).toBe(before);
+ const unaccepted=await securityFixture();
+ await adminPage.goto(`/admin/partnerzy/nowy?applicationId=${unaccepted}`);
+ await expect(adminPage.getByRole("heading",{name:pl.adminPartnerCreate.title,exact:true})).toHaveCount(0);
+});
+
 test("bound context rejects target/version substitution, missing/corrupt context and plaintext replacement",async({adminPage})=>{
  const a=await securityFixture(),b=await securityFixture();
  const unchanged={status:"submitted",version:1,events:1};
