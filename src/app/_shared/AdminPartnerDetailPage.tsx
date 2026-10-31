@@ -1,6 +1,7 @@
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import type { Locale } from "@/lib/i18n/config";
-import { getAdminPartnerDetail } from "@/app/actions";
+import { getAdminPartnerAccess, getAdminPartnerDetail } from "@/app/actions";
+import { AdminPartnerAccessControl } from "@/components/admin/AdminPartnerAccessControl";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Landmark, ShieldCheck, Building2, FileText, FileKey, ArrowLeft } from "lucide-react";
@@ -39,6 +40,7 @@ export async function AdminPartnerDetailPage({
   }
 
   const { partner, legalIdentity, taxIdentifiers, registryIdentifiers, eligibility, agreementEvidence } = result.data;
+  const partnerAccess = await getAdminPartnerAccess(partner.id);
   const backPath = locale === "pl" ? "/admin/partnerzy" : `/${locale}/admin/partners`;
 
   const missingFieldLabels = {
@@ -419,6 +421,19 @@ export async function AdminPartnerDetailPage({
           emptyValue={dict.emptyValue}
         />
       </div>
+
+      {partnerAccess.ok ? (
+        <AdminPartnerAccessControl
+          partnerId={partner.id}
+          memberships={partnerAccess.members}
+          dict={dictionary.partnerAccess}
+        />
+      ) : (
+        <section role="alert" className="border border-border-industrial bg-white p-5 text-brand-navy">
+          <h2 className="font-semibold">{dictionary.partnerAccess.title}</h2>
+          <p>{dictionary.partnerAccess.accountUnavailable}</p>
+        </section>
+      )}
     </div>
   );
 }
