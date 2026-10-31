@@ -79,6 +79,7 @@ const exactJournalEntries = [
   { tag: "fake_tag_0023", when: 1793026000000 },
   { tag: "fake_tag_0024", when: 1793113200000 },
 { tag: "fake_tag_0025", when: 1793280737565 },
+  { tag: "fake_tag_0026", when: 1793480000000 },
 ];
 const exactFakeRead = () => exactJournalEntries.map(({ when }) => ({ folderMillis: when, hash: FAKE_HASH }));
 const exactFakeReadFn = () => ({

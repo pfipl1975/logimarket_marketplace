@@ -38,8 +38,22 @@ export function validateProduction0025Chain(journal: Journal, migrations: Migrat
 
 export function readProduction0025Chain(): Production0025Chain {
   const folder = path.join(process.cwd(), "drizzle-runtime");
-  const journal = JSON.parse(fs.readFileSync(path.join(folder, "meta/_journal.json"), "utf8")) as Journal;
-  const migrations = readMigrationFiles({ migrationsFolder: folder });
+  const fullJournal = JSON.parse(fs.readFileSync(path.join(folder, "meta/_journal.json"), "utf8")) as Journal;
+  const fullMigrations = readMigrationFiles({ migrationsFolder: folder });
+  // 0025's production authorization is immutable. The only supported
+  // successor is the reviewed 0026 candidate; do not pass it to this runner.
+  const successor = fullJournal.entries[26];
+  if (
+    fullJournal.entries.length !== 27 || fullMigrations.length !== 27 ||
+    successor?.idx !== 26 || successor.version !== "7" ||
+    successor.when !== 1793480000000 ||
+    successor.tag !== "0026_offer_moderation_events" ||
+    successor.breakpoints !== true
+  ) {
+    throw new Error("STOP_AND_REPORT: 0025_UNAPPROVED_SUCCESSOR_CHAIN");
+  }
+  const journal = { ...fullJournal, entries: fullJournal.entries.slice(0, 26) };
+  const migrations = fullMigrations.slice(0, 26);
   const buffers = new Map(journal.entries.map(e => [e.tag, fs.readFileSync(path.join(folder, `${e.tag}.sql`))]));
   validateProduction0025Chain(journal, migrations, tag => buffers.get(tag)!);
   return { journal, migrations, buffers };

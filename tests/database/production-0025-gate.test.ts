@@ -46,6 +46,8 @@ for (const [name, env] of badEnvs) test(`production 0025 refuses ${name} before 
 test("production 0025 pins all 26 journal entries and SQL bytes", () => {
   const chain = readProduction0025Chain();
   assert.equal(chain.journal.entries.length, 26);
+  assert.equal(chain.migrations.length, 26);
+  assert.equal(chain.journal.entries[25].tag, "0025_partner_applications");
   assert.doesNotThrow(() => validateProduction0025Chain(chain.journal, chain.migrations, tag => chain.buffers.get(tag)!));
   for (const index of [0, 7, 24, 25]) {
     assert.throws(() => validateProduction0025Chain(chain.journal, chain.migrations, tag => tag === chain.journal.entries[index].tag ? Buffer.from("SELECT 1;") : chain.buffers.get(tag)!));
