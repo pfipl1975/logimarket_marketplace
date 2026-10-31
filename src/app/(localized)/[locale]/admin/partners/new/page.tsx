@@ -31,16 +31,20 @@ export async function generateMetadata({
 
 export default async function LocalizedAdminPartnerCreateRoute({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ applicationId?: string | string[] }>;
 }) {
   const resolvedParams = await params;
   const locale = resolvedParams.locale;
+  const { applicationId } = await searchParams;
 
-  if (!isLocale(locale) || locale === 'pl') {
+  if (!isLocale(locale) || locale === 'pl' ||
+      (applicationId !== undefined && (typeof applicationId !== 'string' || !applicationId))) {
     notFound();
   }
 
-  return <AdminPartnerCreatePage locale={locale as Locale} />;
+  return <AdminPartnerCreatePage locale={locale as Locale} applicationId={applicationId} />;
 }
 

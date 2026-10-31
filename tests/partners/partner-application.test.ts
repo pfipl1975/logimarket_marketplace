@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { applicationInputSchema, reviewInputSchema, parseBoundReviewForm, APPLICATION_TRANSITIONS, isLocalIntakeEnabled, validApplicationOrigin } from "@/lib/partner-applications/contract";
+import { applicationInputSchema, reviewInputSchema, parseBoundReviewForm, APPLICATION_TRANSITIONS, adminPartnerHandoffPath, isLocalIntakeEnabled, validApplicationOrigin } from "@/lib/partner-applications/contract";
 const valid = {companyName:"Synthetic Ltd",countryCode:"PL",contactEmail:"synthetic@example.test",businessType:"manufacturer",taxIdentifier:"",locale:"pl",submissionKey:"09b7e0b4-9578-4dc0-aa43-4549713b51b1",privacyNoticeVersion:"LOCAL_FIXTURE_ONLY",website:""};
 test("minimal anonymous input, optional tax ID, normalization and strict allowlist",()=>{
  assert.ok(applicationInputSchema.safeParse(valid).success);
@@ -14,6 +14,19 @@ test("explicit lifecycle excludes conversion and terminal changes",()=>{
  assert.deepEqual(APPLICATION_TRANSITIONS.accepted_for_onboarding,[]);
  assert.deepEqual(APPLICATION_TRANSITIONS.rejected,[]);
  assert.equal(reviewInputSchema.safeParse({applicationId:valid.submissionKey,expectedVersion:1,status:"linked_to_partner",reason:"x",note:""}).success,false);
+});
+test("only accepted applications expose localized Admin handoff with opaque ID",()=>{
+ const id=valid.submissionKey;
+ assert.equal(adminPartnerHandoffPath("pl","accepted_for_onboarding",id),`/admin/partnerzy/nowy?applicationId=${id}`);
+ for(const locale of ["en","de","fr","uk","es","zh"] as const){
+  assert.equal(adminPartnerHandoffPath(locale,"accepted_for_onboarding",id),`/${locale}/admin/partners/new?applicationId=${id}`);
+ }
+ for(const status of ["submitted","under_review","needs_information","rejected"] as const){
+  assert.equal(adminPartnerHandoffPath("pl",status,id),null);
+ }
+ for(const invalidId of ["","../login","not-a-uuid","00000000-0000-0000-0000-000000000000?partnerId=1"]){
+  assert.equal(adminPartnerHandoffPath("pl","accepted_for_onboarding",invalidId),null);
+ }
 });
 test("LOCAL-only switch refuses production, unknown/shared targets, spoofed and missing origins",()=>{
  const env={NODE_ENV:"test",PARTNER_APPLICATION_ENVIRONMENT:"LOCAL",PARTNER_APPLICATION_LOCAL_INTAKE:"1",DATABASE_URL:"postgres://postgres@127.0.0.1:15479/lm_partner_application_test",PARTNER_APPLICATION_ORIGIN:"http://localhost:3107"};
