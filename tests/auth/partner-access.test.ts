@@ -15,7 +15,7 @@ test("ADMIN membership grant is strict, normalized and requires explicit intende
   assert.equal(grantPartnerAccessSchema.safeParse({ ...valid, expectedStatus: "revoked" }).success, true);
   for (const patch of [
     { partnerId: 0 }, { partnerId: -1 }, { partnerId: 1.5 },
-    { authUserId: "wrong" }, { email: "broken" }, { expectedStatus: "active" },
+    { authUserId: "wrong" }, { email: "broken" }, { expectedStatus: "active" }, { authorityConfirmed: false },
     { canAcceptOrders: true }, { membershipStatus: "active" }, { actorId: authUserId },
     { partnerId: "25" }, { email: "test@example.test", app_metadata: { role: "admin" } },
   ]) {
