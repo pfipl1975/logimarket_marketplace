@@ -11,6 +11,7 @@ export const grantPartnerAccessSchema = z.strictObject({
   authUserId: userId,
   email: z.string().trim().toLowerCase().email().max(254),
   expectedStatus: z.enum(["none", "revoked"]),
+  authorityConfirmed: z.literal(true),
 });
 
 export const revokePartnerAccessSchema = z.strictObject({
