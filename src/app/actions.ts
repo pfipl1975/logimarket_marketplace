@@ -624,6 +624,9 @@ export async function mutatePartnerRfqStatus(rawInput: unknown): Promise<import(
     const { PartnerRfqMutationSchema, mutatePartnerRfqStatusCore } = await import("@/lib/partner-rfq/mutation-core");
     const parsed = PartnerRfqMutationSchema.safeParse(rawInput);
     if (!parsed.success) return { ok: false, code: "VALIDATION_ERROR" };
+    // RFQ mutations require verified commercial readiness in addition to tenant membership.
+    const { requirePartnerCommercialAccess } = await import("@/lib/auth/partner-commercial-access");
+    await requirePartnerCommercialAccess(parsed.data.partnerId);
     const result = await db.transaction(tx => mutatePartnerRfqStatusCore(tx, parsed.data, id => authorize(id, tx)));
     if (result.ok && result.code === "UPDATED") revalidatePath("/", "layout");
     return result;

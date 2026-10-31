@@ -1622,6 +1622,7 @@
     "invalidWebsite": "Nieprawidłowy adres URL (musi zaczynać się od http:// lub https://)"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "Profil firmy oczekuje na pełną gotowość handlową i potwierdzenie umowy. Możesz przygotowywać oraz zgłaszać szkice ofert do moderacji; RFQ i zamówienia pozostają niedostępne.",
     "productConditionLabel": "Stan produktu",
     "productConditionUnspecified": "Nie określono",
     "productConditionNew": "Nowe",

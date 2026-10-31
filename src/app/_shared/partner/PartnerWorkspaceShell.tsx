@@ -16,6 +16,7 @@ export function PartnerWorkspaceShell({
   ordersHref,
   rfqHref,
   offersHref,
+  commercialReady,
   dict,
 }: {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export function PartnerWorkspaceShell({
   ordersHref: string;
   rfqHref: string;
   offersHref: string;
+  commercialReady: boolean;
   dict: PartnerWorkspaceDictionary;
 }) {
   const marketplaceHref = getHomePath(locale);
@@ -34,7 +36,7 @@ export function PartnerWorkspaceShell({
       <header className="sticky top-0 z-30 bg-brand-navy text-white shadow-soft">
         <div className="mx-auto grid w-full max-w-[1400px] grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 px-4 sm:px-6 md:grid-cols-[auto_minmax(0,1fr)_auto]">
           <Link
-            href={dashboardHref}
+            href={commercialReady ? dashboardHref : offersHref}
             className="min-w-0 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-teal focus-visible:ring-offset-2 focus-visible:ring-offset-brand-navy"
           >
             <span className="block text-lg font-bold tracking-tight text-white">
@@ -47,6 +49,7 @@ export function PartnerWorkspaceShell({
 
           <div className="order-3 col-span-2 flex min-w-0 flex-col border-t border-white/10 md:order-none md:col-span-1 md:flex-row md:items-stretch md:border-t-0 md:px-4">
             <PartnerWorkspaceNavigation
+              commercialReady={commercialReady}
               dashboardHref={dashboardHref}
               ordersHref={ordersHref}
               rfqHref={rfqHref}
@@ -83,6 +86,11 @@ export function PartnerWorkspaceShell({
       </header>
 
       <main className="mx-auto w-full max-w-[1400px] flex-1 p-4 sm:p-6 lg:p-8">
+        {!commercialReady && (
+          <div role="status" className="mb-6 border-l-4 border-brand-teal bg-white px-5 py-4 text-sm text-brand-navy shadow-soft">
+            {dict.commercialRestrictedNotice}
+          </div>
+        )}
         {children}
       </main>
 

@@ -8,6 +8,7 @@ type PartnerWorkspaceNavigationProps = {
   ordersHref: string;
   rfqHref: string;
   offersHref: string;
+  commercialReady: boolean;
   labels: {
     navigationLabel: string;
     dashboard: string;
@@ -26,6 +27,7 @@ export function PartnerWorkspaceNavigation({
   ordersHref,
   rfqHref,
   offersHref,
+  commercialReady,
   labels,
 }: PartnerWorkspaceNavigationProps) {
   const pathname = normalizePath(usePathname());
@@ -51,8 +53,9 @@ export function PartnerWorkspaceNavigation({
   return (
     <nav
       aria-label={labels.navigationLabel}
-      className="grid min-w-0 flex-1 grid-cols-2 items-stretch gap-1 md:grid-cols-4"
+      className={`grid min-w-0 flex-1 grid-cols-2 items-stretch gap-1 ${commercialReady ? "md:grid-cols-4" : "md:grid-cols-1"}`}
     >
+      {commercialReady && <>
       <Link
         href={dashboardHref}
         aria-current={isDashboardActive ? "page" : undefined}
@@ -74,6 +77,7 @@ export function PartnerWorkspaceNavigation({
       >
         {labels.rfq}
       </Link>
+      </>}
       <Link
         href={offersHref}
         aria-current={isOffersActive ? "page" : undefined}

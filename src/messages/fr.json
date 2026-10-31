@@ -1622,6 +1622,7 @@
     "invalidWebsite": "URL invalide"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "Le profil de l'entreprise attend la validation commerciale complète et la vérification du contrat. Vous pouvez préparer et soumettre des brouillons d'offres, mais les demandes et les commandes sont indisponibles.",
     "productConditionLabel": "État du produit",
     "productConditionUnspecified": "Non précisé",
     "productConditionNew": "Neuf",

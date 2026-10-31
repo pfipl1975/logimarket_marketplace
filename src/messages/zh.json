@@ -1622,6 +1622,7 @@
     "invalidWebsite": "URL 无效（必须以 http:// 或 https:// 开头）"
   },
   "PartnerWorkspace": {
+    "commercialRestrictedNotice": "公司资料尚待完整的商业资质及协议审核。您可以准备报价草稿并提交审核；询价和订单暂不可用。",
     "productConditionLabel": "商品状况",
     "productConditionUnspecified": "未指定",
     "productConditionNew": "全新",

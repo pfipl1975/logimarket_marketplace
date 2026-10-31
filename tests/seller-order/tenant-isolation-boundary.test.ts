@@ -7,14 +7,14 @@ const source = readFileSync(
   "utf8"
 );
 
-test("both Partner read boundaries require server-side membership", () => {
+test("both Partner read boundaries require membership AND commercial readiness", () => {
   assert.match(
     source,
-    /export async function getPartnerOrdersList[\s\S]*?await requirePartnerMembership\(partnerId\);/
+    /export async function getPartnerOrdersList[\s\S]*?await requirePartnerCommercialAccess\(partnerId\);/
   );
   assert.match(
     source,
-    /export async function getPartnerOrderDetail[\s\S]*?await requirePartnerMembership\(partnerId\);/
+    /export async function getPartnerOrderDetail[\s\S]*?await requirePartnerCommercialAccess\(partnerId\);/
   );
 });
 

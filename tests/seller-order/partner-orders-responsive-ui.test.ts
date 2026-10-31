@@ -49,13 +49,13 @@ test("mobile cards and desktop semantic table share the same filtered server dat
   assert.match(source, /href=\{`\$\{basePath\}\/\$\{item\.sellerOrderId\}`\}/);
 });
 
-test("orders stay server-authorized and reuse the trusted countdown helper", async () => {
+test("orders require commercial readiness and reuse the trusted countdown helper", async () => {
   const page = await read("src/app/(pl)/partner/[partnerId]/zamowienia/page.tsx");
   const readModel = await read("src/lib/partner-orders/read-model.ts");
 
   assert.doesNotMatch(page, /^"use client";/);
   assert.equal(page.match(/getPartnerOrdersList\(parsedPartnerId\)/g)?.length, 1);
-  assert.match(readModel, /await requirePartnerMembership\(partnerId\)/);
+  assert.match(readModel, /await requirePartnerCommercialAccess\(partnerId\)/);
   assert.match(page, /formatPartnerOrderRemainingTime\(item\.expiresAt, item\.serverNow, dict\)/);
   assert.doesNotMatch(page, /Date\.now\(\)|fetch\(/);
 });
