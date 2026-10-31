@@ -51,7 +51,7 @@ export function AdminPartnerAccessControl({
     startTransition(async () => {
       try {
         const result = await grantAdminPartnerAccess({
-          partnerId, authUserId: userId.trim(), email: email.trim(), expectedStatus,
+          partnerId, authUserId: userId.trim(), email: email.trim(), expectedStatus, authorityConfirmed,
         });
         setFeedback({ error: !result.ok, text: result.ok ? dict.granted : messages[result.code] ?? dict.systemError });
         if (result.ok) {
