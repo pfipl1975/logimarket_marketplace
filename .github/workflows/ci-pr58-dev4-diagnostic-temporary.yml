@@ -1,0 +1,124 @@
+name: PR58 DEV4 Security Diagnostic (temporary)
+on:
+  pull_request:
+    types: [synchronize]
+    paths:
+      - '.github/workflows/ci-pr58-dev4-diagnostic-temporary.yml'
+permissions:
+  contents: read
+concurrency:
+  group: pr58-dev4-security-diagnostic
+  cancel-in-progress: true
+jobs:
+  verify:
+    name: Reproduce and audit four dev-tool packages (no DB)
+    if: github.event.pull_request.number == 58 && github.event.pull_request.head.ref == 'fix/lm-sec-dependencies-01' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      REPORT_DIR: /tmp/pr58-dev4-audit
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preflight and npm-only lockfile update
+        id: generate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$REPORT_DIR"
+          test "$GITHUB_EVENT_NAME" = "pull_request"
+          test "$GITHUB_BASE_REF" = "main"
+          test "$GITHUB_HEAD_REF" = "fix/lm-sec-dependencies-01"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          test "$(git hash-object package.json)" = "ac42a8b2e47fa7df5f5a0b1d051e4c91b4da5e5c"
+          test "$(git hash-object package-lock.json)" = "29575171cea7efddca889552deaa4b5cebc44d8b"
+          node --version
+          npm --version
+          npm update brace-expansion browserslist js-yaml postcss --package-lock-only --include=optional --ignore-scripts --no-audit --no-fund
+      - name: Verify targeted dependency-only diff and patched versions
+        id: validate
+        if: steps.generate.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('node:fs');
+          const cp = require('node:child_process');
+          const original = JSON.parse(cp.execFileSync('git',['show','HEAD:package-lock.json'],{encoding:'utf8'}));
+          const next = JSON.parse(fs.readFileSync('package-lock.json','utf8'));
+          const names = new Set(['brace-expansion','browserslist','js-yaml','postcss']);
+          const before=original.packages, after=next.packages;
+          const pkgName=p=>p.split('/node_modules/').pop().replace(/^node_modules\//,'');
+          const inScope=p=>names.has(pkgName(p));
+          const oldPaths=Object.keys(before),newPaths=Object.keys(after);
+          const added=newPaths.filter(p=>!(p in before)),removed=oldPaths.filter(p=>!(p in after));
+          const changed=oldPaths.filter(p=>p in after && JSON.stringify(before[p])!==JSON.stringify(after[p]));
+          const unexpected=changed.filter(p=>!inScope(p));
+          const targets=changed.filter(inScope).map(p=>({path:p,from:before[p].version,to:after[p].version}));
+          const mins={
+            'node_modules/brace-expansion':[1,1,21],
+            'node_modules/@typescript-eslint/typescript-estree/node_modules/brace-expansion':[5,0,12],
+            'node_modules/browserslist':[4,28,7],
+            'node_modules/js-yaml':[4,3,2],
+            'node_modules/postcss':[8,5,23],
+            'node_modules/next/node_modules/postcss':[8,5,23]
+          };
+          const patched=(v,min)=>{
+            const m=/^(\d+)\.(\d+)\.(\d+)$/.exec(v||'');if(!m)return false;
+            const ver=m.slice(1).map(Number);
+            for(let i=0;i<3;i++){if(ver[i]>min[i])return true;if(ver[i]<min[i])return false;}
+            return true;
+          };
+          const unsafe=Object.entries(mins).filter(([p,min])=>!after[p]||!patched(after[p].version,min));
+          const rootChanged=JSON.stringify({...next,packages:before})!==JSON.stringify(original);
+          const report={added,removed,changed,unexpected,targets,unsafe,rootChanged};
+          fs.writeFileSync(process.env.REPORT_DIR+'/drift.json',JSON.stringify(report,null,2)+'\n');
+          console.log('DEV4_DRIFT '+JSON.stringify({added:added.length,removed:removed.length,unexpected:unexpected.length,targets,unsafe,rootChanged}));
+          if(added.length||removed.length||unexpected.length||unsafe.length||rootChanged||targets.length<4){
+            console.error('STOP_SCOPE_OR_UNPATCHED_TARGET');process.exitCode=1;
+          }else{
+            fs.copyFileSync('package-lock.json',process.env.REPORT_DIR+'/candidate-package-lock.json');
+          }
+          NODE
+          test -z "$(git diff --name-only -- package.json)"
+          git diff --check
+      - name: Install exact candidate using npm ci
+        id: install
+        if: steps.validate.outcome == 'success'
+        run: npm ci --no-audit --no-fund
+      - name: Audit production and full dependency graph
+        if: steps.install.outcome == 'success'
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --json --fetch-retries=0 > "$REPORT_DIR/audit-production.json"
+          production_code=$?
+          npm audit --json --fetch-retries=0 > "$REPORT_DIR/audit-all.json"
+          complete_code=$?
+          PRODUCTION_CODE="$production_code" COMPLETE_CODE="$complete_code" node <<'NODE'
+          const fs=require('node:fs'),dir=process.env.REPORT_DIR;
+          const prod=JSON.parse(fs.readFileSync(dir+'/audit-production.json','utf8'));
+          const full=JSON.parse(fs.readFileSync(dir+'/audit-all.json','utf8'));
+          const p=prod.metadata?.vulnerabilities,f=full.metadata?.vulnerabilities;
+          const report={production:p,full:f,productionExit:Number(process.env.PRODUCTION_CODE),fullExit:Number(process.env.COMPLETE_CODE),
+            remainingHigh:Object.entries(full.vulnerabilities||{}).filter(([_,v])=>['high','critical'].includes(v.severity)).map(([name,v])=>({name,severity:v.severity})),
+            remainingModerate:Object.entries(full.vulnerabilities||{}).filter(([_,v])=>v.severity==='moderate').map(([name])=>name)};
+          fs.writeFileSync(dir+'/audit-summary.json',JSON.stringify(report,null,2)+'\n');
+          console.log('DEV4_AUDIT_SUMMARY '+JSON.stringify(report));
+          if(prod.error||full.error||!p||!f||report.productionExit!==0||p.total!==0||f.high!==0||f.critical!==0||f.moderate>21||report.remainingHigh.length){
+            console.error('STOP_SECURITY_AUDIT_FAIL');process.exitCode=1;
+          }
+          NODE
+      - name: Upload audit evidence and candidate without repo writes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr58-dev4-high-remediation-evidence
+          path: /tmp/pr58-dev4-audit/
+          if-no-files-found: warn
+          retention-days: 3
