@@ -183,13 +183,17 @@ export async function reproduceMarketplaceRisks({ database, seller, browser, non
         let leaked = false;
         let calls = 0;
         const rejectedActions = new Map(actions);
-        rejectedActions.set("hydrateOffersWithAttributes", "0".repeat(40));
+        // Next.js 16.4.3 accepts 42-character action IDs; probe lookup rejection, not malformed-input rejection.
+        const unregisteredActionId = "0".repeat(42);
+        expect([...actions.values()], "R01 synthetic ID must not shadow a known public action").not.toContain(unregisteredActionId);
+        rejectedActions.set("hydrateOffersWithAttributes", unregisteredActionId);
         for (const request of [anon.request, nonAdminPage.request]) {
           for (const target of protectedOffers) {
             const response = await invoke(request, rejectedActions, "hydrateOffersWithAttributes",
               [[{ id: Number(target.id), categoryId: Number(categoryId) }], "pl"]);
-            expect(response.status(), "R01 unregistered action must reject HTTP invocation").toBe(404);
+            expect(response.status(), "R01 unregistered action must reject HTTP invocation").toBe(409);
             const body = await response.text();
+            expect(body, "R01 must reject unregistered action before invoking application code").toBe("Server Action unavailable.");
             leaked = leaked || sentinels.slice(1).some(sentinel => body.includes(sentinel));
             calls++;
           }
