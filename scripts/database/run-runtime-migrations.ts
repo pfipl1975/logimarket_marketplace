@@ -1,6 +1,6 @@
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { drizzle } from "drizzle-orm/node-postgres";
-import { PROD_0025_WRITE_AUTHORIZATION, verifyTarget } from "./verify-runtime-migration-target";
+import { PROD_0025_WRITE_AUTHORIZATION, PROD_0026_WRITE_AUTHORIZATION, verifyTarget } from "./verify-runtime-migration-target";
 import {
   fetchLiveSchemaMetadata,
   classifyRuntimeTarget,
@@ -21,6 +21,7 @@ import {
 } from "./runtime-migration-journal";
 
 import { readProduction0025Chain, runProduction0025, type Production0025Client } from "./production-partner-application-0025";
+import { readProduction0026Chain, runProduction0026 } from "./production-offer-moderation-0026";
 
 export type PoolFactory = (connectionString: string) => {
   query(text: string, values?: unknown[]): Promise<{ rows: unknown[] }>;
@@ -39,7 +40,9 @@ export async function runMigrations(
   verifyTarget(env);
   const production0025 = env.RUNTIME_MIGRATION_TARGET === "production" && env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION === PROD_0025_WRITE_AUTHORIZATION;
   const productionChain = production0025 ? readProduction0025Chain() : null;
-  if (env.RUNTIME_MIGRATION_TARGET === "production" && !env.RUNTIME_MIGRATION_RECONCILIATION && !production0025) {
+  const production0026 = env.RUNTIME_MIGRATION_TARGET === "production" && env.RUNTIME_MIGRATION_WRITE_AUTHORIZATION === PROD_0026_WRITE_AUTHORIZATION;
+  const productionChain0026 = production0026 ? readProduction0026Chain() : null;
+  if (env.RUNTIME_MIGRATION_TARGET === "production" && !env.RUNTIME_MIGRATION_RECONCILIATION && !production0025 && !production0026) {
     throw new Error("RUNNER: BLOCKED. Partner application 0025 requires separate Owner production migration approval");
   }
 
@@ -61,6 +64,10 @@ export async function runMigrations(
   try {
     if (productionChain) {
       await runProduction0025(pool, productionChain, migrateFn);
+      return;
+    }
+    if (productionChain0026) {
+      await runProduction0026(pool, productionChain0026, migrateFn);
       return;
     }
     console.log("RUNNER: metadata preflight starting");

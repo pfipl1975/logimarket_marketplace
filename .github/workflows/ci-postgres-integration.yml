@@ -105,3 +105,12 @@ jobs:
           RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
           RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
           RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
+
+      - name: Verify production 0026 runner against isolated PostgreSQL
+        run: npx tsx --test tests/database/production-0026-gate.test.ts
+        env:
+          PROD_0026_GATE_TEST_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          PROD_0026_GATE_TEST_CLASSIFICATION: DISPOSABLE_DEV
+          TEST_DATABASE_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          ALLOW_DESTRUCTIVE_DB_TESTS: "1"
+          NODE_ENV: test
