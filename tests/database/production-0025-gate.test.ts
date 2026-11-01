@@ -5,7 +5,7 @@ import { PROD_0025_PROJECT_REF, PROD_0025_WRITE_AUTHORIZATION, verifyTarget } fr
 import { readProduction0025Chain, validateProduction0025Chain } from "../../scripts/database/production-partner-application-0025";
 
 export const production0025TestEnv = {
-  NODE_ENV: "test",
+  NODE_ENV: "test" as const,
   DATABASE_URL: `postgresql://postgres:synthetic@db.${PROD_0025_PROJECT_REF}.supabase.co:5432/postgres?sslmode=verify-full&sslrootcert=synthetic-ca.pem`,
   RUNTIME_MIGRATION_TARGET: "production",
   RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: PROD_0025_PROJECT_REF,
