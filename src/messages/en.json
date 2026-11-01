@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "For this status, publication and editing actions are unavailable.",
     "eligibilitySellerNotReady": "Seller is not ready to sell on Marketplace.",
     "statusPendingReview": "Pending review",
-    "actionReturnToDraft": "Return to draft"
+    "actionReturnToDraft": "Return to draft",
+    "rejectionReasonLabel": "Reason for returning the offer (required)",
+    "rejectionReasonPlaceholder": "Describe precisely what the Partner must correct…",
+    "rejectionReasonHelp": "The Partner will see this message in the offer draft.",
+    "rejectionReasonRequired": "Enter a reason (1–1000 characters).",
+    "returnedForCorrectionSuccess": "The offer was returned to draft with a reason.",
+    "actionConfirmReturnToDraft": "Return for correction"
   },
   "adminOfferEdit": {
     "productConditionLabel": "Product condition",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "The company profile awaits full commercial readiness and agreement verification. You can prepare and submit offer drafts for review; RFQs and orders remain unavailable.",
+    "moderationReturnedTitle": "Offer returned for correction",
+    "moderationReturnedInstruction": "Update the specified details and submit the draft for review again.",
     "productConditionLabel": "Product condition",
     "productConditionUnspecified": "Not specified",
     "productConditionNew": "New",

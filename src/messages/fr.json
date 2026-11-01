@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "Pour ce statut, les actions de publication et d'édition ne sont pas disponibles.",
     "eligibilitySellerNotReady": "Le vendeur n'est pas prêt à vendre sur la Marketplace.",
     "statusPendingReview": "Examen en attente",
-    "actionReturnToDraft": "Retourner au brouillon"
+    "actionReturnToDraft": "Retourner au brouillon",
+    "rejectionReasonLabel": "Motif du retour pour correction (obligatoire)",
+    "rejectionReasonPlaceholder": "Indiquez précisément les éléments à corriger…",
+    "rejectionReasonHelp": "Le partenaire verra ce message dans le brouillon de son offre.",
+    "rejectionReasonRequired": "Saisissez un motif de 1 à 1 000 caractères.",
+    "returnedForCorrectionSuccess": "L’offre a été renvoyée en brouillon avec son motif.",
+    "actionConfirmReturnToDraft": "Renvoyer pour correction"
   },
   "adminOfferEdit": {
     "productConditionLabel": "État du produit",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "Le profil de l'entreprise attend la validation commerciale complète et la vérification du contrat. Vous pouvez préparer et soumettre des brouillons d'offres, mais les demandes et les commandes sont indisponibles.",
+    "moderationReturnedTitle": "Offre renvoyée pour correction",
+    "moderationReturnedInstruction": "Corrigez les éléments indiqués, puis soumettez à nouveau le brouillon.",
     "productConditionLabel": "État du produit",
     "productConditionUnspecified": "Non précisé",
     "productConditionNew": "Neuf",

@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "Für diesen Status sind Veröffentlichungs- und Bearbeitungsaktionen nicht verfügbar.",
     "eligibilitySellerNotReady": "Der Verkäufer ist noch nicht bereit für den Verkauf auf dem Marktplatz.",
     "statusPendingReview": "Ausstehende Überprüfung",
-    "actionReturnToDraft": "Zum Entwurf zurückkehren"
+    "actionReturnToDraft": "Zum Entwurf zurückkehren",
+    "rejectionReasonLabel": "Grund für die Rückgabe (erforderlich)",
+    "rejectionReasonPlaceholder": "Beschreiben Sie genau, was korrigiert werden muss…",
+    "rejectionReasonHelp": "Der Partner sieht diese Nachricht im Angebotsentwurf.",
+    "rejectionReasonRequired": "Bitte einen Grund mit 1 bis 1000 Zeichen eingeben.",
+    "returnedForCorrectionSuccess": "Das Angebot wurde mit Begründung zur Korrektur zurückgegeben.",
+    "actionConfirmReturnToDraft": "Zur Korrektur zurückgeben"
   },
   "adminOfferEdit": {
     "productConditionLabel": "Produktzustand",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "Das Unternehmensprofil wartet auf die vollständige geschäftliche Freigabe und Vertragsprüfung. Sie können Angebotsentwürfe bearbeiten und zur Prüfung einreichen; Anfragen und Bestellungen sind noch nicht verfügbar.",
+    "moderationReturnedTitle": "Angebot zur Korrektur zurückgegeben",
+    "moderationReturnedInstruction": "Korrigieren Sie die genannten Punkte und reichen Sie den Entwurf erneut zur Prüfung ein.",
     "productConditionLabel": "Produktzustand",
     "productConditionUnspecified": "Nicht angegeben",
     "productConditionNew": "Neu",

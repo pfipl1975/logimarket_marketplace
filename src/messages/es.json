@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "Para este estado, las acciones de publicación y edición no están disponibles.",
     "eligibilitySellerNotReady": "El vendedor no está listo para vender en el Marketplace.",
     "statusPendingReview": "Revisión pendiente",
-    "actionReturnToDraft": "Volver al borrador"
+    "actionReturnToDraft": "Volver al borrador",
+    "rejectionReasonLabel": "Motivo de devolución para corrección (obligatorio)",
+    "rejectionReasonPlaceholder": "Indica qué elementos debe corregir el socio…",
+    "rejectionReasonHelp": "El socio verá este mensaje en el borrador de su oferta.",
+    "rejectionReasonRequired": "Introduce un motivo de 1 a 1000 caracteres.",
+    "returnedForCorrectionSuccess": "La oferta se devolvió a borrador con su motivo.",
+    "actionConfirmReturnToDraft": "Devolver para corregir"
   },
   "adminOfferEdit": {
     "productConditionLabel": "Estado del producto",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "El perfil de empresa está pendiente de la validación comercial completa y del contrato. Puedes preparar y enviar borradores de ofertas a revisión; las solicitudes y los pedidos siguen bloqueados.",
+    "moderationReturnedTitle": "Oferta devuelta para corrección",
+    "moderationReturnedInstruction": "Corrige los puntos indicados y vuelve a enviar el borrador para su revisión.",
     "productConditionLabel": "Estado del producto",
     "productConditionUnspecified": "Sin especificar",
     "productConditionNew": "Nuevo",

@@ -184,6 +184,13 @@ export default async function PartnerOfferDetailPage({
       </div>
 
       <header className="border border-border-industrial bg-white p-5 shadow-soft sm:p-8">
+        {offer.publicationStatus === "draft" && offer.latestModerationReturn && (
+          <section aria-label={dict.moderationReturnedTitle} className="mb-6 border border-amber-300 bg-amber-50 p-4">
+            <h2 className="text-sm font-semibold text-amber-900">{dict.moderationReturnedTitle}</h2>
+            <p className="mt-2 text-sm text-amber-900 whitespace-pre-wrap break-words">{offer.latestModerationReturn.reason}</p>
+            <p className="mt-2 text-xs text-amber-800">{dict.moderationReturnedInstruction}</p>
+          </section>
+        )}
         {offer.publicationStatus === "pending_review" && (
           <div className="mb-6 rounded-md bg-amber-50 p-4 border border-amber-200">
             <h3 className="text-sm font-medium text-amber-800">

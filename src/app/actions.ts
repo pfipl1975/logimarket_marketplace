@@ -1114,7 +1114,7 @@ export async function getAdminMarketplaceOrderDetail(rawId: unknown) {
 
 export async function changeAdminOfferPublicationState(rawInput: unknown) {
   const { requireAdmin } = await import("@/lib/auth/guards");
-  await requireAdmin();
+  const admin = await requireAdmin();
 
   const {
     parseAdminOfferPublicationInput,
@@ -1128,7 +1128,7 @@ export async function changeAdminOfferPublicationState(rawInput: unknown) {
 
   const { db } = await import("@/lib/db");
   const { querySellerReadiness } = await import("@/lib/admin/seller-readiness-query");
-  const result = await executeOfferPublicationStateChange(db, input, { querySellerReadiness });
+  const result = await executeOfferPublicationStateChange(db, input, { querySellerReadiness, adminActorId: admin.id });
 
   if (result.ok && result.changed) {
     revalidatePath("/", "layout");
