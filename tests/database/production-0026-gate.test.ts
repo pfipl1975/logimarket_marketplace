@@ -12,6 +12,7 @@ import { classifyRuntimeTarget, fetchLiveSchemaMetadata } from "../../scripts/da
 import { resetDisposableTestDatabase, validateDestructiveTestEnvironment } from "./helpers/destructive-db-safety";
 
 const PROD_0026_TEST_ENV = {
+  NODE_ENV: "test",
   DATABASE_URL: `postgresql://postgres:synthetic@db.${PROD_0025_PROJECT_REF}.supabase.co:5432/postgres?sslmode=verify-full&sslrootcert=synthetic-ca.pem`,
   RUNTIME_MIGRATION_TARGET: "production",
   RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: PROD_0025_PROJECT_REF,
@@ -26,7 +27,7 @@ test("0026 has a distinct explicit production target / authorization", () => {
     ...PROD_0026_TEST_ENV,
     DATABASE_URL: `postgresql://postgres.${PROD_0025_PROJECT_REF}:synthetic@aws-0-eu-west-1.pooler.supabase.com:5432/postgres?sslmode=verify-full&sslrootcert=synthetic-ca.pem`,
   }));
-  assert.equal(PROD_0026_WRITE_AUTHORIZATION === PROD_0025_WRITE_AUTHORIZATION, false);
+  assert.notEqual(PROD_0026_WRITE_AUTHORIZATION, PROD_0025_WRITE_AUTHORIZATION);
 });
 
 for (const [name, env] of [

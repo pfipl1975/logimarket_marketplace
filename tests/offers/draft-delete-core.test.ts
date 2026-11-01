@@ -55,7 +55,7 @@ describe("never-published draft deletion", () => {
   });
 });
 
-type Row = typeof draft | null;
+type Row = Parameters<typeof evaluateDraftDeletion>[0] | null;
 
 function fakeDatabase(row: Row, updates: Record<string, unknown>[], trace: string[], changed = true) {
   const tx = {

@@ -120,7 +120,7 @@ test("bound context rejects target/version substitution, missing/corrupt context
    const request=route.request();if(request.method() !== "POST" || !request.headers()["next-action"] || intercepted){await route.continue();return;}
    intercepted=true;
    // Manipulate only the opaque client-visible action envelope in memory; never log it.
-   const headers=request.headers();const body=await new Request("http://localhost",{method:"POST",headers:{"content-type":headers["content-type"]},body:request.postDataBuffer()!}).formData();
+   const headers=request.headers();const body=await new Request("http://localhost",{method:"POST",headers:{"content-type":headers["content-type"]},body:new Uint8Array(request.postDataBuffer()!)}).formData();
    // Only numeric Flight records carry call arguments; exclude duplicated $ACTION_ form metadata.
    const encryptedParts:[string,string][]=[];
    for(const [key,value] of body.entries()){
