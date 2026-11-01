@@ -14,7 +14,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
@@ -34,6 +34,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Verify isolated PostgreSQL 17 identity
+        shell: bash
+        env:
+          PGPASSWORD: password
+        run: |
+          test "$CI" = "true" && test "$GITHUB_ACTIONS" = "true"
+          version_num=$(psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -Atc "SHOW server_version_num")
+          echo "PG_SERVER_VERSION_NUM=$version_num"
+          test "$((version_num / 10000))" -eq 17
+          test "$(psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -Atc "SELECT current_database()")" = "logimarket_test"
+          psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -c "SELECT version() AS actual_postgresql_version, current_database() AS database, inet_server_addr() AS server_address, inet_server_port() AS server_port"
 
       - name: Install dependencies
         run: npm ci
@@ -105,3 +117,12 @@ jobs:
           RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
           RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
           RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
+
+      - name: Verify production 0026 runner against isolated PostgreSQL
+        run: npx tsx --test tests/database/production-0026-gate.test.ts
+        env:
+          PROD_0026_GATE_TEST_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          PROD_0026_GATE_TEST_CLASSIFICATION: DISPOSABLE_DEV
+          TEST_DATABASE_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          ALLOW_DESTRUCTIVE_DB_TESTS: "1"
+          NODE_ENV: test

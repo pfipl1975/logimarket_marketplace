@@ -1,0 +1,64 @@
+name: Offer Moderation 0026 Isolated Schema Proof
+on:
+  pull_request:
+    paths:
+      - 'drizzle-runtime/0026_offer_moderation_events.sql'
+      - 'tests/database/helpers/print-offer-moderation-fingerprint.ts'
+      - 'scripts/database/offer-moderation-0026-fingerprint.json'
+      - 'drizzle-runtime/meta/_journal.json'
+      - '.github/workflows/ci-offer-moderation-0026-proof.yml'
+jobs:
+  schema-proof:
+    name: Isolated PostgreSQL 17 schema evidence
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: logimarket_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verify isolated PostgreSQL 17 identity
+        shell: bash
+        env:
+          PGPASSWORD: password
+        run: |
+          test "$CI" = "true" && test "$GITHUB_ACTIONS" = "true"
+          version_num=$(psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -Atc "SHOW server_version_num")
+          echo "PG_SERVER_VERSION_NUM=$version_num"
+          test "$((version_num / 10000))" -eq 17
+          test "$(psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -Atc "SELECT current_database()")" = "logimarket_test"
+          psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -c "SELECT version() AS actual_postgresql_version, current_database() AS database, inet_server_addr() AS server_address, inet_server_port() AS server_port"
+
+      - name: Install pinned dependencies
+        run: npm ci
+      - name: Initialize isolated database roles
+        run: |
+          test "$CI" = "true" && test "$GITHUB_ACTIONS" = "true"
+          PGPASSWORD=password psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -c "CREATE ROLE anon; CREATE ROLE authenticated; CREATE ROLE service_role;"
+      - name: Apply canonical runtime chain to disposable database
+        run: npm run db:runtime:migrate
+        env:
+          DATABASE_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          RUNTIME_MIGRATION_TARGET: development
+          RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: localhost
+          RUNTIME_MIGRATION_FORBIDDEN_PROJECT_REF: prodref
+          RUNTIME_MIGRATION_WRITE_AUTHORIZATION: AUTHORIZED_DEV_BASELINE_WRITE
+          RUNTIME_MIGRATION_ROLLBACK_AUTHORIZATION: AUTHORIZED_EMPTY_DEV_BASELINE_ROLLBACK
+      - name: Assert client isolation and emit actual schema fingerprint
+        run: npx tsx tests/database/helpers/print-offer-moderation-fingerprint.ts
+        env:
+          TEST_DATABASE_URL: postgres://postgres:password@localhost:5432/logimarket_test
+          E2E_DB_CLASSIFICATION: ISOLATED_DISPOSABLE_TEST

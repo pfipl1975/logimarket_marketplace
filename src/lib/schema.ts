@@ -76,6 +76,28 @@ export const offers = pgTable("offers", {
   check("offers_publication_status_check", sql`((publication_status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying, 'published'::character varying, 'hidden'::character varying, 'archived'::character varying, 'deleted'::character varying])::text[]))`)
 ]);
 
+// Append-only ADMIN moderation events; no browser grants.
+export const offerModerationEvents = pgTable("offer_moderation_events", {
+  id: bigserial("id", { mode: "number" }).primaryKey(),
+  offerId: bigint("offer_id", { mode: "number" }).notNull().references(() => offers.id, { onDelete: "restrict" }),
+  partnerId: bigint("partner_id", { mode: "number" }).notNull().references(() => partners.id, { onDelete: "restrict" }),
+  adminActorId: uuid("admin_actor_id").notNull(),
+  decision: varchar("decision", { length: 32 }).notNull().$type<"approved" | "returned_for_correction">(),
+  fromStatus: varchar("from_status", { length: 20 }).notNull(),
+  toStatus: varchar("to_status", { length: 20 }).notNull(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, t => [
+  index("idx_offer_moderation_events_offer").on(t.offerId, t.id.desc()),
+  index("idx_offer_moderation_events_partner").on(t.partnerId, t.offerId, t.id.desc()),
+  check("offer_moderation_events_transition_check", sql`(
+    (${t.decision} = 'approved' AND ${t.fromStatus} IN ('draft','pending_review') AND ${t.toStatus} = 'published' AND ${t.reason} IS NULL)
+    OR
+    (${t.decision} = 'returned_for_correction' AND ${t.fromStatus} = 'pending_review' AND ${t.toStatus} = 'draft'
+      AND ${t.reason} IS NOT NULL AND length(btrim(${t.reason})) BETWEEN 1 AND 1000)
+  )`),
+]);
+
 export type OfferMediaSourceType = "upload" | "remote_import";
 
 export const offerMedia = pgTable("offer_media", {

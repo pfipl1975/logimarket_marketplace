@@ -1,4 +1,5 @@
 import applicationFingerprint from "./partner-application-fingerprint.json";
+import moderationFingerprint from "./offer-moderation-0026-fingerprint.json";
 export const RUNTIME_MIGRATIONS_FOLDER = "drizzle-runtime";
 
 export const MARKETPLACE_ORDER_RLS_TARGET_TABLES = [
@@ -104,7 +105,8 @@ export const EXPECTED_POST_0022_TABLES = [...EXPECTED_POST_0021_TABLES];
 export const EXPECTED_POST_0023_TABLES = [...EXPECTED_POST_0022_TABLES];
 export const EXPECTED_POST_0024_TABLES = [...EXPECTED_POST_0023_TABLES];
 export const EXPECTED_POST_0025_TABLES = [...EXPECTED_POST_0024_TABLES, "partner_applications", "partner_application_events", "partner_application_limits"];
-export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0025_TABLES;
+export const EXPECTED_POST_0026_TABLES = [...EXPECTED_POST_0025_TABLES, "offer_moderation_events"];
+export const EXPECTED_BASELINE_TABLES = EXPECTED_POST_0026_TABLES;
 
 export const EXPECTED_COUNTS = {
   get TABLES() { return Object.keys(PRODUCTION_FINGERPRINT).length; },
@@ -1881,5 +1883,10 @@ export const FINAL_POST_0024_PRODUCTION_FINGERPRINT: Record<string, TableContrac
 export const PREVIOUS_PRODUCTION_FINGERPRINT = FINAL_POST_0023_PRODUCTION_FINGERPRINT;
 // Candidate runtime head, captured from isolated LOCAL PostgreSQL; not applied to production.
 export const FINAL_POST_0025_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {...FINAL_POST_0024_PRODUCTION_FINGERPRINT, ...applicationFingerprint as unknown as Record<string, TableContract>};
-export const PRODUCTION_FINGERPRINT = FINAL_POST_0025_PRODUCTION_FINGERPRINT;
+// POST_0026 is measured from isolated PostgreSQL 15; historical states are immutable.
+export const FINAL_POST_0026_PRODUCTION_FINGERPRINT: Record<string, TableContract> = {
+  ...FINAL_POST_0025_PRODUCTION_FINGERPRINT,
+  ...moderationFingerprint as unknown as Record<string, TableContract>,
+};
+export const PRODUCTION_FINGERPRINT = FINAL_POST_0026_PRODUCTION_FINGERPRINT;
 

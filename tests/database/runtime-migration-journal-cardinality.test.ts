@@ -39,8 +39,8 @@ function validate(
 }
 
 test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0024", () => {
-  assert.strictEqual(journal.entries.length, 26);
-  assert.strictEqual(diskMigrations.length, 26);
+  assert.strictEqual(journal.entries.length, 27);
+  assert.strictEqual(diskMigrations.length, 27);
   assert.deepStrictEqual(
     journal.entries.slice(17).map(({ idx, tag }) => ({ idx, tag })),
     [
@@ -53,6 +53,7 @@ test("CARDINALITY: canonical disk journal maps POST_0017 through POST_0024", () 
       { idx: 23, tag: "0023_rfq_net_price_foundation" },
       { idx: 24, tag: "0024_product_condition" },
       { idx: 25, tag: "0025_partner_applications" },
+      { idx: 26, tag: "0026_offer_moderation_events" },
     ],
   );
 });
@@ -241,4 +242,6 @@ test("CARDINALITY: legacy DEV 0000 remains excluded from POST_0017 through POST_
   );
 });
 
-test("CARDINALITY: POST_0025 accepts exactly 26 rows and rejects its predecessor",()=>{assert.doesNotThrow(()=>validate("EXACT_EXISTING_POST_0025",canonicalRows));assert.throws(()=>validate("EXACT_EXISTING_POST_0025",canonicalRows.slice(0,25)),/count 26/);});
+test("CARDINALITY: POST_0025 accepts exactly 26 rows and rejects its predecessor",()=>{assert.doesNotThrow(()=>validate("EXACT_EXISTING_POST_0025",canonicalRows.slice(0,26)));assert.throws(()=>validate("EXACT_EXISTING_POST_0025",canonicalRows.slice(0,25)),/count 26/);});
+
+test("CARDINALITY: POST_0026 accepts exactly 27 rows and rejects predecessor",()=>{assert.doesNotThrow(()=>validate("EXACT_EXISTING_POST_0026",canonicalRows));assert.throws(()=>validate("EXACT_EXISTING_POST_0026",canonicalRows.slice(0,26)),/count 27/);});

@@ -8,6 +8,7 @@ export const DEV_WRITE_AUTHORIZATION = "AUTHORIZED_DEV_BASELINE_WRITE";
 export const PROD_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_RUNTIME_0000_TO_0003";
 
 export const PROD_0025_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_PARTNER_APPLICATION_0025_ONLY";
+export const PROD_0026_WRITE_AUTHORIZATION = "AUTHORIZED_PROD_OFFER_MODERATION_0026_ONLY";
 export const PROD_0025_PROJECT_REF = "tpjsiutclowwaxlopemn";
 
 export function verifyTarget(env: NodeJS.ProcessEnv): void {
@@ -60,6 +61,26 @@ export function verifyTarget(env: NodeJS.ProcessEnv): void {
           !parsed.searchParams.get("sslrootcert") ||
           ["ssl", "sslcert", "sslkey"].some(key => parsed.searchParams.has(key))) {
         throw new Error("0025 requires an approved production host/database and CA-backed verify-full TLS");
+      }
+    } else if (auth === PROD_0026_WRITE_AUTHORIZATION) {
+      if (reconciliationMode !== undefined) throw new Error("0026 authorization cannot use reconciliation");
+      if (expectedRef !== PROD_0025_PROJECT_REF || ref !== PROD_0025_PROJECT_REF) {
+        throw new Error("0026 requires the exact production project");
+      }
+      if (env.RUNTIME_MIGRATION_EXPECTED_PRE_STATE !== "EXACT_EXISTING_POST_0025") {
+        throw new Error("0026 requires explicit EXACT_EXISTING_POST_0025 pre-state");
+      }
+      const parsed = new URL(url);
+      const direct = parsed.hostname === `db.${PROD_0025_PROJECT_REF}.supabase.co`;
+      const pooler = parsed.hostname.endsWith(".pooler.supabase.com") &&
+        decodeURIComponent(parsed.username) === `postgres.${PROD_0025_PROJECT_REF}`;
+      if (!["postgres:", "postgresql:"].includes(parsed.protocol) || (!direct && !pooler) ||
+          parsed.pathname !== "/postgres" || !["", "5432"].includes(parsed.port) ||
+          [...parsed.searchParams.keys()].some(key => !["sslmode", "sslrootcert"].includes(key) || parsed.searchParams.getAll(key).length !== 1) ||
+          parsed.searchParams.get("sslmode") !== "verify-full" ||
+          !parsed.searchParams.get("sslrootcert") ||
+          ["ssl", "sslcert", "sslkey"].some(key => parsed.searchParams.has(key))) {
+        throw new Error("0026 requires an approved production host/database and CA-backed verify-full TLS");
       }
     } else if (reconciliationMode !== undefined) {
       if (reconciliationMode !== POST_0007_RECONCILIATION_MODE) {
