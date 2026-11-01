@@ -59,9 +59,15 @@ jobs:
             'postcss','brace-expansion','browserslist','js-yaml','caniuse-lite','electron-to-chromium',
             'node-releases','update-browserslist-db','lightningcss']);
           const packageName = p => p.split('/node_modules/').pop().replace(/^node_modules\//,'');
+          const wasmDependencies = new Set([
+            'node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@emnapi/core',
+            'node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@emnapi/runtime',
+            'node_modules/@tailwindcss/oxide-wasm32-wasi/node_modules/@emnapi/wasi-threads'
+          ]);
           const allowed = p => {
             const name = packageName(p);
-            return exact.has(name) || name.startsWith('@tailwindcss/oxide-') || name.startsWith('lightningcss-');
+            return exact.has(name) || name.startsWith('@tailwindcss/oxide-') || name.startsWith('lightningcss-')
+              || p === 'node_modules/enhanced-resolve' || wasmDependencies.has(p);
           };
           const unexpected = changed.filter(p => !allowed(p));
           const entry = p => newer['node_modules/'+p];
