@@ -54,7 +54,7 @@ function mutationFixture(status: string, owner = 10) {
     execute: async query => {
       assert.equal(authorized, true, "membership must precede lead read");
       const compiled = new PgDialect().sqlToQuery(query);
-      assert.match(compiled.sql, /WHERE id = .* AND partner_id = .*FOR UPDATE/s);
+      assert.match(compiled.sql, /WHERE id = [\s\S]* AND partner_id = [\s\S]*FOR UPDATE/);
       const [id, partner] = compiled.params;
       return { rows: id === 1 && partner === owner ? [{ id: 1, status }] : [] };
     },

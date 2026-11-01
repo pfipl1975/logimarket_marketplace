@@ -14,7 +14,7 @@ test("RFQ price sorting uses only visible net amount, never hidden gross", () =>
     assert.match(compiled, /"price_netto"/);
     assert.match(compiled, /"price_brutto"/);
     assert.match(compiled, /"price_on_request"/);
-    assert.match(compiled, /THEN CASE.*rfq_net_price_visible/s);
+    assert.match(compiled, /THEN CASE[\s\S]*rfq_net_price_visible/);
     assert.match(compiled, /ELSE NULL/);
     assert.match(compiled, new RegExp(direction + "\\s+NULLS LAST$"));
   }
