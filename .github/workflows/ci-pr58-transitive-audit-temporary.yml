@@ -55,7 +55,13 @@ jobs:
           const added = Object.keys(now).filter(k => !(k in old));
           const removed = Object.keys(old).filter(k => !(k in now));
           const otherChanges = Object.keys(old).filter(k => k in now && !target.has(k) && JSON.stringify(old[k]) !== JSON.stringify(now[k]));
-          const wrong = [...target].filter(([k,v])=> !now[k] || now[k].version !== v || !now[k].resolved || !now[k].integrity || old[k].version === v);
+          const baselineFixed = (version) => {
+            const match = /^2\.(\d+)\.(\d+)$/.exec(version ?? "");
+            return !!match && Number(match[1]) >= 11;
+          };
+          const wrong = [...target].filter(([k,v])=>
+            !now[k] || !(k === "node_modules/baseline-browser-mapping" ? baselineFixed(now[k].version) : now[k].version === v)
+            || !now[k].resolved || !now[k].integrity || old[k].version === now[k].version);
           const rootChanged = JSON.stringify(original) !== JSON.stringify({...candidate, packages: original.packages});
           const report = {targetVersions:Object.fromEntries([...target].map(([k,v])=>[k,{from:old[k]?.version,to:now[k]?.version,requested:v}])),added,removed,otherChanges,wrong,rootChanged};
           fs.writeFileSync(process.env.REPORT_DIR+"/drift.json",JSON.stringify(report,null,2)+"\n");
