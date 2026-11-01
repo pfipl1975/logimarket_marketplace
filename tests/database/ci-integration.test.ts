@@ -2055,7 +2055,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const db = getDb();
     const sellerReadyQuery: PublicationSellerReadinessQuery = async () => ({ status: "ready" as const });
-    const sellerReadyDeps = { querySellerReadiness: sellerReadyQuery };
+    const sellerReadyDeps = { querySellerReadiness: sellerReadyQuery, adminActorId: "00000000-0000-4000-8000-000000000001" };
 
     // A. draft ecommerce, DB raw price = 1.234 -> ECOMMERCE_PRICE_INVALID
     await insertOffer(1001, "draft", "1.234");
@@ -2168,7 +2168,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       offerId: 1009,
       expectedStatus: "draft",
       targetStatus: "published",
-    }, { querySellerReadiness: sellerNotReadyQuery });
+    }, { querySellerReadiness: sellerNotReadyQuery, adminActorId: "00000000-0000-4000-8000-000000000001" });
     assert.deepEqual(resI, {
       ok: false,
       code: "OFFER_PUBLISH_NOT_ELIGIBLE",
@@ -6465,7 +6465,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     });
 
     await tt.test("8. Admin can approve: pending_review -> published", async () => {
-      const deps = { querySellerReadiness: async () => ({ status: "ready" as const, methods: [] as string[] }) };
+      const deps = { querySellerReadiness: async () => ({ status: "ready" as const, methods: [] as string[] }), adminActorId: "00000000-0000-4000-8000-000000000001" };
       const res = await executeOfferPublicationStateChange(db, { offerId, targetStatus: "published", expectedStatus: "pending_review" }, deps);
       assert.equal(res.ok, true);
       const [offer] = await db.select().from(schemaModule.offers).where(eq(schemaModule.offers.id, offerId));
@@ -6473,7 +6473,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     });
 
     await tt.test("9. Admin can return: published -> pending_review -> draft", async () => {
-      const deps = { querySellerReadiness: async () => ({ status: "ready" as const, methods: [] as string[] }) };
+      const deps = { querySellerReadiness: async () => ({ status: "ready" as const, methods: [] as string[] }), adminActorId: "00000000-0000-4000-8000-000000000001" };
       const offer2Res = await pool.query<{ id: string }>(
         `INSERT INTO offers (partner_id, category_id, title, publication_status, offer_model, conversion_type)
          VALUES ($1, $2, 'Submit Test Offer 2', 'pending_review', 'rfq', 'inbound')
@@ -6482,7 +6482,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       );
       const offerId2 = parseFixtureId(offer2Res.rows[0].id);
 
-      const res = await executeOfferPublicationStateChange(db, { offerId: offerId2, targetStatus: "draft", expectedStatus: "pending_review" }, deps);
+      const res = await executeOfferPublicationStateChange(db, { offerId: offerId2, targetStatus: "draft", expectedStatus: "pending_review", rejectionReason: "Please correct the technical details" }, deps);
       assert.equal(res.ok, true);
       const [offer2] = await db.select().from(schemaModule.offers).where(eq(schemaModule.offers.id, offerId2));
       assert.equal(offer2.publicationStatus, "draft");

@@ -44,6 +44,7 @@ export interface AdminOfferPublicationInput {
   offerId: number;
   expectedStatus: OfferPublicationStatus;
   targetStatus: AdminOfferPublicationTarget;
+  rejectionReason?: string;
 }
 
 export function parseAdminOfferPublicationInput(rawInput: unknown): AdminOfferPublicationInput | null {
@@ -51,7 +52,7 @@ export function parseAdminOfferPublicationInput(rawInput: unknown): AdminOfferPu
     return null;
   }
 
-  const { offerId, expectedStatus, targetStatus } = rawInput as Record<string, unknown>;
+  const { offerId, expectedStatus, targetStatus, rejectionReason } = rawInput as Record<string, unknown>;
 
   if (typeof offerId !== "string" || !/^[1-9]\d*$/.test(offerId)) {
     return null;
@@ -73,6 +74,11 @@ export function parseAdminOfferPublicationInput(rawInput: unknown): AdminOfferPu
     return null;
   }
 
+  if (targetStatus === "draft" && expectedStatus === "pending_review") {
+    if (typeof rejectionReason !== "string" || rejectionReason.trim().length < 1 || rejectionReason.trim().length > 1000) return null;
+    return { offerId: idNum, expectedStatus: "pending_review", targetStatus: "draft", rejectionReason: rejectionReason.trim() };
+  }
+  if (rejectionReason !== undefined) return null;
   return {
     offerId: idNum,
     expectedStatus: expectedStatus as OfferPublicationStatus,
@@ -172,8 +178,18 @@ export function evaluateOfferPublishEligibility(input: {
 export async function executeOfferPublicationStateChange(
   db: NodePgDatabase<typeof schema>,
   input: AdminOfferPublicationInput,
-  deps: { querySellerReadiness: PublicationSellerReadinessQuery }
+  deps: { querySellerReadiness: PublicationSellerReadinessQuery; adminActorId: string }
 ): Promise<AdminOfferPublicationResult> {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(deps.adminActorId)) {
+    return { ok: false, code: "OFFER_INVALID_INPUT" };
+  }
+  if (input.targetStatus === "draft" && input.expectedStatus === "pending_review") {
+    if (typeof input.rejectionReason !== "string" || input.rejectionReason.trim().length < 1 || input.rejectionReason.trim().length > 1000) {
+      return { ok: false, code: "OFFER_INVALID_INPUT" };
+    }
+  } else if (input.rejectionReason !== undefined) {
+    return { ok: false, code: "OFFER_INVALID_INPUT" };
+  }
   // Pre-DB transition check
   const preCheck = evaluateOfferPublicationTransition(
     input.expectedStatus, // we optimistically assume current = expected
@@ -275,6 +291,11 @@ export async function executeOfferPublicationStateChange(
           })
           .where(eq(offers.id, offer.id));
 
+        // Transactionally record the ADMIN decision; failure rolls back publication.
+        await tx.insert(schema.offerModerationEvents).values({
+          offerId: offer.id, partnerId: offer.partnerId, adminActorId: deps.adminActorId,
+          decision: "approved", fromStatus: offer.publicationStatus, toStatus: "published", reason: null,
+        });
         return { ok: true, code: "OFFER_PUBLISHED", changed: true };
       }
 
@@ -293,7 +314,14 @@ export async function executeOfferPublicationStateChange(
       }
 
       if (decision.kind === "PROCEED_RETURN_TO_DRAFT") {
+        const reason = input.rejectionReason?.trim();
+        if (!reason || reason.length > 1000) return { ok: false, code: "OFFER_INVALID_INPUT" };
         await tx.update(offers).set({ publicationStatus: "draft", updatedAt: sql`CURRENT_TIMESTAMP` }).where(eq(offers.id, offer.id));
+        // Both updates commit atomically, or the status change rolls back.
+        await tx.insert(schema.offerModerationEvents).values({
+          offerId: offer.id, partnerId: offer.partnerId, adminActorId: deps.adminActorId,
+          decision: "returned_for_correction", fromStatus: "pending_review", toStatus: "draft", reason,
+        });
         return { ok: true, code: "OFFER_RETURNED_TO_DRAFT", changed: true };
       }
 

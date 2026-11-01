@@ -90,7 +90,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: e2e-fake-key
           SUPABASE_SERVICE_ROLE_KEY: e2e-fake-service-key
-          ADMIN_USER_IDS: 00000000-0000-0000-0000-000000000000
+          ADMIN_USER_IDS: 00000000-0000-4000-8000-000000000001
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
       - name: Retain redacted database gate diagnostics
@@ -115,7 +115,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: e2e-fake-key
           SUPABASE_SERVICE_ROLE_KEY: e2e-fake-service-key
-          ADMIN_USER_IDS: 00000000-0000-0000-0000-000000000000
+          ADMIN_USER_IDS: 00000000-0000-4000-8000-000000000001
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
 
       - name: Start Mock GoTrue
@@ -139,7 +139,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: e2e-fake-key
           SUPABASE_SERVICE_ROLE_KEY: e2e-fake-service-key
-          ADMIN_USER_IDS: 00000000-0000-0000-0000-000000000000
+          ADMIN_USER_IDS: 00000000-0000-4000-8000-000000000001
           NEXT_PUBLIC_SITE_URL: http://localhost:3000
           E2E_DB_CLASSIFICATION: ISOLATED_DISPOSABLE_TEST
 

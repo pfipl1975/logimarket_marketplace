@@ -365,7 +365,7 @@ export async function AdminOfferDetailPage({ id, locale }: AdminOfferDetailPageP
               </div>
             </div>
 
-            {offer.publicationStatus === "draft" && (
+            {(offer.publicationStatus === "draft" || offer.publicationStatus === "pending_review") && (
               <div className={`p-4 rounded-industrial border ${eligibility.eligible ? "bg-green-50 border-green-200" : "bg-destructive/5 border-destructive/20"}`}>
                 <h3 className={`text-sm font-medium mb-1 ${eligibility.eligible ? "text-green-800" : "text-destructive"}`}>
                   {eligibility.eligible ? dict.eligibilityOk : dict.eligibilityFailed}

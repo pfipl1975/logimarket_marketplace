@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "Dla tego statusu akcje publikacji i edycji są niedostępne.",
     "eligibilitySellerNotReady": "Sprzedawca nie spełnia jeszcze wymagań gotowości do sprzedaży w Marketplace.",
     "statusPendingReview": "W moderacji",
-    "actionReturnToDraft": "Cofnij do edycji (Szkic)"
+    "actionReturnToDraft": "Cofnij do edycji (Szkic)",
+    "rejectionReasonLabel": "Powód zwrotu do poprawy (wymagany)",
+    "rejectionReasonPlaceholder": "Wskaż konkretne elementy oferty wymagające poprawy…",
+    "rejectionReasonHelp": "Partner zobaczy tę informację przy swoim szkicu.",
+    "rejectionReasonRequired": "Podaj powód zwrotu (od 1 do 1000 znaków).",
+    "returnedForCorrectionSuccess": "Oferta została zwrócona do poprawy z uzasadnieniem.",
+    "actionConfirmReturnToDraft": "Zwróć ofertę do poprawy"
   },
   "adminOfferEdit": {
     "productConditionLabel": "Stan produktu",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "Profil firmy oczekuje na pełną gotowość handlową i potwierdzenie umowy. Możesz przygotowywać oraz zgłaszać szkice ofert do moderacji; RFQ i zamówienia pozostają niedostępne.",
+    "moderationReturnedTitle": "Oferta zwrócona do poprawy",
+    "moderationReturnedInstruction": "Popraw wskazane elementy i ponownie prześlij szkic do moderacji.",
     "productConditionLabel": "Stan produktu",
     "productConditionUnspecified": "Nie określono",
     "productConditionNew": "Nowe",

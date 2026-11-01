@@ -120,7 +120,7 @@ test("AGREEMENT_SELLER_READINESS_FLOW", async (t) => {
     publicationStatus: "draft",
   }).returning({ id: schema.offers.id });
 
-  const adminUserId = "admin-test-123";
+  const adminUserId = "00000000-0000-4000-8000-000000000001";
 
   // PHASE A: no agreement version
   const readinessA = await querySellerReadiness(db, partnerId);
@@ -130,7 +130,7 @@ test("AGREEMENT_SELLER_READINESS_FLOW", async (t) => {
   const pubA = await executeOfferPublicationStateChange(
     db,
     { offerId: offerA.id, expectedStatus: "draft", targetStatus: "published" },
-    { querySellerReadiness }
+    { querySellerReadiness, adminActorId: adminUserId }
   );
   assert.strictEqual(pubA.ok, false);
   if (!pubA.ok) {
@@ -163,7 +163,7 @@ test("AGREEMENT_SELLER_READINESS_FLOW", async (t) => {
   const pubB = await executeOfferPublicationStateChange(
     db,
     { offerId: offerA.id, expectedStatus: "draft", targetStatus: "published" },
-    { querySellerReadiness }
+    { querySellerReadiness, adminActorId: adminUserId }
   );
   assert.strictEqual(pubB.ok, false);
   if (!pubB.ok) {
@@ -206,7 +206,7 @@ test("AGREEMENT_SELLER_READINESS_FLOW", async (t) => {
   const pubC = await executeOfferPublicationStateChange(
     db,
     { offerId: offerA.id, expectedStatus: "draft", targetStatus: "published" },
-    { querySellerReadiness }
+    { querySellerReadiness, adminActorId: adminUserId }
   );
   assert.strictEqual(pubC.ok, true);
   if (pubC.ok) {
@@ -236,7 +236,7 @@ test("AGREEMENT_SELLER_READINESS_FLOW", async (t) => {
   const pubF = await executeOfferPublicationStateChange(
     db,
     { offerId: offerB.id, expectedStatus: "draft", targetStatus: "published" },
-    { querySellerReadiness }
+    { querySellerReadiness, adminActorId: adminUserId }
   );
   assert.strictEqual(pubF.ok, false);
   if (!pubF.ok) {

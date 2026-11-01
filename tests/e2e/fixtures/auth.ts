@@ -2,7 +2,7 @@
 import { test as base } from "@playwright/test";
 import * as crypto from "crypto";
 
-export const E2E_ADMIN_USER_ID = "00000000-0000-0000-0000-000000000000";
+export const E2E_ADMIN_USER_ID = "00000000-0000-4000-8000-000000000001";
 export const E2E_NON_ADMIN_USER_ID = "11111111-1111-1111-1111-111111111111";
 const SECRET = "e2e-dummy-jwt-secret-do-not-use-in-prod";
 

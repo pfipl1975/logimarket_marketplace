@@ -1,5 +1,5 @@
 import "server-only";
-import { eq, and, ne, inArray } from "drizzle-orm";
+import { eq, and, ne, inArray, desc } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import {
@@ -59,6 +59,7 @@ export interface PartnerOfferDetailDto {
   media: PartnerOfferDetailMedia[];
 
   publicPreviewAllowed: boolean;
+  latestModerationReturn: { reason: string; createdAt: string } | null;
 }
 
 export type PartnerOfferDetailResult =
@@ -117,6 +118,23 @@ export async function getPartnerOfferDetailReadModel(
   if (!publicationStatus) {
     return { ok: false, code: "NOT_FOUND" };
   }
+
+  // Membership and offer ownership were verified before accessing moderation history.
+  // Only a current draft can display its latest return reason, never another tenant's data.
+  const returnRows = publicationStatus === "draft"
+    ? await db.select({reason:schema.offerModerationEvents.reason,createdAt:schema.offerModerationEvents.createdAt})
+      .from(schema.offerModerationEvents)
+      .where(and(
+        eq(schema.offerModerationEvents.offerId, offerId),
+        eq(schema.offerModerationEvents.partnerId, partnerId),
+        eq(schema.offerModerationEvents.decision, "returned_for_correction"),
+      ))
+      .orderBy(desc(schema.offerModerationEvents.id))
+      .limit(1)
+    : [];
+  const latestModerationReturn = returnRows[0]?.reason
+    ? {reason: returnRows[0].reason, createdAt: returnRows[0].createdAt.toISOString()}
+    : null;
 
   const categoryConfig = await getCategoryAttributeConfigurationFromDb(
     db,
@@ -251,6 +269,7 @@ export async function getPartnerOfferDetailReadModel(
       media,
 
       publicPreviewAllowed: offer.publicationStatus === "published" && offer.isActive && canonicalModel !== "unknown",
+      latestModerationReturn,
     },
   };
 }

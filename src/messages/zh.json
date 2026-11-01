@@ -1225,7 +1225,13 @@
     "moderationStateDescription": "对于此状态，发布和编辑操作不可用。",
     "eligibilitySellerNotReady": "卖家尚未准备好在市场上销售。",
     "statusPendingReview": "待审核",
-    "actionReturnToDraft": "返回草稿"
+    "actionReturnToDraft": "返回草稿",
+    "rejectionReasonLabel": "退回修改原因（必填）",
+    "rejectionReasonPlaceholder": "请明确说明合作伙伴需要修改的内容…",
+    "rejectionReasonHelp": "合作伙伴将在报价草稿中看到此信息。",
+    "rejectionReasonRequired": "请输入 1 至 1000 个字符的退回原因。",
+    "returnedForCorrectionSuccess": "报价已附带原因退回草稿状态。",
+    "actionConfirmReturnToDraft": "退回修改"
   },
   "adminOfferEdit": {
     "productConditionLabel": "商品状况",
@@ -1623,6 +1629,8 @@
   },
   "PartnerWorkspace": {
     "commercialRestrictedNotice": "公司资料尚待完整的商业资质及协议审核。您可以准备报价草稿并提交审核；询价和订单暂不可用。",
+    "moderationReturnedTitle": "报价已退回修改",
+    "moderationReturnedInstruction": "请修改所指出的问题，然后重新提交草稿以供审核。",
     "productConditionLabel": "商品状况",
     "productConditionUnspecified": "未指定",
     "productConditionNew": "全新",
