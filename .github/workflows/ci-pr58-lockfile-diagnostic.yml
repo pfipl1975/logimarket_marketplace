@@ -1,0 +1,98 @@
+name: PR58 Lockfile Diagnostic (temporary)
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths:
+      - '.github/workflows/ci-pr58-lockfile-diagnostic.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pr58-lockfile-diagnostic
+  cancel-in-progress: true
+
+jobs:
+  diagnose:
+    name: npm lockfile graph on Linux (no DB)
+    if: github.event.pull_request.number == 58 && github.event.pull_request.head.ref == 'fix/lm-sec-dependencies-01' && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout PR with read-only credentials
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Verify baseline and regenerate from main lockfile
+        id: regenerate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = "pull_request"
+          test "$GITHUB_BASE_REF" = "main"
+          test "$GITHUB_HEAD_REF" = "fix/lm-sec-dependencies-01"
+          mkdir -p diagnostics
+          node --version | tee diagnostics/node-version.txt
+          npm --version | tee diagnostics/npm-version.txt
+          git cat-file -e e83582aad89d07dc958ca9b67766f541815889bf^{commit}
+          git show e83582aad89d07dc958ca9b67766f541815889bf:package-lock.json > package-lock.json
+          npm install --package-lock-only --include=optional --ignore-scripts --no-audit --no-fund
+
+      - name: Inspect regenerated candidate and dependency drift
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p diagnostics
+          node <<'NODE'
+          const fs = require("node:fs");
+          const cp = require("node:child_process");
+          const report = { purpose: "PR #58 diagnostic only; NOT approved for commit or merge" };
+          const original = JSON.parse(cp.execFileSync("git", ["show", "HEAD:package-lock.json"], { encoding: "utf8" }));
+          const current = JSON.parse(fs.readFileSync("package-lock.json", "utf8"));
+          const before = original.packages ?? {};
+          const after = current.packages ?? {};
+          const names = ["@emnapi/core", "@emnapi/runtime"];
+          report.emnapi = Object.fromEntries(names.map(name => {
+            const item = after["node_modules/" + name];
+            const version = item?.version || null;
+            const match = version && /^1\.(\d+)\.(\d+)$/.exec(version);
+            const semverOk = !!match && (Number(match[1]) > 11 || (Number(match[1]) === 11 && Number(match[2]) >= 3));
+            return [name, { version, resolved: !!item?.resolved, integrity: !!item?.integrity, valid: !!(semverOk && item?.resolved && item?.integrity) }];
+          }));
+          const oldKeys = Object.keys(before), newKeys = Object.keys(after);
+          const oldSet = new Set(oldKeys), newSet = new Set(newKeys);
+          const added = newKeys.filter(k => !oldSet.has(k));
+          const removed = oldKeys.filter(k => !newSet.has(k));
+          const versionChanged = oldKeys.filter(k => newSet.has(k) && before[k]?.version !== after[k]?.version);
+          report.drift = { addedCount: added.length, removedCount: removed.length, versionChangedCount: versionChanged.length, added: added.slice(0, 30), removed: removed.slice(0, 30), changedExamples: versionChanged.slice(0, 30).map(k => ({ path: k, from: before[k]?.version, to: after[k]?.version })) };
+          report.graphComplete = names.every(name => report.emnapi[name].valid);
+          fs.writeFileSync("diagnostics/report.json", JSON.stringify(report, null, 2) + "\n");
+          fs.copyFileSync("package-lock.json", "diagnostics/candidate-package-lock.json");
+          console.log(JSON.stringify({ graphComplete: report.graphComplete, emnapi: report.emnapi, added: added.length, removed: removed.length, versionChanged: versionChanged.length }));
+          if (!report.graphComplete) { console.error("STOP_INCOMPLETE_EMNAPI_GRAPH"); process.exitCode = 1; }
+          NODE
+
+      - name: Validate npm ci consistency without installing
+        if: always() && steps.regenerate.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --dry-run --ignore-scripts --no-audit --no-fund
+
+      - name: Upload diagnostic artifacts (never commit)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr58-lockfile-linux-diagnostic
+          path: diagnostics/
+          if-no-files-found: warn
+          retention-days: 3
