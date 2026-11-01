@@ -16,7 +16,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      REPORT_DIR: ${{ runner.temp }}/pr58-security-report
+      REPORT_DIR: /tmp/pr58-security-report
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,7 +34,7 @@ jobs:
           test "$GITHUB_EVENT_NAME" = "pull_request"
           test "$GITHUB_BASE_REF" = "main"
           test "$GITHUB_HEAD_REF" = "fix/lm-sec-dependencies-01"
-          test "$(git rev-parse HEAD)" = "cd7f3c3d38615d439a7d66f4522d1f98474d3a28"
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
           test "$(git hash-object package.json)" = "ac42a8b2e47fa7df5f5a0b1d051e4c91b4da5e5c"
           test "$(git hash-object package-lock.json)" = "66c5b1899b4ac96b34060d7f9bd93705c10f1cec"
           npm --version | tee "$REPORT_DIR/npm-version.txt"
@@ -99,6 +99,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: pr58-two-transitive-security-evidence
-          path: ${{ runner.temp }}/pr58-security-report/
+          path: /tmp/pr58-security-report/
           if-no-files-found: warn
           retention-days: 3
