@@ -148,7 +148,7 @@ test("AGREEMENT_SELLER_READINESS_FLOW", async (t) => {
   });
   assert.strictEqual(createdRes.type, "AGREEMENT_VERSION_CREATED");
   if (createdRes.type !== "AGREEMENT_VERSION_CREATED") {
-    assert.fail(`Unexpected create result: ${createdRes.type}`);
+    assert.fail("Unexpected create result");
   }
   const versionId = createdRes.versionId;
 
