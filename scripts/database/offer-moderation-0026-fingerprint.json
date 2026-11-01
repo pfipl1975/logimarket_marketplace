@@ -1,0 +1,116 @@
+{
+  "offer_moderation_events": {
+    "name": "offer_moderation_events",
+    "columns": [
+      {
+        "name": "id",
+        "type": "bigint",
+        "nullable": false,
+        "defaultVal": "nextval('offer_moderation_events_id_seq'::regclass)",
+        "sequenceName": "offer_moderation_events_id_seq"
+      },
+      {
+        "name": "offer_id",
+        "type": "bigint",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "partner_id",
+        "type": "bigint",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "admin_actor_id",
+        "type": "uuid",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "decision",
+        "type": "character varying(32)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "from_status",
+        "type": "character varying(20)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "to_status",
+        "type": "character varying(20)",
+        "nullable": false,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "reason",
+        "type": "text",
+        "nullable": true,
+        "defaultVal": null,
+        "sequenceName": null
+      },
+      {
+        "name": "created_at",
+        "type": "timestamp with time zone",
+        "nullable": false,
+        "defaultVal": "now()",
+        "sequenceName": null
+      }
+    ],
+    "constraints": [
+      {
+        "name": "offer_moderation_events_offer_id_fkey",
+        "type": "FOREIGN KEY",
+        "definition": "FOREIGN KEY (offer_id) REFERENCES offers(id) ON DELETE RESTRICT",
+        "isValidated": true
+      },
+      {
+        "name": "offer_moderation_events_partner_id_fkey",
+        "type": "FOREIGN KEY",
+        "definition": "FOREIGN KEY (partner_id) REFERENCES partners(id) ON DELETE RESTRICT",
+        "isValidated": true
+      },
+      {
+        "name": "offer_moderation_events_pkey",
+        "type": "PRIMARY KEY",
+        "definition": "PRIMARY KEY (id)",
+        "isValidated": true
+      },
+      {
+        "name": "offer_moderation_events_transition_check",
+        "type": "CHECK",
+        "definition": "CHECK (((((decision)::text = 'approved'::text) AND ((from_status)::text = ANY ((ARRAY['draft'::character varying, 'pending_review'::character varying])::text[])) AND ((to_status)::text = 'published'::text) AND (reason IS NULL)) OR (((decision)::text = 'returned_for_correction'::text) AND ((from_status)::text = 'pending_review'::text) AND ((to_status)::text = 'draft'::text) AND (reason IS NOT NULL) AND ((length(btrim(reason)) >= 1) AND (length(btrim(reason)) <= 1000)))))",
+        "isValidated": true
+      }
+    ],
+    "explicitIndexes": [
+      {
+        "name": "idx_offer_moderation_events_offer",
+        "method": "btree",
+        "expressions": "offer_id, id",
+        "isUnique": false,
+        "predicate": null
+      },
+      {
+        "name": "idx_offer_moderation_events_partner",
+        "method": "btree",
+        "expressions": "partner_id, offer_id, id",
+        "isUnique": false,
+        "predicate": null
+      }
+    ],
+    "rlsEnabled": true,
+    "rlsForced": false,
+    "policyCount": 0,
+    "triggerCount": 2
+  }
+}

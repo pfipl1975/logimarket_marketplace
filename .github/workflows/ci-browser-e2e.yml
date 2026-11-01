@@ -13,7 +13,7 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:17-alpine
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: password
@@ -33,6 +33,18 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
+
+      - name: Verify isolated PostgreSQL 17 identity
+        shell: bash
+        env:
+          PGPASSWORD: password
+        run: |
+          test "$CI" = "true" && test "$GITHUB_ACTIONS" = "true"
+          version_num=$(psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -Atc "SHOW server_version_num")
+          echo "PG_SERVER_VERSION_NUM=$version_num"
+          test "$((version_num / 10000))" -eq 17
+          test "$(psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -Atc "SELECT current_database()")" = "logimarket_test"
+          psql -h localhost -U postgres -d logimarket_test -v ON_ERROR_STOP=1 -c "SELECT version() AS actual_postgresql_version, current_database() AS database, inet_server_addr() AS server_address, inet_server_port() AS server_port"
 
       - name: Install dependencies
         run: npm ci

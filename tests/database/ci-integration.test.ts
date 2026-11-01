@@ -252,7 +252,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         security,
       );
 
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0025");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0026");
 
       // 0009 PROOF: tables present
       assert.ok(publicTables.includes("agreement_versions"));
@@ -640,7 +640,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 26, "journal count must be exactly 26");
+      assert.strictEqual(journalRows.length, 27, "journal count must be exactly 27");
 
       for (let i = 0; i < diskMigrations.length; i++) {
         assert.strictEqual(
@@ -791,7 +791,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
           post0010Metadata.publicTables,
           post0010Metadata.security,
         ).state,
-        "EXACT_EXISTING_POST_0025",
+        "EXACT_EXISTING_POST_0026",
       );
       assert.deepStrictEqual(
         post0010Metadata.security.preventVerificationEventsMutationSearchPath,
@@ -801,7 +801,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       const post0010Journal = await pool.query(
         `SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`,
       );
-      assert.strictEqual(post0010Journal.rows[0].count, 26);
+      assert.strictEqual(post0010Journal.rows[0].count, 27);
 
       // E. POST_0007 reconciliation authorization cannot apply 0008
       await assert.rejects(
@@ -941,9 +941,9 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     const replayCount = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
     assert.strictEqual(replayCount.rows[0].count, 17);
     await runMigrations(process.env);
-    assert.strictEqual((await physicalState()).state, "EXACT_EXISTING_POST_0025");
+    assert.strictEqual((await physicalState()).state, "EXACT_EXISTING_POST_0026");
     const terminalCount = await pool.query<{ count: number }>(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(terminalCount.rows[0].count, 26);
+    assert.strictEqual(terminalCount.rows[0].count, 27);
 
     for (const [count, expectedState] of [[16, "EXACT_EXISTING_POST_0015"], [18, "EXACT_EXISTING_POST_0017"]] as const) {
       await setupPhysicalPrefix(count);
@@ -1023,7 +1023,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // Post-migration classification must be the current terminal state.
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0025");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0026");
 
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
     const journalRes = await pool.query(
@@ -1037,7 +1037,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
       journalRows.length, diskMigrations.length,
       "Journal should match the complete disk migration chain",
     );
-    assert.strictEqual(journalRows.length, 26);
+    assert.strictEqual(journalRows.length, 27);
   });
 
   await t.test(
@@ -1203,7 +1203,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         publicTables,
         security,
       );
-      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0025");
+      assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0026");
 
       const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
       const journalRes = await pool.query(
@@ -1217,7 +1217,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
         journalRows.length, diskMigrations.length,
         "Journal should match the complete disk migration chain",
       );
-      assert.strictEqual(journalRows.length, 26);
+      assert.strictEqual(journalRows.length, 27);
     },
   );
 
@@ -4711,7 +4711,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint: postFingerprint, publicTables: postTables, security: postSecurity } = await fetchLiveSchemaMetadata(pool);
     const postClassification = classifyRuntimeTarget(postFingerprint, postTables, postSecurity);
-    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0025", "Must recognize the POST_0025 terminal state after migration");
+    assert.strictEqual(postClassification.state, "EXACT_EXISTING_POST_0026", "Must recognize the POST_0026 terminal state after migration");
   });
 
   await t.test("PATH L: POST_0013 -> POST_0014, terminal no-op, and drift rejection", async () => {
@@ -4737,13 +4737,13 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     await runMigrations(process.env);
     const after = await fetchLiveSchemaMetadata(pool);
-    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0025");
+    assert.strictEqual(classifyRuntimeTarget(after.fingerprint, after.publicTables, after.security).state, "EXACT_EXISTING_POST_0026");
     const journalAfter = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter.rows[0].count, 26);
+    assert.strictEqual(journalAfter.rows[0].count, 27);
 
     await runMigrations(process.env);
     const journalAfterNoOp = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp.rows[0].count, 26);
+    assert.strictEqual(journalAfterNoOp.rows[0].count, 27);
 
     await pool.query(`DROP INDEX idx_seller_acceptance_decisions_pending_expires_at`);
     await assert.rejects(() => runMigrations(process.env), /PARTIAL_OR_DRIFTED/);
@@ -4765,7 +4765,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // ------------------------------------------------------------------
     await cleanDB();
     const diskMigrations = readMigrationFiles({ migrationsFolder: MIGRATIONS_DIR });
-    assert.strictEqual(diskMigrations.length, 26);
+    assert.strictEqual(diskMigrations.length, 27);
     const post0015Migrations = diskMigrations.slice(0, 16);
     assert.strictEqual(post0015Migrations.length, 16);
     for (const migration of post0015Migrations) {
@@ -4804,21 +4804,21 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     // ------------------------------------------------------------------
     await runMigrations(process.env);
 
-    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0025
+    // RUNTIME C: the terminal state is EXACT_EXISTING_POST_0026
     const post0016 = await fetchLiveSchemaMetadata(pool);
     assert.strictEqual(
       classifyRuntimeTarget(post0016.fingerprint, post0016.publicTables, post0016.security).state,
-      "EXACT_EXISTING_POST_0025",
+      "EXACT_EXISTING_POST_0026",
     );
 
     // RUNTIME D: journal has the complete current migration chain.
     const journalAfter0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfter0016.rows[0].count, 26);
+    assert.strictEqual(journalAfter0016.rows[0].count, 27);
 
     // RUNTIME E: POST_0016 rerun is a terminal no-op
     await runMigrations(process.env);
     const journalAfterNoOp0016 = await pool.query(`SELECT count(*)::int AS count FROM drizzle_runtime.__drizzle_migrations`);
-    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 26);
+    assert.strictEqual(journalAfterNoOp0016.rows[0].count, 27);
 
     // ------------------------------------------------------------------
     // SCHEMA F: buyer_auth_user_id is a nullable uuid, not unique, no auth.users FK
@@ -5084,7 +5084,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
     await runMigrations(process.env);
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0025");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0026");
 
     const fakePartnerRes1 = await pool.query<{ id: string }>(
       `INSERT INTO partners (company_name, contact_email) VALUES ($1, $2) RETURNING id`,
@@ -5167,7 +5167,7 @@ test("CI_POSTGRES_INTEGRATION_PROOF", async (t) => {
 
     const { fingerprint, publicTables, security } = await fetchLiveSchemaMetadata(pool);
     const classification = classifyRuntimeTarget(fingerprint, publicTables, security);
-    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0025");
+    assert.strictEqual(classification.state, "EXACT_EXISTING_POST_0026");
 
     // Create an order for testing
     const partnerRes = await pool.query<{ id: string }>(`INSERT INTO partners (company_name, contact_email) VALUES ('Test Partner AuthZ C', 'test-partner-authz-c@test.com') RETURNING id`);

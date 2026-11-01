@@ -3,7 +3,7 @@ import assert from "node:assert";
 import fs from "node:fs";
 import path from "node:path";
 import crypto from "node:crypto";
-import { POST0025_CANDIDATE_CHAIN as POST0024_APPROVED_CHAIN } from "./helpers/post0025-candidate-chain";
+import { POST0026_CANDIDATE_CHAIN as POST0026_APPROVED_CHAIN } from "./helpers/post0026-candidate-chain";
 import { readMigrationFiles } from "drizzle-orm/migrator";
 import { RUNTIME_MIGRATIONS_FOLDER } from "../../scripts/database/runtime-migration-contract";
 
@@ -13,7 +13,7 @@ test("journal exists and is valid", () => {
   const journal = JSON.parse(fs.readFileSync(journalPath, "utf-8"));
 
   assertApprovedJournal(journal);
-  assert.strictEqual(journal.entries.length, 26);
+  assert.strictEqual(journal.entries.length, 27);
   for (let i = 0; i < journal.entries.length; i++) {
     assert.strictEqual(journal.entries[i].idx, i, "idx must be sequential");
     if (i > 0) {
@@ -77,20 +77,20 @@ test("the complete journaled SQL chain is loaded by migrator", () => {
 function assertApprovedJournal(journal: { version: string; dialect: string; entries: unknown[] }) {
   assert.strictEqual(journal.version, "7");
   assert.strictEqual(journal.dialect, "postgresql");
-  assert.deepStrictEqual(journal.entries, POST0024_APPROVED_CHAIN.map(({ blob, ...entry }) => {
+  assert.deepStrictEqual(journal.entries, POST0026_APPROVED_CHAIN.map(({ blob, ...entry }) => {
     void blob;
     return entry;
   }));
 }
 
-test("POST_0025 candidate: exact SQL allowlist, approved raw blob hashes and migrator hashes", () => {
+test("POST_0026 candidate: exact SQL allowlist, approved raw blob hashes and migrator hashes", () => {
   const folder = path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER);
   assert.deepStrictEqual(
     fs.readdirSync(folder).filter(name => name.endsWith(".sql")).sort(),
-    POST0024_APPROVED_CHAIN.map(entry => entry.tag + ".sql").sort(),
+    POST0026_APPROVED_CHAIN.map(entry => entry.tag + ".sql").sort(),
   );
   const migrations = readMigrationFiles({ migrationsFolder: RUNTIME_MIGRATIONS_FOLDER });
-  POST0024_APPROVED_CHAIN.forEach((entry, index) => {
+  POST0026_APPROVED_CHAIN.forEach((entry, index) => {
     const raw = fs.readFileSync(path.join(folder, entry.tag + ".sql"));
     const blobHash = crypto.createHash("sha1").update("blob " + raw.length + "\0").update(raw).digest("hex");
     assert.strictEqual(blobHash, entry.blob, entry.tag + " approved SQL bytes");
@@ -103,7 +103,7 @@ test("POST_0025 candidate: exact SQL allowlist, approved raw blob hashes and mig
   });
 });
 
-test("POST_0025 candidate: reject missing, extra, reordered, reindexed, retimed or renamed entries", () => {
+test("POST_0026 candidate: reject missing, extra, reordered, reindexed, retimed or renamed entries", () => {
   const original = JSON.parse(fs.readFileSync(path.join(process.cwd(), RUNTIME_MIGRATIONS_FOLDER, "meta", "_journal.json"), "utf8"));
   const mutations: ((journal: typeof original) => void)[] = [
     journal => { journal.entries.pop(); },
