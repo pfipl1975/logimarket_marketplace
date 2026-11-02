@@ -7,6 +7,9 @@ on:
       - "main"
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   integration:
     name: Real PostgreSQL Integration Proof
@@ -29,6 +32,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

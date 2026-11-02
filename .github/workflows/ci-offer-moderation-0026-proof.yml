@@ -7,6 +7,10 @@ on:
       - 'scripts/database/offer-moderation-0026-fingerprint.json'
       - 'drizzle-runtime/meta/_journal.json'
       - '.github/workflows/ci-offer-moderation-0026-proof.yml'
+
+permissions:
+  contents: read
+
 jobs:
   schema-proof:
     name: Isolated PostgreSQL 17 schema evidence
@@ -27,6 +31,8 @@ jobs:
           - 5432:5432
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
