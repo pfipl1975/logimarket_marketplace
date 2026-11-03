@@ -1,6 +1,9 @@
 import Link from "next/link";
 import Image from "next/image";
-import { getOffers } from "@/app/actions";
+import { getOffers, getFilteredCategoryOffers } from "@/app/actions";
+import { CategoryOfferFilters } from "@/components/catalog/CategoryOfferFilters";
+import { CategoryOfferSort } from "@/components/catalog/CategoryOfferSort";
+import { buildCategoryOfferQueryHref, type CategoryOfferFilters as OfferFilters, type CatalogOfferSort } from "@/lib/catalog/query";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { CartDrawer } from "@/components/CartDrawer";
@@ -31,6 +34,8 @@ const VIEW_OFFER_LABELS: Record<Locale, string> = {
 interface HomePageProps {
   locale: Locale;
   view?: "grid" | "list";
+  sort?: CatalogOfferSort;
+  filters?: OfferFilters;
 }
 
 function ShieldCheckIcon({ className = "" }: { className?: string }) {
@@ -97,11 +102,21 @@ function PackageIcon({ className = "" }: { className?: string }) {
   );
 }
 
-export async function HomePage({ locale, view = "grid" }: HomePageProps) {
-  const [dict, offers] = await Promise.all([
+export async function HomePage({ locale, view = "grid", sort = "default", filters = {} }: HomePageProps) {
+  const useFilteredQuery = Boolean(filters.model || filters.condition || filters.featured || sort !== "default");
+  const [dict, result] = await Promise.all([
     getDictionary(locale),
-    getOffers(undefined, locale),
+    useFilteredQuery
+      ? getFilteredCategoryOffers({
+          ...(filters.model ? { offerModel: filters.model } : {}),
+          ...(filters.condition ? { productCondition: filters.condition } : {}),
+          ...(filters.featured ? { featured: true } : {}),
+          sort,
+        }, locale)
+      : getOffers(undefined, locale),
   ]);
+  if (!Array.isArray(result) && !result.ok) throw new Error("HOME_FILTER_QUERY_FAILED");
+  const offers = Array.isArray(result) ? result : result.items;
   const categoryLabels = dict.categories.bySlug as Record<string, string>;
   const heroTitleAccent = dict.hero.titleAccent;
   const heroTitleLead = dict.hero.title.endsWith(heroTitleAccent)
@@ -110,8 +125,9 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
 
   const homePath = getHomePath(locale);
   const privacyPolicyHref = getPrivacyPolicyPath(locale);
-  const gridHref = `${homePath}?view=grid`;
-  const listHref = `${homePath}?view=list`;
+  const queryState = { view, sort, filters };
+  const gridHref = buildCategoryOfferQueryHref(homePath, queryState, { view: "grid" });
+  const listHref = buildCategoryOfferQueryHref(homePath, queryState, { view: "list" });
   const catalogHref = locale === "pl" ? "/katalog" : `/${locale}/katalog`;
   const viewOfferLabel = VIEW_OFFER_LABELS[locale];
 
@@ -177,6 +193,21 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
             </div>
           </div>
 
+          <CategoryOfferSort
+            basePath={homePath}
+            view={view}
+            currentSort={sort}
+            filters={filters}
+            labels={{
+              sortLabel: dict.catalog.sortLabel,
+              sortDefault: dict.catalog.sortDefault,
+              sortPriceAsc: dict.catalog.sortPriceAsc,
+              sortPriceDesc: dict.catalog.sortPriceDesc,
+              sortNewest: dict.catalog.sortNewest,
+              apply: dict.catalog.attributeFiltersApply,
+            }}
+          />
+
           {/* View switcher — URL-driven, locale-aware */}
           <nav
             aria-label="Zmień widok ofert"
@@ -206,6 +237,27 @@ export async function HomePage({ locale, view = "grid" }: HomePageProps) {
             </Link>
           </nav>
         </div>
+
+        <CategoryOfferFilters
+          basePath={homePath}
+          view={view}
+          sort={sort}
+          filters={filters}
+          labels={{
+            filtersHeading: dict.catalog.filtersHeading,
+            filtersSummary: dict.catalog.filtersSummary,
+            filtersAll: dict.catalog.filtersAll,
+            filtersModelHeading: dict.catalog.filtersModelHeading,
+            filtersModelRfq: dict.catalog.filtersModelRfq,
+            filtersModelEcommerce: dict.catalog.filtersModelEcommerce,
+            filtersModelOutbound: dict.catalog.filtersModelOutbound,
+            filtersFeaturedOnly: dict.catalog.filtersFeaturedOnly,
+            productConditionLabel: dict.catalog.productConditionLabel,
+            productConditionNew: dict.catalog.productConditionNew,
+            productConditionUsed: dict.catalog.productConditionUsed,
+            productConditionRefurbished: dict.catalog.productConditionRefurbished,
+          }}
+        />
 
         {offers.length === 0 ? (
           <div className="mt-12 flex flex-col items-center gap-4 py-16 text-center">

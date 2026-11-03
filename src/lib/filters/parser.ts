@@ -7,8 +7,8 @@ const positiveInteger = (value: unknown) => typeof value === "number" && Number.
 
 export function parseFilterQueryInput(raw: unknown): { ok: true; value: FilterQueryInput } | { ok: false; errors: FilterErrorCode[] } {
   if (!isObject(raw)) return { ok: false, errors: ["INVALID_INPUT"] };
-  if (!positiveInteger(raw.categoryId)) return { ok: false, errors: ["INVALID_IDENTIFIER"] };
-  const parsed: FilterQueryInput = { categoryId: raw.categoryId as number };
+  if (raw.categoryId !== undefined && !positiveInteger(raw.categoryId)) return { ok: false, errors: ["INVALID_IDENTIFIER"] };
+  const parsed: FilterQueryInput = raw.categoryId === undefined ? {} : { categoryId: raw.categoryId as number };
   for (const key of ["controlled", "numbers", "years", "booleans"] as const) {
     const collection = raw[key];
     if (collection === undefined) continue;
@@ -55,5 +55,12 @@ export function parseFilterQueryInput(raw: unknown): { ok: true; value: FilterQu
     }
   }
 
+  // Global public listings may filter by model/condition/featured/sort, but attribute
+  // assignments remain category-scoped and must fail closed without a category.
+  if (parsed.categoryId === undefined &&
+    ((parsed.controlled?.length ?? 0) > 0 || (parsed.numbers?.length ?? 0) > 0 ||
+     (parsed.years?.length ?? 0) > 0 || (parsed.booleans?.length ?? 0) > 0)) {
+    return { ok: false, errors: ["INVALID_INPUT"] };
+  }
   return { ok: true, value: parsed };
 }

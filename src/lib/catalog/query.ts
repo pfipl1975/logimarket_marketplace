@@ -160,3 +160,17 @@ export function buildClearAllCategoryFiltersHref(
   const qs = params.toString();
   return qs ? `${basePath}?${qs}` : basePath;
 }
+
+/** Homepage uses the same URL/filter vocabulary but never accepts category-only attributes. */
+export function resolveHomeOfferQueryState(params: CategorySearchParams): CategoryOfferQueryState {
+  const parsed = resolveCategoryOfferFilters(params);
+  return {
+    view: resolveOfferListingView(params.view),
+    sort: resolveCategoryOfferSort(params.sort).sort,
+    filters: {
+      ...(parsed.model ? { model: parsed.model } : {}),
+      ...(parsed.condition ? { condition: parsed.condition } : {}),
+      ...(parsed.featured ? { featured: true as const } : {}),
+    },
+  };
+}
