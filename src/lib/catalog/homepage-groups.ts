@@ -8,4 +8,5 @@ export const MVP_HOMEPAGE_ROOT_SLUGS = [
   "opakowania-i-materialy-eksploatacyjne",
   "systemy-bezpieczenstwa-i-oznakowanie",
   "robotyzacja-magazynu",
+  "maszyny-i-urzadzenia",
 ];

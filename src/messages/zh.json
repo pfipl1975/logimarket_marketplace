@@ -275,6 +275,11 @@
   },
   "categories": {
     "bySlug": {
+      "maszyny-i-urzadzenia": "机械与设备",
+      "osprzet-do-maszyn-budowlanych": "工程机械属具",
+      "lyzki-do-koparek": "挖掘机铲斗",
+      "lyzki-do-ladowarek": "装载机铲斗",
+      "lyzki-skarpowe-i-profilujace": "边坡修整与整形铲斗",
       "wozki-widlowe-czolowe": "平衡重式叉车",
       "regaly-i-systemy-skladowania": "货架与存储系统",
       "regaly-paletowe": "托盘货架",
@@ -391,6 +396,11 @@
       "serwis-i-sla-robotow-magazynowych": "仓储机器人服务、维护与 SLA"
     },
     "introsBySlug": {
+      "maszyny-i-urzadzenia": "适用于建筑施工和工业场景的机械、设备及属具。",
+      "osprzet-do-maszyn-budowlanych": "工程机械属具，包括挖掘机和装载机铲斗。",
+      "lyzki-do-koparek": "适用于挖掘机及小型挖掘机的工作铲斗，选型需考虑设备兼容性。",
+      "lyzki-do-ladowarek": "用于物料装卸与土方作业的装载机铲斗。",
+      "lyzki-skarpowe-i-profilujace": "适用于边坡修整、地面整平和地形塑造的铲斗。",
       "regaly-i-systemy-skladowania": "丰富的仓库货架与工业存储系统，助力优化您的库房空间利用率。",
       "wozki-i-transport-wewnetrzny": "高可靠性叉车、托盘搬运车和堆高车，轻松应对各种货物装卸与搬运需求。",
       "wyposazenie-magazynu": "高强度的车间工作台、包装台以及标准周转箱，提升人工作业效率。",

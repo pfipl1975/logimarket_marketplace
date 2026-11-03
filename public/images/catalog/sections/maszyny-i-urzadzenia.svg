@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" role="img" aria-label="Construction machinery">
+  <!-- Track, chassis and cab: neutral navy with restrained teal highlights -->
+  <rect x="5" y="34" width="30" height="8" rx="4" fill="#141c2c"/>
+  <circle cx="12" cy="38" r="2" fill="#147487"/>
+  <circle cx="21" cy="38" r="2" fill="#147487"/>
+  <circle cx="30" cy="38" r="2" fill="#147487"/>
+  <path d="M10 21h17l5 5v8H9v-7z" fill="#141c2c"/>
+  <path d="M15 15h10l4 6H13z" fill="#147487"/>
+  <path d="M28 22l7-7 3 3-6 8" fill="none" stroke="#141c2c" stroke-width="4" stroke-linecap="round"/>
+  <path d="M36 16l4-6 3 2-4 8" fill="none" stroke="#147487" stroke-width="3.5" stroke-linecap="round"/>
+  <path d="M38 19l7 2-2 9-8-3z" fill="#141c2c"/>
+  <path d="M37 25l7 2" stroke="#147487" stroke-width="2"/>
+  <circle cx="25" cy="10" r="2.2" fill="#eab308"/>
+</svg>
