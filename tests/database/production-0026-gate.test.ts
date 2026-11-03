@@ -12,7 +12,7 @@ import { classifyRuntimeTarget, fetchLiveSchemaMetadata } from "../../scripts/da
 import { resetDisposableTestDatabase, validateDestructiveTestEnvironment } from "./helpers/destructive-db-safety";
 
 const PROD_0026_TEST_ENV = {
-  NODE_ENV: "test",
+  NODE_ENV: "test" as const,
   DATABASE_URL: `postgresql://postgres:synthetic@db.${PROD_0025_PROJECT_REF}.supabase.co:5432/postgres?sslmode=verify-full&sslrootcert=synthetic-ca.pem`,
   RUNTIME_MIGRATION_TARGET: "production",
   RUNTIME_MIGRATION_EXPECTED_PROJECT_REF: PROD_0025_PROJECT_REF,
