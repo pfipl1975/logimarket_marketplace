@@ -1,8 +1,9 @@
-import { and, count, eq, exists, inArray, sql, type SQL } from "drizzle-orm";
+import { and, count, eq, exists, inArray, or, sql, type SQL } from "drizzle-orm";
 import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 import * as schema from "@/lib/schema";
 import { getCategoryDescendantIds } from "./tree";
 import { catalogOfferOrder } from "./catalog-offer-order";
+import { resolveCanonicalOfferModel } from "@/lib/offers/model";
 import type { FilterValidationError, NormalizedFilterQuery } from "@/lib/filters/types";
 
 type Db = NodePgDatabase<typeof schema>;
@@ -85,14 +86,24 @@ async function validateConfiguration(db: Db, input: NormalizedFilterQuery): Prom
   return { errors, dataTypes: new Map([...attributes].map(([id, value]) => [id, value.dataType])) };
 }
 
-export function buildFilterPredicates(db: Db, input: NormalizedFilterQuery, categoryIds: number[], dataTypes: Map<number, string>): SQL[] {
+export function buildFilterPredicates(db: Db, input: NormalizedFilterQuery, categoryIds: number[] | undefined, dataTypes: Map<number, string>): SQL[] {
   const predicates: SQL[] = [
     eq(schema.offers.isActive, true),
     eq(schema.offers.publicationStatus, "published"),
-    inArray(schema.offers.categoryId, categoryIds),
   ];
+  if (categoryIds) predicates.push(inArray(schema.offers.categoryId, categoryIds));
   if (input.offerModel) {
-    predicates.push(eq(schema.offers.offerModel, input.offerModel));
+    // Derive the SQL-compatible legacy pairs from the same authoritative resolver
+    // used by public offer projections. Never compare a canonical value to raw offer_model.
+    const knownPairs = [
+      ["rfq", "inbound"], ["rfq", "outbound"],
+      ["marketplace", "inbound"], ["marketplace", "outbound"],
+    ] as const;
+    const matchingPairs = knownPairs
+      .filter(([model, conversion]) => resolveCanonicalOfferModel(model, conversion) === input.offerModel)
+      .map(([model, conversion]) =>
+        and(eq(schema.offers.offerModel, model), eq(schema.offers.conversionType, conversion))!);
+    predicates.push(or(...matchingPairs) ?? sql`false`);
   }
   if (input.productCondition) predicates.push(eq(schema.offers.productCondition, input.productCondition));
   if (input.featured) {
@@ -121,12 +132,18 @@ export function buildFilterPredicates(db: Db, input: NormalizedFilterQuery, cate
 }
 
 export async function queryFilteredCategoryOffers(db: Db, input: NormalizedFilterQuery): Promise<FilterDbResult> {
-  const categories = await db.select({ id: schema.categories.id, parentId: schema.categories.parentId }).from(schema.categories);
-  if (!categories.some((category) => category.id === input.categoryId)) return { ok: false, errors: [{ code: "UNKNOWN_CATEGORY" }] };
+  if (input.categoryId === undefined && requestedAttributeIds(input).length > 0) {
+    return { ok: false, errors: [{ code: "INVALID_INPUT" }] };
+  }
+  let scope: number[] | undefined;
+  if (input.categoryId !== undefined) {
+    const categories = await db.select({ id: schema.categories.id, parentId: schema.categories.parentId }).from(schema.categories);
+    if (!categories.some((category) => category.id === input.categoryId)) return { ok: false, errors: [{ code: "UNKNOWN_CATEGORY" }] };
+    const categoryRows = categories.map((category) => ({ ...category, name: "", slug: "", createdAt: new Date(0) }));
+    scope = [input.categoryId, ...getCategoryDescendantIds(categoryRows, input.categoryId)];
+  }
   const configuration = await validateConfiguration(db, input);
   if (configuration.errors.length) return { ok: false, errors: configuration.errors };
-  const categoryRows = categories.map((category) => ({ ...category, name: "", slug: "", createdAt: new Date(0) }));
-  const scope = [input.categoryId, ...getCategoryDescendantIds(categoryRows, input.categoryId)];
   const where = and(...buildFilterPredicates(db, input, scope, configuration.dataTypes));
   const countRows = await db.select({ total: count() }).from(schema.offers).where(where);
   const itemBase = db.select({ offer: schema.offers, category: schema.categories, partner: schema.partners, primaryMedia: schema.offerMedia })

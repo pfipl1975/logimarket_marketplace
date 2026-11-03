@@ -6,6 +6,9 @@ export function normalizeFilterQuery(input: FilterQueryInput): { ok: true; value
   const years = input.years ?? [];
   const booleans = input.booleans ?? [];
   const errors: FilterValidationError[] = [];
+  if (input.categoryId === undefined && (controlled.length || numbers.length || years.length || booleans.length)) {
+    errors.push({ code: "INVALID_INPUT" });
+  }
   const seen = new Set<number>();
   for (const filter of [...controlled, ...numbers, ...years, ...booleans]) {
     if (seen.has(filter.attributeId)) errors.push({ code: "DUPLICATE_ATTRIBUTE_FILTER", attributeId: filter.attributeId });

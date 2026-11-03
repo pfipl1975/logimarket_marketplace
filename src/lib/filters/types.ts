@@ -12,7 +12,7 @@ export type CatalogOfferSort =
   | "newest";
 
 export type FilterQueryInput = {
-  categoryId: number;
+  categoryId?: number;
   offerModel?: OfferModelFilter;
   productCondition?: ProductCondition;
   featured?: true;
@@ -36,7 +36,7 @@ export type FilterErrorCode =
 export type FilterValidationError = { code: FilterErrorCode; attributeId?: number; optionId?: number };
 
 export type NormalizedFilterQuery = {
-  categoryId: number;
+  categoryId?: number;
   offerModel?: OfferModelFilter;
   productCondition?: ProductCondition;
   featured?: true;

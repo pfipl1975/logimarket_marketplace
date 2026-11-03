@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { PublicOfferPrice } from "@/components/offers/PublicOfferPrice";
 import { OfferModelBadge } from "@/components/offers/OfferModelBadge";
+import { ProductConditionBadge } from "@/components/offers/ProductConditionBadge";
 import { getLocalizedCategoryLabel } from "@/lib/i18n/category-labels";
 import type { CatalogOffer } from "@/app/actions";
 import type { Dictionary, Locale } from "@/lib/i18n/types";
@@ -42,6 +43,8 @@ export function OfferListItem({
             className="sm:hidden rounded px-1.5 py-0 text-[10px]"
           />
         </div>
+
+        <ProductConditionBadge value={offer.productCondition} labels={offerLabels} />
 
         <h3 className="text-sm font-bold leading-snug text-brand-navy">
           <Link href={detailHref} className="hover:text-brand-teal transition-colors">
