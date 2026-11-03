@@ -9,7 +9,7 @@ import type { Dictionary } from "@/lib/i18n/types";
 type CatalogSectionDirectoryLabels = Pick<
   Dictionary["catalogHome"],
   "directoryHeading" | "directoryIntro" | "groupsLabel" | "categoriesLabel"
->;
+> & Pick<Dictionary["catalog"], "offerCountOne" | "offerCountOther">;
 
 interface CatalogSectionDirectoryProps {
   sections: CatalogHomeSectionNode[];
@@ -18,7 +18,10 @@ interface CatalogSectionDirectoryProps {
 
 // Recursive nested-list renderer. Depth is preserved by DOM nesting, a left
 // border per level and fixed spacing — never by dynamic Tailwind classes.
-function CategoryLinkList({ nodes }: { nodes: CatalogHomeCategoryNode[] }) {
+function CategoryLinkList({ nodes, labels }: {
+  nodes: CatalogHomeCategoryNode[];
+  labels: CatalogSectionDirectoryLabels;
+}) {
   if (nodes.length === 0) return null;
 
   return (
@@ -42,7 +45,11 @@ function CategoryLinkList({ nodes }: { nodes: CatalogHomeCategoryNode[] }) {
             ) : (
               <span className={labelClassName}>{node.label}</span>
             )}
-            {node.children.length > 0 && <CategoryLinkList nodes={node.children} />}
+            <span data-testid={`catalog-directory-category-offer-count-${node.id}`}
+              className="ml-2 text-[11px] font-medium tabular-nums text-muted-foreground">
+              {node.offerCount} {node.offerCount === 1 ? labels.offerCountOne : labels.offerCountOther}
+            </span>
+            {node.children.length > 0 && <CategoryLinkList nodes={node.children} labels={labels} />}
           </li>
         );
       })}
@@ -104,6 +111,10 @@ export function CatalogSectionDirectory({
                   {labels.groupsLabel}: {section.groupCount} ·{" "}
                   {labels.categoriesLabel}: {section.categoryCount}
                 </p>
+                <p data-testid={`catalog-directory-section-offer-count-${section.id}`}
+                  className="mt-1 text-xs font-semibold tabular-nums text-brand-teal">
+                  {section.offerCount} {section.offerCount === 1 ? labels.offerCountOne : labels.offerCountOther}
+                </p>
               </div>
             </div>
 
@@ -138,7 +149,11 @@ export function CatalogSectionDirectory({
                     <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                       {labels.categoriesLabel}: {group.categoryCount}
                     </p>
-                    <CategoryLinkList nodes={group.children} />
+                    <p data-testid={`catalog-directory-group-offer-count-${group.id}`}
+                      className="mt-1 text-[11px] font-semibold tabular-nums text-brand-teal">
+                      {group.offerCount} {group.offerCount === 1 ? labels.offerCountOne : labels.offerCountOther}
+                    </p>
+                    <CategoryLinkList nodes={group.children} labels={labels} />
                   </div>
                 ))}
               </div>

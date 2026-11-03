@@ -5,7 +5,7 @@ import { acceptSellerOrder, rejectSellerOrder } from "@/lib/seller-order/seller-
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { and, eq, asc, inArray, sql } from "drizzle-orm";
+import { and, eq, asc, count, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   offers,
@@ -16,8 +16,8 @@ import {
   offerMedia,
 } from "@/lib/schema";
 import type { TechnicalAttributes, OfferPublicationStatus } from "@/lib/schema";
-import { getCategoryDescendantIds } from "@/lib/catalog/tree";
-import type { CatalogCategoryRow } from "@/lib/catalog/tree";
+import { getCategoryDescendantIds, rollupCategoryOfferCounts } from "@/lib/catalog/tree";
+import type { CatalogCategoryRow, CatalogCategoryTreeRow } from "@/lib/catalog/tree";
 import { getCategoryAttributeConfigurationFromDb } from "@/lib/catalog/category-attribute-read-model";
 import type { CategoryAttributeConfiguration } from "@/lib/catalog/category-attribute-read-model";
 import { validateCategoryId } from "@/lib/catalog/category-attribute-read-model";
@@ -259,6 +259,21 @@ export async function getCategoryOffersCount(
     );
 
   return rows.length;
+}
+
+/** One public-only GROUP BY over offers; caller provides the already-read category tree. */
+export async function getPublishedCategoryOfferCounts(
+  categoryRows: CatalogCategoryTreeRow[],
+): Promise<Record<number, number>> {
+  const directRows = await db
+    .select({ categoryId: offers.categoryId, offerCount: count(offers.id) })
+    .from(offers)
+    .where(and(eq(offers.isActive, true), eq(offers.publicationStatus, "published")))
+    .groupBy(offers.categoryId);
+  return rollupCategoryOfferCounts(categoryRows, directRows.map((row) => ({
+    categoryId: Number(row.categoryId),
+    offerCount: Number(row.offerCount),
+  })));
 }
 
 export async function getOffers(

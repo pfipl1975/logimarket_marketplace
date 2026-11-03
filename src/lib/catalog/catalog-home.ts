@@ -20,6 +20,7 @@ export interface CatalogHomeCategoryNode {
   depth: number; // >= 2
   parentId: number | null;
   iconPath: null; // categories never render icons; helpers are not called
+  offerCount: number;
   children: CatalogHomeCategoryNode[];
 }
 
@@ -33,6 +34,7 @@ export interface CatalogHomeGroupNode {
   parentId: number | null;
   iconPath: string;
   categoryCount: number; // all descendants at depth >= 2
+  offerCount: number;
   children: CatalogHomeCategoryNode[];
 }
 
@@ -48,6 +50,7 @@ export interface CatalogHomeSectionNode {
   anchorId: string;
   groupCount: number; // direct children at depth 1
   categoryCount: number; // all descendants at depth >= 2
+  offerCount: number;
   children: CatalogHomeGroupNode[];
 }
 
@@ -62,6 +65,7 @@ export interface BuildCatalogHomeSectionsInput {
   routeableSlugSet: Set<string>;
   localeBySlug?: Record<string, string>;
   fallbackBySlug?: Record<string, string>;
+  offerCounts?: Readonly<Record<number, number>>;
 }
 
 // ─── Anchors ────────────────────────────────────────────────────────────────
@@ -97,6 +101,7 @@ function buildCategoryNode(
   routeableSlugSet: Set<string>,
   localeBySlug: Record<string, string> | undefined,
   fallbackBySlug: Record<string, string> | undefined,
+  offerCounts: Readonly<Record<number, number>>,
   depth: number,
 ): CatalogHomeCategoryNode {
   return {
@@ -113,6 +118,7 @@ function buildCategoryNode(
     depth,
     parentId: node.parentId,
     iconPath: null,
+    offerCount: offerCounts[node.id] ?? 0,
     children: node.children.map((child) =>
       buildCategoryNode(
         child,
@@ -120,6 +126,7 @@ function buildCategoryNode(
         routeableSlugSet,
         localeBySlug,
         fallbackBySlug,
+        offerCounts,
         depth + 1,
       ),
     ),
@@ -132,6 +139,7 @@ function buildGroupNode(
   routeableSlugSet: Set<string>,
   localeBySlug: Record<string, string> | undefined,
   fallbackBySlug: Record<string, string> | undefined,
+  offerCounts: Readonly<Record<number, number>>,
 ): CatalogHomeGroupNode {
   return {
     role: "group",
@@ -148,6 +156,7 @@ function buildGroupNode(
     parentId: node.parentId,
     iconPath: getGroupIconPath(node.slug),
     categoryCount: countDescendants(node),
+    offerCount: offerCounts[node.id] ?? 0,
     children: node.children.map((child) =>
       buildCategoryNode(
         child,
@@ -155,6 +164,7 @@ function buildGroupNode(
         routeableSlugSet,
         localeBySlug,
         fallbackBySlug,
+        offerCounts,
         2,
       ),
     ),
@@ -167,6 +177,7 @@ export function buildCatalogHomeSections({
   routeableSlugSet,
   localeBySlug,
   fallbackBySlug,
+  offerCounts = {},
 }: BuildCatalogHomeSectionsInput): CatalogHomeSectionNode[] {
   return categoryTree.map((section) => {
     const groups = section.children.map((group) =>
@@ -176,6 +187,7 @@ export function buildCatalogHomeSections({
         routeableSlugSet,
         localeBySlug,
         fallbackBySlug,
+        offerCounts,
       ),
     );
 
@@ -196,6 +208,7 @@ export function buildCatalogHomeSections({
       anchorId: createCatalogSectionAnchorId(section.slug, section.id),
       groupCount: groups.length,
       categoryCount: groups.reduce((sum, group) => sum + group.categoryCount, 0),
+      offerCount: offerCounts[section.id] ?? 0,
       children: groups,
     };
   });
