@@ -39,8 +39,8 @@ test.describe("Homepage canonical offer filters and condition list badge", () =>
       [titles.draft, "marketplace", "inbound", "used", "draft"],
     ]) {
       const row = await db.query<{ id: string }>(
-        "INSERT INTO offers (partner_id,category_id,title,offer_model,conversion_type,product_condition,publication_status,is_active,published_at) VALUES ($1,$2,$3,$4,$5,$6,$7,true,CASE WHEN $7='published' THEN now() ELSE NULL END) RETURNING id",
-        [partnerId, categoryId, title, model, conversion, condition, status],
+        "INSERT INTO offers (partner_id,category_id,title,offer_model,conversion_type,product_condition,publication_status,is_active,published_at) VALUES ($1,$2,$3,$4,$5,$6,$7,true,$8) RETURNING id",
+        [partnerId, categoryId, title, model, conversion, condition, status, status === "published" ? new Date() : null],
       );
       offerIds.push(Number(row.rows[0].id));
     }
