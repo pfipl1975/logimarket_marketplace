@@ -275,6 +275,11 @@
   },
   "categories": {
     "bySlug": {
+      "maszyny-i-urzadzenia": "Machines et équipements",
+      "osprzet-do-maszyn-budowlanych": "Accessoires pour engins de chantier",
+      "lyzki-do-koparek": "Godets pour pelles",
+      "lyzki-do-ladowarek": "Godets pour chargeuses",
+      "lyzki-skarpowe-i-profilujace": "Godets de talutage et de profilage",
       "wozki-widlowe-czolowe": "Chariots élévateurs frontaux",
       "regaly-i-systemy-skladowania": "Rayonnages et systèmes de stockage",
       "regaly-paletowe": "Rayonnages à palettes",
@@ -391,6 +396,11 @@
       "serwis-i-sla-robotow-magazynowych": "Service, maintenance et SLA des robots d’entrepôt"
     },
     "introsBySlug": {
+      "maszyny-i-urzadzenia": "Machines, équipements et accessoires pour les travaux publics et l'industrie.",
+      "osprzet-do-maszyn-budowlanych": "Accessoires pour engins de chantier, notamment les godets de pelles et de chargeuses.",
+      "lyzki-do-koparek": "Godets de travail pour pelles et mini-pelles, adaptés aux machines porteuses.",
+      "lyzki-do-ladowarek": "Godets pour chargeuses destinés à la manutention et au terrassement.",
+      "lyzki-skarpowe-i-profilujace": "Godets pour le talutage, le nivellement et le profilage des terrains.",
       "regaly-i-systemy-skladowania": "Rayonnages industriels et solutions de stockage pour optimiser l'espace de votre bâtiment.",
       "wozki-i-transport-wewnetrzny": "Chariots élévateurs, transpalettes et équipements de manutention pour vos charges.",
       "wyposazenie-magazynu": "Mobilier d'atelier robuste, tables d'emballage et bacs plastique de stockage.",

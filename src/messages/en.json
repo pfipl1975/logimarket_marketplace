@@ -275,6 +275,11 @@
   },
   "categories": {
     "bySlug": {
+      "maszyny-i-urzadzenia": "Machinery and equipment",
+      "osprzet-do-maszyn-budowlanych": "Attachments for construction machinery",
+      "lyzki-do-koparek": "Excavator buckets",
+      "lyzki-do-ladowarek": "Loader buckets",
+      "lyzki-skarpowe-i-profilujace": "Grading and profiling buckets",
       "wozki-widlowe-czolowe": "Counterbalance forklifts",
       "regaly-i-systemy-skladowania": "Racking and storage systems",
       "regaly-paletowe": "Pallet racking",
@@ -391,6 +396,11 @@
       "serwis-i-sla-robotow-magazynowych": "Service, maintenance and SLA for warehouse robots"
     },
     "introsBySlug": {
+      "maszyny-i-urzadzenia": "Machinery, equipment and attachments for construction and industrial applications.",
+      "osprzet-do-maszyn-budowlanych": "Construction machinery attachments, including buckets for excavators and loaders.",
+      "lyzki-do-koparek": "Working buckets for excavators and mini excavators, selected for machine compatibility.",
+      "lyzki-do-ladowarek": "Loader buckets for material handling and earthmoving work.",
+      "lyzki-skarpowe-i-profilujace": "Buckets for slope grading, surface levelling and profiling.",
       "regaly-i-systemy-skladowania": "Wide selection of warehouse racking and storage systems to optimize your hall space.",
       "wozki-i-transport-wewnetrzny": "Reliable forklifts, pallet jacks, and material handling equipment for load operations.",
       "wyposazenie-magazynu": "Durable workshop furniture, packing tables, and plastic bins for efficient work.",

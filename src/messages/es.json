@@ -275,6 +275,11 @@
   },
   "categories": {
     "bySlug": {
+      "maszyny-i-urzadzenia": "Maquinaria y equipos",
+      "osprzet-do-maszyn-budowlanych": "Implementos para maquinaria de construcción",
+      "lyzki-do-koparek": "Cucharones para excavadoras",
+      "lyzki-do-ladowarek": "Cucharones para cargadoras",
+      "lyzki-skarpowe-i-profilujace": "Cucharones de nivelación y perfilado",
       "wozki-widlowe-czolowe": "Carretillas elevadoras frontales",
       "regaly-i-systemy-skladowania": "Estanterías y sistemas de almacenamiento",
       "regaly-paletowe": "Estanterías para palets",
@@ -391,6 +396,11 @@
       "serwis-i-sla-robotow-magazynowych": "Servicio, mantenimiento y SLA para robots de almacén"
     },
     "introsBySlug": {
+      "maszyny-i-urzadzenia": "Maquinaria, equipos e implementos para construcción y aplicaciones industriales.",
+      "osprzet-do-maszyn-budowlanych": "Implementos para maquinaria de construcción, incluidos cucharones para excavadoras y cargadoras.",
+      "lyzki-do-koparek": "Cucharones de trabajo para excavadoras y miniexcavadoras, según compatibilidad.",
+      "lyzki-do-ladowarek": "Cucharones para cargadoras destinados a la manipulación de materiales y movimiento de tierras.",
+      "lyzki-skarpowe-i-profilujace": "Cucharones para taludes, nivelación y perfilado del terreno.",
       "regaly-i-systemy-skladowania": "Gran selección de estanterías industriales y sistemas para optimizar el espacio de su almacén.",
       "wozki-i-transport-wewnetrzny": "Carretillas elevadoras, transpaletas y equipos de manutención fiables para sus cargas.",
       "wyposazenie-magazynu": "Mobiliario de taller resistente, mesas de embalaje y contenedores plásticos.",

@@ -275,6 +275,11 @@
   },
   "categories": {
     "bySlug": {
+      "maszyny-i-urzadzenia": "Maszyny i urządzenia",
+      "osprzet-do-maszyn-budowlanych": "Osprzęt do maszyn budowlanych",
+      "lyzki-do-koparek": "Łyżki do koparek",
+      "lyzki-do-ladowarek": "Łyżki do ładowarek",
+      "lyzki-skarpowe-i-profilujace": "Łyżki skarpowe i profilujące",
       "wozki-widlowe-czolowe": "Wózki widłowe czołowe",
       "regaly-i-systemy-skladowania": "Regały i systemy magazynowe",
       "regaly-paletowe": "Regały paletowe",
@@ -391,6 +396,11 @@
       "serwis-i-sla-robotow-magazynowych": "Serwis, utrzymanie i SLA robotów magazynowych"
     },
     "introsBySlug": {
+      "maszyny-i-urzadzenia": "Maszyny, urządzenia i osprzęt do zastosowań budowlanych oraz przemysłowych.",
+      "osprzet-do-maszyn-budowlanych": "Osprzęt do maszyn budowlanych, w tym łyżki do koparek i ładowarek.",
+      "lyzki-do-koparek": "Łyżki robocze do koparek i minikoparek, dobierane do maszyny i zastosowania.",
+      "lyzki-do-ladowarek": "Łyżki do ładowarek do prac przeładunkowych i robót ziemnych.",
+      "lyzki-skarpowe-i-profilujace": "Łyżki do skarpowania, wyrównywania terenu i profilowania powierzchni.",
       "regaly-i-systemy-skladowania": "Szeroki wybór regałów magazynowych i systemów składowania dla optymalizacji przestrzeni halowej.",
       "wozki-i-transport-wewnetrzny": "Niezawodne wózki widłowe, paletowe oraz urządzenia transportu wewnętrznego do obsługi ładunków.",
       "wyposazenie-magazynu": "Wytrzymałe meble warsztatowe, stoły kompletacyjne oraz pojemniki z tworzywa dla sprawnej pracy.",

@@ -1,4 +1,5 @@
 export const GROUP_ICON_PATHS = {
+  "osprzet-do-maszyn-budowlanych": "/images/catalog/groups/osprzet-do-maszyn-budowlanych.svg",
   "regaly-paletowe": "/images/catalog/groups/regaly-paletowe.svg",
   "regaly-polkowe-i-antresole": "/images/catalog/groups/regaly-polkowe-i-antresole.svg",
   "wozki-widlowe-czolowe": "/images/catalog/groups/wozki-widlowe-czolowe.svg",
@@ -32,6 +33,7 @@ export function getGroupIconPath(slug: string): string {
 }
 
 export const SECTION_ICON_PATHS = {
+  "maszyny-i-urzadzenia": "/images/catalog/sections/maszyny-i-urzadzenia.svg",
   "regaly-i-systemy-skladowania": "/images/catalog/sections/regaly-i-systemy-skladowania.svg",
   "wozki-i-transport-wewnetrzny": "/images/catalog/sections/wozki-i-transport-wewnetrzny.svg",
   "wyposazenie-magazynu": "/images/catalog/sections/wyposazenie-magazynu.svg",

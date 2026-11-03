@@ -275,6 +275,11 @@
   },
   "categories": {
     "bySlug": {
+      "maszyny-i-urzadzenia": "Maschinen und Geräte",
+      "osprzet-do-maszyn-budowlanych": "Anbaugeräte für Baumaschinen",
+      "lyzki-do-koparek": "Baggerlöffel",
+      "lyzki-do-ladowarek": "Radladerschaufeln",
+      "lyzki-skarpowe-i-profilujace": "Böschungs- und Profilierschaufeln",
       "wozki-widlowe-czolowe": "Frontstapler",
       "regaly-i-systemy-skladowania": "Regale und Lagersysteme",
       "regaly-paletowe": "Palettenregale",
@@ -391,6 +396,11 @@
       "serwis-i-sla-robotow-magazynowych": "Service, Instandhaltung und SLA für Lagerroboter"
     },
     "introsBySlug": {
+      "maszyny-i-urzadzenia": "Maschinen, Geräte und Anbauwerkzeuge für Bauwesen und Industrie.",
+      "osprzet-do-maszyn-budowlanych": "Anbaugeräte für Baumaschinen, einschließlich Löffeln und Schaufeln.",
+      "lyzki-do-koparek": "Arbeitslöffel für Bagger und Minibagger, passend zur Trägermaschine.",
+      "lyzki-do-ladowarek": "Schaufeln für Radlader zum Materialumschlag und Erdbau.",
+      "lyzki-skarpowe-i-profilujace": "Schaufeln für Böschungsarbeiten, Planieren und Profilieren.",
       "regaly-i-systemy-skladowania": "Große Auswahl an Lagerregalen und Lagersystemen zur Optimierung Ihrer Hallenfläche.",
       "wozki-i-transport-wewnetrzny": "Zuverlässige Stapler, Hubwagen und Flurförderzeuge für den effizienten Umschlag.",
       "wyposazenie-magazynu": "Robuste Werkstattmöbel, Packtische und Kunststoffboxen für Ihren Betrieb.",
