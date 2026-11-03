@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Package } from "lucide-react";
-import { getOffers } from "@/app/actions";
+import { getOffers, getPublishedCategoryOfferCounts } from "@/app/actions";
 import { absoluteUrl } from "@/lib/seo/urls";
 import { getCachedCategories } from "@/lib/catalog/navigation.server";
 import { SiteHeader } from "@/components/SiteHeader";
@@ -37,6 +37,7 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
     getCachedCategories(),
     getOffers(undefined, locale),
   ]);
+  const offerCounts = await getPublishedCategoryOfferCounts(allCategories);
   const fallbackDict = locale === defaultLocale ? dict : await getDictionary(defaultLocale);
 
   const localeBySlug = dict.categories?.bySlug as Record<string, string> | undefined;
@@ -55,6 +56,7 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
     routeableSlugSet,
     localeBySlug,
     fallbackBySlug,
+    offerCounts,
   });
 
   const catalogPath = `${categoryFilterBasePath === "/" ? "" : categoryFilterBasePath}/katalog`;
@@ -168,8 +170,10 @@ export async function CatalogPage({ locale }: CatalogPageProps) {
             </div>
           ) : (
             <>
-              <CatalogSectionIndex sections={sections} labels={dict.catalogHome} />
-              <CatalogSectionDirectory sections={sections} labels={dict.catalogHome} />
+              <CatalogSectionIndex sections={sections}
+                labels={{ ...dict.catalogHome, offerCountOne: dict.catalog.offerCountOne, offerCountOther: dict.catalog.offerCountOther }} />
+              <CatalogSectionDirectory sections={sections}
+                labels={{ ...dict.catalogHome, offerCountOne: dict.catalog.offerCountOne, offerCountOther: dict.catalog.offerCountOther }} />
             </>
           )}
 

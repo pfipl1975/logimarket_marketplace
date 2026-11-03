@@ -116,3 +116,38 @@ export function getCategoryDescendantIds(rows: CatalogCategoryRow[], parentId: n
 
   return descendants;
 }
+
+/**
+ * Roll up one grouped SQL result across the category hierarchy in memory.
+ * Each public offer has a single owning category and contributes once per ancestor.
+ */
+export function rollupCategoryOfferCounts(
+  rows: readonly CatalogCategoryTreeRow[],
+  directRows: readonly { categoryId: number; offerCount: number }[],
+): Record<number, number> {
+  const ids = new Set(rows.map((row) => row.id));
+  if (ids.size !== rows.length) throw new Error("DUPLICATE_CATEGORY_ID");
+  const direct = new Map<number, number>(rows.map((row) => [row.id, 0]));
+  for (const { categoryId, offerCount } of directRows) {
+    if (!Number.isSafeInteger(offerCount) || offerCount < 0) throw new Error("INVALID_CATEGORY_OFFER_COUNT");
+    if (ids.has(categoryId)) direct.set(categoryId, (direct.get(categoryId) ?? 0) + offerCount);
+  }
+  const totals: Record<number, number> = {};
+  const active = new Set<number>();
+  const visited = new Set<number>();
+  function walk(node: CatalogCategoryNode): number {
+    if (active.has(node.id)) throw new Error("CATEGORY_TREE_CYCLE");
+    if (visited.has(node.id)) return totals[node.id];
+    active.add(node.id);
+    let total = direct.get(node.id) ?? 0;
+    for (const child of node.children) total += walk(child);
+    active.delete(node.id);
+    visited.add(node.id);
+    if (!Number.isSafeInteger(total)) throw new Error("CATEGORY_COUNT_OVERFLOW");
+    totals[node.id] = total;
+    return total;
+  }
+  for (const root of buildCategoryTree([...rows])) walk(root);
+  if (visited.size !== rows.length) throw new Error("CATEGORY_TREE_CYCLE");
+  return totals;
+}

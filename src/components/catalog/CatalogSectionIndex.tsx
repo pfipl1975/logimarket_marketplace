@@ -7,7 +7,7 @@ interface CatalogSectionIndexProps {
   labels: Pick<
     Dictionary["catalogHome"],
     "sectionIndexHeading" | "sectionIndexIntro" | "groupsLabel" | "categoriesLabel"
-  >;
+  > & Pick<Dictionary["catalog"], "offerCountOne" | "offerCountOther">;
 }
 
 export function CatalogSectionIndex({ sections, labels }: CatalogSectionIndexProps) {
@@ -43,6 +43,10 @@ export function CatalogSectionIndex({ sections, labels }: CatalogSectionIndexPro
                 <span className="mt-0.5 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                   {labels.groupsLabel}: {section.groupCount} ·{" "}
                   {labels.categoriesLabel}: {section.categoryCount}
+                </span>
+                <span data-testid={`catalog-index-offer-count-${section.id}`}
+                  className="mt-1 block text-xs font-semibold tabular-nums text-brand-teal">
+                  {section.offerCount} {section.offerCount === 1 ? labels.offerCountOne : labels.offerCountOther}
                 </span>
               </span>
             </a>

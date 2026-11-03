@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight } from "lucide-react";
-import { getCategories } from "@/app/actions";
+import { getCategories, getPublishedCategoryOfferCounts } from "@/app/actions";
 import { resolveCategoryName, resolveCategoryIntro } from "@/lib/i18n/category-labels";
 import { getHomePath } from "@/lib/i18n/paths";
 import { getDictionary } from "@/lib/i18n/dictionaries";
@@ -19,6 +19,8 @@ export async function ProductGroupTiles({ locale }: ProductGroupTilesProps) {
     getDictionary(locale),
     getCategories(),
   ]);
+
+  const offerCounts = await getPublishedCategoryOfferCounts(allCategories);
 
   const fallbackDict =
     locale === defaultLocale ? dict : await getDictionary(defaultLocale);
@@ -73,6 +75,7 @@ export async function ProductGroupTiles({ locale }: ProductGroupTilesProps) {
           });
 
           const categoryHref = `${basePath === "/" ? "" : basePath}/katalog/c-${category.slug}`;
+          const offerCount = offerCounts[category.id] ?? 0;
 
           return (
             <Link
@@ -95,6 +98,10 @@ export async function ProductGroupTiles({ locale }: ProductGroupTilesProps) {
                 <h3 className="text-sm font-bold text-brand-navy transition-colors group-hover:text-brand-teal">
                   {categoryLabel}
                 </h3>
+                <p data-testid={`home-category-offer-count-${category.id}`}
+                  className="mt-1 text-xs font-medium tabular-nums text-muted-foreground">
+                  {offerCount} {offerCount === 1 ? dict.catalog.offerCountOne : dict.catalog.offerCountOther}
+                </p>
                 {categoryIntro && (
                   <p className="mt-1.5 text-[11px] leading-normal text-muted-foreground line-clamp-2">
                     {categoryIntro}
